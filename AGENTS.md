@@ -1,0 +1,66 @@
+<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
+
+# AGENTS.md — GoalPilot
+
+Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/copilot-instructions.md` (a thin pointer to this file).
+
+## 📚 Authoritative docs (link, don't restate)
+
+- [README.md](README.md) — features, quick-start.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layered design, data model, data flow.
+- [docs/SETUP.md](docs/SETUP.md) — Firebase / GROQ / OAuth credentials + debug SHA-1.
+- [TODO/TODO.md](TODO/TODO.md) — backlog index (MUST → OPTIONAL → FUTURE).
+- [CHANGELOG/CHANGELOG_README.md](CHANGELOG/CHANGELOG_README.md) — one file per date.
+- [.github/authoring-instructions.md](.github/authoring-instructions.md) — how to write instruction files.
+- [.github/instruction-file-catalog.md](.github/instruction-file-catalog.md) — which instruction file lives where.
+
+## 🗺️ Where things live
+
+- `app/src/main/java/com/idomarhaim/goalpilot/`
+  - `core/` — `Resource` wrapper, date utils, Firestore/Storage/Functions constants.
+  - `domain/` — models, repository **interfaces**, use cases. **No Android/Firebase types here.**
+  - `data/` — Firebase + GROQ implementations (`auth/`, `firestore/`, `storage/`, `remote/`) and integration stubs (`health/`, `tasks/`).
+  - `di/` — Hilt modules (`FirebaseModule`, `DispatchersModule`, `RepositoryModule`).
+  - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold).
+  - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `challenges`.
+- `functions/` — GROQ proxy Cloud Functions (TypeScript).
+- `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc` — backend config.
+- `docs/`, `TODO/`, `CHANGELOG/` — documentation & backlog.
+
+## 🔧 Common commands
+
+```powershell
+# JDK 21 is pinned in gradle.properties; set it if calling gradlew from a fresh shell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
+
+.\gradlew :app:assembleDebug            # build the APK
+.\gradlew :app:testDebugUnitTest        # JVM unit tests
+.\gradlew :app:installDebug             # install on device/emulator
+.\gradlew :app:connectedDebugAndroidTest # instrumented tests (needs emulator)
+
+# Cloud Functions
+cd functions; npm install; npm run build
+firebase emulators:start                # local Auth/Firestore/Storage/Functions
+firebase deploy --only firestore:rules,storage,functions
+```
+
+## ⚠️ Pitfalls
+
+- **JDK:** the machine's `JAVA_HOME` is JDK 25, which AGP rejects. Gradle is pinned to JDK 21 via `org.gradle.java.home` in `gradle.properties`. Don't remove that line on this machine.
+- **`google-services.json` is a placeholder.** The app compiles but sign-in/Firestore only work after you drop in the real file — see [docs/SETUP.md](docs/SETUP.md).
+- **Web client id** comes from `local.properties` → `GOOGLE_WEB_CLIENT_ID` → generated `R.string.gp_web_client_id`. Do **not** reference `R.string.default_web_client_id` (only exists with a real json and would clash).
+- **Firestore DTOs** must stay mutable (`var`) with defaults + `@DocumentId` for reflective (de)serialization. Keep the domain models immutable and separate.
+- **Windows file locks:** KSP/`.gradle` occasionally fail with "Could not delete/move …". Re-run, or `rm -rf app/build/generated/ksp` and rebuild.
+- **GROQ key never ships in the app** — it lives only in `functions/.env` (spec §5). The client always has a local fallback (spec §8).
+
+## 🧱 Conventions
+
+- Generic conventions (English, changelogs, docs, TODOs, safety) live in `.github/instructions/general.instructions.md`.
+- Kotlin/Compose/Firebase rules live in `.github/instructions/android.instructions.md`.
+- Test layering lives in `.github/instructions/testing.instructions.md`.
+- Architecture: **Clean-ish layering** — `feature (Compose + ViewModel)` → `domain (interfaces + models)` → `data (Firebase/GROQ)`, wired by Hilt. ViewModels expose a single `StateFlow<UiState>`; screens are stateless and driven by lambdas from the nav graph.
+
+## 🔒 Frozen / off-limits
+
+- `GoalPilot_spec_EN.docx` — the course spec; do not edit.
+- `gradle/wrapper/gradle-wrapper.jar` and `gradlew*` — generated wrapper; regenerate via `gradle wrapper`, don't hand-edit.

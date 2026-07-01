@@ -1,0 +1,451 @@
+package com.idomarhaim.goalpilot.feature.goals
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.ProgressEntry
+import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.ui.components.EmptyState
+import com.idomarhaim.goalpilot.ui.components.LoadingBox
+import com.idomarhaim.goalpilot.ui.components.ProgressRing
+import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.icon
+import com.idomarhaim.goalpilot.ui.components.toComposeColor
+import com.idomarhaim.goalpilot.ui.components.trimNumber
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GoalDetailScreen(
+    onBack: () -> Unit,
+    onEdit: (String) -> Unit,
+    viewModel: GoalDetailViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val action by viewModel.action.collectAsStateWithLifecycle()
+    val snackbarHost = remember { SnackbarHostState() }
+
+    var menuOpen by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLogDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(action.message) {
+        action.message?.let {
+            snackbarHost.showSnackbar(it)
+            viewModel.consumeMessage()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHost) },
+        topBar = {
+            TopAppBar(
+                title = { Text(state.goal?.title ?: "Goal") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (state.goal != null) {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Edit") },
+                                onClick = { menuOpen = false; onEdit(state.goal!!.id) },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Archive") },
+                                onClick = { menuOpen = false; viewModel.archiveGoal() },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = { menuOpen = false; showDeleteDialog = true },
+                            )
+                        }
+                    }
+                },
+            )
+        },
+    ) { inner ->
+        when {
+            state.isLoading -> LoadingBox(Modifier.padding(inner))
+            state.goal == null -> EmptyState(
+                title = "Goal not found",
+                subtitle = "It may have been deleted.",
+                modifier = Modifier.padding(inner),
+            )
+
+            else -> {
+                val goal = state.goal!!
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(inner),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    item {
+                        GoalHeaderCard(
+                            percent = goal.progressPercent,
+                            fraction = goal.progressFraction,
+                            accentHex = goal.colorHex,
+                            categoryLabel = goal.category.label,
+                            current = goal.currentValue.trimNumber(),
+                            target = goal.targetValue.trimNumber(),
+                            unit = goal.unit,
+                            description = goal.description,
+                            onLogProgress = { showLogDialog = true },
+                        )
+                    }
+                    item { SectionHeader(title = "Tasks") }
+                    item { AddTaskRow(onAdd = viewModel::addTask) }
+                    if (state.tasks.isEmpty()) {
+                        item {
+                            Text(
+                                "No tasks yet — add small tasks that move this goal forward.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        items(state.tasks, key = { it.id }) { task ->
+                            TaskRow(
+                                task = task,
+                                onToggle = { viewModel.toggleTask(task) },
+                                onDelete = { viewModel.deleteTask(task.id) },
+                            )
+                        }
+                    }
+                    item { SectionHeader(title = "Progress log") }
+                    if (state.entries.isEmpty()) {
+                        item {
+                            Text(
+                                "No entries yet. Use “Log progress” to record a step (and attach a photo).",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        items(state.entries, key = { it.id }) { entry ->
+                            ProgressEntryRow(entry = entry, unit = goal.unit)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showLogDialog) {
+        LogProgressDialog(
+            unit = state.goal?.unit ?: "",
+            isSubmitting = action.isSubmitting,
+            onDismiss = { showLogDialog = false },
+            onConfirm = { value, note, uri ->
+                viewModel.logProgress(value, note, uri)
+                showLogDialog = false
+            },
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete goal?") },
+            text = { Text("This permanently removes the goal. This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    viewModel.deleteGoal(onDeleted = onBack)
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            },
+        )
+    }
+}
+
+@Composable
+private fun GoalHeaderCard(
+    percent: Int,
+    fraction: Float,
+    accentHex: String,
+    categoryLabel: String,
+    current: String,
+    target: String,
+    unit: String,
+    description: String,
+    onLogProgress: () -> Unit,
+) {
+    val accent = accentHex.toComposeColor(MaterialTheme.colorScheme.primary)
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ProgressRing(progress = fraction, color = accent, size = 140.dp) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "$percent%",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(categoryLabel, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+            Text(
+                text = "$current / $target $unit",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            if (description.isNotBlank()) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            FilledTonalButton(
+                onClick = onLogProgress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+            ) {
+                Icon(Icons.Filled.TrendingUp, contentDescription = null)
+                Text("Log progress", modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddTaskRow(onAdd: (String, Int) -> Unit) {
+    var title by remember { mutableStateOf("") }
+    var points by remember { mutableStateOf("10") }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Add a task") },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+        )
+        OutlinedTextField(
+            value = points,
+            onValueChange = { points = it.filter { c -> c.isDigit() } },
+            label = { Text("Pts") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .width(72.dp),
+        )
+        IconButton(
+            onClick = {
+                onAdd(title, points.toIntOrNull() ?: 10)
+                title = ""
+                points = "10"
+            },
+            modifier = Modifier.padding(start = 4.dp),
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add task")
+        }
+    }
+}
+
+@Composable
+private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(checked = task.isDone, onCheckedChange = { onToggle() })
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "+${task.points}",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+            )
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Filled.Delete, contentDescription = "Delete task")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressEntryRow(entry: ProgressEntry, unit: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (!entry.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = entry.imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = if (entry.imageUrl.isNullOrBlank()) 0.dp else 12.dp),
+            ) {
+                Text(
+                    text = "+${entry.value.trimNumber()} $unit",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (entry.note.isNotBlank()) {
+                    Text(entry.note, style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(
+                    text = DateTimeUtils.relative(entry.createdAtEpochMillis),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LogProgressDialog(
+    unit: String,
+    isSubmitting: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (Double, String, Uri?) -> Unit,
+) {
+    var value by remember { mutableStateOf("1") }
+    var note by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val picker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> imageUri = uri }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Log progress") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = { value = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Amount ($unit)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (imageUri != null) {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        picker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Filled.AddPhotoAlternate, contentDescription = null)
+                    Text(
+                        if (imageUri == null) "Attach photo" else "Change photo",
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isSubmitting,
+                onClick = { onConfirm(value.toDoubleOrNull() ?: 0.0, note, imageUri) },
+            ) { Text(if (isSubmitting) "Saving…" else "Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
