@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v7; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v8; do not edit in-project, edit user-level then re-sync -->
 ---
 applyTo: "**"
 description: "Cross-cutting project conventions: language, documentation, changelogs, TODOs."
@@ -52,7 +52,8 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
 4. If the task came from `TODO/`, mark its checkbox `[x]` only **after user confirmation**.
 
 ## 🤖 Agent operations
-- When work passes its tests, run `/finish-task` — it updates the docs + CHANGELOG and commits using the CHANGELOG text (copy, not rewrite). Don't hand-roll commits.
+- **Committing follows the global _Commits & pushing_ rule.** When a unit of work is finished — tests passing if it has them, or the activity done if it needs none — update today's CHANGELOG first, then commit **using that CHANGELOG entry's text as the message (copy, don't rewrite)**. In **auto mode** (the user's message starts with `AUTO MODE`) commit automatically; in **normal mode** (default) ask before committing. Where a `/finish-task` command exists, it runs this docs + CHANGELOG + commit flow.
+- **Never push** without explicit OK, and never push to the default branch (`main`/`master`) without confirmation — prefer a feature branch + PR.
 - **Committed docs outrank memory.** If a recalled memory contradicts a committed doc (AGENTS.md, README, `docs/`), the doc wins — correct or delete the stale memory.
 - **Graduate durable insights.** When a Q&A yields a reusable, non-obvious insight, offer to save it with `/save-to-kb` rather than leaving decision-grade facts only in private agent memory. Cross-project insights → user-level knowledge base; project insights → `docs/knowledge-base/`.
 
