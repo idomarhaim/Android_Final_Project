@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v4; do not edit in-project, edit user-level then re-sync -->
 
 # AGENTS.md — GoalPilot
 
@@ -59,6 +59,15 @@ firebase deploy --only firestore:rules,storage,functions
 - Kotlin/Compose/Firebase rules live in `.github/instructions/android.instructions.md`.
 - Test layering lives in `.github/instructions/testing.instructions.md`.
 - Architecture: **Clean-ish layering** — `feature (Compose + ViewModel)` → `domain (interfaces + models)` → `data (Firebase/GROQ)`, wired by Hilt. ViewModels expose a single `StateFlow<UiState>`; screens are stateless and driven by lambdas from the nav graph.
+
+## 🤖 Model routing & agent topology
+
+- **Route by decision density & blast radius:** frontier models (Fable/Opus-class) for architecture, planning, cross-cutting refactors, hairy debugging, review; mid tier (Sonnet-class) for well-specced implementation; fast tier (Haiku/Flash-class) for mechanical bulk edits and summarization. Escalate a tier after repeated failure — never loop a flailing cheap model.
+- **Topology ladder:** one agent, one session (default) → split sessions at verification/commit boundaries (handoff files + committed docs, never chat memory) → subagents only for read-only fan-out or truly independent parallel chunks.
+- **Subagent gate:** before spawning ANY subagent — explain why, which model, why that model, and get user approval (no read-only exemption).
+- **Derivable decisions:** when committed principles fully determine a decision's answer, proceed and log "decision X taken per principle Y" instead of asking. ALWAYS ask for: deletions, outward-facing actions, relocating/rewriting anything that predates JARVIS. Rule: `C:\Dev\JARVIS\rules\derivable-decision.md`.
+- **Surfaces:** Copilot = inline completions, quick in-editor edits, PR review; Claude Code = orchestrated multi-step local work; otherwise token economics decide.
+- Full policy: `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md`.
 
 ## 🔒 Frozen / off-limits
 
