@@ -3,22 +3,30 @@ package com.idomarhaim.goalpilot.feature.dashboard
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -43,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,6 +73,8 @@ fun DashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
     val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
+    val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
+    val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
@@ -75,6 +86,21 @@ fun DashboardScreen(
     val sharePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri -> if (uri != null) viewModel.shareWeeklySummary(uri) }
+
+    // Accounts that signed in before the Tasks scope existed must grant it once.
+    // Google hands us its own consent screen; on success we retry the import.
+    val consentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.onConsentGranted()
+        } else {
+            viewModel.consumeConsentIntent()
+        }
+    }
+    LaunchedEffect(consentIntent) {
+        consentIntent?.let { consentLauncher.launch(it) }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHost) },
@@ -110,6 +136,12 @@ fun DashboardScreen(
                 )
             }
             item { SmartAddCard(onClassify = viewModel::classifyForSmartAdd) }
+            item {
+                GoogleTasksImportCard(
+                    isLoading = tasksImport.isLoading,
+                    onImport = viewModel::importGoogleTasks,
+                )
+            }
             item {
                 SectionHeader(
                     title = "AI coach",
@@ -162,6 +194,159 @@ fun DashboardScreen(
             onDismiss = viewModel::dismissSmartAdd,
         )
     }
+
+    if (tasksImport.isVisible) {
+        GoogleTasksImportDialog(
+            state = tasksImport,
+            onToggle = viewModel::toggleImportProposal,
+            onConfirm = viewModel::confirmImport,
+            onDismiss = viewModel::dismissImport,
+        )
+    }
+}
+
+/**
+ * Entry point for the Google Tasks import (spec §6 nice-to-have). Pulls open
+ * tasks from the signed-in account's Google Tasks lists and files them against
+ * goals using the same classifier as [SmartAddCard].
+ */
+@Composable
+private fun GoogleTasksImportCard(isLoading: Boolean, onImport: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.CloudDownload,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Import from Google Tasks", style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Pull your open Google Tasks in and let GoalPilot file each one " +
+                    "under the right goal. You review everything before it is saved.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = onImport,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Importing…")
+                } else {
+                    Text("Import tasks")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Review sheet for an import. Every row is opt-out-able and nothing is written
+ * until "Import" is pressed — the LLM proposes, the user decides (spec §8).
+ */
+@Composable
+private fun GoogleTasksImportDialog(
+    state: TasksImportState,
+    onToggle: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val selectedCount = state.proposals.count { it.selected }
+    AlertDialog(
+        onDismissRequest = { if (!state.isSaving) onDismiss() },
+        title = { Text("Import from Google Tasks") },
+        text = {
+            when {
+                state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Reading your tasks and sorting them…")
+                }
+
+                state.error != null -> Text(state.error)
+
+                else -> Column {
+                    Text(
+                        "Found ${state.totalFound} open task(s). " +
+                            "Tap a row to include or exclude it.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 320.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(state.proposals, key = { it.externalId }) { proposal ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !state.isSaving) {
+                                        onToggle(proposal.externalId)
+                                    }
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Checkbox(
+                                    checked = proposal.selected,
+                                    onCheckedChange = { onToggle(proposal.externalId) },
+                                    enabled = !state.isSaving,
+                                )
+                                Column(Modifier.weight(1f)) {
+                                    // Google Tasks titles are unbounded — people paste
+                                    // whole messages in. Without a clamp one entry
+                                    // pushes every other row off the dialog.
+                                    Text(
+                                        proposal.title,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        buildString {
+                                            append(
+                                                proposal.targetGoalTitle
+                                                    ?.let { "→ $it" }
+                                                    ?: "→ new goal “${proposal.newGoalTitle}”",
+                                            )
+                                            append(" · ${proposal.points} pts")
+                                            if (proposal.listTitle.isNotBlank()) {
+                                                append(" · from ${proposal.listTitle}")
+                                            }
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (state.error == null && !state.isLoading) {
+                TextButton(onClick = onConfirm, enabled = !state.isSaving && selectedCount > 0) {
+                    Text(if (state.isSaving) "Importing…" else "Import $selectedCount")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving) {
+                Text(if (state.error != null) "Close" else "Cancel")
+            }
+        },
+    )
 }
 
 /**

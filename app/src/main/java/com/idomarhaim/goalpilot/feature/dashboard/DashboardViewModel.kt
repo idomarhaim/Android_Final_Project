@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.feature.dashboard
 
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,10 +8,13 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.core.util.StoragePaths
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
+import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
+import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
@@ -19,6 +23,9 @@ import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +45,7 @@ class DashboardViewModel @Inject constructor(
     private val recommendationRepository: RecommendationRepository,
     private val socialRepository: SocialRepository,
     private val storageRepository: StorageRepository,
+    private val googleTasksClient: GoogleTasksClient,
     private val buildSummary: BuildSummaryUseCase,
 ) : ViewModel() {
 
@@ -195,6 +203,168 @@ class DashboardViewModel @Inject constructor(
 
     fun dismissSmartAdd() { _smartAdd.value = SmartAddState() }
 
+    // ── Google Tasks import (spec §6 nice-to-have) ────────────────────
+
+    private val _tasksImport = MutableStateFlow(TasksImportState())
+    val tasksImport = _tasksImport.asStateFlow()
+
+    /** Set when Google needs the user to grant the Tasks scope; the screen launches it. */
+    private val _consentIntent = MutableStateFlow<Intent?>(null)
+    val consentIntent = _consentIntent.asStateFlow()
+
+    /**
+     * Pulls open tasks from Google Tasks, runs each through the same
+     * `classifyTask` function the "Smart add" card uses, and opens a review sheet.
+     * Nothing is written until the user confirms — identical policy to smart add.
+     */
+    fun importGoogleTasks() {
+        if (_tasksImport.value.isLoading) return
+        viewModelScope.launch {
+            _tasksImport.value = TasksImportState(isVisible = true, isLoading = true)
+            when (val result = googleTasksClient.fetchOpenTasks()) {
+                is TasksImportResult.NeedsConsent -> {
+                    _tasksImport.value = TasksImportState()
+                    _consentIntent.value = result.intent
+                }
+
+                is TasksImportResult.Failure ->
+                    _tasksImport.value =
+                        TasksImportState(isVisible = true, error = result.message)
+
+                is TasksImportResult.Success -> {
+                    // Re-running the import must not duplicate what is already here.
+                    // Tasks carry no external id in Firestore, so title is the only
+                    // handle we have — see the TODO note about a proper externalId.
+                    val existing = lastTasks.map { it.title.trim().lowercase() }.toSet()
+                    val fresh = result.tasks
+                        .filter { it.title.trim().lowercase() !in existing }
+                        .take(MAX_IMPORT)
+
+                    if (fresh.isEmpty()) {
+                        _tasksImport.value = TasksImportState(
+                            isVisible = true,
+                            error = if (result.tasks.isEmpty()) {
+                                "No open tasks found in Google Tasks"
+                            } else {
+                                "Everything in Google Tasks is already here"
+                            },
+                        )
+                        return@launch
+                    }
+
+                    val goals = lastGoals
+                    val proposals = coroutineScope {
+                        fresh.map { imported ->
+                            async {
+                                val classification = when (
+                                    val r = recommendationRepository.classifyTask(
+                                        imported.title,
+                                        goals,
+                                    )
+                                ) {
+                                    is Resource.Success -> r.data
+                                    else -> null
+                                }
+                                val matched =
+                                    goals.firstOrNull { it.id == classification?.suggestedGoalId }
+                                ImportProposal(
+                                    externalId = imported.externalId,
+                                    title = imported.title,
+                                    listTitle = imported.listTitle,
+                                    targetGoalId = matched?.id,
+                                    targetGoalTitle = matched?.title,
+                                    newGoalTitle = if (matched == null) {
+                                        classification?.suggestedNewGoalTitle
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: imported.listTitle.ifBlank { imported.title }
+                                    } else {
+                                        null
+                                    },
+                                    newGoalCategory = classification?.suggestedCategory
+                                        ?: GoalCategory.OTHER,
+                                    points = (classification?.estimatedPoints ?: 10)
+                                        .coerceIn(1, 1000),
+                                )
+                            }
+                        }.awaitAll()
+                    }
+                    _tasksImport.value = TasksImportState(
+                        isVisible = true,
+                        proposals = proposals,
+                        totalFound = result.tasks.size,
+                    )
+                }
+            }
+        }
+    }
+
+    fun toggleImportProposal(externalId: String) {
+        _tasksImport.update { state ->
+            state.copy(
+                proposals = state.proposals.map {
+                    if (it.externalId == externalId) it.copy(selected = !it.selected) else it
+                },
+            )
+        }
+    }
+
+    /** Creates any goals the proposals need, then the selected tasks. */
+    fun confirmImport() {
+        val state = _tasksImport.value
+        if (state.isSaving) return
+        val chosen = state.proposals.filter { it.selected }
+        if (chosen.isEmpty()) {
+            _tasksImport.value = TasksImportState()
+            return
+        }
+        viewModelScope.launch {
+            _tasksImport.update { it.copy(isSaving = true) }
+            // Two proposals can ask for the same new goal; create it once.
+            val createdGoals = mutableMapOf<String, String>()
+            var saved = 0
+            for (proposal in chosen) {
+                val goalId = proposal.targetGoalId ?: run {
+                    val key = proposal.newGoalTitle.orEmpty().lowercase()
+                    createdGoals[key] ?: run {
+                        val created = goalRepository.upsertGoal(
+                            Goal(
+                                title = proposal.newGoalTitle.orEmpty().ifBlank { proposal.title },
+                                category = proposal.newGoalCategory,
+                            ),
+                        )
+                        (created as? Resource.Success)?.data?.also { createdGoals[key] = it }
+                    }
+                }
+                if (goalId == null) continue
+                val result = taskRepository.upsertTask(
+                    Task(
+                        goalId = goalId,
+                        title = proposal.title,
+                        points = proposal.points,
+                        source = TaskSource.GOOGLE_TASKS,
+                    ),
+                )
+                if (result is Resource.Success) saved++
+            }
+            _tasksImport.value = TasksImportState()
+            _message.value = when (saved) {
+                0 -> "Could not import those tasks"
+                1 -> "Imported 1 task from Google Tasks"
+                else -> "Imported $saved tasks from Google Tasks"
+            }
+        }
+    }
+
+    fun dismissImport() { _tasksImport.value = TasksImportState() }
+
+    fun consumeConsentIntent() { _consentIntent.value = null }
+
+    /** Called after the user completes Google's consent screen. */
+    fun onConsentGranted() {
+        _consentIntent.value = null
+        importGoogleTasks()
+    }
+
     fun shareWeeklySummary(imageUri: Uri?) {
         viewModelScope.launch {
             _message.value = null
@@ -218,6 +388,15 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun consumeMessage() { _message.value = null }
+
+    private companion object {
+        /**
+         * Cap on tasks imported per run. Each one costs a `classifyTask` call, and
+         * GROQ's free tier allows 30 requests/minute — a 60-task list would blow
+         * through it and half the classifications would silently fall back.
+         */
+        const val MAX_IMPORT = 15
+    }
 }
 
 data class DashboardUiState(
@@ -257,4 +436,31 @@ data class SmartAddState(
     val newGoalCategory: GoalCategory = GoalCategory.OTHER,
     val points: Int = 10,
     val rationale: String = "",
+)
+
+/** Review sheet for a Google Tasks import, before anything is written. */
+data class TasksImportState(
+    val isVisible: Boolean = false,
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val proposals: List<ImportProposal> = emptyList(),
+    /** How many open tasks Google returned, before dedupe and the import cap. */
+    val totalFound: Int = 0,
+    val error: String? = null,
+)
+
+/**
+ * One Google Tasks entry plus the LLM's filing proposal. Exactly one of
+ * [targetGoalId] (attach to an existing goal) or [newGoalTitle] (create one) is set.
+ */
+data class ImportProposal(
+    val externalId: String,
+    val title: String,
+    val listTitle: String = "",
+    val targetGoalId: String? = null,
+    val targetGoalTitle: String? = null,
+    val newGoalTitle: String? = null,
+    val newGoalCategory: GoalCategory = GoalCategory.OTHER,
+    val points: Int = 10,
+    val selected: Boolean = true,
 )

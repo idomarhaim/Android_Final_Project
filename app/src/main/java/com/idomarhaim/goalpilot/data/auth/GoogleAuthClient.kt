@@ -6,7 +6,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.data.tasks.GoogleTasksScopes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -28,8 +30,11 @@ class GoogleAuthClient @Inject constructor(
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.gp_web_client_id))
             .requestEmail()
-            // NICE-TO-HAVE: to import Google Tasks with the same sign-in, add:
-            //   .requestScopes(Scope("https://www.googleapis.com/auth/tasks.readonly"))
+            // Google Tasks import (spec §6 nice-to-have) rides the same sign-in.
+            // Requesting it here means new sign-ins consent once; accounts that
+            // signed in before this scope existed are handled at call time by
+            // GoogleTasksClient, which surfaces the recovery intent.
+            .requestScopes(Scope(GoogleTasksScopes.TASKS_READONLY))
             .build()
 
     private val client: GoogleSignInClient = GoogleSignIn.getClient(context, options)
