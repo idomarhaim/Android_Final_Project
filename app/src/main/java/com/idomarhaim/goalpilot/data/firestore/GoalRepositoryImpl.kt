@@ -7,13 +7,16 @@ import com.google.firebase.firestore.Query
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.GoalDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.dto.toDto
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -21,6 +24,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class GoalRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -31,23 +35,31 @@ class GoalRepositoryImpl @Inject constructor(
     private fun goalsCol(uid: String): CollectionReference =
         firestore.collection(FirestorePaths.USERS).document(uid).collection(FirestorePaths.GOALS)
 
-    override fun observeGoals(includeArchived: Boolean): Flow<List<Goal>> {
-        val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
-        return goalsCol(uid)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .snapshotsFlow()
-            .map { snap ->
-                snap.toObjects(GoalDto::class.java)
-                    .map { it.toDomain() }
-                    .filter { includeArchived || !it.isArchived }
+    override fun observeGoals(includeArchived: Boolean): Flow<List<Goal>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                goalsCol(uid)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .snapshotsFlow()
+                    .map { snap ->
+                        snap.toObjects(GoalDto::class.java)
+                            .map { it.toDomain() }
+                            .filter { includeArchived || !it.isArchived }
+                    }
             }
-    }
+        }
 
-    override fun observeGoal(goalId: String): Flow<Goal?> {
-        val uid = auth.currentUser?.uid ?: return flowOf(null)
-        return goalsCol(uid).document(goalId).snapshotsFlow()
-            .map { it.toObject(GoalDto::class.java)?.toDomain() }
-    }
+    override fun observeGoal(goalId: String): Flow<Goal?> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(null)
+            } else {
+                goalsCol(uid).document(goalId).snapshotsFlow()
+                    .map { it.toObject(GoalDto::class.java)?.toDomain() }
+            }
+        }
 
     override suspend fun upsertGoal(goal: Goal): Resource<String> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")

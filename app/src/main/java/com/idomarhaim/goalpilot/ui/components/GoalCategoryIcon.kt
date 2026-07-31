@@ -1,7 +1,7 @@
 package com.idomarhaim.goalpilot.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -22,7 +22,7 @@ fun GoalCategory.icon(): ImageVector = when (iconKey) {
     "nutrition" -> Icons.Filled.Restaurant
     "people" -> Icons.Filled.People
     "work" -> Icons.Filled.Work
-    "project" -> Icons.Filled.Assignment
+    "project" -> Icons.AutoMirrored.Filled.Assignment
     "school" -> Icons.Filled.School
     "finance" -> Icons.Filled.Savings
     else -> Icons.Filled.Flag

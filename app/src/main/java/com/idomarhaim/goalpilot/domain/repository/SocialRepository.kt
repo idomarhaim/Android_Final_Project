@@ -17,7 +17,14 @@ interface SocialRepository {
 
     fun observeFriendUids(): Flow<Set<String>>
 
+    /**
+     * Adds a friend by uid (used by the leaderboard rows). Fails with a message if
+     * the uid has no public profile, so a bad id can never create a dangling edge.
+     */
     suspend fun addFriend(uid: String): Resource<Unit>
+
+    /** Adds a friend from the short code shown on their Profile tab (see `FriendCode`). */
+    suspend fun addFriendByCode(code: String): Resource<Unit>
 
     suspend fun removeFriend(uid: String): Resource<Unit>
 

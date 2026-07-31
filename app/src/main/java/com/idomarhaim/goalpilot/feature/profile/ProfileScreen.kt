@@ -36,6 +36,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.ui.components.Avatar
@@ -127,18 +128,27 @@ fun ProfileScreen(
                     modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // Falls back to the uid only for profiles created before short
+                    // codes existed; ensureProfile() back-fills one on next sign-in.
+                    val friendCode = currentUser.friendCode.ifBlank { currentUser.uid }
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Your friend code", style = MaterialTheme.typography.labelLarge)
                         Text(
-                            currentUser.uid,
-                            style = MaterialTheme.typography.bodySmall,
+                            friendCode,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 3.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            "Share it so friends can add you",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     IconButton(onClick = {
-                        clipboard.setText(AnnotatedString(currentUser.uid))
+                        clipboard.setText(AnnotatedString(friendCode))
                         scope.launch { snackbarHost.showSnackbar("Friend code copied") }
                     }) {
                         Icon(Icons.Filled.ContentCopy, contentDescription = "Copy friend code")

@@ -3,7 +3,7 @@
   "description": "GROQ LLM proxy for GoalPilot (keeps the API key off the client).",
   "private": true,
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "lib/index.js",
   "scripts": {

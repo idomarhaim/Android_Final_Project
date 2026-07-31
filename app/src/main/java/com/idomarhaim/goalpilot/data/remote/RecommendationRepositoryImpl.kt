@@ -73,6 +73,17 @@ class RecommendationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun scoreTask(taskTitle: String): Resource<Int> = withContext(io) {
+        try {
+            val result = functions.getHttpsCallable(CloudFunctions.SCORE_TASK)
+                .call(hashMapOf("taskTitle" to taskTitle)).await()
+            val points = ((result.getData() as? Map<*, *>)?.get("points") as? Number)?.toInt()
+            Resource.Success(points?.coerceIn(MIN_POINTS, MAX_POINTS) ?: fallbackPoints(taskTitle))
+        } catch (e: Exception) {
+            Resource.Success(fallbackPoints(taskTitle))
+        }
+    }
+
     // ── Parsing ────────────────────────────────────────────────────
     private fun parseRecommendations(data: Any?): List<Recommendation> {
         val root = data as? Map<*, *> ?: return emptyList()
@@ -145,6 +156,15 @@ class RecommendationRepositoryImpl @Inject constructor(
         return recs
     }
 
+    /**
+     * Offline point estimate: a longer, more specific task title generally
+     * describes more work. Deterministic so the UI never jumps around.
+     */
+    private fun fallbackPoints(taskTitle: String): Int {
+        val words = taskTitle.trim().split(Regex("\\s+")).count { it.isNotBlank() }
+        return (5 + words * 3).coerceIn(MIN_POINTS, MAX_POINTS)
+    }
+
     private fun fallbackClassification(taskTitle: String, goals: List<Goal>): TaskClassification {
         val match = goals.firstOrNull { g ->
             taskTitle.split(" ").any { word ->
@@ -168,5 +188,11 @@ class RecommendationRepositoryImpl @Inject constructor(
                 rationale = "No matching goal found (offline heuristic).",
             )
         }
+    }
+
+    private companion object {
+        /** Matches the 5..50 range the `scoreTask` Cloud Function is prompted for. */
+        const val MIN_POINTS = 5
+        const val MAX_POINTS = 50
     }
 }

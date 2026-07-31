@@ -83,6 +83,7 @@ fun UserDto.toDomain(): User = User(
     email = email,
     photoUrl = photoUrl,
     points = points,
+    friendCode = friendCode,
     createdAtEpochMillis = createdAt,
 )
 

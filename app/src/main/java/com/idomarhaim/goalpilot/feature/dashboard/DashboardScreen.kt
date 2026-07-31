@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -35,7 +37,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +63,7 @@ fun DashboardScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
+    val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
@@ -104,6 +109,7 @@ fun DashboardScreen(
                     onOpenAnalytics = onOpenAnalytics,
                 )
             }
+            item { SmartAddCard(onClassify = viewModel::classifyForSmartAdd) }
             item {
                 SectionHeader(
                     title = "AI coach",
@@ -148,6 +154,114 @@ fun DashboardScreen(
             }
         }
     }
+
+    if (smartAdd.isVisible) {
+        SmartAddDialog(
+            state = smartAdd,
+            onConfirm = viewModel::confirmSmartAdd,
+            onDismiss = viewModel::dismissSmartAdd,
+        )
+    }
+}
+
+/**
+ * Entry point for the LLM task→goal classifier (spec §6 Bonus). Type a task in
+ * plain language; the `classifyTask` Cloud Function decides which goal it belongs
+ * to — or proposes a new one — and estimates its point value.
+ */
+@Composable
+private fun SmartAddCard(onClassify: (String) -> Unit) {
+    var title by remember { mutableStateOf("") }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                )
+                Text(
+                    "Smart add a task",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            Text(
+                "Describe anything you want to do — GoalPilot files it under the right goal.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            Row(
+                modifier = Modifier.padding(top = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("e.g. Run 5 km on Friday") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                FilledTonalButton(
+                    onClick = { onClassify(title); title = "" },
+                    enabled = title.isNotBlank(),
+                    modifier = Modifier.padding(start = 8.dp),
+                ) { Text("Sort") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SmartAddDialog(
+    state: SmartAddState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (state.isClassifying) "Analysing…" else "Add this task?") },
+        text = {
+            if (state.isClassifying) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Text("“${state.taskTitle}”", modifier = Modifier.padding(start = 12.dp))
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(state.taskTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (state.targetGoalId != null) {
+                            "Goal: ${state.targetGoalTitle}"
+                        } else {
+                            "New goal: ${state.newGoalTitle} (${state.newGoalCategory.label})"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        "Worth ${state.points} pts",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    if (state.rationale.isNotBlank()) {
+                        Text(
+                            state.rationale,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !state.isClassifying && !state.isSaving,
+            ) { Text(if (state.isSaving) "Saving…" else "Add") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

@@ -7,6 +7,8 @@ data class User(
     val email: String = "",
     val photoUrl: String? = null,
     val points: Long = 0L,
+    /** Short shareable code others use to add this user — see [FriendCode]. */
+    val friendCode: String = "",
     val createdAtEpochMillis: Long = 0L,
 ) {
     val level: Int get() = Leveling.levelForPoints(points)

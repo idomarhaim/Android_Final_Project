@@ -22,12 +22,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -157,7 +159,15 @@ fun GoalDetailScreen(
                         )
                     }
                     item { SectionHeader(title = "Tasks") }
-                    item { AddTaskRow(onAdd = viewModel::addTask) }
+                    item {
+                        AddTaskRow(
+                            isScoring = action.isScoring,
+                            suggestedPoints = action.suggestedPoints,
+                            onSuggestPoints = viewModel::suggestPoints,
+                            onSuggestionApplied = viewModel::consumeSuggestedPoints,
+                            onAdd = viewModel::addTask,
+                        )
+                    }
                     if (state.tasks.isEmpty()) {
                         item {
                             Text(
@@ -273,17 +283,36 @@ private fun GoalHeaderCard(
                     .fillMaxWidth()
                     .padding(top = 16.dp),
             ) {
-                Icon(Icons.Filled.TrendingUp, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null)
                 Text("Log progress", modifier = Modifier.padding(start = 8.dp))
             }
         }
     }
 }
 
+/**
+ * Add-task row with an LLM point estimate (spec §6 Core: "point scoring for
+ * tasks"). The estimate arrives asynchronously via [suggestedPoints]; the row
+ * writes it into the editable field and clears it so the user stays in control.
+ */
 @Composable
-private fun AddTaskRow(onAdd: (String, Int) -> Unit) {
+private fun AddTaskRow(
+    isScoring: Boolean,
+    suggestedPoints: Int?,
+    onSuggestPoints: (String) -> Unit,
+    onSuggestionApplied: () -> Unit,
+    onAdd: (String, Int) -> Unit,
+) {
     var title by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("10") }
+
+    LaunchedEffect(suggestedPoints) {
+        suggestedPoints?.let {
+            points = it.toString()
+            onSuggestionApplied()
+        }
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
             value = title,
@@ -303,12 +332,26 @@ private fun AddTaskRow(onAdd: (String, Int) -> Unit) {
                 .width(72.dp),
         )
         IconButton(
+            onClick = { onSuggestPoints(title) },
+            enabled = !isScoring,
+            modifier = Modifier.padding(start = 2.dp),
+        ) {
+            if (isScoring) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(
+                    Icons.Filled.AutoAwesome,
+                    contentDescription = "Estimate points with AI",
+                    tint = MaterialTheme.colorScheme.tertiary,
+                )
+            }
+        }
+        IconButton(
             onClick = {
                 onAdd(title, points.toIntOrNull() ?: 10)
                 title = ""
                 points = "10"
             },
-            modifier = Modifier.padding(start = 4.dp),
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add task")
         }

@@ -8,6 +8,7 @@ import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.core.util.StoragePaths
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
@@ -32,8 +33,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     authRepository: AuthRepository,
-    goalRepository: GoalRepository,
-    taskRepository: TaskRepository,
+    private val goalRepository: GoalRepository,
+    private val taskRepository: TaskRepository,
     private val recommendationRepository: RecommendationRepository,
     private val socialRepository: SocialRepository,
     private val storageRepository: StorageRepository,
@@ -108,6 +109,92 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    // ── Smart add (spec §6 Bonus: LLM task→goal classification) ──────
+
+    private val _smartAdd = MutableStateFlow(SmartAddState())
+    val smartAdd = _smartAdd.asStateFlow()
+
+    /**
+     * Runs a free-text task title through the `classifyTask` Cloud Function and
+     * opens a confirmation sheet with the proposal: attach it to an existing goal,
+     * or create the goal the LLM suggests. The user always confirms — the LLM
+     * proposes, it never writes (spec §8: LLM output can be inconsistent).
+     */
+    fun classifyForSmartAdd(rawTitle: String) {
+        val title = rawTitle.trim()
+        if (title.isBlank()) return
+        viewModelScope.launch {
+            _smartAdd.value = SmartAddState(isVisible = true, isClassifying = true, taskTitle = title)
+            val goals = lastGoals
+            val classification = when (val r = recommendationRepository.classifyTask(title, goals)) {
+                is Resource.Success -> r.data
+                else -> null
+            }
+            if (classification == null) {
+                _smartAdd.value = SmartAddState()
+                _message.value = "Could not analyse that task"
+                return@launch
+            }
+            // The model can name a goal id that does not exist; only trust ids we
+            // can actually resolve, otherwise fall through to the new-goal branch.
+            val matched = goals.firstOrNull { it.id == classification.suggestedGoalId }
+            _smartAdd.value = SmartAddState(
+                isVisible = true,
+                isClassifying = false,
+                taskTitle = title,
+                targetGoalId = matched?.id,
+                targetGoalTitle = matched?.title,
+                newGoalTitle = if (matched == null) {
+                    classification.suggestedNewGoalTitle?.takeIf { it.isNotBlank() } ?: title
+                } else {
+                    null
+                },
+                newGoalCategory = classification.suggestedCategory,
+                points = classification.estimatedPoints.coerceIn(1, 1000),
+                rationale = classification.rationale,
+            )
+        }
+    }
+
+    /** Applies the proposal: creates the goal if needed, then the task. */
+    fun confirmSmartAdd() {
+        val state = _smartAdd.value
+        if (state.isClassifying || state.isSaving) return
+        viewModelScope.launch {
+            _smartAdd.update { it.copy(isSaving = true) }
+            val goalId = state.targetGoalId ?: run {
+                val newGoal = Goal(
+                    title = state.newGoalTitle.orEmpty().ifBlank { state.taskTitle },
+                    category = state.newGoalCategory,
+                )
+                when (val r = goalRepository.upsertGoal(newGoal)) {
+                    is Resource.Success -> r.data
+                    else -> null
+                }
+            }
+            if (goalId == null) {
+                _smartAdd.value = SmartAddState()
+                _message.value = "Could not create the goal"
+                return@launch
+            }
+            val saved = taskRepository.upsertTask(
+                Task(goalId = goalId, title = state.taskTitle, points = state.points),
+            )
+            _smartAdd.value = SmartAddState()
+            _message.value = when (saved) {
+                is Resource.Success ->
+                    if (state.targetGoalId != null) {
+                        "Added to “${state.targetGoalTitle}”"
+                    } else {
+                        "Created “${state.newGoalTitle}” and added the task"
+                    }
+                else -> "Could not add the task"
+            }
+        }
+    }
+
+    fun dismissSmartAdd() { _smartAdd.value = SmartAddState() }
+
     fun shareWeeklySummary(imageUri: Uri?) {
         viewModelScope.launch {
             _message.value = null
@@ -152,4 +239,22 @@ data class RecommendationsState(
     val isLoading: Boolean = false,
     val items: List<Recommendation> = emptyList(),
     val error: String? = null,
+)
+
+/**
+ * The LLM's proposal for a free-text task, awaiting the user's confirmation.
+ * Exactly one of [targetGoalId] (attach to an existing goal) or [newGoalTitle]
+ * (create one) is set once classification finishes.
+ */
+data class SmartAddState(
+    val isVisible: Boolean = false,
+    val isClassifying: Boolean = false,
+    val isSaving: Boolean = false,
+    val taskTitle: String = "",
+    val targetGoalId: String? = null,
+    val targetGoalTitle: String? = null,
+    val newGoalTitle: String? = null,
+    val newGoalCategory: GoalCategory = GoalCategory.OTHER,
+    val points: Int = 10,
+    val rationale: String = "",
 )

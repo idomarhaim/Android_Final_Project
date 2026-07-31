@@ -10,6 +10,7 @@ import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
+import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +30,7 @@ class GoalDetailViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     private val taskRepository: TaskRepository,
     private val progressRepository: ProgressRepository,
+    private val recommendationRepository: RecommendationRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -58,6 +60,29 @@ class GoalDetailViewModel @Inject constructor(
             )
         }
     }
+
+    /**
+     * Asks the LLM (via the `scoreTask` Cloud Function) what a task is worth
+     * — spec §6 Core, "point scoring for tasks". The result lands in
+     * [GoalDetailActionState.suggestedPoints] for the add-task row to pick up;
+     * on any failure the repository returns a local estimate instead.
+     */
+    fun suggestPoints(title: String) {
+        if (title.isBlank()) {
+            _action.update { it.copy(message = "Type the task first") }
+            return
+        }
+        viewModelScope.launch {
+            _action.update { it.copy(isScoring = true, suggestedPoints = null) }
+            val points = when (val result = recommendationRepository.scoreTask(title.trim())) {
+                is Resource.Success -> result.data
+                else -> null
+            }
+            _action.update { it.copy(isScoring = false, suggestedPoints = points) }
+        }
+    }
+
+    fun consumeSuggestedPoints() = _action.update { it.copy(suggestedPoints = null) }
 
     fun toggleTask(task: Task) {
         viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
@@ -107,5 +132,8 @@ data class GoalDetailUiState(
 
 data class GoalDetailActionState(
     val isSubmitting: Boolean = false,
+    val isScoring: Boolean = false,
+    /** One-shot LLM point estimate; the add-task row consumes and clears it. */
+    val suggestedPoints: Int? = null,
     val message: String? = null,
 )

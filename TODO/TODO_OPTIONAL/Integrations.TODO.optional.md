@@ -33,8 +33,15 @@ Files: `domain/model/Challenge.kt`, `feature/challenges/ChallengesScreen.kt`
 2. Replace the preview screen's sample data with live challenges; add a create flow.
 3. Compute standings from tasks/Health Connect metrics (Cloud Function recommended).
 
-## LLM task→goal classification action (spec §6 bonus)
-`classifyTask` Cloud Function + `RecommendationRepository.classifyTask` are done.
-1. Add a "sort into a goal" action on a task (e.g. in `GoalDetail`/a global inbox).
-2. Call `classifyTask`; if `suggestedGoalId` present, offer to attach; else offer
-   to create a new goal from `suggestedNewGoalTitle` + `suggestedCategory`.
+## ~~LLM task→goal classification action (spec §6 bonus)~~ — DONE 2026-07-31
+Shipped as the **"Smart add a task"** card on the dashboard
+(`DashboardViewModel.classifyForSmartAdd` / `confirmSmartAdd`, `SmartAddCard` +
+`SmartAddDialog` in `DashboardScreen`). Type a task in plain language → the
+`classifyTask` Cloud Function picks the goal (or proposes a new one) and
+estimates points → the user confirms before anything is written.
+
+`scoreTask` is likewise no longer dead code: the ✨ button on the add-task row in
+`GoalDetailScreen` calls `RecommendationRepository.scoreTask` and fills the
+points field.
+
+Both degrade to local heuristics when the function or key is unavailable (spec §8).

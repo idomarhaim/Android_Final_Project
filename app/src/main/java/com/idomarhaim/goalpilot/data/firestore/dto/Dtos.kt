@@ -51,6 +51,7 @@ data class UserDto(
     var email: String = "",
     var photoUrl: String? = null,
     var points: Long = 0L,
+    var friendCode: String = "",
     var createdAt: Long = 0L,
 )
 
@@ -60,6 +61,8 @@ data class PublicProfileDto(
     var photoUrl: String? = null,
     var points: Long = 0L,
     var level: Int = 1,
+    /** Mirrored from the private user doc so friends can look this profile up. */
+    var friendCode: String = "",
 )
 
 data class SharedItemDto(

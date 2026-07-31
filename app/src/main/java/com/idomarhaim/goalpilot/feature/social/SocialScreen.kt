@@ -47,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.FriendCode
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.ui.components.Avatar
@@ -147,7 +148,7 @@ fun SocialScreen(
     if (showAddFriend) {
         AddFriendDialog(
             onDismiss = { showAddFriend = false },
-            onAdd = { code -> viewModel.addFriend(code); showAddFriend = false },
+            onAdd = { code -> viewModel.addFriendByCode(code); showAddFriend = false },
         )
     }
 }
@@ -273,13 +274,17 @@ private fun AddFriendDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
         text = {
             Column {
                 Text(
-                    "Paste your friend's code (their user id from the Profile tab).",
+                    "Type your friend's ${FriendCode.LENGTH}-character code — they'll " +
+                        "find it on their Profile tab.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 OutlinedTextField(
+                    // Normalising as the user types means a lowercase or spaced-out
+                    // code still matches, and the field can't exceed the code length.
                     value = code,
-                    onValueChange = { code = it },
+                    onValueChange = { code = FriendCode.normalize(it).take(FriendCode.LENGTH) },
                     label = { Text("Friend code") },
+                    placeholder = { Text("7KQ4RD") },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -287,7 +292,12 @@ private fun AddFriendDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
                 )
             }
         },
-        confirmButton = { TextButton(onClick = { onAdd(code) }) { Text("Add") } },
+        confirmButton = {
+            TextButton(
+                onClick = { onAdd(code) },
+                enabled = FriendCode.isValid(code),
+            ) { Text("Add") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

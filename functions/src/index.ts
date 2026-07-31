@@ -15,7 +15,11 @@ import * as logger from "firebase-functions/logger";
 setGlobalOptions({ region: "us-central1", maxInstances: 5 });
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "llama-3.1-8b-instant";
+// GROQ deprecated llama-3.1-8b-instant on 2026-06-17 (shutdown 2026-08-16) and
+// recommends openai/gpt-oss-20b as its replacement. Override per deployment with
+// the GROQ_MODEL env var; check https://console.groq.com/docs/deprecations before
+// pinning a new one.
+const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
 const CATEGORIES = [
   "HEALTH", "FITNESS", "SLEEP", "NUTRITION", "RELATIONSHIPS",

@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.data.firestore.dto.UserDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.snapshotsFlow
+import com.idomarhaim.goalpilot.domain.model.FriendCode
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -75,6 +76,9 @@ class AuthRepositoryImpl @Inject constructor(
      * Creates the private user doc + public leaderboard projection on first
      * sign-in; on subsequent sign-ins only the mutable profile fields are
      * merged so accumulated points/level are never reset.
+     *
+     * A short [FriendCode] is allocated on first sign-in and back-filled for
+     * accounts created before codes existed, so every profile always has one.
      */
     private suspend fun ensureProfile(fbUser: FirebaseUser) {
         val userRef = usersCol.document(fbUser.uid)
@@ -82,6 +86,10 @@ class AuthRepositoryImpl @Inject constructor(
         val name = fbUser.displayName.orEmpty()
         val email = fbUser.email.orEmpty()
         val photo = fbUser.photoUrl?.toString()
+        val friendCode = existing.getString("friendCode")
+            ?.takeIf { FriendCode.isValid(it) }
+            ?: allocateFriendCode()
+
         if (!existing.exists()) {
             userRef.set(
                 UserDto(
@@ -90,6 +98,7 @@ class AuthRepositoryImpl @Inject constructor(
                     email = email,
                     photoUrl = photo,
                     points = 0L,
+                    friendCode = friendCode,
                     createdAt = System.currentTimeMillis(),
                 ),
             ).await()
@@ -99,18 +108,46 @@ class AuthRepositoryImpl @Inject constructor(
                     "photoUrl" to photo,
                     "points" to 0L,
                     "level" to 1,
+                    "friendCode" to friendCode,
                 ),
             ).await()
         } else {
             userRef.set(
-                mapOf("displayName" to name, "email" to email, "photoUrl" to photo),
+                mapOf(
+                    "displayName" to name,
+                    "email" to email,
+                    "photoUrl" to photo,
+                    "friendCode" to friendCode,
+                ),
                 SetOptions.merge(),
             ).await()
             publicCol.document(fbUser.uid).set(
-                mapOf("displayName" to name, "photoUrl" to photo),
+                mapOf(
+                    "displayName" to name,
+                    "photoUrl" to photo,
+                    "friendCode" to friendCode,
+                ),
                 SetOptions.merge(),
             ).await()
         }
+    }
+
+    /**
+     * Picks a code no public profile is using yet. The space is 32^6 (~1.07e9),
+     * so a clash is already vanishingly unlikely; after [FRIEND_CODE_ATTEMPTS]
+     * tries we accept the last candidate rather than block sign-in — a duplicate
+     * would only mean the lookup resolves to the first matching profile.
+     */
+    private suspend fun allocateFriendCode(): String {
+        var candidate = FriendCode.generate()
+        repeat(FRIEND_CODE_ATTEMPTS) {
+            val taken = runCatching {
+                publicCol.whereEqualTo("friendCode", candidate).limit(1).get().await()
+            }.getOrNull()
+            if (taken == null || taken.isEmpty) return candidate
+            candidate = FriendCode.generate()
+        }
+        return candidate
     }
 
     private fun FirebaseUser.toDomainUser(): User = User(
@@ -119,4 +156,8 @@ class AuthRepositoryImpl @Inject constructor(
         email = email.orEmpty(),
         photoUrl = photoUrl?.toString(),
     )
+
+    private companion object {
+        const val FRIEND_CODE_ATTEMPTS = 5
+    }
 }

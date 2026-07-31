@@ -11,7 +11,7 @@ object FirestorePaths {
     /** Public, world-readable projection used to build the friends leaderboard. */
     const val PUBLIC_PROFILES = "publicProfiles"
 
-    /** Friend edges: publicProfiles/{uid}/friends/{friendUid}. */
+    /** Friend edges, private to the owner: users/{uid}/friends/{friendUid}. */
     const val FRIENDS = "friends"
 
     /** Shared achievement/summary feed items. */

@@ -9,6 +9,7 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.core.util.StoragePaths
+import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.ProgressDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
@@ -16,7 +17,9 @@ import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -24,6 +27,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ProgressRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -38,13 +42,17 @@ class ProgressRepositoryImpl @Inject constructor(
             .collection(FirestorePaths.GOALS).document(goalId)
             .collection(FirestorePaths.PROGRESS)
 
-    override fun observeEntries(goalId: String): Flow<List<ProgressEntry>> {
-        val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
-        return progressCol(uid, goalId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .snapshotsFlow()
-            .map { snap -> snap.toObjects(ProgressDto::class.java).map { it.toDomain() } }
-    }
+    override fun observeEntries(goalId: String): Flow<List<ProgressEntry>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                progressCol(uid, goalId)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .snapshotsFlow()
+                    .map { snap -> snap.toObjects(ProgressDto::class.java).map { it.toDomain() } }
+            }
+        }
 
     override suspend fun logProgress(entry: ProgressEntry, imageUri: Uri?): Resource<String> =
         withContext(io) {

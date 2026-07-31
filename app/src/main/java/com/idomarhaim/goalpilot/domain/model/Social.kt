@@ -18,6 +18,16 @@ data class LeaderboardEntry(
 )
 
 /**
+ * Orders leaderboard rows by points (highest first) and stamps 1-based ranks.
+ *
+ * Ranking happens *after* any friends-only filtering, so the "Friends" tab shows
+ * #1..#n among friends rather than each friend's global position.
+ */
+fun List<LeaderboardEntry>.rankedByPoints(): List<LeaderboardEntry> =
+    sortedWith(compareByDescending<LeaderboardEntry> { it.points }.thenBy { it.uid })
+        .mapIndexed { index, entry -> entry.copy(rank = index + 1) }
+
+/**
  * A shared achievement/summary posted to the friends feed (spec §7: "Sharing
  * goal-achievement summaries" and "Sharing images attached to a summary").
  */

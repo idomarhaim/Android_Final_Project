@@ -49,13 +49,13 @@ listeners (`snapshotsFlow()`), and suspend functions return `Resource<T>`.
 ## Firestore data model
 
 ```
-users/{uid}                       UserDto  (points, email, displayName, …)  [private]
+users/{uid}                       UserDto  (points, email, displayName, friendCode, …) [private]
   goals/{goalId}                  GoalDto
     progress/{entryId}            ProgressDto  (value, note, imageUrl)
   tasks/{taskId}                  TaskDto  (goalId, points, done, completedAt)
   friends/{friendUid}             { addedAt }                                [private]
 
-publicProfiles/{uid}              { displayName, photoUrl, points, level }   [world-readable]
+publicProfiles/{uid}              { displayName, photoUrl, points, level, friendCode } [world-readable]
 shares/{shareId}                  SharedItemDto  (authorUid, period, message, imageUrl)
 challenges/{challengeId}          Challenge  (owner, participants, standings) [nice-to-have]
 ```
@@ -64,8 +64,21 @@ challenges/{challengeId}          Challenge  (owner, participants, standings) [n
   it flips `done`, awards/rescinds points on `users/{uid}` **and** the
   `publicProfiles/{uid}` leaderboard projection, recomputes the level, and moves
   the linked goal's `currentValue` — all atomically.
-- The **leaderboard** reads `publicProfiles` ordered by points; **friends-only**
-  filters client-side against `users/{uid}/friends`.
+- The **leaderboard** has two modes. "Everyone" reads `publicProfiles` ordered by
+  points, capped at 100. "Friends" instead fetches the friends' profiles *by
+  document id* (`whereIn` on `documentId()`, chunked at Firestore's 30-value cap)
+  — filtering the global top-100 client-side would drop any friend outside it.
+  Ranking happens after filtering, in the pure `List<LeaderboardEntry>.rankedByPoints()`.
+- **Friend codes:** the raw uid is 28 characters and unusable in a live demo, so
+  `AuthRepositoryImpl.ensureProfile` allocates a 6-character `FriendCode` on first
+  sign-in (back-filled for older accounts) and mirrors it onto `publicProfiles`
+  so `addFriendByCode` can resolve it. `addFriend` rejects uids with no public
+  profile, so a mistyped code can never write a dangling friend edge.
+- **Snapshot flows are uid-reactive.** Repositories build their `Flow`s on
+  `FirebaseAuth.uidFlow()` (`data/auth/AuthExt.kt`) and `flatMapLatest` on it. A
+  `Flow` is constructed when its ViewModel is created, so reading
+  `auth.currentUser` once would pin whichever account was signed in at that
+  moment — and serve user A's goals to user B when demoing sharing (spec §7).
 - Security rules: `firestore.rules` / `storage.rules`. Private data is owner-only;
   `publicProfiles`/`shares` are readable by any signed-in user.
 
@@ -73,13 +86,23 @@ challenges/{challengeId}          Challenge  (owner, participants, standings) [n
 
 ```
 DashboardViewModel → RecommendationRepository → FirebaseFunctions.callable("getRecommendations")
+GoalDetailViewModel →       "                 →            "        .callable("scoreTask")
+DashboardViewModel  →       "                 →            "        .callable("classifyTask")
                                                         │
                               functions/src/index.ts ──┘  → GROQ chat completions (JSON)
 ```
-- Key lives only in `functions/.env` (spec §5).
+- Key lives only in `functions/.env` (spec §5). The model id is pinned in
+  `functions/src/index.ts` and overridable via `GROQ_MODEL` — GROQ retires models
+  on a rolling schedule, see [SETUP.md](SETUP.md#groq-model--check-before-you-demo).
+- All three callables are surfaced in the UI: `getRecommendations` → the AI coach
+  card, `scoreTask` → the ✨ button on the add-task row, `classifyTask` → the
+  "Smart add a task" card on the dashboard (spec §6 Bonus).
 - Every call **degrades gracefully**: on any error the client returns
-  deterministic local guidance (`fallbackRecommendations` / `fallbackClassification`),
-  so the UI never blocks or crashes (spec §8).
+  deterministic local guidance (`fallbackRecommendations`, `fallbackClassification`,
+  `fallbackPoints`), so the UI never blocks or crashes (spec §8).
+- The LLM **proposes, never writes**: Smart add always shows a confirmation
+  dialog, and a `suggestedGoalId` that matches no real goal is discarded rather
+  than trusted.
 
 ## Gamification
 

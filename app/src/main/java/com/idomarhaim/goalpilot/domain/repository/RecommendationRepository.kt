@@ -20,4 +20,10 @@ interface RecommendationRepository {
 
     /** Classify a free-text task title onto an existing goal or suggest a new one. */
     suspend fun classifyTask(taskTitle: String, goals: List<Goal>): Resource<TaskClassification>
+
+    /**
+     * Estimates a fair point value (5..50) for a task from its title
+     * (spec §6 Core: "point scoring for tasks"). Falls back to a local heuristic.
+     */
+    suspend fun scoreTask(taskTitle: String): Resource<Int>
 }

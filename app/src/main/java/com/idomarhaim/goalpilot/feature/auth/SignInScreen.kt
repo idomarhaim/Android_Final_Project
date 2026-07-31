@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -108,7 +108,7 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Icon(Icons.Filled.Login, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                     Text(
                         text = "Sign in with Google",
                         modifier = Modifier.padding(start = 10.dp),

@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.TaskDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.dto.toDto
@@ -13,7 +14,9 @@ import com.idomarhaim.goalpilot.domain.model.Leveling
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -27,6 +30,7 @@ import javax.inject.Singleton
  * projection, recomputes the level, and advances/retracts the linked goal's
  * progress — all atomically (spec §6 Core: point scoring, progress from tasks).
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class TaskRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -46,20 +50,24 @@ class TaskRepositoryImpl @Inject constructor(
     private fun publicDoc(uid: String) =
         firestore.collection(FirestorePaths.PUBLIC_PROFILES).document(uid)
 
-    override fun observeTasks(goalId: String?): Flow<List<Task>> {
-        val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
-        val query = if (goalId != null) {
-            tasksCol(uid).whereEqualTo("goalId", goalId)
-        } else {
-            tasksCol(uid)
+    override fun observeTasks(goalId: String?): Flow<List<Task>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                val query = if (goalId != null) {
+                    tasksCol(uid).whereEqualTo("goalId", goalId)
+                } else {
+                    tasksCol(uid)
+                }
+                // Sort client-side to avoid requiring a composite Firestore index.
+                query.snapshotsFlow().map { snap ->
+                    snap.toObjects(TaskDto::class.java)
+                        .map { it.toDomain() }
+                        .sortedWith(compareBy({ it.isDone }, { -it.createdAtEpochMillis }))
+                }
+            }
         }
-        // Sort client-side to avoid requiring a composite Firestore index.
-        return query.snapshotsFlow().map { snap ->
-            snap.toObjects(TaskDto::class.java)
-                .map { it.toDomain() }
-                .sortedWith(compareBy({ it.isDone }, { -it.createdAtEpochMillis }))
-        }
-    }
 
     override suspend fun upsertTask(task: Task): Resource<String> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")

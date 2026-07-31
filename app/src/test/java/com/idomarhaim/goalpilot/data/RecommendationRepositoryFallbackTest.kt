@@ -47,4 +47,28 @@ class RecommendationRepositoryFallbackTest {
         // "Read"/"book" (>3 chars) matches goal g2 ("Read books").
         assertThat(classification.suggestedGoalId).isEqualTo("g2")
     }
+
+    @Test
+    fun `scoreTask falls back to a local estimate when the function fails`() = runTest {
+        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+
+        val result = repo.scoreTask("Run five kilometres before work")
+
+        assertThat(result).isInstanceOf(Resource.Success::class.java)
+        val points = (result as Resource.Success).data
+        // 5 words → 5 + 5*3 = 20, inside the 5..50 range the function is prompted for.
+        assertThat(points).isEqualTo(20)
+    }
+
+    @Test
+    fun `scoreTask fallback stays within the 5 to 50 point range`() = runTest {
+        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+
+        val long = repo.scoreTask(List(40) { "word" }.joinToString(" "))
+        val short = repo.scoreTask("Stretch")
+
+        // 40 words → 5 + 120 clamped to 50; 1 word → 5 + 3 = 8.
+        assertThat((long as Resource.Success).data).isEqualTo(50)
+        assertThat((short as Resource.Success).data).isEqualTo(8)
+    }
 }

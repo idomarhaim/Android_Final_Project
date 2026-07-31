@@ -52,6 +52,9 @@ firebase deploy --only firestore:rules,storage,functions
 - **Firestore DTOs** must stay mutable (`var`) with defaults + `@DocumentId` for reflective (de)serialization. Keep the domain models immutable and separate.
 - **Windows file locks:** KSP/`.gradle` occasionally fail with "Could not delete/move …". Re-run, or `rm -rf app/build/generated/ksp` and rebuild.
 - **GROQ key never ships in the app** — it lives only in `functions/.env` (spec §5). The client always has a local fallback (spec §8).
+- **The GROQ model id rots.** GROQ retires models on a rolling schedule and a retired id fails *silently* — the client just serves local fallback tips, so the AI looks bland rather than broken. `DEFAULT_MODEL` in `functions/src/index.ts` is the single pin; check it against <https://console.groq.com/docs/deprecations> before any demo.
+- **Instrumented tests need Espresso ≥ 3.7.0** on modern emulators. 3.6.1 reflects on the private `InputManager.getInstance()`, removed in Android 15+, and every test dies with `NoSuchMethodException` before its body runs.
+- **Repository snapshot flows must be built on `FirebaseAuth.uidFlow()`** (`data/auth/AuthExt.kt`), never a one-shot `auth.currentUser` read — a `Flow` is constructed at ViewModel-creation time, so a one-shot read pins the account that was signed in then.
 
 ## 🧱 Conventions
 

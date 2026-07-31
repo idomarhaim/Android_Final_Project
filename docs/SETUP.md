@@ -15,8 +15,12 @@ Google/Firebase/GROQ accounts.
 |------|---------|
 | JDK (for Gradle) | Temurin **21** (pinned in `gradle.properties` → `org.gradle.java.home`) |
 | Android SDK | platform **35**, build-tools 35 |
-| Node | 20+ (Cloud Functions) |
+| Node | 22+ (Cloud Functions target the **nodejs22** runtime) |
 | Firebase CLI | `npm i -g firebase-tools` |
+
+> **Runtime note.** Cloud Functions used to target `nodejs20`, which Google
+> deprecated on 2026-04-30 and decommissions on 2026-10-30. `firebase.json` and
+> `functions/package.json` now both pin **Node 22** (supported until 2027).
 
 Build the app now (no credentials required to compile):
 
@@ -30,9 +34,21 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
 ## 1. Create the Firebase project **(you)**
 
 1. Go to <https://console.firebase.google.com> → **Add project** (e.g. `goalpilot`).
-2. **Build → Authentication → Sign-in method →** enable **Google**.
-3. **Build → Firestore Database →** create (production mode is fine; we ship rules).
-4. **Build → Storage →** enable.
+2. **Upgrade the project to the Blaze (pay-as-you-go) plan.** This requires a
+   credit card. Both features below need it:
+   - **Cloud Functions** has always required Blaze to deploy.
+   - **Cloud Storage** requires a linked billing account since 2026-02-03,
+     regardless of usage volume.
+
+   Real cost for this project is **$0** — pick region `us-central1` so Storage
+   stays inside the always-free 5 GB tier, and set a budget alert (Google Cloud
+   console → Billing → Budgets & alerts) at ~$1 so nothing can surprise you.
+
+   *Without Blaze* the app still builds and runs, and Auth + Firestore work, but
+   image upload and the GROQ coach do not — that costs you two spec features.
+3. **Build → Authentication → Sign-in method →** enable **Google**.
+4. **Build → Firestore Database →** create (production mode is fine; we ship rules).
+5. **Build → Storage →** enable (region `us-central1`).
 
 ## 2. Register the Android app + add the debug SHA-1 **(you)**
 
@@ -75,7 +91,7 @@ FUNCTIONS_REGION=us-central1
 firebase login
 firebase use --add            # pick your new project, alias it "default"
 
-# GROQ key for the LLM proxy — get a free key at https://console.groq.com/keys
+# GROQ key for the LLM proxy — free, no credit card, at https://console.groq.com/keys
 Copy-Item functions\.env.example functions\.env
 # edit functions\.env and set GROQ_API_KEY=gsk_...
 
@@ -85,6 +101,19 @@ firebase deploy --only firestore:rules,storage,functions
 
 > For production, store the key as a secret instead of `.env`:
 > `firebase functions:secrets:set GROQ_API_KEY` and read it via `defineSecret`.
+
+### GROQ model — check before you demo
+
+`functions/src/index.ts` pins **`openai/gpt-oss-20b`**, overridable with
+`GROQ_MODEL` in `functions/.env`. GROQ retires models on a rolling schedule
+(`llama-3.1-8b-instant`, the previous default, was announced 2026-06-17 and shut
+down 2026-08-16). A retired model makes every LLM call fail **silently** — the
+client falls back to local tips by design (spec §8), so the AI simply looks
+generic rather than broken.
+
+Confirm the pinned id is still listed at <https://console.groq.com/docs/models>
+and not on <https://console.groq.com/docs/deprecations> before the demo. Free
+tier is 30 requests/min and 14,400/day — far above what a demo needs.
 
 ## 5. OAuth consent screen (test mode) **(you)**
 

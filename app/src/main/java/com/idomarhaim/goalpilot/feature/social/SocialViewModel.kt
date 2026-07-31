@@ -49,22 +49,30 @@ class SocialViewModel @Inject constructor(
 
     fun setFriendsOnly(value: Boolean) { _friendsOnly.value = value }
 
-    fun addFriend(code: String) {
-        val uid = code.trim()
-        if (uid.isEmpty()) return
-        viewModelScope.launch {
-            _message.value = when (socialRepository.addFriend(uid)) {
-                is Resource.Success -> "Friend added"
-                is Resource.Error -> "Could not add friend"
-                Resource.Loading -> null
-            }
-        }
+    /** Adds a friend straight from a leaderboard row (uid already known). */
+    fun addFriend(uid: String) {
+        viewModelScope.launch { report(socialRepository.addFriend(uid)) }
+    }
+
+    /** Adds a friend from the short code typed into the "Add a friend" dialog. */
+    fun addFriendByCode(code: String) {
+        viewModelScope.launch { report(socialRepository.addFriendByCode(code)) }
     }
 
     fun removeFriend(uid: String) {
         viewModelScope.launch {
             socialRepository.removeFriend(uid)
             _message.value = "Friend removed"
+        }
+    }
+
+    /** Surfaces the repository's own error text — "no user with that code" is
+     *  far more actionable than a generic failure message. */
+    private fun report(result: Resource<Unit>) {
+        _message.value = when (result) {
+            is Resource.Success -> "Friend added"
+            is Resource.Error -> result.message
+            Resource.Loading -> null
         }
     }
 

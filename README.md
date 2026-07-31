@@ -22,18 +22,24 @@ The system works on three levels (spec §1):
 - ✅ Google Sign-In (Firebase Auth)
 - ✅ Define goals across life categories
 - ✅ Associate tasks with goals, with **points** on completion
+- ✅ **AI point scoring** for a task (✨ button on the add-task row)
 - ✅ Manual progress logging + **visual progress rings/bars**
 - ✅ **Image upload** to Firebase Storage (attach a photo to progress)
-- ✅ **Sharing between users**: weekly summaries + a **friends leaderboard** (spec §7)
+- ✅ **Sharing between users**: weekly summaries + a **friends leaderboard** (spec §7),
+  friends added with a 6-character **friend code**
 - ✅ **AI recommendations & encouragement** via GROQ (through a Cloud Function proxy)
 - ✅ Points, levels, and level progress (gamification)
 
-**Nice-to-have / Bonus (architected + scaffolded, see `TODO/`)**
+**Bonus (implemented)**
+- 🤖 **LLM task→goal classification** — the "Smart add a task" card: describe a
+  task in plain language and GoalPilot files it under the right goal, or proposes
+  a new one, with an estimated point value. You confirm before anything is saved.
+- 📊 **Analytics charts** (progress per goal, task-focus split)
+
+**Nice-to-have (architected + scaffolded, see `TODO/`)**
 - 🧩 Import tasks from **Google Tasks** — `data/tasks/GoogleTasksClient` stub
 - 🧩 Pull fitness/sleep from **Health Connect** — `data/health/HealthConnectManager` stub
 - 🧩 Shared/competitive **challenges** — model + Firestore rules + preview screen
-- 📊 **Analytics charts** (progress per goal, task-focus split) — implemented
-- 🤖 **LLM task→goal classification** — `classifyTask` Cloud Function + client wired
 
 ---
 

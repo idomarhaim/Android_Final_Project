@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.AssistChip
@@ -77,7 +77,7 @@ private data class SampleChallenge(
 )
 
 private val sampleChallenges = listOf(
-    SampleChallenge("7-day run streak", "Most km this week", 4, Icons.Filled.DirectionsRun),
+    SampleChallenge("7-day run streak", "Most km this week", 4, Icons.AutoMirrored.Filled.DirectionsRun),
     SampleChallenge("Sleep 8h challenge", "Best average sleep", 3, Icons.Filled.NightlightRound),
     SampleChallenge("Mindful minutes", "Most meditation minutes", 5, Icons.Filled.SelfImprovement),
 )
