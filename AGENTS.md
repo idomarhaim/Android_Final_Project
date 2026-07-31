@@ -6,6 +6,8 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 
 ## 📚 Authoritative docs (link, don't restate)
 
+- **[docs/HANDOFF.md](docs/HANDOFF.md) — start here if you are a new session.** Live
+  project ids, environment traps, what's left, and how to verify it.
 - [README.md](README.md) — features, quick-start.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layered design, data model, data flow.
 - [docs/SETUP.md](docs/SETUP.md) — Firebase / GROQ / OAuth credentials + debug SHA-1.
