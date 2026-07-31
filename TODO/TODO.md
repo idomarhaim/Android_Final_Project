@@ -19,12 +19,16 @@ Backlog index. Per-area files live under three priority subfolders next to this 
 ## 📋 Per-area files
 
 ### 🔴 MUST — [`TODO_MUST/`](TODO_MUST/)
-- [ ] **Wire real credentials** and verify end-to-end on a device — see [docs/SETUP.md](../docs/SETUP.md).
-  Firebase project (**Blaze plan required** — Functions *and* Storage),
-  `google-services.json`, `GOOGLE_WEB_CLIENT_ID`, debug SHA-1, GROQ key,
-  deploy rules + functions. *(Firebase CLI is now installed locally.)*
-- [ ] **Demo the sharing requirement (spec §7) with two Google accounts** — both
-  added as OAuth test users. Friend codes now make this a 6-character type-in.
+- [x] **Wire real credentials** and verify end-to-end on a device — done 31/07/2026.
+  Firebase project `goalpilot-56e30` on Blaze; Firestore + Storage + auth + rules
+  + all three Cloud Functions live in `us-central1`. Verified on the emulator:
+  sign-in → goal → task → completion transaction → photo upload → GROQ, each
+  confirmed against Firestore/Storage/function logs rather than the UI. See
+  `CHANGELOG/2026-07-31.md`.
+- [ ] **Demo the sharing requirement (spec §7) with two Google accounts** — the
+  *second* account still needs adding as an OAuth test user (the project owner
+  is implicitly allowed and cannot be added to that list). Account one is fully
+  verified; friend code `NDXVJC` makes this a 6-character type-in.
 - [ ] **Fill in the spec title page** — it still reads `[Full name & ID] · [Course number]`.
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
@@ -42,9 +46,11 @@ Backlog index. Per-area files live under three priority subfolders next to this 
   now the *only* remaining source of deprecation warnings in the build
   (9 warnings from `data/auth/GoogleAuthClient.kt`). Google has said the legacy
   `com.google.android.gms.auth.api.signin` package will be removed from
-  play-services-auth "in a future release". Deliberately left for after the
-  credentials are wired: it replaces the whole sign-in flow, and it cannot be
-  verified until there is a real Firebase project to sign in against.
+  play-services-auth "in a future release". **Its stated blocker is now gone** —
+  a real Firebase project exists and legacy sign-in is verified working against
+  it, so the migration can be attempted and regression-tested whenever you give
+  the go-ahead. Still `future` tier: it replaces the entire sign-in flow, which
+  is currently the one part of the app proven end-to-end.
 - Replace `createdAt` client timestamps with `@ServerTimestamp`.
 - Instrumented E2E tests against the Firebase Emulator Suite.
 
