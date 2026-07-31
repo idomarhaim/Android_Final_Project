@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Private per-user data: goals, tasks, progress, friends ──────
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+      match /{document=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Public leaderboard projection ──────────────────────────────
+    // Any signed-in user can read (for the leaderboard); only the owner writes.
+    // NOTE: points/level are written by the client for this course project. In
+    // production, compute them in a Cloud Function and lock writes down.
+    match /publicProfiles/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(uid);
+    }
+
+    // ── Shared achievement feed ────────────────────────────────────
+    match /shares/{shareId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn()
+        && resource.data.authorUid == request.auth.uid;
+    }
+
+    // ── Challenges (nice-to-have) ──────────────────────────────────
+    match /challenges/{challengeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid;
+    }
+  }
+}

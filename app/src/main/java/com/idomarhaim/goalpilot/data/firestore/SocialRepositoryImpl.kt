@@ -1,0 +1,199 @@
+package com.idomarhaim.goalpilot.data.firestore
+
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.core.util.FirestorePaths
+import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.data.auth.uidFlow
+import com.idomarhaim.goalpilot.data.firestore.dto.PublicProfileDto
+import com.idomarhaim.goalpilot.data.firestore.dto.SharedItemDto
+import com.idomarhaim.goalpilot.data.firestore.dto.resolvedLevel
+import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
+import com.idomarhaim.goalpilot.domain.model.FriendCode
+import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
+import com.idomarhaim.goalpilot.domain.model.ProgressSummary
+import com.idomarhaim.goalpilot.domain.model.SharedItem
+import com.idomarhaim.goalpilot.domain.model.rankedByPoints
+import com.idomarhaim.goalpilot.domain.repository.SocialRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@Singleton
+class SocialRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth,
+    @IoDispatcher private val io: CoroutineDispatcher,
+) : SocialRepository {
+
+    private val publicCol get() = firestore.collection(FirestorePaths.PUBLIC_PROFILES)
+    private val sharesCol get() = firestore.collection(FirestorePaths.SHARES)
+    private fun friendsCol(uid: String) =
+        firestore.collection(FirestorePaths.USERS).document(uid).collection(FirestorePaths.FRIENDS)
+
+    /**
+     * "Everyone" reads the global top [LEADERBOARD_LIMIT] by points.
+     *
+     * "Friends" instead fetches the friends' profiles **by document id**. Filtering
+     * the global top-N client-side would silently drop any friend who sits outside
+     * it — exactly the friend a new user is most likely to have just added.
+     */
+    override fun observeLeaderboard(friendsOnly: Boolean): Flow<List<LeaderboardEntry>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            observeFriendUids().flatMapLatest { friends ->
+                val profiles = if (friendsOnly) {
+                    observeProfilesByIds(friends + setOfNotNull(uid))
+                } else {
+                    publicCol
+                        .orderBy("points", Query.Direction.DESCENDING)
+                        .limit(LEADERBOARD_LIMIT)
+                        .snapshotsFlow()
+                        .map { it.toObjects(PublicProfileDto::class.java) }
+                }
+                profiles.map { list -> list.toEntries(uid, friends).rankedByPoints() }
+            }
+        }
+
+    /**
+     * Streams the given profiles. Firestore's `in` filter caps out at 30 values,
+     * so larger friend lists are split across parallel listeners and merged.
+     */
+    private fun observeProfilesByIds(ids: Set<String>): Flow<List<PublicProfileDto>> {
+        val chunks = ids.filter { it.isNotBlank() }.chunked(IN_QUERY_LIMIT)
+        if (chunks.isEmpty()) return flowOf(emptyList())
+        val flows = chunks.map { chunk ->
+            publicCol.whereIn(FieldPath.documentId(), chunk)
+                .snapshotsFlow()
+                .map { it.toObjects(PublicProfileDto::class.java) }
+        }
+        return combine(flows) { arrays -> arrays.toList().flatten() }
+    }
+
+    private fun List<PublicProfileDto>.toEntries(
+        uid: String?,
+        friends: Set<String>,
+    ): List<LeaderboardEntry> = map { p ->
+        LeaderboardEntry(
+            uid = p.uid,
+            displayName = p.displayName,
+            photoUrl = p.photoUrl,
+            points = p.points,
+            level = p.resolvedLevel(),
+            isCurrentUser = p.uid == uid,
+            isFriend = p.uid in friends,
+        )
+    }
+
+    override fun observeFeed(): Flow<List<SharedItem>> =
+        sharesCol
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(FEED_LIMIT)
+            .snapshotsFlow()
+            .map { snap -> snap.toObjects(SharedItemDto::class.java).map { it.toDomain() } }
+
+    override fun observeFriendUids(): Flow<Set<String>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptySet())
+            } else {
+                friendsCol(uid).snapshotsFlow()
+                    .map { snap -> snap.documents.map { it.id }.toSet() }
+            }
+        }
+
+    override suspend fun addFriend(uid: String): Resource<Unit> = withContext(io) {
+        val me = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+        if (uid.isBlank()) return@withContext Resource.Error("Enter a friend code")
+        if (uid == me) return@withContext Resource.Error("You cannot add yourself")
+        try {
+            // Reject unknown ids up front — otherwise a typo writes a friend edge
+            // that points at nobody and can never show up on the leaderboard.
+            if (!publicCol.document(uid).get().await().exists()) {
+                return@withContext Resource.Error("No GoalPilot user with that code")
+            }
+            friendsCol(me).document(uid)
+                .set(mapOf("addedAt" to System.currentTimeMillis())).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not add friend", e)
+        }
+    }
+
+    override suspend fun addFriendByCode(code: String): Resource<Unit> = withContext(io) {
+        val normalized = FriendCode.normalize(code)
+        if (!FriendCode.isValid(normalized)) {
+            return@withContext Resource.Error(
+                "A friend code is ${FriendCode.LENGTH} characters, e.g. 7KQ4RD",
+            )
+        }
+        try {
+            val match = publicCol.whereEqualTo("friendCode", normalized).limit(1).get().await()
+            val uid = match.documents.firstOrNull()?.id
+                ?: return@withContext Resource.Error("No GoalPilot user with that code")
+            addFriend(uid)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not add friend", e)
+        }
+    }
+
+    override suspend fun removeFriend(uid: String): Resource<Unit> = withContext(io) {
+        val me = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+        try {
+            friendsCol(me).document(uid).delete().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not remove friend", e)
+        }
+    }
+
+    override suspend fun shareSummary(
+        summary: ProgressSummary,
+        imageUrl: String?,
+    ): Resource<String> = withContext(io) {
+        val user = auth.currentUser ?: return@withContext Resource.Error("Not signed in")
+        try {
+            val ref = sharesCol.document()
+            val avgPercent = (summary.averageProgress * 100).roundToInt()
+            val dto = SharedItemDto(
+                id = ref.id,
+                authorUid = user.uid,
+                authorName = user.displayName.orEmpty(),
+                authorPhotoUrl = user.photoUrl?.toString(),
+                period = summary.period.name,
+                headline = "${summary.period.label} progress",
+                message = "Earned ${summary.totalPoints} pts • " +
+                    "${summary.completedTasks} tasks done • avg $avgPercent% across " +
+                    "${summary.activeGoals} goals",
+                points = summary.totalPoints,
+                completedTasks = summary.completedTasks,
+                imageUrl = imageUrl,
+                createdAt = System.currentTimeMillis(),
+            )
+            ref.set(dto).await()
+            Resource.Success(ref.id)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not share summary", e)
+        }
+    }
+
+    private companion object {
+        const val LEADERBOARD_LIMIT = 100L
+        const val FEED_LIMIT = 50L
+
+        /** Firestore's hard cap on values in an `in` / `whereIn` filter. */
+        const val IN_QUERY_LIMIT = 30
+    }
+}
