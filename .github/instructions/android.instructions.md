@@ -14,7 +14,9 @@ Project-specific rules for the Android app. Generic rules are in
 - Screens are **stateless**: `collectAsStateWithLifecycle()`, then call ViewModel functions / navigation lambdas passed from the nav graph. No navigation inside ViewModels.
 
 ## Compose
-- Material 3 only; theme + reusable widgets live in `ui/`. Prefer existing components (`ProgressRing`, `GoalCard`, `HorizontalBarChart`, `Avatar`, `EmptyState`, `LoadingBox`).
+- Material 3 only; theme + reusable widgets live in `ui/`. Prefer existing components (`GpCard`, `GpLinearProgress`, `ProgressRing`, `GoalCard`, `HorizontalBarChart`, `IconChip`, `HeroSurface`, `SkinPicker`, `Avatar`, `EmptyState`, `LoadingBox`).
+- **Cards go through `GpCard`, not `Card`** — the app inverts Material's surface ladder (tinted page, near-white cards) and a bare `Card` opts out of it.
+- Colour comes from the active `AppSkin` via `MaterialTheme.colorScheme` and `MaterialTheme.gpAccents`. Never hard-code a hex in a screen, and never turn dynamic colour back on.
 - When using `by animateFloatAsState`/`collectAsStateWithLifecycle`, import `androidx.compose.runtime.getValue`.
 - Use `Icons.AutoMirrored.*` for directional icons.
 

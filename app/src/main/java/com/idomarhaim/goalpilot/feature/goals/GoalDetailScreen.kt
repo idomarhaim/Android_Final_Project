@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -56,20 +55,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.ui.components.EmptyState
+import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.icon
-import com.idomarhaim.goalpilot.ui.components.toComposeColor
+import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.trimNumber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,8 +248,8 @@ private fun GoalHeaderCard(
     description: String,
     onLogProgress: () -> Unit,
 ) {
-    val accent = accentHex.toComposeColor(MaterialTheme.colorScheme.primary)
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val accent = accentHex.toGoalAccent()
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -360,7 +362,7 @@ private fun AddTaskRow(
 
 @Composable
 private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -368,19 +370,35 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(checked = task.isDone, onCheckedChange = { onToggle() })
+            // A done task should recede rather than disappear — struck through and
+            // muted keeps it countable without competing with what's still open.
             Text(
                 text = task.title,
                 style = MaterialTheme.typography.bodyLarge,
+                color = if (task.isDone) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 text = "+${task.points}",
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = if (task.isDone) {
+                    MaterialTheme.gpAccents.positive
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
                 fontWeight = FontWeight.Bold,
             )
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete task")
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Delete task",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -388,7 +406,7 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
 
 @Composable
 private fun ProgressEntryRow(entry: ProgressEntry, unit: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (!entry.imageUrl.isNullOrBlank()) {
                 AsyncImage(

@@ -10,7 +10,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,9 +25,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.ui.components.BarItem
 import com.idomarhaim.goalpilot.ui.components.EmptyState
+import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.HorizontalBarChart
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
-import com.idomarhaim.goalpilot.ui.components.toComposeColor
+import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +65,7 @@ fun AnalyticsScreen(
                     BarItem(
                         label = g.title.ifBlank { "Untitled" },
                         fraction = g.progressFraction,
-                        color = g.colorHex.toComposeColor(MaterialTheme.colorScheme.primary),
+                        color = g.colorHex.toGoalAccent(),
                         trailing = "${g.progressPercent}%",
                     )
                 }
@@ -81,7 +81,7 @@ fun AnalyticsScreen(
                         BarItem(
                             label = g.title.ifBlank { "Untitled" },
                             fraction = share,
-                            color = g.colorHex.toComposeColor(MaterialTheme.colorScheme.tertiary),
+                            color = g.colorHex.toGoalAccent(MaterialTheme.colorScheme.tertiary),
                             trailing = "${(share * 100).roundToInt()}%",
                         )
                     }
@@ -120,7 +120,7 @@ fun AnalyticsScreen(
 
 @Composable
 private fun ChartCard(title: String, subtitle: String, content: @Composable () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(

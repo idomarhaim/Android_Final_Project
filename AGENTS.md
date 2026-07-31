@@ -56,6 +56,13 @@ firebase deploy --only firestore:rules,storage,functions
 - **GROQ key never ships in the app** — it lives only in `functions/.env` (spec §5). The client always has a local fallback (spec §8).
 - **The GROQ model id rots.** GROQ retires models on a rolling schedule and a retired id fails *silently* — the client just serves local fallback tips, so the AI looks bland rather than broken. `DEFAULT_MODEL` in `functions/src/index.ts` is the single pin; check it against <https://console.groq.com/docs/deprecations> before any demo.
 - **Instrumented tests need Espresso ≥ 3.7.0** on modern emulators. 3.6.1 reflects on the private `InputManager.getInstance()`, removed in Android 15+, and every test dies with `NoSuchMethodException` before its body runs.
+- **Never re-enable Material You dynamic colour.** `GoalPilotTheme` used to take
+  `dynamicColor = true`, which meant the wallpaper decided every colour and the
+  brand palette was dead code on Android 12+. Colour now comes from the selected
+  `AppSkin` (`ui/theme/Palettes.kt`); the two cannot coexist.
+- **Colours are test-guarded.** `ThemePaletteTest` asserts WCAG contrast for all
+  four skin/brightness schemes and pairwise distinctness of the `GoalCategory`
+  palette. Editing a hex without running `:app:testDebugUnitTest` will bite.
 - **Repository snapshot flows must be built on `FirebaseAuth.uidFlow()`** (`data/auth/AuthExt.kt`), never a one-shot `auth.currentUser` read — a `Flow` is constructed at ViewModel-creation time, so a one-shot read pins the account that was signed in then.
 
 ## 🧱 Conventions

@@ -14,7 +14,6 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.ui.components.GpCard
 
 /**
  * NICE-TO-HAVE (spec §6, §7): shared & competitive challenges. The [Challenge]
@@ -84,7 +84,7 @@ private val sampleChallenges = listOf(
 
 @Composable
 private fun ChallengePreviewCard(challenge: SampleChallenge) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,

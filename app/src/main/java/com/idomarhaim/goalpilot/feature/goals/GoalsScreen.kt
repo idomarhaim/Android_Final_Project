@@ -56,7 +56,14 @@ fun GoalsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(inner),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                // The extended FAB floats over this list; without the extra
+                // bottom room the last goal card sat underneath it.
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = 96.dp,
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(state.goals, key = { it.id }) { goal ->

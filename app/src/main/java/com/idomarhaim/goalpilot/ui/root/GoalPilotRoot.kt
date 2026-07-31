@@ -1,14 +1,17 @@
 package com.idomarhaim.goalpilot.ui.root
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -28,6 +31,7 @@ import com.idomarhaim.goalpilot.feature.goals.GoalsScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
+import com.idomarhaim.goalpilot.ui.components.gpCardContainerColor
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import com.idomarhaim.goalpilot.ui.navigation.TopLevelTab
 
@@ -52,10 +56,16 @@ private fun MainScaffold() {
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                // Same fill as a card, so the bar reads as chrome lifted off the
+                // tinted canvas rather than another band of background.
+                NavigationBar(
+                    containerColor = gpCardContainerColor(),
+                    tonalElevation = 0.dp,
+                ) {
                     TopLevelTab.entries.forEach { tab ->
+                        val selected = currentRoute == tab.route
                         NavigationBarItem(
-                            selected = currentRoute == tab.route,
+                            selected = selected,
                             onClick = {
                                 navController.navigate(tab.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
@@ -65,8 +75,25 @@ private fun MainScaffold() {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) tab.selectedIcon else tab.icon,
+                                    contentDescription = tab.label,
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = tab.label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                         )
                     }
                 }

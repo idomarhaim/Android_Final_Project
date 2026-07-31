@@ -35,22 +35,32 @@ data class Goal(
  * The life areas a goal can belong to (spec §1). Each carries a default accent
  * color and an [iconKey] the UI maps to a Material icon, so the domain layer
  * stays free of any Compose/Android types.
+ *
+ * The colours are a **categorical** palette: ten hues spread around the wheel so
+ * no two categories can be confused when they sit next to each other as bars in
+ * the analytics chart. The previous set had three greens (Fitness, Nutrition,
+ * Finance) that were indistinguishable at bar width. Every value clears 4.5:1
+ * against a light surface — they are used as text, not just fills — and
+ * `String.toGoalAccent()` lifts them for dark surfaces.
+ *
+ * Changing a default only affects goals created from now on; [Goal.colorHex] is
+ * persisted per goal, so existing goals keep the colour they were created with.
  */
 enum class GoalCategory(
     val label: String,
     val iconKey: String,
     val defaultColorHex: String,
 ) {
-    HEALTH("Health", "favorite", "#EF6461"),
-    FITNESS("Fitness", "fitness", "#0B6E4F"),
-    SLEEP("Sleep", "sleep", "#5A67D8"),
-    NUTRITION("Nutrition", "nutrition", "#38A169"),
-    RELATIONSHIPS("Relationships", "people", "#D53F8C"),
-    CAREER("Career", "work", "#2A9DF4"),
-    PROJECTS("Projects", "project", "#DD6B20"),
-    LEARNING("Learning", "school", "#805AD5"),
-    FINANCE("Finance", "finance", "#2F855A"),
-    OTHER("Other", "flag", "#718096");
+    HEALTH("Health", "favorite", "#CF3636"),
+    FITNESS("Fitness", "fitness", "#B85107"),
+    SLEEP("Sleep", "sleep", "#3B3BA8"),
+    NUTRITION("Nutrition", "nutrition", "#26804A"),
+    RELATIONSHIPS("Relationships", "people", "#D6246E"),
+    CAREER("Career", "work", "#0F6FCB"),
+    PROJECTS("Projects", "project", "#7C4A21"),
+    LEARNING("Learning", "school", "#8B39C4"),
+    FINANCE("Finance", "finance", "#0B7285"),
+    OTHER("Other", "flag", "#64748B");
 
     companion object {
         fun fromName(name: String?): GoalCategory =

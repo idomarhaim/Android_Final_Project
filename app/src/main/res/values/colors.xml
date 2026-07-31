@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0B6E4F</color>
-    <color name="gp_window_background">#FCFDF7</color>
+    <!--
+      These two exist only for the *window* — the frame Android draws before
+      Compose has its first frame up. Keep them in step with the default skin's
+      (Aurora) background, otherwise cold start flashes a colour the app never
+      uses again. Everything else is themed in Compose (ui/theme/).
+    -->
+    <color name="ic_launcher_background">#0B62D6</color>
+    <color name="gp_window_background">#F9FAFF</color>
 </resources>

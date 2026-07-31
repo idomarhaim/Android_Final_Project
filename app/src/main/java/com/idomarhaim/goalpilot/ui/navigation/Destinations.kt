@@ -5,6 +5,10 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SpaceDashboard
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.SpaceDashboard
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /** All navigation routes + argument keys in one place. */
@@ -26,10 +30,21 @@ object Routes {
         if (goalId.isNullOrBlank()) ADD_EDIT_GOAL else "$ADD_EDIT_GOAL?$ARG_GOAL_ID=$goalId"
 }
 
-/** Bottom navigation tabs shown in the signed-in area. */
-enum class TopLevelTab(val route: String, val label: String, val icon: ImageVector) {
-    DASHBOARD(Routes.DASHBOARD, "Home", Icons.Filled.SpaceDashboard),
-    GOALS(Routes.GOALS, "Goals", Icons.Filled.Flag),
-    SOCIAL(Routes.SOCIAL, "Social", Icons.Filled.EmojiEvents),
-    PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person),
+/**
+ * Bottom navigation tabs shown in the signed-in area.
+ *
+ * Each tab carries both weights: outlined when idle, filled when selected. That
+ * pairing is what makes the active tab obvious at a glance — the pill indicator
+ * alone is easy to miss on a small screen.
+ */
+enum class TopLevelTab(
+    val route: String,
+    val label: String,
+    val selectedIcon: ImageVector,
+    val icon: ImageVector,
+) {
+    DASHBOARD(Routes.DASHBOARD, "Home", Icons.Filled.SpaceDashboard, Icons.Outlined.SpaceDashboard),
+    GOALS(Routes.GOALS, "Goals", Icons.Filled.Flag, Icons.Outlined.Flag),
+    SOCIAL(Routes.SOCIAL, "Social", Icons.Filled.EmojiEvents, Icons.Outlined.EmojiEvents),
+    PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person, Icons.Outlined.Person),
 }

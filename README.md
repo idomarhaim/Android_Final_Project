@@ -29,6 +29,9 @@ The system works on three levels (spec §1):
   friends added with a 6-character **friend code**
 - ✅ **AI recommendations & encouragement** via GROQ (through a Cloud Function proxy)
 - ✅ Points, levels, and level progress (gamification)
+- ✅ **Two selectable colour skins** — *Aurora* (ocean blue → evergreen, default)
+  and *Blossom* (sunset pink → orange), chosen on the Profile tab and applied
+  instantly across the app. Both ship a full light **and** dark palette.
 
 **Bonus (implemented)**
 - 🤖 **LLM task→goal classification** — the "Smart add a task" card: describe a

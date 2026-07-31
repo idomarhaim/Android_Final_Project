@@ -27,7 +27,33 @@ key never ships in the app.
 - **domain** depends on nothing Android/Firebase — trivially unit-testable (`BuildSummaryUseCase`, `Leveling`).
 - **data** implements domain interfaces using Firebase; maps DTOs ↔ domain models.
 - **feature** ViewModels depend only on domain interfaces (mockable in tests).
-- **ui** holds the theme, reusable components (`ProgressRing`, `GoalCard`, `HorizontalBarChart`, `Avatar`), navigation, and the root auth gate.
+- **ui** holds the theme, reusable components (`GpCard`, `GpLinearProgress`, `ProgressRing`, `GoalCard`, `HorizontalBarChart`, `IconChip`, `HeroSurface`, `Avatar`), navigation, and the root auth gate.
+
+## Theming — skins
+
+`ui/theme/` is the single colour authority. **Material You dynamic colour is
+deliberately off**: it let the device wallpaper override the brand palette, and
+it cannot coexist with a user-chosen skin — two colour authorities cannot both
+win.
+
+- `domain/model/AppSkin` — the pure enum (`AURORA` default, `BLOSSOM`) plus its
+  persisted id. No Compose types, same split as `GoalCategory.iconKey`.
+- `ui/theme/Palettes.kt` — `colorSchemeFor(skin, dark)` returns one of four full
+  Material 3 `ColorScheme`s; `accentsFor(...)` returns the off-Material brand
+  accents (`GpAccents.heroGradient`, `positive`) exposed as `MaterialTheme.gpAccents`.
+- `domain/repository/AppPreferencesRepository` → `data/prefs/…Impl` — the chosen
+  skin, in `SharedPreferences`, as a hot `StateFlow` so the first frame already
+  has the right palette. Device-local: it is *not* synced to Firestore.
+- `MainActivity` field-injects that repository, because the skin must be known
+  outside `GoalPilotTheme` and every `hiltViewModel()` lives inside it.
+
+Surfaces invert the Material default on purpose: the page is a tinted canvas and
+`GpCard` fills with `surfaceContainerLowest`, so cards read as objects lifted off
+the background rather than darker holes cut into it.
+
+`app/src/test/.../ui/ThemePaletteTest` asserts WCAG contrast across all four
+schemes and the distinctness of the ten `GoalCategory` colours, so a palette edit
+that breaks legibility fails the build rather than shipping.
 
 ## Navigation & auth gate
 

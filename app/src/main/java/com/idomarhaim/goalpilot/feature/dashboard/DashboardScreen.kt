@@ -5,6 +5,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,14 +26,12 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -42,6 +41,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,16 +50,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.ui.components.GoalCard
+import com.idomarhaim.goalpilot.ui.components.GpCard
+import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
+import com.idomarhaim.goalpilot.ui.components.HeroSurface
+import com.idomarhaim.goalpilot.ui.components.IconChip
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.theme.gpAccents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +114,18 @@ fun DashboardScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHost) },
-        topBar = { TopAppBar(title = { Text("GoalPilot") }) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "GoalPilot",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            )
+        },
     ) { inner ->
         if (state.isLoading) {
             LoadingBox(Modifier.padding(inner))
@@ -114,7 +135,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
@@ -212,25 +233,21 @@ fun DashboardScreen(
  */
 @Composable
 private fun GoogleTasksImportCard(isLoading: Boolean, onImport: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.CloudDownload,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.width(8.dp))
+                IconChip(icon = Icons.Filled.CloudDownload)
+                Spacer(Modifier.width(12.dp))
                 Text("Import from Google Tasks", style = MaterialTheme.typography.titleMedium)
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 "Pull your open Google Tasks in and let GoalPilot file each one " +
                     "under the right goal. You review everything before it is saved.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
             OutlinedButton(
                 onClick = onImport,
                 enabled = !isLoading,
@@ -357,28 +374,27 @@ private fun GoogleTasksImportDialog(
 @Composable
 private fun SmartAddCard(onClassify: (String) -> Unit) {
     var title by remember { mutableStateOf("") }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.AutoAwesome,
-                    contentDescription = null,
+                IconChip(
+                    icon = Icons.Filled.AutoAwesome,
                     tint = MaterialTheme.colorScheme.tertiary,
                 )
                 Text(
                     "Smart add a task",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 8.dp),
+                    modifier = Modifier.padding(start = 12.dp),
                 )
             }
             Text(
                 "Describe anything you want to do — GoalPilot files it under the right goal.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = 10.dp),
             )
             Row(
-                modifier = Modifier.padding(top = 10.dp),
+                modifier = Modifier.padding(top = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 OutlinedTextField(
@@ -449,6 +465,11 @@ private fun SmartAddDialog(
     )
 }
 
+/**
+ * The one branded surface on this screen (see [HeroSurface]). Points are the
+ * number the user opens the app for, so they get the display type and the
+ * gradient; everything below stays on neutral cards.
+ */
 @Composable
 private fun PointsLevelCard(
     userName: String,
@@ -457,32 +478,65 @@ private fun PointsLevelCard(
     levelProgress: Float,
     pointsToNext: Long,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = if (userName.isBlank()) "Welcome back!" else "Hi $userName 👋",
-                style = MaterialTheme.typography.titleLarge,
-            )
+    val accents = MaterialTheme.gpAccents
+    HeroSurface {
+        Column(modifier = Modifier.padding(22.dp)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Level $level", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("$points pts", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = if (userName.isBlank()) "Welcome back!" else "Hi $userName 👋",
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.20f))
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                ) {
+                    Text(
+                        text = "Level $level",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
-            LinearProgressIndicator(
-                progress = { levelProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
+
+            Row(
+                modifier = Modifier.padding(top = 18.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Text(
+                    text = "$points",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "pts",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = accents.onHeroVariant,
+                    modifier = Modifier.padding(start = 6.dp, bottom = 5.dp),
+                )
+            }
+
+            GpLinearProgress(
+                progress = levelProgress,
+                color = accents.onHero,
+                trackColor = Color.White.copy(alpha = 0.28f),
+                height = 8.dp,
+                modifier = Modifier.padding(top = 12.dp),
             )
             Text(
                 text = "$pointsToNext pts to level ${level + 1}",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
+                color = accents.onHeroVariant,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
@@ -496,47 +550,83 @@ private fun OverviewCard(
     completedThisWeek: Int,
     onOpenAnalytics: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ProgressRing(progress = averageProgress, size = 96.dp, strokeWidth = 10.dp) {
-                Text(
-                    "${(averageProgress * 100).toInt()}%",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+    val ringBrush = Brush.linearGradient(MaterialTheme.gpAccents.heroGradient)
+    GpCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ProgressRing(
+                    progress = averageProgress,
+                    size = 92.dp,
+                    strokeWidth = 11.dp,
+                    brush = ringBrush,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                ) {
+                    Text(
+                        "${(averageProgress * 100).toInt()}%",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(start = 18.dp)
+                        .weight(1f),
+                ) {
+                    Text("Overall progress", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Averaged across all your goals",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
-            Column(modifier = Modifier.padding(start = 20.dp).fillMaxWidth()) {
-                Text("Overall progress", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "$goalCount goals • $doneTasks tasks done • $completedThisWeek this week",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                TextButton(
-                    onClick = onOpenAnalytics,
-                    modifier = Modifier.padding(top = 4.dp),
-                ) { Text("View analytics") }
+            // Three counts read as three facts; the old "7 goals • 1 tasks done •
+            // 1 this week" run-on read as one sentence you had to parse.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Metric(value = goalCount.toString(), label = "Goals")
+                Metric(value = doneTasks.toString(), label = "Tasks done")
+                Metric(value = completedThisWeek.toString(), label = "This week")
             }
+            TextButton(
+                onClick = onOpenAnalytics,
+                modifier = Modifier.align(Alignment.End),
+            ) { Text("View analytics") }
         }
     }
 }
 
 @Composable
+private fun Metric(value: String, label: String) {
+    Column {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun RecommendationCard(rec: Recommendation) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(16.dp)) {
-            Icon(
-                imageVector = Icons.Filled.AutoAwesome,
-                contentDescription = null,
+            IconChip(
+                icon = Icons.Filled.AutoAwesome,
                 tint = MaterialTheme.colorScheme.tertiary,
+                size = 36.dp,
             )
-            Column(modifier = Modifier.padding(start = 12.dp)) {
+            Column(modifier = Modifier.padding(start = 14.dp)) {
                 Text(rec.title, style = MaterialTheme.typography.titleMedium)
                 Text(
                     rec.message,
@@ -551,17 +641,27 @@ private fun RecommendationCard(rec: Recommendation) {
 
 @Composable
 private fun ShareSummaryCard(onShare: () -> Unit, onShareWithPhoto: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Share your weekly progress", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconChip(
+                    icon = Icons.Filled.Share,
+                    tint = MaterialTheme.colorScheme.secondary,
+                )
+                Text(
+                    "Share your weekly progress",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
             Text(
                 "Post a summary to your friends feed and climb the leaderboard.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = 10.dp),
             )
             Row(
-                modifier = Modifier.padding(top = 12.dp),
+                modifier = Modifier.padding(top = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilledTonalButton(onClick = onShare, modifier = Modifier.weight(1f)) {
