@@ -58,7 +58,7 @@ firebase deploy --only firestore:rules,storage,functions
 ## ⚠️ Pitfalls
 
 - **JDK:** the machine's `JAVA_HOME` is JDK 25, which AGP rejects. Gradle is pinned to JDK 21 via `org.gradle.java.home` in `gradle.properties`. Don't remove that line on this machine.
-- **`google-services.json` is a placeholder.** The app compiles but sign-in/Firestore only work after you drop in the real file — see [docs/SETUP.md](docs/SETUP.md).
+- **`google-services.json` is the real config** for Firebase project `goalpilot-56e30` (since `79ce624`) — it is committed, which is normal for Android since the key is restricted by package name + SHA-1. `local.properties` and `functions/.env` hold the machine-local half and are git-ignored; a fresh clone needs both before sign-in or the AI coach work. See [docs/SETUP.md](docs/SETUP.md) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - **Web client id** comes from `local.properties` → `GOOGLE_WEB_CLIENT_ID` → generated `R.string.gp_web_client_id`. Do **not** reference `R.string.default_web_client_id` (only exists with a real json and would clash).
 - **Firestore DTOs** must stay mutable (`var`) with defaults + `@DocumentId` for reflective (de)serialization. Keep the domain models immutable and separate.
 - **Windows file locks:** KSP/`.gradle` occasionally fail with "Could not delete/move …". Re-run, or `rm -rf app/build/generated/ksp` and rebuild.

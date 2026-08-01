@@ -25,11 +25,14 @@ Backlog index. Per-area files live under three priority subfolders next to this 
   sign-in → goal → task → completion transaction → photo upload → GROQ, each
   confirmed against Firestore/Storage/function logs rather than the UI. See
   `CHANGELOG/2026-07-31.md`.
-- [ ] **Demo the sharing requirement (spec §7) with two Google accounts** — the
-  *second* account still needs adding as an OAuth test user (the project owner
-  is implicitly allowed and cannot be added to that list). Account one is fully
-  verified; friend code `NDXVJC` makes this a 6-character type-in.
-- [ ] **Fill in the spec title page** — it still reads `[Full name & ID] · [Course number]`.
+- [Submission.TODO.must.md](TODO_MUST/Submission.TODO.must.md) — the two items
+  that block handing the project in. Both are largely **manual**: an agent cannot
+  sign into Google as a second account, nor supply your name/ID/course number.
+  - [ ] **Demo the sharing requirement (spec §7) with two Google accounts.**
+    Both accounts are already OAuth test users; friend code `NDXVJC` makes the
+    add-friend step a 6-character type-in.
+  - [ ] **Fill in the spec title page** — it still reads
+    `[Full name & ID] · [Course number]`.
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
 - [Integrations.TODO.optional.md](TODO_OPTIONAL/Integrations.TODO.optional.md)
