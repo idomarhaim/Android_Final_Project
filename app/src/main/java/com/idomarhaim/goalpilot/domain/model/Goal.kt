@@ -43,8 +43,11 @@ data class Goal(
  * against a light surface — they are used as text, not just fills — and
  * `String.toGoalAccent()` lifts them for dark surfaces.
  *
- * Changing a default only affects goals created from now on; [Goal.colorHex] is
- * persisted per goal, so existing goals keep the colour they were created with.
+ * [Goal.colorHex] is persisted per goal, so changing a default here does not
+ * rewrite existing documents — an untouched goal keeps the colour it was created
+ * with. Note that `AddEditGoalViewModel.save()` re-derives `colorHex` from the
+ * category on *every* save, so an old goal picks the new default up the next time
+ * it is edited.
  */
 enum class GoalCategory(
     val label: String,
