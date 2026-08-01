@@ -1,8 +1,15 @@
-# Session handoff — GoalPilot
+# Operating notes — GoalPilot
 
 **Written 2026-07-31**, after the session that took this project from placeholder
 config to a live, verified backend. Read [AGENTS.md](../AGENTS.md) first; this
 file covers only what a *new session* needs that the other docs don't say.
+
+> Not a `/handoff` document. `/handoff` writes session context to
+> `%TEMP%\handoffs\` and is deliberately *not* committed
+> (`C:\Dev\JARVIS\skills\handoff\SKILL.md`). This file is the opposite: durable
+> project facts that belong in the repo, which is exactly where a handoff is
+> required to have put them before a session split
+> (`C:\Dev\JARVIS\rules\memory-promotion.md`).
 
 ---
 

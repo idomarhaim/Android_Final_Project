@@ -6,8 +6,10 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 
 ## 📚 Authoritative docs (link, don't restate)
 
-- **[docs/HANDOFF.md](docs/HANDOFF.md) — start here if you are a new session.** Live
-  project ids, environment traps, what's left, and how to verify it.
+- **[docs/OPERATIONS.md](docs/OPERATIONS.md) — start here if you are a new session.**
+  Live project ids, environment traps, what's left, and how to verify it.
+- [SESSIONS.md](SESSIONS.md) — session claim board. **Read before your first edit**
+  if anyone else may be working here; claim before your first write.
 - [README.md](README.md) — features, quick-start.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layered design, data model, data flow.
 - [docs/SETUP.md](docs/SETUP.md) — Firebase / GROQ / OAuth credentials + debug SHA-1.
@@ -76,6 +78,7 @@ firebase deploy --only firestore:rules,storage,functions
 
 - **Route by decision density & blast radius:** frontier models (Fable/Opus-class) for architecture, planning, cross-cutting refactors, hairy debugging, review; mid tier (Sonnet-class) for well-specced implementation; fast tier (Haiku/Flash-class) for mechanical bulk edits and summarization. Escalate a tier after repeated failure — never loop a flailing cheap model.
 - **Topology ladder:** one agent, one session (default) → split sessions at verification/commit boundaries (handoff files + committed docs, never chat memory) → subagents only for read-only fan-out or truly independent parallel chunks.
+- **Concurrent sessions — claim by path, or don't run them at once.** Two live sessions in one working tree is **opt-in, not the default**, and legitimate only when the working sets are disjoint. Board: [SESSIONS.md](SESSIONS.md) — read before your first edit, claim before your first write, release when done. Claim **paths**, not themes. Singletons here are exclusive: the Gradle daemon, the git index, emulator `Pixel_10_Pro_XL`, and the live Firebase project `goalpilot-56e30`; **never `git add -A`** beside a live sibling session. The agent recommends, the user assigns: append `🧭 **Claim:** <candidate> → owns <paths>; conflicts: <none|paths>` and wait — never self-assign. Entry point `/claim`. Rule: `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md` §5.
 - **Subagent gate:** before spawning ANY subagent — explain why, which model, why that model, and get user approval (no read-only exemption).
 - **Derivable decisions:** when committed principles fully determine a decision's answer, proceed and log "decision X taken per principle Y" instead of asking. ALWAYS ask for: deletions, outward-facing actions, relocating/rewriting anything that predates JARVIS. Rule: `C:\Dev\JARVIS\rules\derivable-decision.md`.
 - **Surfaces:** Copilot = inline completions, quick in-editor edits, PR review; Claude Code = orchestrated multi-step local work; otherwise token economics decide.
