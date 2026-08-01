@@ -29,11 +29,18 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
   - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `challenges`.
 - `functions/` — GROQ proxy Cloud Functions (TypeScript).
 - `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc` — backend config.
+- `scripts/` — one-click launchers (emulator/phone → build → install → launch) so
+  the project never has to be opened in Android Studio. See `scripts/README.md`.
 - `docs/`, `TODO/`, `CHANGELOG/` — documentation & backlog.
 
 ## 🔧 Common commands
 
 ```powershell
+# One-click: device up -> build -> install -> launch. Sets JAVA_HOME itself.
+.\scripts\run-goalpilot.ps1             # phone if plugged in, else the emulator
+.\scripts\run-goalpilot.ps1 -Target device -Logcat
+.\scripts\run-goalpilot.ps1 -Target emulator -SkipInstall   # just boot the AVD
+
 # JDK 21 is pinned in gradle.properties; set it if calling gradlew from a fresh shell
 $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
 
