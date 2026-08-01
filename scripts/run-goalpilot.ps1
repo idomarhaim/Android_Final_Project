@@ -32,8 +32,20 @@
 .PARAMETER Logcat
     After launching, tail logcat filtered to the app's process. Ctrl+C to stop.
 
+.PARAMETER Recover
+    Repair an emulator stuck 'offline' after a corrupt quickboot snapshot. Shuts
+    down only the processes serving -Avd, clears only that AVD's stale *.lock
+    entries, then cold-boots. Implies -Target emulator and -ColdBoot.
+
 .PARAMETER BootTimeoutSec
     How long to wait for the emulator to finish booting. Default 300s.
+
+.NOTES
+    Concurrency: SESSIONS.md declares the emulator an exclusive singleton ("one
+    screen, one driver"). This script takes an exclusive OS file-handle lock on
+    the target device for the duration of a run, so a second session refuses to
+    drive the same AVD instead of silently fighting for it. The lock is released
+    by the OS if the process dies, so there are no stale claims to clear.
 
 .EXAMPLE
     .\scripts\run-goalpilot.ps1
@@ -56,6 +68,7 @@ param(
     [switch]$SkipInstall,
     [switch]$ColdBoot,
     [switch]$Logcat,
+    [switch]$Recover,
 
     [int]$BootTimeoutSec = 300
 )
@@ -190,6 +203,122 @@ function Test-DeviceReady {
     return ($prop -eq '1')
 }
 
+# An emulator's stable identity is its AVD name, not its serial — the port is
+# recycled. Everything that locks or targets a device keys off this.
+function Get-EmulatorAvdName {
+    param([string]$Serial)
+    $lines = & $Adb -s $Serial emu avd name 2>$null
+    foreach ($line in $lines) {
+        $trimmed = "$line".Trim()
+        if ($trimmed -and $trimmed -ne 'OK' -and $trimmed -notlike 'KO*') { return $trimmed }
+    }
+    return $Serial
+}
+
+# ── Cross-session lock on the device singleton ────────────────────────────────
+# SESSIONS.md: the emulator is "one screen, one driver". Two sessions driving one
+# AVD is what corrupts its quickboot snapshot and yields 'InstallException:
+# device offline'. This is an exclusive OS file handle rather than a PID file:
+# Windows drops it when the process dies, so a crashed run cannot leave a stale
+# claim that blocks work nobody is doing.
+$script:LockHandle = $null
+$script:LockPath = $null
+
+function Lock-Device {
+    param([string]$Key)
+
+    $dir = Join-Path $env:LOCALAPPDATA 'GoalPilot\locks'
+    if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $script:LockPath = Join-Path $dir (($Key -replace '[^A-Za-z0-9._-]', '_') + '.lock')
+
+    try {
+        $script:LockHandle = [System.IO.File]::Open(
+            $script:LockPath,
+            [System.IO.FileMode]::OpenOrCreate,
+            [System.IO.FileAccess]::Write,
+            [System.IO.FileShare]::Read)
+    }
+    catch [System.IO.IOException] {
+        # Share mode Read lets a blocked session read who holds it.
+        $holder = ''
+        try {
+            $peek = [System.IO.File]::Open($script:LockPath, [System.IO.FileMode]::Open,
+                [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            try {
+                $reader = New-Object System.IO.StreamReader($peek)
+                $holder = $reader.ReadToEnd().Trim()
+            }
+            finally { $peek.Dispose() }
+        }
+        catch { }
+        if (-not $holder) { $holder = '(the holder did not record details)' }
+
+        Fail @"
+'$Key' is already being driven by another session.
+  $($holder -replace "`n", "`n  ")
+SESSIONS.md declares the emulator an exclusive singleton. Two sessions driving
+one AVD is what corrupts its quickboot snapshot. Wait for that run to finish, or
+target something else with -Avd / -Target.
+"@
+    }
+
+    $stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes("PID $PID ($env:USERNAME) since $stamp`nrepo: $RepoRoot")
+    $script:LockHandle.SetLength(0)
+    $script:LockHandle.Write($bytes, 0, $bytes.Length)
+    $script:LockHandle.Flush()
+    Write-Note "Claimed '$Key' for this run"
+}
+
+function Unlock-Device {
+    if ($script:LockHandle) {
+        $script:LockHandle.Dispose()
+        $script:LockHandle = $null
+        if ($script:LockPath) {
+            Remove-Item -LiteralPath $script:LockPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Repair an emulator wedged 'offline' by a corrupt quickboot snapshot. Everything
+# here is scoped to ONE AVD on purpose: a blanket `Stop-Process qemu*` would take
+# down another session's emulator, which is the exact failure this script exists
+# to prevent.
+function Invoke-EmulatorRecovery {
+    param([string]$AvdName)
+
+    Write-Step "Recovering AVD '$AvdName'"
+
+    foreach ($d in @(Get-AdbDevices | Where-Object { $_.IsEmulator })) {
+        if ((Get-EmulatorAvdName -Serial $d.Serial) -eq $AvdName) {
+            Write-Note "Asking $($d.Serial) to shut down"
+            & $Adb -s $d.Serial emu kill 2>$null | Out-Null
+        }
+    }
+    Start-Sleep -Seconds 3
+
+    $pattern = '-avd\s+' + [regex]::Escape($AvdName) + '(\s|$)'
+    $procs = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -in @('qemu-system-x86_64.exe', 'emulator.exe') -and $_.CommandLine -match $pattern })
+    foreach ($p in $procs) {
+        Write-Warn "Force-stopping $($p.Name) pid $($p.ProcessId) (serves '$AvdName')"
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+    if ($procs.Count -gt 0) { Start-Sleep -Seconds 2 }
+
+    $avdDir = Join-Path $env:USERPROFILE ".android\avd\$AvdName.avd"
+    if (Test-Path -LiteralPath $avdDir) {
+        $locks = @(Get-ChildItem -LiteralPath $avdDir -Filter '*.lock' -Recurse -Force -ErrorAction SilentlyContinue)
+        foreach ($l in $locks) { Remove-Item -LiteralPath $l.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+        Write-Note "Cleared $($locks.Count) stale lock entries in $AvdName.avd"
+    }
+    else {
+        Write-Warn "AVD folder not found at $avdDir - skipped lock cleanup."
+    }
+}
+
+if ($Recover) { $Target = 'emulator'; $ColdBoot = $true }
+
 Write-Step 'Starting adb server'
 & $Adb start-server | Out-Null
 $devices = @(Get-AdbDevices)
@@ -218,14 +347,17 @@ Then re-run. (Use 'Run GoalPilot.cmd' instead to fall back to the emulator.)
 
     }
     $serial = $phones[0].Serial
+    Lock-Device -Key "device-$serial"
     Write-Ok "Using physical device $serial"
 }
 elseif ($Target -eq 'auto' -and $phones.Count -gt 0) {
     $serial = $phones[0].Serial
+    Lock-Device -Key "device-$serial"
     Write-Ok "Using physical device $serial"
 }
-elseif ($emulators.Count -gt 0) {
+elseif ($emulators.Count -gt 0 -and -not $Recover) {
     $serial = $emulators[0].Serial
+    Lock-Device -Key "avd-$(Get-EmulatorAvdName -Serial $serial)"
     Write-Ok "Reusing running emulator $serial"
 }
 else {
@@ -240,6 +372,14 @@ else {
         Fail "AVD '$Avd' not found.`nAvailable AVDs: $available`nPass a different one with -Avd <name>."
     }
 
+    # Claim before booting, and before any recovery touches processes or files —
+    # nothing below this line may run in two sessions at once.
+    Lock-Device -Key "avd-$Avd"
+    if ($Recover) {
+        Invoke-EmulatorRecovery -AvdName $Avd
+        $devices = @(Get-AdbDevices)
+    }
+
     Write-Step "Booting emulator '$Avd'"
     $emuArgs = @('-avd', $Avd)
     if ($ColdBoot) { $emuArgs += '-no-snapshot-load' }
@@ -247,8 +387,11 @@ else {
 
     # Only *verified-ready* serials count as pre-existing. A serial that adb still
     # lists while its emulator shuts down must stay adoptable, because the AVD we
-    # just launched can reclaim the very same port.
-    $known = @($phones + $emulators | ForEach-Object { $_.Serial })
+    # just launched can reclaim the very same port. Recomputed here rather than
+    # reused from above: -Recover has just killed devices that were live then.
+    $known = @(Get-AdbDevices |
+        Where-Object { $_.State -eq 'device' -and (Test-DeviceReady -Serial $_.Serial) } |
+        ForEach-Object { $_.Serial })
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $announced = $false
 
@@ -287,6 +430,8 @@ if ($serial.StartsWith('emulator-')) {
 if ($SkipInstall) {
     Write-Host ''
     Write-Ok "Device $serial is up. Skipping build (-SkipInstall)."
+    Write-Note 'Released the device claim; the emulator keeps running.'
+    Unlock-Device
     # Explicit: otherwise the script inherits $LASTEXITCODE from the last adb call.
     exit 0
 }
@@ -308,6 +453,7 @@ if ($gradleExit -ne 0) {
     Write-Warn 'If the error mentions "Could not delete/move", it is a Windows file lock, not a code error:'
     Write-Warn '  - close the project in Android Studio, then re-run; or'
     Write-Warn '  - run: .\gradlew --stop ; Remove-Item -Recurse -Force app\build\generated\ksp'
+    Unlock-Device
     exit $gradleExit
 }
 Write-Ok 'Installed'
@@ -325,6 +471,10 @@ if ($LASTEXITCODE -ne 0 -or $amText -match '(?m)^\s*Error') {
 Write-Host ''
 Write-Ok "GoalPilot is running on $serial"
 Write-Host ''
+
+# Released before the logcat tail: tailing is read-only and can run for hours,
+# and holding the singleton that long would block every other session.
+Unlock-Device
 
 if ($Logcat) {
     Write-Step 'Tailing logcat (Ctrl+C to stop)'
