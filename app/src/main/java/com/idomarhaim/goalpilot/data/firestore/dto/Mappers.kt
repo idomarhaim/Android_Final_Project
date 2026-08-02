@@ -74,6 +74,7 @@ fun ProgressDto.toDomain(): ProgressEntry = ProgressEntry(
     note = note,
     imageUrl = imageUrl,
     createdAtEpochMillis = createdAt,
+    sourceKey = sourceKey,
 )
 
 // ── User ───────────────────────────────────────────────────────────

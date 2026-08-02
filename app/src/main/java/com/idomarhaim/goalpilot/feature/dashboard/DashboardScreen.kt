@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -58,8 +59,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.GpCard
@@ -84,11 +87,15 @@ fun DashboardScreen(
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
     val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
     val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
+    val healthSync by viewModel.healthSync.collectAsStateWithLifecycle()
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) { viewModel.ensureRecommendations() }
+    LaunchedEffect(Unit) {
+        viewModel.ensureRecommendations()
+        viewModel.ensureHealthAvailability()
+    }
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
     }
@@ -110,6 +117,19 @@ fun DashboardScreen(
     }
     LaunchedEffect(consentIntent) {
         consentIntent?.let { consentLauncher.launch(it) }
+    }
+
+    // Health Connect runs its own permission UI; the contract below is the only
+    // supported way to ask, and it has to be registered from a composable.
+    val healthPermissionLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract(),
+    ) { granted -> viewModel.onHealthPermissionsResult(granted) }
+    LaunchedEffect(healthSync.requestPermissions) {
+        if (!healthSync.requestPermissions) return@LaunchedEffect
+        // Launching throws if the provider vanished between the availability check
+        // and this call — uninstalling Health Connect mid-session does exactly that.
+        runCatching { healthPermissionLauncher.launch(viewModel.healthPermissions) }
+            .onFailure { viewModel.consumeHealthPermissionRequest() }
     }
 
     Scaffold(
@@ -161,6 +181,12 @@ fun DashboardScreen(
                 GoogleTasksImportCard(
                     isLoading = tasksImport.isLoading,
                     onImport = viewModel::importGoogleTasks,
+                )
+            }
+            item {
+                HealthConnectCard(
+                    state = healthSync,
+                    onSync = viewModel::syncHealth,
                 )
             }
             item {
@@ -224,6 +250,166 @@ fun DashboardScreen(
             onDismiss = viewModel::dismissImport,
         )
     }
+
+    if (healthSync.isVisible) {
+        HealthSyncDialog(
+            state = healthSync,
+            onToggle = viewModel::toggleHealthProposal,
+            onConfirm = viewModel::confirmHealthSync,
+            onDismiss = viewModel::dismissHealthSync,
+        )
+    }
+}
+
+/**
+ * Entry point for the Health Connect sync (spec §5, §6 nice-to-have). Reads the
+ * last week of steps and sleep and files each day against a fitness or sleep goal.
+ *
+ * The card is deliberately honest about absence: Health Connect is a separate app
+ * below Android 14 and missing from most emulator images, so "not available here"
+ * is a normal outcome that gets its own explanation rather than a dead button.
+ */
+@Composable
+private fun HealthConnectCard(state: HealthSyncState, onSync: () -> Unit) {
+    val availability = state.availability
+    val canSync = availability == HealthAvailability.AVAILABLE ||
+        availability == HealthAvailability.PERMISSIONS_REQUIRED
+    GpCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconChip(
+                    icon = Icons.Filled.MonitorHeart,
+                    tint = MaterialTheme.colorScheme.secondary,
+                )
+                Spacer(Modifier.width(12.dp))
+                Text("Sync health data", style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = when (availability) {
+                    null -> "Checking whether Health Connect is available…"
+                    HealthAvailability.AVAILABLE ->
+                        "Pull your steps and sleep from Health Connect and log them " +
+                            "against your goals. You review every day before it is saved."
+                    else -> availability.explain()
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(14.dp))
+            OutlinedButton(
+                onClick = onSync,
+                enabled = canSync && !state.isLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                when {
+                    state.isLoading -> {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reading…")
+                    }
+
+                    availability == HealthAvailability.PERMISSIONS_REQUIRED ->
+                        Text("Connect Health Connect")
+
+                    else -> Text("Sync steps & sleep")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Review sheet for a health sync. Every row is opt-out-able and nothing reaches
+ * Firestore until "Log" is pressed — the same policy as the Google Tasks import.
+ */
+@Composable
+private fun HealthSyncDialog(
+    state: HealthSyncState,
+    onToggle: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val selectedCount = state.proposals.count { it.selected }
+    AlertDialog(
+        onDismissRequest = { if (!state.isSaving) onDismiss() },
+        title = { Text("Log health readings") },
+        text = {
+            when {
+                state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Reading your steps and sleep…")
+                }
+
+                state.error != null -> Text(state.error)
+
+                else -> Column {
+                    Text(
+                        buildString {
+                            append("Found ${state.proposals.size} reading(s) from the last week.")
+                            if (state.skippedCount > 0) {
+                                append(" ${state.skippedCount} already logged, skipped.")
+                            }
+                            append(" Tap a row to include or exclude it.")
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 320.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        items(state.proposals, key = { it.sourceKey }) { proposal ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !state.isSaving) {
+                                        onToggle(proposal.sourceKey)
+                                    }
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Checkbox(
+                                    checked = proposal.selected,
+                                    onCheckedChange = { onToggle(proposal.sourceKey) },
+                                    enabled = !state.isSaving,
+                                )
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "${proposal.valueLabel()} · ${proposal.dayLabel()}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        "→ ${proposal.goalLabel}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (state.error == null && !state.isLoading) {
+                TextButton(onClick = onConfirm, enabled = !state.isSaving && selectedCount > 0) {
+                    Text(if (state.isSaving) "Logging…" else "Log $selectedCount")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving) {
+                Text(if (state.error != null) "Close" else "Cancel")
+            }
+        },
+    )
 }
 
 /**

@@ -123,6 +123,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
 
+    // ── Health Connect (fitness & sleep, spec §5 nice-to-have) ────
+    implementation(libs.androidx.health.connect)
+
     // ── Unit tests ────────────────────────────────────────────────
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

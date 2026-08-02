@@ -39,9 +39,16 @@ The system works on three levels (spec §1):
   a new one, with an estimated point value. You confirm before anything is saved.
 - 📊 **Analytics charts** (progress per goal, task-focus split)
 
+**Nice-to-have (implemented)**
+- ✅ **Import tasks from Google Tasks** — the "Import from Google Tasks" card
+  pulls your open tasks in and files each one under the right goal. Deduped
+  against what is already there; you review everything before it is saved.
+- ✅ **Pull fitness & sleep from Health Connect** — the "Sync health data" card
+  reads the last seven days of steps and sleep and logs each day against a
+  fitness or sleep goal, creating one if you have none. **Read-only** (GoalPilot
+  never writes to your health store), and nothing is saved until you confirm.
+
 **Nice-to-have (architected + scaffolded, see `TODO/`)**
-- 🧩 Import tasks from **Google Tasks** — `data/tasks/GoogleTasksClient` stub
-- 🧩 Pull fitness/sleep from **Health Connect** — `data/health/HealthConnectManager` stub
 - 🧩 Shared/competitive **challenges** — model + Firestore rules + preview screen
 
 ---

@@ -4,15 +4,38 @@ These tiers are **architected and scaffolded** (models, DI, stubs, navigation) b
 not fully implemented, to keep the Core build rock-solid. Each item lists exactly
 how to activate it.
 
-## Health Connect — fitness & sleep (spec §5, §6 nice-to-have)
-File: `app/.../data/health/HealthConnectManager.kt` (stub).
-1. Add dep: `androidx.health.connect:connect-client:<latest stable/rc>` to
-   `gradle/libs.versions.toml` + `app/build.gradle.kts`.
-2. Manifest: declare health permissions, the Health Connect `<queries>` entry,
-   and a `PermissionsRationaleActivity`.
-3. Replace the stub with `HealthConnectClient.getOrCreate(context)` reads
-   (`StepsRecord`, `SleepSessionRecord`) over a time range.
-4. Feed results into `ProgressRepository` (e.g. auto-log a "Steps"/"Sleep" goal).
+## ~~Health Connect — fitness & sleep (spec §5, §6 nice-to-have)~~ — DONE 2026-08-02
+Shipped as the **"Sync health data"** card on the dashboard. Reads the last seven
+days of steps and sleep, proposes which goal each day belongs to, and writes
+nothing until the user confirms. See `CHANGELOG/2026-08-02.md`.
+
+**Read-only by design** — only `READ_STEPS` / `READ_SLEEP` are declared, so the
+user is never asked for write access and GoalPilot can never modify the device's
+health store.
+
+Implementation notes worth keeping:
+- **The client version is pinned by the toolchain, not by preference.**
+  `connect-client` is on `1.1.0-beta01`; stable `1.1.0` and every `1.1.0-rc*`
+  require **compileSdk 36 + AGP 8.9.1**, and this project is on compileSdk 35 /
+  AGP 8.7.3 / Gradle 8.10.2. Don't "upgrade to stable" without doing the
+  toolchain bump first — `checkDebugAarMetadata` fails immediately. There is no
+  stable `1.0.0`; that line ends at `1.0.0-alpha11`.
+- **Sleep is filed under the day the user woke up.** A session crossing midnight
+  has two candidate dates; waking day is what "last night" means.
+- **Overlapping sleep sessions are merged, not summed.** Health Connect
+  aggregates every app on the device, so a watch plus a sleep tracker reports the
+  same night twice — summing claims sixteen hours.
+- **Steps use `aggregateGroupByPeriod`, not `readRecords`.** The provider
+  de-duplicates across source apps during aggregation; raw reads do not.
+- `ProgressEntry.sourceKey` (e.g. `hc:steps:2026-08-01`) makes re-sync dedupe
+  **exact** — steps are cumulative, so logging a day twice silently doubles it.
+- The rationale activity is **mandatory**: Health Connect refuses permissions to
+  an app that handles neither `ACTION_SHOW_PERMISSIONS_RATIONALE` nor, on 14+,
+  the `VIEW_PERMISSION_USAGE` alias.
+
+**Still worth doing:** verify a sync on a **physical phone with real step data**.
+The emulator carries the Health Connect apex but its store is empty, so the
+proposal → Firestore write path has never run against real readings.
 
 ## ~~Google Tasks import (spec §5, §6 nice-to-have)~~ — DONE 2026-07-31
 Shipped as the **"Import from Google Tasks"** card on the dashboard. Verified

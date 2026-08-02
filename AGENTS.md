@@ -23,7 +23,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 - `app/src/main/java/com/idomarhaim/goalpilot/`
   - `core/` — `Resource` wrapper, date utils, Firestore/Storage/Functions constants.
   - `domain/` — models, repository **interfaces**, use cases. **No Android/Firebase types here.**
-  - `data/` — Firebase + GROQ implementations (`auth/`, `firestore/`, `storage/`, `remote/`) and integration stubs (`health/`, `tasks/`).
+  - `data/` — Firebase + GROQ implementations (`auth/`, `firestore/`, `storage/`, `remote/`) plus the Google Tasks (`tasks/`) and Health Connect (`health/`) integrations.
   - `di/` — Hilt modules (`FirebaseModule`, `DispatchersModule`, `RepositoryModule`).
   - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold).
   - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `challenges`.
@@ -66,6 +66,10 @@ firebase deploy --only firestore:rules,storage,functions
 - **GROQ key never ships in the app** — it lives only in `functions/.env` (spec §5). The client always has a local fallback (spec §8).
 - **The GROQ model id rots.** GROQ retires models on a rolling schedule and a retired id fails *silently* — the client just serves local fallback tips, so the AI looks bland rather than broken. `DEFAULT_MODEL` in `functions/src/index.ts` is the single pin; check it against <https://console.groq.com/docs/deprecations> before any demo.
 - **Instrumented tests need Espresso ≥ 3.7.0** on modern emulators. 3.6.1 reflects on the private `InputManager.getInstance()`, removed in Android 15+, and every test dies with `NoSuchMethodException` before its body runs.
+- **Health Connect is pinned to `connect-client:1.1.0-beta01` by the toolchain.** Stable `1.1.0` and every `1.1.0-rc*` require **compileSdk 36 AND AGP 8.9.1+**; this project is compileSdk 35 / AGP 8.7.3 / Gradle 8.10.2, and `checkDebugAarMetadata` rejects them outright. Do not "upgrade to stable" as a tidy-up — it is a three-part toolchain bump (AGP + wrapper + compileSdk), tracked in TODO → FUTURE. There is no stable `1.0.0`; that line ends at `1.0.0-alpha11`.
+- **Health Connect is read-only here, and that is load-bearing.** Only `READ_STEPS`/`READ_SLEEP` are declared. Adding a write permission — even temporarily, even to seed test data — contradicts what `HealthPermissionsRationaleActivity` promises the user on a screen the system itself surfaces. Seed real data on a phone instead.
+- **The rationale activity is mandatory, and the 14+ entry point must be an `<activity-alias>`.** Health Connect refuses permissions to an app handling neither `ACTION_SHOW_PERMISSIONS_RATIONALE` nor `VIEW_PERMISSION_USAGE`. The alias exists because the system requires `START_VIEW_PERMISSION_USAGE` on the component it launches, and putting that permission on the activity itself would also gate the 13-and-below entry point, which may not be gated.
+- **An activity outside `ui/root/` gets no insets for free.** `enableEdgeToEdge()` is on, and only `GoalPilotRoot`'s scaffold insets for it — a standalone activity needs `Modifier.safeDrawingPadding()` or its heading renders under the status bar.
 - **Never re-enable Material You dynamic colour.** `GoalPilotTheme` used to take
   `dynamicColor = true`, which meant the wallpaper decided every colour and the
   brand palette was dead code on Android 12+. Colour now comes from the selected

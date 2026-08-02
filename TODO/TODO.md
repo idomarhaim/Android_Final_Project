@@ -36,13 +36,25 @@ Backlog index. Per-area files live under three priority subfolders next to this 
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
 - [Integrations.TODO.optional.md](TODO_OPTIONAL/Integrations.TODO.optional.md)
-  - Health Connect (fitness/sleep) — `data/health/HealthConnectManager` stub.
-  - Google Tasks import — `data/tasks/GoogleTasksClient` stub.
-  - Competitive challenges — model + rules + preview screen exist; create/join/standings logic pending.
+  - [x] **Health Connect (fitness/sleep)** — shipped 02/08/2026 as the "Sync
+    health data" card. Read-only, review-before-write, dedupe via
+    `ProgressEntry.sourceKey`. One follow-up: verify on a **physical phone with
+    real step data** — the emulator's Health Connect store is empty, so the
+    write path has never run against real readings.
+  - [x] Google Tasks import — shipped 31/07/2026.
+  - [ ] **Competitive challenges** — model + rules + preview screen exist;
+    create/join/standings logic pending. **The last remaining §6 nice-to-have.**
   - [x] LLM task→goal classification UI — shipped as the "Smart add a task" card
     on the dashboard; `scoreTask` is wired to the ✨ button on the add-task row.
 
 ### 🟢 FUTURE — [`TODO_FUTURE/`](TODO_FUTURE/)
+- **Bump the build toolchain, then take Health Connect `1.1.0` stable.** The app
+  is pinned to `connect-client:1.1.0-beta01` purely because stable `1.1.0` (and
+  every `1.1.0-rc*`) requires **compileSdk 36 + AGP 8.9.1+**, while this project
+  is on compileSdk 35 / AGP 8.7.3 / Gradle 8.10.2. The three move together —
+  AGP 8.9.1 also needs Gradle 8.11.1+. SDK Platform 36 is already installed on
+  this machine, so the blocker is risk, not tooling: it is a whole-build change
+  and was deliberately kept out of the Health Connect feature.
 - Move points/level computation to a Firestore-triggered Cloud Function (anti-cheat).
 - Cascade-delete a goal's tasks/progress (Cloud Function or batched client delete).
 - **Migrate Google Sign-In → Credential Manager + Sign in with Google.** This is

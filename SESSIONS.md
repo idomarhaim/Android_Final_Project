@@ -15,13 +15,17 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `health` | Health Connect integration — steps & sleep ([Integrations.TODO.optional.md](TODO/TODO_OPTIONAL/Integrations.TODO.optional.md)) | `app/src/main/java/com/idomarhaim/goalpilot/data/health/`, `.../domain/model/HealthMetrics.kt`, `.../domain/repository/HealthRepository.kt`, `.../feature/health/`, `.../di/HealthModule.kt`, `app/src/main/AndroidManifest.xml`, `app/src/main/res/xml/`, `gradle/libs.versions.toml`, `app/build.gradle.kts`, `app/src/test/java/com/idomarhaim/goalpilot/health/` | Gradle daemon; emulator `Pixel_10_Pro_XL` at verification | 2026-08-02 |
 | `theming` | UI / theming pass — selectable app skins | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `.../data/prefs/`, `.../domain/model/AppSkin.kt`, `.../domain/repository/AppPreferencesRepository.kt` | — | 2026-07-31 ~20:05 |
 
 > ⚠️ The `theming` row was **recorded by another session from observed file
 > changes**, not claimed by its owner — the board did not exist when that work
 > started. Confirm the path list with that session before relying on it, and have
 > it release the row when done.
+>
+> As of 2026-08-02 that session is **live again and uncommitted**: `ui/theme/Color.kt`,
+> `res/values/colors.xml` and `res/values-night/colors.xml` are modified in the
+> working tree. The `health` session left them untouched and staged by explicit
+> path. **Do not `git add -A` here.**
 
 ## 📏 Rules
 
@@ -54,9 +58,12 @@ Where to look, in order: [`TODO/TODO.md`](TODO/TODO.md) (MUST → OPTIONAL →
 FUTURE), then open issues. `/claim` reads both and proposes a fit.
 
 Currently unclaimed and ready:
-- **Health Connect** (§6 nice-to-have) — `data/health/`, manifest, `ProgressRepository`
-- **Competitive challenges** (§6 nice-to-have) — `feature/challenges/`, a new `ChallengeRepository`
 - **Two-account demo + spec title page** — the two remaining MUST items, mostly manual
+- **Competitive challenges** (§6 nice-to-have) — `feature/challenges/`, a new
+  `ChallengeRepository`. **Now the last remaining nice-to-have.**
+- **Health Connect on a physical phone** — small follow-up to the shipped feature.
+  The emulator carries the provider but its store is empty, so the
+  proposal → Firestore write path has never run against real step data.
 
 ## 📓 Recently released
 
@@ -64,3 +71,4 @@ Currently unclaimed and ready:
 |---|---|---|---|
 | `backend` | Live Firebase backend, E2E verification, Google Tasks import, JARVIS §5 governance | 2026-07-31 | `6e4a184`, `79ce624`, `1ebb178`, `53c2afb`, `64802e5`, PR #1 |
 | `launchers` | One-click run scripts; made the emulator singleton self-enforcing | 2026-08-01 | `dc1c06e` + follow-up (pending) |
+| `health` | Health Connect integration — steps & sleep, read-only, review-before-write | 2026-08-02 | see `CHANGELOG/2026-08-02.md`; emulator released |

@@ -5,12 +5,14 @@ import com.idomarhaim.goalpilot.data.firestore.GoalRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.ProgressRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.SocialRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.TaskRepositoryImpl
+import com.idomarhaim.goalpilot.data.health.HealthConnectManager
 import com.idomarhaim.goalpilot.data.prefs.AppPreferencesRepositoryImpl
 import com.idomarhaim.goalpilot.data.remote.RecommendationRepositoryImpl
 import com.idomarhaim.goalpilot.data.storage.StorageRepositoryImpl
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
@@ -57,4 +59,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAppPreferencesRepository(impl: AppPreferencesRepositoryImpl): AppPreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHealthRepository(impl: HealthConnectManager): HealthRepository
 }

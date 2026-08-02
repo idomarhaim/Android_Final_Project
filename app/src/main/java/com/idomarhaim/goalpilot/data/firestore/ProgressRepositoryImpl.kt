@@ -78,6 +78,7 @@ class ProgressRepositoryImpl @Inject constructor(
                     note = entry.note,
                     imageUrl = imageUrl,
                     createdAt = System.currentTimeMillis(),
+                    sourceKey = entry.sourceKey,
                 )
                 ref.set(dto).await()
 

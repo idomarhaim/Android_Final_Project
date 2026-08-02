@@ -27,6 +27,17 @@ playServicesAuth = "21.3.0"
 coil = "2.7.0"
 kotlinxSerialization = "1.7.3"
 
+# ── Health Connect ─────────────────────────────────────────────────
+# PINNED BY THE TOOLCHAIN, not by preference. 1.1.0 is the first stable
+# connect-client (there is no stable 1.0.0 — that line ends at alpha11), but
+# 1.1.0 and 1.1.0-rc* both demand compileSdk 36 AND AGP 8.9.1+; this project is
+# on compileSdk 35 / AGP 8.7.3 / Gradle 8.10.2. beta01 is the newest release
+# that builds against the current toolchain, and the APIs used in
+# data/health/HealthConnectManager.kt have been settled since 1.0.0-alpha.
+# Moving to 1.1.0 means bumping AGP, the Gradle wrapper and compileSdk together
+# — tracked in TODO/TODO_FUTURE/, deliberately not bundled into this feature.
+healthConnect = "1.1.0-beta01"
+
 # ── Test ───────────────────────────────────────────────────────────
 junit = "4.13.2"
 mockk = "1.13.13"
@@ -78,6 +89,9 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 # Media / serialization
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Health Connect (fitness & sleep)
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
 
 # Unit test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -43,6 +43,8 @@ data class ProgressDto(
     var note: String = "",
     var imageUrl: String? = null,
     var createdAt: Long = 0L,
+    /** Identity of an imported reading (e.g. `hc:steps:2026-08-01`); null if logged by hand. */
+    var sourceKey: String? = null,
 )
 
 data class UserDto(
