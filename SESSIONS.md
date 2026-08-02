@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `health` | Health Connect integration — steps & sleep ([Integrations.TODO.optional.md](TODO/TODO_OPTIONAL/Integrations.TODO.optional.md)) | `app/src/main/java/com/idomarhaim/goalpilot/data/health/`, `.../domain/model/HealthMetrics.kt`, `.../domain/repository/HealthRepository.kt`, `.../feature/health/`, `.../di/HealthModule.kt`, `app/src/main/AndroidManifest.xml`, `app/src/main/res/xml/`, `gradle/libs.versions.toml`, `app/build.gradle.kts`, `app/src/test/java/com/idomarhaim/goalpilot/health/` | Gradle daemon; emulator `Pixel_10_Pro_XL` at verification | 2026-08-02 |
 | `theming` | UI / theming pass — selectable app skins | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `.../data/prefs/`, `.../domain/model/AppSkin.kt`, `.../domain/repository/AppPreferencesRepository.kt` | — | 2026-07-31 ~20:05 |
 
 > ⚠️ The `theming` row was **recorded by another session from observed file
