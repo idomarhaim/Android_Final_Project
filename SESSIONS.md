@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `scaffold` | Upgrade this repo's scaffold to the current template library (`AGENTS.md` v8 → v10, `general.instructions.md` v10 → v12) via `/jarvis-ize` | `AGENTS.md`, `.github/`, `SESSIONS.md`, `CHANGELOG/2026-08-02.md` | — | 2026-08-02 |
 
 ## 📏 Rules
 
