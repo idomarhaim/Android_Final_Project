@@ -34,6 +34,8 @@ Delete the `.lnk` files to undo — nothing else is modified.
 .\scripts\run-goalpilot.ps1 -SkipInstall           # bring a device up only
 .\scripts\run-goalpilot.ps1 -ColdBoot              # ignore the emulator snapshot
 .\scripts\run-goalpilot.ps1 -Recover               # repair a wedged AVD, then cold-boot
+.\scripts\run-goalpilot.ps1 -WindowScale 0.3       # override the emulator window scale
+.\scripts\run-goalpilot.ps1 -NoWindowFit           # leave window size/position to the emulator
 .\scripts\run-goalpilot.ps1 -Logcat                # tail app logcat after launch
 .\scripts\run-goalpilot.ps1 -Avd Some_Other_AVD
 ```
@@ -119,6 +121,32 @@ this machine) — that is expected, not a hang.
 **Gradle fails with `InstallException: device offline`.** The device dropped out
 *during* the install. Confirm with `adb devices`; if the emulator is gone or
 offline, apply the cold-boot recovery above and re-run.
+
+**The emulator window opens half off the top of the screen and can't be
+dragged.** The `pixel_10_pro_xl` skin is **1466 × 3101**. Auto-scaled on a short
+monitor the window comes out taller than the desktop, and the emulator then
+centres it *vertically* — which puts the title bar above the top edge, leaving
+nothing to grab. (On a 1440 × 900 display the working height is 852 px, so this
+happens every time.)
+
+The script prevents it: before each launch it computes a scale that fits the
+primary monitor and writes `window.x` / `window.y` / `window.scale` into
+`<avd>.avd\emulator-user.ini`. It has to be rewritten *every* launch, because the
+emulator overwrites that file with the window's last position when it exits.
+
+If a window is *already* stranded, just run the script again — it also checks the
+live window after attaching and moves it back:
+
+```
+!!  Emulator window was off-screen (top=-420); moved it to (566,96).
+```
+
+That check is judged against the monitor the window is actually on, so an
+emulator you deliberately parked on a second screen is left where you put it.
+
+Override with `-WindowScale 0.3`, or opt out entirely with `-NoWindowFit`.
+Note that `-scale` on the emulator command line does **not** work — it has been
+obsolete and silently ignored since Emulator 2.0.
 
 ## Why avoid opening the project in Android Studio
 

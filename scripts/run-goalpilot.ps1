@@ -37,6 +37,13 @@
     down only the processes serving -Avd, clears only that AVD's stale *.lock
     entries, then cold-boots. Implies -Target emulator and -ColdBoot.
 
+.PARAMETER WindowScale
+    Emulator window scale (e.g. 0.25). Default 0 = compute a scale that fits the
+    primary monitor's working area.
+
+.PARAMETER NoWindowFit
+    Leave window size and position entirely to the emulator.
+
 .PARAMETER BootTimeoutSec
     How long to wait for the emulator to finish booting. Default 300s.
 
@@ -69,6 +76,9 @@ param(
     [switch]$ColdBoot,
     [switch]$Logcat,
     [switch]$Recover,
+
+    [double]$WindowScale = 0,
+    [switch]$NoWindowFit,
 
     [int]$BootTimeoutSec = 300
 )
@@ -317,6 +327,127 @@ function Invoke-EmulatorRecovery {
     }
 }
 
+# ── Emulator window placement ─────────────────────────────────────────────────
+# The Pixel 10 Pro XL skin is 1466x3101. Auto-scaled on a short monitor the
+# window comes out taller than the desktop, and the emulator then centres it
+# vertically — which puts the title bar ABOVE the top of the screen, so the
+# window cannot be dragged back into view. Pick a scale that fits and a position
+# that centres, before launching.
+function Get-SkinSize {
+    param([string]$AvdName)
+
+    $cfg = Join-Path $env:USERPROFILE ".android\avd\$AvdName.avd\config.ini"
+    $w = 0; $h = 0; $skinPath = $null
+    if (Test-Path -LiteralPath $cfg) {
+        foreach ($line in Get-Content -LiteralPath $cfg) {
+            if ($line -match '^\s*skin\.path\s*=\s*(.+?)\s*$') { $skinPath = $Matches[1] }
+            elseif ($line -match '^\s*hw\.lcd\.width\s*=\s*(\d+)') { $w = [int]$Matches[1] }
+            elseif ($line -match '^\s*hw\.lcd\.height\s*=\s*(\d+)') { $h = [int]$Matches[1] }
+        }
+    }
+    # Prefer the skin's own layout — it includes the bezel, and the bezel is part
+    # of what gets scaled. hw.lcd.* alone under-reports the window by ~4%.
+    if ($skinPath) {
+        $layout = Join-Path $skinPath 'layout'
+        if (Test-Path -LiteralPath $layout) {
+            $widths = @(); $heights = @()
+            foreach ($line in Get-Content -LiteralPath $layout) {
+                if ($line -match '^\s*width\s+(\d+)') { $widths += [int]$Matches[1] }
+                elseif ($line -match '^\s*height\s+(\d+)') { $heights += [int]$Matches[1] }
+            }
+            if ($widths.Count -gt 0 -and $heights.Count -gt 0) {
+                $w = ($widths | Measure-Object -Maximum).Maximum
+                $h = ($heights | Measure-Object -Maximum).Maximum
+            }
+        }
+    }
+    if ($w -le 0 -or $h -le 0) { return $null }
+    return [pscustomobject]@{ Width = $w; Height = $h }
+}
+
+function Set-EmulatorWindowLayout {
+    param([string]$AvdName, [double]$Scale = 0)
+
+    $skin = Get-SkinSize -AvdName $AvdName
+    if (-not $skin) {
+        Write-Note 'Could not read the skin size; leaving window placement to the emulator.'
+        return
+    }
+
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+    $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+
+    # 90px covers the title bar plus a margin above and below.
+    if ($Scale -le 0) { $Scale = [math]::Round(($wa.Height - 90) / $skin.Height, 3) }
+    if ($Scale -gt 1) { $Scale = 1 }
+    if ($Scale -lt 0.1) { $Scale = 0.1 }
+
+    $winW = [int]($skin.Width * $Scale)
+    $winH = [int]($skin.Height * $Scale)
+    $x = [int]($wa.X + [math]::Max(0, ($wa.Width - $winW) / 2))
+    $y = [int]($wa.Y + [math]::Max(0, ($wa.Height - $winH - 31) / 2))
+
+    # The emulator rewrites this file on exit, so it is set fresh every launch
+    # rather than once. Other keys (uuid, posture, ...) are preserved.
+    $ini = Join-Path $env:USERPROFILE ".android\avd\$AvdName.avd\emulator-user.ini"
+    $keep = @()
+    if (Test-Path -LiteralPath $ini) {
+        $keep = @(Get-Content -LiteralPath $ini | Where-Object { $_ -notmatch '^\s*window\.(x|y|scale)\s*=' })
+    }
+    $lines = @("window.x = $x", "window.y = $y", ('window.scale = {0:F6}' -f $Scale)) + $keep
+    Set-Content -LiteralPath $ini -Value $lines -Encoding ascii
+    Write-Note ("Window: scale {0} -> {1}x{2} at ({3},{4})" -f $Scale, $winW, $winH, $x, $y)
+}
+
+# Safety net for a window that is already off-screen — including one stranded by
+# an earlier run, which the ini alone cannot rescue because the emulator is
+# already up.
+function Repair-EmulatorWindowPosition {
+    param([string]$Serial)
+
+    if (-not ([System.Management.Automation.PSTypeName]'GpWin').Type) {
+        Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public class GpWin {
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
+}
+'@
+    }
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+
+    $port = ($Serial -split '-')[-1]
+    $proc = Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -like "*:$port*" } |
+        Select-Object -First 1
+    if (-not $proc) { return }
+
+    $r = New-Object GpWin+RECT
+    if (-not [GpWin]::GetWindowRect($proc.MainWindowHandle, [ref]$r)) { return }
+    $w = $r.Right - $r.Left
+    $h = $r.Bottom - $r.Top
+
+    # Judge against the monitor the window actually sits on, not the primary one.
+    # A window deliberately parked on a second screen is not a problem to fix,
+    # and dragging it back to the primary would just fight the user.
+    $wa = ([System.Windows.Forms.Screen]::FromHandle($proc.MainWindowHandle)).WorkingArea
+
+    # The only true failure is an unreachable title bar, or so little of the
+    # window on-screen that it cannot be grabbed.
+    $titleBarHidden = $r.Top -lt $wa.Y
+    $barelyVisible = ($r.Right -le ($wa.X + 40)) -or ($r.Left -ge ($wa.X + $wa.Width - 40)) -or
+                     ($r.Top -ge ($wa.Y + $wa.Height - 40))
+    if (-not ($titleBarHidden -or $barelyVisible)) { return }
+
+    $x = [int]($wa.X + [math]::Max(0, ($wa.Width - $w) / 2))
+    $y = [int]($wa.Y + [math]::Max(0, ($wa.Height - $h) / 2))
+    # SWP_NOSIZE (0x0001) | SWP_NOZORDER (0x0004) — move only.
+    [void][GpWin]::SetWindowPos($proc.MainWindowHandle, [IntPtr]::Zero, $x, $y, 0, 0, 0x0005)
+    Write-Warn "Emulator window was off-screen (top=$($r.Top)); moved it to ($x,$y)."
+}
+
 if ($Recover) { $Target = 'emulator'; $ColdBoot = $true }
 
 Write-Step 'Starting adb server'
@@ -380,6 +511,8 @@ else {
         $devices = @(Get-AdbDevices)
     }
 
+    if (-not $NoWindowFit) { Set-EmulatorWindowLayout -AvdName $Avd -Scale $WindowScale }
+
     Write-Step "Booting emulator '$Avd'"
     $emuArgs = @('-avd', $Avd)
     if ($ColdBoot) { $emuArgs += '-no-snapshot-load' }
@@ -425,6 +558,8 @@ $env:ANDROID_SERIAL = $serial
 if ($serial.StartsWith('emulator-')) {
     & $Adb -s $serial shell input keyevent 224 | Out-Null   # KEYCODE_WAKEUP
     & $Adb -s $serial shell wm dismiss-keyguard | Out-Null
+    # Runs on the reuse path too: rescues a window an earlier run left stranded.
+    if (-not $NoWindowFit) { Repair-EmulatorWindowPosition -Serial $serial }
 }
 
 if ($SkipInstall) {
