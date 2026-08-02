@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v1; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
 
 # 🧭 Session claim board — GoalPilot
 
@@ -15,17 +15,25 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `scaffold` | Upgrade this repo's scaffold to the current template library (`AGENTS.md` v8 → v10, `general.instructions.md` v10 → v12) via `/jarvis-ize` | `AGENTS.md`, `.github/`, `SESSIONS.md`, `CHANGELOG/2026-08-02.md` | — | 2026-08-02 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
-1. **Claim before writing.** Add your row, commit it, then work.
+0. **This file existing is the trigger.** Read it before your first edit — not
+   "if someone else might be here". Whether they are is what this file tells you,
+   so skipping it means you have no evidence you were allowed to skip it.
+1. **Claim before writing.** Add your row, commit it, then work. If a row was
+   written *for* you by another session from files it saw change, that is a
+   report, not a claim — confirm and correct its path list before you continue.
 2. **Never write outside your paths.** If you need a path another session owns,
    say so and let the user re-assign — do not "just quickly" edit it.
-3. **Never `git add -A`** while another session is live. Stage explicit paths, or
-   you will commit their half-written work.
+3. **Never blanket-stage** — `git add -A`, `git add .`, `git add --all`,
+   `git commit -a`. Not "while another session is live": you cannot know that
+   until you have read this board, and by then you have already staged. Explicit
+   paths always; it costs nothing on the days you are alone.
 4. **Singletons are exclusive.** Builds and device work serialise. Claim, use,
-   release.
+   release — and check the table below before your first **build or device
+   command**, not only before your first edit.
 5. **Release when done** — clear your row on `/handoff`, on finish, or when
    abandoning. A stale claim blocks work nobody is doing.
 6. **The agent recommends, the user assigns.** A session that sees unclaimed work
@@ -62,7 +70,8 @@ Currently unclaimed and ready:
 | `backend` | Live Firebase backend, E2E verification, Google Tasks import, JARVIS §5 governance | 2026-07-31 | `6e4a184`, `79ce624`, `1ebb178`, `53c2afb`, `64802e5`, PR #1 |
 | `launchers` | One-click run scripts; made the emulator singleton self-enforcing | 2026-08-01 | `dc1c06e` + follow-up (pending) |
 | `health` | Health Connect integration — steps & sleep, read-only, review-before-write | 2026-08-02 | see `CHANGELOG/2026-08-02.md`; emulator released |
-| `theming` | Selectable app skins (Aurora/Blossom) + UI/UX pass | 2026-08-02 | `e31ac9d`, `a413485`, + the canvas re-tint committed alongside this row; emulator released |
+| `theming` | Selectable app skins (Aurora/Blossom) + UI/UX pass | 2026-08-02 | `e31ac9d`, `a413485`, `c30709e`; emulator released |
+| `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not
