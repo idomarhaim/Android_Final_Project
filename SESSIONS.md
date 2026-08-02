@@ -15,17 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `theming` | UI / theming pass — selectable app skins | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `.../data/prefs/`, `.../domain/model/AppSkin.kt`, `.../domain/repository/AppPreferencesRepository.kt` | — | 2026-07-31 ~20:05 |
-
-> ⚠️ The `theming` row was **recorded by another session from observed file
-> changes**, not claimed by its owner — the board did not exist when that work
-> started. Confirm the path list with that session before relying on it, and have
-> it release the row when done.
->
-> As of 2026-08-02 that session is **live again and uncommitted**: `ui/theme/Color.kt`,
-> `res/values/colors.xml` and `res/values-night/colors.xml` are modified in the
-> working tree. The `health` session left them untouched and staged by explicit
-> path. **Do not `git add -A` here.**
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -72,3 +62,15 @@ Currently unclaimed and ready:
 | `backend` | Live Firebase backend, E2E verification, Google Tasks import, JARVIS §5 governance | 2026-07-31 | `6e4a184`, `79ce624`, `1ebb178`, `53c2afb`, `64802e5`, PR #1 |
 | `launchers` | One-click run scripts; made the emulator singleton self-enforcing | 2026-08-01 | `dc1c06e` + follow-up (pending) |
 | `health` | Health Connect integration — steps & sleep, read-only, review-before-write | 2026-08-02 | see `CHANGELOG/2026-08-02.md`; emulator released |
+| `theming` | Selectable app skins (Aurora/Blossom) + UI/UX pass | 2026-08-02 | `e31ac9d`, `a413485`, + the canvas re-tint committed alongside this row; emulator released |
+
+> **Post-mortem, recorded because the next session should not repeat it.** The
+> `theming` session ran for two days without ever reading this board — it did not
+> exist when that work started, and the `AGENTS.md` it read (template v4) had no
+> pointer to it. Consequences: it used `git add -A` (the one thing rule 3 forbids
+> by name), wrote to `feature/dashboard/DashboardScreen.kt` and
+> `di/RepositoryModule.kt` while `health` owned them, and used the Gradle daemon
+> and the AVD while `health` held both. Nothing was actually lost — the two
+> sessions happened to edit different regions of `DashboardScreen.kt`, and the
+> `add -A` landed in a window where the tree held no sibling work — but only by
+> luck. The rule text and enforcement were tightened in JARVIS §5 as a result.
