@@ -122,6 +122,39 @@ this machine) — that is expected, not a hang.
 *during* the install. Confirm with `adb devices`; if the emulator is gone or
 offline, apply the cold-boot recovery above and re-run.
 
+**The emulator boots to a black screen, or System UI ANRs.** First check whether
+the *guest* is rendering, not just the window — they look identical on screen:
+
+```powershell
+adb shell screencap -p /sdcard/g.png; adb pull /sdcard/g.png .
+```
+
+A fully black frame compresses to ~22 KB; a real frame is ~500–700 KB. If it is
+black, GPU emulation is wedged — usually GL state restored from a snapshot. Run
+`-Recover` (cold boot), which fixes it.
+
+If it recurs, the AVD's hardware profile is the cause. **This machine's AVD has
+been retuned** (`~/.android/avd/Pixel_10_Pro_XL.avd/config.ini`, original kept as
+`config.ini.bak-before-tuning`):
+
+| Setting | Default | Here | Why |
+|---|---|---|---|
+| `hw.ramSize` | 2048 | 4096 | 2 GB is too little for an API 37 image with Play Services |
+| `vm.heapSize` | 256 | 512 | matches the larger RAM |
+| `hw.cpu.ncore` | 4 | 6 | host is 12-core / 14-thread |
+| `hw.gpu.mode` | `auto` | `angle_indirect` | host has **no discrete GPU** |
+
+That last one matters most here. With integrated Intel graphics, `auto` resolves
+to the host **OpenGL** path, and Intel's Windows OpenGL driver is where the GLES
+translator dies with `Failed to find EmulatedEglImage` and
+`glAttachShader ... error 0x502`. `angle_indirect` goes through **Direct3D 11**
+instead. If that ever misbehaves, `swiftshader_indirect` is pure software —
+slower, but it works anywhere.
+
+These values are tuned to one machine and are deliberately **not** project
+defaults. Changing `hw.ramSize` invalidates the snapshot, so the next boot is
+automatically cold.
+
 **The emulator window opens half off the top of the screen and can't be
 dragged.** The `pixel_10_pro_xl` skin is **1466 × 3101**. Auto-scaled on a short
 monitor the window comes out taller than the desktop, and the emulator then

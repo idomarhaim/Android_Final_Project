@@ -9,3 +9,4 @@ discipline — a `## 🧪 Tests` section with pass/fail counts and covered layer
 - [2026-07-15.md](2026-07-15.md) — `/jarvis-ize` governance pass (scaffold v10/v4, `knowledge/` bundle).
 - [2026-07-31.md](2026-07-31.md) — Fix pass: GROQ/Node deprecations, LLM features shipped, social correctness fixes, instrumented tests run for the first time.
 - [2026-08-01.md](2026-08-01.md) — `scripts/` one-click launchers: run the emulator/phone loop without Android Studio.
+- [2026-08-02.md](2026-08-02.md) — Emulator black screen + SystemUI ANR diagnosed; AVD hardware profile retuned for this host (no discrete GPU).
