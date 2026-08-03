@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `sentinels` | Install `JARVIS:BEGIN`/`END` markers in `AGENTS.md` (v10→v12), preserving this repo's singleton list outside the block | `AGENTS.md`, `CHANGELOG/2026-08-03.md` | the git index (no build/device work in this pass) | 2026-08-03 16:40 |
 
 ## 📏 Rules
 
