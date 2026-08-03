@@ -65,6 +65,7 @@ import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -153,6 +154,7 @@ fun GoalDetailScreen(
                             fraction = goal.progressFraction,
                             accentHex = goal.colorHex,
                             categoryLabel = goal.category.label,
+                            lifeAreaName = state.lifeArea?.name,
                             current = goal.currentValue.trimNumber(),
                             target = goal.targetValue.trimNumber(),
                             unit = goal.unit,
@@ -165,6 +167,7 @@ fun GoalDetailScreen(
                         AddTaskRow(
                             isScoring = action.isScoring,
                             suggestedPoints = action.suggestedPoints,
+                            suggestedMinutes = action.suggestedMinutes,
                             onSuggestPoints = viewModel::suggestPoints,
                             onSuggestionApplied = viewModel::consumeSuggestedPoints,
                             onAdd = viewModel::addTask,
@@ -242,6 +245,7 @@ private fun GoalHeaderCard(
     fraction: Float,
     accentHex: String,
     categoryLabel: String,
+    lifeAreaName: String?,
     current: String,
     target: String,
     unit: String,
@@ -270,6 +274,16 @@ private fun GoalHeaderCard(
                 text = "$current / $target $unit",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 12.dp),
+            )
+            // Which part of the user's life this goal counts towards. Absent when
+            // the goal is unfiled — and then it says so, because unfiled time shows
+            // up as "Unassigned" in the analytics pie and that should not be a
+            // mystery.
+            Text(
+                text = lifeAreaName?.let { "Life area: $it" } ?: "No life area yet",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
             )
             if (description.isNotBlank()) {
                 Text(
@@ -301,24 +315,38 @@ private fun GoalHeaderCard(
 private fun AddTaskRow(
     isScoring: Boolean,
     suggestedPoints: Int?,
+    suggestedMinutes: Int?,
     onSuggestPoints: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Int) -> Unit,
+    onAdd: (String, Int, Int) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("10") }
+    // Held separately from the points field because it has no input of its own:
+    // it is the AI's answer while the title still matches, and a function of the
+    // points the moment the user types something new.
+    var aiMinutes by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(suggestedPoints) {
+    LaunchedEffect(suggestedPoints, suggestedMinutes) {
         suggestedPoints?.let {
             points = it.toString()
+            aiMinutes = suggestedMinutes
             onSuggestionApplied()
         }
     }
 
+    val minutes = aiMinutes ?: TaskDuration.fallbackMinutes(points.toIntOrNull() ?: 10)
+
+    Column {
     Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
             value = title,
-            onValueChange = { title = it },
+            onValueChange = {
+                title = it
+                // The estimate belonged to the old wording; keeping it would credit
+                // a rewritten task with the previous one's time.
+                aiMinutes = null
+            },
             label = { Text("Add a task") },
             singleLine = true,
             modifier = Modifier.weight(1f),
@@ -350,13 +378,27 @@ private fun AddTaskRow(
         }
         IconButton(
             onClick = {
-                onAdd(title, points.toIntOrNull() ?: 10)
+                onAdd(title, points.toIntOrNull() ?: 10, minutes)
                 title = ""
                 points = "10"
+                aiMinutes = null
             },
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add task")
         }
+    }
+        // The duration is what this task will contribute to the analytics pie, so
+        // it is shown before the task is created rather than discovered later.
+        Text(
+            text = if (aiMinutes != null) {
+                "AI estimate: about ${DateTimeUtils.formatMinutes(minutes)} of your time"
+            } else {
+                "Counts as about ${DateTimeUtils.formatMinutes(minutes)} of your time"
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+        )
     }
 }
 
@@ -382,6 +424,12 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
                 },
                 textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
                 modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = DateTimeUtils.formatMinutes(TaskDuration.minutesOf(task)),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 8.dp),
             )
             Text(
                 text = "+${task.points}",

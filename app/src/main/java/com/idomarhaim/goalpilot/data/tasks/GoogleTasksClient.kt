@@ -6,6 +6,7 @@ import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.UserRecoverableAuthException
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.domain.usecase.GoogleTaskList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -41,6 +42,19 @@ sealed interface TasksImportResult {
 }
 
 /**
+ * Outcome of reading the user's Google Tasks *lists* — the names that become
+ * life areas. Same three cases as [TasksImportResult] and deliberately a separate
+ * type rather than a shared generic one: the two calls are consumed by different
+ * screens, and a generic sealed interface behind a typealias reads worse at both
+ * call sites than four extra lines here.
+ */
+sealed interface TaskListsResult {
+    data class Success(val lists: List<GoogleTaskList>) : TaskListsResult
+    data class NeedsConsent(val intent: Intent) : TaskListsResult
+    data class Failure(val message: String) : TaskListsResult
+}
+
+/**
  * NICE-TO-HAVE (spec §5, §6): import open tasks from Google Tasks so they can be
  * filed against goals.
  *
@@ -65,27 +79,42 @@ class GoogleTasksClient @Inject constructor(
         GoogleSignIn.getLastSignedInAccount(context)?.account != null
 
     /**
+     * Fetches the user's task lists — the names shown down the side of Google
+     * Tasks — so they can be turned into life areas (spec §1 + §6 nice-to-have).
+     *
+     * Deliberately *not* derived from [fetchOpenTasks]: a list with no open tasks
+     * returns no tasks at all, and empty lists are exactly the ones a user has
+     * just created for an area of life they are about to start working on. Reading
+     * the lists endpoint keeps them.
+     */
+    suspend fun fetchTaskLists(): TaskListsResult = withContext(io) {
+        when (val token = accessToken()) {
+            is TokenResult.NeedsConsent -> TaskListsResult.NeedsConsent(token.intent)
+            is TokenResult.Failure -> TaskListsResult.Failure(token.message)
+            is TokenResult.Success -> try {
+                val lists = json.decodeFromString<TaskListsResponse>(
+                    get("$BASE/users/@me/lists?maxResults=100", token.value),
+                ).items
+                TaskListsResult.Success(
+                    lists.filter { it.id.isNotBlank() && it.title.isNotBlank() }
+                        .map { GoogleTaskList(id = it.id, title = it.title.trim().clampTitle()) },
+                )
+            } catch (e: Exception) {
+                TaskListsResult.Failure(e.message ?: "Could not read your Google Tasks lists")
+            }
+        }
+    }
+
+    /**
      * Fetches every incomplete task across all of the user's task lists.
      *
      * @param maxPerList cap per list, so a huge list cannot stall the import.
      */
     suspend fun fetchOpenTasks(maxPerList: Int = 50): TasksImportResult = withContext(io) {
-        val account = GoogleSignIn.getLastSignedInAccount(context)?.account
-            ?: return@withContext TasksImportResult.Failure("Not signed in with Google")
-
-        val token = try {
-            GoogleAuthUtil.getToken(context, account, GoogleTasksScopes.OAUTH2_TASKS_READONLY)
-        } catch (e: UserRecoverableAuthException) {
-            // The account exists but has not granted the Tasks scope yet.
-            val intent = e.intent
-                ?: return@withContext TasksImportResult.Failure(
-                    "Google Tasks access was not granted",
-                )
-            return@withContext TasksImportResult.NeedsConsent(intent)
-        } catch (e: Exception) {
-            return@withContext TasksImportResult.Failure(
-                e.message ?: "Could not obtain a Google Tasks token",
-            )
+        val token = when (val t = accessToken()) {
+            is TokenResult.NeedsConsent -> return@withContext TasksImportResult.NeedsConsent(t.intent)
+            is TokenResult.Failure -> return@withContext TasksImportResult.Failure(t.message)
+            is TokenResult.Success -> t.value
         }
 
         try {
@@ -114,6 +143,7 @@ class GoogleTasksClient @Inject constructor(
                             title = dto.title.trim().clampTitle(),
                             notes = dto.notes?.trim()?.takeIf { it.isNotEmpty() },
                             dueEpochMillis = dto.due?.let(::parseRfc3339),
+                            listId = list.id,
                             listTitle = list.title,
                         )
                     }
@@ -122,6 +152,35 @@ class GoogleTasksClient @Inject constructor(
         } catch (e: Exception) {
             TasksImportResult.Failure(e.message ?: "Could not read Google Tasks")
         }
+    }
+
+    /**
+     * Mints an OAuth access token for the signed-in account, or explains why it
+     * could not. Shared by both endpoints so the consent flow behaves identically
+     * whether the user asked for lists or for tasks — the scope is the same one,
+     * and a user who grants it from the life-areas screen must not be asked again
+     * from the dashboard.
+     */
+    private fun accessToken(): TokenResult {
+        val account = GoogleSignIn.getLastSignedInAccount(context)?.account
+            ?: return TokenResult.Failure("Not signed in with Google")
+        return try {
+            TokenResult.Success(
+                GoogleAuthUtil.getToken(context, account, GoogleTasksScopes.OAUTH2_TASKS_READONLY),
+            )
+        } catch (e: UserRecoverableAuthException) {
+            // The account exists but has not granted the Tasks scope yet.
+            e.intent?.let { TokenResult.NeedsConsent(it) }
+                ?: TokenResult.Failure("Google Tasks access was not granted")
+        } catch (e: Exception) {
+            TokenResult.Failure(e.message ?: "Could not obtain a Google Tasks token")
+        }
+    }
+
+    private sealed interface TokenResult {
+        data class Success(val value: String) : TokenResult
+        data class NeedsConsent(val intent: Intent) : TokenResult
+        data class Failure(val message: String) : TokenResult
     }
 
     private fun get(url: String, token: String): String {
@@ -175,6 +234,12 @@ data class ImportedTask(
     val title: String,
     val notes: String? = null,
     val dueEpochMillis: Long? = null,
+    /**
+     * Id of the Google Tasks list it came from. This is what ties an imported task
+     * to a life area: the area stores the same id, so the link survives the user
+     * renaming either side.
+     */
+    val listId: String = "",
     /** Name of the Google Tasks list it came from — useful context when classifying. */
     val listTitle: String = "",
 )

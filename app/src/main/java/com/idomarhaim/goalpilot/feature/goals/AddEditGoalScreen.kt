@@ -35,6 +35,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.ui.components.icon
+import com.idomarhaim.goalpilot.ui.components.iconForKey
+import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +45,7 @@ fun AddEditGoalScreen(
     viewModel: AddEditGoalViewModel = hiltViewModel(),
 ) {
     val form by viewModel.form.collectAsStateWithLifecycle()
+    val lifeAreas by viewModel.lifeAreas.collectAsStateWithLifecycle()
 
     LaunchedEffect(form.saved) {
         if (form.saved) onDone()
@@ -91,6 +94,45 @@ fun AddEditGoalScreen(
                             )
                         },
                     )
+                }
+            }
+
+            // Which part of the user's life this goal belongs to. Separate from the
+            // category above: the category is a fixed taxonomy the AI classifies
+            // against, the life area is the user's own division of their life and
+            // the unit the time-allocation chart reports on.
+            Text("Life area", style = MaterialTheme.typography.labelLarge)
+            if (lifeAreas.isEmpty()) {
+                Text(
+                    "No life areas yet — add them under Profile → Life areas, or sync " +
+                        "them from your Google Tasks lists.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = form.lifeAreaId == null,
+                            onClick = { viewModel.onLifeAreaChange(null) },
+                            label = { Text("None") },
+                        )
+                    }
+                    items(lifeAreas) { area ->
+                        FilterChip(
+                            selected = form.lifeAreaId == area.id,
+                            onClick = { viewModel.onLifeAreaChange(area.id) },
+                            label = { Text(area.name) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = iconForKey(area.iconKey),
+                                    contentDescription = null,
+                                    tint = area.colorHex.toGoalAccent(),
+                                    modifier = Modifier.padding(2.dp),
+                                )
+                            },
+                        )
+                    }
                 }
             }
 

@@ -34,6 +34,25 @@ object DateTimeUtils {
     fun startOfDay(date: LocalDate = LocalDate.now()): Long =
         date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
+    /**
+     * "45m", "2h 15m", "18h" — the shape people say out loud, not "1.75 hours".
+     *
+     * Used anywhere a task duration is shown: the AI's estimate on the smart-add
+     * sheet, the import review rows, and every label on the time-allocation chart.
+     * One implementation so the same 90 minutes never reads as "1.5h" on one screen
+     * and "1h 30m" on the next.
+     */
+    fun formatMinutes(minutes: Int): String {
+        if (minutes <= 0) return "0m"
+        val hours = minutes / 60
+        val rest = minutes % 60
+        return when {
+            hours == 0 -> "${rest}m"
+            rest == 0 -> "${hours}h"
+            else -> "${hours}h ${rest}m"
+        }
+    }
+
     /** Start epoch millis for the [SummaryPeriod] window ending now. */
     fun windowStart(period: SummaryPeriod, now: LocalDate = LocalDate.now()): Long {
         val date = when (period) {

@@ -46,6 +46,26 @@ Backlog index. Per-area files live under three priority subfolders next to this 
     create/join/standings logic pending. **The last remaining §6 nice-to-have.**
   - [x] LLM task→goal classification UI — shipped as the "Smart add a task" card
     on the dashboard; `scoreTask` is wired to the ✨ button on the add-task row.
+  - [~] **Life areas + time-allocation analytics** — shipped **and verified**
+    03/08/2026; left `[~]` only because closing an item needs your confirmation
+    (the convention at the bottom of this file), so flip it to `[x]` when you have
+    seen it. What shipped:
+    user-defined areas synced from Google Tasks list names, LLM duration estimates
+    on tasks, and the interactive "Where your time goes" donut at day / week /
+    month / quarter / year. See `CHANGELOG/2026-08-03/lifeareas.md`.
+    Follow-ups it deliberately left out, none of them blocking:
+    - [ ] **Reordering life areas** — `sortOrder` is persisted and honoured
+      everywhere; only a drag handle is missing.
+    - [ ] **Show the life area on the goals list**, not just on a goal's own
+      screen — `GoalsViewModel` would need the areas flow, and the list probably
+      wants grouping headers rather than another chip per row.
+    - [ ] **Back-fill durations for old tasks.** Tasks created before this feature
+      have no `estimatedMinutes` and fall back to 3 min/point. A "re-estimate with
+      AI" action would have to respect the 30 req/min GROQ cap, so it needs the
+      same per-run cap the Tasks import uses.
+    - [ ] **A trend chart over time** — the pie answers "what share", not "is
+      Health growing or shrinking". A stacked bar per bucket across the range is
+      the natural next chart.
 
 ### 🟢 FUTURE — [`TODO_FUTURE/`](TODO_FUTURE/)
 - **Bump the build toolchain, then take Health Connect `1.1.0` stable.** The app

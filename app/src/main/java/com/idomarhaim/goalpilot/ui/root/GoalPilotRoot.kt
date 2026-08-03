@@ -28,6 +28,7 @@ import com.idomarhaim.goalpilot.feature.dashboard.DashboardScreen
 import com.idomarhaim.goalpilot.feature.goals.AddEditGoalScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalDetailScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalsScreen
+import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreasScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -147,13 +148,20 @@ private fun MainScaffold() {
                 ProfileScreen(
                     onOpenAnalytics = { navController.navigate(Routes.ANALYTICS) },
                     onOpenChallenges = { navController.navigate(Routes.CHALLENGES) },
+                    onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
                 )
             }
             composable(Routes.CHALLENGES) {
                 ChallengesScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.ANALYTICS) {
-                AnalyticsScreen(onBack = { navController.popBackStack() })
+                AnalyticsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
+                )
+            }
+            composable(Routes.LIFE_AREAS) {
+                LifeAreasScreen(onBack = { navController.popBackStack() })
             }
         }
     }

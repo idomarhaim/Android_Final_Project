@@ -6,12 +6,17 @@ import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -19,6 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AddEditGoalViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
+    lifeAreaRepository: LifeAreaRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -26,6 +32,10 @@ class AddEditGoalViewModel @Inject constructor(
 
     private val _form = MutableStateFlow(GoalForm(isEdit = goalId != null))
     val form = _form.asStateFlow()
+
+    /** The areas the goal can be filed under; empty until the user defines some. */
+    val lifeAreas: StateFlow<List<LifeArea>> = lifeAreaRepository.observeLifeAreas()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         if (goalId != null) {
@@ -37,6 +47,7 @@ class AddEditGoalViewModel @Inject constructor(
                             title = g.title,
                             description = g.description,
                             category = g.category,
+                            lifeAreaId = g.lifeAreaId,
                             target = g.targetValue.toTrimmedString(),
                             unit = g.unit,
                             currentValue = g.currentValue,
@@ -51,6 +62,7 @@ class AddEditGoalViewModel @Inject constructor(
     fun onTitleChange(value: String) = _form.update { it.copy(title = value, error = null) }
     fun onDescriptionChange(value: String) = _form.update { it.copy(description = value) }
     fun onCategoryChange(value: GoalCategory) = _form.update { it.copy(category = value) }
+    fun onLifeAreaChange(value: String?) = _form.update { it.copy(lifeAreaId = value) }
     fun onTargetChange(value: String) =
         _form.update { it.copy(target = value.filter { c -> c.isDigit() || c == '.' }, error = null) }
     fun onUnitChange(value: String) = _form.update { it.copy(unit = value) }
@@ -73,6 +85,7 @@ class AddEditGoalViewModel @Inject constructor(
                 title = current.title.trim(),
                 description = current.description.trim(),
                 category = current.category,
+                lifeAreaId = current.lifeAreaId,
                 targetValue = target,
                 currentValue = current.currentValue.coerceIn(0.0, target),
                 unit = current.unit.ifBlank { "%" },
@@ -93,6 +106,8 @@ data class GoalForm(
     val title: String = "",
     val description: String = "",
     val category: GoalCategory = GoalCategory.HEALTH,
+    /** Which life area the goal is filed under; null = unfiled. */
+    val lifeAreaId: String? = null,
     val target: String = "100",
     val unit: String = "%",
     val currentValue: Double = 0.0,

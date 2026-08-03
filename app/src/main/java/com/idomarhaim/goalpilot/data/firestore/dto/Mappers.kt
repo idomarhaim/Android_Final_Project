@@ -4,9 +4,12 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Leveling
+import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.model.User
 
@@ -16,6 +19,7 @@ fun GoalDto.toDomain(): Goal = Goal(
     title = title,
     description = description,
     category = GoalCategory.fromName(category),
+    lifeAreaId = lifeAreaId?.takeIf { it.isNotBlank() },
     targetValue = targetValue,
     currentValue = currentValue,
     unit = unit,
@@ -31,6 +35,7 @@ fun Goal.toDto(): GoalDto = GoalDto(
     title = title,
     description = description,
     category = category.name,
+    lifeAreaId = lifeAreaId,
     targetValue = targetValue,
     currentValue = currentValue,
     unit = unit,
@@ -50,6 +55,7 @@ fun TaskDto.toDomain(): Task = Task(
     isDone = done,
     source = TaskSource.fromName(source),
     progressContribution = progressContribution,
+    estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
     createdAtEpochMillis = createdAt,
     completedAtEpochMillis = completedAt,
 )
@@ -62,8 +68,34 @@ fun Task.toDto(): TaskDto = TaskDto(
     done = isDone,
     source = source.name,
     progressContribution = progressContribution,
+    estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
     createdAt = createdAtEpochMillis,
     completedAt = completedAtEpochMillis,
+)
+
+// ── LifeArea ───────────────────────────────────────────────────────
+fun LifeAreaDto.toDomain(): LifeArea = LifeArea(
+    id = id,
+    name = name,
+    colorHex = colorHex.ifBlank { LifeAreaPalette.DEFAULT_HEX },
+    iconKey = iconKey.ifBlank { "flag" },
+    sortOrder = sortOrder,
+    googleListId = googleListId?.takeIf { it.isNotBlank() },
+    isArchived = archived,
+    createdAtEpochMillis = createdAt,
+    updatedAtEpochMillis = updatedAt,
+)
+
+fun LifeArea.toDto(): LifeAreaDto = LifeAreaDto(
+    id = id,
+    name = name,
+    colorHex = colorHex,
+    iconKey = iconKey,
+    sortOrder = sortOrder,
+    googleListId = googleListId,
+    archived = isArchived,
+    createdAt = createdAtEpochMillis,
+    updatedAt = updatedAtEpochMillis,
 )
 
 // ── ProgressEntry ──────────────────────────────────────────────────

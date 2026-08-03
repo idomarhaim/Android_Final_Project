@@ -27,7 +27,48 @@ key never ships in the app.
 - **domain** depends on nothing Android/Firebase — trivially unit-testable (`BuildSummaryUseCase`, `Leveling`).
 - **data** implements domain interfaces using Firebase; maps DTOs ↔ domain models.
 - **feature** ViewModels depend only on domain interfaces (mockable in tests).
-- **ui** holds the theme, reusable components (`GpCard`, `GpLinearProgress`, `ProgressRing`, `GoalCard`, `HorizontalBarChart`, `IconChip`, `HeroSurface`, `Avatar`), navigation, and the root auth gate.
+- **ui** holds the theme, reusable components (`GpCard`, `GpLinearProgress`, `ProgressRing`, `GoalCard`, `HorizontalBarChart`, `DonutChart`, `IconChip`, `HeroSurface`, `Avatar`), navigation, and the root auth gate.
+
+## Life areas and the time-allocation chart
+
+The user's goals hang off **life areas** — their own division of their life
+("בריאות", "לימודים", "קריירה", …), not the fixed `GoalCategory` taxonomy. A goal
+carries both: `category` drives colour, icon and the LLM's context; `lifeAreaId`
+answers *which part of my life is this*, and is the unit the analytics pie reports
+on.
+
+```
+completed Task ──(goalId)──▶ Goal ──(lifeAreaId)──▶ LifeArea
+       │                                              │
+       └── estimatedMinutes (LLM) ────────────────────┴──▶ slice of the pie
+```
+
+- `domain/model/LifeArea.kt` — the model plus `LifeAreaPalette` (ten categorical
+  hues, twelve icon keys, and a **bilingual** name→icon guesser, because the
+  Google Tasks lists it names areas after are in Hebrew).
+- `domain/usecase/BuildLifeAreaProposalsUseCase` — Google Tasks lists → reviewable
+  proposals (create / link / already-synced), pure and unit-tested.
+- `domain/usecase/TimeAllocationUseCase` — the chain above, over a window, pure
+  and unit-tested. Unresolvable links (no goal, no area, deleted area) fall into
+  one honest "Unassigned" slice rather than being dropped.
+- `core/util/AnalyticsRange` — day / week / month / quarter / year, **calendar
+  aligned** (not rolling like `SummaryPeriod`) and locale-aware about which day the
+  week starts on.
+- `feature/lifeareas/` — define, edit, delete and sync areas; file loose goals.
+- `feature/analytics/` — the range picker, the interactive `DonutChart`, and the
+  two goal-level bar charts.
+
+**Durations.** Every completed task contributes minutes: the LLM's estimate when
+there is one (`classifyTask` / `scoreTask` return `estimatedMinutes`), otherwise
+`TaskDuration.fallbackMinutes(points)` — 3 minutes per difficulty point. One
+function, `TaskDuration.minutesOf`, decides for the whole app, and the analytics
+card states how many of the window's durations were the model's rather than
+implying they all were.
+
+**Chart animation.** `ui/components/ChartAnimation.kt` is the shared entry
+animation. `animateFloatAsState` cannot do this job: it initialises *at* its
+target, so a value that never changes never animates. An `Animatable` explicitly
+started at zero is what makes bars grow and the donut sweep out of 12 o'clock.
 
 ## Theming — skins
 
@@ -76,9 +117,10 @@ listeners (`snapshotsFlow()`), and suspend functions return `Resource<T>`.
 
 ```
 users/{uid}                       UserDto  (points, email, displayName, friendCode, …) [private]
-  goals/{goalId}                  GoalDto
+  goals/{goalId}                  GoalDto  (…, lifeAreaId → lifeAreas/{id})
     progress/{entryId}            ProgressDto  (value, note, imageUrl)
-  tasks/{taskId}                  TaskDto  (goalId, points, done, completedAt)
+  tasks/{taskId}                  TaskDto  (goalId, points, done, completedAt, estimatedMinutes)
+  lifeAreas/{areaId}              LifeAreaDto  (name, colorHex, iconKey, sortOrder, googleListId)
   friends/{friendUid}             { addedAt }                                [private]
 
 publicProfiles/{uid}              { displayName, photoUrl, points, level, friendCode } [world-readable]
@@ -105,8 +147,14 @@ challenges/{challengeId}          Challenge  (owner, participants, standings) [n
   `Flow` is constructed when its ViewModel is created, so reading
   `auth.currentUser` once would pin whichever account was signed in at that
   moment — and serve user A's goals to user B when demoing sharing (spec §7).
+- **Deleting a life area unfiles its goals first** (`LifeAreaRepositoryImpl`
+  batch-clears `lifeAreaId`, then deletes). In that order on purpose: a failure
+  halfway leaves the area alive, which the user can retry, rather than goals
+  holding an id nothing resolves.
 - Security rules: `firestore.rules` / `storage.rules`. Private data is owner-only;
-  `publicProfiles`/`shares` are readable by any signed-in user.
+  `publicProfiles`/`shares` are readable by any signed-in user. `lifeAreas` needed
+  **no rules change** — it is matched by the existing `users/{uid}/{document=**}`
+  owner-only rule.
 
 ## LLM (GROQ) flow
 
@@ -123,6 +171,11 @@ DashboardViewModel  →       "                 →            "        .callabl
 - All three callables are surfaced in the UI: `getRecommendations` → the AI coach
   card, `scoreTask` → the ✨ button on the add-task row, `classifyTask` → the
   "Smart add a task" card on the dashboard (spec §6 Bonus).
+- `classifyTask` and `scoreTask` also return **`estimatedMinutes`** — the duration
+  the time-allocation chart weighs a completed task by — and `classifyTask` takes
+  the user's life areas so a goal it creates is filed straight away. Both facts
+  ride on the *existing* call rather than a second one: GROQ's free tier allows 30
+  requests/minute and the Google Tasks import already spends one per row.
 - Every call **degrades gracefully**: on any error the client returns
   deterministic local guidance (`fallbackRecommendations`, `fallbackClassification`,
   `fallbackPoints`), so the UI never blocks or crashes (spec §8).
@@ -159,4 +212,9 @@ if (BuildConfig.DEBUG) {
   edit `publicProfiles`. Production would compute them in a Cloud Function trigger.
 - Deleting a goal doesn't cascade-delete its `tasks`/`progress` subcollections
   (Firestore has no server-side cascade); acceptable for the demo.
-- Health Connect & Google Tasks are compiling stubs — see [TODO/](../TODO/TODO.md).
+- The time-allocation chart measures **estimated** effort, not clocked time: there
+  is no timer in the app, so a task's minutes come from the LLM or from its point
+  value. The analytics card says which, per window, rather than implying precision
+  it does not have.
+- Life areas are not reorderable in the UI. `sortOrder` is persisted and honoured;
+  only the drag handle is missing — see [TODO/](../TODO/TODO.md).

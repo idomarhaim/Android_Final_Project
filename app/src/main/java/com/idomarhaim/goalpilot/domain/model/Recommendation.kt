@@ -34,7 +34,15 @@ data class TaskClassification(
     val suggestedGoalId: String? = null,
     val suggestedNewGoalTitle: String? = null,
     val suggestedCategory: GoalCategory = GoalCategory.OTHER,
+    /**
+     * Which of the user's [LifeArea]s the task belongs to, when the model can tell.
+     * Only ever an id the caller sent in — an unknown id is dropped rather than
+     * filing real time under an area that does not exist.
+     */
+    val suggestedLifeAreaId: String? = null,
     val estimatedPoints: Int = 10,
+    /** Minutes the task is expected to take — the input to the time-allocation chart. */
+    val estimatedMinutes: Int = TaskDuration.DEFAULT_MINUTES,
     val confidence: Float = 0f,
     val rationale: String = "",
 )

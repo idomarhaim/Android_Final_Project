@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Palette
@@ -59,6 +60,7 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     onOpenAnalytics: () -> Unit,
     onOpenChallenges: () -> Unit,
+    onOpenLifeAreas: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val user by viewModel.user.collectAsStateWithLifecycle()
@@ -113,6 +115,11 @@ fun ProfileScreen(
 
             GpCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
+                    NavRow("Life areas", Icons.Filled.Category, onOpenLifeAreas)
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 56.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
                     NavRow("Analytics", Icons.Filled.BarChart, onOpenAnalytics)
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 56.dp),

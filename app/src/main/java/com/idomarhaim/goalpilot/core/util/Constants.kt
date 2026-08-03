@@ -5,6 +5,9 @@ object FirestorePaths {
     const val USERS = "users"
     const val GOALS = "goals"
     const val TASKS = "tasks"
+
+    /** User-defined life areas: users/{uid}/lifeAreas/{id}. */
+    const val LIFE_AREAS = "lifeAreas"
     const val PROGRESS = "progress"
     const val SUMMARIES = "summaries"
 

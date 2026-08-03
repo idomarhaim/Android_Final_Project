@@ -6,9 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
@@ -31,6 +34,7 @@ class GoalDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val progressRepository: ProgressRepository,
     private val recommendationRepository: RecommendationRepository,
+    lifeAreaRepository: LifeAreaRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -40,8 +44,15 @@ class GoalDetailViewModel @Inject constructor(
         goalRepository.observeGoal(goalId),
         taskRepository.observeTasks(goalId),
         progressRepository.observeEntries(goalId),
-    ) { goal, tasks, entries ->
-        GoalDetailUiState(isLoading = false, goal = goal, tasks = tasks, entries = entries)
+        lifeAreaRepository.observeLifeAreas(includeArchived = true),
+    ) { goal, tasks, entries, areas ->
+        GoalDetailUiState(
+            isLoading = false,
+            goal = goal,
+            tasks = tasks,
+            entries = entries,
+            lifeArea = areas.firstOrNull { it.id == goal?.lifeAreaId },
+        )
     }.catch { emit(GoalDetailUiState(isLoading = false, error = it.message)) }
         .stateIn(
             viewModelScope,
@@ -52,20 +63,27 @@ class GoalDetailViewModel @Inject constructor(
     private val _action = MutableStateFlow(GoalDetailActionState())
     val action = _action.asStateFlow()
 
-    fun addTask(title: String, points: Int) {
+    fun addTask(title: String, points: Int, minutes: Int) {
         if (title.isBlank()) return
         viewModelScope.launch {
             taskRepository.upsertTask(
-                Task(goalId = goalId, title = title.trim(), points = points.coerceIn(1, 1000)),
+                Task(
+                    goalId = goalId,
+                    title = title.trim(),
+                    points = points.coerceIn(1, 1000),
+                    estimatedMinutes = TaskDuration.sanitize(minutes),
+                ),
             )
         }
     }
 
     /**
-     * Asks the LLM (via the `scoreTask` Cloud Function) what a task is worth
-     * — spec §6 Core, "point scoring for tasks". The result lands in
-     * [GoalDetailActionState.suggestedPoints] for the add-task row to pick up;
-     * on any failure the repository returns a local estimate instead.
+     * Asks the LLM (via the `scoreTask` Cloud Function) what a task is worth and
+     * how long it takes — spec §6 Core "point scoring for tasks", plus the duration
+     * the time-allocation chart is built from. The result lands in
+     * [GoalDetailActionState.suggestedPoints] / [GoalDetailActionState.suggestedMinutes]
+     * for the add-task row to pick up; on any failure the repository returns a
+     * local estimate instead.
      */
     fun suggestPoints(title: String) {
         if (title.isBlank()) {
@@ -73,16 +91,23 @@ class GoalDetailViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            _action.update { it.copy(isScoring = true, suggestedPoints = null) }
-            val points = when (val result = recommendationRepository.scoreTask(title.trim())) {
+            _action.update { it.copy(isScoring = true, suggestedPoints = null, suggestedMinutes = null) }
+            val estimate = when (val result = recommendationRepository.scoreTask(title.trim())) {
                 is Resource.Success -> result.data
                 else -> null
             }
-            _action.update { it.copy(isScoring = false, suggestedPoints = points) }
+            _action.update {
+                it.copy(
+                    isScoring = false,
+                    suggestedPoints = estimate?.points,
+                    suggestedMinutes = estimate?.minutes,
+                )
+            }
         }
     }
 
-    fun consumeSuggestedPoints() = _action.update { it.copy(suggestedPoints = null) }
+    fun consumeSuggestedPoints() =
+        _action.update { it.copy(suggestedPoints = null, suggestedMinutes = null) }
 
     fun toggleTask(task: Task) {
         viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
@@ -127,6 +152,8 @@ data class GoalDetailUiState(
     val goal: Goal? = null,
     val tasks: List<Task> = emptyList(),
     val entries: List<ProgressEntry> = emptyList(),
+    /** Resolved area the goal is filed under; null when unfiled or the area is gone. */
+    val lifeArea: LifeArea? = null,
     val error: String? = null,
 )
 
@@ -135,5 +162,7 @@ data class GoalDetailActionState(
     val isScoring: Boolean = false,
     /** One-shot LLM point estimate; the add-task row consumes and clears it. */
     val suggestedPoints: Int? = null,
+    /** Duration estimate from the same call, in minutes. */
+    val suggestedMinutes: Int? = null,
     val message: String? = null,
 )

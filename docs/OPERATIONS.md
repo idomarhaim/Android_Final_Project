@@ -26,10 +26,11 @@ verified against the real backend — not inferred from the UI.
 | GROQ | `openai/gpt-oss-20b`, key in git-ignored `functions/.env` |
 | §6 Core | ✅ verified end-to-end |
 | §6 Bonus — LLM classification | ✅ "Smart add a task" on the dashboard |
+| §6 Bonus — life areas + time-allocation analytics | ✅ shipped 2026-08-03, verified on the emulator against the real Google Tasks account |
 | §6 Nice-to-have — Google Tasks | ✅ shipped, verified on real Hebrew data |
-| §6 Nice-to-have — Health Connect | ⬜ compiling stub |
+| §6 Nice-to-have — Health Connect | ✅ shipped 2026-08-02 (this row said "compiling stub" until 2026-08-03; the emulator carries real synced step entries) |
 | §6 Nice-to-have — Challenges | ⬜ preview screen with sample data |
-| Tests | 27 JVM unit + 3 instrumented, all passing |
+| Tests | 92 JVM unit + 12 instrumented, all passing (2026-08-03) |
 
 Full detail is in [`CHANGELOG/2026-07-31.md`](../CHANGELOG/2026-07-31.md) — it is
 long, but it is the record of what was done and *why*.
@@ -139,6 +140,19 @@ Never report an LLM feature as working based on the UI alone.
 Free tier is **30 requests/minute**. Any feature that fans out one LLM call per
 item must be capped — the Google Tasks import caps at 15 per run for this reason.
 Exceeding it doesn't error visibly; the calls just fall back.
+
+That is also why `classifyTask` and `scoreTask` return the task's **duration**
+alongside its points instead of a second callable: one sentence, one call.
+
+### Verifying the time-allocation chart
+
+The pie is built from `completed task → goal → life area`, weighted by minutes, so
+an empty chart usually means one of the links is missing rather than the chart
+being broken. In order: is anything **completed inside the selected window**
+(a calendar day/week/month/quarter/year, not a rolling one)? do those tasks have a
+**goal**? does that goal have a **life area**? A 100 % "Unassigned" slice is the
+chart telling you the third link is missing — the card's "Fix" button jumps
+straight to the screen that repairs it.
 
 ### OAuth and sensitive scopes
 

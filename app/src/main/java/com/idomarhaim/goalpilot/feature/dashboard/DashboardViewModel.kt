@@ -13,13 +13,17 @@ import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
+import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
+import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
@@ -60,12 +64,27 @@ class DashboardViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val googleTasksClient: GoogleTasksClient,
     private val healthRepository: HealthRepository,
+    private val lifeAreaRepository: LifeAreaRepository,
     private val buildSummary: BuildSummaryUseCase,
     private val buildHealthProposals: BuildHealthProposalsUseCase,
 ) : ViewModel() {
 
     @Volatile private var lastGoals: List<Goal> = emptyList()
     @Volatile private var lastTasks: List<Task> = emptyList()
+
+    /**
+     * The user's life areas, kept warm for the AI flows: a goal the assistant
+     * creates has to be filed somewhere, and asking Firestore for the areas in the
+     * middle of a classification would make the smart-add sheet wait on a network
+     * round trip it does not need.
+     */
+    @Volatile private var lastLifeAreas: List<LifeArea> = emptyList()
+
+    init {
+        viewModelScope.launch {
+            lifeAreaRepository.observeLifeAreas().collect { lastLifeAreas = it }
+        }
+    }
 
     val uiState: StateFlow<DashboardUiState> = combine(
         authRepository.authState(),
@@ -149,10 +168,12 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             _smartAdd.value = SmartAddState(isVisible = true, isClassifying = true, taskTitle = title)
             val goals = lastGoals
-            val classification = when (val r = recommendationRepository.classifyTask(title, goals)) {
-                is Resource.Success -> r.data
-                else -> null
-            }
+            val areas = lastLifeAreas
+            val classification =
+                when (val r = recommendationRepository.classifyTask(title, goals, areas)) {
+                    is Resource.Success -> r.data
+                    else -> null
+                }
             if (classification == null) {
                 _smartAdd.value = SmartAddState()
                 _message.value = "Could not analyse that task"
@@ -161,6 +182,11 @@ class DashboardViewModel @Inject constructor(
             // The model can name a goal id that does not exist; only trust ids we
             // can actually resolve, otherwise fall through to the new-goal branch.
             val matched = goals.firstOrNull { it.id == classification.suggestedGoalId }
+            // A new goal is filed under the area the model picked; an existing goal
+            // keeps whatever area the user already gave it.
+            val area = areas.firstOrNull {
+                it.id == (matched?.lifeAreaId ?: classification.suggestedLifeAreaId)
+            }
             _smartAdd.value = SmartAddState(
                 isVisible = true,
                 isClassifying = false,
@@ -173,7 +199,10 @@ class DashboardViewModel @Inject constructor(
                     null
                 },
                 newGoalCategory = classification.suggestedCategory,
+                lifeAreaId = area?.id,
+                lifeAreaName = area?.name,
                 points = classification.estimatedPoints.coerceIn(1, 1000),
+                minutes = classification.estimatedMinutes,
                 rationale = classification.rationale,
             )
         }
@@ -189,6 +218,7 @@ class DashboardViewModel @Inject constructor(
                 val newGoal = Goal(
                     title = state.newGoalTitle.orEmpty().ifBlank { state.taskTitle },
                     category = state.newGoalCategory,
+                    lifeAreaId = state.lifeAreaId,
                 )
                 when (val r = goalRepository.upsertGoal(newGoal)) {
                     is Resource.Success -> r.data
@@ -201,7 +231,12 @@ class DashboardViewModel @Inject constructor(
                 return@launch
             }
             val saved = taskRepository.upsertTask(
-                Task(goalId = goalId, title = state.taskTitle, points = state.points),
+                Task(
+                    goalId = goalId,
+                    title = state.taskTitle,
+                    points = state.points,
+                    estimatedMinutes = state.minutes,
+                ),
             )
             _smartAdd.value = SmartAddState()
             _message.value = when (saved) {
@@ -268,6 +303,7 @@ class DashboardViewModel @Inject constructor(
                     }
 
                     val goals = lastGoals
+                    val areas = lastLifeAreas
                     val proposals = coroutineScope {
                         fresh.map { imported ->
                             async {
@@ -275,6 +311,7 @@ class DashboardViewModel @Inject constructor(
                                     val r = recommendationRepository.classifyTask(
                                         imported.title,
                                         goals,
+                                        areas,
                                     )
                                 ) {
                                     is Resource.Success -> r.data
@@ -282,9 +319,22 @@ class DashboardViewModel @Inject constructor(
                                 }
                                 val matched =
                                     goals.firstOrNull { it.id == classification?.suggestedGoalId }
+                                // The Google Tasks list a task lives in *is* an area
+                                // of the user's life — that is the whole premise of
+                                // the life-area sync — so the list wins over the
+                                // model's guess when the two disagree.
+                                val listArea = areas.firstOrNull {
+                                    it.googleListId == imported.listId
+                                } ?: areas.firstOrNull {
+                                    it.name.equals(imported.listTitle.trim(), ignoreCase = true)
+                                }
+                                val area = listArea ?: areas.firstOrNull {
+                                    it.id == classification?.suggestedLifeAreaId
+                                }
                                 ImportProposal(
                                     externalId = imported.externalId,
                                     title = imported.title,
+                                    listId = imported.listId,
                                     listTitle = imported.listTitle,
                                     targetGoalId = matched?.id,
                                     targetGoalTitle = matched?.title,
@@ -297,8 +347,18 @@ class DashboardViewModel @Inject constructor(
                                     },
                                     newGoalCategory = classification?.suggestedCategory
                                         ?: GoalCategory.OTHER,
+                                    lifeAreaId = area?.id,
+                                    // No area yet for this list: offer to create one
+                                    // named after it, so an import can bring the
+                                    // user's life areas across in the same pass.
+                                    lifeAreaName = area?.name
+                                        ?: imported.listTitle.trim().takeIf { it.isNotBlank() },
+                                    createsLifeArea = area == null &&
+                                        imported.listTitle.isNotBlank(),
                                     points = (classification?.estimatedPoints ?: 10)
                                         .coerceIn(1, 1000),
+                                    minutes = classification?.estimatedMinutes
+                                        ?: TaskDuration.DEFAULT_MINUTES,
                                 )
                             }
                         }.awaitAll()
@@ -334,10 +394,39 @@ class DashboardViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _tasksImport.update { it.copy(isSaving = true) }
-            // Two proposals can ask for the same new goal; create it once.
+            // Two proposals can ask for the same new goal — or the same new life
+            // area, when several tasks come from one Google Tasks list. Create each
+            // once and reuse the id.
             val createdGoals = mutableMapOf<String, String>()
+            val createdAreas = mutableMapOf<String, String>()
+            // Hexes handed out so far, so two lists imported in one pass do not come
+            // out the same colour in the pie chart.
+            val usedHexes = lastLifeAreas.map { it.colorHex }.toMutableList()
+            var nextOrder = (lastLifeAreas.maxOfOrNull { it.sortOrder } ?: -1) + 1
             var saved = 0
+            var newAreas = 0
             for (proposal in chosen) {
+                val areaId = proposal.lifeAreaId
+                    ?: proposal.takeIf { it.createsLifeArea }?.let { p ->
+                        createdAreas[p.listId] ?: run {
+                            val hex = LifeAreaPalette.nextHex(usedHexes)
+                            val created = lifeAreaRepository.upsertLifeArea(
+                                LifeArea(
+                                    name = p.lifeAreaName.orEmpty(),
+                                    colorHex = hex,
+                                    iconKey = LifeAreaPalette.iconKeyFor(p.lifeAreaName.orEmpty()),
+                                    googleListId = p.listId,
+                                    sortOrder = nextOrder,
+                                ),
+                            )
+                            (created as? Resource.Success)?.data?.also {
+                                createdAreas[p.listId] = it
+                                usedHexes += hex
+                                nextOrder++
+                                newAreas++
+                            }
+                        }
+                    }
                 val goalId = proposal.targetGoalId ?: run {
                     val key = proposal.newGoalTitle.orEmpty().lowercase()
                     createdGoals[key] ?: run {
@@ -345,6 +434,7 @@ class DashboardViewModel @Inject constructor(
                             Goal(
                                 title = proposal.newGoalTitle.orEmpty().ifBlank { proposal.title },
                                 category = proposal.newGoalCategory,
+                                lifeAreaId = areaId,
                             ),
                         )
                         (created as? Resource.Success)?.data?.also { createdGoals[key] = it }
@@ -357,14 +447,17 @@ class DashboardViewModel @Inject constructor(
                         title = proposal.title,
                         points = proposal.points,
                         source = TaskSource.GOOGLE_TASKS,
+                        estimatedMinutes = proposal.minutes,
                     ),
                 )
                 if (result is Resource.Success) saved++
             }
             _tasksImport.value = TasksImportState()
-            _message.value = when (saved) {
-                0 -> "Could not import those tasks"
-                1 -> "Imported 1 task from Google Tasks"
+            _message.value = when {
+                saved == 0 -> "Could not import those tasks"
+                newAreas > 0 -> "Imported $saved task${if (saved == 1) "" else "s"} and " +
+                    "$newAreas life area${if (newAreas == 1) "" else "s"}"
+                saved == 1 -> "Imported 1 task from Google Tasks"
                 else -> "Imported $saved tasks from Google Tasks"
             }
         }
@@ -640,7 +733,12 @@ data class SmartAddState(
     val targetGoalTitle: String? = null,
     val newGoalTitle: String? = null,
     val newGoalCategory: GoalCategory = GoalCategory.OTHER,
+    /** Life area the resulting goal is filed under, when one could be resolved. */
+    val lifeAreaId: String? = null,
+    val lifeAreaName: String? = null,
     val points: Int = 10,
+    /** Minutes the AI thinks the task takes — carried onto the saved task. */
+    val minutes: Int = TaskDuration.DEFAULT_MINUTES,
     val rationale: String = "",
 )
 
@@ -710,11 +808,19 @@ fun HealthLogProposal.noteText(): String =
 data class ImportProposal(
     val externalId: String,
     val title: String,
+    val listId: String = "",
     val listTitle: String = "",
     val targetGoalId: String? = null,
     val targetGoalTitle: String? = null,
     val newGoalTitle: String? = null,
     val newGoalCategory: GoalCategory = GoalCategory.OTHER,
+    /** Existing life area for this task's Google Tasks list, if there is one. */
+    val lifeAreaId: String? = null,
+    /** Name shown on the row: the existing area, or the one that will be created. */
+    val lifeAreaName: String? = null,
+    /** True when confirming will also create a life area for this task's list. */
+    val createsLifeArea: Boolean = false,
     val points: Int = 10,
+    val minutes: Int = TaskDuration.DEFAULT_MINUTES,
     val selected: Boolean = true,
 )

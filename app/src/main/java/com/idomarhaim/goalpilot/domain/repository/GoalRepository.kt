@@ -17,6 +17,14 @@ interface GoalRepository {
     /** Adds [delta] to the goal's current value (clamped at the target), for progress logging. */
     suspend fun addProgress(goalId: String, delta: Double): Resource<Unit>
 
+    /**
+     * Files a goal under a life area, or unfiles it with null. Separate from
+     * [upsertGoal] so the life-areas screen can re-file a stack of goals without
+     * loading and re-writing each one whole — a read-modify-write of a goal the
+     * user is editing on another screen would clobber their edit.
+     */
+    suspend fun setLifeArea(goalId: String, lifeAreaId: String?): Resource<Unit>
+
     suspend fun setArchived(goalId: String, archived: Boolean): Resource<Unit>
 
     suspend fun deleteGoal(goalId: String): Resource<Unit>

@@ -12,6 +12,13 @@ data class Goal(
     val title: String = "",
     val description: String = "",
     val category: GoalCategory = GoalCategory.OTHER,
+    /**
+     * The user-defined [LifeArea] this goal belongs to, or null while it is
+     * unfiled. Nullable rather than defaulted because a made-up default would put
+     * real time into the wrong slice of the time-allocation chart; "Unassigned"
+     * is an honest answer and one the user can act on.
+     */
+    val lifeAreaId: String? = null,
     val targetValue: Double = 100.0,
     val currentValue: Double = 0.0,
     val unit: String = "%",

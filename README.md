@@ -33,11 +33,23 @@ The system works on three levels (spec §1):
   and *Blossom* (sunset pink → orange), chosen on the Profile tab and applied
   instantly across the app. Both ship a full light **and** dark palette.
 
+- ✅ **Life areas** — your own division of your life (health, studies, career,
+  relationships…), defined on *Profile → Life areas* or **synced from your Google
+  Tasks list names**. Every goal is filed under one, and that is what the time
+  chart reports on.
+
 **Bonus (implemented)**
 - 🤖 **LLM task→goal classification** — the "Smart add a task" card: describe a
   task in plain language and GoalPilot files it under the right goal, or proposes
-  a new one, with an estimated point value. You confirm before anything is saved.
-- 📊 **Analytics charts** (progress per goal, task-focus split)
+  a new one, with an estimated point value, an estimated **duration**, and the life
+  area it belongs to. You confirm before anything is saved.
+- 🥧 **"Where your time goes"** — an interactive donut showing what share of your
+  life went into each life area, from the AI's duration estimate for every task you
+  completed. Switch between **day / week / month / quarter / year**; tap a slice
+  for its hours and share.
+- 📊 **Analytics charts** (progress per goal, task-focus split) — every chart draws
+  itself: bars grow from zero with a staggered sweep, the donut unrolls clockwise,
+  and the numbers count up with them.
 
 **Nice-to-have (implemented)**
 - ✅ **Import tasks from Google Tasks** — the "Import from Google Tasks" card
@@ -93,7 +105,8 @@ app/                     Android app (Compose + MVVM)
     data/                Firebase + GROQ implementations, integration stubs
     di/                  Hilt modules
     ui/                  theme · shared components · navigation · root
-    feature/             auth · goals · dashboard · social · profile · analytics · challenges
+    feature/             auth · goals · dashboard · social · profile · analytics ·
+                         lifeareas · challenges
   src/test/              JVM unit tests
   src/androidTest/       Compose UI + instrumented tests
 functions/               GROQ proxy Cloud Functions (TypeScript)

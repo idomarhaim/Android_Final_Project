@@ -20,6 +20,7 @@ object Routes {
     const val PROFILE = "profile"
     const val CHALLENGES = "challenges"
     const val ANALYTICS = "analytics"
+    const val LIFE_AREAS = "life_areas"
 
     const val ARG_GOAL_ID = "goalId"
     const val GOAL_DETAIL = "goal_detail"

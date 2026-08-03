@@ -27,7 +27,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
   - `data/` — Firebase + GROQ implementations (`auth/`, `firestore/`, `storage/`, `remote/`) plus the Google Tasks (`tasks/`) and Health Connect (`health/`) integrations.
   - `di/` — Hilt modules (`FirebaseModule`, `DispatchersModule`, `RepositoryModule`).
   - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold).
-  - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `challenges`.
+  - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `lifeareas`, `challenges`.
 - `functions/` — GROQ proxy Cloud Functions (TypeScript).
 - `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc` — backend config.
 - `scripts/` — one-click launchers (emulator/phone → build → install → launch) so
@@ -78,6 +78,23 @@ firebase deploy --only firestore:rules,storage,functions
 - **Colours are test-guarded.** `ThemePaletteTest` asserts WCAG contrast for all
   four skin/brightness schemes and pairwise distinctness of the `GoalCategory`
   palette. Editing a hex without running `:app:testDebugUnitTest` will bite.
+- **`animateFloatAsState` cannot animate a chart into existence.** It initialises
+  *at* its target on first composition, so a bar whose value never changes never
+  moves — which is why the analytics screen used to appear fully formed. Entry
+  animations go through `rememberChartProgress` (`ui/components/ChartAnimation.kt`),
+  an `Animatable` explicitly started at 0f. Its `key` is the animation's restart
+  handle, so anything it keys on must have stable structural equality: `BarItem`
+  deliberately carries a `countSuffix: String` and **not** a formatter lambda,
+  because two identical lambdas are not `equals` and every recomposition would
+  restart the sweep.
+- **A composable parameter named `contentDescription` shadows the semantics
+  property.** Inside `Modifier.semantics { }` you must write
+  `this.contentDescription = …`, or the compiler resolves the name to the (val)
+  parameter and fails with "'val' cannot be reassigned". `DonutChart` does exactly
+  this.
+- **Life areas needed no `firestore.rules` change** — `users/{uid}/lifeAreas` is
+  already covered by the owner-only `users/{uid}/{document=**}` match. Adding a new
+  per-user subcollection is a client-side change only.
 - **Repository snapshot flows must be built on `FirebaseAuth.uidFlow()`** (`data/auth/AuthExt.kt`), never a one-shot `auth.currentUser` read — a `Flow` is constructed at ViewModel-creation time, so a one-shot read pins the account that was signed in then.
 
 ## 🧱 Conventions

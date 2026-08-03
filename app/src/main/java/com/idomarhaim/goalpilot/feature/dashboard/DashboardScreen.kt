@@ -62,6 +62,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.ui.components.GoalCard
@@ -521,8 +522,15 @@ private fun GoogleTasksImportDialog(
                                                     ?: "→ new goal “${proposal.newGoalTitle}”",
                                             )
                                             append(" · ${proposal.points} pts")
-                                            if (proposal.listTitle.isNotBlank()) {
-                                                append(" · from ${proposal.listTitle}")
+                                            append(" · ${formatMinutes(proposal.minutes)}")
+                                            proposal.lifeAreaName?.let {
+                                                append(
+                                                    if (proposal.createsLifeArea) {
+                                                        " · new area “$it”"
+                                                    } else {
+                                                        " · $it"
+                                                    },
+                                                )
                                             }
                                         },
                                         style = MaterialTheme.typography.bodySmall,
@@ -626,8 +634,17 @@ private fun SmartAddDialog(
                         },
                         style = MaterialTheme.typography.bodyLarge,
                     )
+                    state.lifeAreaName?.let {
+                        Text(
+                            "Life area: $it",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Text(
-                        "Worth ${state.points} pts",
+                        // The minutes are not decoration: they are what this task
+                        // will contribute to the time-allocation chart once ticked.
+                        "Worth ${state.points} pts · about ${formatMinutes(state.minutes)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )

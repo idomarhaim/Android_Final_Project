@@ -100,6 +100,19 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun setLifeArea(goalId: String, lifeAreaId: String?): Resource<Unit> =
+        withContext(io) {
+            val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            try {
+                goalsCol(uid).document(goalId)
+                    .update("lifeAreaId", lifeAreaId, "updatedAt", System.currentTimeMillis())
+                    .await()
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not change the goal's life area", e)
+            }
+        }
+
     override suspend fun setArchived(goalId: String, archived: Boolean): Resource<Unit> =
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")

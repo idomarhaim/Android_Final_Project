@@ -14,6 +14,8 @@ data class GoalDto(
     var title: String = "",
     var description: String = "",
     var category: String = "OTHER",
+    /** Id of the user's [com.idomarhaim.goalpilot.domain.model.LifeArea]; absent on older docs. */
+    var lifeAreaId: String? = null,
     var targetValue: Double = 100.0,
     var currentValue: Double = 0.0,
     var unit: String = "%",
@@ -32,8 +34,23 @@ data class TaskDto(
     var done: Boolean = false,
     var source: String = "MANUAL",
     var progressContribution: Double = 1.0,
+    /** LLM duration estimate in minutes; absent on tasks created before it existed. */
+    var estimatedMinutes: Int? = null,
     var createdAt: Long = 0L,
     var completedAt: Long? = null,
+)
+
+data class LifeAreaDto(
+    @DocumentId var id: String = "",
+    var name: String = "",
+    var colorHex: String = "",
+    var iconKey: String = "flag",
+    var sortOrder: Int = 0,
+    /** Google Tasks list this area mirrors, if it was synced from one. */
+    var googleListId: String? = null,
+    var archived: Boolean = false,
+    var createdAt: Long = 0L,
+    var updatedAt: Long = 0L,
 )
 
 data class ProgressDto(

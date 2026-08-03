@@ -13,6 +13,15 @@ data class Task(
     val source: TaskSource = TaskSource.MANUAL,
     /** How much this task advances its goal's [Goal.currentValue] when completed. */
     val progressContribution: Double = 1.0,
+    /**
+     * How long the task takes, in minutes — estimated by the LLM when the task is
+     * classified or scored, and the raw material of the time-allocation chart.
+     *
+     * Null means "never estimated" (hand-typed task, or the model was unreachable
+     * and nothing was written); [TaskDuration.minutesOf] supplies the fallback
+     * rather than dropping the task from the chart.
+     */
+    val estimatedMinutes: Int? = null,
     val createdAtEpochMillis: Long = 0L,
     val completedAtEpochMillis: Long? = null,
 )
