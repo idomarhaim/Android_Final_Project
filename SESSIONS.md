@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `lifeareas` | Life Areas (user-defined + Google Tasks list sync), LLM time estimates, interactive time-allocation analytics | `app/src/main/java/com/idomarhaim/goalpilot/domain/`, `.../data/`, `.../di/RepositoryModule.kt`, `.../core/util/`, `.../ui/`, `.../feature/analytics/`, `.../feature/lifeareas/`, `.../feature/goals/`, `.../feature/dashboard/DashboardViewModel.kt`, `.../feature/profile/ProfileScreen.kt`, `app/src/test/`, `app/src/androidTest/`, `functions/src/index.ts`, `docs/`, `TODO/`, `CHANGELOG/2026-08-03/` | Gradle daemon, git index, `Pixel_10_Pro_XL` | 2026-08-03 |
 
 ## 📏 Rules
 
