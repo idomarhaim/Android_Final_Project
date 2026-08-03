@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `challenges` | Competitive challenges — create/join/standings, replacing the preview screen ([TODO_OPTIONAL](TODO/TODO_OPTIONAL/Integrations.TODO.optional.md#competitive-challenges-spec-6-nice-to-have-7)) | `.../domain/model/Challenge.kt`, `.../domain/repository/ChallengeRepository.kt`, `.../domain/usecase/ChallengeStandingsUseCase.kt`, `.../data/firestore/ChallengeRepositoryImpl.kt`, `.../feature/challenges/`, `.../di/RepositoryModule.kt`, `.../ui/root/GoalPilotRoot.kt`, `firestore.rules`, `app/src/test/.../domain/Challenge*Test.kt`, `CHANGELOG/2026-08-03/challenges.md`, `TODO/`. **Challenge regions only** of these shared files: `.../core/util/Constants.kt`, `.../data/firestore/dto/Dtos.kt`, `.../data/firestore/dto/Mappers.kt`, `.../ui/navigation/Destinations.kt` | Gradle daemon, git index, `Pixel_10_Pro_XL`, Firebase `goalpilot-56e30` (rules deploy) | 2026-08-03 |
 
 ## 📏 Rules
 
@@ -57,11 +57,22 @@ FUTURE), then open issues. `/claim` reads both and proposes a fit.
 
 Currently unclaimed and ready:
 - **Two-account demo + spec title page** — the two remaining MUST items, mostly manual
-- **Competitive challenges** (§6 nice-to-have) — `feature/challenges/`, a new
-  `ChallengeRepository`. **Now the last remaining nice-to-have.**
 - **Health Connect on a physical phone** — small follow-up to the shipped feature.
   The emulator carries the provider but its store is empty, so the
   proposal → Firestore write path has never run against real step data.
+- Two written briefs, each a session: `/kickoff lifearea-polish` and
+  `/kickoff time-insights` (`sessions/`).
+
+**Disjointness against the live `challenges` claim**, checked 2026-08-03 so the
+next session does not have to re-derive it:
+- `lifearea-polish` — **disjoint.** It owns `feature/lifeareas/`, `feature/goals/`
+  and the `LifeArea*` triple; `challenges` touches none of them. Safe in parallel.
+- `time-insights` — **disjoint only because `challenges` computes standings on the
+  client.** The TODO recommends a Cloud Function for standings; that would have put
+  both sessions in `functions/src/index.ts`, the one file neither can share. If a
+  later session moves standings server-side, it collides with `time-insights`.
+- Both, and `challenges`, add files under `app/src/test/` — different files in the
+  same directory, which is fine. Stage explicit paths and it stays fine.
 
 ## 📓 Recently released
 
