@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v1; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
 ---
 applyTo: "**"
 description: "Layered testing discipline: every feature must produce, run, and document tests at every relevant layer."
@@ -35,7 +35,7 @@ Every **new / modified / planned** feature must produce tests at every layer the
 - For failures: copy the assertion message + the test name into the changelog.
 
 ## 📋 Changelog `🧪 Tests` section
-Required format in today's `CHANGELOG/YYYY-MM-DD.md`:
+Required format in this session's `CHANGELOG/YYYY-MM-DD/<session-label>.md`:
 
 ```markdown
 ## 🧪 Tests

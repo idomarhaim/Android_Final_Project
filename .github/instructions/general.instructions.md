@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v13; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v14; do not edit in-project, edit user-level then re-sync -->
 ---
 applyTo: "**"
 description: "Cross-cutting project conventions: language, documentation, changelogs, TODOs."
@@ -21,7 +21,13 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
 - `.github/instruction-file-catalog.md`
 
 ## 📋 Changelog Rules
-- One file per date: `CHANGELOG/YYYY-MM-DD.md`. Multiple change rounds on the same date go into the same file as `## Round 1`, `## Round 2`, …
+- **One folder per date, one file per session:** `CHANGELOG/YYYY-MM-DD/<session-label>.md`. Multiple rounds by the **same** session go into **its own** file as `## Round 1`, `## Round 2`, …
+  - `<session-label>` is this session's row on `SESSIONS.md`; use `main` when the repo has no board or you are the only session. Kebab-case, no spaces.
+  - **Always the folder, even when working alone.** You cannot know you are alone until you have read the board, and by then you have already picked a path. A conditional layout is a layout agents get wrong.
+  - **Why:** `CHANGELOG/YYYY-MM-DD.md` was the one file *every* session had to write *every* day, so no session could claim it and the claim board was structurally unable to protect it. Sibling sessions overwrote and truncated each other's entries repeatedly (JARVIS, 2026-08-03, three repair commits in seven minutes). Disjoint paths make the collision impossible instead of merely forbidden — the same principle that already keeps code safe.
+  - **Never write into another session's file.** If their entry is wrong, say so; don't fix it in their file.
+  - **Migration, deterministic — no flag day:** if a flat `CHANGELOG/YYYY-MM-DD.md` **already exists** for the date you are writing, append to it as before; otherwise create the folder. So the last partly-flat day finishes flat and every later day is a folder, with no half-converted day and no rewriting of what sibling sessions already wrote. Never migrate an old flat file — that is history, not drift.
+- **`SUMMARY.md` — the day's rollup**, at `CHANGELOG/YYYY-MM-DD/SUMMARY.md`. Written by the **first session of a later day**, never during the day it covers: by then nobody is writing those files, so the one file that *is* shared has zero contention. Check for a missing `SUMMARY.md` in the most recent past day folder as a session-start chore; it is a rollup of that day's files, not new analysis.
 - **Use today's date only — never future-date a changelog.**
 - **⚠️ MANDATORY branch line.** Every changelog file MUST have, on line 3 (one blank line after the H1 title):
   ```
@@ -43,12 +49,12 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
   ## 🧪 Tests
   ```
 
-- `CHANGELOG/CHANGELOG_README.md` keeps an **Available Files** table — append every new entry.
+- `CHANGELOG/CHANGELOG_README.md` keeps an **Available Files** table — one row per **day** (link the folder), not per session file. It is a shared index, so re-read it immediately before editing and add only your own row.
 
 ## ✅ After completing a task
 1. Update `README.md` / `ARCHITECTURE.md` if behavior or structure changed.
-2. Append / create today's `CHANGELOG/YYYY-MM-DD.md`.
-3. Update the **Available Files** table in `CHANGELOG_README.md`.
+2. Append / create **your own** `CHANGELOG/YYYY-MM-DD/<session-label>.md`.
+3. Update the **Available Files** table in `CHANGELOG_README.md` (one row per day; add the day's row if it isn't there yet).
 4. If the task came from `TODO/`, mark its checkbox `[x]` only **after user confirmation**.
 
 ## 🤖 Agent operations

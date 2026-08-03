@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v3; do not edit in-project, edit user-level then re-sync -->
 
 # 🤖 GitHub Copilot — Project Entry Point
 
@@ -10,7 +10,7 @@
 - **Path-scoped rules** → `.github/instructions/*.instructions.md` (auto-loaded by Copilot per `applyTo` pattern)
 - **Slash-commands** → `.github/prompts/*.prompt.md` (e.g., `/summarize-branch`, `/summarize-so-far`)
 - **TODO backlog** → [TODO/TODO.md](../TODO/TODO.md)
-- **Changelog** → `CHANGELOG/YYYY-MM-DD.md` (today's date only)
+- **Changelog** → `CHANGELOG/YYYY-MM-DD/<session-label>.md` (today's date only; one folder per day, one file per session)
 - **Instruction authoring guide** → [.github/authoring-instructions.md](authoring-instructions.md)
 - **Instruction file catalog** → [.github/instruction-file-catalog.md](instruction-file-catalog.md)
 
