@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `lifeareas` | Life Areas (user-defined + Google Tasks list sync), LLM time estimates, interactive time-allocation analytics | `app/src/main/java/com/idomarhaim/goalpilot/domain/`, `.../data/`, `.../di/RepositoryModule.kt`, `.../core/util/`, `.../ui/`, `.../feature/analytics/`, `.../feature/lifeareas/`, `.../feature/goals/`, `.../feature/dashboard/DashboardViewModel.kt`, `.../feature/profile/ProfileScreen.kt`, `app/src/test/`, `app/src/androidTest/`, `functions/src/index.ts`, `docs/`, `TODO/`, `CHANGELOG/2026-08-03/` | Gradle daemon, git index, `Pixel_10_Pro_XL` | 2026-08-03 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -72,6 +72,7 @@ Currently unclaimed and ready:
 | `health` | Health Connect integration — steps & sleep, read-only, review-before-write | 2026-08-02 | see `CHANGELOG/2026-08-02.md`; emulator released |
 | `theming` | Selectable app skins (Aurora/Blossom) + UI/UX pass | 2026-08-02 | `e31ac9d`, `a413485`, `c30709e`; emulator released |
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
+| `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not
