@@ -12,10 +12,11 @@ commit: 342af48
 > kickoff and which overrides the `mode: normal` above). Both items shipped; see
 > `CHANGELOG/2026-08-04/time-insights.md`.
 >
-> **Two exit criteria were not met, both blocked on the emulator singleton held by
-> `lifearea-polish`:** `:app:connectedDebugAndroidTest` (compiles, never executed)
-> and the live re-estimation run against the model. Carried onto `SESSIONS.md`
-> under "Unclaimed work" as a single follow-up task.
+> **All exit criteria met.** Two were initially blocked on the emulator singleton
+> held by `lifearea-polish`; both were finished in a second sitting once the AVD
+> came free — `:app:connectedDebugAndroidTest` 20/20 green, and a live
+> re-estimation run that returned 105 minutes for a five-word title, which neither
+> fallback rule can produce. See the changelog's "Verified against the live model".
 >
 > **One thing this brief did not anticipate:** `scoreTask` has a *second* fallback
 > signature — the Cloud Function's own flat `10 points / 30 minutes` — which the

@@ -122,13 +122,57 @@ copies would make the comparison meaningless the first time either drifted.
     types precisely so it runs here instead of behind an emulator.
   - `RecommendationRepositoryFallbackTest` — unchanged and still green after the
     heuristic moved to `TaskScoring`, which is what makes that move safe.
-- **Instrumented layer — compiled, not run.** `:app:compileDebugAndroidTestKotlin`
-  passes, so `StackedColumnChartUiTest` (3 cases: labels when they fit, an empty
-  column staying in place, thinning across a quarter) is known to build. It has
-  **not been executed**: the emulator `Pixel_10_Pro_XL` is an exclusive singleton
-  and `lifearea-polish` holds it. See "Still open".
+- **`:app:connectedDebugAndroidTest` — 20 tests, 0 failed** on `Pixel_10_Pro_XL`,
+  run after `lifearea-polish` released the AVD. Includes the three new
+  `StackedColumnChartUiTest` cases (labels when they fit, an empty column staying
+  in place, thinning across a quarter) and confirms the sibling session's earlier
+  report of the same suite rather than relying on it.
 - **Security-rules layer (`firestore-tests/`) — not run and not affected**: this
   change touches no rules and adds no new Firestore path.
+
+## ✅ Verified against the live model, not the UI
+
+Run on `Pixel_10_Pro_XL` against live `goalpilot-56e30`, signed in as the real
+account. The analytics card offered **"Re-estimate 1 duration"**; the sheet came
+back with **8 candidates, 1 of them flagged as unanswered and unticked**.
+
+The point of the run is that a duration was returned that the offline heuristic
+is *arithmetically incapable* of producing. The client rule is
+`points = 5 + 3×words` (clamped 5..50) and `minutes = 3 × points`; the Cloud
+Function's own failure path is a flat 30 minutes:
+
+| Task | Words | Client fallback | Server fallback | Returned | |
+|---|---|---|---|---|---|
+| להגיש פרויקט גמר בפיתוח אנדרואיד | 5 | 60m | 30m | **105m** | model |
+| להגיש ספר פרויקט גמר | 4 | 51m | 30m | **90m** | model |
+| אימון כח | 2 | 33m | 30m | **60m** | model |
+| אימון ריצה | 2 | 33m | 30m | **60m** | model |
+| Morning run | 2 | 33m | 30m | *(matched a fallback)* | **unticked by the app** |
+
+105 minutes for a five-word title cannot come from a rule whose ceiling for five
+words is 60, and it is not 30 — so GROQ answered. The titles are Hebrew, which the
+function's system prompt explicitly anticipates, and the values are semantically
+sensible (a 10 k training run at an hour, a final-project submission at 1 h 45).
+
+**The honesty check fired in production on the first run.** One of eight came back
+matching a fallback and arrived unticked without being asked to. That is the
+mechanism described above doing exactly its job on real data, not a hypothetical.
+
+**Confirming wrote 7 durations to live Firestore**, and the card moved the way it
+had to:
+
+| | Before | After |
+|---|---|---|
+| Tracked | `2h` | **`2h 15m`** |
+| לימודים | `1h 30m · 75 %` | **`1h 45m · 78 %`** |
+| בריאות | `30m · 25 %` | `30m · 22 %` |
+| Footnote | *1 of 2 durations estimated by AI; the rest inferred from task difficulty* | **_Durations estimated by AI for all 2 tasks_** |
+
+The re-estimate button is now absent, because nothing in the window is inferred
+any more. That footnote was named in the brief as this feature's success metric,
+and it is the thing that moved.
+
+Screenshots: `screen1`/`s3`–`s10.png` in this session's scratchpad (not committed).
 
 ## 📁 Modified / added
 - `app/.../core/util/AnalyticsRange.kt` — `TimeBucket`, `buckets()`, `bucketNoun`
@@ -155,12 +199,20 @@ builds and both sessions' suites are green in the same run — but the AVD was l
 alone entirely, which is why the instrumented layer is compiled and not executed.
 
 ## ⚠️ Still open
-- **`:app:connectedDebugAndroidTest` not run** — blocked on the emulator singleton.
-  One task, after `lifearea-polish` releases its row.
-- **No re-estimation run against the live model.** The brief asks for a duration
-  the local heuristic could not have produced, verified against the model rather
-  than the UI. That needs the app on the emulator against live `goalpilot-56e30`,
-  so it is blocked on the same singleton. The fallback signatures above are what
-  such a run should be checked against.
 - **TODO checkboxes not flipped** — per the convention at the bottom of
-  `TODO/TODO.md`, closing an item waits for Ido's confirmation.
+  `TODO/TODO.md`, closing an item waits for Ido's confirmation. Both follow-ups
+  under "Life areas + time-allocation analytics" (back-fill durations, trend
+  chart) are done and verified.
+- Nothing else. Both exit criteria that were blocked at first release are now met:
+  the instrumented suite ran green, and the live re-estimation run is recorded
+  above.
+
+## 🕐 Two sittings, and why the entry says so
+This session was written, committed and **released with two exit criteria unmet**
+because the emulator was held by `lifearea-polish`, then re-claimed and finished
+once the AVD came free. The release was the right call — a claim held open across
+a wait blocks work nobody is doing — but it is worth noticing what it cost: the
+board had to carry the unfinished verification as prose under "Unclaimed work",
+and the next session had to re-derive the device state. **A session that ends
+blocked on a singleton should say so in the board row itself**, which is what the
+re-claim did.

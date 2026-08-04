@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `time-insights` | Finish the one verification left open at release: a re-estimation run against the live model (`CHANGELOG/2026-08-04/time-insights.md` → "Still open") | `CHANGELOG/2026-08-04/time-insights.md`, `sessions/done/time-insights.md`, `SESSIONS.md`, `TODO/TODO.md` (checkbox only, on Ido's confirmation) | **Emulator `Pixel_10_Pro_XL`**, **Gradle daemon**, **live Firebase `goalpilot-56e30`** — the re-estimation writes real `estimatedMinutes` to real task documents | 2026-08-04 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -65,13 +65,13 @@ Currently unclaimed and ready:
 - One written brief, its own session: `/kickoff challenges-ui` (`sessions/`).
   `time-insights` and `lifearea-polish` are done and their briefs have moved to
   `sessions/done/`.
-- **One `time-insights` verification is still open** — a **re-estimation run
-  against the live model**. Press "Re-estimate N durations" and confirm a duration
-  the local heuristic could not have produced, checked against **both** fallback
-  signatures in `docs/OPERATIONS.md` §4 — the client's `5 + 3×words` *and* the
-  Cloud Function's flat `10 points / 30 minutes`. Verify against the model, not the
-  UI. (Its other blocked check, `StackedColumnChartUiTest`, ran green inside
-  `lifearea-polish`'s suite — 20 tests, 0 failures. Nothing left to do there.)
+- ~~One `time-insights` verification is still open~~ — **done 2026-08-04.** Both
+  blocked checks ran once the AVD came free: `:app:connectedDebugAndroidTest` 20/20
+  green, and a live re-estimation run that returned 105 minutes for a five-word
+  title, which the client heuristic (ceiling 60 for five words) and the Cloud
+  Function's flat 30 both cannot produce. One of eight candidates matched a
+  fallback and was unticked automatically. See
+  `CHANGELOG/2026-08-04/time-insights.md` → "Verified against the live model".
 
 **Disjointness**, checked 2026-08-04 and left here so it need not be re-derived:
 - The three briefs' **paths** were disjoint — `feature/challenges/`,
@@ -101,7 +101,7 @@ Currently unclaimed and ready:
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 | `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
 | `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
-| `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48`; see `CHANGELOG/2026-08-04/time-insights.md`. JVM layer green (150 tests). Its instrumented layer was later run green inside `lifearea-polish`'s suite; **one verification still outstanding** (live re-estimation) — see "Unclaimed work". Never held a singleton; the Gradle daemon was shared by queueing. |
+| `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48` + verification pass; see `CHANGELOG/2026-08-04/time-insights.md`. **All layers green and fully verified**: 150 JVM, 20 instrumented, and a live re-estimation run against GROQ that wrote 7 durations to `goalpilot-56e30`. Ran in two sittings — released once with the device checks blocked, re-claimed when the AVD came free. Emulator and Firebase project **released**. |
 | `lifearea-polish` | Drag-to-reorder life areas (minimal `sortOrder` writes) and the goals list banded by life area | 2026-08-04 | `6f4a749`; see `CHANGELOG/2026-08-04/lifearea-polish.md`. Both layers green — 144 JVM, 20 instrumented. Emulator `Pixel_10_Pro_XL` recovered from a wedge and **released**; Gradle daemon released. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
