@@ -14,6 +14,7 @@ import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.usecase.BuildLifeAreaProposalsUseCase
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaProposal
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaSyncAction
+import com.idomarhaim.goalpilot.domain.usecase.ReorderLifeAreasUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +40,7 @@ class LifeAreasViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     private val googleTasksClient: GoogleTasksClient,
     private val buildProposals: BuildLifeAreaProposalsUseCase,
+    private val reorderAreas: ReorderLifeAreasUseCase,
 ) : ViewModel() {
 
     @Volatile private var lastAreas: List<LifeArea> = emptyList()
@@ -166,6 +168,23 @@ class LifeAreasViewModel @Inject constructor(
             _message.value = when (lifeAreaRepository.deleteLifeArea(areaId)) {
                 is Resource.Success -> "Life area deleted; its goals are now unfiled"
                 else -> "Could not delete that life area"
+            }
+        }
+    }
+
+    /**
+     * Commits a drag (or a "move up"/"move down" accessibility action). Indices
+     * are positions in the displayed list — the same order [uiState] emits.
+     *
+     * The screen has already moved the card locally, so this is only the write;
+     * a no-op move never reaches Firestore at all.
+     */
+    fun moveArea(fromIndex: Int, toIndex: Int) {
+        val changes = reorderAreas(lastAreas, fromIndex, toIndex)
+        if (changes.isEmpty()) return
+        viewModelScope.launch {
+            if (lifeAreaRepository.reorderLifeAreas(changes) !is Resource.Success) {
+                _message.value = "Could not save the new order"
             }
         }
     }

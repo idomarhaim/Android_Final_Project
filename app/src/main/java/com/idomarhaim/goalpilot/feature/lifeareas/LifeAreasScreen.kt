@@ -27,8 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Category
@@ -95,10 +93,16 @@ fun LifeAreasScreen(
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var pendingDelete by remember { mutableStateOf<LifeArea?>(null) }
+    val reorder = rememberLifeAreaReorderState()
 
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
     }
+
+    // Keyed on the rows alone, deliberately: at the instant of a drop the drag is
+    // already over while the flow still holds the pre-drag list, and re-running
+    // this then would snap the card back for the frame before Firestore echoes.
+    LaunchedEffect(state.rows) { reorder.sync(state.rows) }
 
     // The Tasks scope is granted once per account; an account that signed in
     // before this feature existed is sent through Google's own consent screen.
@@ -141,6 +145,7 @@ fun LifeAreasScreen(
         }
 
         LazyColumn(
+            state = reorder.listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(inner),
@@ -161,14 +166,22 @@ fun LifeAreasScreen(
                 }
             } else {
                 item { SectionHeader("Your areas") }
-                items(state.rows, key = { it.area.id }) { row ->
-                    LifeAreaCard(
-                        area = row.area,
-                        goalCount = row.goalCount,
-                        onEdit = { viewModel.openEditor(row.area) },
-                        onDelete = { pendingDelete = row.area },
-                    )
+                if (state.rows.size > 1) {
+                    item {
+                        Text(
+                            "Hold the ⠿ handle to drag an area into place. The order " +
+                                "here is the order your goals and analytics use.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
+                lifeAreaRows(
+                    state = reorder,
+                    onMove = viewModel::moveArea,
+                    onEdit = { viewModel.openEditor(it) },
+                    onDelete = { pendingDelete = it },
+                )
             }
 
             if (state.unfiledGoals.isNotEmpty() && state.rows.isNotEmpty()) {
@@ -256,70 +269,6 @@ private fun GoogleSyncCard(isLoading: Boolean, onSync: () -> Unit) {
                     Icon(Icons.Filled.Link, contentDescription = null)
                 }
                 Text("Sync my lists", modifier = Modifier.padding(start = 8.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun LifeAreaCard(
-    area: LifeArea,
-    goalCount: Int,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val accent = area.colorHex.toGoalAccent()
-    GpCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(accent.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = iconForKey(area.iconKey),
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 14.dp),
-            ) {
-                Text(
-                    area.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    buildString {
-                        append("$goalCount goal")
-                        if (goalCount != 1) append("s")
-                        if (area.isLinkedToGoogleTasks) append(" · synced from Google Tasks")
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Filled.Edit, contentDescription = "Edit ${area.name}")
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = "Delete ${area.name}",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

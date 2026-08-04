@@ -26,6 +26,17 @@ interface LifeAreaRepository {
     suspend fun deleteLifeArea(areaId: String): Resource<Unit>
 
     /**
+     * Writes new [LifeArea.sortOrder] values in one batch.
+     *
+     * Takes the changes rather than the whole ordered list on purpose: a drag
+     * moves one card, and renumbering every area on every drag would turn a
+     * one-finger gesture into N document writes against a collection two devices
+     * may be watching. [com.idomarhaim.goalpilot.domain.usecase.ReorderLifeAreasUseCase]
+     * is what computes the minimal map; an empty map is a no-op, not an error.
+     */
+    suspend fun reorderLifeAreas(newSortOrders: Map<String, Int>): Resource<Unit>
+
+    /**
      * Points an existing area at a Google Tasks list without touching the name,
      * colour or icon the user chose. Used when the sync finds an area that already
      * carries the list's name — re-creating it would give the user two "בריאות".

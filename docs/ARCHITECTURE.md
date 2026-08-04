@@ -48,15 +48,40 @@ completed Task ──(goalId)──▶ Goal ──(lifeAreaId)──▶ LifeArea
   Google Tasks lists it names areas after are in Hebrew).
 - `domain/usecase/BuildLifeAreaProposalsUseCase` — Google Tasks lists → reviewable
   proposals (create / link / already-synced), pure and unit-tested.
+- `domain/usecase/ReorderLifeAreasUseCase` — a drag `(from, to)` → the **minimal**
+  `id → sortOrder` map. Positions outside the moved span keep their existing
+  values, so one drag writes the span it crossed and not the collection. It falls
+  back to renumbering 0..n-1 only when the existing values are not strictly
+  increasing, because rotating values through a tie would land the card wherever
+  the `(sortOrder, name)` tie-break decided rather than where it was dropped.
+- `domain/usecase/GroupGoalsByLifeAreaUseCase` — goals + areas → the bands the
+  goals list is grouped into. It is what stops a header appearing where it says
+  nothing: empty areas get no band, unfiled goes last, and a user with no areas at
+  all gets one nameless band (the flat list, as before) rather than a lone
+  "No life area" header over everything.
 - `domain/usecase/TimeAllocationUseCase` — the chain above, over a window, pure
   and unit-tested. Unresolvable links (no goal, no area, deleted area) fall into
   one honest "Unassigned" slice rather than being dropped.
 - `core/util/AnalyticsRange` — day / week / month / quarter / year, **calendar
   aligned** (not rolling like `SummaryPeriod`) and locale-aware about which day the
   week starts on.
-- `feature/lifeareas/` — define, edit, delete and sync areas; file loose goals.
+- `feature/lifeareas/` — define, edit, delete, reorder and sync areas; file loose
+  goals. `LifeAreaRows.kt` holds the drag-to-reorder state holder and the rows as a
+  `LazyListScope` extension, so they drop into the screen's existing list rather
+  than nesting a second scrollable, and can be driven by a UI test with no
+  Firebase in the room.
+- `feature/goals/` — the goals list, **banded by life area**. Headers rather than a
+  chip per card: the card's colour and meta line already belong to the goal's
+  *category*, and a second differently-coloured token per row read as noise.
 - `feature/analytics/` — the range picker, the interactive `DonutChart`, and the
   two goal-level bar charts.
+
+**One order, three screens.** `sortOrder` is the user's own ordering and the
+repository sorts by `(sortOrder, name)` client-side — a composite index for a
+collection holding a handful of documents would be ceremony. Because the goals
+list and the analytics chart both consume `observeLifeAreas`, dragging an area on
+the life-areas screen reorders the goal bands too, with no write to the goals
+collection at all.
 
 **Durations.** Every completed task contributes minutes: the LLM's estimate when
 there is one (`classifyTask` / `scoreTask` return `estimatedMinutes`), otherwise

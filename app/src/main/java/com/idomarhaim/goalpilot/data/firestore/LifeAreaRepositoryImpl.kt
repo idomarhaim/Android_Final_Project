@@ -105,6 +105,31 @@ class LifeAreaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun reorderLifeAreas(newSortOrders: Map<String, Int>): Resource<Unit> =
+        withContext(io) {
+            // A drop that changed nothing (or was cancelled) is a success with no
+            // write, not an error the user has to see.
+            if (newSortOrders.isEmpty()) return@withContext Resource.Success(Unit)
+            val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            try {
+                val col = areasCol(uid)
+                val now = System.currentTimeMillis()
+                val batch = firestore.batch()
+                newSortOrders.forEach { (areaId, sortOrder) ->
+                    batch.update(
+                        col.document(areaId),
+                        mapOf("sortOrder" to sortOrder, "updatedAt" to now),
+                    )
+                }
+                // One batch, so the list can never be observed half-reordered —
+                // which would show the dragged card in two places at once.
+                batch.commit().await()
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not save the new order", e)
+            }
+        }
+
     override suspend fun linkGoogleList(areaId: String, googleListId: String): Resource<Unit> =
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
