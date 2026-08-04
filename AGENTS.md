@@ -42,6 +42,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 .\scripts\run-goalpilot.ps1             # phone if plugged in, else the emulator
 .\scripts\run-goalpilot.ps1 -Target device -Logcat
 .\scripts\run-goalpilot.ps1 -Target emulator -SkipInstall   # just boot the AVD
+.\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B          # the second device (two-account demo)
 
 # JDK 21 is pinned in gradle.properties; set it if calling gradlew from a fresh shell
 $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
@@ -134,7 +135,7 @@ cd firestore-tests; npm install; npm test
 - Full policy: `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md`.
 <!-- JARVIS:END routing -->
 
-**Singletons in this repo** — check them before your first *build or device command*, not only before your first edit: the **Gradle daemon**, the **git index**, emulator **`Pixel_10_Pro_XL`**, and the live Firebase project **`goalpilot-56e30`**. Blanket staging (`git add -A`, `git add .`, `git commit -a`) is banned outright here, not merely beside a live sibling. Board: [SESSIONS.md](SESSIONS.md).
+**Singletons in this repo** — check them before your first *build or device command*, not only before your first edit: the **Gradle daemon**, the **git index**, emulators **`Pixel_10_Pro_XL`** and **`Pixel_10_Pro_XL_B`** (claimed separately; `_B` exists for the two-account demo, not to parallelise instrumented tests — those still queue at the one Gradle daemon), and the live Firebase project **`goalpilot-56e30`**. Blanket staging (`git add -A`, `git add .`, `git commit -a`) is banned outright here, not merely beside a live sibling. Board: [SESSIONS.md](SESSIONS.md).
 
 ## 🔒 Frozen / off-limits
 

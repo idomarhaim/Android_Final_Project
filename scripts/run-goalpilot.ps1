@@ -12,8 +12,11 @@
 
     Device selection ('auto' = the default):
       1. a physical phone in state 'device'  -> use it
-      2. an emulator already running         -> use it
-      3. otherwise                           -> boot the AVD named by -Avd
+      2. an emulator already serving -Avd    -> use it
+      3. some other emulator running, and no -Avd was passed
+                                             -> adopt it, with a note
+      4. otherwise                           -> boot the AVD named by -Avd,
+                                                alongside anything already up
 
 .PARAMETER Target
     auto     - phone if one is plugged in, else emulator (default)
@@ -21,7 +24,10 @@
     device   - require a physical phone; fail if none is connected
 
 .PARAMETER Avd
-    Name of the AVD to boot. Defaults to Pixel_10_Pro_XL.
+    Name of the AVD to use. Defaults to Pixel_10_Pro_XL. Passing it explicitly is
+    a demand, not a hint: a running emulator serving a *different* AVD is left
+    alone and this one is booted next to it. That is what lets two sessions hold
+    one device each (Pixel_10_Pro_XL and Pixel_10_Pro_XL_B) without colliding.
 
 .PARAMETER SkipInstall
     Only bring the device up. Skips the Gradle build, install and app launch.
@@ -223,6 +229,46 @@ function Get-EmulatorAvdName {
         if ($trimmed -and $trimmed -ne 'OK' -and $trimmed -notlike 'KO*') { return $trimmed }
     }
     return $Serial
+}
+
+# Which running emulator, if any, may stand in for -Avd. Adopting "whatever is
+# running" was harmless while the machine had one AVD. With two it attaches a
+# session to the *other* session's screen, and the device lock then reports the
+# collision as a baffling "already being driven" refusal instead of the second
+# emulator the caller actually asked for.
+function Select-ReusableEmulator {
+    param(
+        [object[]]$Emulators,
+        [string]$Wanted,
+        [bool]$AvdWasExplicit
+    )
+
+    $named = @(foreach ($e in $Emulators) {
+        [pscustomobject]@{ Serial = $e.Serial; AvdName = (Get-EmulatorAvdName -Serial $e.Serial) }
+    })
+
+    $match = @($named | Where-Object { $_.AvdName -eq $Wanted })
+    if ($match.Count -gt 0) { return $match[0] }
+
+    # A name was asked for and nothing is serving it: boot it alongside the rest.
+    # (Keep message strings ASCII. This file has no BOM, so PowerShell 5.1 decodes
+    # it as CP1252, where the last byte of a UTF-8 em dash becomes U+201D — which
+    # the parser honours as a closing quote. Safe in a comment, fatal in a string.)
+    if ($AvdWasExplicit) {
+        Write-Note "Running: $(($named.AvdName) -join ', '). -Avd asked for '$Wanted' - booting it alongside."
+        return $null
+    }
+
+    # No -Avd given. Keep the old convenience of adopting a hand-booted emulator
+    # instead of starting a second one — but never silently, now that which
+    # emulator you got is a real question.
+    if ($named.Count -gt 1) {
+        Write-Warn "$($named.Count) emulators running and no -Avd given; taking '$($named[0].AvdName)'. Pass -Avd to choose."
+    }
+    else {
+        Write-Note "Adopting running emulator '$($named[0].AvdName)' (no -Avd given; default is '$Wanted')."
+    }
+    return $named[0]
 }
 
 # ── Cross-session lock on the device singleton ────────────────────────────────
@@ -465,6 +511,9 @@ $emulators = @($devices | Where-Object { $_.IsEmulator -and $_.State -eq 'device
 
 # ── Pick / bring up a target ──────────────────────────────────────────────────
 $serial = $null
+$reusable = if ($emulators.Count -gt 0 -and -not $Recover) {
+    Select-ReusableEmulator -Emulators $emulators -Wanted $Avd -AvdWasExplicit $PSBoundParameters.ContainsKey('Avd')
+} else { $null }
 
 if ($Target -eq 'device') {
     if ($phones.Count -eq 0) {
@@ -486,10 +535,10 @@ elseif ($Target -eq 'auto' -and $phones.Count -gt 0) {
     Lock-Device -Key "device-$serial"
     Write-Ok "Using physical device $serial"
 }
-elseif ($emulators.Count -gt 0 -and -not $Recover) {
-    $serial = $emulators[0].Serial
-    Lock-Device -Key "avd-$(Get-EmulatorAvdName -Serial $serial)"
-    Write-Ok "Reusing running emulator $serial"
+elseif ($null -ne $reusable) {
+    $serial = $reusable.Serial
+    Lock-Device -Key "avd-$($reusable.AvdName)"
+    Write-Ok "Reusing running emulator $serial ($($reusable.AvdName))"
 }
 else {
     # Boot the AVD.

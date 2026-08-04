@@ -31,8 +31,19 @@ never been seen with more than a single row.
 
 **Steps**
 
-1. Sign in as **account B** — either on a second AVD, or sign out on the existing
-   one. If reusing one device, **kill and relaunch the app between accounts**:
+1. Sign in as **account B** — on the second AVD, which exists as of 05/08/2026:
+
+   ```powershell
+   .\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B    # or the desktop shortcut
+   ```
+
+   It boots alongside account A's emulator rather than replacing it, so both
+   screens stay visible for the demo. Expect **one** ANR while it settles (host
+   RAM, not the AVD) — tap *Wait*. Details in
+   [`scripts/README.md`](../../scripts/README.md).
+
+   The old route — sign out on the single device and back in as B — still works,
+   but then **kill and relaunch the app between accounts**:
    Firestore listeners are per-process and a stale one will serve account A's
    data (`data/auth/AuthExt.kt` fixed the Flow-construction bug, but a warm
    process is still the riskier demo).

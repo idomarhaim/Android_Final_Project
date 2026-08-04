@@ -1,14 +1,14 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Puts the three GoalPilot launchers on your Desktop as real shortcut icons.
+    Puts the four GoalPilot launchers on your Desktop as real shortcut icons.
 
 .DESCRIPTION
-    Creates (or refreshes) three .lnk files on the Desktop pointing at the .cmd
+    Creates (or refreshes) four .lnk files on the Desktop pointing at the .cmd
     launchers in this folder. Each shortcut starts in the repo root and borrows an
     icon from a Windows system DLL so they are distinguishable at a glance.
 
-    Run once. Re-running just overwrites the same three shortcuts.
+    Run once. Re-running just overwrites the same four shortcuts.
     Remove them by deleting the .lnk files from the Desktop; nothing else is touched.
 
 .PARAMETER Destination
@@ -32,7 +32,8 @@ if (-not (Test-Path -LiteralPath $Destination)) {
 $shortcuts = @(
     @{ Name = 'GoalPilot - Run'; Cmd = 'Run GoalPilot.cmd'; Icon = "$env:SystemRoot\System32\shell32.dll,137"; Desc = 'Boot emulator or use phone, build, install, launch GoalPilot' },
     @{ Name = 'GoalPilot - Emulator only'; Cmd = 'Start Emulator Only.cmd'; Icon = "$env:SystemRoot\System32\imageres.dll,109"; Desc = 'Start the Pixel_10_Pro_XL emulator without building' },
-    @{ Name = 'GoalPilot - Run on phone'; Cmd = 'Run On Phone.cmd'; Icon = "$env:SystemRoot\System32\imageres.dll,96"; Desc = 'Build and install onto the USB-connected phone' }
+    @{ Name = 'GoalPilot - Run on phone'; Cmd = 'Run On Phone.cmd'; Icon = "$env:SystemRoot\System32\imageres.dll,96"; Desc = 'Build and install onto the USB-connected phone' },
+    @{ Name = 'GoalPilot - Second device'; Cmd = 'Run GoalPilot on Second Device.cmd'; Icon = "$env:SystemRoot\System32\imageres.dll,104"; Desc = 'Boot Pixel_10_Pro_XL_B alongside the first emulator and install (two-account demo)' }
 )
 
 $shell = New-Object -ComObject WScript.Shell

@@ -45,10 +45,19 @@ before your first write. Normative rule:
 
 | Singleton | Why it matters here |
 |---|---|
-| Gradle daemon / `.gradle` locks | Two `gradlew` runs contend; one blocks or dies mid-write |
+| Gradle daemon / `.gradle` locks | Two `gradlew` runs contend; one blocks or dies mid-write. **This, not the emulator, is what actually serialises two sessions** — see below |
 | The git index | Never `git add -A` — stage explicit paths |
 | Emulator `Pixel_10_Pro_XL` (`adb`) | One screen, one driver. Installing/driving the app is exclusive |
+| Emulator `Pixel_10_Pro_XL_B` (`adb`) | Second device, added 2026-08-05 for the two-account demo. Same rule, claimed separately: `run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B` |
 | Firebase project `goalpilot-56e30` | Live Firestore/Storage/Functions — concurrent writes are attributable to nobody |
+
+**Two emulators do not buy two parallel verifications.** Both AVDs exist so that
+*one* session can drive two signed-in accounts at once (the spec §7 sharing demo),
+not so that two sessions can each run `:app:connectedDebugAndroidTest`. Those two
+runs would still queue at the Gradle daemon above, and worse, each would build an
+APK from the *other* session's uncommitted edits — one working tree, one
+`app/build/`. Real parallel instrumented testing needs a second checkout, which
+this repo has deliberately not adopted.
 
 ## 🗂️ Unclaimed work
 
@@ -108,6 +117,7 @@ Currently unclaimed and ready:
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 | `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
 | `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
+| `second-avd` | Second emulator `Pixel_10_Pro_XL_B` for the two-account demo; `-Avd` made a demand so it never adopts the other session's screen | 2026-08-05 | see `CHANGELOG/2026-08-05/second-avd.md`. No app code touched, so no suite was run — verification was behavioural against both live emulators. Both AVDs left running; neither claim held. |
 | `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48` + verification pass; see `CHANGELOG/2026-08-04/time-insights.md`. **All layers green and fully verified**: 150 JVM, 20 instrumented, and a live re-estimation run against GROQ that wrote 7 durations to `goalpilot-56e30`. Ran in two sittings — released once with the device checks blocked, re-claimed when the AVD came free. Emulator and Firebase project **released**. |
 | `lifearea-polish` | Drag-to-reorder life areas (minimal `sortOrder` writes) and the goals list banded by life area | 2026-08-04 | `6f4a749`; see `CHANGELOG/2026-08-04/lifearea-polish.md`. Both layers green — 144 JVM, 20 instrumented. Emulator `Pixel_10_Pro_XL` recovered from a wedge and **released**; Gradle daemon released. |
 | `challenges-ui` | Competitive challenges as a real screen: ViewModel, live standings, discover/join/leave, score reporting, create flow | 2026-08-05 | see `CHANGELOG/2026-08-05/challenges-ui.md`. All three layers green — 175 JVM, 29 instrumented, 16 rules. Ran against an empty board, uncontended. Emulator `Pixel_10_Pro_XL` and the Gradle daemon **released**. The live project `goalpilot-56e30` was **never touched** — the rules deploy is held for the two-account session on Ido's call, so a non-owner join is still proven by `firestore-tests` only. |

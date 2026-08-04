@@ -11,6 +11,7 @@ command-line tools (`emulator.exe`, `adb.exe`) plus the Gradle wrapper.
 | `Run GoalPilot.cmd` | Phone if one is plugged in, otherwise boots the emulator → `:app:installDebug` → launches the app. |
 | `Start Emulator Only.cmd` | Boots `Pixel_10_Pro_XL` and stops. No Gradle, so `app\build\` is never touched. |
 | `Run On Phone.cmd` | Same as *Run*, but fails fast if no authorized physical device is attached. |
+| `Run GoalPilot on Second Device.cmd` | Boots `Pixel_10_Pro_XL_B` **alongside** the first emulator and installs there. The second-account half of the spec §7 demo. |
 
 Each window stays open at the end (`pause`) so you can read the output.
 
@@ -20,7 +21,7 @@ Each window stays open at the end (`pause`) so you can read the output.
 .\scripts\create-desktop-shortcuts.ps1
 ```
 
-Creates three `.lnk` shortcuts on the Desktop pointing at the `.cmd` files above.
+Creates four `.lnk` shortcuts on the Desktop pointing at the `.cmd` files above.
 Delete the `.lnk` files to undo — nothing else is modified.
 
 ## The underlying script
@@ -37,7 +38,7 @@ Delete the `.lnk` files to undo — nothing else is modified.
 .\scripts\run-goalpilot.ps1 -WindowScale 0.3       # override the emulator window scale
 .\scripts\run-goalpilot.ps1 -NoWindowFit           # leave window size/position to the emulator
 .\scripts\run-goalpilot.ps1 -Logcat                # tail app logcat after launch
-.\scripts\run-goalpilot.ps1 -Avd Some_Other_AVD
+.\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B   # the second device
 ```
 
 What it handles for you:
@@ -46,7 +47,9 @@ What it handles for you:
   `%LOCALAPPDATA%\Android\Sdk`), so no PATH setup is required.
 - Sets `JAVA_HOME` from `org.gradle.java.home` in `gradle.properties` — the
   machine default is JDK 25, which AGP rejects (see [AGENTS.md](../AGENTS.md)).
-- Reuses an already-running emulator instead of booting a second one.
+- Reuses an already-running emulator instead of booting a second one — unless you
+  named a different one with `-Avd`, which is a demand rather than a hint. See
+  [Two emulators](#two-emulators-pixel_10_pro_xl-and-_b).
 - Waits for `sys.boot_completed=1`, not just for adb to see the device.
 - Pins `ANDROID_SERIAL` so Gradle installs to exactly one device even when both
   the emulator and a phone are connected.
@@ -54,6 +57,62 @@ What it handles for you:
 - Explains the Windows "Could not delete/move" lock error if the build hits it.
 - Refuses to drive an emulator another session is already driving — see
   [Running more than one session at a time](#running-more-than-one-session-at-a-time).
+
+## Two emulators: `Pixel_10_Pro_XL` and `_B`
+
+Added 2026-08-05, for one reason: the spec §7 sharing demo needs **two accounts
+signed in at once**, and one AVD cannot do that. Both are the same API 37
+Google-APIs-with-Play-Store image; `_B` is deliberately the leaner of the two.
+
+**Two of them is what this host can just about carry, not comfortably.** With
+both up beside VS Code and WSL, free RAM measured **0.5–1.6 GB of 32 GB**, and
+`_B` throws an ANR — *"System UI isn't responding"*, or the launcher's — **once
+while it settles**, after a cold boot *and* after a snapshot restore. Tap
+**Wait**, give it a minute, and it lands on a clean launcher every time. Budget
+for it before a live demo rather than being surprised by it. If you want it
+smoother, shut WSL down (`wsl --shutdown` frees ~2.5 GB) rather than shrinking
+either AVD.
+
+Boot times measured on this host with the first emulator already up:
+**125 s** cold, **33 s** from `_B`'s snapshot.
+
+| | `Pixel_10_Pro_XL` | `Pixel_10_Pro_XL_B` |
+|---|---|---|
+| RAM / cores | 4096 MB / 6 | 3072 MB / 4 |
+| `vm.heapSize` | 512 | 384 |
+| GPU mode | `angle_indirect` | `angle_indirect` |
+| Signed in as | `name.iddo@gmail.com` | *(fresh — sign in as `rachil751@gmail.com`)* |
+
+**`_B` was tried at 2048 MB first and that does not work** — which is the tuning
+table further down this file saying the same thing twice. At 2 GB the first cold
+boot took 382 s and landed on *"System UI isn't responding"*, and the snapshot
+restore afterwards never came online at all (still `offline` after 300 s). At 3 GB
+the cold boot is **125 s** and the snapshot restore works; only the one settling
+ANR above remains. Do not lower it back to save host RAM; lower `hw.cpu.ncore`
+instead.
+
+`_B` was created by hand rather than through `avdmanager create`: the bundled
+cmdline-tools device catalogue on this machine has no `pixel_10_pro_xl` profile,
+so `_B` is a copy of the first AVD's `config.ini` with the id, display name and
+the three resource values above changed. It carries **no** copied user data — the
+data partition is built fresh on first boot, which is what makes it a genuinely
+separate account.
+
+**`-Avd` is now a demand, not a hint.** Device selection used to adopt any
+running emulator, which with two AVDs silently attached you to the *other*
+session's screen; the device lock then reported it as a baffling "already being
+driven" refusal. Now:
+
+1. an emulator already serving `-Avd` → use it;
+2. some other emulator running and **no** `-Avd` passed → adopt it, with a note;
+3. otherwise → boot `-Avd` **alongside** whatever is already up.
+
+**What a second emulator does not buy you.** It is a second *device*, not a
+second *build*. Two sessions running `:app:connectedDebugAndroidTest` still queue
+at the Gradle daemon, and each would build its APK out of the other's
+uncommitted edits — one working tree, one `app\build\`. Both emulators also talk
+to the same live Firebase project, so keep them on different accounts or the
+writes are attributable to nobody.
 
 ## Running more than one session at a time
 

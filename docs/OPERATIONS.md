@@ -68,6 +68,10 @@ because of it.
 - `gcloud` and `firebase` CLIs are installed and authenticated as `name.iddo@gmail.com`.
 - Emulator AVD `Pixel_10_Pro_XL` (API 37 / Android 17), a Google-APIs image — Play
   Services present, which Google Sign-In requires.
+- Second AVD `Pixel_10_Pro_XL_B` (same image, leaner: 3 GB / 4 cores), added
+  2026-08-05 so two accounts can be signed in at once. Boot it with
+  `run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B`, or the *Run GoalPilot on Second
+  Device* launcher. Details in [`scripts/README.md`](../scripts/README.md).
 
 ### Test accounts
 
@@ -83,9 +87,21 @@ rachil751@gmail.com    second demo account, already an OAuth test user
 ### MUST (blocks submission)
 
 1. **Two-account sharing demo (spec §7).** Everything is in place — both accounts
-   are OAuth test users. Sign in as `rachil751@gmail.com` on a second device or
-   emulator, add friend code `NDXVJC`, and exercise the leaderboard / friends /
-   shared-feed flow.
+   are OAuth test users, and since 2026-08-05 the second device exists too:
+
+   ```powershell
+   .\scripts\run-goalpilot.ps1                              # emulator A, name.iddo@
+   .\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B       # emulator B, alongside
+   ```
+
+   Run them **one at a time** — the second waits for the first's Gradle build, and
+   `-Avd` guarantees it boots B rather than adopting A. Then sign in on B as
+   `rachil751@gmail.com`, add friend code `NDXVJC`, and exercise the leaderboard /
+   friends / shared-feed flow with both screens visible.
+
+   Keep the two emulators on **different accounts**: they share the live Firebase
+   project, so two sessions of the same account produce writes attributable to
+   nobody.
 2. **Spec title page** still reads `[Full name & ID] · [Course number]`.
    `GoalPilot_spec_EN.docx` is marked frozen in AGENTS.md — confirm with the user
    before touching it.
