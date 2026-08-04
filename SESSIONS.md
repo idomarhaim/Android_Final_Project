@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `challenges-ui` | Challenges UI — ViewModel, live screen, create flow; deploy the rules | `app/src/main/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/test/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/ChallengesUiTest.kt`, `firestore.rules` (deploy only), `sessions/challenges-ui.md`, `CHANGELOG/2026-08-04/challenges-ui.md`, `TODO/TODO.md`, `TODO/TODO_OPTIONAL/Integrations.TODO.optional.md` | Gradle daemon · emulator `Pixel_10_Pro_XL` · `goalpilot-56e30` (rules deploy, gated on Ido) | 2026-08-04 |
 
 ## 📏 Rules
 
