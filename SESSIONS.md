@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `time-insights` | Finish the one verification left open at release: a re-estimation run against the live model (`CHANGELOG/2026-08-04/time-insights.md` → "Still open") | `CHANGELOG/2026-08-04/time-insights.md`, `sessions/done/time-insights.md`, `SESSIONS.md`, `TODO/TODO.md` (checkbox only, on Ido's confirmation) | **Emulator `Pixel_10_Pro_XL`**, **Gradle daemon**, **live Firebase `goalpilot-56e30`** — the re-estimation writes real `estimatedMinutes` to real task documents | 2026-08-04 |
 
 ## 📏 Rules
 
