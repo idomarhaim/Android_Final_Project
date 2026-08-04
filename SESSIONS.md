@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `lifearea-polish` | Life-area reordering + life area shown on the goals list (`sessions/lifearea-polish.md`) | `app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/`, `.../feature/goals/`, `.../domain/repository/LifeAreaRepository.kt`, `.../data/firestore/LifeAreaRepositoryImpl.kt`, `.../domain/usecase/ReorderLifeAreasUseCase.kt`, `.../domain/usecase/GroupGoalsByLifeAreaUseCase.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/LifeAreaOrderingTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/GoalGroupingTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/LifeAreaReorderUiTest.kt`, `sessions/lifearea-polish.md`, `CHANGELOG/2026-08-04/lifearea-polish.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-04 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -62,33 +62,33 @@ Currently unclaimed and ready:
 - **Health Connect on a physical phone** — small follow-up to the shipped feature.
   The emulator carries the provider but its store is empty, so the
   proposal → Firestore write path has never run against real step data.
-- Two written briefs, each a session: `/kickoff challenges-ui`,
-  `/kickoff lifearea-polish` (`sessions/`). `time-insights` is done and its brief
-  has moved to `sessions/done/`.
-- **Finish verifying `time-insights` — one task, needs only the AVD.** Its code is
-  committed (`342af48`) and its JVM layer is green, but two things could not be
-  checked without the emulator that `lifearea-polish` holds:
-  1. `:app:connectedDebugAndroidTest` — `StackedColumnChartUiTest` compiles but has
-     never executed, and the analytics screen gained a card, a button and a dialog.
-  2. **A re-estimation run against the live model.** Press "Re-estimate N
-     durations" and confirm a duration the local heuristic could not have produced,
-     checked against **both** fallback signatures now in `docs/OPERATIONS.md` §4 —
-     the client's `5 + 3×words` *and* the Cloud Function's flat `10 points /
-     30 minutes`. Verify against the model, not the UI.
+- One written brief, its own session: `/kickoff challenges-ui` (`sessions/`).
+  `time-insights` and `lifearea-polish` are done and their briefs have moved to
+  `sessions/done/`.
+- **One `time-insights` verification is still open** — a **re-estimation run
+  against the live model**. Press "Re-estimate N durations" and confirm a duration
+  the local heuristic could not have produced, checked against **both** fallback
+  signatures in `docs/OPERATIONS.md` §4 — the client's `5 + 3×words` *and* the
+  Cloud Function's flat `10 points / 30 minutes`. Verify against the model, not the
+  UI. (Its other blocked check, `StackedColumnChartUiTest`, ran green inside
+  `lifearea-polish`'s suite — 20 tests, 0 failures. Nothing left to do there.)
 
-**Disjointness of the three briefs**, checked 2026-08-04 so the next session does
-not have to re-derive it:
-- Their **paths** are disjoint — `feature/challenges/`, `feature/lifeareas/` +
-  `feature/goals/`, and `feature/analytics/` + `functions/src/index.ts`
-  respectively. Two can be written concurrently.
-- Their **verification is not.** All three touch composables, so all three want
-  `:app:connectedDebugAndroidTest`, and the emulator is one exclusive singleton.
-  They queue at the device even when their edits never meet.
+**Disjointness**, checked 2026-08-04 and left here so it need not be re-derived:
+- The three briefs' **paths** were disjoint — `feature/challenges/`,
+  `feature/lifeareas/` + `feature/goals/`, and `feature/analytics/` +
+  `functions/src/index.ts`. Two ran concurrently and never collided.
+- Their **verification was not**, and that is the part that actually bit. All three
+  touch composables, so all three want `:app:connectedDebugAndroidTest`, and the
+  emulator is one exclusive singleton — `time-insights` released with its
+  instrumented layer unrun because `lifearea-polish` held the AVD. **Disjoint paths
+  do not make sessions independent; the device does.** When two sessions both end
+  at a composable, expect one of them to hand its device check to the other.
+- The **Gradle daemon** turned out to be shareable by queueing, not by claiming: a
+  build during a sibling's mid-edit fails on *their* half-written file, which reads
+  as your own compile error until you look at the path.
 - `challenges-ui` stays clear of `functions/src/index.ts` only because standings
   are computed client-side. A later session moving them server-side collides with
-  `time-insights`.
-- All three add files under `app/src/test/` — different files in the same
-  directory, which is fine. Stage explicit paths and it stays fine.
+  what `time-insights` already landed.
 
 ## 📓 Recently released
 
@@ -101,7 +101,8 @@ not have to re-derive it:
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 | `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
 | `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
-| `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48`; see `CHANGELOG/2026-08-04/time-insights.md`. JVM layer green (150 tests). **Two verifications outstanding, both blocked on the AVD held by `lifearea-polish`** — see "Unclaimed work". Never held a singleton; the Gradle daemon was shared by queueing. |
+| `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48`; see `CHANGELOG/2026-08-04/time-insights.md`. JVM layer green (150 tests). Its instrumented layer was later run green inside `lifearea-polish`'s suite; **one verification still outstanding** (live re-estimation) — see "Unclaimed work". Never held a singleton; the Gradle daemon was shared by queueing. |
+| `lifearea-polish` | Drag-to-reorder life areas (minimal `sortOrder` writes) and the goals list banded by life area | 2026-08-04 | `6f4a749`; see `CHANGELOG/2026-08-04/lifearea-polish.md`. Both layers green — 144 JVM, 20 instrumented. Emulator `Pixel_10_Pro_XL` recovered from a wedge and **released**; Gradle daemon released. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not
