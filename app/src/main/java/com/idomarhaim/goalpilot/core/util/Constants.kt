@@ -20,8 +20,18 @@ object FirestorePaths {
     /** Shared achievement/summary feed items. */
     const val SHARES = "shares"
 
-    /** Competitive challenges. */
+    /**
+     * Competitive challenges. Used twice on purpose: the world-readable
+     * `challenges/{id}`, and the private mirror edge `users/{uid}/challenges/{id}`
+     * that answers "which challenges am I in?" in one query.
+     */
     const val CHALLENGES = "challenges"
+
+    /**
+     * `challenges/{id}/participants/{uid}` — one self-owned row per member. The
+     * document id must be the writer's uid; the security rule matches on it.
+     */
+    const val PARTICIPANTS = "participants"
 }
 
 /** Names of the Firebase Cloud Functions the client calls (callable HTTPS). */

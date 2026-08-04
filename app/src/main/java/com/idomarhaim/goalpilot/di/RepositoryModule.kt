@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.di
 
 import com.idomarhaim.goalpilot.data.auth.AuthRepositoryImpl
+import com.idomarhaim.goalpilot.data.firestore.ChallengeRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.GoalRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.LifeAreaRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.ProgressRepositoryImpl
@@ -12,6 +13,7 @@ import com.idomarhaim.goalpilot.data.remote.RecommendationRepositoryImpl
 import com.idomarhaim.goalpilot.data.storage.StorageRepositoryImpl
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
+import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
@@ -57,6 +59,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSocialRepository(impl: SocialRepositoryImpl): SocialRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
 
     @Binds
     @Singleton

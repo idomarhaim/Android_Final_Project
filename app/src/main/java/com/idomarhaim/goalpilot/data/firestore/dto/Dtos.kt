@@ -97,3 +97,28 @@ data class SharedItemDto(
     var imageUrl: String? = null,
     var createdAt: Long = 0L,
 )
+
+data class ChallengeDto(
+    @DocumentId var id: String = "",
+    var title: String = "",
+    var description: String = "",
+    var type: String = "CUSTOM",
+    var metricUnit: String = "points",
+    var ownerUid: String = "",
+    var startAt: Long = 0L,
+    var endAt: Long = 0L,
+    var createdAt: Long = 0L,
+)
+
+/**
+ * `challenges/{challengeId}/participants/{uid}` — the document id **is** the
+ * participant's uid, which is what the security rule matches on. Never write
+ * this to a path whose id differs from the signed-in user; the rule rejects it.
+ */
+data class ChallengeParticipantDto(
+    @DocumentId var uid: String = "",
+    var displayName: String = "",
+    var photoUrl: String? = null,
+    var score: Double = 0.0,
+    var joinedAt: Long = 0L,
+)

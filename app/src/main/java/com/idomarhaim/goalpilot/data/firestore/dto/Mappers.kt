@@ -1,6 +1,9 @@
 package com.idomarhaim.goalpilot.data.firestore.dto
 
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
+import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
+import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Leveling
@@ -133,6 +136,39 @@ fun SharedItemDto.toDomain(): SharedItem = SharedItem(
     completedTasks = completedTasks,
     imageUrl = imageUrl,
     createdAtEpochMillis = createdAt,
+)
+
+// ── Challenge ──────────────────────────────────────────────────────
+fun ChallengeDto.toDomain(): Challenge = Challenge(
+    id = id,
+    title = title,
+    description = description,
+    type = ChallengeType.fromName(type),
+    metricUnit = metricUnit.ifBlank { "points" },
+    ownerUid = ownerUid,
+    startAtEpochMillis = startAt,
+    endAtEpochMillis = endAt,
+    createdAtEpochMillis = createdAt,
+)
+
+fun Challenge.toDto(): ChallengeDto = ChallengeDto(
+    id = id,
+    title = title,
+    description = description,
+    type = type.name,
+    metricUnit = metricUnit,
+    ownerUid = ownerUid,
+    startAt = startAtEpochMillis,
+    endAt = endAtEpochMillis,
+    createdAt = createdAtEpochMillis,
+)
+
+fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticipant(
+    uid = uid,
+    displayName = displayName,
+    photoUrl = photoUrl,
+    score = score,
+    joinedAtEpochMillis = joinedAt,
 )
 
 // ── PublicProfile → level convenience ──────────────────────────────

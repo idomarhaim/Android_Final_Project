@@ -92,12 +92,57 @@ Claimed `challenges` before the first write (`9954822`). Claim extended twice as
 scope became clear — `firestore-tests/`, then the changelog/AGENTS paths — rather
 than writing outside the row. Still active; not released.
 
+## 🏗️ Domain + data layer
+
+The model no longer describes something the rules forbid. `participantUids` and
+`standings` are gone from `Challenge`; `ChallengeParticipant` is one self-owned
+row and `ChallengeWithStandings` is what a screen actually needs. The KDoc on
+`Challenge` says why, so they do not get re-added.
+
+**Standings use standard competition ranking, deliberately unlike the
+leaderboard.** `rankedByPoints` stamps `index + 1`, so two people on the same
+score render as #1 and #2. On a leaderboard an arbitrary tiebreak is cosmetic;
+on the thing people compete over it is wrong. `rankedByScore` gives joint ranks
+with the next skipping — 1, 1, 3.
+
+`phaseAt` reads a challenge with no dates as **active, not expired in 1970**, and
+uses half-open bounds so an instant belongs to exactly one phase — matching
+`AnalyticsRange`.
+
+`ChallengeRepositoryImpl` — three collections, each write aimed at whichever one
+the rules actually permit:
+- **Create and join commit in one batch.** An owner missing from their own
+  standings reads as a bug the first time anyone else joins.
+- **`reportScore` uses `update()`, not a merging `set()`.** A merge would happily
+  create a participant row with no mirror edge, leaving someone scoring in a
+  challenge that never appears in their own list.
+- **`joinChallenge` checks the challenge exists first** — the same guard
+  `addFriend` already uses against edges that point at nothing.
+- `observeMyChallenges` walks the mirror edges and opens one pair of listeners
+  per challenge rather than a chunked `whereIn`: the participants listeners are
+  needed for standings anyway, so the query would have merged only the other half.
+
+**Two limitations left visible rather than hidden.** Deleting a challenge
+orphans its participant rows (Firestore does not cascade — the existing
+`TODO_FUTURE` cascade-delete item covers it), and there is no "kick a
+participant": granting the owner that power needs a `get()` on the parent inside
+the rule, billing a document read on every evaluation.
+
+### 🧪 Tests
+- `:app:testDebugUnitTest` — **106 tests, 0 failed, 0 skipped** (was 92).
+  New: `ChallengeStandingsTest`, 14 cases covering ordering, joint ranks, a
+  three-way tie, snapshot-stable tie ordering, current-user flagging, zero-score
+  participants, and all five phase boundaries.
+- Instrumented layer **not run**: no composable changed in this pass.
+- First Gradle run died on the documented Windows KSP lock
+  (`Could not delete .../generated/ksp/debug/classes`). Cleared with
+  `rm -rf app/build/generated/ksp`; not a code error.
+
 ## ⚠️ Still open
 - **Rules are not deployed.** Live `goalpilot-56e30` still has the old ruleset,
   so joining is still impossible against the real backend. Deploy is deliberately
   held until the client code exists, so the whole path can be verified in one
   pass: `firebase deploy --only firestore:rules`.
-- The feature itself: `ChallengeRepository` + Firestore impl, the DI binding, and
-  replacing `sampleChallenges` in `ChallengesScreen` with live data and a create
-  flow. `Challenge.participantUids` / `Challenge.standings` need removing as part
-  of that.
+- **The UI.** `ChallengesViewModel`, and replacing `sampleChallenges` in
+  `ChallengesScreen` with live data, a create flow, join/leave and score
+  reporting. The repository contract it consumes is committed and stable.
