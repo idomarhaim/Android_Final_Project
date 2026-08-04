@@ -45,3 +45,8 @@ npm-debug.log*
 
 # ── OS / editor cruft ─────────────────────────────────────────────
 Thumbs.db
+# Machine-local VS Code settings. Holds only
+# `java.configuration.updateBuildConfiguration: disabled`, which suits this
+# machine's JDK setup and should not be imposed on a fresh clone. `.idea/` above
+# is ignored for the same reason.
+.vscode/

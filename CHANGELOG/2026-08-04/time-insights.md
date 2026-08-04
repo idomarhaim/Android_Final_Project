@@ -199,13 +199,17 @@ builds and both sessions' suites are green in the same run — but the AVD was l
 alone entirely, which is why the instrumented layer is compiled and not executed.
 
 ## ⚠️ Still open
-- **TODO checkboxes not flipped** — per the convention at the bottom of
-  `TODO/TODO.md`, closing an item waits for Ido's confirmation. Both follow-ups
-  under "Life areas + time-allocation analytics" (back-fill durations, trend
-  chart) are done and verified.
-- Nothing else. Both exit criteria that were blocked at first release are now met:
-  the instrumented suite ran green, and the live re-estimation run is recorded
-  above.
+
+**Nothing.** Both exit criteria that were blocked at first release are now met —
+the instrumented suite ran green and the live re-estimation run is recorded
+above — and on Ido's confirmation the whole **"Life areas + time-allocation
+analytics"** item is closed in `TODO/TODO.md`, parent included: all four of its
+follow-ups landed on 04/08/2026, two here and two in `lifearea-polish`.
+
+`.vscode/` is now git-ignored (Ido's call). It held one machine-local setting,
+`java.configuration.updateBuildConfiguration: disabled`, which suits this
+machine's JDK layout and has no business in a fresh clone — the same reasoning
+`.idea/` was already ignored under.
 
 ## 🕐 Two sittings, and why the entry says so
 This session was written, committed and **released with two exit criteria unmet**

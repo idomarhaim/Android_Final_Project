@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `time-insights` | Close the shipped TODO items and ignore `.vscode/` (Ido's call, this session) | `TODO/TODO.md`, `.gitignore`, `SESSIONS.md` | None — no build, no device, no Firebase | 2026-08-04 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 

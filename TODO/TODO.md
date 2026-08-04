@@ -46,26 +46,29 @@ Backlog index. Per-area files live under three priority subfolders next to this 
     create/join/standings logic pending. **The last remaining §6 nice-to-have.**
   - [x] LLM task→goal classification UI — shipped as the "Smart add a task" card
     on the dashboard; `scoreTask` is wired to the ✨ button on the add-task row.
-  - [~] **Life areas + time-allocation analytics** — shipped **and verified**
-    03/08/2026; left `[~]` only because closing an item needs your confirmation
-    (the convention at the bottom of this file), so flip it to `[x]` when you have
-    seen it. What shipped:
-    user-defined areas synced from Google Tasks list names, LLM duration estimates
-    on tasks, and the interactive "Where your time goes" donut at day / week /
-    month / quarter / year. See `CHANGELOG/2026-08-03/lifeareas.md`.
-    Follow-ups it deliberately left out, none of them blocking:
-    - [ ] **Reordering life areas** — `sortOrder` is persisted and honoured
-      everywhere; only a drag handle is missing.
-    - [ ] **Show the life area on the goals list**, not just on a goal's own
-      screen — `GoalsViewModel` would need the areas flow, and the list probably
-      wants grouping headers rather than another chip per row.
-    - [ ] **Back-fill durations for old tasks.** Tasks created before this feature
-      have no `estimatedMinutes` and fall back to 3 min/point. A "re-estimate with
-      AI" action would have to respect the 30 req/min GROQ cap, so it needs the
-      same per-run cap the Tasks import uses.
-    - [ ] **A trend chart over time** — the pie answers "what share", not "is
-      Health growing or shrinking". A stacked bar per bucket across the range is
-      the natural next chart.
+  - [x] **Life areas + time-allocation analytics** — shipped **and verified**;
+    closed 04/08/2026 on your confirmation, with every follow-up done. What
+    shipped: user-defined areas synced from Google Tasks list names, LLM duration
+    estimates on tasks, and the interactive "Where your time goes" donut at
+    day / week / month / quarter / year. See `CHANGELOG/2026-08-03/lifeareas.md`.
+    The four follow-ups it deliberately left out, all landed 04/08/2026:
+    - [x] **Reordering life areas** — drag handle plus accessibility actions,
+      writing only the `sortOrder` values that actually moved.
+      See `CHANGELOG/2026-08-04/lifearea-polish.md`.
+    - [x] **Show the life area on the goals list** — the list is banded by area
+      rather than carrying another chip per row.
+      See `CHANGELOG/2026-08-04/lifearea-polish.md`.
+    - [x] **Back-fill durations for old tasks** — a "Re-estimate N durations"
+      action on the analytics card, capped at 15 per run like the Tasks import,
+      review-before-write. Verified against the live model: it returned 105
+      minutes for a five-word title, which neither the client heuristic (ceiling
+      60 for five words) nor the Cloud Function's flat 30 can produce, and the
+      card moved from "1 of 2 durations estimated by AI" to "all 2".
+      See `CHANGELOG/2026-08-04/time-insights.md`.
+    - [x] **A trend chart over time** — "How it moves", a stacked column per
+      bucket, with buckets that tile the selected range exactly (days in a week,
+      weeks in a month or quarter, months in a year, four-hour blocks in a day).
+      See `CHANGELOG/2026-08-04/time-insights.md`.
 
 ### 🟢 FUTURE — [`TODO_FUTURE/`](TODO_FUTURE/)
 - **Bump the build toolchain, then take Health Connect `1.1.0` stable.** The app
