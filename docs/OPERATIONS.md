@@ -130,8 +130,19 @@ what the fallback can produce:
 
 - `getRecommendations` fallback only ever emits *"Start with one goal"*, *"Keep
   the streak alive"*, or *"Nudge: {goal}"*. Anything else came from GROQ.
-- `scoreTask` fallback is exactly `5 + 3×words`, clamped 5..50. A different
-  number means the model answered.
+- `scoreTask` has **two** fallback signatures, and knowing only the first is how a
+  dead model gets reported as a working one:
+  1. **Client-side**, when the call never left the device: `5 + 3×words` points
+     clamped 5..50, and `3 × points` minutes.
+  2. **Server-side**, when the call reached the function but GROQ did not answer:
+     a flat **`10 points / 30 minutes`** from the `catch` in
+     `functions/src/index.ts`. Note `5 + 3×words` can never equal 10, so this pair
+     is *unreachable* by rule 1 and looks like a perfectly ordinary estimate.
+
+  `TaskScoring.looksLikeFallback` encodes both; the duration back-fill uses it to
+  keep either from being written as an AI estimate. If the `catch` in
+  `functions/src/index.ts` ever returns different numbers, that constant must
+  change with it.
 
 Never report an LLM feature as working based on the UI alone.
 

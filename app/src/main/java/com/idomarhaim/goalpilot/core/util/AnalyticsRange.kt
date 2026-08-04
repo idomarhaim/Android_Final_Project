@@ -20,6 +20,17 @@ data class TimeWindow(val startMillis: Long, val endMillisExclusive: Long) {
 }
 
 /**
+ * One column of the trend chart — a sub-window of the selected
+ * [AnalyticsRange], with the label that goes under it.
+ *
+ * Buckets **tile** their range: contiguous, non-overlapping, and covering it
+ * exactly. That is what lets the trend's totals be checked against the pie's,
+ * and it inherits the half-open convention from [TimeWindow], so a task
+ * completed at midnight belongs to exactly one column.
+ */
+data class TimeBucket(val label: String, val window: TimeWindow)
+
+/**
  * The zoom levels of the analytics screen (day / week / month / quarter / year).
  *
  * **Calendar-aligned, not rolling.** [SummaryPeriod] windows are rolling — "the
@@ -31,12 +42,12 @@ data class TimeWindow(val startMillis: Long, val endMillisExclusive: Long) {
  * Everything is computed from an injected [LocalDate] and [ZoneId] so the whole
  * thing is testable on the JVM without touching the system clock.
  */
-enum class AnalyticsRange(val label: String) {
-    DAY("Day"),
-    WEEK("Week"),
-    MONTH("Month"),
-    QUARTER("Quarter"),
-    YEAR("Year");
+enum class AnalyticsRange(val label: String, val bucketNoun: String) {
+    DAY("Day", "4 hours"),
+    WEEK("Week", "day"),
+    MONTH("Month", "week"),
+    QUARTER("Quarter", "week"),
+    YEAR("Year", "month");
 
     /** First day of the calendar period [today] falls in. */
     fun startDate(today: LocalDate, firstDayOfWeek: DayOfWeek = defaultFirstDayOfWeek()): LocalDate =
@@ -69,6 +80,40 @@ enum class AnalyticsRange(val label: String) {
         endMillisExclusive = endDateExclusive(today, firstDayOfWeek)
             .atStartOfDay(zone).toInstant().toEpochMilli(),
     )
+
+    /**
+     * The range split into the columns of the trend chart, in order.
+     *
+     * The unit is one step finer than the range itself — days in a week, weeks
+     * in a month or quarter, months in a year — so every range answers *"is this
+     * area growing or shrinking?"* at a resolution somebody can actually read.
+     * A day is the exception: it has no finer calendar unit, so it is cut into
+     * six four-hour blocks, which is also the only view that shows *when* in the
+     * day the time went.
+     *
+     * Boundaries are derived from [startDate]/[endDateExclusive] rather than
+     * re-derived here, so the buckets can never disagree with the pie they sit
+     * under. Week-aligned buckets are clipped at both ends: a month almost never
+     * begins on the first day of a week, and a partial first column is honest
+     * where a column reaching back into the previous month would not be.
+     */
+    fun buckets(
+        today: LocalDate = LocalDate.now(),
+        zone: ZoneId = ZoneId.systemDefault(),
+        firstDayOfWeek: DayOfWeek = defaultFirstDayOfWeek(),
+    ): List<TimeBucket> {
+        val start = startDate(today, firstDayOfWeek)
+        val end = endDateExclusive(today, firstDayOfWeek)
+        return when (this) {
+            DAY -> hourBlocks(start, end, zone)
+            WEEK -> dateBuckets(datesEvery(start, end) { it.plusDays(1) }, zone, dayName::format)
+            MONTH -> dateBuckets(weekStarts(start, end, firstDayOfWeek), zone) {
+                it.dayOfMonth.toString()
+            }
+            QUARTER -> dateBuckets(weekStarts(start, end, firstDayOfWeek), zone, dayAndMonth::format)
+            YEAR -> dateBuckets(datesEvery(start, end) { it.plusMonths(1) }, zone, shortMonth::format)
+        }
+    }
 
     /** Human label for the window itself, e.g. "Aug 3, 2026", "Q3 2026", "2026". */
     fun windowLabel(
@@ -105,8 +150,103 @@ enum class AnalyticsRange(val label: String) {
         private fun daysSince(day: DayOfWeek, first: DayOfWeek): Int =
             (day.value - first.value + 7) % 7
 
+        /** How many blocks a [AnalyticsRange.DAY] is cut into, and how long each is. */
+        private const val DAY_BLOCKS = 6
+        private const val DAY_BLOCK_HOURS = 4
+
+        /**
+         * Boundary dates walking [start] to [endExclusive] by [next]. n boundaries
+         * describe n-1 buckets, and the last step is clipped rather than allowed to
+         * run past the end — which is what keeps a partial final week inside its
+         * own month.
+         */
+        private fun datesEvery(
+            start: LocalDate,
+            endExclusive: LocalDate,
+            next: (LocalDate) -> LocalDate,
+        ): List<LocalDate> {
+            val dates = mutableListOf<LocalDate>()
+            var cursor = start
+            while (cursor.isBefore(endExclusive)) {
+                dates += cursor
+                cursor = next(cursor)
+            }
+            return dates + endExclusive
+        }
+
+        /**
+         * Week boundaries inside `[start, endExclusive)`, aligned to
+         * [firstDayOfWeek]. The first column is whatever is left of the week the
+         * range begins in — a month starting on a Thursday opens with a 3-day
+         * column, not with one reaching back into the month before.
+         */
+        private fun weekStarts(
+            start: LocalDate,
+            endExclusive: LocalDate,
+            firstDayOfWeek: DayOfWeek,
+        ): List<LocalDate> {
+            val dates = mutableListOf(start)
+            var cursor = start.plusDays((7 - daysSince(start.dayOfWeek, firstDayOfWeek)).toLong())
+            while (cursor.isBefore(endExclusive)) {
+                dates += cursor
+                cursor = cursor.plusWeeks(1)
+            }
+            return dates + endExclusive
+        }
+
+        private fun dateBuckets(
+            boundaries: List<LocalDate>,
+            zone: ZoneId,
+            label: (LocalDate) -> String,
+        ): List<TimeBucket> = boundaries.zipWithNext { from, to ->
+            TimeBucket(
+                label = label(from),
+                window = TimeWindow(
+                    startMillis = from.atStartOfDay(zone).toInstant().toEpochMilli(),
+                    endMillisExclusive = to.atStartOfDay(zone).toInstant().toEpochMilli(),
+                ),
+            )
+        }
+
+        /**
+         * A single day as [DAY_BLOCKS] blocks of [DAY_BLOCK_HOURS] hours.
+         *
+         * Built by adding hours to a `ZonedDateTime` and then clamping to the day's
+         * real end, because a DST day is 23 or 25 hours long: without the clamp the
+         * last block of a short day would run past midnight into the next one, and
+         * a long day would lose its final hour entirely.
+         */
+        private fun hourBlocks(
+            start: LocalDate,
+            endExclusive: LocalDate,
+            zone: ZoneId,
+        ): List<TimeBucket> {
+            val dayStart = start.atStartOfDay(zone)
+            val dayEnd = endExclusive.atStartOfDay(zone).toInstant().toEpochMilli()
+            return (0 until DAY_BLOCKS).mapNotNull { index ->
+                val from = dayStart.plusHours((index * DAY_BLOCK_HOURS).toLong())
+                val fromMillis = from.toInstant().toEpochMilli()
+                if (fromMillis >= dayEnd) return@mapNotNull null
+                val isLast = index == DAY_BLOCKS - 1
+                val toMillis = if (isLast) {
+                    dayEnd
+                } else {
+                    from.plusHours(DAY_BLOCK_HOURS.toLong()).toInstant().toEpochMilli()
+                        .coerceAtMost(dayEnd)
+                }
+                TimeBucket(
+                    label = blockHour.format(from),
+                    window = TimeWindow(fromMillis, toMillis),
+                )
+            }
+        }
+
         private val fullDay = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
         private val shortDay = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
         private val monthYear = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+        private val dayName = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
+        private val shortMonth = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
+        private val dayAndMonth = DateTimeFormatter.ofPattern("d/M", Locale.getDefault())
+        private val blockHour = DateTimeFormatter.ofPattern("HH", Locale.getDefault())
     }
 }

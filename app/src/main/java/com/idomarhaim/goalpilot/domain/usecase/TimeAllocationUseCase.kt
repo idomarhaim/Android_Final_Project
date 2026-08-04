@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.domain.usecase
 
+import com.idomarhaim.goalpilot.core.util.TimeBucket
 import com.idomarhaim.goalpilot.core.util.TimeWindow
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -45,6 +46,58 @@ data class TimeAllocation(
 ) {
     val isEmpty: Boolean get() = slices.isEmpty()
     val totalHours: Float get() = totalMinutes / 60f
+}
+
+/**
+ * One life area's row in the trend chart. Carries the name and colour so a column
+ * can be drawn without going back to the area list, and so the trend's stacking
+ * order is literally the pie's slice order.
+ */
+data class TrendSeries(
+    val areaId: String?,
+    val name: String,
+    val colorHex: String,
+)
+
+/**
+ * One column of the trend chart. [minutes] is positional — index *i* is the time
+ * that went into [TimeTrend.series] *i* — rather than a map, because the chart
+ * draws the segments in series order and a `List<Int>` compares by value, which
+ * the chart's animation key depends on.
+ */
+data class TrendBucket(
+    val label: String,
+    val minutes: List<Int>,
+) {
+    val totalMinutes: Int get() = minutes.sum()
+}
+
+/**
+ * The same window as [TimeAllocation], cut into consecutive buckets: what the pie
+ * cannot say, which is whether an area is growing or shrinking.
+ *
+ * Its totals are the pie's totals redistributed, never recomputed from a different
+ * rule — [TimeAllocationUseCase.trend] takes the finished allocation as input, so
+ * "the columns add up to the donut" is a property of the design and not a
+ * coincidence that has to be re-checked whenever either changes.
+ */
+data class TimeTrend(
+    val series: List<TrendSeries> = emptyList(),
+    val buckets: List<TrendBucket> = emptyList(),
+) {
+    val isEmpty: Boolean get() = buckets.none { it.totalMinutes > 0 }
+
+    /** Tallest column, and so the one every other column is drawn relative to. */
+    val maxBucketMinutes: Int get() = buckets.maxOfOrNull { it.totalMinutes } ?: 0
+
+    val totalMinutes: Int get() = buckets.sumOf { it.totalMinutes }
+
+    /**
+     * The heaviest bucket, for the one-line summary under the chart. Null when
+     * nothing was tracked — "your busiest day was Monday, with nothing on it" is
+     * not a sentence worth showing.
+     */
+    val busiest: TrendBucket? get() = buckets.filter { it.totalMinutes > 0 }.maxByOrNull { it.totalMinutes }
 }
 
 /**
@@ -109,6 +162,51 @@ class TimeAllocationUseCase @Inject constructor() {
             completedTasks = completed.size,
             estimatedTaskCount = completed.count { (it.estimatedMinutes ?: 0) > 0 },
         )
+    }
+
+    /**
+     * The same time, distributed over [buckets] instead of summed into one pie.
+     *
+     * Takes the finished [allocation] rather than the life areas, for two reasons
+     * that are really one: its slices already carry every name and colour a column
+     * needs, and its ordering — biggest area first — becomes the stacking order,
+     * so the legend under the donut reads the trend as well. It also means an area
+     * that has no slice can have no segment, which is how a task filed under a
+     * deleted area lands in "Unassigned" here without repeating the rule that
+     * decided so.
+     *
+     * Assumes [buckets] tile the window [allocation] was computed for, which is
+     * what `AnalyticsRange.buckets()` guarantees. Anything outside them is simply
+     * not counted, exactly as the pie does not count it.
+     */
+    fun trend(
+        buckets: List<TimeBucket>,
+        allocation: TimeAllocation,
+        goals: List<Goal>,
+        tasks: List<Task>,
+    ): TimeTrend {
+        if (allocation.isEmpty || buckets.isEmpty()) return TimeTrend()
+
+        val series = allocation.slices.map { TrendSeries(it.areaId, it.name, it.colorHex) }
+        val indexByArea: Map<String?, Int> =
+            series.withIndex().associate { (index, s) -> s.areaId to index }
+        val goalsById = goals.associateBy { it.id }
+        val completed = tasks.filter { it.isDone && it.completedAtEpochMillis != null }
+
+        val rows = buckets.map { bucket ->
+            val minutes = IntArray(series.size)
+            for (task in completed) {
+                if (!bucket.window.contains(task.completedAtEpochMillis!!)) continue
+                val areaId = task.goalId?.let(goalsById::get)?.lifeAreaId
+                // An area with no slice cannot have a segment; it falls to the
+                // unassigned row, which the pie must already have created for it.
+                val index = indexByArea[areaId] ?: indexByArea[null] ?: continue
+                minutes[index] += TaskDuration.minutesOf(task)
+            }
+            TrendBucket(label = bucket.label, minutes = minutes.toList())
+        }
+
+        return TimeTrend(series = series, buckets = rows)
     }
 
     companion object {

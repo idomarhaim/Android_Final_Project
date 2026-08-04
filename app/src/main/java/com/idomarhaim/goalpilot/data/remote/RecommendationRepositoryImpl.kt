@@ -12,6 +12,7 @@ import com.idomarhaim.goalpilot.domain.model.RecommendationType
 import com.idomarhaim.goalpilot.domain.model.TaskClassification
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
+import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.tasks.await
@@ -91,15 +92,16 @@ class RecommendationRepositoryImpl @Inject constructor(
             val result = functions.getHttpsCallable(CloudFunctions.SCORE_TASK)
                 .call(hashMapOf("taskTitle" to taskTitle)).await()
             val data = result.getData() as? Map<*, *>
-            val points = (data?.get("points") as? Number)?.toInt()?.coerceIn(MIN_POINTS, MAX_POINTS)
-                ?: fallbackPoints(taskTitle)
+            val points = (data?.get("points") as? Number)?.toInt()
+                ?.coerceIn(TaskScoring.MIN_POINTS, TaskScoring.MAX_POINTS)
+                ?: TaskScoring.heuristicPoints(taskTitle)
             // A model that answers with points but no duration is common enough
             // that it must not cost the task its slice of the chart.
             val minutes = TaskDuration.sanitize((data?.get("minutes") as? Number)?.toInt())
                 ?: TaskDuration.fallbackMinutes(points)
             Resource.Success(TaskEstimate(points = points, minutes = minutes))
         } catch (e: Exception) {
-            val points = fallbackPoints(taskTitle)
+            val points = TaskScoring.heuristicPoints(taskTitle)
             Resource.Success(
                 TaskEstimate(points = points, minutes = TaskDuration.fallbackMinutes(points)),
             )
@@ -185,15 +187,6 @@ class RecommendationRepositoryImpl @Inject constructor(
         return recs
     }
 
-    /**
-     * Offline point estimate: a longer, more specific task title generally
-     * describes more work. Deterministic so the UI never jumps around.
-     */
-    private fun fallbackPoints(taskTitle: String): Int {
-        val words = taskTitle.trim().split(Regex("\\s+")).count { it.isNotBlank() }
-        return (5 + words * 3).coerceIn(MIN_POINTS, MAX_POINTS)
-    }
-
     private fun fallbackClassification(
         taskTitle: String,
         goals: List<Goal>,
@@ -227,11 +220,5 @@ class RecommendationRepositoryImpl @Inject constructor(
                 rationale = "No matching goal found (offline heuristic).",
             )
         }
-    }
-
-    private companion object {
-        /** Matches the 5..50 range the `scoreTask` Cloud Function is prompted for. */
-        const val MIN_POINTS = 5
-        const val MAX_POINTS = 50
     }
 }

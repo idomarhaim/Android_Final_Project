@@ -110,6 +110,82 @@ class AnalyticsRangeTest {
         assertThat(nextDay.contains(window.endMillisExclusive)).isTrue()
     }
 
+    // ── Trend buckets ────────────────────────────────────────────────
+
+    @Test
+    fun `buckets tile their range exactly, with no gap and no overlap`() {
+        AnalyticsRange.entries.forEach { range ->
+            val window = range.window(monday, utc, DayOfWeek.SUNDAY)
+            val buckets = range.buckets(monday, utc, DayOfWeek.SUNDAY)
+
+            assertThat(buckets).isNotEmpty()
+            assertThat(buckets.first().window.startMillis).isEqualTo(window.startMillis)
+            assertThat(buckets.last().window.endMillisExclusive)
+                .isEqualTo(window.endMillisExclusive)
+            buckets.forEach { bucket ->
+                assertThat(bucket.window.startMillis).isLessThan(bucket.window.endMillisExclusive)
+            }
+            buckets.zipWithNext { a, b ->
+                assertThat(a.window.endMillisExclusive).isEqualTo(b.window.startMillis)
+            }
+        }
+    }
+
+    @Test
+    fun `a week is seven day-long buckets`() {
+        val buckets = AnalyticsRange.WEEK.buckets(monday, utc, DayOfWeek.MONDAY)
+
+        assertThat(buckets).hasSize(7)
+        val oneDay = 24 * 60 * 60 * 1000L
+        buckets.forEach {
+            assertThat(it.window.endMillisExclusive - it.window.startMillis).isEqualTo(oneDay)
+        }
+    }
+
+    @Test
+    fun `a year is twelve month buckets, however unequal they are`() {
+        val buckets = AnalyticsRange.YEAR.buckets(monday, utc, DayOfWeek.SUNDAY)
+
+        assertThat(buckets).hasSize(12)
+        // February is shorter than January; equal-width buckets would be a bug.
+        assertThat(buckets[1].window.endMillisExclusive - buckets[1].window.startMillis)
+            .isLessThan(buckets[0].window.endMillisExclusive - buckets[0].window.startMillis)
+    }
+
+    @Test
+    fun `a day is six four-hour blocks, labelled by the hour they start`() {
+        val buckets = AnalyticsRange.DAY.buckets(monday, utc, DayOfWeek.MONDAY)
+
+        assertThat(buckets).hasSize(6)
+        assertThat(buckets.map { it.label })
+            .containsExactly("00", "04", "08", "12", "16", "20").inOrder()
+    }
+
+    @Test
+    fun `a month opens with whatever is left of the week it starts in`() {
+        // August 2026 starts on a Saturday; with a Sunday week start that is a
+        // single-day first column, not one reaching back into July.
+        val buckets = AnalyticsRange.MONTH.buckets(monday, utc, DayOfWeek.SUNDAY)
+
+        assertThat(buckets.map { it.label }).containsExactly("1", "2", "9", "16", "23", "30")
+            .inOrder()
+        val oneDay = 24 * 60 * 60 * 1000L
+        assertThat(buckets.first().window.endMillisExclusive - buckets.first().window.startMillis)
+            .isEqualTo(oneDay)
+        assertThat(buckets[1].window.endMillisExclusive - buckets[1].window.startMillis)
+            .isEqualTo(7 * oneDay)
+    }
+
+    @Test
+    fun `a quarter is cut into weeks`() {
+        val buckets = AnalyticsRange.QUARTER.buckets(monday, utc, DayOfWeek.SUNDAY)
+
+        // Q3 is 13 weeks; a quarter not starting on the first day of a week opens
+        // with a partial column, so 13 or 14 are both correct — 12 or 15 are not.
+        assertThat(buckets.size).isIn(13..14)
+        assertThat(buckets.first().label).isEqualTo("1/7")
+    }
+
     @Test
     fun `every range widens the one before it`() {
         val lengths = AnalyticsRange.entries.map { range ->

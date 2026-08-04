@@ -2,23 +2,33 @@ package com.idomarhaim.goalpilot.feature.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.AnalyticsRange
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
+import com.idomarhaim.goalpilot.domain.usecase.BackfillDurationsUseCase
+import com.idomarhaim.goalpilot.domain.usecase.DurationProposal
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocationUseCase
+import com.idomarhaim.goalpilot.domain.usecase.TimeTrend
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -36,12 +46,21 @@ import javax.inject.Inject
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     goalRepository: GoalRepository,
-    taskRepository: TaskRepository,
+    private val taskRepository: TaskRepository,
     lifeAreaRepository: LifeAreaRepository,
+    private val recommendationRepository: RecommendationRepository,
     private val timeAllocation: TimeAllocationUseCase,
+    private val backfillDurations: BackfillDurationsUseCase,
 ) : ViewModel() {
 
     private val controls = MutableStateFlow(AnalyticsControls())
+
+    /**
+     * The latest tasks, for the actions rather than the chart. Re-estimation runs
+     * off a button press, and reaching back into a snapshot flow at that moment
+     * would make the button wait on a network round trip it does not need.
+     */
+    @Volatile private var lastTasks: List<Task> = emptyList()
 
     val uiState: StateFlow<AnalyticsUiState> = combine(
         goalRepository.observeGoals(),
@@ -49,6 +68,7 @@ class AnalyticsViewModel @Inject constructor(
         lifeAreaRepository.observeLifeAreas(includeArchived = true),
         controls,
     ) { goals, tasks, areas, controls ->
+        lastTasks = tasks
         // Resolved per emission rather than once at construction, so the window
         // follows the calendar for a session left open across midnight.
         val today = LocalDate.now()
@@ -66,6 +86,14 @@ class AnalyticsViewModel @Inject constructor(
             tasks = tasks,
             lifeAreas = areas.filterNot { it.isArchived },
             allocation = allocation,
+            // Same window, same numbers, cut into columns — the buckets come from
+            // the range so the trend can never disagree with the pie above it.
+            trend = timeAllocation.trend(
+                buckets = controls.range.buckets(today = today),
+                allocation = allocation,
+                goals = goals,
+                tasks = tasks,
+            ),
             // A slice selected in one range can be absent from the next; keeping
             // the id would leave the chart dimmed with nothing highlighted.
             selectedSliceId = controls.selectedSliceId
@@ -87,10 +115,133 @@ class AnalyticsViewModel @Inject constructor(
         controls.update { it.copy(selectedSliceId = sliceId) }
     }
 
+    // ── Duration back-fill (making the pie measured, not inferred) ────
+
+    private val _backfill = MutableStateFlow(BackfillState())
+    val backfill = _backfill.asStateFlow()
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message = _message.asStateFlow()
+
+    /**
+     * Asks the model how long each un-estimated task really takes, and opens a
+     * review sheet with the answers.
+     *
+     * Nothing is written until the user confirms — identical policy to smart add,
+     * the Google Tasks import and the Health Connect sync, and for the identical
+     * reason (spec §8: LLM output can be inconsistent). Capped per run at
+     * [BackfillDurationsUseCase.MAX_PER_RUN] because each row costs one `scoreTask`
+     * call against a 30 requests/minute free tier.
+     */
+    fun reEstimateDurations() {
+        if (_backfill.value.isLoading || _backfill.value.isSaving) return
+        viewModelScope.launch {
+            _backfill.value = BackfillState(isVisible = true, isLoading = true)
+            val window = controls.value.range.window()
+            // Unlimited first, so the sheet can say "15 of 42" rather than
+            // implying the cap is the whole of the problem.
+            val candidates = backfillDurations(lastTasks, window, limit = Int.MAX_VALUE)
+            if (candidates.isEmpty()) {
+                _backfill.value = BackfillState(
+                    isVisible = true,
+                    error = "Every task already has an AI duration estimate.",
+                )
+                return@launch
+            }
+            val batch = candidates.take(BackfillDurationsUseCase.MAX_PER_RUN)
+            val proposals = coroutineScope {
+                batch.map { candidate ->
+                    async {
+                        val estimate =
+                            when (val r = recommendationRepository.scoreTask(candidate.title)) {
+                                is Resource.Success -> r.data
+                                else -> null
+                            }
+                        backfillDurations.propose(candidate, estimate)
+                    }
+                }.awaitAll()
+            }
+            _backfill.value = BackfillState(
+                isVisible = true,
+                proposals = proposals,
+                totalCandidates = candidates.size,
+            )
+        }
+    }
+
+    fun toggleDurationProposal(taskId: String) {
+        _backfill.update { state ->
+            state.copy(
+                proposals = state.proposals.map {
+                    if (it.taskId == taskId) it.copy(selected = !it.selected) else it
+                },
+            )
+        }
+    }
+
+    /**
+     * Writes the accepted durations, and only the durations.
+     *
+     * `upsertTask` replaces the whole document, so each write starts from the task
+     * as it currently stands and changes one field. Points in particular are left
+     * exactly as they were: they were already awarded when the task was ticked, and
+     * rewriting them would make un-ticking refund a different number.
+     */
+    fun confirmBackfill() {
+        val state = _backfill.value
+        if (state.isSaving) return
+        val chosen = state.proposals.filter { it.selected }
+        if (chosen.isEmpty()) {
+            _backfill.value = BackfillState()
+            return
+        }
+        viewModelScope.launch {
+            _backfill.update { it.copy(isSaving = true) }
+            val byId = lastTasks.associateBy { it.id }
+            var saved = 0
+            for (proposal in chosen) {
+                val task = byId[proposal.taskId] ?: continue
+                val result = taskRepository.upsertTask(
+                    task.copy(estimatedMinutes = proposal.proposedMinutes),
+                )
+                if (result is Resource.Success) saved++
+            }
+            _backfill.value = BackfillState()
+            _message.value = when (saved) {
+                0 -> "Could not update those durations"
+                1 -> "Updated 1 task duration"
+                else -> "Updated $saved task durations"
+            }
+        }
+    }
+
+    fun dismissBackfill() { _backfill.value = BackfillState() }
+
+    fun consumeMessage() { _message.value = null }
+
     private data class AnalyticsControls(
         val range: AnalyticsRange = AnalyticsRange.WEEK,
         val selectedSliceId: String? = null,
     )
+}
+
+/**
+ * The re-estimation review sheet, before anything is written.
+ *
+ * [totalCandidates] counts every task that could be re-estimated, not just the
+ * ones in this run — the difference is the honest way to say "run it again".
+ */
+data class BackfillState(
+    val isVisible: Boolean = false,
+    val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
+    val proposals: List<DurationProposal> = emptyList(),
+    val totalCandidates: Int = 0,
+    val error: String? = null,
+) {
+    /** Rows a model actually answered for; the rest came back as a fallback. */
+    val answeredCount: Int get() = proposals.count { !it.isFallback }
+    val selectedCount: Int get() = proposals.count { it.selected }
 }
 
 /**
@@ -109,6 +260,14 @@ data class AnalyticsUiState(
     val tasks: List<Task> = emptyList(),
     val lifeAreas: List<LifeArea> = emptyList(),
     val allocation: TimeAllocation = TimeAllocation(),
+    val trend: TimeTrend = TimeTrend(),
     val selectedSliceId: String? = null,
     val error: String? = null,
-)
+) {
+    /**
+     * Completed tasks in this window whose duration is still a guess from their
+     * difficulty. The number the re-estimation button exists to drive to zero.
+     */
+    val inferredTaskCount: Int
+        get() = (allocation.completedTasks - allocation.estimatedTaskCount).coerceAtLeast(0)
+}

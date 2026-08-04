@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.core.util.TimeBucket
 import com.idomarhaim.goalpilot.core.util.TimeWindow
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -153,5 +154,103 @@ class TimeAllocationUseCaseTest {
         val result = useCase(window, archived, goalsWithArchived, tasks)
 
         assertThat(result.slices.map { it.name }).containsExactly("Health", "Old area")
+    }
+
+    // ── The trend: the same minutes, cut into buckets ─────────────────
+
+    /** Four buckets tiling [window] exactly, as `AnalyticsRange.buckets()` would. */
+    private val buckets = listOf(
+        TimeBucket("a", TimeWindow(1_000L, 3_000L)),
+        TimeBucket("b", TimeWindow(3_000L, 5_000L)),
+        TimeBucket("c", TimeWindow(5_000L, 7_000L)),
+        TimeBucket("d", TimeWindow(7_000L, 9_000L)),
+    )
+
+    @Test
+    fun `the trend redistributes exactly the minutes the pie reports`() {
+        val tasks = listOf(
+            done("t1", "g-run", at = 1_500L, minutes = 60),
+            done("t2", "g-thesis", at = 3_500L, minutes = 30),
+            done("t3", "g-sleep", at = 8_999L, minutes = 30),
+        )
+        val allocation = useCase(window, areas, goals, tasks)
+
+        val trend = useCase.trend(buckets, allocation, goals, tasks)
+
+        assertThat(trend.totalMinutes).isEqualTo(allocation.totalMinutes)
+        assertThat(trend.buckets.map { it.totalMinutes }).containsExactly(60, 30, 0, 30).inOrder()
+        assertThat(trend.maxBucketMinutes).isEqualTo(60)
+        assertThat(trend.busiest?.label).isEqualTo("a")
+    }
+
+    @Test
+    fun `series are the pie's slices, in the pie's order`() {
+        val tasks = listOf(
+            done("t1", "g-run", at = 1_500L, minutes = 60),
+            done("t2", "g-thesis", at = 3_500L, minutes = 30),
+        )
+        val allocation = useCase(window, areas, goals, tasks)
+
+        val trend = useCase.trend(buckets, allocation, goals, tasks)
+
+        assertThat(trend.series.map { it.name })
+            .containsExactlyElementsIn(allocation.slices.map { it.name }).inOrder()
+        // Positional: index 0 is Health, which is where bucket "a"'s 60 minutes went.
+        assertThat(trend.buckets.first().minutes).containsExactly(60, 0).inOrder()
+        assertThat(trend.buckets[1].minutes).containsExactly(0, 30).inOrder()
+    }
+
+    @Test
+    fun `an area that lost its slice folds into Unassigned here too`() {
+        val goalsWithDanglingArea = goals + Goal(id = "g-ghost", lifeAreaId = "deleted-area")
+        val tasks = listOf(
+            done("real", "g-run", at = 1_500L, minutes = 60),
+            done("dangling", "g-ghost", at = 3_500L, minutes = 40),
+        )
+        val allocation = useCase(window, areas, goalsWithDanglingArea, tasks)
+
+        val trend = useCase.trend(buckets, allocation, goalsWithDanglingArea, tasks)
+
+        val unassigned = trend.series.indexOfFirst { it.areaId == null }
+        assertThat(unassigned).isAtLeast(0)
+        assertThat(trend.buckets[1].minutes[unassigned]).isEqualTo(40)
+        assertThat(trend.totalMinutes).isEqualTo(allocation.totalMinutes)
+    }
+
+    @Test
+    fun `a completion outside every bucket counts in neither chart`() {
+        val tasks = listOf(
+            done("inside", "g-run", at = 1_500L, minutes = 60),
+            done("after", "g-run", at = 9_000L, minutes = 999),
+        )
+        val allocation = useCase(window, areas, goals, tasks)
+
+        val trend = useCase.trend(buckets, allocation, goals, tasks)
+
+        assertThat(allocation.totalMinutes).isEqualTo(60)
+        assertThat(trend.totalMinutes).isEqualTo(60)
+    }
+
+    @Test
+    fun `an empty window has an empty trend rather than a row of zero columns`() {
+        val allocation = useCase(window, areas, goals, tasks = emptyList())
+
+        val trend = useCase.trend(buckets, allocation, goals, emptyList())
+
+        assertThat(trend.isEmpty).isTrue()
+        assertThat(trend.buckets).isEmpty()
+        assertThat(trend.busiest).isNull()
+    }
+
+    @Test
+    fun `a window with nothing in some buckets keeps those columns empty, not absent`() {
+        val tasks = listOf(done("t1", "g-run", at = 1_500L, minutes = 60))
+        val allocation = useCase(window, areas, goals, tasks)
+
+        val trend = useCase.trend(buckets, allocation, goals, tasks)
+
+        assertThat(trend.buckets).hasSize(4)
+        assertThat(trend.isEmpty).isFalse()
+        assertThat(trend.buckets.drop(1).map { it.totalMinutes }).containsExactly(0, 0, 0)
     }
 }
