@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `challenges` | Competitive challenges — create/join/standings, replacing the preview screen ([TODO_OPTIONAL](TODO/TODO_OPTIONAL/Integrations.TODO.optional.md#competitive-challenges-spec-6-nice-to-have-7)) | `.../domain/model/Challenge.kt`, `.../domain/repository/ChallengeRepository.kt`, `.../domain/usecase/ChallengeStandingsUseCase.kt`, `.../data/firestore/ChallengeRepositoryImpl.kt`, `.../feature/challenges/`, `.../di/RepositoryModule.kt`, `.../ui/root/GoalPilotRoot.kt`, `firestore.rules`, `firestore-tests/` (new — security-rules test layer), `app/src/test/.../domain/Challenge*Test.kt`, `CHANGELOG/2026-08-04/challenges.md`, `CHANGELOG/CHANGELOG_README.md`, `AGENTS.md` (docs lines only — commands, layout, pitfalls), `TODO/`. **Challenge regions only** of these shared files: `.../core/util/Constants.kt`, `.../data/firestore/dto/Dtos.kt`, `.../data/firestore/dto/Mappers.kt`, `.../ui/navigation/Destinations.kt` | Gradle daemon, git index, `Pixel_10_Pro_XL`, Firebase `goalpilot-56e30` (rules deploy) | 2026-08-03 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -56,23 +56,28 @@ Where to look, in order: [`TODO/TODO.md`](TODO/TODO.md) (MUST → OPTIONAL →
 FUTURE), then open issues. `/claim` reads both and proposes a fit.
 
 Currently unclaimed and ready:
-- **Two-account demo + spec title page** — the two remaining MUST items, mostly manual
+- **Two-account demo + spec title page** — the two remaining MUST items, and the
+  only things still blocking submission. Mostly manual: no agent can sign in as
+  the second Google account or supply a name, ID and course number.
 - **Health Connect on a physical phone** — small follow-up to the shipped feature.
   The emulator carries the provider but its store is empty, so the
   proposal → Firestore write path has never run against real step data.
-- Two written briefs, each a session: `/kickoff lifearea-polish` and
-  `/kickoff time-insights` (`sessions/`).
+- Three written briefs, each a session: `/kickoff challenges-ui`,
+  `/kickoff lifearea-polish`, `/kickoff time-insights` (`sessions/`).
 
-**Disjointness against the live `challenges` claim**, checked 2026-08-03 so the
-next session does not have to re-derive it:
-- `lifearea-polish` — **disjoint.** It owns `feature/lifeareas/`, `feature/goals/`
-  and the `LifeArea*` triple; `challenges` touches none of them. Safe in parallel.
-- `time-insights` — **disjoint only because `challenges` computes standings on the
-  client.** The TODO recommends a Cloud Function for standings; that would have put
-  both sessions in `functions/src/index.ts`, the one file neither can share. If a
-  later session moves standings server-side, it collides with `time-insights`.
-- Both, and `challenges`, add files under `app/src/test/` — different files in the
-  same directory, which is fine. Stage explicit paths and it stays fine.
+**Disjointness of the three briefs**, checked 2026-08-04 so the next session does
+not have to re-derive it:
+- Their **paths** are disjoint — `feature/challenges/`, `feature/lifeareas/` +
+  `feature/goals/`, and `feature/analytics/` + `functions/src/index.ts`
+  respectively. Two can be written concurrently.
+- Their **verification is not.** All three touch composables, so all three want
+  `:app:connectedDebugAndroidTest`, and the emulator is one exclusive singleton.
+  They queue at the device even when their edits never meet.
+- `challenges-ui` stays clear of `functions/src/index.ts` only because standings
+  are computed client-side. A later session moving them server-side collides with
+  `time-insights`.
+- All three add files under `app/src/test/` — different files in the same
+  directory, which is fine. Stage explicit paths and it stays fine.
 
 ## 📓 Recently released
 
@@ -84,6 +89,7 @@ next session does not have to re-derive it:
 | `theming` | Selectable app skins (Aurora/Blossom) + UI/UX pass | 2026-08-02 | `e31ac9d`, `a413485`, `c30709e`; emulator released |
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 | `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
+| `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not
