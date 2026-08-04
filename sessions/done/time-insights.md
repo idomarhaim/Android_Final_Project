@@ -2,9 +2,25 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: ready
+status: done
 created: 2026-08-03
+completed: 2026-08-04
+commit: 342af48
 ---
+
+> **Done 2026-08-04 in `342af48`** (run under `AUTO MODE`, which the user set at
+> kickoff and which overrides the `mode: normal` above). Both items shipped; see
+> `CHANGELOG/2026-08-04/time-insights.md`.
+>
+> **Two exit criteria were not met, both blocked on the emulator singleton held by
+> `lifearea-polish`:** `:app:connectedDebugAndroidTest` (compiles, never executed)
+> and the live re-estimation run against the model. Carried onto `SESSIONS.md`
+> under "Unclaimed work" as a single follow-up task.
+>
+> **One thing this brief did not anticipate:** `scoreTask` has a *second* fallback
+> signature — the Cloud Function's own flat `10 points / 30 minutes` — which the
+> client heuristic can never produce and which `docs/OPERATIONS.md` §4 did not
+> list. Any verification run must check against both.
 
 # Time insights: honest durations, and a trend beside the pie
 

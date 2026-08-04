@@ -16,7 +16,6 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `lifearea-polish` | Life-area reordering + life area shown on the goals list (`sessions/lifearea-polish.md`) | `app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/`, `.../feature/goals/`, `.../domain/repository/LifeAreaRepository.kt`, `.../data/firestore/LifeAreaRepositoryImpl.kt`, `.../domain/usecase/ReorderLifeAreasUseCase.kt`, `.../domain/usecase/GroupGoalsByLifeAreaUseCase.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/LifeAreaOrderingTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/GoalGroupingTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/LifeAreaReorderUiTest.kt`, `sessions/lifearea-polish.md`, `CHANGELOG/2026-08-04/lifearea-polish.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-04 |
-| `time-insights` | Back-fill task durations with AI + a trend chart beside the pie (`sessions/time-insights.md`) | `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/`, `.../core/util/AnalyticsRange.kt`, `.../domain/usecase/TimeAllocationUseCase.kt`, `.../domain/usecase/BackfillDurationsUseCase.kt`, `.../domain/model/TaskEstimate.kt`, `.../data/remote/RecommendationRepositoryImpl.kt`, `.../ui/components/StackedColumnChart.kt`, `app/src/test/java/com/idomarhaim/goalpilot/core/AnalyticsRangeTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/TimeAllocationUseCaseTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/domain/BackfillDurationsUseCaseTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/data/RecommendationRepositoryFallbackTest.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/ChartLabelStrideTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/StackedColumnChartUiTest.kt`, `docs/OPERATIONS.md` (§4 fallback signatures only), `CHANGELOG/CHANGELOG_README.md` (index line only), `sessions/time-insights.md`, `CHANGELOG/2026-08-04/time-insights.md` | **None held.** Gradle daemon and emulator `Pixel_10_Pro_XL` are held by `lifearea-polish`; this session queues behind it for `:app:testDebugUnitTest` and does not take the AVD at all | 2026-08-04 |
 
 ## 📏 Rules
 
@@ -63,8 +62,19 @@ Currently unclaimed and ready:
 - **Health Connect on a physical phone** — small follow-up to the shipped feature.
   The emulator carries the provider but its store is empty, so the
   proposal → Firestore write path has never run against real step data.
-- Three written briefs, each a session: `/kickoff challenges-ui`,
-  `/kickoff lifearea-polish`, `/kickoff time-insights` (`sessions/`).
+- Two written briefs, each a session: `/kickoff challenges-ui`,
+  `/kickoff lifearea-polish` (`sessions/`). `time-insights` is done and its brief
+  has moved to `sessions/done/`.
+- **Finish verifying `time-insights` — one task, needs only the AVD.** Its code is
+  committed (`342af48`) and its JVM layer is green, but two things could not be
+  checked without the emulator that `lifearea-polish` holds:
+  1. `:app:connectedDebugAndroidTest` — `StackedColumnChartUiTest` compiles but has
+     never executed, and the analytics screen gained a card, a button and a dialog.
+  2. **A re-estimation run against the live model.** Press "Re-estimate N
+     durations" and confirm a duration the local heuristic could not have produced,
+     checked against **both** fallback signatures now in `docs/OPERATIONS.md` §4 —
+     the client's `5 + 3×words` *and* the Cloud Function's flat `10 points /
+     30 minutes`. Verify against the model, not the UI.
 
 **Disjointness of the three briefs**, checked 2026-08-04 so the next session does
 not have to re-derive it:
@@ -91,6 +101,7 @@ not have to re-derive it:
 | `scaffold` | Template-library upgrade — `AGENTS.md` v8→v10, `general.instructions.md` v10→v12, this file v1→v2 | 2026-08-03 | see `CHANGELOG/2026-08-03.md` |
 | `lifeareas` | Life areas (user-defined + synced from Google Tasks list names), LLM task durations, interactive time-allocation analytics at day/week/month/quarter/year | 2026-08-03 | `fe9f61d`; see `CHANGELOG/2026-08-03/lifeareas.md`. Emulator released. |
 | `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
+| `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48`; see `CHANGELOG/2026-08-04/time-insights.md`. JVM layer green (150 tests). **Two verifications outstanding, both blocked on the AVD held by `lifearea-polish`** — see "Unclaimed work". Never held a singleton; the Gradle daemon was shared by queueing. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not
