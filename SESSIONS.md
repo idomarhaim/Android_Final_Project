@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `lifearea-polish` | Life-area reordering + life area shown on the goals list (`sessions/lifearea-polish.md`) | `app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/`, `.../feature/goals/`, `.../domain/repository/LifeAreaRepository.kt`, `.../data/firestore/LifeAreaRepositoryImpl.kt`, `app/src/test/java/com/idomarhaim/goalpilot/lifeareas/`, `sessions/lifearea-polish.md`, `CHANGELOG/2026-08-04/lifearea-polish.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-04 |
 
 ## 📏 Rules
 
