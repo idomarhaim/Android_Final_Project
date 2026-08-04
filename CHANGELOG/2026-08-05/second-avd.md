@@ -94,7 +94,8 @@ behavioural, against the two live emulators:
 | `_B` settles after the one ANR | ✅ launcher focused both times, after tapping *Wait* |
 | A renders after `_B` booted | ✅ 1.87 MB — no GPU contention damage on the shared iGPU |
 | `_B` carries Play Services | ✅ `com.google.android.gms` present, API 37 |
-| App installed on `_B` | ⬜ not done — that is the demo itself, and it needs the second Google account's credentials |
+| App installed and launched on `_B` | ✅ `:app:installDebug` in 1 m 28 s, `MainActivity` focused on the "Sign in with Google" screen |
+| Demo run as account B | ⬜ still open — it needs `rachil751@gmail.com`'s password, which no agent has. The demo starts at step 2 of `TODO/TODO_MUST/Submission.TODO.must.md` |
 
 **One error hit and fixed while working:** the new code failed to parse with
 *"Missing closing '}'"* pointing at a function that was balanced. Cause: this
