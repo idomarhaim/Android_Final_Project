@@ -29,6 +29,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
   - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold).
   - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `lifeareas`, `challenges`.
 - `functions/` — GROQ proxy Cloud Functions (TypeScript).
+- `firestore-tests/` — security-rules tests (`@firebase/rules-unit-testing`) against the local emulator. The **only** layer that can test `firestore.rules`; the Kotlin suites cannot reach them.
 - `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc` — backend config.
 - `scripts/` — one-click launchers (emulator/phone → build → install → launch) so
   the project never has to be opened in Android Studio. See `scripts/README.md`.
@@ -54,6 +55,9 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
 cd functions; npm install; npm run build
 firebase emulators:start                # local Auth/Firestore/Storage/Functions
 firebase deploy --only firestore:rules,storage,functions
+
+# Security-rules tests — emulator-only, cannot reach live goalpilot-56e30
+cd firestore-tests; npm install; npm test
 ```
 
 ## ⚠️ Pitfalls
@@ -95,6 +99,18 @@ firebase deploy --only firestore:rules,storage,functions
 - **Life areas needed no `firestore.rules` change** — `users/{uid}/lifeAreas` is
   already covered by the owner-only `users/{uid}/{document=**}` match. Adding a new
   per-user subcollection is a client-side change only.
+- **A subcollection is not covered by its parent's `match`.** `match /challenges/{id}`
+  says nothing about `challenges/{id}/participants/{uid}` — without its own block that
+  path matches no rule and is denied. This is what makes a participants subcollection
+  the way to let a non-owner join something they cannot edit.
+- **`firebase emulators:exec` does NOT validate `firestore.rules`.** It starts, runs
+  your script and exits **0** even against a rules file with an undefined function and
+  an unbalanced brace — confirmed by running it against a deliberately broken one. The
+  emulator does not load rules until a client connects, so a clean run proves nothing.
+  The only check that actually fails on bad rules is `firestore-tests/`, where
+  `initializeTestEnvironment` loads the ruleset explicitly. And when adding rules tests,
+  run the suite against the *old* rules too: pure negative tests ("X is denied") pass
+  vacuously when nothing matches at all.
 - **Repository snapshot flows must be built on `FirebaseAuth.uidFlow()`** (`data/auth/AuthExt.kt`), never a one-shot `auth.currentUser` read — a `Flow` is constructed at ViewModel-creation time, so a one-shot read pins the account that was signed in then.
 
 ## 🧱 Conventions

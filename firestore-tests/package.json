@@ -1,0 +1,16 @@
+{
+  "name": "goalpilot-firestore-tests",
+  "description": "Security-rules tests for ../firestore.rules, run against the local Firestore emulator.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-goalpilot --config ../firebase.json \"node --test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase": "^12.17.0"
+  }
+}
