@@ -42,8 +42,18 @@ Backlog index. Per-area files live under three priority subfolders next to this 
     real step data** — the emulator's Health Connect store is empty, so the
     write path has never run against real readings.
   - [x] Google Tasks import — shipped 31/07/2026.
-  - [ ] **Competitive challenges** — model + rules + preview screen exist;
-    create/join/standings logic pending. **The last remaining §6 nice-to-have.**
+  - [x] **Competitive challenges** — shipped 05/08/2026: a live screen with
+    standings, discover/join/leave, score reporting and a create flow, over the
+    domain/data layers and participants security rule built 04/08/2026. **The
+    last §6 nice-to-have.** Two follow-ups deliberately left open:
+    - [ ] **Deploy `firestore.rules` to live `goalpilot-56e30`** —
+      `firebase deploy --only firestore:rules`. The 16 rules tests pass, but the
+      live project still carries the old ruleset, so joining fails against the
+      real backend however correct the client is.
+    - [ ] **Verify a *non-owner* join end-to-end.** Creating a challenge
+      auto-joins the owner, so one account cannot exercise the path that was
+      broken; it needs the second account. Pairs with the two-account demo MUST
+      item. Proven so far by `firestore-tests` only.
   - [x] LLM task→goal classification UI — shipped as the "Smart add a task" card
     on the dashboard; `scoreTask` is wired to the ✨ button on the add-task row.
   - [x] **Life areas + time-allocation analytics** — shipped **and verified**;

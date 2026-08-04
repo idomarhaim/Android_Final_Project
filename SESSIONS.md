@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `challenges-ui` | Challenges UI — ViewModel, live screen, create flow; deploy the rules | `app/src/main/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/test/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/ChallengesUiTest.kt`, `firestore.rules` (deploy only), `sessions/challenges-ui.md`, `CHANGELOG/2026-08-04/challenges-ui.md`, `TODO/TODO.md`, `TODO/TODO_OPTIONAL/Integrations.TODO.optional.md` | Gradle daemon · emulator `Pixel_10_Pro_XL` · `goalpilot-56e30` (rules deploy, gated on Ido) | 2026-08-04 |
+| _none_ | — | — | — | — |
 
 ## 📏 Rules
 
@@ -58,13 +58,20 @@ FUTURE), then open issues. `/claim` reads both and proposes a fit.
 Currently unclaimed and ready:
 - **Two-account demo + spec title page** — the two remaining MUST items, and the
   only things still blocking submission. Mostly manual: no agent can sign in as
-  the second Google account or supply a name, ID and course number.
+  the second Google account or supply a name, ID and course number. **Take the
+  challenges rules deploy in the same sitting**: `firebase deploy --only
+  firestore:rules` is one command, and the second account is the only way to
+  prove what it unblocks — a *non-owner* join, which creating a challenge
+  (auto-joining the owner) cannot exercise.
 - **Health Connect on a physical phone** — small follow-up to the shipped feature.
   The emulator carries the provider but its store is empty, so the
   proposal → Firestore write path has never run against real step data.
-- One written brief, its own session: `/kickoff challenges-ui` (`sessions/`).
-  `time-insights` and `lifearea-polish` are done and their briefs have moved to
-  `sessions/done/`.
+- ~~One written brief, its own session: `/kickoff challenges-ui`~~ — **done
+  2026-08-05.** All three briefs are now in `sessions/done/`; there is no
+  unworked brief left. What challenges left behind is folded into the two-account
+  item above: **deploy `firestore.rules`**, then verify a *non-owner* join
+  against the live backend. Both want the second account, so both belong to that
+  sitting rather than to a session of their own.
 - ~~One `time-insights` verification is still open~~ — **done 2026-08-04.** Both
   blocked checks ran once the AVD came free: `:app:connectedDebugAndroidTest` 20/20
   green, and a live re-estimation run that returned 105 minutes for a five-word
@@ -103,6 +110,7 @@ Currently unclaimed and ready:
 | `challenges` | Competitive challenges: the `participants` security rule that makes joining possible, `firestore-tests/` (the repo's first rules test layer), and the domain + data + DI layers | 2026-08-04 | `1e56ee3`, `8117368`; see `CHANGELOG/2026-08-04/challenges.md`. **Rules written and tested but NOT deployed.** UI continues in `sessions/challenges-ui.md`. Emulator never claimed in practice; Gradle daemon released. |
 | `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48` + verification pass; see `CHANGELOG/2026-08-04/time-insights.md`. **All layers green and fully verified**: 150 JVM, 20 instrumented, and a live re-estimation run against GROQ that wrote 7 durations to `goalpilot-56e30`. Ran in two sittings — released once with the device checks blocked, re-claimed when the AVD came free. Emulator and Firebase project **released**. |
 | `lifearea-polish` | Drag-to-reorder life areas (minimal `sortOrder` writes) and the goals list banded by life area | 2026-08-04 | `6f4a749`; see `CHANGELOG/2026-08-04/lifearea-polish.md`. Both layers green — 144 JVM, 20 instrumented. Emulator `Pixel_10_Pro_XL` recovered from a wedge and **released**; Gradle daemon released. |
+| `challenges-ui` | Competitive challenges as a real screen: ViewModel, live standings, discover/join/leave, score reporting, create flow | 2026-08-05 | see `CHANGELOG/2026-08-05/challenges-ui.md`. All three layers green — 175 JVM, 29 instrumented, 16 rules. Ran against an empty board, uncontended. Emulator `Pixel_10_Pro_XL` and the Gradle daemon **released**. The live project `goalpilot-56e30` was **never touched** — the rules deploy is held for the two-account session on Ido's call, so a non-owner join is still proven by `firestore-tests` only. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The
 > `theming` session ran for two days without ever reading this board — it did not

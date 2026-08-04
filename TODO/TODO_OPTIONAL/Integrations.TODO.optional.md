@@ -68,13 +68,54 @@ Implementation notes worth keeping:
 listed under Test users, and publishing status **Testing** — an unverified app
 *in production* hard-blocks sensitive scopes with no override.
 
-## Competitive challenges (spec §6 nice-to-have, §7)
-Files: `domain/model/Challenge.kt`, `feature/challenges/ChallengesScreen.kt`
-(preview), `challenges` Firestore rules.
-1. Add `ChallengeRepository` (interface + Firestore impl) for create/join and
-   standings.
-2. Replace the preview screen's sample data with live challenges; add a create flow.
-3. Compute standings from tasks/Health Connect metrics (Cloud Function recommended).
+## ~~Competitive challenges (spec §6 nice-to-have, §7)~~ — DONE 05/08/2026
+Shipped as a real **Challenges** screen, reached from both Social and Profile:
+your challenges with live standings, a Discover list, join / leave, score
+reporting, and a create flow. Built over two sessions — see
+`CHANGELOG/2026-08-04/challenges.md` (rules + domain + data) and
+`CHANGELOG/2026-08-05/challenges-ui.md` (ViewModel + screen).
+
+**The plan above was deliberately not followed on point 3.** Standings are
+computed **client-side**, not in a Cloud Function: a function would have put that
+session in `functions/src/index.ts`, which the concurrent `time-insights` session
+also needed, and that is the one file two sessions cannot share. Moving them
+server-side is covered by the existing anti-cheat item in TODO → FUTURE, which
+should move points and scores together.
+
+Implementation notes worth keeping:
+- **Participation is not a field on `Challenge`.** The rules allow writes to the
+  challenge document only to its owner, so a `participantUids` array or a
+  `standings` list stored there would deny every join. Participants are one
+  self-owned document each under `challenges/{id}/participants/{uid}`, with a
+  mirror edge at `users/{uid}/challenges/{id}` for "my challenges". The KDoc says
+  so; do not re-add the fields.
+- **A subcollection is not covered by its parent's `match`** — that is precisely
+  what makes the participants subcollection the way to let a non-owner join
+  something they cannot edit.
+- **Standings use standard competition ranking** (joint ranks, 1-1-3), unlike the
+  leaderboard's `rankedByPoints`. On a leaderboard an arbitrary tiebreak is
+  cosmetic; on the thing people compete over it is wrong.
+- **`endAt` is an exclusive bound**, so a challenge running *through* the chosen
+  day ends at the **following** local midnight — storing the chosen day's own
+  midnight ends a one-day challenge before it begins.
+- **The Material date picker returns UTC midnight**, which is the previous
+  calendar day in any zone west of Greenwich. `ChallengeDates.kt` extracts the day
+  in UTC and re-anchors it to local midnight; both conversions are JVM-tested.
+- **`reportScore` replaces the total, it does not add to it** — the dialog says
+  so, because guessing wrong is a competitor's whole standing.
+- Known limitations, deliberate and unchanged: deleting a challenge orphans its
+  participant rows (Firestore does not cascade), and there is no "kick a
+  participant" — granting the owner that power needs a `get()` on the parent
+  inside the rule, billing a document read on every evaluation.
+
+**Still to do, both carried into TODO index:**
+1. **Deploy the rules** — `firebase deploy --only firestore:rules`. The 16
+   `firestore-tests` cases pass, but live `goalpilot-56e30` still carries the old
+   ruleset, so joining fails against the real backend however correct the client
+   is. Held back on 05/08/2026 to pair with the two-account session.
+2. **Verify a *non-owner* join end-to-end.** Creating a challenge auto-joins the
+   owner, so a single account cannot exercise the path that was broken. Needs the
+   second Google account — the two-account demo MUST item.
 
 ## ~~LLM task→goal classification action (spec §6 bonus)~~ — DONE 2026-07-31
 Shipped as the **"Smart add a task"** card on the dashboard

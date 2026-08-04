@@ -2,9 +2,24 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 created: 2026-08-04
+completed: 2026-08-05
 ---
+
+> **Done 2026-08-05.** All four items shipped; see
+> [`CHANGELOG/2026-08-05/challenges-ui.md`](../CHANGELOG/2026-08-05/challenges-ui.md).
+> Three layers green: 175 JVM, 29 instrumented, 16 rules.
+>
+> **Item 4 was split, on Ido's call.** The whole path was *not* verified in one
+> pass: the rules deploy is held for the two-account session, because that is the
+> only sitting in which a *non-owner* join can be proven rather than merely
+> attempted. Both follow-ups are recorded in `TODO/TODO.md` and on `SESSIONS.md`,
+> not left in this file.
+>
+> Two things this session added beyond the four items: **delete for an owner**
+> (already on the committed contract) and the detail view as a **bottom sheet**
+> rather than a nav destination — so `ui/root/GoalPilotRoot.kt` was never touched.
 
 # Challenges: a real screen, and the rules deploy that makes it work
 
