@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `submission` | **Two-account sharing demo (spec §7) + deploy `firestore.rules`**, the last MUST item and the only thing still blocking hand-in — see [`TODO/TODO_MUST/Submission.TODO.must.md`](TODO/TODO_MUST/Submission.TODO.must.md) and the two challenges follow-ups in [`TODO/TODO_OPTIONAL/Integrations.TODO.optional.md`](TODO/TODO_OPTIONAL/Integrations.TODO.optional.md). Deploy and demo ride together because a **non-owner** join is the path the deploy unblocks, and creating a challenge auto-joins the owner — one account cannot exercise it. Rider: correct the stale governance note in `Submission.TODO.must.md` (claims `AGENTS.md` is at template v4 vs library v7; it is at **v14** since `f7ae3dd`) | `firestore.rules` (deploy only, not edited) · `TODO/TODO_MUST/Submission.TODO.must.md` · `TODO/TODO_OPTIONAL/Integrations.TODO.optional.md` · `CHANGELOG/2026-08-05/submission.md` · `SESSIONS.md` | `#emulator-A` (`Pixel_10_Pro_XL`) · `#emulator-B` (`Pixel_10_Pro_XL_B`) · `#firebase` (`goalpilot-56e30`) — **all three held**; a sibling session must not build, drive a device, or write to the live project until this row is released | 2026-08-05 |
 
 ## 📏 Rules
 
