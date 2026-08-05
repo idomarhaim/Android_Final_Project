@@ -9,11 +9,21 @@ person, and it cannot supply your name, ID or course number.
 
 ---
 
-## [ ] 1. Two-account sharing demo (spec §7)
+## [x] 1. Two-account sharing demo (spec §7) — **done 05/08/2026**
 
-Spec §7 requires the social layer demonstrated with **two real users**. Only one
-account has ever signed in, so the leaderboard, friends and shared feed have
-never been seen with more than a single row.
+Spec §7 requires the social layer demonstrated with **two real users**. Done and
+captured on 05/08/2026 with both emulators up: friends-only leaderboard showing
+both accounts, the shared feed item, and — on top of what this item originally
+asked for — a challenge created by A, **joined by B as a non-owner**, scored by
+B, and the owner's screen re-ranking itself live. See
+`CHANGELOG/2026-08-05/submission.md`.
+
+> ⚠️ This item's original premise was **wrong**, and it cost a session's worth of
+> planning. It claimed *"Only one account has ever signed in"* and listed the
+> friend-code exchange as work still to do. Live Firestore had held **two**
+> profiles (`NDXVJC` and `8ZFFSM`), friend edges in **both** directions, and a
+> share by account A **since 02/08/2026**. The demo needed capturing, not
+> building. Check the live project before believing a backlog item about it.
 
 **Already in place — do not redo:**
 
@@ -91,7 +101,9 @@ Tracked in [`TODO_OPTIONAL/Integrations.TODO.optional.md`](../TODO_OPTIONAL/Inte
 Health Connect and competitive challenges are the two remaining spec §6
 nice-to-haves. Google Tasks import and the LLM classification bonus are **done**.
 
-One governance item, not a feature: [AGENTS.md](../../AGENTS.md) carries template
-marker **v4** while the library is at **v7** (v5 knowledge-graph section, v6
-session hygiene, v7 concurrent sessions). Needs the template-sync rule's
-diff-and-confirm flow — a task for a session, not a silent copy.
+~~One governance item, not a feature: [AGENTS.md](../../AGENTS.md) carries template
+marker **v4** while the library is at **v7**~~ — **closed 05/08/2026.**
+`AGENTS.md` is at **v14**, brought current by the mechanical template sweep in
+`f7ae3dd`. It needed the diff-and-confirm flow when it was written; it no longer
+does, because verbatim projections are now swept in bulk by
+`Update-TemplateConsumers.ps1` rather than upgraded a repo at a time.

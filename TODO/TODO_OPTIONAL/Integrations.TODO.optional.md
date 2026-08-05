@@ -108,14 +108,24 @@ Implementation notes worth keeping:
   participant" — granting the owner that power needs a `get()` on the parent
   inside the rule, billing a document read on every evaluation.
 
-**Still to do, both carried into TODO index:**
-1. **Deploy the rules** — `firebase deploy --only firestore:rules`. The 16
-   `firestore-tests` cases pass, but live `goalpilot-56e30` still carries the old
-   ruleset, so joining fails against the real backend however correct the client
-   is. Held back on 05/08/2026 to pair with the two-account session.
-2. **Verify a *non-owner* join end-to-end.** Creating a challenge auto-joins the
-   owner, so a single account cannot exercise the path that was broken. Needs the
-   second Google account — the two-account demo MUST item.
+**~~Still to do~~ — both done 05/08/2026** in the `submission` session, in one
+sitting as intended. See `CHANGELOG/2026-08-05/submission.md`.
+1. [x] **Deploy the rules** — `firebase deploy --only firestore:rules` ran
+   against live `goalpilot-56e30`. Release `cloud.firestore` moved from ruleset
+   `8f80b66d-0970-4f72-80b1-59dcbd37ff80` (31/07) to
+   `d38c7248-f5c4-464a-b01b-d7edba01ce6b`, and the deployed copy was read back
+   over the Firebase Rules API to confirm it carries the `participants` block.
+   The delta was purely additive; the 16 `firestore-tests` cases were re-run
+   against that exact file first.
+2. [x] **Verify a *non-owner* join end-to-end.** Account A created "August Steps
+   Race" on `Pixel_10_Pro_XL`; account B joined it from `Pixel_10_Pro_XL_B`,
+   reported a score of 8200, and A's screen re-ranked itself to #2 with no
+   interaction. Each step confirmed in Firestore over REST.
+
+   Worth keeping: the **owner auto-join is itself proof the deploy landed** —
+   it writes `challenges/{id}/participants/{ownerUid}`, which under the old
+   ruleset matched no rule at all, since a subcollection is not covered by the
+   parent `match`.
 
 ## ~~LLM task→goal classification action (spec §6 bonus)~~ — DONE 2026-07-31
 Shipped as the **"Smart add a task"** card on the dashboard
