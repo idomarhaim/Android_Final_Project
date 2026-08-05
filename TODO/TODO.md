@@ -39,15 +39,19 @@ Backlog index. Per-area files live under three priority subfolders next to this 
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
 - [Integrations.TODO.optional.md](TODO_OPTIONAL/Integrations.TODO.optional.md)
-  - [x] **Health Connect (fitness/sleep)** — shipped 02/08/2026 as the "Sync
-    health data" card. Read-only, review-before-write, dedupe via
-    `ProgressEntry.sourceKey`. One follow-up: verify on a **physical phone with
-    real step data** — the emulator's Health Connect store is empty, so the
-    write path has never run against real readings. Re-checked 05/08/2026 on
-    API 37: permission grant works, the card flips to "Sync steps & sleep", and
-    the sync returns *"Health Connect has no steps or sleep for the last week"* —
-    the empty-store path degrades correctly, so what remains unproven is
-    specifically the proposal → Firestore write against real readings.
+  - [x] **Health Connect (fitness/sleep)** — shipped 02/08/2026 as a dashboard
+    card; made **automatic** 05/08/2026. Read-only. Syncs on every app
+    foreground, throttled to once per 15 minutes (stamp persisted per uid in
+    SharedPreferences), and writes every unsynced reading with no review sheet —
+    dedupe via `ProgressEntry.sourceKey` is what makes that safe, and today is
+    **topped up by the difference** rather than skipped once seen. One follow-up:
+    verify on a **physical phone with real step data** — the emulator's Health
+    Connect store is empty, so the write path has never run against real
+    readings. Re-checked 05/08/2026 on API 37: permission grant works, the card
+    flips to "Synced just now", the throttle was proven both ways against the
+    on-device stamp, and an empty store degrades to *"Health Connect is already
+    up to date"* — so what remains unproven is specifically the reading →
+    Firestore write against real data.
     (Samsung Health is not integrated directly; it is one of the apps that
     *writes into* Health Connect, which is all GoalPilot reads.)
   - [x] Google Tasks import — shipped 31/07/2026.

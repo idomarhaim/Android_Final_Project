@@ -4,10 +4,12 @@ These tiers are **architected and scaffolded** (models, DI, stubs, navigation) b
 not fully implemented, to keep the Core build rock-solid. Each item lists exactly
 how to activate it.
 
-## ~~Health Connect — fitness & sleep (spec §5, §6 nice-to-have)~~ — DONE 2026-08-02
-Shipped as the **"Sync health data"** card on the dashboard. Reads the last seven
-days of steps and sleep, proposes which goal each day belongs to, and writes
-nothing until the user confirms. See `CHANGELOG/2026-08-02.md`.
+## ~~Health Connect — fitness & sleep (spec §5, §6 nice-to-have)~~ — DONE 2026-08-02, automatic since 2026-08-05
+Reads the last seven days of steps and sleep and files each day against a fitness
+or sleep goal. Originally a "Sync health data" button with a review sheet; since
+2026-08-05 it runs **on every app foreground**, at most once per fifteen minutes,
+and writes everything unsynced without asking. See `CHANGELOG/2026-08-02.md` and
+`CHANGELOG/2026-08-05/health-autosync.md`.
 
 **Read-only by design** — only `READ_STEPS` / `READ_SLEEP` are declared, so the
 user is never asked for write access and GoalPilot can never modify the device's
@@ -29,6 +31,14 @@ Implementation notes worth keeping:
   de-duplicates across source apps during aggregation; raw reads do not.
 - `ProgressEntry.sourceKey` (e.g. `hc:steps:2026-08-01`) makes re-sync dedupe
   **exact** — steps are cumulative, so logging a day twice silently doubles it.
+  Since the sync became automatic that key is no longer unique per entry: a day
+  can carry several entries, and their **sum** is what it has been credited. That
+  is what lets today be topped up by the difference instead of being frozen at
+  the first reading of the morning, which is what "skip any day already seen"
+  would have done once the app started syncing every time it opened.
+- **The throttle stamp is per uid and lives in SharedPreferences.** In memory it
+  would reset on every cold start, which is exactly when the sync fires — the
+  fifteen-minute window would then never apply.
 - The rationale activity is **mandatory**: Health Connect refuses permissions to
   an app that handles neither `ACTION_SHOW_PERMISSIONS_RATIONALE` nor, on 14+,
   the `VIEW_PERMISSION_USAGE` alias.

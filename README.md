@@ -55,10 +55,13 @@ The system works on three levels (spec §1):
 - ✅ **Import tasks from Google Tasks** — the "Import from Google Tasks" card
   pulls your open tasks in and files each one under the right goal. Deduped
   against what is already there; you review everything before it is saved.
-- ✅ **Pull fitness & sleep from Health Connect** — the "Sync health data" card
-  reads the last seven days of steps and sleep and logs each day against a
-  fitness or sleep goal, creating one if you have none. **Read-only** (GoalPilot
-  never writes to your health store), and nothing is saved until you confirm.
+- ✅ **Pull fitness & sleep from Health Connect** — steps and sleep are read
+  automatically **every time you open the app** (at most once every fifteen
+  minutes) and logged against a fitness or sleep goal, creating one if you have
+  none. **Read-only** (GoalPilot never writes to your health store). A day is
+  never counted twice, and today is topped up by the difference as you walk, so
+  the goal keeps up without the day being logged again. The "Health data" card
+  shows when the last sync ran and can force one.
 
 **Nice-to-have (architected + scaffolded, see `TODO/`)**
 - 🧩 Shared/competitive **challenges** — model + Firestore rules + preview screen

@@ -16,4 +16,16 @@ interface AppPreferencesRepository {
     val skin: StateFlow<AppSkin>
 
     fun setSkin(skin: AppSkin)
+
+    /**
+     * When Health Connect was last read for [uid], in epoch millis, or 0 if never.
+     *
+     * Per-account, because the throttle it drives decides whether *this* user's
+     * readings are already in Firestore — a shared timestamp would make a freshly
+     * signed-in account wait out the other one's window. Device-local like
+     * everything else here: it describes this install's sync clock, not the user.
+     */
+    fun healthLastSyncAt(uid: String): Long
+
+    fun setHealthLastSyncAt(uid: String, epochMillis: Long)
 }

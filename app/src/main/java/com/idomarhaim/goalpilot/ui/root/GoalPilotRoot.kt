@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -43,7 +45,15 @@ fun GoalPilotRoot(viewModel: RootViewModel = hiltViewModel()) {
     when (authState) {
         AuthUiState.Loading -> LoadingBox()
         AuthUiState.SignedOut -> SignInScreen()
-        is AuthUiState.SignedIn -> MainScaffold()
+        is AuthUiState.SignedIn -> {
+            // Health Connect syncs whenever the app comes forward. ON_START rather
+            // than ON_RESUME because a permission dialog or the app switcher briefly
+            // pauses the activity, and resuming from those is not "opening the app".
+            // A lifecycle already past STARTED replays the event to a new observer,
+            // so this also fires on cold start and immediately after sign-in.
+            LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onAppForegrounded() }
+            MainScaffold()
+        }
     }
 }
 

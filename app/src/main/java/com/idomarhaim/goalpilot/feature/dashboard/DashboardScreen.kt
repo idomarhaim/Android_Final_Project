@@ -252,19 +252,17 @@ fun DashboardScreen(
         )
     }
 
-    if (healthSync.isVisible) {
-        HealthSyncDialog(
-            state = healthSync,
-            onToggle = viewModel::toggleHealthProposal,
-            onConfirm = viewModel::confirmHealthSync,
-            onDismiss = viewModel::dismissHealthSync,
-        )
-    }
 }
 
 /**
- * Entry point for the Health Connect sync (spec §5, §6 nice-to-have). Reads the
- * last week of steps and sleep and files each day against a fitness or sleep goal.
+ * Status and manual override for the Health Connect sync (spec §5, §6 nice-to-have).
+ *
+ * The sync itself is automatic — it runs whenever the app comes forward, at most
+ * once every fifteen minutes — so this card is mostly a window onto something that
+ * has already happened. It exists because a feature that writes to your goals
+ * without ever being visible is worse than one you have to press: "Synced 4
+ * minutes ago" is how the user knows it is working, and the button is how they
+ * skip the wait.
  *
  * The card is deliberately honest about absence: Health Connect is a separate app
  * below Android 14 and missing from most emulator images, so "not available here"
@@ -283,134 +281,53 @@ private fun HealthConnectCard(state: HealthSyncState, onSync: () -> Unit) {
                     tint = MaterialTheme.colorScheme.secondary,
                 )
                 Spacer(Modifier.width(12.dp))
-                Text("Sync health data", style = MaterialTheme.typography.titleMedium)
+                Text("Health data", style = MaterialTheme.typography.titleMedium)
             }
             Spacer(Modifier.height(10.dp))
             Text(
                 text = when (availability) {
                     null -> "Checking whether Health Connect is available…"
                     HealthAvailability.AVAILABLE ->
-                        "Pull your steps and sleep from Health Connect and log them " +
-                            "against your goals. You review every day before it is saved."
+                        "Your steps and sleep are pulled from Health Connect and logged " +
+                            "against your goals automatically, every time you open GoalPilot."
                     else -> availability.explain()
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // Recomputed on every recomposition rather than ticking: the label is a
+            // coarse "4 minutes ago", and a card that repaints once a second to keep
+            // a number honest costs more than the honesty is worth.
+            val ago = healthSyncAgoLabel(state.lastSyncAtMillis, System.currentTimeMillis())
+            if (availability == HealthAvailability.AVAILABLE) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = ago ?: "Not synced on this device yet",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Spacer(Modifier.height(14.dp))
             OutlinedButton(
                 onClick = onSync,
-                enabled = canSync && !state.isLoading,
+                enabled = canSync && !state.isSyncing,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 when {
-                    state.isLoading -> {
+                    state.isSyncing -> {
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
-                        Text("Reading…")
+                        Text("Syncing…")
                     }
 
                     availability == HealthAvailability.PERMISSIONS_REQUIRED ->
                         Text("Connect Health Connect")
 
-                    else -> Text("Sync steps & sleep")
+                    else -> Text("Sync now")
                 }
             }
         }
     }
-}
-
-/**
- * Review sheet for a health sync. Every row is opt-out-able and nothing reaches
- * Firestore until "Log" is pressed — the same policy as the Google Tasks import.
- */
-@Composable
-private fun HealthSyncDialog(
-    state: HealthSyncState,
-    onToggle: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val selectedCount = state.proposals.count { it.selected }
-    AlertDialog(
-        onDismissRequest = { if (!state.isSaving) onDismiss() },
-        title = { Text("Log health readings") },
-        text = {
-            when {
-                state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Text("Reading your steps and sleep…")
-                }
-
-                state.error != null -> Text(state.error)
-
-                else -> Column {
-                    Text(
-                        buildString {
-                            append("Found ${state.proposals.size} reading(s) from the last week.")
-                            if (state.skippedCount > 0) {
-                                append(" ${state.skippedCount} already logged, skipped.")
-                            }
-                            append(" Tap a row to include or exclude it.")
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    LazyColumn(
-                        modifier = Modifier.heightIn(max = 320.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        items(state.proposals, key = { it.sourceKey }) { proposal ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(enabled = !state.isSaving) {
-                                        onToggle(proposal.sourceKey)
-                                    }
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Checkbox(
-                                    checked = proposal.selected,
-                                    onCheckedChange = { onToggle(proposal.sourceKey) },
-                                    enabled = !state.isSaving,
-                                )
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "${proposal.valueLabel()} · ${proposal.dayLabel()}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        "→ ${proposal.goalLabel}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (state.error == null && !state.isLoading) {
-                TextButton(onClick = onConfirm, enabled = !state.isSaving && selectedCount > 0) {
-                    Text(if (state.isSaving) "Logging…" else "Log $selectedCount")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !state.isSaving) {
-                Text(if (state.error != null) "Close" else "Cancel")
-            }
-        },
-    )
 }
 
 /**

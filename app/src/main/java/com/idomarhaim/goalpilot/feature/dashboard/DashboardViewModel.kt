@@ -15,7 +15,6 @@ import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
-import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
@@ -24,15 +23,15 @@ import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
-import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
-import com.idomarhaim.goalpilot.domain.usecase.BuildHealthProposalsUseCase
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
-import com.idomarhaim.goalpilot.domain.usecase.HealthLogProposal
-import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
+import com.idomarhaim.goalpilot.domain.usecase.HealthSyncOutcome
+import com.idomarhaim.goalpilot.domain.usecase.HealthSyncResult
+import com.idomarhaim.goalpilot.domain.usecase.HealthSyncTrigger
+import com.idomarhaim.goalpilot.domain.usecase.SyncHealthDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -47,10 +46,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -61,12 +56,11 @@ class DashboardViewModel @Inject constructor(
     private val recommendationRepository: RecommendationRepository,
     private val socialRepository: SocialRepository,
     private val storageRepository: StorageRepository,
-    private val progressRepository: ProgressRepository,
     private val googleTasksClient: GoogleTasksClient,
     private val healthRepository: HealthRepository,
     private val lifeAreaRepository: LifeAreaRepository,
     private val buildSummary: BuildSummaryUseCase,
-    private val buildHealthProposals: BuildHealthProposalsUseCase,
+    private val syncHealthData: SyncHealthDataUseCase,
 ) : ViewModel() {
 
     @Volatile private var lastGoals: List<Goal> = emptyList()
@@ -483,6 +477,32 @@ class DashboardViewModel @Inject constructor(
 
     private var healthChecked = false
 
+    /**
+     * Syncs are fired from the root scaffold as well as from this screen's card, so
+     * the card mirrors the shared state rather than owning it.
+     *
+     * This `init` sits *below* [_healthSync] on purpose: property initialisers run
+     * in source order, and [SyncHealthDataUseCase.status] is a `StateFlow`, so
+     * collecting it delivers the current value synchronously on the main
+     * dispatcher — from a block placed above, that lands on a field that is still
+     * null and the app dies before its first frame.
+     */
+    init {
+        viewModelScope.launch {
+            syncHealthData.status.collect { status ->
+                _healthSync.update {
+                    it.copy(
+                        isSyncing = status.isSyncing,
+                        lastSyncAtMillis = status.lastSyncAtMillis,
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            syncHealthData.results.collect(::onHealthSyncResult)
+        }
+    }
+
     /** Resolves the card's state once per screen entry. */
     fun ensureHealthAvailability() {
         if (healthChecked) return
@@ -498,152 +518,56 @@ class DashboardViewModel @Inject constructor(
     }
 
     /**
-     * Reads the last week of steps and sleep and opens the review sheet.
+     * Syncs on demand, bypassing the fifteen-minute throttle: the user pressed the
+     * button, so "you synced eight minutes ago" is not an answer.
      *
-     * When the permissions are missing this asks the *screen* to request them —
-     * a ViewModel cannot launch an Android permission flow, and the Health
-     * Connect contract has to be registered from a composable.
+     * The result is not handled here — every sync, whoever started it, comes back
+     * through [SyncHealthDataUseCase.results], which this ViewModel already
+     * collects. Handling it in both places is how the two paths drift apart.
      */
     fun syncHealth() {
-        if (_healthSync.value.isLoading) return
-        viewModelScope.launch {
-            val availability = healthRepository.availability()
-            _healthSync.update { it.copy(availability = availability) }
-            when (availability) {
-                HealthAvailability.PERMISSIONS_REQUIRED -> {
-                    _healthSync.update { it.copy(requestPermissions = true) }
-                    return@launch
-                }
-
-                HealthAvailability.AVAILABLE -> Unit
-
-                else -> {
-                    _message.value = availability.explain()
-                    return@launch
-                }
-            }
-
-            _healthSync.update { it.copy(isVisible = true, isLoading = true, error = null) }
-            when (val read = healthRepository.readSnapshot()) {
-                is Resource.Error ->
-                    _healthSync.update { it.copy(isLoading = false, error = read.message) }
-
-                Resource.Loading -> Unit
-
-                is Resource.Success -> {
-                    val snapshot = read.data
-                    if (snapshot.isEmpty) {
-                        _healthSync.update {
-                            it.copy(
-                                isLoading = false,
-                                error = "Health Connect has no steps or sleep for the last week",
-                            )
-                        }
-                        return@launch
-                    }
-                    // Two passes: the first decides which goals are involved, the
-                    // second drops the days those goals were already given. The
-                    // filing rules live in the use case either way — this only
-                    // supplies the facts it cannot read for itself.
-                    val provisional = buildHealthProposals(snapshot, lastGoals)
-                    val alreadyLogged = provisional.mapNotNull { it.targetGoalId }
-                        .distinct()
-                        .flatMap { goalId -> loggedSourceKeys(goalId) }
-                        .toSet()
-                    val proposals = buildHealthProposals(snapshot, lastGoals, alreadyLogged)
-
-                    _healthSync.update {
-                        it.copy(
-                            isLoading = false,
-                            proposals = proposals,
-                            skippedCount = provisional.size - proposals.size,
-                            error = if (proposals.isEmpty()) {
-                                "Every reading from the last week is already logged"
-                            } else {
-                                null
-                            },
-                        )
-                    }
-                }
-            }
-        }
+        if (_healthSync.value.isSyncing) return
+        viewModelScope.launch { syncHealthData(HealthSyncTrigger.MANUAL) }
     }
 
     /**
-     * Source keys already written against a goal. Bounded by a timeout: this is a
-     * Firestore snapshot flow, and a dedupe lookup that never returns would leave
-     * the review sheet spinning forever. Losing the lookup is recoverable — the
-     * user still reviews every row before it is written.
+     * Turns a finished sync into a snackbar and keeps the card honest.
+     *
+     * An automatic sync only ever speaks when it *wrote* something — a failure or
+     * an empty week that the user did not ask about is not worth a snackbar on
+     * every app launch. A manual one reports whatever happened, including nothing.
      */
-    private suspend fun loggedSourceKeys(goalId: String): List<String> =
-        withTimeoutOrNull(DEDUPE_TIMEOUT_MS) {
-            progressRepository.observeEntries(goalId).first().mapNotNull { it.sourceKey }
-        }.orEmpty()
+    private fun onHealthSyncResult(result: HealthSyncResult) {
+        val outcome = result.outcome
+        val manual = result.trigger == HealthSyncTrigger.MANUAL
 
-    fun toggleHealthProposal(sourceKey: String) {
-        _healthSync.update { state ->
-            state.copy(
-                proposals = state.proposals.map {
-                    if (it.sourceKey == sourceKey) it.copy(selected = !it.selected) else it
-                },
-            )
-        }
-    }
-
-    /** Creates whichever goals the selection needs, then logs a progress entry per reading. */
-    fun confirmHealthSync() {
-        val state = _healthSync.value
-        if (state.isSaving) return
-        val chosen = state.proposals.filter { it.selected }
-        if (chosen.isEmpty()) {
-            _healthSync.value = HealthSyncState(availability = state.availability)
-            return
-        }
-        viewModelScope.launch {
-            _healthSync.update { it.copy(isSaving = true) }
-            // Steps and sleep each need at most one new goal, however many days
-            // are selected — create it once and reuse the id.
-            val createdGoals = mutableMapOf<HealthMetric, String>()
-            var saved = 0
-            for (proposal in chosen) {
-                val goalId = proposal.targetGoalId
-                    ?: createdGoals[proposal.metric]
-                    ?: run {
-                        val created = goalRepository.upsertGoal(
-                            Goal(
-                                title = proposal.newGoalTitle.orEmpty()
-                                    .ifBlank { proposal.metric.defaultGoalTitle },
-                                category = proposal.metric.category,
-                                unit = proposal.metric.unit,
-                                targetValue = proposal.metric.defaultGoalTarget,
-                            ),
-                        )
-                        (created as? Resource.Success)?.data
-                            ?.also { createdGoals[proposal.metric] = it }
-                    }
-                if (goalId == null) continue
-                val result = progressRepository.logProgress(
-                    ProgressEntry(
-                        goalId = goalId,
-                        value = proposal.value,
-                        note = proposal.noteText(),
-                        sourceKey = proposal.sourceKey,
-                    ),
-                    imageUri = null,
+        _healthSync.update {
+            when (outcome) {
+                is HealthSyncOutcome.Logged, HealthSyncOutcome.UpToDate ->
+                    it.copy(availability = HealthAvailability.AVAILABLE)
+                HealthSyncOutcome.PermissionsRequired -> it.copy(
+                    availability = HealthAvailability.PERMISSIONS_REQUIRED,
+                    // Only a manual press may raise the system permission dialog:
+                    // one that appears by itself on every launch is an ambush.
+                    requestPermissions = manual,
                 )
-                if (result is Resource.Success) saved++
-            }
-            _healthSync.value = HealthSyncState(availability = state.availability)
-            _message.value = when (saved) {
-                0 -> "Could not log those readings"
-                1 -> "Logged 1 reading from Health Connect"
-                else -> "Logged $saved readings from Health Connect"
+                is HealthSyncOutcome.Unavailable -> it.copy(availability = outcome.availability)
+                else -> it
             }
         }
-    }
 
-    fun dismissHealthSync() {
-        _healthSync.value = HealthSyncState(availability = _healthSync.value.availability)
+        val message = when (outcome) {
+            is HealthSyncOutcome.Logged -> outcome.describe()
+            HealthSyncOutcome.UpToDate ->
+                "Health Connect is already up to date".takeIf { manual }
+            is HealthSyncOutcome.Unavailable -> outcome.availability.explain().takeIf { manual }
+            is HealthSyncOutcome.Failed ->
+                (outcome.message ?: "Could not sync Health Connect").takeIf { manual }
+            // Throttled, AlreadyRunning, NotSignedIn and a permission request are
+            // all either invisible or already answered by the card itself.
+            else -> null
+        }
+        if (message != null) _message.value = message
     }
 
     fun consumeHealthPermissionRequest() {
@@ -692,9 +616,6 @@ class DashboardViewModel @Inject constructor(
          * through it and half the classifications would silently fall back.
          */
         const val MAX_IMPORT = 15
-
-        /** Ceiling on the per-goal dedupe lookup before the sync proceeds without it. */
-        const val DEDUPE_TIMEOUT_MS = 5_000L
     }
 }
 
@@ -754,7 +675,8 @@ data class TasksImportState(
 )
 
 /**
- * Review sheet for a Health Connect sync, plus the card's own state.
+ * The health card's state. There is no review sheet any more — the sync writes
+ * whatever is not logged yet — so this only has to describe the card itself.
  *
  * [availability] is null only before the first check has come back; the card
  * renders a neutral "checking" state until then rather than claiming the feature
@@ -762,16 +684,39 @@ data class TasksImportState(
  */
 data class HealthSyncState(
     val availability: HealthAvailability? = null,
-    val isVisible: Boolean = false,
-    val isLoading: Boolean = false,
-    val isSaving: Boolean = false,
+    val isSyncing: Boolean = false,
+    /** Epoch millis of the last successful read; 0 until this account has synced. */
+    val lastSyncAtMillis: Long = 0L,
     /** Set when the screen must launch the Health Connect permission contract. */
     val requestPermissions: Boolean = false,
-    val proposals: List<HealthLogProposal> = emptyList(),
-    /** Readings dropped because they were already logged — worth telling the user. */
-    val skippedCount: Int = 0,
-    val error: String? = null,
 )
+
+/** e.g. "Logged 3 readings from Health Connect · 1 topped up". */
+fun HealthSyncOutcome.Logged.describe(): String = buildString {
+    append("Logged $entries reading${if (entries == 1) "" else "s"} from Health Connect")
+    if (createdGoals > 0) {
+        append(" · created ${createdGoals} goal${if (createdGoals == 1) "" else "s"}")
+    }
+    if (topUps > 0) append(" · $topUps topped up")
+}
+
+/** "Just now" / "12 minutes ago" / "Yesterday" for the card's footer. */
+fun healthSyncAgoLabel(lastSyncAtMillis: Long, nowMillis: Long): String? {
+    if (lastSyncAtMillis <= 0L) return null
+    val minutes = ((nowMillis - lastSyncAtMillis) / 60_000L).coerceAtLeast(0L)
+    return when {
+        minutes < 1 -> "Synced just now"
+        minutes < 60 -> "Synced $minutes minute${if (minutes == 1L) "" else "s"} ago"
+        minutes < 24 * 60 -> {
+            val hours = minutes / 60
+            "Synced $hours hour${if (hours == 1L) "" else "s"} ago"
+        }
+        else -> {
+            val days = minutes / (24 * 60)
+            "Synced $days day${if (days == 1L) "" else "s"} ago"
+        }
+    }
+}
 
 /** Why the health card cannot sync right now, in the user's terms. */
 fun HealthAvailability.explain(): String = when (this) {
@@ -784,22 +729,6 @@ fun HealthAvailability.explain(): String = when (this) {
     HealthAvailability.AVAILABLE ->
         "Health Connect is ready"
 }
-
-private val healthDayFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault())
-
-/** e.g. "Sat, Aug 1" — the day the reading belongs to, not the day it was synced. */
-fun HealthLogProposal.dayLabel(): String =
-    healthDayFormatter.format(LocalDate.ofEpochDay(epochDay))
-
-fun HealthLogProposal.valueLabel(): String = when (metric) {
-    HealthMetric.STEPS -> "%,d steps".format(value.toLong())
-    HealthMetric.SLEEP -> "%.1f hours".format(value)
-}
-
-/** What gets written to the progress entry the user will read back later. */
-fun HealthLogProposal.noteText(): String =
-    "Health Connect · ${valueLabel()} · ${dayLabel()}"
 
 /**
  * One Google Tasks entry plus the LLM's filing proposal. Exactly one of

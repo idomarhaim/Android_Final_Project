@@ -72,9 +72,12 @@ Currently unclaimed and ready:
   firestore:rules` is one command, and the second account is the only way to
   prove what it unblocks — a *non-owner* join, which creating a challenge
   (auto-joining the owner) cannot exercise.
-- **Health Connect on a physical phone** — small follow-up to the shipped feature.
-  The emulator carries the provider but its store is empty, so the
-  proposal → Firestore write path has never run against real step data.
+- **Health Connect on a physical phone** — small follow-up to the shipped feature,
+  and **bigger since 2026-08-05**. The emulator carries the provider but its store
+  is empty, so the reading → Firestore write path has never run against real step
+  data — and that path now runs unattended, with no review sheet to catch it. The
+  top-up arithmetic (today logged at 09:00, walked, opened again at 18:00) has only
+  ever been exercised against fakes; a phone is the only place it can be watched.
 - ~~One written brief, its own session: `/kickoff challenges-ui`~~ — **done
   2026-08-05.** All three briefs are now in `sessions/done/`; there is no
   unworked brief left. What challenges left behind is folded into the two-account
@@ -122,6 +125,7 @@ Currently unclaimed and ready:
 | `time-insights` | A stacked-column trend beside the time-allocation donut, and an AI re-estimation pass for tasks that never had a duration | 2026-08-04 | `342af48` + verification pass; see `CHANGELOG/2026-08-04/time-insights.md`. **All layers green and fully verified**: 150 JVM, 20 instrumented, and a live re-estimation run against GROQ that wrote 7 durations to `goalpilot-56e30`. Ran in two sittings — released once with the device checks blocked, re-claimed when the AVD came free. Emulator and Firebase project **released**. |
 | `lifearea-polish` | Drag-to-reorder life areas (minimal `sortOrder` writes) and the goals list banded by life area | 2026-08-04 | `6f4a749`; see `CHANGELOG/2026-08-04/lifearea-polish.md`. Both layers green — 144 JVM, 20 instrumented. Emulator `Pixel_10_Pro_XL` recovered from a wedge and **released**; Gradle daemon released. |
 | `submission` | Deployed `firestore.rules` to live `goalpilot-56e30` and proved the **non-owner challenge join** end-to-end with two real accounts on both AVDs; captured the spec §7 sharing evidence | 2026-08-05 | see `CHANGELOG/2026-08-05/submission.md`. **16/16 rules tests** re-run against the deployed file; JVM and instrumented suites **not run** — no Kotlin/Gradle file changed. Both emulators and the live project **released**. Found the MUST item's premise stale: two profiles, both friend edges and a share had existed since 02/08, so §7 needed capturing rather than building. Health Connect re-checked on API 37 by request — permissions and the empty read are fine; the physical-phone follow-up stands |
+| `health-autosync` | Health Connect made automatic: syncs on every app foreground, throttled to 15 min by a per-uid SharedPreferences stamp, and writes every unsynced reading with no review sheet. The dedupe became a *value* comparison so today is topped up rather than frozen at its first reading | 2026-08-05 | see `CHANGELOG/2026-08-05/health-autosync.md`. **197 JVM and 29 instrumented green**; rules untouched, so `firestore-tests/` not run. Throttle proven in both directions against the on-device stamp, not the UI. **Still unproven: the write path against real step data** — the emulator's store is empty, so the physical-phone follow-up below stands and now covers the top-up path too. Emulator `Pixel_10_Pro_XL` and the Gradle daemon **released** |
 | `challenges-ui` | Competitive challenges as a real screen: ViewModel, live standings, discover/join/leave, score reporting, create flow | 2026-08-05 | see `CHANGELOG/2026-08-05/challenges-ui.md`. All three layers green — 175 JVM, 29 instrumented, 16 rules. Ran against an empty board, uncontended. Emulator `Pixel_10_Pro_XL` and the Gradle daemon **released**. The live project `goalpilot-56e30` was **never touched** — the rules deploy is held for the two-account session on Ido's call, so a non-owner join is still proven by `firestore-tests` only. |
 
 > **Post-mortem, recorded because the next session should not repeat it.** The

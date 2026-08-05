@@ -37,8 +37,17 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _skin.value = skin
     }
 
+    override fun healthLastSyncAt(uid: String): Long = prefs.getLong(healthSyncKey(uid), 0L)
+
+    override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
+        prefs.edit { putLong(healthSyncKey(uid), epochMillis) }
+    }
+
     private companion object {
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
+
+        /** One key per account, so switching users does not inherit a sync clock. */
+        fun healthSyncKey(uid: String) = "health_last_sync_$uid"
     }
 }
