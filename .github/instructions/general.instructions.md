@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v14; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v16; do not edit in-project, edit user-level then re-sync -->
 ---
 applyTo: "**"
 description: "Cross-cutting project conventions: language, documentation, changelogs, TODOs."
@@ -34,12 +34,18 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
   > **Branch:** `<branch-name>`
   ```
   Get the branch by running `git rev-parse --abbrev-ref HEAD` **before** writing the file — never guess, never skip. If rounds span multiple branches, list them comma-separated in chronological order. This rule fires on **every** changelog creation or round-append, regardless of whether the `/new-changelog-entry` slash-command was used. After writing, re-read the first 5 lines and verify the branch line is present; fix immediately if missing.
+- **⚠️ MANDATORY summary line**, on line 4, directly under the branch line:
+  ```
+  > **Summary:** <one sentence — what this session changed, ~200 chars>
+  ```
+  One line, no line breaks, no `|` (it becomes a table cell). This is the **only** thing your session contributes to the shared day index, and it is in **your own** file, so no two sessions ever write the same line. Same self-check as the branch line: re-read the first 5 lines after writing.
 - Each file follows this structure:
 
   ```markdown
   # Changes — DD/MM/YYYY
 
   > **Branch:** `<branch-name>`
+  > **Summary:** <one sentence>
 
   ## 🆕 New Features
   ## 🔧 Bug Fixes
@@ -49,12 +55,15 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
   ## 🧪 Tests
   ```
 
-- `CHANGELOG/CHANGELOG_README.md` keeps an **Available Files** table — one row per **day** (link the folder), not per session file. It is a shared index, so re-read it immediately before editing and add only your own row.
+- **`CHANGELOG/CHANGELOG_README.md`'s Available Files table is derived content — never write prose into it.** One row per **day** (link the folder), and the row is a link, a session count, and **one line per session**: each session's own `> **Summary:**`, nothing more.
+  - **Where a generator exists, run it and never hand-edit the table** — in JARVIS that is `powershell -File scripts\New-ChangelogIndex.ps1`, which rebuilds the region between the `CHANGELOG-INDEX:BEGIN`/`END` markers from the day folders, with `-Check` wired into pre-commit. Absent a generator, append **only your own one-line segment** to the day row, re-reading the file immediately before you write it.
+  - **A day's prose belongs in `YYYY-MM-DD/SUMMARY.md`**, never in the index.
+  - **Why:** the day row used to be one table cell that every session of that day appended a paragraph to — a shared singleton one level above the changelog files that had already been sharded for exactly this reason. On 2026-08-04 in JARVIS six sessions shared one cell, one of them could not write its sentence at all and a third session paid the debt two minutes later, and the file became the second-most contended in the repo (30 touches). *Shard before you lease* — `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md` §5.2.
 
 ## ✅ After completing a task
 1. Update `README.md` / `ARCHITECTURE.md` if behavior or structure changed.
 2. Append / create **your own** `CHANGELOG/YYYY-MM-DD/<session-label>.md`.
-3. Update the **Available Files** table in `CHANGELOG_README.md` (one row per day; add the day's row if it isn't there yet).
+3. Refresh the **Available Files** table in `CHANGELOG_README.md` — run the generator where one exists (JARVIS: `powershell -File scripts\New-ChangelogIndex.ps1`), otherwise append only your own one-line segment to the day row. Never paste prose into it; your `> **Summary:**` line is what the row is built from.
 4. If the task came from `TODO/`, mark its checkbox `[x]` only **after user confirmation**.
 
 ## 🤖 Agent operations
@@ -62,7 +71,7 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
 - **Pushing is mode-gated too.** **Normal mode** (default): never push without explicit OK, and never push to the default branch without confirmation — prefer a feature branch + PR. **Auto mode** (`AUTO MODE`): push when the agent judges it right, without asking — including to `main` in a solo repo — but only while **all six preconditions** hold: (1) tests green at every layer the project has and today's CHANGELOG written; (2) the outgoing diff actually read (`git log @{u}..HEAD`, `git diff --stat @{u}..HEAD`) with no deleted/renamed file, secret, large binary, or out-of-scope change in it — deletions stay always-ask; (3) **fast-forward only** — `--force`, `--force-with-lease`, `--delete`, `+refspec`, moving a published tag, or pushing a rebase of already-pushed commits are destructive shortcuts, always-ask in both modes; (4) `git fetch` first, never push over commits you cannot account for; (5) sibling sessions respected, remembering that `git push` is **branch-scoped, not commit-scoped** — their *uncommitted* work must never ride along (that is the staging rule: explicit paths, never `git add -A`), while their *committed* work unavoidably will, so read the outgoing log and name in the reply any commit going up that is not yours; (6) a repo with other contributors or a PR workflow stays branch + PR. Pushing is the **dev half of outwardness only** — it neither needs nor grants `OUTWARD AUTO`, and opening/merging a PR, deleting a remote branch or tag, publishing a release, and changing repo settings are **not** pushes: they stay always-ask. Full rule: the global _Commits & pushing_ rule.
 - **Committed docs outrank memory.** If a recalled memory contradicts a committed doc (AGENTS.md, README, `docs/`), the doc wins — correct or delete the stale memory.
 - **Graduate durable insights.** When a Q&A yields a reusable, non-obvious insight, save it to the knowledge layer (`/kb-ingest` where available, else `/save-to-kb`) rather than leaving decision-grade facts only in private agent memory. Cross-project insights → the central KB (`C:\Dev\JARVIS\kb`); project insights → the project's `knowledge/` bundle. Vendor agent memory holds pointers, not substance — full rule: `C:\Dev\JARVIS\rules\memory-promotion.md`.
-- **Flag KB candidates as they happen — don't wait for the session end.** The moment something durable lands (a decision, work worth recording, or an explanation the user asked for and learned from), append one line to that reply: `📌 **KB candidate:** <topic> → <destination>` — then carry on. No ingest yet; flags collect into the session's candidate list, which the finish protocol ingests (approved items) and `/handoff` carries (unresolved ones). The user can add candidates any time with `/kb-flag <topic>`, or run `/kb-flag` bare after a Q&A to make the agent list every candidate it sees with a proposed destination.
+- **Flag KB candidates as they happen — don't wait for the session end.** The moment something durable lands (a decision, work worth recording, or an explanation the user asked for and learned from), append one line to that reply: `📌 **KB candidate:** <topic> → <destination>` — then carry on. No ingest at the moment of flagging; flags collect into the session's candidate list. **The list drains at the commit trigger, gated by the same `AUTO MODE` signal as committing and pushing:** in **normal mode** the pending candidates are offered when the unit is done and silence is not approval; in **auto mode** they are ingested via `/kb-ingest` without asking, ride in that unit's commit, and each is reported — `📥 **Ingested:** <topic> → <bundle>/<page>` — because an ingest the user only finds by reading a diff is silent autonomy. Not at session end: sessions end abruptly, which is what the flagging duty exists to stop relying on. **Two candidates stay always-ask in both modes** and are never dropped: one whose destination is `rules/` (a change to how the agent behaves, not a KB page) and one that **supersedes or contradicts** a standing KB claim (rewriting committed knowledge is a deletion). `/handoff` carries whatever is still unresolved. The user can add candidates any time with `/kb-flag <topic>`, or run `/kb-flag` bare after a Q&A to make the agent list every candidate it sees with a proposed destination.
 - **Climb the decision ladder before writing code** — *lazy about the solution, never about reading*: (1) does it need to exist at all? (2) already in this codebase? (3) standard library? (4) platform feature? (5) already-installed dependency? (6) can it be one line? (7) only then write the minimum that works. Bug fix = root cause, not symptom. Full rule: `C:\Dev\JARVIS\rules\decision-ladder.md`.
 
 ## 🗂️ TODO discipline

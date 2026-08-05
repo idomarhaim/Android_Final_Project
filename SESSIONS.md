@@ -110,6 +110,7 @@ Currently unclaimed and ready:
 
 | Session | Task | Released | Landed in |
 |---|---|---|---|
+| `template-sync-v16` | 🔁 **Mechanical template sweep**, driven from JARVIS by `Update-TemplateConsumers.ps1`: `general.instructions.md` **v14 → v16**, `new-changelog-entry.prompt.md` v3 → v4, `AGENTS.md` v12 → v14. Clears the v14 → v15 gap the 2026-08-04 sweep **correctly** refused while `challenges` held a dirty tree — that tree is clean now, so both versions landed in one pass. Verbatim projections only; no decision was taken in this repo, no Kotlin/Gradle/Firestore file touched, and neither `#emulator` nor `#gradle-daemon` was taken. **No Active row was claimed:** a single-commit mechanical sync into a clean, unclaimed tree, so a claim created and cleared in the same breath protects nothing (`C:\Dev\JARVIS\rules\scale-adaptive-ceremony.md`, *mechanical sync* row) | 2026-08-05 | this commit |
 | `backend` | Live Firebase backend, E2E verification, Google Tasks import, JARVIS §5 governance | 2026-07-31 | `6e4a184`, `79ce624`, `1ebb178`, `53c2afb`, `64802e5`, PR #1 |
 | `launchers` | One-click run scripts; made the emulator singleton self-enforcing | 2026-08-01 | `dc1c06e` + follow-up (pending) |
 | `health` | Health Connect integration — steps & sleep, read-only, review-before-write | 2026-08-02 | see `CHANGELOG/2026-08-02.md`; emulator released |
