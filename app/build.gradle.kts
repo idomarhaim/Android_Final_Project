@@ -60,8 +60,8 @@ android {
         // versionCode is lower than the one already on the device. The release
         // checklist in docs/RELEASING.md exists because forgetting this is
         // silent — the build succeeds and testers are simply never prompted.
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.2.1"
 
         testInstrumentationRunner = "com.idomarhaim.goalpilot.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }

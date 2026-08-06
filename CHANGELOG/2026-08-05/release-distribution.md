@@ -180,6 +180,26 @@ authenticated on this machine rather than through the consoles.
 Then `versionCode 1 → 2`, `versionName 0.1.0 → 0.2.0`, tagged `v0.2.0` — the
 first build that exists to be *distributed* rather than to be run from a cable.
 
+### 🐛 `v0.2.0` died in 11 seconds: `./gradlew: Permission denied`
+
+`gradlew` was committed from Windows, which carries no POSIX executable bit, so
+`ubuntu-latest` refused to run it (exit 126). Nothing local ever catches this —
+`gradlew.bat` is what runs on this machine, and the wrapper's mode is invisible
+until a Linux runner tries to execute it.
+
+The tidy fix is `git update-index --chmod=+x gradlew`, which restores the mode
+`gradle wrapper` generates. It was **not** taken: `gradlew*` is frozen in
+AGENTS.md, and a frozen path is not somewhere to make a judgement call
+unilaterally. The workflow does `chmod +x ./gradlew` after checkout instead —
+one line, no frozen file touched, and correct regardless of what the repo's mode
+bits say.
+
+`v0.2.0` is therefore a **burned tag**: it published nothing, and it is left in
+place rather than moved, because re-pointing a pushed tag rewrites remote history
+for everyone who already fetched it. The release continues at `versionCode 3` /
+`v0.2.1`, which costs nothing when the tester count is two and no build has ever
+shipped.
+
 ## 🧭 Sessions
 
 Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,

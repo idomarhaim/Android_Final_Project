@@ -52,6 +52,13 @@ jobs:
         # keep on every developer build.
         run: sed -i '/^org\.gradle\.java\.home=/d' gradle.properties
 
+      - name: Make the Gradle wrapper executable
+        # gradlew was committed from Windows, which does not carry a POSIX exec
+        # bit, so the runner gets "./gradlew: Permission denied" (exit 126). The
+        # tidier fix is `git update-index --chmod=+x gradlew`, but gradlew* is
+        # marked frozen in AGENTS.md, so this stays on the CI side.
+        run: chmod +x ./gradlew
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
