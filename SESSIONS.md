@@ -15,7 +15,15 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `product-model-map` | `/kickoff product-model-map` — chart the GoalPilot v0.3 product-model `/wayfinder` map over the 13 decisions `C1`–`C13`. **HITL, normal mode**: it grills Ido and cannot be run AFK. Charting only — no ticket is resolved | `TODO/TODO_FUTURE/ProductModel.TODO.future.md`, `sessions/product-model-map.md`, `CHANGELOG/2026-08-06/product-model-map.md`, `kb-candidates/2026-08-06-product-model-map.md`, plus GitHub issues and the `wayfinder:*` labels on `idomarhaim/Android_Final_Project` | **none** — no build, no device, no Firebase. Not `#gradle-daemon`, neither AVD | 2026-08-06 |
+| `product-device-pass` | `/kickoff product-device-pass` — reproduce defects `D1`–`D5` against a real build, run the **device half** of the product/UX pass (onboarding, empty states, tap targets, both skins in dark, error/offline, dashboard order) as `A5`+, then file the repo's **first** GitHub issues for the survivors and `U1`–`U6`. Establishing what is real; **fixing is out of scope** | `TODO/TODO_OPTIONAL/ProductReview.TODO.optional.md`, `sessions/product-device-pass.md`, `CHANGELOG/2026-08-06/product-device-pass.md`, `kb-candidates/2026-08-06-product-device-pass.md`, plus GitHub issues on `idomarhaim/Android_Final_Project` | `#emulator` `Pixel_10_Pro_XL`, `#gradle-daemon` | 2026-08-06 |
+
+> **The two rows above overlap on exactly one resource: the GitHub issue tracker**
+> — and it is partitioned by *content*, not by turn-taking, so they do not
+> serialise. `product-device-pass` files reproduced `D` defects and the `U1`–`U6`
+> UX items from `TODO_OPTIONAL/`; `product-model-map` files `wayfinder:*` decision
+> tickets from `TODO_FUTURE/`. Neither files from the other's list — a `C` item
+> filed twice is how a map ends up with two sources of truth. Both briefs say so.
 
 ## 📏 Rules
 
