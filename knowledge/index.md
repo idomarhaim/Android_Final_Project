@@ -23,3 +23,4 @@ that outlives any single session and travels with this repo.
 | Page | Topic |
 |---|---|
 | [deployment-conventions.md](deployment-conventions.md) | Cross-project deployment decision matrix (synced template, v1) — applies here to Firebase rules + Cloud Functions deploys. |
+| [release-distribution.md](release-distribution.md) | Getting an APK to other people and updating it afterwards: off-Play means no update mechanism, the signing key is unrecoverable so it precedes the first hand-out, the updater is release-only by construction, and why the workflow triggers on a tag rather than a push (`versionCode` is manual). |
