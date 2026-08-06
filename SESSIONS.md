@@ -65,13 +65,22 @@ Where to look, in order: [`TODO/TODO.md`](TODO/TODO.md) (MUST → OPTIONAL →
 FUTURE), then open issues. `/claim` reads both and proposes a fit.
 
 Currently unclaimed and ready:
-- **Two-account demo + spec title page** — the two remaining MUST items, and the
-  only things still blocking submission. Mostly manual: no agent can sign in as
-  the second Google account or supply a name, ID and course number. **Take the
-  challenges rules deploy in the same sitting**: `firebase deploy --only
-  firestore:rules` is one command, and the second account is the only way to
-  prove what it unblocks — a *non-owner* join, which creating a challenge
-  (auto-joining the owner) cannot exercise.
+- **Two written briefs, one session each** — `/kickoff product-device-pass` and
+  `/kickoff product-model-map`, both from the 2026-08-06 product/UX intake. They
+  are **disjoint and can run in either order or concurrently**: the device pass
+  owns `TODO/TODO_OPTIONAL/`, GitHub issues, and both singletons (emulator +
+  Gradle daemon); the map owns `TODO/TODO_FUTURE/` and the issue tracker's
+  `wayfinder:*` labels, and takes no device at all. The map session is **HITL** —
+  it grills Ido and cannot be run AFK.
+- ~~**Two-account demo + spec title page**~~ — **effectively closed 2026-08-06.**
+  The sharing demo was done on 05/08 (`CHANGELOG/2026-08-05/submission.md`,
+  rules deployed and a non-owner join proven), and the title page turns out to be
+  filled in already: `GoalPilot_spec_EN.docx` is modified in the working tree and
+  reads `Submitted by: Ido · [Ido Mar-Chaim 209497072] · [10208]`. **Confirmed
+  and ticked 2026-08-06** — the template's square brackets survive around both
+  values and Ido ruled them cosmetic. **Every MUST item is now closed; nothing
+  blocks submission.** The docx stays *Frozen / off-limits* in `AGENTS.md`, was
+  not touched by any agent, and is Ido's to commit.
 - **Health Connect on a physical phone** — small follow-up to the shipped feature,
   and **bigger since 2026-08-05**. The emulator carries the provider but its store
   is empty, so the reading → Firestore write path has never run against real step
@@ -113,6 +122,7 @@ Currently unclaimed and ready:
 
 | Session | Task | Released | Landed in |
 |---|---|---|---|
+| `product-review` | **Markdown only.** Intake of Ido's 2026-08-06 pre-sleep product/UX brief: faithful English transcription (`R1`–`R28`) beside the `.docx`, the actionable half (`D1`–`D5`, `U1`–`U6`, `A1`–`A4`) split from the 13 product-model decisions (`C1`–`C13`) bound for a `/wayfinder` map, plus two session briefs for the halves. Deliberately **no device pass, no GitHub issues, no map** — every repro note is static, and this repo has been burned once by a stale backlog premise, so nothing graduates until it is reproduced. Headline finding: the reported task-score/goal-percentage "bug" is **not a defect** — `Task.points` and `currentValue/targetValue` are independent by construction, joined only by `progressContribution` (default `1.0`, invisible in the UI) — so it was reclassified to decision `C3` rather than filed. Also recorded: no `values-he`, so the app has no Hebrew and no RTL, which is not in the brief. No `app/`, `functions/`, `firestore.rules` or `scripts/` file touched; **no suite run and none applicable**; neither AVD nor `#gradle-daemon` taken; live `goalpilot-56e30` untouched | 2026-08-06 | this commit |
 | `release-distribution` | Signed release key, Firebase App Distribution on both ends (upload plugin + in-app update prompt), and a tag-triggered release workflow — so an APK reaches other people's phones and updates itself afterwards | 2026-08-06 | `5316782`, `1f41b50`, `40cfc12`, `356613d`, `7e21ab1`, `964d6e9`; see `CHANGELOG/2026-08-05/release-distribution.md`. **Proven end to end on a physical phone:** install → Google Sign-In under the release key → in-app update `v0.2.1` → `v0.2.2` in one tap. 197 JVM green; instrumented and rules suites not run (no UI, no rules file touched). `#gradle-daemon` leased twice and **released**; neither AVD taken. Live `goalpilot-56e30` **was** touched — release SHA-1, `testers` group, service account — all additive, all listed in `docs/RELEASING.md`. Note for the next session: **`v0.2.2` was built and uploaded from the developer machine**, because GitHub could not allocate a hosted runner on two attempts (15-min acquisition timeout, zero steps). CI itself is fine — `v0.2.1` went green on the same file |
 | `kb-audit` | **Ingest only, Markdown only** — this repo's share of a cross-repo KB-candidate sweep run from `C:\Dev\GenAI-Driven-Dev-Self-Improvement`. **New** [`knowledge/release-distribution.md`](knowledge/release-distribution.md) from `CHANGELOG/2026-08-05/release-distribution.md` (off-Play means Android supplies no update mechanism; the signing key is unrecoverable so it precedes the first hand-out; tag-triggered because `versionCode` is manual), plus the bundle index and journal, and the missing `CHANGELOG_README.md` row for that 08-05 session file. Three claims from `second-avd`, `submission` and `release-distribution` generalise past GoalPilot and were ingested **centrally** instead (PowerShell 5.1 encoding traps · second-AVD mechanics · an authorization rule needs a second real identity). No `app/`, `firestore.rules`, `functions/` or `scripts/` file touched; neither AVD nor `#gradle-daemon` taken; no suite run. **Recorded rather than papered over:** the row went in *with* the commit rather than before the first write — the tree was clean and the only Active row owns disjoint paths, but the ordering rule says claim first and this session did not. **Also noted, not touched:** the `release-distribution` Active row is stale — its work is committed and pushed (`5316782`), so it is a release somebody owes | 2026-08-06 | this commit |
 | `template-sync-v16` | 🔁 **Mechanical template sweep**, driven from JARVIS by `Update-TemplateConsumers.ps1`: `general.instructions.md` **v14 → v16**, `new-changelog-entry.prompt.md` v3 → v4, `AGENTS.md` v12 → v14. Clears the v14 → v15 gap the 2026-08-04 sweep **correctly** refused while `challenges` held a dirty tree — that tree is clean now, so both versions landed in one pass. Verbatim projections only; no decision was taken in this repo, no Kotlin/Gradle/Firestore file touched, and neither `#emulator` nor `#gradle-daemon` was taken. **No Active row was claimed:** a single-commit mechanical sync into a clean, unclaimed tree, so a claim created and cleared in the same breath protects nothing (`C:\Dev\JARVIS\rules\scale-adaptive-ceremony.md`, *mechanical sync* row) | 2026-08-05 | this commit |

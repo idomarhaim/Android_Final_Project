@@ -34,10 +34,26 @@ Backlog index. Per-area files live under three priority subfolders next to this 
     non-owner, with A's screen re-ranking live. Most of it turned out to have
     been in place since 02/08 — the item's premise was stale.
     See `CHANGELOG/2026-08-05/submission.md`.
-  - [ ] **Fill in the spec title page** — it still reads
-    `[Full name & ID] · [Course number]`.
+  - [x] **Fill in the spec title page** — done by Ido; **confirmed and closed
+    06/08/2026.** `GoalPilot_spec_EN.docx` now reads
+    `Submitted by: Ido · [Ido Mar-Chaim 209497072] · [10208]`; the
+    `[Full name & ID] · [Course number]` placeholder is gone. The template's
+    square brackets are still around the name/ID and the course number — **Ido
+    ruled them cosmetic**, so this is closed, not deferred. The file stays
+    *Frozen / off-limits* in [AGENTS.md](../AGENTS.md): no agent edited it, and
+    the docx itself is **not** in this session's commit — it is Ido's to commit.
+
+  🎉 **With this, every MUST item is closed and nothing blocks submission.**
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
+- [ProductReview.TODO.optional.md](TODO_OPTIONAL/ProductReview.TODO.optional.md) —
+  the **actionable** half of the 2026-08-06 product/UX brief: 5 defects to
+  reproduce and fix, 6 single-session UX items, and 4 additions from the agent's
+  own static pass. Source text transcribed to
+  [`Product and UX Reviews/2026-08-06-brief-review.md`](../Product%20and%20UX%20Reviews/2026-08-06-brief-review.md)
+  as `R1`–`R28`; everything here cites those ids. **Nothing in it blocks
+  submission**, and nothing graduates to a GitHub issue until it has been
+  reproduced on a device.
 - [Integrations.TODO.optional.md](TODO_OPTIONAL/Integrations.TODO.optional.md)
   - [x] **Health Connect (fitness/sleep)** — shipped 02/08/2026 as a dashboard
     card; made **automatic** 05/08/2026. Read-only. Syncs on every app
@@ -109,6 +125,12 @@ Backlog index. Per-area files live under three priority subfolders next to this 
     sends a failure email. Deleting a remote tag is destructive; user's call.
 
 ### 🟢 FUTURE — [`TODO_FUTURE/`](TODO_FUTURE/)
+- [ProductModel.TODO.future.md](TODO_FUTURE/ProductModel.TODO.future.md) — the
+  **13 product-model decisions** from the same brief (`C1`–`C13`): the
+  points/percentage knot, the goal↔task ontology, maintenance goals, AI planning
+  and the calendar, the quote feed, presentation, and what a free model can be
+  trusted to do. These are decision tickets for a `/wayfinder` map, not build
+  items — none is worked before the map exists.
 - **Bump the build toolchain, then take Health Connect `1.1.0` stable.** The app
   is pinned to `connect-client:1.1.0-beta01` purely because stable `1.1.0` (and
   every `1.1.0-rc*`) requires **compileSdk 36 + AGP 8.9.1+**, while this project

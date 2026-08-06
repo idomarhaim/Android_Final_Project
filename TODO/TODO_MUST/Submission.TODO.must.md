@@ -85,13 +85,24 @@ both users, and of the shared feed item.
 
 ---
 
-## [ ] 2. Spec title page
+## [x] 2. Spec title page — **done 06/08/2026**
 
-`GoalPilot_spec_EN.docx` still reads `[Full name & ID] · [Course number]`.
+Filled in by Ido himself, as this item preferred. `GoalPilot_spec_EN.docx` now
+reads `Submitted by: Ido · [Ido Mar-Chaim 209497072] · [10208]`; the
+`[Full name & ID] · [Course number]` placeholder is gone.
 
-⚠️ That file is listed under **Frozen / off-limits** in [AGENTS.md](../../AGENTS.md)
-— it is the course spec and agents must not edit it. **Confirm with the user
-before touching it**, and prefer that they fill it in themselves.
+The template's square brackets survive around the name/ID and the course number.
+Ido ruled them **cosmetic** on 06/08/2026, so this item is closed rather than
+deferred — do not reopen it for the brackets.
+
+⚠️ That file remains listed under **Frozen / off-limits** in
+[AGENTS.md](../../AGENTS.md) — it is the course spec and agents must not edit it.
+No agent touched it here, and the modified docx is **not** part of the
+`product-review` commit; committing it is Ido's move.
+
+---
+
+**Both MUST items are now closed. Nothing blocks handing the project in.**
 
 ---
 
