@@ -231,6 +231,22 @@ with `{"location":"us-central1"}` — the call the console's "Get started" makes
 
 ---
 
+## 4a. Getting a build onto someone else's phone
+
+See [`RELEASING.md`](RELEASING.md) — the release signing key, Firebase App
+Distribution, the tag-triggered workflow, and the per-release checklist.
+
+Two things from it are worth knowing even if you never cut a release:
+
+- **The release signing key is permanent.** Once a tester installs a build,
+  every later build must carry the same signature or Android refuses the update.
+  `scripts/new-release-keystore.ps1` creates it; the `.jks` and its password are
+  git-ignored and must be backed up off this machine.
+- **`versionCode` is bumped by hand and forgetting is silent** — the build and
+  the upload both succeed, and no tester is ever prompted.
+
+---
+
 ## 5. Useful verification commands
 
 ```bash

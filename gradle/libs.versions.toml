@@ -22,6 +22,12 @@ coroutines = "1.9.0"
 # ── Firebase / Google ──────────────────────────────────────────────
 firebaseBom = "33.7.0"
 playServicesAuth = "21.3.0"
+# App Distribution ships OUTSIDE the Firebase BoM — its Android SDK is still
+# beta, so the BoM deliberately does not pin it and an explicit version is
+# mandatory. `appDistributionPlugin` (build-time upload) and `appDistribution`
+# (in-app update prompt) version independently of each other.
+appDistributionPlugin = "5.3.0"
+appDistribution = "16.0.0-beta20"
 
 # ── Media / serialization ──────────────────────────────────────────
 coil = "2.7.0"
@@ -86,6 +92,13 @@ firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
+# App Distribution — the api/impl split is load-bearing, not tidiness. The `-api`
+# artifact is a no-op stub that ships in every variant so the call site compiles
+# and does nothing; the full implementation is added to the *release* variant
+# only. A build that never reaches a tester therefore carries no updater at all.
+firebase-appdistribution-api = { group = "com.google.firebase", name = "firebase-appdistribution-api", version.ref = "appDistribution" }
+firebase-appdistribution = { group = "com.google.firebase", name = "firebase-appdistribution", version.ref = "appDistribution" }
+
 # Media / serialization
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
@@ -114,3 +127,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "appDistributionPlugin" }

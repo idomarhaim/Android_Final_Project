@@ -1,3 +1,7 @@
+// Required by App Distribution plugin 5.x for a `firebaseAppDistribution { }`
+// block inside a buildType. Without it the block still resolves, but through a
+// deprecated path that warns on every configuration.
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import java.util.Properties
 
 plugins {
@@ -8,6 +12,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 // Read developer-specific config from local.properties (git-ignored) so no
@@ -23,6 +28,24 @@ val googleWebClientId: String =
 val functionsRegion: String =
     localProps.getProperty("FUNCTIONS_REGION") ?: "us-central1"
 
+/**
+ * Release-signing credentials. local.properties on a developer machine (written
+ * by `scripts/new-release-keystore.ps1`), environment variables on CI — neither
+ * is ever committed. See docs/RELEASING.md.
+ */
+fun secret(key: String): String? =
+    localProps.getProperty(key) ?: System.getenv(key)
+
+val releaseStoreFile: String? = secret("RELEASE_STORE_FILE")
+val releaseStorePassword: String? = secret("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias: String? = secret("RELEASE_KEY_ALIAS")
+val releaseKeyPassword: String? = secret("RELEASE_KEY_PASSWORD")
+
+// Resolved once so both signingConfigs and the sanity check below agree on it.
+val releaseKeystore = releaseStoreFile?.let { rootProject.file(it) }
+val hasReleaseKey = releaseKeystore?.exists() == true &&
+    releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+
 android {
     namespace = "com.idomarhaim.goalpilot"
     compileSdk = 35
@@ -31,6 +54,12 @@ android {
         applicationId = "com.idomarhaim.goalpilot"
         minSdk = 26
         targetSdk = 35
+        // BUMP BOTH ON EVERY RELEASE — versionCode strictly upward. Nothing
+        // detects "an update is available" without it: App Distribution
+        // compares versionCode, and Android refuses to install a build whose
+        // versionCode is lower than the one already on the device. The release
+        // checklist in docs/RELEASING.md exists because forgetting this is
+        // silent — the build succeeds and testers are simply never prompted.
         versionCode = 1
         versionName = "0.1.0"
 
@@ -40,6 +69,17 @@ android {
         // Exposed to code as R.string.gp_web_client_id and BuildConfig.FUNCTIONS_REGION.
         resValue("string", "gp_web_client_id", googleWebClientId)
         buildConfigField("String", "FUNCTIONS_REGION", "\"$functionsRegion\"")
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -55,10 +95,23 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug signing so `assembleRelease` produces an installable APK
-            // out of the box for the course demo. Replace with a real
-            // release keystore before publishing.
-            signingConfig = signingConfigs.getByName("debug")
+            // The real key when its credentials are present, the debug key
+            // otherwise — a fresh clone can still `assembleRelease` and get an
+            // installable APK. The fallback is for *local* builds only: the
+            // release workflow fails the build outright when the real key is
+            // missing (see the check below), because a debug-signed APK handed
+            // to a tester can never be updated by a properly signed one.
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
+
+            firebaseAppDistribution {
+                // Testers are managed in the Firebase console. The group alias
+                // must exist there or the upload fails with a 404 that reads
+                // like an auth problem.
+                groups = "testers"
+                artifactType = "APK"
+                releaseNotesFile = "release-notes.txt"
+            }
         }
     }
 
@@ -119,6 +172,14 @@ dependencies {
     implementation(libs.firebase.functions)
     implementation(libs.play.services.auth)
 
+    // ── Firebase App Distribution (in-app update prompt) ──────────
+    // `-api` is a no-op stub compiled into every variant; the real
+    // implementation is release-only, so debug builds carry no updater and
+    // AppUpdateChecker quietly does nothing there. That asymmetry is the
+    // whole point of the split — do not "simplify" it to one dependency.
+    implementation(libs.firebase.appdistribution.api)
+    releaseImplementation(libs.firebase.appdistribution)
+
     // ── Media / serialization ─────────────────────────────────────
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
@@ -141,4 +202,23 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
+}
+
+/**
+ * A debug-signed APK is a dead end: the moment a tester installs one, the
+ * properly signed successor can no longer update it — Android rejects a
+ * signature change and the only way out is uninstall-and-lose-your-data. Local
+ * `assembleRelease` may still fall back to the debug key (handy, and it never
+ * leaves the machine), but *distributing* one is unrecoverable, so the upload
+ * task refuses rather than warns.
+ */
+tasks.matching { it.name.startsWith("appDistributionUpload") }.configureEach {
+    doFirst {
+        check(hasReleaseKey) {
+            "Refusing to distribute: no release signing key. RELEASE_STORE_FILE / " +
+                "RELEASE_STORE_PASSWORD / RELEASE_KEY_ALIAS / RELEASE_KEY_PASSWORD must " +
+                "resolve from local.properties or the environment, and the keystore must " +
+                "exist. Run scripts/new-release-keystore.ps1 — see docs/RELEASING.md."
+        }
+    }
 }

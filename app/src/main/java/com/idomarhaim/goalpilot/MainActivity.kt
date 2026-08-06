@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.core.update.AppUpdateChecker
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.ui.root.GoalPilotRoot
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
@@ -30,6 +31,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Sideloaded builds get nothing from Play, so this is the app's only
+        // update path. It lives here rather than in ui/root because the SDK
+        // drives its own dialogs off the foreground Activity, outside Compose.
+        AppUpdateChecker.checkOnce()
+
         setContent {
             val skin by appPreferences.skin.collectAsStateWithLifecycle()
             GoalPilotTheme(skin = skin) {

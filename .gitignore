@@ -31,6 +31,9 @@ build/
 /functions/node_modules/
 *.keystore
 !debug.keystore
+# The release signing key. Permanent and irreplaceable — back it up off this
+# machine (see docs/RELEASING.md); never commit it.
+*.jks
 service-account*.json
 
 # ── Logs / crash dumps ────────────────────────────────────────────

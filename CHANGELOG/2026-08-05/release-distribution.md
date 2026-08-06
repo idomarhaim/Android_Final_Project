@@ -1,0 +1,161 @@
+# Changes — 05/08/2026 · session `release-distribution`
+
+> **Branch:** `feat/goalpilot-implementation`
+
+Two questions started this: *can I send someone an APK on WhatsApp?* and *can the
+people who already have it get an update prompt when I push?* The first was
+already true and not worth much; the second was false, and making it true is what
+this session actually built.
+
+An app that is not on Google Play gets **no** update mechanism from Android — no
+auto-update, no notification, nothing. So the deliverable is the mechanism:
+Firebase App Distribution on both ends, a real signing key underneath it, and a
+tag-triggered workflow that puts a build in front of testers without anyone
+opening Android Studio.
+
+## 🔑 The signing key had to come first
+
+`app/build.gradle.kts` signed release builds with the **debug** key — a deliberate
+convenience noted in a comment as "replace before publishing". It cannot be
+replaced *after* publishing: Android identifies an app by its signature, so the
+first build handed to someone locks in the key forever, and switching later means
+every user uninstalls and loses their local state.
+
+So `scripts/new-release-keystore.ps1` generates the real key before anything is
+distributed. It:
+
+- refuses to overwrite an existing keystore (replacing a release key is the
+  unrecoverable move, so the script does not offer it);
+- generates a 32-char alphanumeric password — **alphanumeric deliberately**: the
+  password travels through a Gradle property, a GitHub secret and a base64
+  round-trip, and every quoting layer in that chain is a chance to mangle
+  punctuation;
+- writes the credentials straight into git-ignored `local.properties` and
+  **never prints them**, so a signing password does not end up in a terminal
+  scrollback or an agent transcript;
+- prints the SHA-1 (public) plus the `firebase apps:android:sha:create` command
+  that has to follow.
+
+Signing config now resolves from `local.properties` **or** the environment (CI),
+and falls back to the debug key when neither is present so a fresh clone still
+builds. The fallback is local-only: a `doFirst` check fails
+`appDistributionUpload*` outright rather than warning, because a debug-signed APK
+in a tester's hands is not discoverable until the day you try to update it.
+
+## 📲 The update prompt
+
+`firebase-appdistribution` is split into an `-api` stub and a full
+implementation, and the split is load-bearing rather than tidy:
+`implementation(…-api)` compiles into every variant and does nothing, while
+`releaseImplementation(…)` adds the real updater to release builds only. A build
+that never reaches a tester therefore carries no updater at all, and a developer
+running from source is never interrupted by an update dialog.
+
+`core/update/AppUpdateChecker.kt` is one call —
+`updateIfNewReleaseAvailable()` owns sign-in, the version comparison, the dialog,
+the download and the install — guarded so it fires once per process. The guard is
+not paranoia: `MainActivity` is recreated on every configuration change, so
+without it a rotation mid-download restarts the flow on top of itself.
+
+It is hooked from `MainActivity.onCreate` rather than `ui/root/`, because the SDK
+drives its own dialogs off the foreground Activity, outside Compose. (`ui/root/`
+was also owned by a live sibling session at the time; the Activity was the right
+home regardless.)
+
+## 🏷️ Why the workflow is tag-triggered, not push-triggered
+
+`.github/workflows/release.yml` was asked for as "on push to main". It ships on
+`v*` tags plus `workflow_dispatch` instead, because `versionCode` is bumped by
+hand: a push-triggered job would publish build after build carrying the *same*
+`versionCode`, App Distribution would accept every one, testers would be notified
+every time, and not one of those notifications would describe an installable
+update. A tag is the signal that a version number was actually decided.
+
+Two things in the workflow are non-obvious:
+
+- **`org.gradle.java.home` has to be stripped on the runner.** `gradle.properties`
+  pins it to a Windows JDK 21 path because this machine's `JAVA_HOME` is JDK 25,
+  which AGP rejects. Correct locally, fatal on `ubuntu-latest`. The line is
+  deleted in CI rather than removed from the repo, where it earns its keep daily.
+- **The APK's signature is verified with `apksigner` after assembling.** An
+  unsigned or debug-signed APK assembles perfectly happily; catching it in CI
+  beats catching it on a tester's phone.
+
+Uploads use a **service account**, not a `firebase login:ci` token — those are
+deprecated. The APK is also attached to the workflow run, so a build can still be
+shared by hand with someone who is not in the tester group yet.
+
+## 📓 What the docs now say
+
+[`docs/RELEASING.md`](../../docs/RELEASING.md) is new and is the whole story:
+one-time setup, the per-release checklist, the six GitHub secrets, the traps, and
+a blunt walk-through of what a tester actually experiences — five taps and a red
+Play Protect dialog on first install, three taps on every update after that.
+[`docs/OPERATIONS.md`](../../docs/OPERATIONS.md) gains a short §4a pointing at it
+with the two facts worth knowing even if you never cut a release.
+
+The honest answer to the WhatsApp question is in there too: you *can* attach the
+APK, but a hand-sent APK is invisible to App Distribution, so that person is
+outside the update flow permanently. Send the invitation, not the file.
+
+## 🧪 Tests
+
+No new test layer — this session added no behaviour that a test can observe.
+`AppUpdateChecker` is one delegating call into a Firebase singleton whose only
+locally reachable outcome is the debug no-op; a unit test around it would assert
+that a mock was called, which is the test asserting its own setup. What the
+session actually risked breaking was the **build**, so that is what was verified.
+
+| Layer | Result |
+|---|---|
+| Gradle configuration (`:app:tasks`) | ✅ — surfaced a real defect: plugin 5.x deprecates a bare `firebaseAppDistribution { }` inside a buildType. Fixed by importing `com.google.firebase.appdistribution.gradle.firebaseAppDistribution` |
+| JVM unit (`:app:testDebugUnitTest`) | ✅ **197 tests, 0 failures, 0 skipped** |
+| Release assembly (`:app:assembleRelease`, R8 + resource shrinking) | ✅ `BUILD SUCCESSFUL in 9m 13s` → `app-release.apk`, 4.59 MB |
+| Instrumented | not run — no UI changed, and the emulators belonged to the sibling session for most of this one |
+| Firestore rules | not run — no rules file touched |
+
+**Both signing paths were exercised, in order, which is the only way to prove
+either.** The first `assembleRelease` ran with no keystore on the machine:
+`validateSigningRelease` resolved to the debug config and produced an installable
+APK, which is the property the fallback exists to preserve for a fresh clone.
+`scripts/new-release-keystore.ps1` then created the real key, and a second
+`assembleRelease` produced an APK whose `apksigner` output reads
+`CN=Ido Marhaim, OU=GoalPilot, …` with SHA-1 `e7:d5:53:4c:…:90:62` — byte-identical
+to the keystore's own fingerprint. The credentials resolve, the config switches
+over automatically, and `git check-ignore` confirms `*.jks` keeps the key out of
+the index.
+
+### 🐛 The script did not run the first time
+
+`new-release-keystore.ps1` failed to **parse** on its first invocation:
+
+```
+The string is missing the terminator: '.
+```
+
+Nothing in it involves a stray quote. Windows PowerShell 5.1 decodes a BOM-less
+`.ps1` as **ANSI, not UTF-8**, and the em dash in `"NEXT — Google Sign-In…"` is
+`E2 80 94`, which as CP1252 is `â€"` — that third character is a double quote,
+which closes the string 40 characters early and leaves the rest of the line
+parsing as garbage. The error names a symptom three tokens downstream of the
+cause, which is what makes it worth writing down.
+
+Fixed by making the script **pure ASCII** rather than by adding a BOM: a BOM is
+one careless re-save away from being lost, and every editor and tool in this
+repo's path handles ASCII identically. A note in the script's header says so, so
+the next person does not "tidy up" the hyphens back into em dashes.
+
+**Not verified, and it cannot be verified from here:** that a tester receives the
+prompt. That needs the key created, its SHA-1 registered on `goalpilot-56e30`, a
+`testers` group, and *two* release builds with different `versionCode`s. Every one
+of those is an outward action on live infrastructure, so none was taken.
+
+## 🧭 Sessions
+
+Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,
+`data/prefs/`, `domain/usecase/` and `#gradle-daemon`. Nothing here touched those
+paths. `SESSIONS.md` was leased rather than claimed and came back `BLOCKED` on the
+first attempt; the work was reordered onto everything that did not need it, which
+cost nothing — by the time the lease came free the sibling had committed
+(`6cb178a`) and released its row, leaving the tree exclusively this session's and
+the Gradle daemon free.

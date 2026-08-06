@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| _none_ | — | — | — | — |
+| `release-distribution` | Signed release key + Firebase App Distribution, so an APK can reach other people's phones and update itself afterwards | `build.gradle.kts`, `app/build.gradle.kts`, `gradle/libs.versions.toml`, `.gitignore`, `app/release-notes.txt` *(new)*, `MainActivity.kt`, `core/update/` *(new)*, `.github/workflows/` *(new)*, `scripts/new-release-keystore.ps1` *(new)*, `docs/RELEASING.md` *(new)*, `docs/OPERATIONS.md` | `#gradle-daemon`, leased for a **configuration-only** `:app:tasks` run. Neither AVD; the live project `goalpilot-56e30` untouched | 2026-08-05 |
 
 ## 📏 Rules
 
