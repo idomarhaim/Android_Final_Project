@@ -222,6 +222,25 @@ only surfaces months later, when the update that cannot install lands.
 device and then a *second* release above it, which no amount of CI can
 substitute for.
 
+### 📱 `v0.2.1` installed on a real phone
+
+Two things that only a device could establish:
+
+- **Google Sign-In works under the release key.** The SHA-1 was registered
+  server-side and, until this install, never exercised — a registration that had
+  silently failed would look identical from here and only surface as
+  `ApiException: 10` on someone else's phone.
+- **Play Protect blocks the first install**, exactly as §4 of the release doc
+  predicted, and the dialog *hides its escape hatch*: the visible button is
+  "הבנתי", which cancels. "Install anyway" only appears after expanding
+  "פרטים נוספים". Worth knowing, because a tester who taps the obvious button
+  concludes the app is broken. It fires because the signing key was hours old
+  and Google has no reputation for it; it does **not** fire on updates, which is
+  the entire point of what was built.
+
+`versionCode 4` / `v0.2.2` follows purely to put a second release above the
+installed one, since that is the only way the prompt can be observed at all.
+
 ## 🧭 Sessions
 
 Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,
