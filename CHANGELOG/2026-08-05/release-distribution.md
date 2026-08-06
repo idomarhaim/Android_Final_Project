@@ -241,6 +241,46 @@ Two things that only a device could establish:
 `versionCode 4` / `v0.2.2` follows purely to put a second release above the
 installed one, since that is the only way the prompt can be observed at all.
 
+### 🎯 The update prompt works — proven on the phone
+
+`v0.2.2` reached the installed `v0.2.1` as an **in-app update**: the dialog
+appeared, the tester tapped Update, and it installed in place with no Play
+Protect dialog and no reinstall. That is the whole deliverable, and it is the one
+claim in this changelog that no amount of CI could have supported.
+
+The asymmetry it demonstrates is the point of the exercise: the **first** install
+costs five taps and a red "unknown developer" warning; **every** install after it
+costs one tap inside the app.
+
+### 🐛 GitHub could not run the release, twice
+
+`v0.2.2` never built on CI. Both attempts sat in `queued` for exactly 15 minutes
+and were killed, with the job annotation reading:
+
+> `The job was not acquired by Runner of type hosted even after multiple attempts`
+
+Zero steps executed either time — no checkout, no build, nothing that could have
+failed. Ruled out: billing (the repo is public, so Actions minutes are
+unlimited), and the workflow itself (the same file had succeeded for `v0.2.1` an
+hour earlier). It is GitHub-side runner starvation, and nothing in this repo can
+fix it. The `concurrency: group: app-distribution` block was the one
+self-inflicted candidate and was **left alone** — no evidence implicated it, and
+editing a workflow on a hunch is how a real cause gets buried.
+
+So `v0.2.2` was built and uploaded **from the developer machine**, which is the
+fallback [`docs/RELEASING.md`](../../docs/RELEASING.md) §3 documents. Two things
+were deliberately not skipped along with CI:
+
+- **the signature was verified before uploading.** Locally the debug-key
+  fallback is live, so a keystore credential that failed to resolve would have
+  produced a perfectly installable APK that could never update the one already on
+  the phone. `apksigner` reported `e7d5534c…` — the release key.
+- **the JVM suite was run anyway** (197 green). It could not plausibly have
+  regressed — the only changes since CI last ran it were two version literals and
+  some markdown — but "could not plausibly have" is not a test result.
+
+A fallback nobody has ever exercised is not a fallback. This one now has been.
+
 ## 🗂️ What was left open, and where it went
 
 Four follow-ups are now a new OPTIONAL area,
