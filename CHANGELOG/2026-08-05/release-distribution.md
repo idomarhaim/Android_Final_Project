@@ -150,6 +150,36 @@ prompt. That needs the key created, its SHA-1 registered on `goalpilot-56e30`, a
 `testers` group, and *two* release builds with different `versionCode`s. Every one
 of those is an outward action on live infrastructure, so none was taken.
 
+## 🚀 The live setup, and the first real release
+
+Committed in `5316782`, this section covers what followed: the infrastructure the
+code above needs in order to do anything, all of it run from the CLIs already
+authenticated on this machine rather than through the consoles.
+
+- **Release SHA-1 registered** on the Firebase release app
+  (`…:android:b5d15ee7…`). The app now carries two SHA-1s — the original debug
+  `f1d0964d…` and the release `e7d5534c…` — which is additive, so debug builds
+  and the emulators are unaffected.
+- **`google-services.json` refreshed**, and this one deserved care.
+  `apps:sdkconfig` is per-app, and the committed file describes **both** the
+  release and the `.debug` app; a naive overwrite would have silently dropped the
+  debug entry and broken every developer build. The fetched file was diffed
+  before replacing: it turned out to be a strict superset — one added
+  `oauth_client` for the release certificate, nothing removed.
+- **`testers` group created** with both existing test accounts. The alias
+  (`testers`, not the display name `Testers`) is what `app/build.gradle.kts` and
+  the workflow pass, so the two now agree.
+- **Service account `github-appdistribution@`** created with
+  `roles/firebaseappdistro.admin`, binding verified by reading the IAM policy
+  back rather than trusting the write.
+- **Six GitHub Actions secrets set** via `gh secret set`. The service-account
+  JSON had to go in over **stdin**: passing multi-line JSON as a PowerShell
+  `--body` argument word-splits it into five arguments. Its key file was deleted
+  from the scratchpad immediately afterwards.
+
+Then `versionCode 1 → 2`, `versionName 0.1.0 → 0.2.0`, tagged `v0.2.0` — the
+first build that exists to be *distributed* rather than to be run from a cable.
+
 ## 🧭 Sessions
 
 Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,
