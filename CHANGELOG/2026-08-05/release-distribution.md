@@ -241,6 +241,29 @@ Two things that only a device could establish:
 `versionCode 4` / `v0.2.2` follows purely to put a second release above the
 installed one, since that is the only way the prompt can be observed at all.
 
+## 🗂️ What was left open, and where it went
+
+Four follow-ups are now a new OPTIONAL area,
+`TODO/TODO_OPTIONAL/Distribution.TODO.optional.md` — a new file because neither
+existing area fitted (`Integrations` is third-party services; this is
+distribution), which is what the index's own convention prescribes.
+
+Only the first was asked for. The other three are loose ends **this session
+created**, and a loose end recorded only in a changelog is a loose end lost:
+
+1. **The app displays its version nowhere.** `BuildConfig.VERSION_NAME` is never
+   read. On Play that is minor — the store answers it. Sideloaded it is not:
+   after an in-app update, Settings → Apps is the only way to know what you are
+   running, and it is the first thing anyone debugging a tester's report needs.
+2. **Both variants use `@string/app_name`**, so a release build installed beside
+   a script-installed debug one gives two identical "GoalPilot" icons — and only
+   one of them can ever prompt for an update.
+3. **The `gradlew` exec bit** needs a decision rather than a patch, or the CI-side
+   `chmod` will be "fixed" again by someone who does not know `gradlew*` is
+   frozen.
+4. **The burned `v0.2.0` tag** still emails on failure. Deleting a remote tag is
+   destructive, so it stays the user's call.
+
 ## 🧭 Sessions
 
 Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,

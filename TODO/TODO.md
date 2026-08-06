@@ -91,6 +91,23 @@ Backlog index. Per-area files live under three priority subfolders next to this 
       weeks in a month or quarter, months in a year, four-hour blocks in a day).
       See `CHANGELOG/2026-08-04/time-insights.md`.
 
+- [Distribution.TODO.optional.md](TODO_OPTIONAL/Distribution.TODO.optional.md) —
+  loose ends from putting the app on Firebase App Distribution (05/08/2026).
+  None blocks submission; they are the cost of shipping outside Google Play.
+  - [ ] **Show the app version in the UI** — it appears nowhere, and sideloaded
+    that matters: after an in-app update, Settings → Apps is the only way to know
+    what you are running. Kept out of `v0.2.2` so nothing muddied the
+    update-prompt test.
+  - [ ] **Give the debug build a distinct launcher name** — both variants use
+    `@string/app_name`, so a release build installed beside a script-installed
+    debug one yields two icons both reading "GoalPilot", and only one of them
+    can ever prompt for updates.
+  - [ ] **Decide whether `gradlew` carries its exec bit in git** — CI does
+    `chmod +x` after checkout, because `gradlew*` is frozen in `AGENTS.md`. Needs
+    a decision so nobody "fixes" it twice.
+  - [ ] **Clean up the burned `v0.2.0` tag** — it published nothing and still
+    sends a failure email. Deleting a remote tag is destructive; user's call.
+
 ### 🟢 FUTURE — [`TODO_FUTURE/`](TODO_FUTURE/)
 - **Bump the build toolchain, then take Health Connect `1.1.0` stable.** The app
   is pinned to `connect-client:1.1.0-beta01` purely because stable `1.1.0` (and
