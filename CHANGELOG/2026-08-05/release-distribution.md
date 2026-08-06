@@ -200,6 +200,28 @@ for everyone who already fetched it. The release continues at `versionCode 3` /
 `v0.2.1`, which costs nothing when the tester count is two and no build has ever
 shipped.
 
+### ✅ `v0.2.1` shipped
+
+Run `31114738682`, all 13 steps green, and checked against something other than
+the exit code — a workflow can succeed while uploading nothing:
+
+- `uploaded new release 0.2.1 (3) successfully` → `distributed to testers/groups
+  successfully` in the CLI output;
+- `appdistribution:group:list` independently reports the `testers` group at
+  **release count 1**, queried afterwards rather than read from the run;
+- the in-workflow `apksigner` step printed
+  `CN=Ido Marhaim, OU=GoalPilot, …` / SHA-1 `e7d5534c…` — the release
+  certificate, so the debug-key fallback did **not** silently take over on a
+  machine where the keystore arrives base64-decoded out of a secret.
+
+That last one is the check worth keeping. Everything else about the pipeline
+fails loudly; a debug-signed APK is the one failure that succeeds quietly and
+only surfaces months later, when the update that cannot install lands.
+
+**Still unproven:** the update prompt itself. It needs `v0.2.1` installed on a
+device and then a *second* release above it, which no amount of CI can
+substitute for.
+
 ## 🧭 Sessions
 
 Ran alongside `health-autosync`, which owned `ui/root/`, `feature/dashboard/`,
