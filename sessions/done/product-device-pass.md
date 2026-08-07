@@ -2,9 +2,28 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 created: 2026-08-06
+completed: 2026-08-06
+landed: see `CHANGELOG/2026-08-06/product-device-pass.md` and this file's own move commit
+issues: https://github.com/idomarhaim/Android_Final_Project/issues/2 … /11
 ---
+
+> **Done 2026-08-06.** `D2`–`D5` confirmed on `Pixel_10_Pro_XL` and filed as issues
+> `#2`–`#5`; `U1`–`U6` filed as `#6`–`#11`. `D1` resolved **not a defect** — an
+> undecided model question — and was *not* moved into
+> `TODO_FUTURE/ProductModel.TODO.future.md` because the concurrent
+> `product-model-map` session owns that file; the verdict waits under `D1` in
+> `TODO_OPTIONAL/ProductReview.TODO.optional.md`. Device UX findings appended as
+> `A5`–`A9`.
+>
+> **Second sitting, 2026-08-07** (`CHANGELOG/2026-08-07/product-device-pass.md`):
+> re-claimed to close the first-run empty states with an approved `pm clear`. That
+> did **not** reach the zero-data states — Firestore restores everything on
+> sign-in — but it found `A10` (a cold cacheless load is a blank page and an 8 px
+> dot) and an emulator trap (`pm clear` wedges Play Services). `D1` was handed to
+> `product-model-map` as a liftable `C14` block on Ido's call. Only the true
+> zero-data empty states remain open, and they need a throwaway account.
 
 # Product review, device pass: reproduce the defects, walk the app, then file issues
 

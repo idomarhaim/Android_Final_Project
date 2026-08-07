@@ -49,10 +49,44 @@ a v2 backlog.
   be answered without `C7` (what a *unit* is), because `Challenge.metricUnit` is
   free text with the identical disease as `Goal.unit` (**A3**).
   **→ belongs in `TODO_FUTURE/ProductModel.TODO.future.md` as a new decision**,
-  alongside `C7`. **Not moved yet**: that file is owned by the concurrent
-  `product-model-map` session (`SESSIONS.md`), and writing into another session's
-  paths is exactly what the board forbids. Ido to re-assign; until then this entry
-  is the record.
+  alongside `C7`. **Not moved, by Ido's call on 2026-08-07**: it goes to the
+  concurrent `product-model-map` session as a **candidate `C14`**, to be charted
+  with the other thirteen rather than bolted on afterwards. That session owns
+  `TODO_FUTURE/`, so this session did not write there.
+
+  <!-- HANDOFF: product-model-map may lift the block below verbatim into
+       ProductModel.TODO.future.md. Reproduced on a device 2026-08-06; the
+       evidence is above. -->
+
+  ```markdown
+  ## C14 · What should a challenge score from?
+
+  Reported by Ido as a defect (`R1`: "a shared CHALLENGE does not sync with my
+  tasks or with my Health Connect"), reclassified 2026-08-06 after reproducing it
+  on a device: nothing is broken, the wiring was never specified.
+
+  `ChallengeParticipant.score` has exactly one writer — `reportScore`, from a
+  manual dialog. `ChallengeType` (`RUNNING`/`STEPS`/`SLEEP`/`WORKOUTS`) is purely
+  presentational: an icon, a label, and a default `metricUnit` string. Nothing
+  branches on it. `SyncHealthDataUseCase` writes a `ProgressEntry` against a
+  **`Goal`** and never mentions challenges.
+
+  **The decision:** does a challenge's score come from (a) a linked goal's
+  progress, (b) a count of completed tasks, (c) a raw Health Connect metric,
+  (d) a free number the user reports, or (e) a choice per `ChallengeType`?
+
+  **Blocked on `C7`.** `Challenge.metricUnit` is free text with the identical
+  disease as `Goal.unit`, so "8200 steps" and "8200" are the same value to the
+  app. Whatever `C7` decides a unit *is* has to cover challenges too, or the two
+  drift apart.
+
+  **Also decide with it:** anti-cheat. If a score can be typed, it can be typed
+  dishonestly — the existing server-side-scoring item in TODO → FUTURE should
+  move points and challenge scores together.
+
+  Evidence: `D1` in `TODO/TODO_OPTIONAL/ProductReview.TODO.optional.md`;
+  `CHANGELOG/2026-08-06/product-device-pass.md`.
+  ```
 
 - [ ] **D2 · No route from a life area into its goals** (`R2`) — **CONFIRMED on device → [#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)**
   `feature/lifeareas/LifeAreasScreen.kt` contains no navigation call at all — the
@@ -289,12 +323,42 @@ issue, because they are one defect with two faces.
   name is Hebrew. So A1 is not hypothetical — Hebrew strings are being laid out
   left-to-right in English chrome **today**, on Ido's own account.
 
-> **Still owed and not verified: first-run comprehension.** Every feature screen
-> *has* an empty-state branch in code — Analytics, Challenges, Dashboard,
-> AddEditGoal, GoalDetail (tasks and entries), LifeAreas, Social (leaderboard and
-> feed) — but none could be *seen*, because the only account on the device is Ido's
-> and it is full of real data. Reaching them means `pm clear` (which signs him out)
-> or a throwaway Google account, and neither is a call this session should make.
-> The sign-in screen itself was seen: one sentence of explanation, a single "Sign in
-> with Google" button, no preview and no way past it, and the in-progress state is a
-> ~4 px dot in the middle of the button.
+- [ ] **A10 · A cold start with no cache is a blank screen and an 8-pixel dot**
+  Found 2026-08-07 by `pm clear`-ing the app and signing back in — i.e. exactly
+  what a user gets on a **new phone, a reinstall, or after clearing data**. Between
+  sign-in completing and Firestore's first snapshot arriving, the dashboard is
+  **empty**: the word "GoalPilot", the bottom nav, and a **single ~8 px blue dot**
+  in the middle of an otherwise blank page. It held that state for ~10 seconds on
+  a healthy connection.
+
+  Nothing tells the user the app is fetching their data, and at that size the dot
+  reads as a rendering artefact rather than a spinner. The same undersized
+  indicator is used on the sign-in button. A skeleton, or simply a normally-sized
+  spinner with a line of text, would cost very little.
+
+  Note this is **not** the same as the empty state for a genuinely new account —
+  see the box below.
+
+> **Still owed: the true zero-data empty states.** `pm clear` was run with Ido's
+> approval on 2026-08-07 and **did not** reach them, exactly as expected: signing
+> back in restores every goal from Firestore, so the app was full again within
+> seconds. What it *did* buy is `A10` above — the cold, cacheless first load.
+>
+> Every feature screen has an empty-state branch in code (Analytics, Challenges,
+> Dashboard, AddEditGoal, GoalDetail ×2, LifeAreas, Social ×2), so the states
+> exist; what has never been *read on a screen* is their copy, for a user with
+> nothing at all. That needs a **throwaway Google account**, which is the only
+> remaining route.
+>
+> The sign-in screen itself was seen twice: one sentence of explanation, a single
+> "Sign in with Google" button, no preview, no way past it, and a ~4 px dot as its
+> in-progress state.
+
+> ⚙️ **Environment note, not a product finding.** Immediately after `pm clear`,
+> Google Play Services on the emulator wedged: `SignInActivity` took focus and
+> rendered nothing — a scrimmed screen and an empty accessibility tree — through
+> two full retries and ~90 s of waiting, while logcat showed GMS cold-compiling its
+> Chimera modules. `adb shell am force-stop com.google.android.gms` cleared it
+> immediately and sign-in then worked first time. **This is the emulator, not
+> GoalPilot** — recorded so the next session that clears app data does not spend
+> twenty minutes diagnosing the app.
