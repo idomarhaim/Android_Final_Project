@@ -12,53 +12,118 @@ and are bound for a `/wayfinder` map.
 **None of this blocks submission.** Spec §6 and §7 are built and verified; this is
 a v2 backlog.
 
-> ⚠️ **Repro status is static only.** The notes below were derived by reading the
-> source, not by driving the app. "Confirmed statically" means the code cannot do
-> the thing; it does not mean the observed symptom has the cause named here. The
-> device pass — reproduce each defect against a real build, on the emulator and
-> for the Health Connect one a physical phone — is still owed, and this repo has
-> been burned by a stale backlog premise before (`TODO_MUST/Submission.TODO.must.md`
-> §1). Nothing here graduates to a GitHub issue until it has been reproduced.
+> ✅ **Reproduced on a device, 2026-08-06** (`CHANGELOG/2026-08-06/product-device-pass.md`).
+> Every `D` below now carries a verdict taken against a real debug build on
+> `Pixel_10_Pro_XL`, signed in as Ido's own account with his real data — not a
+> reading of the source. `D2`, `D3`, `D4`, `D5` are **confirmed**; `D1` is
+> **not a defect** and moves to the decision backlog. The four confirmed ones have
+> graduated to GitHub issues, which are now the place their state lives: per
+> `/triage`, graduating is **one-way**, so the issue number is recorded here and
+> issue state is never mirrored back into this file.
 
 ---
 
 ## 🐞 Defects
 
-- [ ] **D1 · Shared challenge does not sync with my tasks or Health Connect** (`R1`)
-  Progress inside a challenge has to be typed in by hand; completing the tasks or
-  walking the steps that the challenge is nominally about moves nothing.
-  *Not verified statically* — `ChallengeRepositoryImpl` and `SyncHealthDataUseCase`
-  need reading together to say whether this is a missing wiring or a deliberate
-  scope line from the challenges session. **Start here in the device pass**: it is
-  the only defect whose expected behaviour is not self-evident, and it may turn out
-  to be a design question (what *should* a challenge score from?) rather than a bug.
-  Touches: `data/firestore/ChallengeRepositoryImpl.kt`,
-  `domain/usecase/SyncHealthDataUseCase.kt`, `feature/challenges/`.
+- [ ] **D1 · ~~Shared challenge does not sync with my tasks or Health Connect~~ → not a defect, it is an undecided model** (`R1`)
+  **Do not open this as a bug.** The symptom is exactly as reported, and it is not
+  a wiring that broke — it is a wiring that was **never specified**, so building one
+  now would pick an answer by accident. Established 2026-08-06, statically and then
+  on the device:
+  - `ChallengeParticipant.score` has **exactly one writer in the whole codebase**:
+    `ChallengeRepositoryImpl.reportScore`, reached only from the manual "Report
+    score" dialog. Join initialises it to `0.0`; nothing else ever touches it.
+  - `ChallengeType` — which carries `RUNNING`, `STEPS`, `SLEEP`, `WORKOUTS` — is
+    **purely presentational**. Its only three uses are an icon (`ChallengesScreen`
+    `iconFor`), a display label, and a default `metricUnit` **string**
+    (`ChallengesViewModel.defaultUnitFor`). No code branches on it to source a score.
+  - `SyncHealthDataUseCase` writes a `ProgressEntry` against a **`Goal`**. It does
+    not import, inject, or mention challenges anywhere.
+  - Device evidence: Ido's own **"August Steps Race"** is a `STEPS` challenge
+    reading **"#2 · 0 steps"** with "Report score" as the only way to move it —
+    while his steps are flowing into goals through Health Connect. Two parallel
+    representations of the same walk, joined by nothing.
 
-- [ ] **D2 · No route from a life area into its goals** (`R2`)
-  **Confirmed statically.** `feature/lifeareas/LifeAreasScreen.kt` contains no
-  navigation call at all — the areas screen is a management surface (rename,
-  reorder, propose), and nothing on it is a way in to the goals it groups. The
-  goals list is already banded by area (`lifearea-polish`, 2026-08-04), so the
-  destination exists; only the entry point is missing.
+  So the open question is **what a challenge should score from** — a goal's
+  progress, a task count, a raw health metric, or a free number — and that cannot
+  be answered without `C7` (what a *unit* is), because `Challenge.metricUnit` is
+  free text with the identical disease as `Goal.unit` (**A3**).
+  **→ belongs in `TODO_FUTURE/ProductModel.TODO.future.md` as a new decision**,
+  alongside `C7`. **Not moved yet**: that file is owned by the concurrent
+  `product-model-map` session (`SESSIONS.md`), and writing into another session's
+  paths is exactly what the board forbids. Ido to re-assign; until then this entry
+  is the record.
+
+- [ ] **D2 · No route from a life area into its goals** (`R2`) — **CONFIRMED on device → [#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)**
+  `feature/lifeareas/LifeAreasScreen.kt` contains no navigation call at all — the
+  areas screen is a management surface (rename, reorder, propose), and nothing on
+  it is a way in to the goals it groups. The goals list is already banded by area
+  (`lifearea-polish`, 2026-08-04), so the destination exists; only the entry point
+  is missing.
+  **Device evidence:** tapping the row body and tapping the "3 goals" count both
+  leave the screen pixel-identical. The accessibility tree says why exactly — per
+  area row the *only* nodes with `clickable="true"` are the two icon buttons
+  `Edit <area>` and `Delete <area>`. The row, the area name and the goal count
+  carry no click handler, so **the count reads as a link and is a label**.
   Touches: `feature/lifeareas/LifeAreasScreen.kt`, `ui/navigation/Destinations.kt`,
   `feature/goals/GoalsScreen.kt` (needs to accept an area to scroll/filter to).
 
-- [ ] **D3 · Completing a task takes too long to show the checkbox and the graph** (`R13`)
-  Reported as latency. Needs measuring before it is fixed — a Firestore round-trip
-  that the UI waits on rather than an optimistic local update is the likely shape,
-  but that is a guess until timed.
+- [ ] **D3 · Completing a task takes too long to show the checkbox and the graph** (`R13`) — **CONFIRMED and measured → [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3)**
+  **~2 seconds, and the guess in the original note was right but not sharp enough.**
+  Measured from 60 fps screen recordings (`screenrecord` emits a frame only when
+  the screen changes, so the gaps below are real dead time, not sampling):
+
+  | | tap → checkbox changes | dead screen after the ripple ends |
+  |---|---|---|
+  | sample 1 (complete) | **2.24 s** | 1.20 s |
+  | sample 2 (un-complete) | **1.94 s** | 0.88 s |
+
+  The goal's own number moves at the same moment, not before: the donut read
+  `2 / 100 %` right up to the last frame of the first burst and `3 / 100 %` on the
+  first frame of the second. **The only feedback in those two seconds is the
+  Material ripple, which itself finishes in ~0.7 s** — after that the screen is
+  completely still, with the box still empty.
+
+  **Root cause, and it is worse than a plain round-trip.** `TaskRepositoryImpl.setDone`
+  is a **`firestore.runTransaction`** (it reads task + user + goal, then writes all
+  three). A Firestore transaction is **server-only** — it cannot be served from the
+  offline cache — so the UI is waiting on a full server read-then-write, and there
+  is no local write to render early. On top of that
+  `GoalDetailViewModel.toggleTask` is one line that **discards the `Resource` it
+  gets back**:
+  ```kotlin
+  fun toggleTask(task: Task) {
+      viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
+  }
+  ```
+  — no `isSubmitting`, no error branch, unlike `logProgress` directly beneath it.
+  So there is neither an optimistic update nor a failure path. **This is the same
+  defect as `A5`** (offline it does nothing at all) and the two must be fixed
+  together: adding an optimistic update *alone* would turn `A5` from a silent
+  no-op into a silent lie.
   Touches: `feature/goals/GoalDetailViewModel.kt`, `data/firestore/TaskRepositoryImpl.kt`
   (`setDone`), `ui/components/ChartAnimation.kt`.
 
-- [ ] **D4 · A shared photo cannot be opened** (`R27a`)
-  **Confirmed statically.** `feature/social/SocialScreen.kt:269-271` renders the
-  image with `AsyncImage` inside the feed card and attaches no click handler —
-  there is no full-screen or zoom destination for it to open into.
+- [ ] **D4 · A shared photo cannot be opened** (`R27a`) — **CONFIRMED on device → [#4](https://github.com/idomarhaim/Android_Final_Project/issues/4)**
+  `feature/social/SocialScreen.kt:269-271` renders the image with `AsyncImage`
+  inside the feed card and attaches no click handler — there is no full-screen or
+  zoom destination for it to open into.
+  **Device evidence:** tapping the photo in Ido's own feed post leaves the screen
+  **pixel-identical** below the status bar (PSNR ∞, MSE 0.00 against the frame
+  before the tap). The accessibility tree has **no interactive node anywhere in the
+  feed card** — the last `clickable="true"` node on the screen is the "Challenges"
+  link above the feed. **Also**: the image carries **no content description**, so
+  it is not merely un-openable, it is invisible to a screen reader — fix both in
+  one pass.
   Touches: `feature/social/SocialScreen.kt`.
 
-- [ ] **D5 · A user cannot delete a share they made** (`R27b`)
-  **Confirmed statically, and it is not UI-only.**
+- [ ] **D5 · A user cannot delete a share they made** (`R27b`) — **CONFIRMED on device → [#5](https://github.com/idomarhaim/Android_Final_Project/issues/5)**
+  **Device evidence:** on Ido's own post there is no overflow menu, no delete icon
+  and no context menu — a 1.2 s long-press on the card leaves the screen
+  **pixel-identical**, and the accessibility tree shows **zero interactive nodes in
+  the entire feed card**. There is nothing to remove a share with, on your own post
+  or anyone's.
+  **Not UI-only.**
   `domain/repository/SocialRepository.kt` exposes `observeFeed` and `shareSummary`
   and no delete of any kind, so this needs a repository method, a `firestore.rules`
   clause restricting deletion to the author, a rules test, and the UI affordance.
@@ -80,34 +145,34 @@ a v2 backlog.
 
 ## ✨ Single-session UX work
 
-- [ ] **U1 · Smart add should not ask for approval every time** (`R3`)
+- [ ] **U1 · Smart add should not ask for approval every time** (`R3`) → [#6](https://github.com/idomarhaim/Android_Final_Project/issues/6)
   Today `SmartAddCard` always opens `SmartAddDialog` for confirmation
   (`feature/dashboard/DashboardScreen.kt:180,239`). Wanted: a preference —
   default **off**, i.e. file it silently — with the dialog kept as the opt-in.
   `AppPreferencesRepository` already exists to hold it. Pairs naturally with **U3**:
   silent filing is only safe if the user is told when the sorter improvised.
 
-- [ ] **U2 · Complete a task from within quick add** (`R6`)
+- [ ] **U2 · Complete a task from within quick add** (`R6`) → [#7](https://github.com/idomarhaim/Android_Final_Project/issues/7)
   A task you are entering because you already did it should not need a second trip
   to the goal detail screen.
 
-- [ ] **U3 · Notify when the sorter invents a new goal** (`R5`)
+- [ ] **U3 · Notify when the sorter invents a new goal** (`R5`) → [#8](https://github.com/idomarhaim/Android_Final_Project/issues/8)
   In-app **and** a system notification. The app currently ships no notification
   channel at all, so this item carries the whole notification substrate with it —
   channel, permission request (API 33+), and a tap-through destination. Size it
   accordingly; it is the largest item in this section.
 
-- [ ] **U4 · Duration box: AI estimate by default, manual override, placeholder icon** (`R8`)
+- [ ] **U4 · Duration box: AI estimate by default, manual override, placeholder icon** (`R8`) → [#9](https://github.com/idomarhaim/Android_Final_Project/issues/9)
   `Task.estimatedMinutes` is already nullable-with-fallback and the LLM already
   fills it, so this is a UI item — except for the part that decides *when* a
   hand-typed value wins over a re-estimation, which is **C1**'s call.
 
-- [ ] **U5 · Widget pack** (`R24`)
+- [ ] **U5 · Widget pack** (`R24`) → [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10)
   No widget exists today. Which widgets, and what each shows, is a design question
   the map should answer (**C12** covers presentation); the build itself is
   ordinary work once that is decided.
 
-- [ ] **U6 · Repeat-tappable fill buttons for quantity tasks** (`R25`)
+- [ ] **U6 · Repeat-tappable fill buttons for quantity tasks** (`R25`) → [#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)
   250 ml / 500 ml / 750 ml / 1 L for "drink 4 litres a day". **Blocked on C7** —
   what a unit *is* has to be settled first, because these buttons are increments in
   a unit and `Goal.unit` is currently free text.
@@ -141,8 +206,95 @@ screen.
   progress behind (already on the FUTURE list as a cascade-delete item). Worth
   seeing as one story rather than two.
 
-> **Still owed: the device half of this pass.** Onboarding and empty states, first-run
-> comprehension, tap targets, dark mode across both skins, error and offline states,
-> and whether the dashboard's information order matches what a user opens the app
-> for. None of that can be assessed from source. It wants the emulator and a
-> deliberate walk through the app.
+## 🔍 Additions from the agent's own pass — **device half**, 2026-08-06
+
+Found by driving a real debug build on `Pixel_10_Pro_XL` signed in as Ido, not by
+reading. Still the agent's rather than Ido's. Per the session brief these are
+**recorded, not filed** — the only things that graduated to issues are the
+confirmed `D` defects and `U1`–`U6`. `A5` is the exception and rides inside `D3`'s
+issue, because they are one defect with two faces.
+
+- [ ] **A5 · Completing a task while offline does nothing at all, and says nothing** → filed inside [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3)
+  Same root cause as **D3**, and the more serious half. Tap the checkbox with the
+  network down and you get the ripple and **nothing else** — box still empty, title
+  not struck through, points unchanged, no snackbar, no toast, no error. The screen
+  is unchanged 60 s later. Logcat shows Firestore failing the write
+  (`UNAVAILABLE … UnknownHostException: firestore.googleapis.com`), so the app knew.
+  Two reasons it is silent, and both need fixing:
+  1. `setDone` is a **`runTransaction`**, which is server-only — offline it cannot
+     even apply locally, so unlike an ordinary `set()`/`update()` there is no cached
+     write for the snapshot listener to render.
+  2. `GoalDetailViewModel.toggleTask` **throws the `Resource` away**, so the
+     `Resource.Error` that comes back is consumed by nobody.
+
+  A user walking through a tunnel ticks four tasks, sees nothing happen, and has no
+  way to tell whether the app is slow or broken. Verified as the *only* silently
+  swallowed write? **No** — `deleteTask` on the line below has the same shape, and
+  the other repositories were not audited. Worth a sweep when this is fixed.
+
+- [ ] **A6 · The app never says it is offline, and cold-starts looking perfectly live**
+  Force-stopped and relaunched with the network down, the dashboard renders in full
+  from Firestore's local cache — "70 pts", "24% overall", "7 goals", "5 tasks done",
+  the goal list, the feed — with **no banner, no badge, no "last updated", nothing**.
+  Offline persistence is doing its job; the problem is that the UI presents cached
+  numbers and live numbers identically, so a stale figure is indistinguishable from
+  a current one. Pairs with **A5**: together they mean a user offline sees confident
+  numbers *and* silently loses their writes.
+
+- [ ] **A7 · The dashboard answers "how am I doing?" and never "what do I do now?"**
+  In scroll order the home screen is: points/level banner → overall-progress donut →
+  Smart add → **Import from Google Tasks** → **Connect Health Connect** → five
+  generic AI-coach tips → *then* "Your goals" → share card. Ido's own goals are
+  roughly **four screenfuls down**, behind two one-time setup cards that never
+  retire and five tips that are not about his goals. And **no task appears on the
+  dashboard at all** — not today's, not overdue, not next. Someone opening a goal
+  app at 8 a.m. wants the list of what to do; the current order gives them a score.
+  This is the `R24` widget question in miniature and should be decided with it.
+
+- [ ] **A8 · One tap target below the 48 dp minimum**
+  Every `clickable` node on Home, Goals, goal detail, Social and Challenges was
+  measured from the accessibility tree against 48 dp (144 px at this device's
+  480 dpi). **57 of 58 pass.** The one that fails is the **⋮ overflow on a row under
+  "Goals with no area"** on the Life areas screen: `144 × 113 px` = **48 × 38 dp**,
+  10 dp short vertically. Small, mechanical, and the kind of thing that never gets
+  found by looking.
+
+- [ ] **A9 · The shared photo has no content description** → filed inside [#4](https://github.com/idomarhaim/Android_Final_Project/issues/4)
+  Recorded separately from **D4** because it survives D4's fix: making the image
+  tappable does not give it a label. The Social screen's only content descriptions
+  are "Add friend", "Remove friend" and the two leaderboard avatars; the posted
+  image has none, so a screen reader announces the post with the picture missing.
+
+### Checked and **not** defects — recorded so they are not re-raised
+
+- **Both skins in dark mode are fine.** Aurora and Blossom were each walked in dark
+  across Home, Goals, goal detail and Profile: text legible, progress bars visible,
+  selected-nav pills readable, no invisible-on-invisible. Consistent with
+  `ThemePaletteTest` asserting WCAG contrast for all four skin/brightness schemes.
+  The goal-category icon colours stay constant across skins — that is deliberate
+  (`AGENTS.md`: the `GoalCategory` palette is pairwise-distinct and test-guarded),
+  not a skin bug.
+- **The AI coach is live, not falling back.** The tips shown were "Start Small",
+  "Track Your Wins", "Set SMART Goals", "Celebrate Progress". The local fallback in
+  `RecommendationRepositoryImpl` can only ever emit "Start with one goal", "Keep the
+  streak alive" or "Nudge: {goal}", so these came from the model — i.e. the GROQ
+  model id in `functions/src/index.ts` has **not** rotted as of 2026-08-06. That is
+  the check `AGENTS.md` demands before any demo, and it passes today.
+- **The FAB does not cover the last card.** It overlaps mid-scroll, which is normal
+  Material behaviour; at full scroll both the Goals and Life areas lists have
+  enough bottom padding to clear it.
+- **Hebrew content is already real in the app**, which bears on **A1** without
+  changing its scope-decision status: the life areas are `בריאות`, `לימודים`,
+  `קריירה`, `זוגיות`, tasks are titled in Hebrew (`אימון ריצה`), and the profile
+  name is Hebrew. So A1 is not hypothetical — Hebrew strings are being laid out
+  left-to-right in English chrome **today**, on Ido's own account.
+
+> **Still owed and not verified: first-run comprehension.** Every feature screen
+> *has* an empty-state branch in code — Analytics, Challenges, Dashboard,
+> AddEditGoal, GoalDetail (tasks and entries), LifeAreas, Social (leaderboard and
+> feed) — but none could be *seen*, because the only account on the device is Ido's
+> and it is full of real data. Reaching them means `pm clear` (which signs him out)
+> or a throwaway Google account, and neither is a call this session should make.
+> The sign-in screen itself was seen: one sentence of explanation, a single "Sign in
+> with Google" button, no preview and no way past it, and the in-progress state is a
+> ~4 px dot in the middle of the button.

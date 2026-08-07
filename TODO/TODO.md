@@ -47,13 +47,18 @@ Backlog index. Per-area files live under three priority subfolders next to this 
 
 ### 🟡 OPTIONAL — [`TODO_OPTIONAL/`](TODO_OPTIONAL/)
 - [ProductReview.TODO.optional.md](TODO_OPTIONAL/ProductReview.TODO.optional.md) —
-  the **actionable** half of the 2026-08-06 product/UX brief: 5 defects to
-  reproduce and fix, 6 single-session UX items, and 4 additions from the agent's
-  own static pass. Source text transcribed to
+  the **actionable** half of the 2026-08-06 product/UX brief: 6 single-session UX
+  items, 4 additions from the agent's static pass and 5 more from its device pass.
+  Source text transcribed to
   [`Product and UX Reviews/2026-08-06-brief-review.md`](../Product%20and%20UX%20Reviews/2026-08-06-brief-review.md)
   as `R1`–`R28`; everything here cites those ids. **Nothing in it blocks
-  submission**, and nothing graduates to a GitHub issue until it has been
-  reproduced on a device.
+  submission.**
+  **Reproduced on a device 2026-08-06** (`product-device-pass`): `D2`–`D5`
+  confirmed and `D1` reclassified as an undecided model question rather than a bug.
+  The confirmed defects and `U1`–`U6` have **graduated to GitHub issues
+  [#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)–[#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)**,
+  the repo's first. Per `/triage` that is **one-way**: each entry records its issue
+  number, and issue state is never mirrored back here.
 - [Integrations.TODO.optional.md](TODO_OPTIONAL/Integrations.TODO.optional.md)
   - [x] **Health Connect (fitness/sleep)** — shipped 02/08/2026 as a dashboard
     card; made **automatic** 05/08/2026. Read-only. Syncs on every app
