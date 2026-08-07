@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.idomarhaim.goalpilot.core.net.ConnectivityMonitor
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -34,22 +35,55 @@ class GoalDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val progressRepository: ProgressRepository,
     private val recommendationRepository: RecommendationRepository,
+    private val connectivity: ConnectivityMonitor,
     lifeAreaRepository: LifeAreaRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val goalId: String = savedStateHandle[Routes.ARG_GOAL_ID] ?: ""
 
+    /**
+     * Task completions drawn on screen before Firestore has confirmed them, as
+     * `task id -> the done state we optimistically rendered`.
+     *
+     * This exists because [TaskRepository.setDone] is a **server-only**
+     * `runTransaction` (see `TaskRepositoryImpl`), and that is deliberate — it is
+     * what keeps `task.done`, the user's points, the level derived from them and
+     * the clamped goal progress in agreement. The price is that, unlike an
+     * ordinary `set()`/`update()`, a transaction never touches the offline cache,
+     * so there is **no local write for the snapshot listener to render**. Without
+     * this overlay the screen sits perfectly still for the whole server round trip
+     * — measured at 2.24 s on a real device — which reads as broken rather than
+     * slow (issue #3).
+     *
+     * The overlay is only half the fix. [toggleTask] removes the entry again when
+     * the write fails, which is what stops an offline tap — where the transaction
+     * cannot reach anything at all — from becoming a *silent lie*: a ticked box and
+     * raised points over a write that never landed.
+     */
+    private val _pendingToggles = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+
     val uiState: StateFlow<GoalDetailUiState> = combine(
         goalRepository.observeGoal(goalId),
         taskRepository.observeTasks(goalId),
         progressRepository.observeEntries(goalId),
         lifeAreaRepository.observeLifeAreas(includeArchived = true),
-    ) { goal, tasks, entries, areas ->
+        _pendingToggles,
+    ) { goal, tasks, entries, areas, pending ->
+        // An entry the snapshot listener has caught up with is retired here rather
+        // than when setDone returns. That ordering matters: the transaction's
+        // completion callback and the snapshot that reflects it arrive on two
+        // different channels, so dropping the overlay on completion can re-render
+        // the *old* state for the frames in between — a visible flicker on every
+        // successful tap. Retiring it against the observed data cannot flicker,
+        // because the observed data is already what the overlay was claiming.
+        val inFlight = pending.filterNot { (id, done) ->
+            tasks.any { it.id == id && it.isDone == done }
+        }
         GoalDetailUiState(
             isLoading = false,
-            goal = goal,
-            tasks = tasks,
+            goal = goal?.withOptimisticProgress(tasks, inFlight),
+            tasks = tasks.withOptimisticDone(inFlight),
             entries = entries,
             lifeArea = areas.firstOrNull { it.id == goal?.lifeAreaId },
         )
@@ -66,7 +100,7 @@ class GoalDetailViewModel @Inject constructor(
     fun addTask(title: String, points: Int, minutes: Int) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            taskRepository.upsertTask(
+            val result = taskRepository.upsertTask(
                 Task(
                     goalId = goalId,
                     title = title.trim(),
@@ -74,6 +108,13 @@ class GoalDetailViewModel @Inject constructor(
                     estimatedMinutes = TaskDuration.sanitize(minutes),
                 ),
             )
+            // No optimistic row is needed here, unlike toggleTask: upsertTask is an
+            // ordinary set(), so Firestore applies it to the offline cache and the
+            // snapshot listener renders it immediately, online or off. Only the
+            // failure needed surfacing.
+            if (result is Resource.Error) {
+                _action.update { it.copy(message = result.message) }
+            }
         }
     }
 
@@ -109,12 +150,54 @@ class GoalDetailViewModel @Inject constructor(
     fun consumeSuggestedPoints() =
         _action.update { it.copy(suggestedPoints = null, suggestedMinutes = null) }
 
+    /**
+     * Ticks the task on screen straight away, then asks Firestore to make it true —
+     * and takes the tick back, with a message, if it could not.
+     *
+     * See [_pendingToggles] for why the optimistic half is necessary. The undo half
+     * is not optional decoration: an optimistic update *on its own* would turn the
+     * offline case from a silent no-op into a silent lie, which is worse. The two
+     * ship together or not at all.
+     */
     fun toggleTask(task: Task) {
-        viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
+        // Refuse rather than mislead. Measured on a device: offline, the
+        // transaction takes 7.9 s to come back UNAVAILABLE, and drawing an
+        // optimistic tick across those eight seconds is a lie the undo only
+        // eventually corrects. The undo below still has to exist — this check
+        // proves a network, not that Firestore answered.
+        if (!connectivity.isOnline()) {
+            _action.update { it.copy(message = OFFLINE_MESSAGE) }
+            return
+        }
+        val target = !task.isDone
+        viewModelScope.launch {
+            _pendingToggles.update { it + (task.id to target) }
+            val result = taskRepository.setDone(task.id, target)
+            if (result is Resource.Error) {
+                _pendingToggles.update { it - task.id }
+                // Deliberately *not* result.message. Unlike a repository refusal
+                // the user can act on ("no user with that code"), setDone's failure
+                // text is a gRPC string — the device pass surfaced
+                // "UNAVAILABLE: Unable to resolve host firestore.googleapis.com"
+                // in a snackbar. The detail stays in logcat, where it is useful.
+                _action.update { it.copy(message = SAVE_FAILED_MESSAGE) }
+            }
+            // On success the entry stays put and is retired by the uiState transform
+            // once the snapshot listener catches up — see the comment there for why
+            // clearing it here would flicker.
+        }
     }
 
     fun deleteTask(taskId: String) {
-        viewModelScope.launch { taskRepository.deleteTask(taskId) }
+        viewModelScope.launch {
+            // delete() is an ordinary write, so the row disappears from the cache
+            // immediately and needs no optimistic handling — but the failure was
+            // being discarded exactly as toggleTask's was (issue #3).
+            val result = taskRepository.deleteTask(taskId)
+            if (result is Resource.Error) {
+                _action.update { it.copy(message = result.message) }
+            }
+        }
     }
 
     fun logProgress(value: Double, note: String, imageUri: Uri?) {
@@ -132,7 +215,12 @@ class GoalDetailViewModel @Inject constructor(
     }
 
     fun archiveGoal() {
-        viewModelScope.launch { goalRepository.setArchived(goalId, true) }
+        viewModelScope.launch {
+            when (goalRepository.setArchived(goalId, true)) {
+                is Resource.Error -> _action.update { it.copy(message = "Could not archive goal") }
+                else -> Unit
+            }
+        }
     }
 
     fun deleteGoal(onDeleted: () -> Unit) {
@@ -145,6 +233,45 @@ class GoalDetailViewModel @Inject constructor(
     }
 
     fun consumeMessage() = _action.update { it.copy(message = null) }
+
+    companion object {
+        const val OFFLINE_MESSAGE = "You're offline — task changes need a connection"
+        const val SAVE_FAILED_MESSAGE = "Couldn't save that — check your connection"
+    }
+}
+
+/**
+ * Applies the not-yet-confirmed completions over the observed task list, then
+ * re-sorts on the same key the repository uses.
+ *
+ * Re-sorting is deliberate: the optimistic list should be a faithful preview of
+ * what the server is about to return, so the row settles into its final position
+ * as it is ticked rather than jumping a second time two seconds later.
+ */
+private fun List<Task>.withOptimisticDone(inFlight: Map<String, Boolean>): List<Task> {
+    if (inFlight.isEmpty()) return this
+    return map { task -> inFlight[task.id]?.let { task.copy(isDone = it) } ?: task }
+        .sortedWith(compareBy({ it.isDone }, { -it.createdAtEpochMillis }))
+}
+
+/**
+ * Moves the goal's progress by what the in-flight completions are worth, so the
+ * ring and the "3 / 100 %" caption travel with the checkbox instead of lagging it.
+ *
+ * The arithmetic deliberately mirrors `TaskRepositoryImpl.setDone`'s transaction —
+ * same contribution, same clamp to `0..targetValue` — because anything else would
+ * show the user a number the server is not about to agree with.
+ */
+private fun Goal.withOptimisticProgress(tasks: List<Task>, inFlight: Map<String, Boolean>): Goal {
+    if (inFlight.isEmpty()) return this
+    val byId = tasks.associateBy { it.id }
+    val delta = inFlight.entries.sumOf { (taskId, done) ->
+        val task = byId[taskId] ?: return@sumOf 0.0
+        if (task.isDone == done) 0.0
+        else if (done) task.progressContribution else -task.progressContribution
+    }
+    if (delta == 0.0) return this
+    return copy(currentValue = (currentValue + delta).coerceIn(0.0, targetValue))
 }
 
 data class GoalDetailUiState(

@@ -2,10 +2,20 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/3
 created: 2026-08-07 by product-device-pass
+completed: 2026-08-08 — see CHANGELOG/2026-08-08/fix-task-completion-feedback.md
 ---
+
+> **Done.** Issue #3 closed. The transaction was **kept** (Ido's call) and the fix
+> went into `GoalDetailViewModel`: an optimistic tick undone with a message on
+> failure, plus a `ConnectivityMonitor` pre-check that the on-device measurement
+> forced — the undo alone took **7.9 s** to correct itself offline. Online, tap →
+> checkbox went from **2.24 s** to the **first frame after the tap**. The sweep
+> found **five** discarded-`Resource` sites, not two. The Cloud-Function
+> alternative is [#34](https://github.com/idomarhaim/Android_Final_Project/issues/34).
+> 213 JVM and 29 instrumented green.
 
 # Fix issue #3 — task completion has no feedback online and no effect offline
 
