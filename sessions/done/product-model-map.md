@@ -2,9 +2,19 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 created: 2026-08-06
+completed: 2026-08-08
+issue: https://github.com/idomarhaim/Android_Final_Project/issues/12
+landed: CHANGELOG/2026-08-08/product-model-map.md — map #12 with 20 tickets (#13–#32), 5 on the frontier
 ---
+
+> **Done 2026-08-08.** Every exit condition met, with two departures from the brief
+> as written, both on Ido's call during charting: the map is **#12, not #1**
+> (`product-device-pass` filed #2–#11 in between), and it carries **20 tickets for
+> 15 decisions, not 13** — `C9` was ruled fully in scope and split into five,
+> `C11` split into a takeable probe plus a blocked format spec, `C14` arrived from
+> `D1`, and `C15` (localization) is new and appears nowhere in `R1`–`R28`.
 
 # Chart the GoalPilot v0.3 product-model map
 

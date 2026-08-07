@@ -12,9 +12,43 @@ because the questions interlock: answer the points model and three others change
 shape; answer it wrong and the "score mismatch" defect comes back as a design
 flaw rather than a bug.
 
-**Nothing here is worked on before the map exists** — that is what `future` means
-in this repo. The actionable half is in
+The actionable half is in
 [`TODO_OPTIONAL/ProductReview.TODO.optional.md`](../TODO_OPTIONAL/ProductReview.TODO.optional.md).
+
+---
+
+> ## 🗺️ Graduated to a map on 2026-08-08 — this file is no longer the source of truth
+>
+> Every decision below is now a ticket on
+> **[#12 · GoalPilot v0.3 product model — wayfinder map](https://github.com/idomarhaim/Android_Final_Project/issues/12)**.
+> **The funnel is one-way**: from here on the map and its children hold the state,
+> and this file is the historical record of how the questions were first written
+> down. Do not tick a box here, and do not add a `C15`, `C16`… here — add a ticket
+> to the map. What this file is still good for is the trail back to `R1`–`R28`.
+>
+> **What Ido fixed while charting**, because it is not derivable from the text below:
+> the destination is a written **v0.3 product spec** (`docs/PRODUCT_v0.3.md`), not
+> merely a set of answers; the audience is **one real user, Ido, daily**; the free
+> model is a **permanent** constraint, so every AI feature is specced with a non-AI
+> fallback beside it; **`C9` is fully in scope** and was split into five tickets
+> rather than deferred to a second map; and **localization is in scope** as an
+> in-app language picker — a requirement that appears nowhere in `R1`–`R28`.
+>
+> | Decision | Ticket | Decision | Ticket |
+> |---|---|---|---|
+> | `C1` points-and-time model | [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) | `C9b` in-app calendar | [#26](https://github.com/idomarhaim/Android_Final_Project/issues/26) |
+> | `C2` task types | [#20](https://github.com/idomarhaim/Android_Final_Project/issues/20) | `C9c` sync direction | [#27](https://github.com/idomarhaim/Android_Final_Project/issues/27) |
+> | `C3` points ↔ progress | [#18](https://github.com/idomarhaim/Android_Final_Project/issues/18) | `C9d` scopes & consent | [#17](https://github.com/idomarhaim/Android_Final_Project/issues/17) ⭐ |
+> | `C4` goal↔task ontology | [#13](https://github.com/idomarhaim/Android_Final_Project/issues/13) ⭐ | `C9e` event lifecycle | [#28](https://github.com/idomarhaim/Android_Final_Project/issues/28) |
+> | `C5` maintenance goals | [#21](https://github.com/idomarhaim/Android_Final_Project/issues/21) | `C10` daily quote feed | [#29](https://github.com/idomarhaim/Android_Final_Project/issues/29) |
+> | `C6` LOG PROGRESS editing | [#22](https://github.com/idomarhaim/Android_Final_Project/issues/22) | `C11a` free-model probe | [#16](https://github.com/idomarhaim/Android_Final_Project/issues/16) ⭐ |
+> | `C7` what is a unit | [#14](https://github.com/idomarhaim/Android_Final_Project/issues/14) ⭐ | `C11b` output formats | [#30](https://github.com/idomarhaim/Android_Final_Project/issues/30) |
+> | `C8` numbered plans | [#24](https://github.com/idomarhaim/Android_Final_Project/issues/24) | `C12` charts | [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) |
+> | `C9a` scheduling model | [#25](https://github.com/idomarhaim/Android_Final_Project/issues/25) | `C13` BYO API key | [#32](https://github.com/idomarhaim/Android_Final_Project/issues/32) |
+> | `C14` challenge scoring | [#23](https://github.com/idomarhaim/Android_Final_Project/issues/23) | `C15` localization *(new)* | [#15](https://github.com/idomarhaim/Android_Final_Project/issues/15) ⭐ |
+>
+> ⭐ = **on the frontier**: open, unblocked, unclaimed. `C11a` and `C9d` are AFK and
+> need nobody in the room; the other three are grilling tickets and need Ido.
 
 ---
 
@@ -62,6 +96,22 @@ These four are one knot; none can be answered alone.
   unreadable. Decide the enumerated set, what each means for progress arithmetic,
   and how quantity units support increments — U6's fill buttons are blocked on this.
 
+## Challenges
+
+- [ ] **C14 · What does a challenge score from?** (`R1`) — *added 2026-08-07, moved
+  here from `D1` in [`TODO_OPTIONAL/ProductReview.TODO.optional.md`](../TODO_OPTIONAL/ProductReview.TODO.optional.md)
+  on Ido's re-assignment.* Reported as a defect ("a shared challenge does not sync
+  with my tasks or Health Connect") and reproduced on the device, but it is not a
+  wiring that broke — it is one that was **never specified**. `ChallengeParticipant.score`
+  has exactly one writer in the codebase, the manual "Report score" dialog;
+  `ChallengeType` (`RUNNING`, `STEPS`, `SLEEP`, `WORKOUTS`) is purely presentational
+  and nothing branches on it to source a score; `SyncHealthDataUseCase` writes against
+  a `Goal` and never mentions challenges. So Ido's own "August Steps Race" reads
+  `#2 · 0 steps` while his steps flow into goals. The decision is whether a challenge
+  scores from a goal's progress, a task count, a raw health metric, or a free number
+  — and it cannot be taken without **C7**, because `Challenge.metricUnit` is free text
+  with the identical disease as `Goal.unit` (`A3`). Full evidence stays under `D1`.
+
 ## Planning and the calendar
 
 - [ ] **C8 · AI-proposed numbered task plans for a goal** (`R16`)
@@ -105,14 +155,40 @@ These four are one knot; none can be answered alone.
 
 ---
 
-## Suggested destination for the map
+## Suggested destination for the map — *tested 2026-08-08, and partly overturned*
+
+The proposal was:
 
 > A v0.3 product spec for GoalPilot fixing the points-and-time model, the
 > goal↔task ontology, goal kinds including maintenance, AI-assisted planning and
 > the calendar surface, the motivation feed, presentation strategy, and the
 > free-model constraint that underlies all of them.
 
-Charting order to consider when the map session runs: **C11 first** (it prices
-everything), then the C1–C4 knot, then C5–C7 which fall out of it, then C8–C9,
-then C10, C12, C13. That is a proposal for the charting session to test, not a
-decision — the map's own first act is naming the destination.
+**The destination survived; the charting order did not.** Recorded because a
+proposal that was wrong is worth more to the next reader than one quietly
+replaced:
+
+- **`C11` was proposed as the root that prices everything.** It is not one
+  question. *What can the free model do* is measurable today; *what are the
+  formats* cannot be written before the features it serves exist — you cannot test
+  a format nobody has designed yet. Split into [#16](https://github.com/idomarhaim/Android_Final_Project/issues/16)
+  (unblocked, AFK, on the frontier) and [#30](https://github.com/idomarhaim/Android_Final_Project/issues/30)
+  (blocked on `C1`, `C2`, `C8`, `C10` — the most-blocked ticket on the map).
+- **The "C1–C4 knot" was ordered, not merged.** Four questions that "none can be
+  answered alone" is usually a signal they are one ticket; here it was a signal the
+  chain had never been drawn. It is `C4` → `C3` → `C1` → `C2`: what a task and a
+  goal *are* precedes whether their numbers join, which precedes who authors those
+  numbers, which precedes whether a type feeds the authoring. `C4` is the map's
+  true root, not `C11`.
+- **`C7` turned out to be unblocked**, not a consequence of the knot. It is
+  self-contained, and it is the fastest route to unblocking already-filed work
+  ([#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)) and
+  [#23](https://github.com/idomarhaim/Android_Final_Project/issues/23).
+- **`C9` was expected to earn its own map.** Ido ruled it fully in scope instead,
+  so it is five tickets here — and `C9d` (Google's scopes and consent) is AFK
+  research that was takeable from the moment the map existed.
+- **Localization was missing entirely.** It is in none of `R1`–`R28`; it came from
+  the device pass finding `A1` and Ido's answer during charting, and it is now
+  [#15](https://github.com/idomarhaim/Android_Final_Project/issues/15) — with a
+  real edge into the free-model probe, because a small model's Hebrew is not its
+  English.

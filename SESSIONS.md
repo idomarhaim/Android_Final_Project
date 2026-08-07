@@ -15,25 +15,21 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `product-model-map` | `/kickoff product-model-map` — chart the GoalPilot v0.3 product-model `/wayfinder` map over the 13 decisions `C1`–`C13`. **HITL, normal mode**: it grills Ido and cannot be run AFK. Charting only — no ticket is resolved | `TODO/TODO_FUTURE/ProductModel.TODO.future.md`, `sessions/product-model-map.md`, `CHANGELOG/2026-08-06/product-model-map.md`, `kb-candidates/2026-08-06-product-model-map.md`, plus GitHub issues and the `wayfinder:*` labels on `idomarhaim/Android_Final_Project` | **none** — no build, no device, no Firebase. Not `#gradle-daemon`, neither AVD | 2026-08-06 |
+| _none_ | — | — | — | — |
 
-> **Issue-tracker partition, left here because `product-model-map` is still live.**
-> The tracker is shared and partitioned by *content*, not by turn-taking:
-> `product-device-pass` filed the reproduced `D` defects and the `U1`–`U6` UX items
-> from `TODO_OPTIONAL/` as **[#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)–[#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)**;
-> `product-model-map` files `wayfinder:*` decision tickets from `TODO_FUTURE/`, and
-> should number from there. Neither files from the other's list — a `C` item filed
-> twice is how a map ends up with two sources of truth.
+> **Issue-tracker partition — settled, and now visible in the tracker itself.**
+> Both 2026-08-06 sessions have released, and neither filed from the other's list.
+> `product-device-pass` owns **[#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)–[#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)**
+> (reproduced defects and `U1`–`U6`); `product-model-map` owns
+> **[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)–[#32](https://github.com/idomarhaim/Android_Final_Project/issues/32)**
+> (the `wayfinder:*` map and its 20 decision tickets). A future session adding to
+> either half should read the map first — `#12` is now the source of truth for the
+> product model, and `TODO/TODO_FUTURE/ProductModel.TODO.future.md` is not.
 >
-> ⚠️ **`product-model-map`: there is a 14th decision waiting for you.** Ido's call,
-> 2026-08-07 — `D1` resolved to *not a defect but an undecided model question*
-> (**"what should a challenge score from?"**) and belongs in your map beside `C7`,
-> not bolted on afterwards. Because `TODO/TODO_FUTURE/` is yours, this session did
-> **not** write there. Instead there is a **fenced, liftable `C14` block** you can
-> paste verbatim, at the end of the `D1` entry in
-> `TODO/TODO_OPTIONAL/ProductReview.TODO.optional.md` — decision stated, four
-> candidate answers enumerated, the `C7` dependency and the anti-cheat coupling
-> named. Evidence: `CHANGELOG/2026-08-06/product-device-pass.md`.
+> ✅ **The 14th decision landed.** `D1` → `C14` → **[#23](https://github.com/idomarhaim/Android_Final_Project/issues/23)**,
+> blocked on `C7`, with the handoff block's enumeration and anti-cheat coupling
+> folded in. The liftable block under `D1` in `TODO_OPTIONAL/` has been used and
+> is now historical.
 
 ## 📏 Rules
 
@@ -83,13 +79,30 @@ Where to look, in order: [`TODO/TODO.md`](TODO/TODO.md) (MUST → OPTIONAL →
 FUTURE), then open issues. `/claim` reads both and proposes a fit.
 
 Currently unclaimed and ready:
-- **Two written briefs, one session each** — `/kickoff product-device-pass` and
-  `/kickoff product-model-map`, both from the 2026-08-06 product/UX intake. They
-  are **disjoint and can run in either order or concurrently**: the device pass
-  owns `TODO/TODO_OPTIONAL/`, GitHub issues, and both singletons (emulator +
-  Gradle daemon); the map owns `TODO/TODO_FUTURE/` and the issue tracker's
-  `wayfinder:*` labels, and takes no device at all. The map session is **HITL** —
-  it grills Ido and cannot be run AFK.
+- ~~**Two written briefs, one session each** — `/kickoff product-device-pass` and
+  `/kickoff product-model-map`~~ — **both done, 2026-08-07 and 2026-08-08.** They
+  ran concurrently, stayed disjoint, and partitioned the tracker by content
+  without colliding. What they produced is the unclaimed work below.
+- **The wayfinder map's frontier — five tickets, one session each.**
+  [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is the map;
+  **never resolve more than one ticket per session**, and claim by assigning
+  yourself the issue before any work. Takeable now:
+  - [#13 · `C4` goal↔task ontology](https://github.com/idomarhaim/Android_Final_Project/issues/13) — **HITL.** The map's root: three tickets unblock behind it. Start here if you start anywhere.
+  - [#14 · `C7` what is a unit](https://github.com/idomarhaim/Android_Final_Project/issues/14) — **HITL.** Self-contained, and the fastest route to unblocking already-filed [#11](https://github.com/idomarhaim/Android_Final_Project/issues/11).
+  - [#15 · `C15` in-app language switching](https://github.com/idomarhaim/Android_Final_Project/issues/15) — **HITL.**
+  - [#16 · `C11a` free-model probe](https://github.com/idomarhaim/Android_Final_Project/issues/16) — **AFK.** Needs the GROQ path and a live model pin; no device, no Ido.
+  - [#17 · `C9d` Google Calendar scopes & consent](https://github.com/idomarhaim/Android_Final_Project/issues/17) — **AFK.** Pure research.
+
+  The two AFK tickets are **disjoint from everything else and from each other** —
+  they take no singleton and write only their own issue, so either can run beside a
+  HITL ticket. The three HITL ones are not disjoint from one another in practice:
+  they are all Ido's attention, which is the scarcest singleton here and the one
+  the board cannot enforce.
+- **One written brief, its own session: `/kickoff fix-task-completion-feedback`** —
+  written by `product-device-pass` for issue [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3)
+  (the ~2 s completion lag and its silent-offline twin). Ordinary build work, needs
+  the emulator and the Gradle daemon — so it **does** contend with any device
+  session, unlike anything on the map.
 - ~~**Two-account demo + spec title page**~~ — **effectively closed 2026-08-06.**
   The sharing demo was done on 05/08 (`CHANGELOG/2026-08-05/submission.md`,
   rules deployed and a non-owner join proven), and the title page turns out to be
@@ -140,6 +153,7 @@ Currently unclaimed and ready:
 
 | Session | Task | Released | Landed in |
 |---|---|---|---|
+| `product-model-map` | **Charting only — Markdown and issues, no code.** Turned the 13 undecided product-model questions from the 2026-08-06 brief into **[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)**, a `wayfinder:map` with **20 decision tickets** as native GitHub sub-issues and **25 blocking edges**; five are on the frontier, two of those AFK. Ido fixed five things the brief could not derive: the destination is a **written v0.3 spec** (`docs/PRODUCT_v0.3.md`), the audience is **one real user daily**, the free model is a **permanent** constraint (so every AI feature is specced with a non-AI fallback beside it), `C9` is **fully in scope** (five tickets, no second map), and **localization is in scope** as an in-app language picker — a requirement that appears nowhere in `R1`–`R28`, surfaced by the device pass's `A1`. **The proposed charting order was tested and partly overturned**, and the reasons are recorded rather than replaced: `C11` was two questions wearing one hat (you cannot test a format nobody has designed yet), the "C1–C4 knot" wanted *ordering* not merging — `C4` is the real root, not `C11` — and `C7` turned out unblocked. `D1` graduated to `C14` ([#23](https://github.com/idomarhaim/Android_Final_Project/issues/23)) on Ido's call, with `product-device-pass`'s handoff block lifted rather than duplicated. **No suite run and none applicable** — no Kotlin, Gradle, rules or Functions file touched; verification was structural, querying the graph back out of GitHub after wiring (20 children, every edge present, frontier exactly the five intended, no cycles). **No singleton taken at all**: no `#gradle-daemon`, neither AVD, live `goalpilot-56e30` never touched. **Recorded, not papered over:** this session's board row never got a commit of its own — it was staged into `9466990` by the concurrent session before it could be committed, which is the commons-lease hazard `AGENTS.md` names, and neither session took a lease | 2026-08-08 | this commit; see `CHANGELOG/2026-08-08/product-model-map.md` |
 | `product-device-pass` *(2nd sitting)* | Re-claimed to close the one item the first sitting left `unverified` — the **first-run empty states** — with Ido's approval to `pm clear`. It **did not** reach the zero-data states (signing back in restores everything from Firestore, as predicted) and says so; a throwaway account is the only remaining route. It **did** find `A10`: a cold, cacheless first load is a **blank page and a single ~8 px dot** for ~10 s — what every user gets on a new phone. Also recorded an environment trap: `pm clear` wedges Play Services on this emulator (`SignInActivity` focused, rendering nothing, through two retries), and `am force-stop com.google.android.gms` clears it — the discriminator being that `dumpsys window \| grep mCurrentFocus` names GMS, not the app. `D1` handed to `product-model-map` as a **liftable `C14` block** rather than written into their file. Wrote `sessions/fix-task-completion-feedback.md` for issue #3. **No suite run, none applicable**; app restored to exactly as found (Aurora, 70 pts, 7 goals) and verified; `goalpilot-56e30` read-only; `#emulator` **released** | 2026-08-07 | this commit |
 | `product-device-pass` | **Read-only against the code; Markdown and issues only.** Drove a real debug build on `Pixel_10_Pro_XL` as Ido to turn the `product-review` backlog from static claims into verdicts, then filed **the repo's first GitHub issues, [#2](https://github.com/idomarhaim/Android_Final_Project/issues/2)–[#11](https://github.com/idomarhaim/Android_Final_Project/issues/11)**. `D2`/`D4`/`D5` confirmed (the accessibility tree names exactly which nodes are clickable — the life-area row and goal count are not, and the whole social feed card has **zero** interactive nodes); `D3` **measured at 2.24 s and 1.94 s** from frame-timed recordings, with the cause found: `setDone` is a **server-only Firestore transaction** whose `Resource` `toggleTask` discards — which is also why the identical tap is a **silent no-op offline** (`A5`), so both were filed as one issue. `D1` **reclassified, not filed**: a challenge's score has exactly one writer (`reportScore`) and `ChallengeType` is decorative, so "what should a challenge score from?" is an undecided model question — it belongs in `TODO_FUTURE/`, which the live `product-model-map` session owns, and was deliberately left unmoved (see the ⚠️ above). Device half of the UX pass added as `A5`–`A9`, plus a *checked-and-not-a-defect* section (both skins in dark are fine; **GROQ is live, not falling back**; the FAB clears the last card). **No suite run and none applicable** — no Kotlin, Gradle, rules or Functions file touched; verification was behavioural (`uiautomator` dumps, VFR `screenrecord`, PSNR, logcat). **Not verified, and said so:** first-run empty states, which need `pm clear` or a throwaway account. `#emulator` `Pixel_10_Pro_XL` and `#gradle-daemon` leased and **released**. Live `goalpilot-56e30` **was** touched — one task toggled done and back to time `D3`, **restored and verified** (`2 / 100 %`, `70 pts`); theme switched to Blossom for the dark check and **restored to Aurora** | 2026-08-06 | this commit |
 | `product-review` | **Markdown only.** Intake of Ido's 2026-08-06 pre-sleep product/UX brief: faithful English transcription (`R1`–`R28`) beside the `.docx`, the actionable half (`D1`–`D5`, `U1`–`U6`, `A1`–`A4`) split from the 13 product-model decisions (`C1`–`C13`) bound for a `/wayfinder` map, plus two session briefs for the halves. Deliberately **no device pass, no GitHub issues, no map** — every repro note is static, and this repo has been burned once by a stale backlog premise, so nothing graduates until it is reproduced. Headline finding: the reported task-score/goal-percentage "bug" is **not a defect** — `Task.points` and `currentValue/targetValue` are independent by construction, joined only by `progressContribution` (default `1.0`, invisible in the UI) — so it was reclassified to decision `C3` rather than filed. Also recorded: no `values-he`, so the app has no Hebrew and no RTL, which is not in the brief. No `app/`, `functions/`, `firestore.rules` or `scripts/` file touched; **no suite run and none applicable**; neither AVD nor `#gradle-daemon` taken; live `goalpilot-56e30` untouched | 2026-08-06 | this commit |
