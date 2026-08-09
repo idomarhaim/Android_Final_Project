@@ -52,6 +52,74 @@ Region (everything)      us-central1
 Debug SHA-1              F1:D0:96:4D:54:41:D5:99:86:7D:AE:83:0F:77:16:23:BB:64:DB:3F
 ```
 
+### OAuth consent screen — current state
+
+```
+Publishing status        In production    (unverified)   ← since 2026-08-09
+User type                External
+Test users               name.iddo@gmail.com, rachil751@gmail.com   (since 31/07;
+                                                       irrelevant while in production)
+```
+
+**It was `Testing` until 2026-08-09**, read from the console that morning by the
+`c9f-consent-screen-state` session and published the same day for
+[#33](https://github.com/idomarhaim/Android_Final_Project/issues/33). The reason
+matters more than the setting:
+
+**In `Testing`, every authorization dies after seven days.** Verbatim —
+*"authorizations by a test user will expire seven days from the time of consent."*
+The clock is on the **grant**, not the access token, so `GoogleAuthUtil.getToken`
+stops minting and Play Services throws `UserRecoverableAuthException`, which
+`GoogleTasksClient` turns into `NeedsConsent(intent)` and the dashboard renders as an
+ordinary "grant permission" button. **A weekly re-consent is indistinguishable from
+normal first use**, so it had been happening silently for as long as the Tasks import
+had shipped and nobody could have filed it by observation. Survivable for an import
+you press; fatal for a calendar that is supposed to stay true while nobody is looking.
+
+**In production, authorizations do not expire.** That is why this was changed.
+
+**What production costs, tested on 2026-08-09, not assumed:** first consent on any
+account now goes through *"Google hasn't verified this app"* → **Advanced** → **Go to
+GoalPilot (unsafe)** — one extra tap, once per account — and the 100-new-user lifetime
+counter for unverified production apps is now running. At an audience of two, noise.
+If a clean demo screen is ever wanted (a course recording, say), switching back to
+`Testing` restores the milder wording and is a 30-second job — at the price of the
+clock returning. Full evidence:
+[`docs/research/2026-08-09-oauth-production-test/`](research/2026-08-09-oauth-production-test/README.md).
+
+**Publishing is reversible — and this took finding, so don't re-derive it.** Neither
+[Manage app audience](https://support.google.com/cloud/answer/15549945) nor
+[Submitting your app for verification](https://support.google.com/cloud/answer/13461325)
+mentions the return trip at all, which reads like a one-way door. It isn't. The
+statement lives on an unrelated page,
+[Brand Approvals & Auto-Cancellations](https://support.google.com/cloud/answer/16868008):
+
+> If you switched to Testing or Internal, when you switch back to In Production or
+> External, public users will immediately be able to sign in and access the
+> previously verified configuration.
+
+What the round trip costs, from the same page: switching to Testing **auto-cancels a
+pending verification request** but *"does not revoke your existing verification
+status."* GoalPilot has neither, so both are free here. Two things Google does **not**
+document, and neither should be assumed: whether the 100-new-user counter resets
+(assume not — immaterial at two accounts), and whether a grant issued while in
+production is re-clocked to seven days on the way back.
+
+### Google APIs enabled for user data
+
+```
+tasks.googleapis.com            Google Tasks API      (since 31/07)
+calendar-json.googleapis.com    Google Calendar API   (enabled 2026-08-08 by #33)
+```
+
+Calendar was **not** enabled until 2026-08-08. It is a separate toggle from Tasks;
+missing it yields HTTP 403 `accessNotConfigured`, which does not read as a consent
+problem. Re-enable elsewhere with:
+
+```bash
+gcloud services enable calendar-json.googleapis.com --project=goalpilot-56e30
+```
+
 ### ⚠️ gcloud's default project is the WRONG one
 
 `gcloud config` points at `neon-feat-461713-h9` ("My First Project"), a leftover.
@@ -187,10 +255,33 @@ Plain sign-in uses `email`/`profile` (non-sensitive) and Just Works. Anything
 sensitive — `tasks.readonly`, and Health Connect data if you route it through
 Google — plays by different rules:
 
-- Publishing status **must be Testing**. An unverified app *in production*
-  returns `Error 403: access_denied` with **no override**.
 - The account must be on the **Test users** list. Being project Owner grants
-  nothing.
+  nothing. **This one was observed** — an `Error 403: access_denied` screen on
+  31/07 disproved the "owners are implicitly allowed" theory
+  ([`CHANGELOG/2026-08-01.md:252-259`](../CHANGELOG/2026-08-01.md#L252-L259)).
+- ❌ **DISPROVEN 2026-08-09, by running it.** This file used to say *"Publishing
+  status must be Testing — an unverified app in production returns `Error 403:
+  access_denied` with **no override**."* Written as fact on 31/07, never tested,
+  and repeated into two TODO files as a standing instruction. **It is false.** An
+  unverified app in production shows *"Google hasn't verified this app"* with an
+  **Advanced → Go to GoalPilot (unsafe)** override on the first screen, and
+  `tasks.readonly` then works: a live import found 10 open tasks with no
+  `UserRecoverableAuthException` and no 403. Screenshots and the full run:
+  [`docs/research/2026-08-09-oauth-production-test/`](research/2026-08-09-oauth-production-test/README.md).
+  The original was most likely a true fact about **restricted** scopes (Gmail,
+  Drive) generalised to a **sensitive** one, which `tasks.readonly` is.
+- ⚠️ **The granular consent checkbox arrives UNCHECKED.** On the *"Select what
+  GoalPilot can access"* screen, `View your tasks` is off by default. Tap Continue
+  without ticking it and sign-in **succeeds** while granting nothing — the Tasks
+  import then has no permission, and it surfaces as an ordinary "grant permission"
+  prompt rather than as "you declined this". Live on the shipped feature; observed
+  2026-08-09. If an import ever returns nothing for an account that plainly has
+  tasks, check this before checking the code.
+- ⚠️ **`GoalPilot-297750736036` was not observed.** The claim below that Google
+  appends the project number to unverified app names did not hold on any of the
+  four consent screens captured 2026-08-09 — all four read plain `GoalPilot`.
+  Left in place rather than deleted, because one run is weak evidence against it,
+  but do not rely on it.
 - **"Ineligible accounts not added" means the address is already on the list** —
   a duplicate rejection, not a permissions failure.
 - Google appends the project number to unverified app names on the consent screen

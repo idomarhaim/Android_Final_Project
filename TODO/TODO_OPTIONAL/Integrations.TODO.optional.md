@@ -74,9 +74,19 @@ Implementation notes worth keeping:
   people paste whole messages into them; an unclamped one broke the review
   dialog layout during testing and would have become a giant goal name.
 
-**Requires** the `tasks.readonly` scope on the OAuth consent screen, the account
-listed under Test users, and publishing status **Testing** — an unverified app
-*in production* hard-blocks sensitive scopes with no override.
+**Requires** the `tasks.readonly` scope on the OAuth consent screen, and — while the
+project was in `Testing` — the account listed under Test users.
+
+> ⚠️ **This line used to end** *"and publishing status **Testing** — an unverified app
+> in production hard-blocks sensitive scopes with no override."* **That was never tested
+> and it is false**, disproven 09/08/2026 by [#33](https://github.com/idomarhaim/Android_Final_Project/issues/33):
+> production shows a warning with an `Advanced` override, and the import then works.
+> The project has been **in production** since, so the Test users list no longer gates
+> anything. Evidence: [`docs/research/2026-08-09-oauth-production-test/`](../../docs/research/2026-08-09-oauth-production-test/README.md).
+>
+> One live trap remains, and it is not about publishing status: the consent screen's
+> `View your tasks` checkbox **arrives unchecked**. Sign-in succeeds without it and the
+> import silently has no permission.
 
 ## ~~Competitive challenges (spec §6 nice-to-have, §7)~~ — DONE 05/08/2026
 Shipped as a real **Challenges** screen, reached from both Social and Profile:

@@ -31,13 +31,27 @@ B, and the owner's screen re-ranking itself live. See
 |---|---|
 | Account A | `name.iddo@gmail.com` — signed in, friend code **`NDXVJC`** |
 | Account B | `rachil751@gmail.com` — **already an OAuth test user** |
-| Publishing status | **Testing** (leave it there — production hard-blocks sensitive scopes) |
+| Publishing status | **In production** since 09/08/2026 — see the note below. Was `Testing` when this table was written |
 
 > ⚠️ An earlier note in this backlog claimed the second account "still needs
 > adding" and that the project owner is implicitly allowed as a tester. **Both
 > were wrong.** Both accounts are on the Test users list, and the
 > `Ineligible accounts not added` dialog you get when re-adding one means
 > *already on the list* — a duplicate rejection, not a permissions failure.
+
+> ⚠️ **The publishing-status row used to read** *"**Testing** (leave it there —
+> production hard-blocks sensitive scopes)"*. **That instruction rested on a claim
+> nobody had tested, and it is false** — disproven 09/08/2026 by
+> [#33](https://github.com/idomarhaim/Android_Final_Project/issues/33): an unverified
+> app in production shows a warning with an **Advanced → Go to GoalPilot (unsafe)**
+> override, and `tasks.readonly` works through it. The project was published so that
+> authorizations stop expiring after seven days, which they do in `Testing`.
+> Evidence: [`docs/research/2026-08-09-oauth-production-test/`](../../docs/research/2026-08-09-oauth-production-test/README.md).
+>
+> **If you re-record the two-account demo**, note that first consent on each account now
+> costs one extra tap through that warning. Switching back to `Testing` restores the
+> milder screen and takes 30 seconds — at the price of the seven-day clock returning.
+> Both directions are documented in [`docs/OPERATIONS.md`](../../docs/OPERATIONS.md) §2.
 
 **Steps**
 
