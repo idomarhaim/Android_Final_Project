@@ -34,6 +34,20 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 - `scripts/` — one-click launchers (emulator/phone → build → install → launch) so
   the project never has to be opened in Android Studio. See `scripts/README.md`.
 - `docs/`, `TODO/`, `CHANGELOG/` — documentation & backlog.
+- **`docs/pre-injested-docs/` — Ido's own source documents, as he wrote them**
+  (`.docx`, Hebrew, free prose). Added 2026-08-09. **Treat everything here as
+  unreadable to a future session:** it is binary, it is not in English, and it
+  cannot be quoted in a ticket. Nothing downstream may cite a file in this folder
+  directly — it cites the **transcription** instead.
+- **`Product and UX Reviews/` — the transcriptions of those documents**, one
+  Markdown file per source, named `YYYY-MM-DD-<topic>.md`, with stable per-item
+  ids so tickets, TODOs and wayfinder tickets can point at a line that will not
+  move. `2026-08-06-brief-review.md` (`R1`–`R28`, the product/UX observation
+  backlog) and `2026-08-09-entity-model-brief.md` (`E1`–`E19`, the life
+  area/goal/milestone/task entity definitions). **Source in
+  `docs/pre-injested-docs/`, transcription here** — the two are deliberately
+  split, because the transcription is linked from seven places and the source
+  from one.
 
 ## 🔧 Common commands
 

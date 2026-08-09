@@ -1,8 +1,13 @@
 # Product / UX brief review — 2026-08-06
 
 Faithful English transcription of
-`נקודות לאפליקציה באנדרואיד ששמתי לב אליהם בבריף קצר.docx`, written by Ido in a
-quick manual pass over the app before sleep.
+[`docs/pre-injested-docs/נקודות לאפליקציה באנדרואיד ששמתי לב אליהם בבריף קצר 2026-08-06.docx`](../docs/pre-injested-docs/),
+written by Ido in a quick manual pass over the app before sleep.
+
+> **The source moved on 2026-08-09** and was renamed with its date. It used to
+> sit beside this file in `Product and UX Reviews/`; the `.docx` originals now
+> live in [`docs/pre-injested-docs/`](../docs/pre-injested-docs/) and the
+> transcriptions stay here. Nothing in the content changed.
 
 **Why this file exists.** The original is free-form Hebrew prose inside a `.docx`
 — unreadable by any future agent session and unquotable in a ticket. This is the
