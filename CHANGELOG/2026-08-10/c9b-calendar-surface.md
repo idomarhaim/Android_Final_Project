@@ -138,6 +138,50 @@ Fri/Sat shaded; a live `now` pill on the current-time line; part-of-day group he
 in B so a flat list becomes scannable; staggered entry; a gradient hero and heavier
 display type in C; an M3-Expressive nav indicator; two-layer tinted shadows.
 
+## 🔁 Rev 4 — a sibling moved the ground, and the standing preference landed
+
+**`C9c` ([#27](https://github.com/idomarhaim/Android_Final_Project/issues/27)) closed
+mid-session and left a hand-off comment on #26** — posted rather than edited, because
+#26 is this session's claim. It invalidated a premise the prototype was built on: Ido
+chose a **two-way** sync, so **the app is no longer the only author of an occurrence.**
+Reading it before continuing is the only reason rev 4 is current rather than obsolete.
+
+Four states now drawn, in both languages and both themes: **`MOVED`** (changed in
+Google — old time struck through), **`AWAY`** (*planned, but it left your calendar*;
+`calendar.app.created` cannot tell a move-out from a delete), **`SILENT`** (agent-placed
+and already confirmed because the slot was visibly free) and **`EXTERNAL`** (made by
+hand in the GoalPilot calendar, no task behind it). `SILENT` and `PROVISIONAL` sit on
+the **same day on purpose** — `C9c`'s point is that they differ by *visibility*, not
+confidence. A deadline is drawn **only** in the all-day strip, never as a timed block,
+which is now a test.
+
+**One real bug, found by the checks rather than by looking:** B carried `OVERDUE` items
+forward from other days but not `AWAY` ones, so an event that vanished from Thursday's
+calendar would have surfaced only when Thursday arrived — *exactly too late to put it
+back*. Both are carried now, for one reason: they need action and neither waits for you
+to navigate to its date.
+
+**Dark mode**, from the committed `AuroraDark` palette — the app ships `values-night`,
+so a calendar that only works in light is half a design. The surface ladder also moved
+onto the **committed** Aurora container tones; the previous revision had been guessing
+values that the app already defines.
+
+### 📥 Ido said yes: the design standard is now normative for the whole map
+
+Added to [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)'s
+**Standing preferences** — *"every screen is designed to a current UI/UX standard, not
+merely specified"* — carrying the three rules his own defect reports bought, so they
+bind `C12`, `C6` and anything else with a screen rather than living only here:
+**one chip may not carry two axes** · **form and words before iconography** · **a design
+is not finished until it has been seen in Hebrew.**
+
+**The commons discipline was followed and is worth recording, because three sessions
+were live:** the body was **re-fetched immediately before the write** (the earlier fetch
+was already stale), the patch was **proved a pure insertion before sending** — 122 → 139
+lines, `0` deleted — and every sibling's *Decisions so far* line was verified present
+**after** the write. `#26`'s own index line is still owed by this session and remains
+unwritten; another session's line is not mine to author.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
@@ -189,3 +233,18 @@ identifier colliding with the page's own, and a regex expecting the dash immedia
 before `</span>` when it sits mid-string. Recorded because the honest reading of a red
 run is *"something disagrees"*, not *"the code is wrong"*, and both times the artefact
 was fine.
+
+**Rev 4 raised the matrix to 36 renders** — 3 variants × 2 languages × 3 views × 2
+themes — all clean, and added assertions that each of `MOVED`/`AWAY`/`SILENT`/`EXTERNAL`
+is drawn *and* labelled in both languages, that no deadline leaks into the timed grid,
+that `C`'s queue carries Keep / Cancel / Put back and reads `1/4`, and that the dark
+palette is actually wired rather than silently falling back to light.
+
+**The tooling lesson, which cost four false failures across three revisions:** building
+a check file with a shell heredoc destroys backslash escapes, and a surviving `\b`
+inside a JS template literal becomes a **backspace character** — so
+`class="[^"]*\baway\b[^"]*"` silently stopped being a word-boundary match and reported a
+correctly-rendered element as missing. The checks are now **written as a file** and
+match classes by `split()` rather than by regex. One of the four failures was real (the
+`AWAY` carry above); the discipline that separates them is *reproduce the assertion in
+isolation before touching the artefact*.

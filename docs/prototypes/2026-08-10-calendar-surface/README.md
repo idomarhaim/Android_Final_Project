@@ -100,6 +100,45 @@ part-of-day group headers in B (morning / afternoon / evening) so a flat list be
 scannable; staggered entry animation; a gradient hero card and heavier display type in
 C; M3-Expressive nav pill; two-layer tinted shadows throughout.
 
+## Rev 4 — the app is no longer the only author
+
+**`C9c` ([#27](https://github.com/idomarhaim/Android_Final_Project/issues/27)) closed
+while this prototype was open, and it invalidated a premise it was built on.** Ido chose
+a **two-way** sync, so an occurrence can change without the app doing anything. Four new
+states are now drawn, in both languages and both themes:
+
+| State | What it means | How it reads |
+|---|---|---|
+| `MOVED` | dragged to a new time **in Google** | solid, a move badge, the old time struck through in the time column |
+| `AWAY` | planned, but it **left your GoalPilot calendar** — indistinguishable from a delete | ghosted, dashed, neutral: *not on your calendar* |
+| `SILENT` | agent-placed **and already confirmed**, because the slot was visibly free | solid, a small spark — no decision owed |
+| `EXTERNAL` | you made it **by hand** inside the GoalPilot calendar; no task behind it | neutral grey, chip reads *from your calendar* |
+
+`SILENT` and `PROVISIONAL` sit **on the same day on purpose**: `C9c`'s point is that they
+differ by whether the app could *see* the slot, not by how confident it is. A deadline is
+now drawn **only in the all-day banner strip** and never as a timed block, because in
+Google it is an all-day banner — asserted by a test.
+
+**A real bug the checks found, not a cosmetic one:** B carried `OVERDUE` items forward
+from other days but not `AWAY` ones, so an event that vanished from Thursday's calendar
+would surface only when Thursday arrived — exactly too late to put it back. Both states
+are now carried, for the same reason: they need action, and neither waits for you to
+navigate to its date.
+
+**Dark mode**, from the committed `AuroraDark` palette — the app ships `values-night`, so
+a calendar that only works in light is half a design. The whole surface ladder now uses
+the **committed** Aurora container tones rather than the values this prototype had been
+guessing at.
+
+Craft: a punch-hole and a raking gloss on the device (most of why a mockup reads as a
+phone), concentric radii, inner highlights on raised surfaces, soft hero glows built from
+the committed `AuroraHero` stops, Hebrew UI faces first in the font stack, and springy
+easing on everything that moves.
+
+**One question this prototype poses rather than answers**, handed over by `C9c`: an event
+you create **by hand** inside the GoalPilot calendar is readable at no extra scope and has
+no task behind it. It is drawn here in grey so you can say whether you want it at all.
+
 ## What the three variants disagree about
 
 They are not three skins. They disagree about the **primary affordance** — what the
