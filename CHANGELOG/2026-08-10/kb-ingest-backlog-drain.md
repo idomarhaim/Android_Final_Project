@@ -134,6 +134,30 @@ check, not just the outcome.
 
 `Check-KbLinks` **CLEAN at 39 pages**.
 
+## Pass 4 — `entity-model-intake`, 2/3 (entry 1 parked)
+
+**Both drained entries were updates in place, exactly as the candidate proposed** —
+this file was written by a session that had checked the bundle first, and it shows.
+
+`kb/dev/review-intake-and-triage.md` gains **§1.1**: a binary source and its
+transcription acquire **opposite link profiles**, so they belong in different
+folders — the transcription accumulates inbound references and must never move, the
+source has one and can. Decided by **counting** (seven inbound against one, one of
+the seven inside a live map issue), not by taste. Plus the rot nothing catches: a
+**backticked filename is not a link any linter follows**, which is why a source
+reference stale in two ways at once — moved *and* renamed — went undetected.
+
+`kb/dev/decision-map-charting.md` gains **§4**: a new source document arriving while
+a map is in flight is **routed, not re-charted**. Transcription plus a routing table
+(which new id bears on which ticket, and *how*) is the one artifact an intake
+session can produce without writing into a claimed path.
+
+**Parked, not dropped:** entry 1 (*every option shares a framing the user doesn't
+hold*). Same treatment as pass 3 — rewritten down to the survivor under
+`## Standing — always-ask`.
+
+`Check-KbLinks` **CLEAN at 39 pages**.
+
 ## 🧪 Tests
 
 **No suite run, and none applicable** — this session created or modified no Kotlin,

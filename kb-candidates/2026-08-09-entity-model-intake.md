@@ -1,10 +1,25 @@
 # KB candidates — `entity-model-intake`, 2026-08-09
 
 Repo: `c:\Dev\Android_Final_Project` · Session row: `entity-model-intake`
-Mode: **normal** — this list is a **proposal**. Nothing here is ingested; silence
-is not approval. Drain via `/kb-ingest`.
+
+> **Partially drained 2026-08-10** by session `kb-ingest-backlog-drain`, pass 4 of 5.
+> **Entries 2 and 3 are ingested** and removed from this file — they landed in
+> `C:\Dev\JARVIS\kb` as `dev/review-intake-and-triage.md` §1.1 and
+> `dev/decision-map-charting.md` §4. Both were **updates in place**, exactly as the
+> entries proposed. See `kb/log/2026-08-10.md` for the full record; that journal
+> entry is the only tie between this file and those pages, because they live in
+> different repos.
+>
+> **Entry 1 survives, with its original number**, because it is always-ask in both
+> modes. The file is rewritten rather than deleted: deleting on a partial drain
+> discards exactly what the always-ask exclusions exist to preserve.
 
 ---
+
+## Standing — always-ask
+
+Not eligible for an automatic drain in either mode. Do not re-reason about the
+disposition; the question is only whether Ido wants the change.
 
 ## 1 · "It doesn't understand me" usually means every option shares a framing the user doesn't hold
 
@@ -41,9 +56,7 @@ axis should say *"assuming we discriminate by X, which cut?"* rather than
 presenting itself as the whole question.
 
 **Destination.** `kb/dev/` — a page on question-picker design, or a section in
-whatever page covers `/grilling` and `AskUserQuestion` practice. **Note:** if the
-drain concludes this belongs in `rules/` (it is arguably a change to how the
-agent asks), that is **always-ask** in both modes.
+whatever page covers `/grilling` and `AskUserQuestion` practice.
 
 **Anchors.** `Product and UX Reviews/2026-08-09-entity-model-brief.md` `E7`,
 `E12`; GitHub issue
@@ -52,91 +65,14 @@ agent asks), that is **always-ask** in both modes.
 
 **Supersedes.** Nothing known.
 
-**Status.** Pending — not ingested.
-
----
-
-## 2 · A binary source document is invisible to future sessions; the transcription is the artifact, and the two live apart
-
-**Claim.** A `.docx` / `.pdf` / image the user wrote is **not** a citable source
-in an agent-run repo: it is binary (no diff, no grep), often not in the project's
-working language, and unquotable in a ticket. The durable artifact is a
-**transcription with stable per-item ids** — and once both exist, the **source
-and the transcription belong in different folders**, because they have opposite
-link profiles: the transcription accumulates inbound references and must never
-move, while the source has one and can.
-
-**Why.** Both halves were observed here. This repo already had the pattern once
-(`R1`–`R28` from the 08-06 brief) and the reason was written down at the time:
-*"the original is free-form Hebrew prose inside a `.docx` — unreadable by any
-future agent session and unquotable in a ticket."* The **second** half is the new
-part: when the user moved the `.docx` out to a new folder, the question of
-whether the transcription should follow it was decided by counting references —
-the transcription is linked from **seven** places including the body of a live
-GitHub map issue, the `.docx` from **one**. Moving the linked half to sit beside
-the unlinked half would have broken seven references, one of them inside an issue
-three live sessions were reading.
-
-Rejected: *"keep source and transcription together for provenance"* — provenance
-is a one-line link in the transcription's header, which costs nothing and cannot
-rot the other six references.
-
-Also worth recording: the 08-06 transcription's source reference had gone stale
-in **two ways at once** — the file had moved folders *and* been renamed — and
-nothing detected it, because a prose filename reference is not a link any linter
-follows. Naming the source as a **markdown link** rather than backticked prose is
-what would have made it checkable.
-
-**Destination.** `kb/dev/` — a page on ingesting user-authored source documents
-into an agent-navigable repo.
-
-**Anchors.** `AGENTS.md` → *Where things live*;
-`Product and UX Reviews/2026-08-06-brief-review.md` header;
-`Product and UX Reviews/2026-08-09-entity-model-brief.md` header.
-
-**Supersedes.** Nothing known.
-
-**Status.** Pending — not ingested.
-
----
-
-## 3 · New user input arriving mid-map is routed, not re-charted — and routing is a table of id → ticket
-
-**Claim.** When a user writes a **new** source document while a `/wayfinder` map
-is already in flight with live sessions on its tickets, the correct response is
-**not** to re-chart the map and **not** to answer the tickets the document
-touches. It is to produce the transcription plus a **routing table** — one row
-per ticket, listing which of the new ids bear on it and what *kind* of bearing
-(answers it / constrains it / creates scope it does not cover). Answering is the
-claimed sessions' job; re-charting is the map owner's.
-
-**Why.** Three sessions were live on the board and between them owned the map
-body and three of its tickets, so §5 rule 2 forbade writing to any of them. But
-the document plainly *answered* part of one live ticket and *created scope on
-none of them*, so doing nothing would have left three sessions working from a
-superseded framing. The routing table is what the intake session can produce
-without writing into anyone's paths: it is a reading list, and it makes the
-"which of these is new scope" question explicit — here, five items belonged to no
-ticket at all (a new entity, two new relationship cardinalities, an unanswered
-question the user addressed to the agent, and a presentation requirement).
-
-Rejected: (a) *"comment on the tickets, it's only a comment"* — a comment on a
-claimed issue is a write to a claimed path, and the claim column names issues
-explicitly in this repo; (b) *"file the new-scope items as issues"* — wiring
-tickets into a map is a charting act and the map is claimed; (c) *"wait for the
-sessions to finish"* — the live session was blocked on a question the document
-answers, so waiting is the expensive option.
-
-**Destination.** `kb/dev/decision-map-charting.md` — extends an existing page
-(a constraint ticket "splits", a knot wants an "order"; this adds what happens
-when the *source* changes under a live map).
-
-**Anchors.** `SESSIONS.md` → the three live rows of 2026-08-09;
-`Product and UX Reviews/2026-08-09-entity-model-brief.md` → *Where these items
-land — routing only, not answers*;
-`CHANGELOG/2026-08-09/entity-model-intake.md` → *What was deliberately not done*.
-
-**Supersedes.** Nothing — it extends `kb/dev/decision-map-charting.md` rather
-than replacing a claim on it. Confirm at drain time.
-
-**Status.** Pending — not ingested.
+**Status.** ⏸️ **Always-ask, awaiting Ido — 2026-08-10.** Held back by
+`kb-ingest-backlog-drain` for the reason the entry itself names: this is arguably a
+change to **how the agent asks questions**, which makes it a `rules/` change rather
+than a KB page, and `rules/` is always-ask in both modes and owned by the 🎬
+walkthrough rule. It also bears directly on the ❓ Ambiguity rule's
+`AskUserQuestion` clause, which is live text Ido reads every session. His call at
+the drain was **park it and be given the `rules/` proposal**; that draft is written
+to its canonical JARVIS home, uncommitted and unsynced, pending `/walkthrough`.
+This entry closes when he accepts or rejects that draft; if he rejects the `rules/`
+framing, it drains here as a section of `kb/dev/grilling-question-framing.md`, which
+is the existing page on question shape.
