@@ -15,8 +15,23 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c7-what-is-a-unit` | `/wayfinder 12 14` — resolve **[#14](https://github.com/idomarhaim/Android_Final_Project/issues/14)** (`C7`, what is a unit). **Planning only; no code.** | `SESSIONS.md` (this row), `CHANGELOG/2026-08-08/c7-what-is-a-unit.md`, `kb-candidates/2026-08-08-c7-what-is-a-unit.md`, GitHub issues **#14** and the map body **#12** | **None taken** — no `#gradle-daemon`, neither AVD, live `goalpilot-56e30` untouched | 2026-08-08 |
+| `c7-what-is-a-unit` | `/wayfinder 12 14` — resolve **[#14](https://github.com/idomarhaim/Android_Final_Project/issues/14)** (`C7`, what is a unit). **Planning only; no code.** | `SESSIONS.md` (this row), `CHANGELOG/2026-08-10/c7-what-is-a-unit.md`, `kb-candidates/2026-08-10-c7-what-is-a-unit.md`, GitHub issue **#14** and the map body **#12**; **hand-off comments only** (no body edits) on **#11**, **#23**, **#37**, **#38** — row widened from its original `#14 + #12` before the first write to any of them | **None taken** — no `#gradle-daemon`, neither AVD, live `goalpilot-56e30` untouched | 2026-08-08, still live 2026-08-10 |
 | `c10-quote-feed` | `/wayfinder 12 29` — resolve **[#29](https://github.com/idomarhaim/Android_Final_Project/issues/29)** (`C10`, the daily quote feed; unblocked by `C11a` #16 and `C15` #15 closing). **Planning only; no code.** | `SESSIONS.md` (this row), `CHANGELOG/2026-08-09/c10-quote-feed.md`, `kb-candidates/2026-08-09-c10-quote-feed.md`, GitHub issue **#29** and the map body **#12** | **None taken** — no `#gradle-daemon`, neither AVD, live `goalpilot-56e30` untouched | 2026-08-09 |
+| `kb-ingest-backlog-drain` | Bare `/kb-ingest` — drain the **five un-ingested candidate files** this repo has accumulated (**21 entries**, every owning session released). Ingest only, Markdown only; no code, no issue, no ticket. **Cross-repo:** the pages land in the central bundle `C:\Dev\JARVIS\kb`, so this session also holds a row on **that** board. | `SESSIONS.md` (this row), `CHANGELOG/2026-08-10/kb-ingest-backlog-drain.md`, `CHANGELOG/CHANGELOG_README.md` (its index row), `knowledge/` (one project-local page + this bundle's index and log), and **exactly five** candidate files by explicit path — `kb-candidates/2026-08-08-c9d-calendar-scopes.md`, `kb-candidates/2026-08-08-fix-task-completion-feedback.md`, `kb-candidates/2026-08-09-c9f-consent-screen-state.md`, `kb-candidates/2026-08-09-entity-model-intake.md`, `kb-candidates/2026-08-10-c4-goal-task-ontology.md`. **Explicitly NOT `kb-candidates/` as a folder** — `c7-what-is-a-unit` is live and will write `kb-candidates/2026-08-10-c7-what-is-a-unit.md` into it | **None taken** — no `#gradle-daemon`, neither AVD, live `goalpilot-56e30` never contacted | 2026-08-10 |
+
+> ⚠️ **`c7-what-is-a-unit` is live, and its row was edited in the working tree
+> *during* this session** — it widened its own `Owns` column (hand-off comments on
+> `#11`/`#23`/`#37`/`#38`, and its changelog/candidate paths moved from 08-08 to
+> 08-10 dates) between `kb-ingest-backlog-drain` first reading this board and
+> first writing to it. Re-read before writing, per rule 1; recorded here because
+> the *evidence* mattered — the row this session originally read is not the row
+> that is now on the board.
+>
+> **Consequence for staging, and it is unavoidable:** `SESSIONS.md` is one file,
+> so any commit of this row also carries `c7-what-is-a-unit`'s still-uncommitted
+> row edit. Named rather than silent, exactly as `c9d-calendar-scopes` and
+> `entity-model-intake` had to before it. Nothing of theirs was reverted,
+> reworded or unstaged.
 
 > **Issue-tracker partition — settled, and now visible in the tracker itself.**
 > Both 2026-08-06 sessions have released, and neither filed from the other's list.
