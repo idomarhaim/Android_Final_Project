@@ -720,31 +720,35 @@ Currently unclaimed and ready:
   `/kickoff product-model-map`~~ — **both done, 2026-08-07 and 2026-08-08.** They
   ran concurrently, stayed disjoint, and partitioned the tracker by content
   without colliding. What they produced is the unclaimed work below.
-- **The wayfinder map's frontier — two tickets takeable, one session each.**
+- **The wayfinder map's frontier — four tickets takeable, one session each.**
   [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is the map;
   **never resolve more than one ticket per session**, and claim by assigning yourself the
   issue before any work.
-  **Re-queried out of GitHub 2026-08-10 by `c9b-calendar-surface` after `C9b`
-  ([#26](https://github.com/idomarhaim/Android_Final_Project/issues/26)) closed** —
-  `blocked_by` walked per open child through the dependencies API, not read off this
-  board. **13 of the map's children are now resolved.** Two are in flight
-  (`C9e` [#28](https://github.com/idomarhaim/Android_Final_Project/issues/28) and
-  `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19), both
-  assigned); five are still blocked, **all five behind `C1` alone** — `#20`, `#22`, `#24`,
-  `#30`, `#35`. So `C1` closing will open more of this map than anything else left.
-  Takeable now:
-  - [#31 · `C12` charts and presentation strategy](https://github.com/idomarhaim/Android_Final_Project/issues/31)
-    — **prototype, HITL, newly unblocked** by `C3` closing. **Take this one first**: it is
-    the direct heir of `C9b`, which handed it two concrete items (where the *daily review*
-    lives, and that **spans must contribute nothing** to the time-allocation chart or one
-    week-long renovation swamps every life area), and it is the first screen ticket to run
-    under the **design standard Ido made normative on 2026-08-10** — read `#12`'s Standing
-    preferences before starting, plus `C9b`'s resolution comment for the three build-session
-    findings (bidi isolation · `GoalCategory` is light-mode-only · no Hebrew literal in an
-    English render).
+  **Re-derived out of GitHub 2026-08-10 by `c12-charts-presentation` after `C1`
+  ([#19](https://github.com/idomarhaim/Android_Final_Project/issues/19)) and `C9e`
+  ([#28](https://github.com/idomarhaim/Android_Final_Project/issues/28)) both closed** —
+  `blocked_by` walked per open child through the dependencies API, not read off this board.
+  **18 of the map's 25 children are now resolved**, and the block below is rewritten rather
+  than amended because `C1` closing changed almost every line of it: **the frontier doubled
+  in one step.** One ticket is in flight — `C12`
+  [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31), assigned and
+  mid-prototype — and **only two remain blocked**: `#30 · C11b` (behind `#20` and `#24`) and
+  `#35 · C15b` (behind `#24`).
+  **Ido assigned `#24` as the next session on 2026-08-10.** Takeable now, in his order:
+  - [#24 · `C8` AI-proposed numbered task plans for a goal](https://github.com/idomarhaim/Android_Final_Project/issues/24)
+    — **Ido's pick for the next session.** Newly unblocked by `C1`. It is the **only**
+    remaining ticket with downstream leverage: closing it unblocks `#35` outright and, with
+    `#20`, `#30` as well.
+  - [#22 · `C6` what may the user edit in LOG PROGRESS](https://github.com/idomarhaim/Android_Final_Project/issues/22)
+    — newly unblocked by `C1`. A **screen** ticket, so it inherits `#12`'s design standard and
+    the three findings `C12` restated: bidi isolation on every time and date string ·
+    `GoalCategory` is light-mode-only · no Hebrew literal in an English render.
+  - [#20 · `C2` AI-assigned task type](https://github.com/idomarhaim/Android_Final_Project/issues/20)
+    — newly unblocked by `C1`. Half of `#30`'s remaining blockade.
   - [#21 · `C5` endless and maintenance goals](https://github.com/idomarhaim/Android_Final_Project/issues/21)
-    — **HITL, newly unblocked** by `C3` closing. It is what the map's *"per-life-area
-    success and failure, visualised"* fog now hangs on **alone**, and `C9a` already supplied
+    — takeable since `C3` closed, and **declined twice today for reasons that have now both
+    expired**: it fed the then-live `#26` and `#28`, and both are closed. It is what the map's
+    *"per-life-area success and failure, visualised"* fog hangs on alone, and `C9a` supplied
     its vocabulary — `MISSED` / `OVERDUE` / `EXPIRED` are three different things and
     conflating them would draw a picture that **overstates** Ido's failures.
 
