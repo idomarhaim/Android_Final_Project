@@ -37,19 +37,54 @@ attribute, so **"how does a calendar grid survive Hebrew" is something you can l
 rather than reason about. That is one of the six things the ticket must settle and the
 only one prose reliably gets wrong.
 
+## Rev 2 — Ido's review, 2026-08-10
+
+Four things changed, and one of them was a design error rather than a taste call.
+
+1. **A block shows its end time**, not only its start — `09:00–11:00`.
+2. **The rung glyphs are gone.** They were unreadable because *the chip was carrying
+   two unrelated axes*: the **rung** (a property of the occurrence) and the **life
+   area** (a property of the goal). Forced into one pill, the rung had to degrade
+   into a symbol. The chip now carries **only** the life area — a colour dot and its
+   name — and the rung is carried by **the form of the leading time column**:
+
+   | Rung | Time column | Reads as |
+   |---|---|---|
+   | `BLOCK` | start over end with a **filled rail** between | a span of time you are inside |
+   | `DEADLINE` | `due` + the time, then a **single point** | a moment, not a duration |
+   | `SPAN` | a date range + a **soft capsule** | days, not hours |
+   | `ALL_DAY` | the words **all-day**, no time at all | a day with no slot |
+
+   No legend and no symbol vocabulary to learn — form first, then words, and icons
+   only where there is no room for words. A regression test asserts that none of the
+   four old glyphs survives anywhere in any variant, in either language.
+3. **C was rebuilt as a decision stack**, because "I couldn't tell C from B" was
+   correct: both had become lists of rows. C now has **no list and no browsing at
+   all** — one card, `1/3`, two buttons, a stack peeking behind it. Its cost is now
+   honest and visible: you cannot see a week from it.
+4. **Plurals fixed** in both languages, both branches — `4 בלוקים` / `4 blocks`,
+   and `בלוק אחד` / `1 block` at n=1.
+
+Plus a full visual pass: the flat white cards were replaced by the **M3 tonal
+container ladder** derived from the Aurora skin (five levels between `surfaceBright`
+and `surfaceDim`), event fills went from saturated-with-white-text to **tinted with
+coloured text**, corner radii moved onto the M3 Expressive scale, the type scale was
+rebuilt around one weight axis, and every icon is now hand-authored inline SVG so
+nothing depends on a font or a CDN.
+
 ## What the three variants disagree about
 
 They are not three skins. They disagree about the **primary affordance** — what the
 screen is *for* — and therefore about what belongs on it and where it lives in
 navigation.
 
-| | **A — The Grid** | **B — The Day Rail** | **C — The Review** |
+| | **A — The Grid** | **B — The Day Rail** | **C — The Decision Stack** |
 |---|---|---|---|
-| Primary affordance | **Place time** (drag a block into a slot) | **Tick things off** | **Confirm or reject what the agent proposed** |
-| Shape | Real hour grid, Sun→Sat | Week strip + agenda list, one day at a time | Review sheet first; month heatmap demoted |
+| Primary affordance | **Place time** (drag a block into a slot) | **Tick things off** | **Decide, one at a time** |
+| Shape | Real hour grid, Sun→Sat | Week strip + agenda list, one day at a time | One card at a time, `1/3`, stack behind it |
 | Shows | Everything — blocks, all-days, spans, deadlines, **challenge windows** | Tasks and deadlines only; goal deadlines as a chip | **Only what needs a decision** |
 | Lives in nav | A **5th bottom tab** | A segmented control **inside Goals** | On **Home**; the grid is a top-bar icon |
-| Costs | 5 tabs is a crowded bar | No cross-day view at all | You cannot browse a week |
+| Costs | 5 tabs is a crowded bar | No cross-day view at all | **No browsing at all** — you cannot see a week |
 
 ## The data is one week, shared by all three
 

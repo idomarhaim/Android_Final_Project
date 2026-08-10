@@ -2,7 +2,14 @@
 <!--
   PROTOTYPE — GoalPilot in-app calendar surface (C9b, issue #26).
   THROWAWAY. Not app code. Three variants of one week, ?variant=A|B|C, ?lang=he|en.
-  Colours are the committed GoalCategory hexes + the Aurora light skin.
+
+  Rev 2 — Ido's review, 2026-08-10:
+    A  block now shows start AND end time
+    B  rung glyphs removed: the life-area chip carries ONLY the area; the rung is
+       carried by the row's FORM (rail / point / band / capsule) and by words
+    C  rebuilt as a decision STACK, not a third list, so it cannot be mistaken for B
+    *  plural fixed ("4 בלוקים" / "4 blocks", and singular forms too)
+    *  full visual pass on the M3 tonal ladder derived from the Aurora skin
 -->
 <html lang="en">
 <head>
@@ -10,510 +17,543 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PROTOTYPE — GoalPilot calendar surface (C9b / #26)</title>
 <style>
+  /* ═══ tokens — Aurora light (ui/theme/Color.kt) expanded to a full M3 tonal
+         ladder. Cards must never be pure white on a tinted canvas: M3 puts five
+         container levels between surfaceBright and surfaceDim, and using them is
+         what makes depth read without a single drop-shadow. ═══ */
   :root{
-    /* Aurora light skin — ui/theme/Color.kt */
-    --bg:#D0E2F5; --surface:#D0E2F5; --surface-bright:#F4F9FF; --surface-dim:#B8CBDF;
-    --primary:#0A56C4; --on-primary:#fff; --primary-container:#D8E2FF; --on-primary-container:#001A41;
-    --secondary:#0A6045; --secondary-container:#A8F2D3;
-    --on-surface:#131A22; --on-surface-var:#44515F; --outline:#8FA3B8;
-    --desk:#1b2430;
+    --bg:#D0E2F5;
+    --s-lowest:#FFFFFF; --s-low:#F4F9FF; --s:#EAF1FB; --s-high:#E2EBF7; --s-highest:#D9E4F2;
+    --s-dim:#B8CBDF;
+    --primary:#0A56C4; --on-primary:#fff; --p-container:#D8E2FF; --on-p-container:#001A41;
+    --secondary:#0A6045; --s-container:#A8F2D3; --on-s-container:#002019;
+    --tertiary:#00596B; --t-container:#ADEDFF;
+    --error:#B3261E; --late:#9A3412; --late-container:#FFE6D5;
+    --on-surface:#101820; --on-surface-var:#43505E; --outline:#73808E; --outline-var:#C3D2E2;
+    --desk:#131a23;
+    --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:22px; --r-xl:28px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    background:var(--desk); color:#e7eef7; min-height:100vh;
-    font-family:'Segoe UI',Roboto,system-ui,sans-serif;
-    display:flex; flex-direction:column; align-items:center; gap:14px;
-    padding:24px 12px 120px;
+    background:
+      radial-gradient(1100px 620px at 50% -10%, #1e2a38 0%, var(--desk) 62%);
+    color:#dce6f2; min-height:100vh;
+    font-family:'Inter','Segoe UI Variable Text','Segoe UI',Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; align-items:center; gap:18px;
+    padding:26px 12px 128px;
   }
+  svg{display:block}
+  .i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;
+     stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-  /* ── page chrome (not part of the design being judged) ───────────────── */
-  .banner{max-width:820px;text-align:center}
-  .banner h1{margin:0 0 4px;font-size:15px;letter-spacing:.02em;font-weight:600}
-  .banner p{margin:0;font-size:12.5px;line-height:1.5;color:#9fb3c8}
-  .banner code{background:#0e1620;padding:1px 5px;border-radius:4px;font-size:11.5px}
+  /* ── page chrome (deliberately not part of the design) ───────────────── */
+  .banner{max-width:760px;text-align:center}
+  .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;letter-spacing:.01em;color:#eaf2fb}
+  .banner p{margin:0;font-size:12.5px;line-height:1.55;color:#93a7bd}
+  .banner code{background:#0b1219;padding:1.5px 6px;border-radius:5px;font-size:11.5px;color:#b9cde2}
+  .banner a{color:#7dd3fc}
 
-  /* ── phone frame ─────────────────────────────────────────────────────── */
+  /* ── phone ───────────────────────────────────────────────────────────── */
   .phone{
-    width:390px;height:844px;border-radius:38px;background:var(--bg);
-    border:9px solid #0b1017;box-shadow:0 20px 50px rgba(0,0,0,.55);
+    width:392px;height:848px;border-radius:44px;background:var(--bg);
+    border:10px solid #05090d;
+    box-shadow:0 2px 0 rgba(255,255,255,.06) inset, 0 26px 64px rgba(0,0,0,.6);
     overflow:hidden;position:relative;color:var(--on-surface);
     display:flex;flex-direction:column;
+    animation:in .32s cubic-bezier(.2,.8,.25,1);
   }
+  @keyframes in{from{opacity:0;transform:translateY(9px) scale(.994)}to{opacity:1;transform:none}}
   .statusbar{
-    height:30px;flex:none;display:flex;align-items:center;justify-content:space-between;
-    padding:0 18px;font-size:11.5px;font-weight:600;color:var(--on-surface);
+    height:34px;flex:none;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:12px;font-weight:600;letter-spacing:.01em;
   }
-  .appbar{
-    flex:none;padding:6px 14px 10px;display:flex;align-items:center;gap:10px;
-  }
-  .appbar h2{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em}
-  .appbar .sub{font-size:11.5px;color:var(--on-surface-var);font-weight:400}
+  .statusbar .rt{display:flex;align-items:center;gap:5px;font-size:10.5px}
+
+  .appbar{flex:none;padding:4px 18px 12px;display:flex;align-items:flex-start;gap:10px}
+  .appbar .ttl{font-size:27px;font-weight:650;letter-spacing:-.025em;line-height:1.12}
+  .appbar .sub{font-size:12.5px;color:var(--on-surface-var);margin-top:2px;font-weight:450}
   .appbar .spacer{flex:1}
   .iconbtn{
-    width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
-    background:var(--surface-bright);font-size:15px;flex:none;
+    width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+    background:var(--s-low);color:var(--on-surface-var);font-size:19px;flex:none;
   }
-  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+  .iconbtn.accent{background:var(--p-container);color:var(--on-p-container)}
+
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:thin}
+  .screen::-webkit-scrollbar{width:0}
+
   .navbar{
-    flex:none;height:62px;background:var(--surface-bright);
-    display:flex;align-items:center;justify-content:space-around;
-    border-top:1px solid rgba(0,0,0,.06);
+    flex:none;height:76px;background:var(--s-low);display:flex;align-items:flex-start;
+    justify-content:space-around;padding-top:11px;
   }
-  .navbar div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--on-surface-var)}
-  .navbar div.on{color:var(--primary);font-weight:600}
-  .navbar div.on .ico{background:var(--primary-container);}
-  .navbar .ico{font-size:16px;line-height:1;padding:3px 14px;border-radius:12px}
-  .navbar div.new .ico{outline:2px dashed #C2410C;outline-offset:1px}
+  .navbar .t{display:flex;flex-direction:column;align-items:center;gap:4px;
+             font-size:11px;font-weight:550;color:var(--on-surface-var);width:64px}
+  .navbar .t .pill{padding:4px 19px;border-radius:16px;font-size:21px;line-height:0;height:31px;
+                   display:grid;place-items:center;transition:background .18s}
+  .navbar .t.on{color:var(--on-p-container);font-weight:650}
+  .navbar .t.on .pill{background:var(--p-container);color:var(--on-p-container)}
+  .navbar .t.new .pill{box-shadow:0 0 0 2px #C2410C, 0 0 0 4px rgba(194,65,12,.18)}
 
-  /* ── shared bits ─────────────────────────────────────────────────────── */
-  .card{background:var(--surface-bright);border-radius:16px;padding:12px 13px;margin:0 12px 10px}
-  .card h3{margin:0 0 2px;font-size:13.5px;font-weight:600}
-  .muted{color:var(--on-surface-var);font-size:11.5px;line-height:1.45}
-  .chip{
-    display:inline-flex;align-items:center;gap:4px;border-radius:8px;
-    padding:2px 7px;font-size:10.5px;font-weight:600;white-space:nowrap;
-  }
-  .btn{
-    border:0;border-radius:20px;padding:9px 16px;font-size:12.5px;font-weight:600;
-    background:var(--primary);color:var(--on-primary);font-family:inherit;cursor:default;
-  }
-  .btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--outline)}
-  .legend{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 8px}
-  .legend .chip{background:var(--surface-dim);color:var(--on-surface-var);font-weight:500}
+  /* ── shared ──────────────────────────────────────────────────────────── */
+  .card{background:var(--s-low);border-radius:var(--r-lg);padding:15px 16px;margin:0 14px 12px}
+  .sect{font-size:11.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;
+        color:var(--on-surface-var);margin:2px 18px 8px}
+  .muted{color:var(--on-surface-var);font-size:12.5px;line-height:1.5}
+  .area{display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+        padding:3px 10px 3px 8px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .area i{width:7px;height:7px;border-radius:50%;flex:none}
+  .tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;
+       font-size:11px;font-weight:650;white-space:nowrap}
+  .btn{border:0;border-radius:999px;padding:13px 22px;font-size:14px;font-weight:600;
+       background:var(--primary);color:var(--on-primary);font-family:inherit;cursor:default;
+       display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .btn.tonal{background:var(--p-container);color:var(--on-p-container)}
+  .btn.ghost{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.4px var(--outline-var)}
+  .btn.sm{padding:9px 16px;font-size:12.5px}
 
-  /* rung glyphs — the four shapes, used by every variant */
-  .rung{width:16px;flex:none;display:grid;place-items:center;font-size:12px;line-height:1}
+  /* ── A · grid ────────────────────────────────────────────────────────── */
+  .dayhdr{display:grid;grid-template-columns:40px repeat(7,1fr);padding:0 10px 4px;flex:none}
+  .dayhdr .d{text-align:center;font-size:10.5px;font-weight:600;color:var(--on-surface-var)}
+  .dayhdr .d b{display:block;font-size:15px;font-weight:600;color:var(--on-surface);
+               width:29px;height:29px;line-height:29px;margin:3px auto 0;border-radius:50%}
+  .dayhdr .d.today{color:var(--primary)}
+  .dayhdr .d.today b{background:var(--primary);color:var(--on-primary)}
+  .banded{display:grid;grid-template-columns:40px repeat(7,1fr);gap:3px;padding:3px 10px 8px;flex:none}
+  .banded .lbl{font-size:9px;font-weight:600;color:var(--on-surface-var);align-self:center;
+               text-align:center;line-height:1.2}
+  .banded .slot{display:flex;flex-direction:column;gap:3px;min-height:18px}
+  .band{font-size:9.5px;font-weight:600;padding:3px 5px;border-radius:6px;overflow:hidden;
+        white-space:nowrap;text-overflow:ellipsis;line-height:1.1}
+  .band.cap-s{border-start-start-radius:999px;border-end-start-radius:999px;padding-inline-start:9px}
+  .band.cap-e{border-start-end-radius:999px;border-end-end-radius:999px}
+  .grid{display:grid;grid-template-columns:40px repeat(7,1fr);position:relative;padding-inline-end:6px}
+  .hours .h{height:52px;font-size:10px;font-weight:550;color:var(--on-surface-var);
+            text-align:end;padding-inline-end:7px;transform:translateY(-6px)}
+  .col{position:relative}
+  .col::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:1px;
+               background:var(--outline-var);opacity:.65}
+  .col .line{height:52px;box-shadow:inset 0 -1px 0 var(--outline-var)}
+  .ev{position:absolute;inset-inline:1.5px;border-radius:7px;overflow:hidden;
+      padding:3px 4px 3px 6px;font-size:9px;line-height:1.25}
+  .ev::before{content:'';position:absolute;inset-block:3px;inset-inline-start:2px;
+              width:2.5px;border-radius:2px;background:currentColor}
+  .ev b{display:block;font-size:9.5px;font-weight:650;white-space:nowrap;overflow:hidden;
+        text-overflow:ellipsis}
+  .ev .tm{font-size:8.5px;font-weight:550;opacity:.82;white-space:nowrap}
+  .ev.prov{border:1.5px dashed;background:transparent!important}
+  .ev.gone{opacity:.5}
+  .ev.gone b{text-decoration:line-through}
+  .now{position:absolute;inset-inline:0;border-top:2px solid var(--error);z-index:5}
+  .now::before{content:'';position:absolute;inset-inline-start:-2px;top:-4.5px;width:8px;height:8px;
+               border-radius:50%;background:var(--error)}
 
-  /* ── A · the grid ────────────────────────────────────────────────────── */
-  .daystrip{display:grid;grid-template-columns:34px repeat(7,1fr);padding:0 8px 2px;flex:none}
-  .daystrip .d{text-align:center;font-size:10px;color:var(--on-surface-var);padding-bottom:3px}
-  .daystrip .d b{display:block;font-size:13px;color:var(--on-surface);font-weight:600}
-  .daystrip .d.today b{color:var(--on-primary);background:var(--primary);border-radius:50%;width:22px;height:22px;line-height:22px;margin:0 auto}
-  .allday{
-    display:grid;grid-template-columns:34px repeat(7,1fr);gap:2px;padding:2px 8px 6px;
-    border-bottom:1px solid var(--surface-dim);flex:none;
-  }
-  .allday .lbl{font-size:8.5px;color:var(--on-surface-var);align-self:center;text-align:center;line-height:1.15}
-  .allday .slot{min-height:16px;display:flex;flex-direction:column;gap:2px}
-  .band{font-size:8.5px;padding:1px 3px;border-radius:3px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-  .grid{display:grid;grid-template-columns:34px repeat(7,1fr);position:relative}
-  .hours{position:relative}
-  .hours .h{height:44px;font-size:9.5px;color:var(--on-surface-var);text-align:end;padding-inline-end:4px;transform:translateY(-6px)}
-  .col{position:relative;border-inline-start:1px solid rgba(0,0,0,.07)}
-  .col .line{height:44px;border-bottom:1px solid rgba(0,0,0,.055)}
-  .block{
-    position:absolute;inset-inline:1px;border-radius:5px;padding:2px 4px;overflow:hidden;
-    font-size:9px;line-height:1.2;color:#fff;
-  }
-  .block b{font-weight:600;display:block;font-size:9.5px}
-  .block.prov{background:transparent!important;border:1.5px dashed;padding:1.5px 3px}
-  .block.missed{opacity:.55;text-decoration:line-through}
-  .nowline{position:absolute;inset-inline:0;height:0;border-top:2px solid #C2410C;z-index:4}
-  .nowline::before{content:'';position:absolute;inset-inline-start:-3px;top:-4px;width:7px;height:7px;border-radius:50%;background:#C2410C}
+  /* ── B · day rail ────────────────────────────────────────────────────── */
+  .seg{display:flex;background:var(--s-highest);border-radius:999px;padding:4px;margin:0 14px 12px;flex:none}
+  .seg span{flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px 0;border-radius:999px;
+            color:var(--on-surface-var)}
+  .seg span.on{background:var(--s-lowest);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .rail{display:flex;gap:7px;padding:0 14px 14px;flex:none}
+  .rail .p{flex:1;text-align:center;border-radius:var(--r-md);padding:8px 0 7px;background:var(--s-low);
+           font-size:10.5px;font-weight:600;color:var(--on-surface-var)}
+  .rail .p b{display:block;font-size:16px;font-weight:650;color:var(--on-surface);margin:3px 0 5px}
+  .rail .p.on{background:var(--primary)}
+  .rail .p.on,.rail .p.on b{color:var(--on-primary)}
+  .rail .dots{display:flex;gap:3px;justify-content:center;height:5px}
+  .rail .dots i{width:4.5px;height:4.5px;border-radius:50%;display:block}
 
-  /* ── B · the day rail ────────────────────────────────────────────────── */
-  .weekrail{display:flex;gap:6px;padding:2px 12px 10px;flex:none}
-  .weekrail .p{
-    flex:1;text-align:center;border-radius:13px;padding:6px 0 5px;background:var(--surface-bright);
-    font-size:10px;color:var(--on-surface-var);
-  }
-  .weekrail .p b{display:block;font-size:14px;color:var(--on-surface);font-weight:600;margin-bottom:3px}
-  .weekrail .p.on{background:var(--primary)}
-  .weekrail .p.on b,.weekrail .p.on{color:var(--on-primary)}
-  .weekrail .dots{display:flex;gap:2px;justify-content:center;height:4px}
-  .weekrail .dots i{width:4px;height:4px;border-radius:50%;display:block}
-  .agenda{padding:0 12px}
-  .arow{
-    display:flex;gap:9px;align-items:flex-start;background:var(--surface-bright);
-    border-radius:13px;padding:10px 11px;margin-bottom:7px;border-inline-start:4px solid;
-  }
-  .arow.prov{background:transparent;border:1.5px dashed;border-inline-start-width:4px}
-  .arow .tick{
-    width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex:none;margin-top:1px;
-    display:grid;place-items:center;font-size:12px;color:var(--primary);
-  }
-  .arow .tick.done{background:var(--secondary);border-color:var(--secondary);color:#fff}
-  .arow .body{flex:1;min-width:0}
-  .arow .t{font-size:13px;font-weight:600;line-height:1.25}
-  .arow.done .t{text-decoration:line-through;color:var(--on-surface-var)}
-  .arow .m{font-size:11px;color:var(--on-surface-var);margin-top:2px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-  .arow .when{font-size:11.5px;font-weight:700;color:var(--on-surface);white-space:nowrap;text-align:end}
-  .seg{display:flex;background:var(--surface-dim);border-radius:20px;padding:3px;margin:0 12px 10px;flex:none}
-  .seg span{flex:1;text-align:center;font-size:12px;padding:5px 0;border-radius:17px;color:var(--on-surface-var);font-weight:600}
-  .seg span.on{background:var(--surface-bright);color:var(--primary)}
+  .agenda{padding:0 14px}
+  .row{display:flex;gap:0;margin-bottom:9px;align-items:stretch}
+  /* leading time column — ITS FORM is the rung, no glyph required */
+  .when{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;padding-top:2px;
+        font-size:12px;font-weight:650;line-height:1.35;text-align:center}
+  .when small{font-size:10.5px;font-weight:550;color:var(--on-surface-var);letter-spacing:.01em}
+  .when .bar{width:4px;flex:1;border-radius:2px;margin:5px 0 2px;min-height:14px}   /* BLOCK  */
+  .when .pt{width:9px;height:9px;border-radius:50%;margin:6px 0 2px;box-shadow:0 0 0 3px var(--bg)} /* DEADLINE */
+  .when .cap{width:4px;flex:1;border-radius:999px;margin:5px 0 2px;min-height:14px;opacity:.45}     /* SPAN */
+  .body{flex:1;min-width:0;background:var(--s-low);border-radius:var(--r-md);padding:12px 14px}
+  .row.prov .body{background:transparent;border:1.5px dashed var(--primary)}
+  .row.band-row .body{border-radius:999px;padding:10px 18px}
+  .body .t{font-size:14.5px;font-weight:600;line-height:1.3}
+  .row.done .body .t{text-decoration:line-through;color:var(--on-surface-var)}
+  .body .m{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .tick{width:24px;height:24px;border-radius:8px;flex:none;align-self:center;margin-inline-start:11px;
+        display:grid;place-items:center;box-shadow:inset 0 0 0 2px var(--outline);color:transparent}
+  .tick.done{background:var(--secondary);box-shadow:none;color:#fff}
 
-  /* ── C · the review ──────────────────────────────────────────────────── */
-  .review{margin:0 12px 10px;border-radius:18px;background:var(--surface-bright);overflow:hidden}
-  .review .hd{padding:13px 14px 10px}
-  .review .hd h3{margin:0;font-size:16px;font-weight:600}
-  .rline{display:flex;gap:9px;align-items:center;padding:9px 14px;border-top:1px solid rgba(0,0,0,.06)}
-  .rline .n{font-size:17px;font-weight:700;width:22px;text-align:center;flex:none}
-  .rline .tx{flex:1;font-size:12px;line-height:1.35}
-  .propose{margin:0 12px 10px;border-radius:18px;background:var(--surface-bright);overflow:hidden;border:1.5px dashed var(--primary)}
-  .prow{display:flex;gap:9px;align-items:flex-start;padding:9px 13px;border-top:1px solid rgba(0,0,0,.06)}
-  .prow .cb{width:19px;height:19px;border-radius:5px;border:2px solid var(--primary);background:var(--primary);color:#fff;display:grid;place-items:center;font-size:12px;flex:none;margin-top:1px}
-  .prow .cb.off{background:transparent;color:transparent}
-  .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px 2px 0}
-  .heat .c{aspect-ratio:1;border-radius:5px;background:var(--surface-dim);display:grid;place-items:center;font-size:9.5px;color:var(--on-surface-var);position:relative}
-  .heat .c.on{outline:2px solid var(--primary)}
-  .heat .c .pips{position:absolute;bottom:3px;display:flex;gap:1.5px}
-  .heat .c .pips i{width:3px;height:3px;border-radius:50%;display:block}
+  /* ── C · decision stack ──────────────────────────────────────────────── */
+  .hero{margin:0 14px 4px;position:relative}
+  .hero .peek{position:absolute;inset-inline:12px;height:26px;border-radius:var(--r-xl);
+              background:var(--s-high);top:-9px;z-index:0}
+  .hero .peek.b2{inset-inline:22px;top:-17px;background:var(--s-highest)}
+  .deck{position:relative;z-index:1;background:var(--s-lowest);border-radius:var(--r-xl);
+        padding:18px 18px 16px;box-shadow:0 6px 22px rgba(16,24,32,.10)}
+  .deck .kicker{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:650;
+                letter-spacing:.04em;text-transform:uppercase;color:var(--primary)}
+  .deck h3{margin:9px 0 3px;font-size:21px;font-weight:650;letter-spacing:-.02em;line-height:1.2}
+  .deck .lede{font-size:13px;line-height:1.5;color:var(--on-surface-var)}
+  .mini{margin-top:13px;border-radius:var(--r-md);background:var(--s);overflow:hidden}
+  .mini .r{display:flex;align-items:center;gap:11px;padding:10px 13px}
+  .mini .r+.r{box-shadow:inset 0 1px 0 var(--outline-var)}
+  .mini .cb{width:21px;height:21px;border-radius:7px;flex:none;display:grid;place-items:center;
+            background:var(--primary);color:#fff}
+  .mini .cb.off{background:transparent;box-shadow:inset 0 0 0 2px var(--outline);color:transparent}
+  .mini .tx{flex:1;min-width:0}
+  .mini .tx b{display:block;font-size:13px;font-weight:600;line-height:1.25}
+  .mini .tx span{font-size:11.5px;color:var(--on-surface-var)}
+  .acts{display:flex;gap:9px;margin-top:15px}
+  .acts .btn{flex:1}
+  .skip{text-align:center;margin-top:11px;font-size:12.5px;font-weight:600;color:var(--on-surface-var)}
+  .pips{display:flex;justify-content:center;gap:7px;padding:16px 0 6px}
+  .pips i{width:7px;height:7px;border-radius:50%;background:var(--s-dim);display:block}
+  .pips i.on{background:var(--primary);width:22px;border-radius:999px}
+  .recap{margin:6px 14px 12px;background:var(--s-low);border-radius:var(--r-lg);padding:13px 16px;
+         display:flex;align-items:center;gap:13px}
+  .recap .n{font-size:19px;font-weight:700;line-height:1}
+  .recap .sep{width:1px;align-self:stretch;background:var(--outline-var)}
+  .recap .u{font-size:11px;font-weight:600;color:var(--on-surface-var);margin-top:3px}
+  .toweek{margin:0 14px 16px;text-align:center;font-size:13px;font-weight:600;color:var(--primary);
+          padding:13px;border-radius:999px;box-shadow:inset 0 0 0 1.4px var(--outline-var)}
 
-  /* ── floating switcher (deliberately not part of the design) ─────────── */
-  .switcher{
-    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99;
+  /* ── switcher ────────────────────────────────────────────────────────── */
+  .switcher{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;
     display:flex;align-items:center;gap:2px;background:#f8fafc;color:#0f172a;
-    border-radius:999px;padding:5px;box-shadow:0 8px 30px rgba(0,0,0,.5);
-    font-family:'Segoe UI',system-ui,sans-serif;
-  }
-  .switcher button{
-    border:0;background:transparent;font:inherit;font-size:15px;cursor:pointer;
-    width:34px;height:32px;border-radius:999px;color:#0f172a;
-  }
+    border-radius:999px;padding:6px;box-shadow:0 10px 34px rgba(0,0,0,.55);}
+  .switcher button{border:0;background:transparent;font:inherit;font-size:17px;cursor:pointer;
+    width:36px;height:34px;border-radius:999px;color:#0f172a}
   .switcher button:hover{background:#e2e8f0}
-  .switcher .lab{padding:0 12px;font-size:12.5px;font-weight:700;white-space:nowrap;min-width:186px;text-align:center}
-  .switcher .lab small{display:block;font-weight:500;font-size:10.5px;color:#64748b}
-  .switcher .lang{border-inline-start:1px solid #cbd5e1;padding-inline-start:5px;margin-inline-start:3px;display:flex;gap:2px}
-  .switcher .lang button{width:auto;padding:0 9px;font-size:11.5px;font-weight:700;color:#64748b}
+  .switcher .lab{padding:0 14px;font-size:13px;font-weight:700;white-space:nowrap;min-width:200px;
+    text-align:center;letter-spacing:-.01em}
+  .switcher .lab small{display:block;font-weight:500;font-size:10.5px;color:#64748b;letter-spacing:0}
+  .switcher .lang{border-inline-start:1px solid #cbd5e1;padding-inline-start:6px;margin-inline-start:4px;
+    display:flex;gap:2px}
+  .switcher .lang button{width:auto;padding:0 11px;font-size:12px;font-weight:700;color:#64748b}
   .switcher .lang button.on{background:#0f172a;color:#fff}
 </style>
 </head>
 <body>
 
 <div class="banner">
-  <h1>PROTOTYPE · <code>C9b</code> — the in-app calendar surface (<a href="https://github.com/idomarhaim/Android_Final_Project/issues/26" style="color:#7dd3fc">#26</a>)</h1>
-  <p>Three structurally different answers to <em>what a calendar is for in this app</em> — same week, same twelve occurrences.
-     <code>←</code> <code>→</code> to cycle · <b>HE</b> flips the whole frame to RTL. Throwaway; nothing here ships.</p>
+  <h1>PROTOTYPE · <code>C9b</code> — the in-app calendar surface (<a href="https://github.com/idomarhaim/Android_Final_Project/issues/26">#26</a>)</h1>
+  <p>Three answers to <em>what a calendar is for in this app</em> — same week, same twelve occurrences.
+     <code>←</code> <code>→</code> cycle · <b>HE</b> flips the frame to RTL. Throwaway; nothing here ships.</p>
 </div>
 
 <div id="stage"></div>
 
 <div class="switcher">
-  <button id="prev" title="Previous variant">‹</button>
+  <button id="prev" title="Previous">‹</button>
   <span class="lab" id="lab"></span>
-  <button id="next" title="Next variant">›</button>
-  <span class="lang">
-    <button data-lang="en">EN</button>
-    <button data-lang="he">HE</button>
-  </span>
+  <button id="next" title="Next">›</button>
+  <span class="lang"><button data-lang="en">EN</button><button data-lang="he">HE</button></span>
 </div>
 
 <script>
-/* ═══ data — one week, twelve occurrences, every C9a state represented ═══ */
-
-const CAT = {
-  HEALTH:   {he:'בריאות',   en:'Health',   c:'#CF3636'},
-  FITNESS:  {he:'אימון ריצה',en:'Running',  c:'#B85107'},
-  LEARNING: {he:'לימודים',  en:'Studies',  c:'#8B39C4'},
-  CAREER:   {he:'קריירה',   en:'Career',   c:'#0F6FCB'},
+/* ═══ icons — hand-authored so nothing depends on a font or a CDN ═══ */
+const svg = d => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
+const ICON = {
+  home:  svg('<path d="M3.5 11 12 3.6 20.5 11v8.4a1 1 0 0 1-1 1h-4.4v-5.6H8.9v5.6H4.5a1 1 0 0 1-1-1z"/>'),
+  goals: svg('<path d="M6.4 21V3.6h11.2l-3 4.2 3 4.2H6.4"/>'),
+  social:svg('<path d="M7.4 4h9.2v4.6a4.6 4.6 0 0 1-9.2 0zM7.4 5.2H4.6v1.6a3 3 0 0 0 2.8 3M16.6 5.2h2.8v1.6a3 3 0 0 1-2.8 3M12 13.2v4.2M8.4 20h7.2"/>'),
+  person:svg('<circle cx="12" cy="8" r="3.9"/><path d="M4.4 20.2a7.6 7.6 0 0 1 15.2 0"/>'),
+  cal:   svg('<rect x="3.6" y="5.2" width="16.8" height="15.2" rx="3"/><path d="M8 3.2v3.6M16 3.2v3.6M3.6 10.2h16.8"/>'),
+  search:svg('<circle cx="11" cy="11" r="6.8"/><path d="M16.2 16.2 21 21"/>'),
+  plus:  svg('<path d="M12 5.4v13.2M5.4 12h13.2"/>'),
+  check: svg('<path d="M5 12.4 9.6 17 19 7.4"/>'),
+  clock: svg('<circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.2 2"/>'),
+  spark: svg('<path d="M12 3.4l1.9 4.7 4.7 1.9-4.7 1.9L12 16.6l-1.9-4.7-4.7-1.9 4.7-1.9zM18.4 15.6l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+  alert: svg('<circle cx="12" cy="12" r="8.6"/><path d="M12 7.6v5M12 16.1h.01"/>'),
+  undo:  svg('<path d="M4 9.4h9.6a5.6 5.6 0 1 1 0 11.2H8.4M4 9.4l4-4M4 9.4l4 4"/>'),
 };
+/* fake status-bar indicators, drawn rather than typed — the block characters
+   they replaced were indistinguishable from the rung glyphs B just dropped */
+const SYS = `<svg viewBox="0 0 46 14" style="height:11px;width:36px;fill:currentColor">
+  <rect x="0" y="9" width="3" height="5" rx="1"/><rect x="4.5" y="6.5" width="3" height="7.5" rx="1"/>
+  <rect x="9" y="4" width="3" height="10" rx="1"/><rect x="13.5" y="1.5" width="3" height="12.5" rx="1"/>
+  <path d="M25.5 4.2a7.6 7.6 0 0 1 8.6 0l-1.5 1.9a5.2 5.2 0 0 0-5.6 0zm2.2 3.1a4 4 0 0 1 4.2 0l-2.1 2.7z"/>
+  <rect x="37" y="3" width="8" height="9" rx="2" opacity=".45"/><rect x="38" y="4" width="6" height="7" rx="1.2"/>
+</svg>`;
 
-/* day 0 = Sunday (C15: region decides week start; Israel = Sunday) */
+/* ═══ data — one week, twelve occurrences, every C9a state ═══ */
+const CAT = {
+  HEALTH:  {he:'בריאות',    en:'Health',   c:'#CF3636'},
+  FITNESS: {he:'אימון ריצה',en:'Running',  c:'#B85107'},
+  LEARNING:{he:'לימודים',   en:'Studies',  c:'#8B39C4'},
+  CAREER:  {he:'קריירה',    en:'Career',   c:'#0F6FCB'},
+};
 const OCC = [
-  {d:0, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'DONE',
-   he:'ריצה 5 ק״מ',            en:'Run 5 km'},
-  {d:0, rung:'BLOCK',    s:1200, e:1230, cat:'LEARNING', st:'EXPIRED',
-   he:'לקרוא פרק',              en:'Read a chapter'},
-  {d:0, rung:'DEADLINE', s:1439,          cat:'LEARNING', st:'OVERDUE',
-   he:'תשלום שכר לימוד',        en:'Pay tuition'},
-
-  {d:1, rung:'SPAN', until:5,             cat:'LEARNING', st:'CONFIRMED',
-   he:'שבוע מבחנים',            en:'Exam week'},
-  {d:1, rung:'ALL_DAY',                   cat:'HEALTH',   st:'CONFIRMED',
-   he:'יום ללא סוכר',           en:'No-sugar day'},
-  {d:1, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'MISSED',
-   he:'ריצה 5 ק״מ',            en:'Run 5 km'},
-  {d:1, rung:'BLOCK',    s:540,  e:660,  cat:'LEARNING', st:'PROVISIONAL',
-   he:'תרגול אלגוריתמים',       en:'Algorithms practice'},
-  {d:1, rung:'BLOCK',    s:1020, e:1110, cat:'CAREER',   st:'PROVISIONAL',
-   he:'הכנה לראיון',            en:'Interview prep'},
-  {d:1, rung:'DEADLINE', s:1439,          cat:'LEARNING', st:'CONFIRMED',
-   he:'הגשת תרגיל 3',           en:'Submit exercise 3'},
-
-  {d:2, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'CONFIRMED',
-   he:'ריצה 8 ק״מ',            en:'Run 8 km'},
-  {d:3, rung:'BLOCK',    s:540,  e:720,  cat:'LEARNING', st:'CONFIRMED',
-   he:'מבחן מערכות הפעלה',      en:'OS exam'},
-  {d:4, rung:'BLOCK',    s:840,  e:900,  cat:'CAREER',   st:'CONFIRMED',
-   he:'ראיון עבודה',            en:'Job interview'},
-  {d:4, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'PROVISIONAL',
-   he:'ריצה קלה',               en:'Easy run'},
-  {d:6, rung:'BLOCK',    s:1080, e:1140, cat:'FITNESS',  st:'PROVISIONAL',
-   he:'ריצה ארוכה 12 ק״מ',     en:'Long run 12 km'},
+  {d:0,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'DONE',        he:'ריצה 5 ק״מ',       en:'Run 5 km'},
+  {d:0,rung:'BLOCK',   s:1200,e:1230,cat:'LEARNING',st:'EXPIRED',     he:'לקרוא פרק',        en:'Read a chapter'},
+  {d:0,rung:'DEADLINE',s:1439,       cat:'LEARNING',st:'OVERDUE',     he:'תשלום שכר לימוד',  en:'Pay tuition'},
+  {d:1,rung:'SPAN',  until:5,        cat:'LEARNING',st:'CONFIRMED',   he:'שבוע מבחנים',      en:'Exam week'},
+  {d:1,rung:'ALL_DAY',              cat:'HEALTH',  st:'CONFIRMED',    he:'יום ללא סוכר',     en:'No-sugar day'},
+  {d:1,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'MISSED',      he:'ריצה 5 ק״מ',       en:'Run 5 km'},
+  {d:1,rung:'BLOCK',   s:540, e:660, cat:'LEARNING',st:'PROVISIONAL', he:'תרגול אלגוריתמים', en:'Algorithms practice'},
+  {d:1,rung:'BLOCK',   s:1020,e:1110,cat:'CAREER',  st:'PROVISIONAL', he:'הכנה לראיון',      en:'Interview prep'},
+  {d:1,rung:'DEADLINE',s:1439,       cat:'LEARNING',st:'CONFIRMED',   he:'הגשת תרגיל 3',     en:'Submit exercise 3'},
+  {d:2,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'CONFIRMED',   he:'ריצה 8 ק״מ',       en:'Run 8 km'},
+  {d:3,rung:'BLOCK',   s:540, e:720, cat:'LEARNING',st:'CONFIRMED',   he:'מבחן מערכות הפעלה',en:'OS exam'},
+  {d:4,rung:'BLOCK',   s:840, e:900, cat:'CAREER',  st:'CONFIRMED',   he:'ראיון עבודה',      en:'Job interview'},
+  {d:4,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'PROVISIONAL', he:'ריצה קלה',         en:'Easy run'},
+  {d:6,rung:'BLOCK',   s:1080,e:1140,cat:'FITNESS', st:'PROVISIONAL', he:'ריצה ארוכה 12 ק״מ',en:'Long run 12 km'},
 ];
-
-/* A only — does a challenge window belong on the calendar at all? */
-const CHALLENGE = {from:0, until:6, he:'אתגר: 10,000 צעדים ביום', en:'Challenge: 10k steps a day', c:'#0A6045'};
+const CHALLENGE = {from:0, until:6, he:'אתגר · 10,000 צעדים ביום', en:'Challenge · 10k steps a day', c:'#0A6045'};
 
 const T = {
-  he:{title:'לוח שנה', goals:'מטרות', home:'בית', social:'חברתי', profile:'פרופיל', cal:'לוח',
-      allday:'כל היום', today:'היום', week:'השבוע', month:'החודש', day:'יום', agenda:'סדר יום',
-      review:'סיכום היום', done:'הושלמו', missed:'פוספסו', overdue:'באיחור, עדיין פתוח',
-      proposed:'הסוכן הציע', confirm:'אישור', later:'אחר כך', reschedule:'תזמון מחדש',
-      list:'רשימה', due:'עד', prov:'הצעה', spanL:'רב-יומי', dl:'יעד', bl:'בלוק',
-      empty:'אין כלום מתוזמן', plan:'תכנן את מחר', now:'עכשיו',
+  he:{home:'בית',goals:'מטרות',social:'חברתי',profile:'פרופיל',cal:'לוח שנה',
+      allday:'כל היום',today:'היום',week:'השבוע',month:'החודש',list:'רשימה',agenda:'סדר יום',
+      due:'עד',span:'רב-יומי',prov:'הצעה',missed:'פוספס',late:'באיחור · עדיין פתוח',
+      review:'סיכום היום',done:'הושלם',plan:'תכנן את מחר →',toweek:'לוח השבוע המלא →',
+      decisions:'ממתין להחלטה',confirm:'אשר הכול',later:'אחר כך',resched:'תזמון מחדש',
+      skip:'דלג על ההחלטה הזו',markdone:'סמן כבוצע',
+      agentTitle:n=>`הסוכן תכנן ${n===1?'בלוק אחד':n+' בלוקים'} לשבוע הקרוב`,
+      agentLede:'שום דבר לא נכתב ליומן שלך עד שתאשר. אפשר לבטל סימון של כל אחד מהם.',
       hint:'לחיצה ארוכה גוררת בלוק לשעה אחרת'},
-  en:{title:'Calendar', goals:'Goals', home:'Home', social:'Social', profile:'Profile', cal:'Calendar',
-      allday:'All-day', today:'Today', week:'Week', month:'Month', day:'Day', agenda:'Agenda',
-      review:'Your day', done:'done', missed:'missed', overdue:'late, still owed',
-      proposed:'The agent proposed', confirm:'Confirm', later:'Later', reschedule:'Reschedule',
-      list:'List', due:'due', prov:'proposed', spanL:'multi-day', dl:'deadline', bl:'block',
-      empty:'Nothing scheduled', plan:'Plan tomorrow',now:'now',
+  en:{home:'Home',goals:'Goals',social:'Social',profile:'Profile',cal:'Calendar',
+      allday:'All-day',today:'Today',week:'Week',month:'Month',list:'List',agenda:'Agenda',
+      due:'due',span:'multi-day',prov:'proposed',missed:'missed',late:'late · still owed',
+      review:'Your day',done:'done',plan:'Plan tomorrow →',toweek:'Open the full week →',
+      decisions:'Waiting on you',confirm:'Confirm all',later:'Later',resched:'Reschedule',
+      skip:'Skip this decision',markdone:'Mark as done',
+      agentTitle:n=>`The agent planned ${n===1?'1 block':n+' blocks'} for the week`,
+      agentLede:'Nothing reaches your Google calendar until you confirm. Untick any of them.',
       hint:'long-press drags a block to another hour'},
 };
 
-const RUNG_GLYPH = {ALL_DAY:'▭', DEADLINE:'▼', BLOCK:'▮', SPAN:'⟷'};
-
-/* week containing 2026-08-10, starting Sunday — derived, never guessed */
-const TODAY = new Date(2026, 7, 10);
-const SUNDAY = new Date(TODAY); SUNDAY.setDate(TODAY.getDate() - TODAY.getDay());
+const TODAY = new Date(2026,7,10);
+const SUNDAY = new Date(TODAY); SUNDAY.setDate(TODAY.getDate()-TODAY.getDay());
 const TODAY_IDX = TODAY.getDay();
-const NOW_MIN = 20*60 + 10;
+const NOW_MIN = 20*60+10, H0 = 5, H1 = 23, ROW = 52;
 
-const H0 = 5, H1 = 23, ROW = 44;          // grid spans 05:00 – 23:00
 const hhmm = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 const dayDate = i => { const d = new Date(SUNDAY); d.setDate(SUNDAY.getDate()+i); return d; };
-const dayName = (i,lang) => new Intl.DateTimeFormat(lang==='he'?'he-IL':'en-GB',{weekday:'short'}).format(dayDate(i));
-const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const dayName = (i,l) => new Intl.DateTimeFormat(l==='he'?'he-IL':'en-GB',{weekday:'short'}).format(dayDate(i));
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const rgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const tint = (h,a) => `rgba(${rgb(h).join(',')},${a})`;
+const areaChip = (o,l) => `<span class="area" style="background:${tint(CAT[o.cat].c,.13)};color:${CAT[o.cat].c}">
+  <i style="background:${CAT[o.cat].c}"></i>${esc(CAT[o.cat][l])}</span>`;
 
-/* ═══ shared chrome ═══════════════════════════════════════════════════ */
-
-function phone(lang, {tabs, active, appbar, body, newTab}){
+/* ═══ chrome ═══ */
+function phone(lang,{tabs,active,newTab,appbar,body}){
   const t = T[lang];
-  const TABS = tabs || [['🏠',t.home],['🚩',t.goals],['🏆',t.social],['👤',t.profile]];
+  const TABS = tabs || [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.social,t.social],[ICON.person,t.profile]];
   return `<div class="phone" dir="${lang==='he'?'rtl':'ltr'}" lang="${lang}">
-    <div class="statusbar"><span>${hhmm(NOW_MIN)}</span><span>▮▮▮ ▲ 84%</span></div>
-    ${appbar}
-    <div class="screen">${body}</div>
+    <div class="statusbar"><span>${hhmm(NOW_MIN)}</span>
+      <span class="rt">${SYS}<span>84%</span></span></div>
+    ${appbar}<div class="screen">${body}</div>
     <div class="navbar">${TABS.map((x,i)=>
-      `<div class="${i===active?'on':''} ${i===newTab?'new':''}"><span class="ico">${x[0]}</span><span>${x[1]}</span></div>`
-    ).join('')}</div>
+      `<div class="t ${i===active?'on':''} ${i===newTab?'new':''}">
+         <span class="pill">${x[0]}</span><span>${x[1]}</span></div>`).join('')}</div>
   </div>`;
 }
 
-function legend(lang){
-  const t = T[lang];
-  return `<div class="legend">
-    <span class="chip">${RUNG_GLYPH.BLOCK} ${t.bl}</span>
-    <span class="chip">${RUNG_GLYPH.DEADLINE} ${t.dl}</span>
-    <span class="chip">${RUNG_GLYPH.ALL_DAY} ${t.allday}</span>
-    <span class="chip">${RUNG_GLYPH.SPAN} ${t.spanL}</span>
-    <span class="chip" style="border:1.5px dashed var(--primary);color:var(--primary)">${t.prov}</span>
-  </div>`;
-}
-
-/* ═══ VARIANT A — “The Grid”: a real time canvas. Affordance: place time ═══ */
-
+/* ═══ A — THE GRID · affordance: place time ═══ */
 function variantA(lang){
   const t = T[lang];
-  const hours = [];
-  for(let h=H0; h<=H1; h++) hours.push(`<div class="h">${String(h).padStart(2,'0')}:00</div>`);
+  let hours=''; for(let h=H0;h<=H1;h++) hours += `<div class="h">${String(h).padStart(2,'0')}:00</div>`;
 
-  const cols = [];
+  let cols='';
   for(let d=0; d<7; d++){
-    const lines = Array.from({length:H1-H0}, ()=>`<div class="line"></div>`).join('');
-    const blocks = OCC.filter(o=>o.d===d && o.rung==='BLOCK').map(o=>{
-      const top = ((o.s - H0*60)/60)*ROW, h = ((o.e-o.s)/60)*ROW;
-      const c = CAT[o.cat].c;
-      const prov = o.st==='PROVISIONAL', missed = o.st==='MISSED', expired = o.st==='EXPIRED';
-      const cls = ['block', prov||expired?'prov':'', missed?'missed':''].join(' ');
-      const style = prov||expired
-        ? `top:${top}px;height:${h-1}px;border-color:${c};color:${c}`
-        : `top:${top}px;height:${h-1}px;background:${c}`;
-      return `<div class="${cls}" style="${style}"><b>${esc(o[lang])}</b>${hhmm(o.s)}</div>`;
+    let lines=''; for(let i=0;i<H1-H0;i++) lines += '<div class="line"></div>';
+    const evs = OCC.filter(o=>o.d===d && o.rung==='BLOCK').map(o=>{
+      const top=((o.s-H0*60)/60)*ROW, h=((o.e-o.s)/60)*ROW, c=CAT[o.cat].c;
+      const prov = o.st==='PROVISIONAL'||o.st==='EXPIRED', gone = o.st==='MISSED'||o.st==='EXPIRED';
+      const style = prov
+        ? `top:${top}px;height:${h-2}px;color:${c};border-color:${c}`
+        : `top:${top}px;height:${h-2}px;color:${c};background:${tint(c,.16)}`;
+      /* Ido: a block must show its END time, not only its start */
+      return `<div class="ev ${prov?'prov':''} ${gone?'gone':''}" style="${style}">
+        <b>${esc(o[lang])}</b><span class="tm">${hhmm(o.s)}–${hhmm(o.e)}</span></div>`;
     }).join('');
-    const now = d===TODAY_IDX
-      ? `<div class="nowline" style="top:${((NOW_MIN-H0*60)/60)*ROW}px"></div>` : '';
-    cols.push(`<div class="col">${lines}${blocks}${now}</div>`);
+    const now = d===TODAY_IDX ? `<div class="now" style="top:${((NOW_MIN-H0*60)/60)*ROW}px"></div>` : '';
+    cols += `<div class="col">${lines}${evs}${now}</div>`;
   }
 
-  const strip = [];
-  strip.push(`<div></div>`);
-  for(let d=0; d<7; d++) strip.push(
-    `<div class="d ${d===TODAY_IDX?'today':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b></div>`);
+  let hdr='<div></div>';
+  for(let d=0;d<7;d++) hdr += `<div class="d ${d===TODAY_IDX?'today':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b></div>`;
 
-  const bands = [`<div class="lbl">${t.allday}</div>`];
+  let bands = `<div class="lbl">${t.allday}</div>`;
   for(let d=0; d<7; d++){
-    const here = [];
-    if(d>=CHALLENGE.from && d<=CHALLENGE.until)
-      here.push(`<div class="band" style="background:${CHALLENGE.c}">${d===CHALLENGE.from?esc(CHALLENGE[lang]):'&nbsp;'}</div>`);
-    OCC.filter(o=>o.d===d && o.rung==='SPAN').forEach(o=>
-      here.push(`<div class="band" style="background:${CAT[o.cat].c}">${esc(o[lang])}</div>`));
-    OCC.filter(o=>o.rung==='SPAN' && d>o.d && d<=o.until).forEach(o=>
-      here.push(`<div class="band" style="background:${CAT[o.cat].c}">&nbsp;</div>`));
+    let here='';
+    const capsule = (o,c,label) => {
+      const start = d===o.d, end = d===(o.until ?? o.d);
+      return `<div class="band ${start?'cap-s':''} ${end?'cap-e':''}"
+        style="background:${tint(c,.2)};color:${c}">${start?esc(label):'&nbsp;'}</div>`;
+    };
+    if(d>=CHALLENGE.from && d<=CHALLENGE.until) here += capsule(
+      {d:CHALLENGE.from,until:CHALLENGE.until}, CHALLENGE.c, CHALLENGE[lang]);
+    OCC.filter(o=>o.rung==='SPAN' && d>=o.d && d<=o.until).forEach(o=>
+      here += capsule(o, CAT[o.cat].c, o[lang]));
     OCC.filter(o=>o.d===d && o.rung==='ALL_DAY').forEach(o=>
-      here.push(`<div class="band" style="background:${CAT[o.cat].c}">${RUNG_GLYPH.ALL_DAY} ${esc(o[lang])}</div>`));
+      here += `<div class="band" style="background:${tint(CAT[o.cat].c,.2)};color:${CAT[o.cat].c}">${esc(o[lang])}</div>`);
     OCC.filter(o=>o.d===d && o.rung==='DEADLINE').forEach(o=>{
-      const late = o.st==='OVERDUE';
-      here.push(`<div class="band" style="background:${late?'#C2410C':CAT[o.cat].c}">${RUNG_GLYPH.DEADLINE} ${esc(o[lang])}</div>`);
+      const late = o.st==='OVERDUE', c = late ? '#9A3412' : CAT[o.cat].c;
+      here += `<div class="band" style="background:${late?'var(--late-container)':tint(c,.2)};color:${c}">
+        ${t.due} ${hhmm(o.s)} · ${esc(o[lang])}</div>`;
     });
-    bands.push(`<div class="slot">${here.join('')}</div>`);
+    bands += `<div class="slot">${here}</div>`;
   }
 
   const appbar = `<div class="appbar">
-      <div><h2>${t.title}</h2><div class="sub">${t.week} · ${dayDate(0).getDate()}–${dayDate(6).getDate()} Aug</div></div>
-      <div class="spacer"></div><div class="iconbtn">📋</div><div class="iconbtn">＋</div>
+      <div><div class="ttl">${t.cal}</div>
+        <div class="sub">${dayDate(0).getDate()}–${dayDate(6).getDate()} ${new Intl.DateTimeFormat(lang==='he'?'he-IL':'en-GB',{month:'long'}).format(TODAY)}</div></div>
+      <div class="spacer"></div>
+      <div class="iconbtn">${ICON.search}</div><div class="iconbtn accent">${ICON.plus}</div>
     </div>
-    <div class="daystrip">${strip.join('')}</div>
-    <div class="allday">${bands.join('')}</div>`;
+    <div class="dayhdr">${hdr}</div><div class="banded">${bands}</div>`;
 
-  const body = `<div class="grid"><div class="hours">${hours.join('')}</div>${cols.join('')}</div>
-    <div class="muted" style="padding:8px 12px 14px;text-align:center">${t.hint}</div>`;
-
-  return phone(lang, {
-    active:2, newTab:2,
-    tabs:[['🏠',t.home],['🚩',t.goals],['📅',t.cal],['🏆',t.social],['👤',t.profile]],
-    appbar, body,
-  });
+  return phone(lang,{active:2,newTab:2,
+    tabs:[[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social],[ICON.person,t.profile]],
+    appbar,
+    body:`<div class="grid"><div class="hours">${hours}</div>${cols}</div>
+          <div class="muted" style="padding:12px 16px 20px;text-align:center">${t.hint}</div>`});
 }
 
-/* ═══ VARIANT B — “The Day Rail”: an agenda that knows about time.
-       Affordance: tick things off. No grid, one day at a time.        ═══ */
-
+/* ═══ B — THE DAY RAIL · affordance: tick things off
+       The rung is carried by the FORM of the leading time column
+       (rail = block · point = deadline · capsule = span · band = all-day)
+       and by words. The chip carries ONLY the life area.            ═══ */
 function variantB(lang){
-  const t = T[lang];
-  const sel = TODAY_IDX;
+  const t = T[lang], sel = TODAY_IDX;
 
-  const rail = [];
-  for(let d=0; d<7; d++){
+  let rail='';
+  for(let d=0;d<7;d++){
     const dots = OCC.filter(o=>o.d===d).slice(0,4)
-      .map(o=>`<i style="background:${d===sel?'#fff':CAT[o.cat].c}"></i>`).join('');
-    rail.push(`<div class="p ${d===sel?'on':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>
-      <div class="dots">${dots}</div></div>`);
+      .map(o=>`<i style="background:${d===sel?'rgba(255,255,255,.85)':CAT[o.cat].c}"></i>`).join('');
+    rail += `<div class="p ${d===sel?'on':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>
+      <div class="dots">${dots}</div></div>`;
   }
 
   const order = {SPAN:0, ALL_DAY:1, BLOCK:2, DEADLINE:3};
-  const rows = OCC.filter(o => o.d===sel || (o.rung==='SPAN' && sel>o.d && sel<=o.until))
+  const rows = OCC
+    .filter(o => o.d===sel || (o.rung==='SPAN' && sel>o.d && sel<=o.until))
     .concat(OCC.filter(o=>o.st==='OVERDUE' && o.d!==sel))
-    .sort((a,b)=> (order[a.rung]-order[b.rung]) || ((a.s||0)-(b.s||0)))
+    .sort((a,b)=>(order[a.rung]-order[b.rung])||((a.s||0)-(b.s||0)))
     .map(o=>{
       const c = CAT[o.cat].c;
-      const prov = o.st==='PROVISIONAL', done = o.st==='DONE', missed = o.st==='MISSED';
-      const late = o.st==='OVERDUE';
-      const when = o.rung==='BLOCK' ? `${hhmm(o.s)}<br><span class="muted">${hhmm(o.e)}</span>`
-                 : o.rung==='DEADLINE' ? `${t.due}<br>${hhmm(o.s===1439?1439:o.s).replace('23:59','23:59')}`
-                 : o.rung==='SPAN' ? t.spanL : t.allday;
-      const tags = [`<span class="chip" style="background:${c}22;color:${c}">${RUNG_GLYPH[o.rung]} ${esc(CAT[o.cat][lang])}</span>`];
-      if(prov) tags.push(`<span class="chip" style="border:1px dashed var(--primary);color:var(--primary)">${t.prov}</span>`);
-      if(missed) tags.push(`<span class="chip" style="background:#e2e8f0;color:#64748b">${t.missed}</span>`);
-      if(late) tags.push(`<span class="chip" style="background:#C2410C;color:#fff">${t.overdue}</span>`);
-      return `<div class="arow ${prov?'prov':''} ${done?'done':''}" style="border-color:${prov?'var(--primary)':c}">
-        <div class="tick ${done?'done':''}">${done?'✓':''}</div>
-        <div class="body"><div class="t">${esc(o[lang])}</div><div class="m">${tags.join('')}</div></div>
+      const prov=o.st==='PROVISIONAL', done=o.st==='DONE', missed=o.st==='MISSED', late=o.st==='OVERDUE';
+      let when;
+      if(o.rung==='BLOCK')
+        when = `${hhmm(o.s)}<div class="bar" style="background:${prov?tint(c,.4):c}"></div><small>${hhmm(o.e)}</small>`;
+      else if(o.rung==='DEADLINE')
+        when = `<small>${t.due}</small>${hhmm(o.s)}<div class="pt" style="background:${late?'#9A3412':c}"></div>`;
+      else if(o.rung==='SPAN')
+        when = `<small>${dayDate(o.d).getDate()}–${dayDate(o.until).getDate()}</small><div class="cap" style="background:${c}"></div>`;
+      else when = `<small>${t.allday}</small>`;
+
+      const tags = [areaChip(o,lang)];
+      if(prov)   tags.push(`<span class="tag" style="color:var(--primary);box-shadow:inset 0 0 0 1.3px var(--primary)">${ICON.spark}${t.prov}</span>`);
+      if(missed) tags.push(`<span class="tag" style="background:var(--s-highest);color:var(--on-surface-var)">${t.missed}</span>`);
+      if(late)   tags.push(`<span class="tag" style="background:var(--late-container);color:var(--late)">${ICON.alert}${t.late}</span>`);
+
+      return `<div class="row ${prov?'prov':''} ${done?'done':''} ${o.rung==='ALL_DAY'||o.rung==='SPAN'?'band-row':''}">
         <div class="when">${when}</div>
-      </div>`;
+        <div class="body"><div class="t">${esc(o[lang])}</div><div class="m">${tags.join('')}</div></div>
+        <div class="tick ${done?'done':''}">${ICON.check}</div></div>`;
     }).join('');
 
   const appbar = `<div class="appbar">
-      <div><h2>${t.goals}</h2><div class="sub">${t.today} · ${dayName(sel,lang)} ${dayDate(sel).getDate()}</div></div>
-      <div class="spacer"></div><div class="iconbtn">🔍</div><div class="iconbtn">＋</div>
+      <div><div class="ttl">${t.goals}</div>
+        <div class="sub">${t.today} · ${dayName(sel,lang)} ${dayDate(sel).getDate()}</div></div>
+      <div class="spacer"></div>
+      <div class="iconbtn">${ICON.search}</div><div class="iconbtn accent">${ICON.plus}</div>
     </div>
     <div class="seg"><span>${t.list}</span><span class="on">${t.agenda}</span></div>
-    <div class="weekrail">${rail.join('')}</div>`;
+    <div class="rail">${rail}</div>`;
 
-  const body = `${legend(lang)}<div class="agenda">${rows}</div>
-    <div style="padding:4px 12px 18px"><button class="btn ghost" style="width:100%">${t.plan} →</button></div>`;
-
-  return phone(lang, {active:1, appbar, body});
+  return phone(lang,{active:1,appbar,
+    body:`<div class="agenda">${rows}</div>
+      <div style="padding:6px 14px 20px"><button class="btn ghost" style="width:100%">${t.plan}</button></div>`});
 }
 
-/* ═══ VARIANT C — “The Review”: the calendar is a decision queue.
-       Affordance: confirm / reject / reschedule. Grid demoted.       ═══ */
-
+/* ═══ C — THE DECISION STACK · affordance: decide, one at a time.
+       NOT a third list: there is no browsing here at all. One card,
+       two buttons, 1-of-N. Its cost is that you cannot see a week.  ═══ */
 function variantC(lang){
   const t = T[lang];
-  const done    = OCC.filter(o=>o.st==='DONE').length;
-  const missed  = OCC.filter(o=>o.st==='MISSED').length;
-  const overdue = OCC.filter(o=>o.st==='OVERDUE');
-  const props   = OCC.filter(o=>o.st==='PROVISIONAL');
+  const props  = OCC.filter(o=>o.st==='PROVISIONAL');
+  const done   = OCC.filter(o=>o.st==='DONE').length;
+  const missed = OCC.filter(o=>o.st==='MISSED').length;
+  const late   = OCC.filter(o=>o.st==='OVERDUE').length;
 
-  const review = `<div class="review">
-    <div class="hd"><h3>${t.review}</h3>
-      <div class="muted">${dayName(TODAY_IDX,lang)} · ${hhmm(NOW_MIN)}</div></div>
-    <div class="rline"><span class="n" style="color:var(--secondary)">${done}</span>
-      <span class="tx">${t.done}</span><span class="chip" style="background:var(--secondary-container)">✓</span></div>
-    <div class="rline"><span class="n" style="color:#64748b">${missed}</span>
-      <span class="tx">${t.missed} — ${esc(OCC.find(o=>o.st==='MISSED')[lang])}</span>
-      <button class="btn ghost" style="padding:5px 11px">${t.reschedule}</button></div>
-    ${overdue.map(o=>`<div class="rline"><span class="n" style="color:#C2410C">!</span>
-      <span class="tx"><b>${esc(o[lang])}</b><br><span class="muted">${t.overdue}</span></span>
-      <button class="btn" style="padding:5px 11px">${t.confirm}</button></div>`).join('')}
-  </div>`;
+  /* the hero decision is the agent's PLAN, because C9a fixed confirmation as
+     per-plan and not per-block — so the batch is one decision, not four */
+  const hero = `<div class="hero">
+    <div class="peek b2"></div><div class="peek"></div>
+    <div class="deck">
+      <div class="kicker">${ICON.spark}${t.decisions} · 1/3</div>
+      <h3>${esc(t.agentTitle(props.length))}</h3>
+      <div class="lede">${esc(t.agentLede)}</div>
+      <div class="mini">${props.map((o,i)=>`<div class="r">
+          <div class="cb ${i===2?'off':''}">${ICON.check}</div>
+          <div class="tx"><b>${esc(o[lang])}</b>
+            <span>${dayName(o.d,lang)} · ${hhmm(o.s)}–${hhmm(o.e)} · ${esc(CAT[o.cat][lang])}</span></div>
+          <span style="width:9px;height:9px;border-radius:50%;background:${CAT[o.cat].c};flex:none"></span>
+        </div>`).join('')}</div>
+      <div class="acts">
+        <button class="btn">${ICON.check}${t.confirm}</button>
+        <button class="btn ghost">${t.later}</button>
+      </div>
+      <div class="skip">${t.skip}</div>
+    </div></div>
+    <div class="pips"><i class="on"></i><i></i><i></i></div>`;
 
-  const propose = `<div class="propose">
-    <div class="hd" style="padding:12px 13px 9px">
-      <h3 style="margin:0;font-size:14.5px">${t.proposed} ${props.length} ${t.bl}</h3>
-      <div class="muted">${lang==='he'?'שום דבר לא נכתב ליומן עד שתאשר.':'Nothing reaches your Google calendar until you confirm.'}</div>
-    </div>
-    ${props.map((o,i)=>`<div class="prow">
-      <div class="cb ${i===2?'off':''}">✓</div>
-      <div class="body" style="flex:1">
-        <div style="font-size:12.5px;font-weight:600">${esc(o[lang])}</div>
-        <div class="muted">${dayName(o.d,lang)} ${hhmm(o.s)}–${hhmm(o.e)} ·
-          <span style="color:${CAT[o.cat].c};font-weight:600">${esc(CAT[o.cat][lang])}</span></div>
-      </div></div>`).join('')}
-    <div class="prow" style="gap:8px">
-      <button class="btn" style="flex:1">${t.confirm}</button>
-      <button class="btn ghost" style="flex:1">${t.later}</button>
-    </div>
-  </div>`;
-
-  const cells = [];
-  for(let d=0; d<7; d++){
-    const pips = OCC.filter(o=>o.d===d).slice(0,3)
-      .map(o=>`<i style="background:${CAT[o.cat].c}"></i>`).join('');
-    cells.push(`<div class="c ${d===TODAY_IDX?'on':''}">${dayDate(d).getDate()}<div class="pips">${pips}</div></div>`);
-  }
-  const heat = `<div class="card"><h3>${t.week}</h3>
-    <div class="heat">${cells.join('')}</div>
-    <div style="margin-top:9px"><button class="btn ghost" style="width:100%">${t.month} →</button></div></div>`;
-
-  const appbar = `<div class="appbar">
-      <div><h2>${t.home}</h2><div class="sub">${dayName(TODAY_IDX,lang)} ${dayDate(TODAY_IDX).getDate()} Aug</div></div>
-      <div class="spacer"></div><div class="iconbtn">📅</div><div class="iconbtn">👤</div>
+  const recap = `<div class="recap">
+      <div><div class="n" style="color:var(--secondary)">${done}</div><div class="u">${t.done}</div></div>
+      <div class="sep"></div>
+      <div><div class="n" style="color:var(--on-surface-var)">${missed}</div><div class="u">${t.missed}</div></div>
+      <div class="sep"></div>
+      <div><div class="n" style="color:var(--late)">${late}</div><div class="u">${t.late}</div></div>
+      <div style="flex:1"></div>
+      <button class="btn tonal sm">${t.resched}</button>
     </div>`;
 
-  return phone(lang, {active:0, appbar, body: review + propose + heat + `<div style="height:10px"></div>`});
+  const appbar = `<div class="appbar">
+      <div><div class="ttl">${t.home}</div>
+        <div class="sub">${dayName(TODAY_IDX,lang)} · ${hhmm(NOW_MIN)}</div></div>
+      <div class="spacer"></div>
+      <div class="iconbtn">${ICON.cal}</div><div class="iconbtn">${ICON.person}</div>
+    </div>`;
+
+  return phone(lang,{active:0,appbar,
+    body:`<div class="sect">${t.review}</div>${hero}${recap}
+          <div class="toweek">${t.toweek}</div>`});
 }
 
-/* ═══ switcher ═══════════════════════════════════════════════════════ */
-
+/* ═══ switcher ═══ */
 const VARIANTS = [
-  ['A', 'The Grid',     'place time',              variantA],
-  ['B', 'The Day Rail', 'tick things off',         variantB],
-  ['C', 'The Review',   'confirm what was proposed',variantC],
+  ['A','The Grid','place time',variantA],
+  ['B','The Day Rail','tick things off',variantB],
+  ['C','The Decision Stack','decide, one at a time',variantC],
 ];
-
 function state(){
   const p = new URLSearchParams(location.search);
-  const v = (p.get('variant')||'A').toUpperCase();
-  const l = p.get('lang')==='he' ? 'he' : 'en';
-  return [VARIANTS.findIndex(x=>x[0]===v) < 0 ? 0 : VARIANTS.findIndex(x=>x[0]===v), l];
+  let i = VARIANTS.findIndex(x=>x[0]===(p.get('variant')||'A').toUpperCase());
+  return [i<0?0:i, p.get('lang')==='he'?'he':'en'];
 }
-function go(i, lang){
+function go(i,lang){
   const p = new URLSearchParams(location.search);
-  p.set('variant', VARIANTS[i][0]); p.set('lang', lang);
-  history.replaceState(null,'', location.pathname+'?'+p);
-  render();
+  p.set('variant',VARIANTS[i][0]); p.set('lang',lang);
+  history.replaceState(null,'',location.pathname+'?'+p); render();
 }
 function render(){
-  const [i, lang] = state();
+  const [i,lang] = state();
   document.getElementById('stage').innerHTML = VARIANTS[i][3](lang);
   document.getElementById('lab').innerHTML =
     `${VARIANTS[i][0]} — ${VARIANTS[i][1]}<small>${VARIANTS[i][2]}</small>`;
-  document.querySelectorAll('.lang button').forEach(b =>
-    b.classList.toggle('on', b.dataset.lang === lang));
+  document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
 }
-document.getElementById('prev').onclick = () => { const [i,l]=state(); go((i+2)%3, l); };
-document.getElementById('next').onclick = () => { const [i,l]=state(); go((i+1)%3, l); };
-document.querySelectorAll('.lang button').forEach(b =>
-  b.onclick = () => { const [i]=state(); go(i, b.dataset.lang); });
-addEventListener('keydown', e => {
-  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
-  const [i,l] = state();
-  if(e.key==='ArrowLeft')  go((i+2)%3, l);
-  if(e.key==='ArrowRight') go((i+1)%3, l);
+document.getElementById('prev').onclick = () => { const [i,l]=state(); go((i+2)%3,l); };
+document.getElementById('next').onclick = () => { const [i,l]=state(); go((i+1)%3,l); };
+document.querySelectorAll('.lang button').forEach(b=>
+  b.onclick = () => { const [i]=state(); go(i,b.dataset.lang); });
+addEventListener('keydown', e=>{
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)||e.target.isContentEditable) return;
+  const [i,l]=state();
+  if(e.key==='ArrowLeft')  go((i+2)%3,l);
+  if(e.key==='ArrowRight') go((i+1)%3,l);
 });
 render();
 </script>

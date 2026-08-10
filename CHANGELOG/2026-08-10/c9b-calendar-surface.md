@@ -77,6 +77,38 @@ One week of data, shared by all three, carrying every state `C9a` defined: four 
 owed), one `EXPIRED` (counts for nothing). Hebrew titles under Ido's real life areas
 in the committed `GoalCategory` hexes.
 
+## 🔁 Rev 2 — Ido's review
+
+Four corrections. **One was a design error, not a taste call**, and separating those
+two is the finding worth keeping.
+
+- **A** — a block printed only its start time. Fixed: `09:00–11:00`.
+- **B** — *"I can't read the little icons inside the life-area chips, and there's no
+  connection between a square / triangle / double-arrow and what they mean."*
+  **He was right about the cause, not just the symptom.** The chip was carrying **two
+  unrelated axes at once** — the **rung** (a property of the *occurrence*) and the
+  **life area** (a property of the *goal*). Jammed into one pill, the rung had no room
+  to be anything but a cryptic symbol. The fix is a decomposition, not a nicer icon:
+  the chip now carries **only** the life area, and the rung is carried by **the form of
+  the leading time column** — a filled rail (`BLOCK`), a single point (`DEADLINE`), a
+  soft capsule (`SPAN`), the words *all-day* with no time at all (`ALL_DAY`). Form
+  first, then words, icons only where words do not fit. No legend survives.
+- **C** — *"I couldn't understand the difference between C and B."* Also correct, and
+  also structural: both had degenerated into **lists of rows**, so the intended
+  difference (browse-many vs decide-one) was invisible. C is now a **decision stack**
+  with no list and no browsing at all — one card, `1/3`, two buttons, two cards peeking
+  behind. Its cost is now *visible on the screen* rather than argued in a table: you
+  cannot see a week from it. The hero decision is the agent's **whole plan**, not one
+  block, because `C9a` fixed confirmation as per-plan.
+- **Plurals** — `הסוכן תכנן 4 בלוקים` / `The agent planned 4 blocks`, and the `n=1`
+  branch too (`בלוק אחד` / `1 block`), which is where this class of bug usually hides.
+
+Plus the visual pass he asked for: flat white cards replaced by the **M3 tonal
+container ladder** derived from the Aurora skin (five levels between `surfaceBright`
+and `surfaceDim`), event fills moved from saturated-with-white-text to **tinted with
+coloured text**, radii onto the M3 Expressive scale, one weight axis in the type scale,
+and **every icon hand-authored as inline SVG** so nothing depends on a font or a CDN.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
@@ -99,3 +131,17 @@ first paint:
 
 What this does **not** prove, and the resolution must not claim: that any of it lays
 out correctly in Compose.
+
+**Rev 2 added three regression checks**, each tied to a defect Ido actually found —
+a review comment is worth more as a test than as a memory:
+
+- **every** block in A prints a range, not a bare start (`10/10` blocks carry `–`);
+- **none** of the four retired rung glyphs (`▮ ▼ ▭ ⟷`) survives anywhere in A, B or C,
+  in either language;
+- both plural branches print correctly in both languages at `n=1` **and** `n=4`.
+
+The glyph check **failed on its first run** and the failure was the useful kind: the
+surviving `▮` was in the fake status bar, not in a chip — a false positive of my own
+test. It still earned its keep, because those block characters were visually
+indistinguishable from the glyphs B had just dropped, so the status bar is now drawn
+as inline SVG signal/wifi/battery indicators instead.
