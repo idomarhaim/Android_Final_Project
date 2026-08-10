@@ -158,6 +158,57 @@ hold*). Same treatment as pass 3 — rewritten down to the survivor under
 
 `Check-KbLinks` **CLEAN at 39 pages**.
 
+## Pass 5 — `c4-goal-task-ontology`, 5/5 — backlog closed
+
+**New:** `kb/dev/edges-not-types.md` — entries 1 and 2 merged, because they are the
+semantic and structural halves of one finding. A discriminator between two entity
+kinds can be a property of the **relationship**, and when it is, every
+object-property proxy can be **inverted** rather than merely weak: the best one
+classified Ido's own two unprompted examples backwards *in both directions*. The
+consequence that outlives the domain — a relationship property is **absent from the
+input**, not merely hard to infer, so no model size closes it, which turns a
+modelling note into a product rule (*act silently on instrumental structure; ask
+before asserting an intrinsic edge*). Structurally: *"can an X contain an X?"* is one
+object with two edges, and a role stored as an **edge** makes promotion one write
+where a `kind` enum makes it a migration over live data.
+
+**New:** `kb/dev/render-site-vs-query-site.md` — a query proves **reachability**;
+only a render site proves **visibility**. Worth a page because the wrong conclusion
+was well-evidenced: three true facts pointed at "the unfiled-task inbox is free"
+while the dashboard reduces the list to three integers and renders no tasks —
+counted everywhere, reachable nowhere, one surface rather than zero.
+
+**Updated in place:** `kb/dev/decision-map-charting.md` gains **§5** (a tracker does
+not know what its own inputs are — a session working a ticket owes the **source
+folder** and the **recent commit subjects**, and the miss is damning because the
+session had read a commit subject saying the answer had arrived) and **§6** (closing
+a root can leave a map **more** blocked, which is it catching up, not regressing —
+so report the frontier as **re-queried, never predicted**).
+
+That page accumulated **four entries from three different candidate files** in this
+one drain, which is what an update-over-create discipline looks like when it works.
+
+Candidate file `git rm`'d. `Check-KbLinks` **CLEAN at 41 pages**.
+
+## Where the backlog ended up
+
+| | Count |
+|---|---|
+| Entries ingested centrally | 18 |
+| Entries ingested project-locally | 1 |
+| Entries parked as always-ask `rules/` candidates | 2 |
+| **Total** | **21** |
+
+**No standing claim was superseded in either bundle across all five passes** — every
+entry was additive. The one entry that carried a supersede warning was checked and
+cleared.
+
+New central pages: `recovery-masks-failure`, `google-oauth-scopes-and-consent`,
+`optimistic-ui-patterns`, `edges-not-types`, `render-site-vs-query-site`.
+Central pages updated in place: `decision-map-charting` (4 entries),
+`firestore-write-semantics` (2), `android-device-verification`,
+`review-intake-and-triage`, `learning-pipeline`.
+
 ## 🧪 Tests
 
 **No suite run, and none applicable** — this session created or modified no Kotlin,
