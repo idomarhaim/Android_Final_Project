@@ -181,6 +181,7 @@ body{
 }
 .note .tag.derived{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
 .note .tag.ask{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.note .tag.taken{background:color-mix(in srgb,var(--c-rel) 18%,transparent);color:var(--c-rel);border-color:color-mix(in srgb,var(--c-rel) 45%,transparent)}
 .note strong{color:var(--text)}
 
 .dead{opacity:.42}
@@ -214,12 +215,18 @@ h2.sec{width:100%;text-align:center;font-size:13px;text-transform:uppercase;lett
    contribute nothing (C9a via C9b).
    ═══════════════════════════════════════════════════════════════ */
 const AREAS = [
-  {id:'learning', en:'Learning',      he:'לימודים',        v:'--c-learning', min:420, dprog:3,   measured:true },
-  {id:'health',   en:'Health',        he:'בריאות',         v:'--c-health',   min:260, dprog:12,  measured:true },
-  {id:'career',   en:'Career',        he:'קריירה',         v:'--c-career',   min:210, dprog:6,   measured:true },
-  {id:'rel',      en:'Relationships', he:'מערכות יחסים',   v:'--c-rel',      min:120, dprog:18,  measured:true },
-  {id:'finance',  en:'Finance',       he:'כספים',          v:'--c-finance',  min:60,  dprog:null,measured:false},
-  {id:'other',    en:'Unfiled',       he:'ללא שיוך',       v:'--c-other',    min:40,  dprog:null,measured:false},
+  {id:'learning', en:'Learning',      he:'לימודים',        v:'--c-learning', min:420, dprog:3,   measured:false,
+   moves:[]},
+  {id:'health',   en:'Health',        he:'בריאות',         v:'--c-health',   min:260, dprog:12,  measured:true,
+   moves:[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',d:12},{en:'Lose 5 kg',he:'לרדת 5 ק״ג',d:4}]},
+  {id:'career',   en:'Career',        he:'קריירה',         v:'--c-career',   min:210, dprog:6,   measured:true,
+   moves:[{en:'Publish the portfolio',he:'לפרסם תיק עבודות',d:6}]},
+  {id:'rel',      en:'Relationships', he:'מערכות יחסים',   v:'--c-rel',      min:120, dprog:18,  measured:true,
+   moves:[{en:'A date night every week',he:'ערב זוגי כל שבוע',d:18}]},
+  {id:'finance',  en:'Finance',       he:'כספים',          v:'--c-finance',  min:60,  dprog:null,measured:false,
+   moves:[]},
+  {id:'other',    en:'Unfiled',       he:'ללא שיוך',       v:'--c-other',    min:40,  dprog:null,measured:false,
+   moves:[]},
 ];
 const TOTAL = AREAS.reduce((s,a)=>s+a.min,0);
 
@@ -313,31 +320,25 @@ function stacked(w, h){
   </svg>`;
 }
 
-/* the new one — two ranked columns, joined. See note G1. */
-function slopeChart(w){
-  const measured = AREAS.filter(a=>a.measured);
-  const byEffort  = [...measured].sort((a,b)=>b.min-a.min);
-  const byOutcome = [...measured].sort((a,b)=>b.dprog-a.dprog);
-  const rowH = 44, h = rowH*measured.length + 10;
-  const leftX = 8, rightX = w-8, mid1 = w*0.34, mid2 = w*0.66;
-  const flip = L==='he';
-  let out = '';
-  byEffort.forEach((a,i)=>{
-    const j = byOutcome.findIndex(x=>x.id===a.id);
-    const y1 = 18+i*rowH, y2 = 18+j*rowH;
-    const x1 = flip ? w-mid1 : mid1, x2 = flip ? w-mid2 : mid2;
-    const moved = Math.abs(i-j);
-    out += `<path d="M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}"
-      fill="none" stroke="var(${a.v})" stroke-width="${moved>=2?3:2}" opacity="${moved>=2?1:.45}"/>`;
-    out += `<circle cx="${x1}" cy="${y1}" r="4.5" fill="var(${a.v})"/>`;
-    out += `<circle cx="${x2}" cy="${y2}" r="4.5" fill="var(${a.v})"/>`;
-    const lx = flip ? rightX : leftX, la = flip ? 'end' : 'start';
-    out += `<text x="${lx}" y="${y1+4}" text-anchor="${la}" font-size="12.5" font-weight="600"
-      fill="var(--text)">${T(a)}</text>`;
-    const rx = flip ? leftX : rightX, ra = flip ? 'start' : 'end';
-    out += `<text x="${rx}" y="${y2+4}" text-anchor="${ra}" font-size="12" fill="var(--muted)">+${a.dprog}%</text>`;
-  });
-  return `<svg width="${w}" height="${h}" style="display:block;overflow:visible">${out}</svg>`;
+/* rev 2 — effort ranked, and what actually moved beside it. See note G1. */
+function movedRows(){
+  const ordered = [...AREAS].filter(a=>a.id!=='other').sort((a,b)=>b.min-a.min);
+  const maxMin = Math.max(...ordered.map(a=>a.min));
+  return ordered.map(a=>`
+    <div style="padding:11px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="flex:1;font-size:14px;font-weight:650">${T(a)}</span>
+        <span style="font-size:12px;color:var(--muted)">${bidi(hm(a.min))}</span>
+      </div>
+      <div style="height:7px;border-radius:99px;background:var(--surface2);margin:7px 0 8px;overflow:hidden">
+        <div style="width:${a.min/maxMin*100}%;height:100%;background:var(${a.v})"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${a.moves.length
+          ? a.moves.map(m=>`<span class="pill" style="border-color:color-mix(in srgb,var(--good) 45%,var(--line));color:var(--good)">${T(m)} ${bidi('+'+m.d+'%')}</span>`).join('')
+          : `<span class="nomeasure">${t('no measure — nothing here can move','ללא מדד — אין כאן מה שיזוז')}</span>`}
+      </div>
+    </div>`).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -354,6 +355,24 @@ function statusbar(){
   return `<div class="statusbar"><span>${bidi('9:41')}</span><span>${bidi('􀙇 􀛨 100%')}</span></div>`;
 }
 
+/* rev 2 — the level ring lives around the avatar, so nothing is lost and
+   nothing occupies a row of its own. See note H4. */
+function avatarWithLevel(pct, level){
+  const s=48, thick=3, r=(s-thick)/2, c=s/2, C=2*Math.PI*r;
+  return `<div style="position:relative;width:${s}px;height:${s+4}px;flex:none">
+    <svg width="${s}" height="${s}" style="position:absolute;top:0;inset-inline-start:0">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${thick}"
+        stroke-linecap="round" stroke-dasharray="${C*pct/100} ${C}" transform="rotate(-90 ${c} ${c})"/>
+    </svg>
+    <div class="avatar" style="position:absolute;top:7px;inset-inline-start:7px;width:34px;height:34px;border:0;font-size:13px">${t('I','ע')}</div>
+    <div style="position:absolute;bottom:0;left:0;right:0;text-align:center;line-height:0">
+      <span style="display:inline-block;background:var(--accent);color:var(--accent-ink);font-size:9.5px;
+        font-weight:800;padding:2px 6px;border-radius:99px;border:2px solid var(--surface);line-height:1">${bidi(String(level))}</span>
+    </div>
+  </div>`;
+}
+
 function topbar(){
   return `${statusbar()}
   <div class="topbar">
@@ -362,7 +381,7 @@ function topbar(){
       <div class="v">${t('Good evening, Ido','ערב טוב, עידו')}</div>
     </div>
     <div class="iconbtn">✦</div>
-    <div class="avatar">${t('I','ע')}</div>
+    ${avatarWithLevel(72, 6)}
   </div>`;
 }
 
@@ -532,16 +551,15 @@ function screenAnalytics(){
     </div>
 
     <div class="card">
-      <h3>${t('Effort and outcome','מאמץ ותוצאה')}</h3>
-      <p class="sub">${t('Ranked by time on the left, by progress moved on the right','מדורג לפי זמן מצד אחד, לפי התקדמות מהצד השני')}</p>
-      <div class="slope">
-        <div class="hd"><span>${t('Most time','הכי הרבה זמן')}</span><span>${t('Most movement','הכי הרבה תזוזה')}</span></div>
-        ${slopeChart(322)}
-      </div>
+      <h3>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</h3>
+      <p class="sub">${t('Ordered by time. Beside each area, the goals that actually moved.',
+                         'מסודר לפי זמן. ליד כל תחום, המטרות שבאמת זזו.')}</p>
+      ${movedRows()}
       <div class="foot">
-        <b>${t('Learning took the most time and moved the least.','לימודים לקחו הכי הרבה זמן והתקדמו הכי מעט.')}</b>
-        ${t('That is not necessarily wrong — some work pays off later. Two areas are missing because their goals have no measure.',
-            'זה לא בהכרח רע — יש עבודה שמשתלמת בהמשך. שני תחומים חסרים כי למטרות שלהם אין מדד.')}
+        <b>${t('Learning took most of your week — and it has no measure, so nothing here can tell you whether it moved.',
+               'לימודים לקחו את רוב השבוע — ואין להם מדד, אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</b>
+        ${t('That is worth knowing on its own. Adding a measure to one of those goals is the only thing that changes it.',
+            'זה שווה לדעת בפני עצמו. הוספת מדד לאחת מהמטרות האלה היא הדבר היחיד שישנה את זה.')}
       </div>
     </div>
 
@@ -550,7 +568,7 @@ function screenAnalytics(){
 
 /* ── THE GAP CHART, and the two forms it is not ───────────────── */
 function screenGap(){
-  const measured = AREAS.filter(a=>a.measured);
+  const measured = AREAS.filter(a=>a.dprog!==null);
   const maxMin = Math.max(...measured.map(a=>a.min));
   const maxD   = Math.max(...measured.map(a=>a.dprog));
   const rows = measured.map(a=>`
@@ -565,17 +583,34 @@ function screenGap(){
         <div style="width:${a.dprog/maxD*100}%;height:100%;background:var(${a.v});opacity:.45"></div></div>
     </div>`).join('');
 
+  const confound = (title, span, step, pct, v) => `
+    <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <span class="rail" style="background:var(${v});height:30px"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13.5px;font-weight:600">${title}</div>
+        <div style="font-size:12px;color:var(--muted)">${step}</div>
+      </div>
+      <div style="font-size:17px;font-weight:750;color:var(${v})">${bidi('+'+pct+'%')}</div>
+    </div>`;
+
   return `${statusbar()}
   <div class="topbar"><div class="hello"><div class="v">${t('Effort and outcome','מאמץ ותוצאה')}</div></div>
     <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
   <div class="wrap">
+
     <div class="card">
-      <h3>${t('Chosen form — two rankings, joined','הצורה הנבחרת — שני דירוגים, מחוברים')}</h3>
-      <p class="sub">${t('Crossing lines are the whole story','הקווים שמצטלבים הם כל הסיפור')}</p>
-      <div class="slope">
-        <div class="hd"><span>${t('Most time','הכי הרבה זמן')}</span><span>${t('Most movement','הכי הרבה תזוזה')}</span></div>
-        ${slopeChart(322)}
-      </div>
+      <h3>${t('Chosen — effort ranked, movement named','נבחר — מאמץ מדורג, תזוזה בשמה')}</h3>
+      <p class="sub">${t('The app orders only the quantity it may order','האפליקציה מדרגת רק את הכמות שמותר לה לדרג')}</p>
+      ${movedRows()}
+    </div>
+
+    <div class="card">
+      <h3>${t('Rejected — rank time against rank movement','נדחה — דירוג זמן מול דירוג תזוזה')}</h3>
+      <p class="sub">${t('This was revision 1. It was killed by its own test.','זו הייתה גרסה 1. היא נפסלה במבחן של עצמה.')}</p>
+      ${confound(t('Lose 5 kg','לרדת 5 ק״ג'), 5, t('one kilogram','קילוגרם אחד'), 20, '--c-health')}
+      ${confound(t('Read 12 books','לקרוא 12 ספרים'), 12, t('one book','ספר אחד'), 8, '--c-learning')}
+      <div class="foot">${t('The same single act of progress scores 20% or 8% depending only on how large a target you happened to write. So a ranking by "movement" partly ranks how modest your goals are — and an ordering that depends on how you phrased the goal is the exact failure C16 and C3 each killed once already.',
+        'אותו מעשה התקדמות בודד שווה 20% או 8% רק לפי גודל היעד שבמקרה כתבתם. כך שדירוג לפי "תזוזה" מדרג בין השאר כמה צנועות המטרות שלכם — וסדר שתלוי בניסוח המטרה הוא בדיוק הכשל ש־C16 ו־C3 כבר הרגו כל אחד בתורו.')}</div>
     </div>
 
     <div class="card">
@@ -674,12 +709,14 @@ const VARIANTS = [
      p:`<code>A7</code>'s sharpest fact is that <strong>no task is shown anywhere on Home</strong>. A task list
         for today, with the load bar <code>C9b</code> already settled (arithmetic, no model call, free against the
         free-tier constraint), is the smallest thing that fixes it.`},
-    {tag:'ask', t:'H4 · Points demoted to the avatar — your call',
-     p:`<code>C3</code> settled that <strong>points are a view of effort</strong>, computed as
-        <code>round(minutes / 3) × difficulty</code> — not a third currency. A derived number as the screen's
-        hero teaches that the derived thing is the point. Here it moves into the profile avatar.
-        <strong>Motivation design is <code>C10</code>'s, not this ticket's</strong>, so this is a proposal you can
-        overturn without touching anything else.`},
+    {tag:'taken', t:'H4 · The points hero and the donut were the same number twice',
+     p:`Handed back on 2026-08-10, so this is the agent's, on the record. <code>C3</code> made points
+        <code>round(minutes / 3) × difficulty</code> — <strong>computed from minutes</strong>. The time donut lower
+        down is built from those same minutes. So Home was showing <strong>one quantity twice</strong>, once as a
+        reward and once as a fact, and removing the hero loses <em>no information at all</em>. What it would have
+        lost is the <strong>motivation</strong>, so that is kept rather than deleted: <strong>the level becomes a
+        ring around the avatar</strong>, with the number on it. Glanceable, zero vertical space, and it is not the
+        headline. Motivation design stays <code>C10</code>'s.`},
   ]},
 
   {id:'home-before', name:'Home — as it ships today', tab:0, render:screenHomeBefore, hint:'The comparison', notes:[
@@ -715,21 +752,25 @@ const VARIANTS = [
   ]},
 
   {id:'gap', name:'Effort and outcome — the new chart', tab:0, render:screenGap, hint:'And the two forms it is not', notes:[
-    {tag:'derived', t:'G1 · Why two rankings and not a scatter, a pair of bars, or a score',
-     p:`Effort is <strong>minutes</strong>; outcome is <strong>percentage points of progress</strong>, and
-        <code>C17</code> ruled progress <strong>owned, never pooled</strong> — so there is no legitimate total to
-        take a share of, and any chart that puts the two on one scale is arithmetic the model forbids.
-        <strong>Rankings survive incommensurable units</strong>: ordering is all they need. The finding is the
-        <strong>crossing line</strong> — Learning is first for time and fourth for movement.`},
-    {tag:'derived', t:'G2 · The rejected forms fail a rule this map already has',
-     p:`Paired bars invite a length comparison the numbers cannot support. A single efficiency number
-        (<code>% per hour</code>) is <strong>one mark carrying two axes</strong> — the chart form of the rule
-        <code>C9b</code> bought with its unreadable rung glyphs — and it deletes the very gap it claims to measure.`},
-    {tag:'ask', t:'G3 · Two areas are absent, and that is the honest render',
-     p:`Finance and Unfiled have no measured goal, so they have no outcome to rank. They are named as absent rather
-        than drawn at zero — a goal with no measure is <code>C7</code>'s <strong>default</strong>, not a gap to fill.
-        Worth your eye: this chart is <strong>about your week</strong>, and a picture of where your time
-        underperformed can read as an accusation. The footnote says <em>"not necessarily wrong"</em> deliberately.`},
+    {tag:'taken', t:'G1 · Revision 1 drew this as two rankings. Its own test killed it.',
+     p:`Effort is <strong>minutes</strong>, outcome is <strong>percentage points</strong>, and <code>C17</code>
+        ruled progress <strong>owned, never pooled</strong> — so no single scale is legitimate, and rev 1 fell back
+        on <em>rankings survive incommensurable units</em>. They do; <strong>this ranking does not.</strong>
+        A percentage is a fraction of <em>its own</em> target, so one kilogram off a 5 kg goal scores
+        <strong>20%</strong> while one book of twelve scores <strong>8%</strong> — the same single act of progress.
+        Ranking by "movement" therefore partly ranks <strong>how modest your goals are</strong>, and an ordering
+        that depends on how you phrased the goal is the exact failure <code>C16</code> and <code>C3</code> each
+        killed once already. Rev 1's chart is kept in the <code>gap</code> variant as the rejected exhibit.`},
+    {tag:'taken', t:'G2 · What replaced it: order only the quantity you may order',
+     p:`<strong>Minutes are poolable and comparable, so the app ranks them.</strong> Movement is not, so the app
+        <strong>names</strong> it instead — the goals that actually moved, with their own numbers, beside the bar.
+        No cross-goal ordering is asserted anywhere, and the gap is still the thing you see first, because the
+        longest bar with nothing beside it is unmissable.`},
+    {tag:'taken', t:'G3 · And the honest render found a better headline than the ranking had',
+     p:`With movement named rather than scored, the week says something rev 1 could not: <strong>the area that took
+        most of it has no measure at all</strong>, so the app cannot tell you whether it moved. That is a fact about
+        <em>the model</em>, not a verdict on your week — and it points at the one action that changes it, which is
+        adding a measure. It also replaces the accusation risk: no area is scored, so none is blamed.`},
   ]},
 
   {id:'widgets', name:'Widget pack (#10)', tab:0, render:screenWidgets, hint:'What may and may not be a widget', notes:[
@@ -738,10 +779,10 @@ const VARIANTS = [
         than a warning. The donut fails it: <code>C17</code> <strong>requires</strong> the divided-minutes
         disclosure, and a widget cannot carry it. What passes: next block, decisions waiting, one measured goal's
         ring. <strong>Issue #10 is unblocked by this rule</strong>, not by a list of drawings.`},
-    {tag:'ask', t:'W2 · The points widget is refused on a product argument, not a technical one',
-     p:`It would render perfectly. But points are derived from minutes, and a derived number on a home screen all
-        day becomes the thing being optimised. Overturnable — and it belongs beside <code>H4</code>, since the two
-        stand or fall together.`},
+    {tag:'taken', t:'W2 · The points widget is refused on a product argument, not a technical one',
+     p:`It would render perfectly. But points are derived from minutes, and a derived number sitting on a home
+        screen all day becomes the thing being optimised. Decided with <code>H4</code>, which the two always stood
+        or fell together on — and the level ring on the avatar is where that motivation now lives instead.`},
   ]},
 ];
 
@@ -753,11 +794,17 @@ const GLOBAL_NOTES = [
       <strong>Committed palette</strong> on the dark theme to see the defect: <code>#3B3BA8</code> and
       <code>#7C4A21</code> stop being distinguishable on <code>#0C1520</code>. The dark tones proposed here keep the
       pairwise distinctness <code>ThemePaletteTest</code> already guards.`},
-  {tag:'ask', t:'P1 · No chart picker — derived, and flagged for you to overturn',
-   p:`<code>AppPreferencesRepository</code> exists, so a picker is cheap to build. It is refused on the standard
-      <code>#12</code> made normative: the app owes a <strong>design</strong>, not a configuration space, and a
-      picker asks the one real user to author his own analysis. What stays pickable is the
-      <strong>range</strong> and the <strong>focused slice</strong> — those are queries, not layout.`},
+  {tag:'taken', t:'P1 · No chart picker — and the need behind one is met a better way',
+   p:`Handed back, so this is the agent's. <code>AppPreferencesRepository</code> exists, so cost was never the
+      discriminator. The app <strong>already</strong> lets you pick — the <strong>range</strong> and the
+      <strong>focused slice</strong> — and those are <em>queries</em>. A layout picker is different in kind: it asks
+      the one real user to author his own analysis, against <code>#12</code>'s standard that the app owes a
+      <strong>design</strong>. And the wish behind it is almost always <em>"this card is useless to me"</em>, which
+      is a design failure to fix for everyone, not a preference to store — exactly what retiring
+      <code>HorizontalBarChart</code> did. <strong>Two improvements instead of a picker:</strong> a card with
+      nothing to say <strong>hides itself</strong> (the effort card needs at least one measured goal; the trend
+      needs more than one day), and the <strong>range picker remembers your choice</strong> — which is the honest
+      use for the preference store.`},
 ];
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -772,7 +819,7 @@ function render(){
   document.getElementById('screen').scrollTop = 0;
   document.getElementById('notes').innerHTML =
     [...v.notes, ...GLOBAL_NOTES].map(n=>`<div class="note">
-      <h4>${n.tag?`<span class="tag ${n.tag}">${n.tag==='derived'?'derived':'yours'}</span>`:''}${n.t}</h4>
+      <h4>${n.tag?`<span class="tag ${n.tag}">${({derived:'derived',ask:'yours',taken:'handed back'})[n.tag]}</span>`:''}${n.t}</h4>
       <p>${n.p}</p></div>`).join('');
   const u = new URL(location); u.searchParams.set('variant', v.id); history.replaceState({},'',u);
 }

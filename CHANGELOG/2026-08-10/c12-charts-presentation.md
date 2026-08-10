@@ -152,18 +152,64 @@ Three items are tagged **yours** in the prototype and in the comment, not derive
 points banner (it touches `C10`'s motivation design), refusing a chart picker, and whether an
 effort-versus-outcome picture is one Ido wants shown at all.
 
+## Revision 2 — the three open questions were handed back, and one of the answers killed rev 1's own chart
+
+Ido was shown the picker for the three items rev 1 tagged **yours** and answered all three
+identically: *"I could not fully understand the options — explain simply and schematically,
+choose the answer that gives the highest standard and quality for the app and its purpose,
+UX/UI and the software, and improve it if you can."* That is a **delegation, not a waiver** —
+the record distinguishes them — so all three are taken by the agent and on the record, and each
+was re-checked for a false fork rather than picked out of its own option set. Posted as
+[the rev 2 comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5245560781).
+
+1. **Points on Home — the fork was false.** `C3` makes points `round(minutes / 3) × difficulty`,
+   **computed from minutes**, and the time donut on the same screen is built from those same
+   minutes. Home was showing **one quantity twice**, so removing the hero loses **no
+   information**. What it would have lost is the motivation, which is kept rather than deleted:
+   **the level becomes a ring around the avatar**, number on it — glanceable, zero vertical
+   space, not the headline. The points widget falls with it, as the two always stood together.
+2. **No chart picker, and the need behind one met a better way.** Cost was never the
+   discriminator. The app already lets the user pick the **range** and the **focused slice** —
+   *queries*, not layout — and the wish behind a layout picker is almost always *"this card is
+   useless to me"*, which is a design failure to fix for everyone. Two improvements instead:
+   **a card with nothing to say hides itself** (the effort card needs ≥1 measured goal, the
+   trend needs >1 day), and **the range picker remembers the choice**, which is the honest use
+   for `AppPreferencesRepository`.
+3. **The effort card ships — but rev 1's form was wrong, and this is the real improvement.**
+   Rev 1 argued rankings survive incommensurable units. They do; **that particular ranking did
+   not survive its own test.** A percentage is a fraction of *its own* target, so one kilogram
+   off *"lose 5 kg"* scores **+20%** while one book of *"read 12 books"* scores **+8%** — the
+   same act of progress. Ranking by movement therefore partly ranks **how modest the goals
+   are**, which is the failure `C16` killed as count-weighting and `C3` killed again as
+   points-weighting. Rev 1's chart is retained in the `gap` variant as a **third rejected
+   exhibit**.
+
+**What replaced it: order only the quantity you may order.** Minutes are poolable and
+comparable, so the app ranks them; movement is not, so the app **names** it — the goals that
+actually moved, with their own numbers, beside the bar. No cross-goal ordering is asserted.
+**And the honest render found a better headline than the ranking had:** the area taking most of
+the week **has no measure at all**, so the app cannot say whether it moved — a fact about the
+model rather than a verdict on the week, pointing at the one action that changes it. It also
+disposes of the accusation risk that made the question Ido's in the first place: no area is
+scored, so none is blamed.
+
 ## 🧪 Tests
 
-**Still none owed — no ticket on this map ships code — but two mechanical assertions were run
+**Still none owed — no ticket on this map ships code — but the mechanical assertions were run
 against the artifact rather than eyeballed:**
 
-- **JS parses.** The `<script>` block was extracted and passed through `node --check` → **OK**.
-  A prototype that silently fails to render is worse than no prototype.
+- **JS parses.** The `<script>` block was extracted and passed through `node --check` → **OK**,
+  at rev 1 and again after every rev 2 edit. A prototype that silently fails to render is worse
+  than no prototype.
 - **No Hebrew literal can reach the English render** — `C9b`'s finding 3, asserted absolutely
-  rather than sampled. Every single-quoted literal containing a character in the Hebrew Unicode
-  block was enumerated: **41 found, 41 language-guarded** (behind `t(en, he)`, a `he:` /`meHe:`
-  key, or an `L === 'he'` conditional), **0 unguarded**, and **0 lines** carry Hebrew outside a
-  string literal.
+  rather than sampled, and **re-asserted after the rev 2 rewrite**. Every literal containing a
+  character in the Hebrew Unicode block was enumerated: **41 found, 41 language-guarded**
+  (behind `t(en, he)`, a `he:` / `meHe:` key, or an `L === 'he'` branch — those three are the
+  complete taxonomy of where Hebrew appears in the file), **0 unguarded**, and **0 lines** carry
+  Hebrew outside a string literal. Stated precisely: this is a **static** guard check, not a
+  rendered-output test — no browser was driven.
+- **No dead reference to the deleted chart.** `slopeChart` was rev 1's function; after the rev 2
+  rewrite the file contains **0** references to it, checked rather than assumed.
 
 Layer coverage is otherwise unchanged and unowed: nothing in this unit touched `app/`,
 `functions/` or `firestore-tests/`, so no server, client, endpoint, database or UI layer was
@@ -174,7 +220,9 @@ target.
 
 ## Status
 
-**Revision 1 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
-visual, so it resolves against something Ido reacts to, not against an argument. Awaiting his
-reaction. Nothing was filed, no other session's ticket, row or file was edited, and `#12`'s
-index line is deliberately **not** written yet: it is written on resolution, after a re-fetch.
+**Revision 2 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+visual, so it resolves against something Ido reacts to, not against an argument. The three
+questions the prototype could not settle have been put to him once and handed back, so they are
+answered on the record and remain overturnable; what is still owed is his reaction to the
+screens. Nothing was filed, no other session's ticket, row or file was edited, and `#12`'s index
+line is deliberately **not** written yet: it is written on resolution, after a re-fetch.
