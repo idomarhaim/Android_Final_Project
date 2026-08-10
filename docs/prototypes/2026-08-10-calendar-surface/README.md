@@ -139,7 +139,52 @@ easing on everything that moves.
 you create **by hand** inside the GoalPilot calendar is readable at no extra scope and has
 no task behind it. It is drawn here in grey so you can say whether you want it at all.
 
-## What the three variants disagree about
+## Rev 5 — the resolution: `D` and `E`
+
+Ido answered three of the four questions and **delegated the fourth** — *"choose the
+solution that gives the highest standard and quality, and if you can improve it, improve
+it."* So `A`/`B`/`C` are no longer offered as rivals. They are kept as the **record of
+what was explored**, and the answer sits in front of them as `D` and `E`.
+
+**The option list was the wrong shape, and that is the finding.** `A`, `B` and `C` are
+not three rival screens — they are three **zoom levels of one thing**:
+
+| | horizon | the user's question |
+|---|---|---|
+| `C` | now | *what needs me?* |
+| `B` | today | *what do I do?* |
+| `A` | this week | *when does it fit?* |
+
+Picking one throws away two. So the resolution collapses them into **two surfaces, one
+job each**:
+
+- **`E` — Home answers *what needs me?*** It leads with the decision stack when
+  decisions are waiting and falls back to the ordinary dashboard when none are. Adaptive,
+  so it is never a permanent nag.
+- **`D` — a Calendar tab answers *when?*** with a zoom: **agenda ⇄ 3 days ⇄ week**.
+  `B` was never a rival screen; it is the **agenda level** of this control.
+
+**Navigation, and the improvement beyond the options offered.** Five bottom tabs is a
+crowded bar, so rather than adding one, **Profile moves to an avatar in Home's top-right**
+— what Gmail, YouTube and Google Calendar all do — and Calendar takes the freed tab. Four
+tabs: `בית · מטרות · לוח שנה · חברתי`. Nothing is lost.
+
+**Ido's other answers, applied:** fully actionable (create via FAB or by tapping a slot,
+drag to move, tick to complete); all three views kept with **3 days** as the default; plus
+challenge windows and goal deadlines.
+
+**Two additions he asked me to make if I saw them:**
+
+1. **A per-day load bar.** The calendar already knows every block's length, so *"is this
+   day full?"* is free arithmetic — no model call. Turns red past 75% of waking hours.
+   Spans contribute nothing, per `C9a`.
+2. **A strip for work due today that was never given a time.** Without it the calendar
+   quietly lies about the day's real workload.
+
+Both are subtraction and addition over data already on screen, which is what keeps them
+inside the free-model constraint.
+
+## What the three variants disagree about *(the record — superseded by `D`/`E` above)*
 
 They are not three skins. They disagree about the **primary affordance** — what the
 screen is *for* — and therefore about what belongs on it and where it lives in

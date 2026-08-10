@@ -4,6 +4,16 @@
   THROWAWAY. Not app code.
   ?variant=A|B|C · ?lang=he|en · ?view=1|3|7 (A only) · ?theme=light|dark
 
+  Rev 5 — 2026-08-10: Ido delegated the choice, so A/B/C are folded into a
+  RESOLUTION and kept beside it as the record of what was explored:
+    D  the CALENDAR tab — one surface answering "when?", zoomable agenda/3/week.
+       B was never a rival screen; it is the agenda level of this control.
+    E  HOME — leads with whatever needs a decision, dashboard when nothing does.
+    *  Four tabs, not five: Calendar earns one, Profile moves to Home's avatar.
+    *  Fully actionable (Ido's answer): create, drag, complete.
+    *  Two additions beyond the options offered — a per-day load bar, and a strip
+       for work due today that was never given a time.
+
   Rev 4 — 2026-08-10:
     * C9c (#27) landed while this was open: Ido chose a TWO-WAY sync, so the app
       is no longer the only author of an occurrence. The surface now draws MOVED,
@@ -295,6 +305,33 @@
   .toweek{margin:0 14px 18px;text-align:center;font-size:13.5px;font-weight:640;color:var(--primary);
     padding:14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--outline-var)}
 
+  /* ── D / E · the resolution ───────────────────────────────────────────── */
+  /* capacity: the calendar already knows every block's length, so "is this day
+     full?" is free arithmetic. Spans contribute nothing (C9a: a week-long span
+     would otherwise swamp the day it starts on). */
+  .cap-bar{height:3px;border-radius:999px;background:var(--outline-var);margin:5px 6px 0;overflow:hidden}
+  .cap-bar i{display:block;height:100%;border-radius:999px;background:var(--primary)}
+  .cap-bar.full i{background:var(--late)}
+  .avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:13px;font-weight:700;background:var(--p-container);color:var(--on-p-container);
+    box-shadow:var(--sh-1)}
+  .fab{position:absolute;inset-inline-end:18px;bottom:96px;z-index:30;height:56px;
+    padding:0 20px;border-radius:18px;border:0;font-family:inherit;font-size:15px;font-weight:650;
+    background:var(--primary);color:var(--on-primary);display:flex;align-items:center;gap:9px;
+    box-shadow:0 8px 24px var(--glow);cursor:default}
+  .fab .i{width:20px;height:20px}
+  .loose{margin:0 14px 4px;padding:11px 14px;border-radius:var(--r-md);
+    background:var(--late-container);color:var(--late);display:flex;align-items:center;gap:10px;
+    font-size:12.5px;font-weight:640;line-height:1.35}
+  .loose b{font-weight:750}
+  .free{display:flex;align-items:center;gap:8px;margin:0 14px 10px;padding:10px 14px;
+    border-radius:var(--r-md);background:var(--s-low);box-shadow:var(--sh-1);
+    font-size:12.5px;font-weight:600;color:var(--on-surface-var)}
+  .free b{color:var(--secondary);font-weight:750}
+  .slotHint{position:absolute;inset-inline:2px;border-radius:10px;border:1.6px dashed var(--outline);
+    color:var(--on-surface-var);display:grid;place-items:center;font-size:10px;font-weight:650;
+    opacity:.55}
+
   /* ── switcher ────────────────────────────────────────────────────────── */
   .switcher{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;
     display:flex;align-items:center;gap:2px;background:#f8fafc;color:#0f172a;
@@ -315,10 +352,9 @@
 
 <div class="banner">
   <h1>PROTOTYPE · <code>C9b</code> — the in-app calendar surface (<a href="https://github.com/idomarhaim/Android_Final_Project/issues/26">#26</a>)</h1>
-  <p><code>←</code> <code>→</code> cycle the three screens · <b>HE</b> flips to RTL · <b>☀/☾</b> switches theme ·
-     in <b>A</b>, tap <b>day / 3 / week</b>.<br>
-     Rev 4 draws the state <code>C9c</code> introduced: <b>moved</b>, <b>gone from your calendar</b>,
-     <b>silent</b> vs <b>proposed</b>, and an event you made by hand. Throwaway; nothing here ships.</p>
+  <p><b>D</b> and <b>E</b> are the resolution — two surfaces, one job each. <b>A/B/C</b> are kept as the record of what was explored.<br>
+     <code>←</code> <code>→</code> cycle · <b>HE</b> flips to RTL · <b>☀/☾</b> switches theme · in <b>D</b>, tap the zoom: <b>סדר יום / 3 ימים / שבוע</b>.
+     Throwaway; nothing here ships.</p>
 </div>
 
 <div id="stage"></div>
@@ -405,7 +441,12 @@ const T = {
       morning:'בוקר',afternoon:'צהריים ואחה״צ',evening:'ערב',allDayHd:'לאורך היום',
       agentTitle:n=>`הסוכן תכנן ${n===1?'בלוק אחד':n+' בלוקים'} לשבוע הקרוב`,
       agentLede:'שום דבר לא נכתב ליומן שלך עד שתאשר. אפשר לבטל סימון של כל אחד מהם.',
-      hint:'לחיצה ארוכה גוררת בלוק לשעה אחרת'},
+      hint:'לחיצה ארוכה גוררת בלוק לשעה אחרת',
+      zAgenda:'סדר יום',z3:'3 ימים',z7:'שבוע',
+      newTask:'משימה חדשה',tapSlot:'הקש כדי לתזמן כאן',
+      loose:n=>`${n===1?'משימה אחת':n+' משימות'} להיום בלי שעה`,schedule:'לתזמן',
+      freeLeft:h=>`נשארו לך ${h} שעות פנויות היום`,
+      cap:'עומס',needsYou:'ממתין לך',allClear:'הכול מסודר'},
   en:{home:'Home',goals:'Goals',social:'Social',profile:'Profile',cal:'Calendar',
       allday:'All-day',today:'Today',list:'List',agenda:'Agenda',
       vDay:'Day',v3:'3 days',vWeek:'Week',
@@ -421,7 +462,12 @@ const T = {
       morning:'Morning',afternoon:'Afternoon',evening:'Evening',allDayHd:'Across the day',
       agentTitle:n=>`The agent planned ${n===1?'1 block':n+' blocks'} for the week`,
       agentLede:'Nothing reaches your Google calendar until you confirm. Untick any of them.',
-      hint:'long-press drags a block to another hour'},
+      hint:'long-press drags a block to another hour',
+      zAgenda:'Agenda',z3:'3 days',z7:'Week',
+      newTask:'New task',tapSlot:'Tap to schedule here',
+      loose:n=>`${n} task${n===1?'':'s'} due today with no time`,schedule:'Schedule',
+      freeLeft:h=>`${h} free hours left today`,
+      cap:'Load',needsYou:'Waiting on you',allClear:'All clear'},
 };
 
 const TODAY = new Date(2026,7,10);
@@ -447,19 +493,32 @@ const areaChip = (o,l) => o.cat
   : `<span class="area" style="background:var(--ghost-container);color:var(--ghost)">
        <i style="background:var(--ghost)"></i>${T[l].ext}</span>`;
 
-function phone(lang,theme,{tabs,active,newTab,sticky,body}){
+/* THE RESOLUTION'S NAV — four tabs, not five. Calendar earns a tab; Profile moves
+   to an avatar in Home's top-right, which is what Gmail, YouTube and Google
+   Calendar all do. Nothing is lost and the bar stays comfortable. */
+const NAV4 = t => [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social]];
+/* a day's load, in minutes. SPANs contribute nothing: C9a established that a
+   week-long span would otherwise swamp the day it starts on. */
+const loadOf = d => OCC.filter(o=>o.d===d && o.rung==='BLOCK'
+                    && !['AWAY','EXPIRED','MISSED'].includes(o.st))
+                      .reduce((a,o)=>a+(o.e-o.s),0);
+const WAKING = 16*60;
+const capBar = d => { const pct = Math.min(100, Math.round(loadOf(d)/WAKING*100));
+  return `<div class="${cx('cap-bar', pct>=75&&'full')}"><i style="width:${pct}%"></i></div>`; };
+
+function phone(lang,theme,{tabs,active,newTab,sticky,body,fab}){
   const t = T[lang];
   const TABS = tabs || [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.social,t.social],[ICON.person,t.profile]];
   return `<div class="phone" data-theme="${theme}" dir="${lang==='he'?'rtl':'ltr'}" lang="${lang}">
     <div class="statusbar"><span>${hhmm(NOW_MIN)}</span><span class="rt">${SYS}<span>84%</span></span></div>
-    <div class="screen"><div class="sticky">${sticky}</div>${body}</div>
+    <div class="screen"><div class="sticky">${sticky}</div>${body}</div>${fab||''}
     <div class="navbar">${TABS.map((x,i)=>
       `<div class="${cx('t', i===active&&'on', i===newTab&&'new')}">
          <span class="pill">${x[0]}</span><span>${x[1]}</span></div>`).join('')}</div></div>`;
 }
 
 /* ═══ A — THE GRID ═══ */
-function variantA(lang, view, theme){
+function variantA(lang, view, theme, ans){
   const t = T[lang];
   const days = view===1 ? [TODAY_IDX]
              : view===3 ? [0,1,2].map(k=>Math.min(4,Math.max(0,TODAY_IDX-1))+k)
@@ -496,7 +555,7 @@ function variantA(lang, view, theme){
     ? `<div class="nowpill" style="top:${((NOW_MIN-H0*60)/60)*ROW}px">${time(NOW_MIN)}</div>` : '';
 
   let hdr='<div></div>';
-  days.forEach(d=> hdr += `<div class="${cx('d', d===TODAY_IDX&&'today')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b></div>`);
+  days.forEach(d=> hdr += `<div class="${cx('d', d===TODAY_IDX&&'today')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>${ans?capBar(d):''}</div>`);
 
   let bands = `<div class="lbl">${t.allday}</div>`;
   days.forEach(d=>{
@@ -526,22 +585,24 @@ function variantA(lang, view, theme){
         <div class="sub num">${dayDate(days[0]).getDate()}–${dayDate(days[days.length-1]).getDate()} ${month}</div></div>
       <div class="spacer"></div>
       <div class="iconbtn">${ICON.search}</div><div class="iconbtn accent">${ICON.plus}</div></div>
-    <div class="seg" style="margin:0 18px 11px">
+    ${ans ? zoomSeg(lang,view) : `<div class="seg" style="margin:0 18px 11px">
       <span data-view="1" class="${view===1?'on':''}">${t.vDay}</span>
       <span data-view="3" class="${view===3?'on':''}">${t.v3}</span>
-      <span data-view="7" class="${view===7?'on':''}">${t.vWeek}</span></div>
+      <span data-view="7" class="${view===7?'on':''}">${t.vWeek}</span></div>`}
     <div class="dayhdr" style="${cols}">${hdr}</div>
     <div class="banded" style="${cols}">${bands}</div>`;
 
-  return phone(lang,theme,{active:2,newTab:2,
-    tabs:[[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social],[ICON.person,t.profile]],
+  return phone(lang,theme,{active:2, newTab: ans?undefined:2,
+    tabs: ans ? NAV4(t)
+              : [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social],[ICON.person,t.profile]],
     sticky,
+    fab: ans ? `<button class="fab">${ICON.plus}${t.newTask}</button>` : '',
     body:`<div class="grid" style="${cols}"><div class="hours">${hours}</div>${colHtml}${nowPill}</div>
-          <div class="muted" style="padding:14px 16px 22px;text-align:center">${t.hint}</div>`});
+          <div class="muted" style="padding:14px 16px ${ans?'96px':'22px'};text-align:center">${ans?t.tapSlot:t.hint}</div>`});
 }
 
 /* ═══ B — THE DAY RAIL ═══ */
-function variantB(lang, view, theme){
+function variantB(lang, view, theme, ans){
   const t = T[lang], sel = TODAY_IDX;
   let rail='';
   for(let d=0;d<7;d++){
@@ -601,20 +662,32 @@ function variantB(lang, view, theme){
     items.sort((a,b)=>(a.s||0)-(b.s||0)).map(o=>rowOf(o,n++)).join('')).join('');
 
   const sticky = `<div class="appbar">
-      <div><div class="ttl">${t.goals}</div>
+      <div><div class="ttl">${ans?t.cal:t.goals}</div>
         <div class="sub">${t.today} · ${dayName(sel,lang)} <span class="num">${dayDate(sel).getDate()}</span></div></div>
       <div class="spacer"></div>
-      <div class="iconbtn">${ICON.search}</div><div class="iconbtn accent">${ICON.plus}</div></div>
-    <div class="seg" style="margin:0 14px 12px"><span>${t.list}</span><span class="on">${t.agenda}</span></div>
+      <div class="iconbtn">${ICON.search}</div>${ans?'':`<div class="iconbtn accent">${ICON.plus}</div>`}</div>
+    ${ans ? zoomSeg(lang,0)
+          : `<div class="seg" style="margin:0 14px 12px"><span>${t.list}</span><span class="on">${t.agenda}</span></div>`}
     <div class="rail">${rail}</div>`;
 
-  return phone(lang,theme,{active:1,sticky,
-    body:`<div class="agenda">${agenda}</div>
-      <div style="padding:14px 14px 22px"><button class="btn ghost" style="width:100%">${t.plan}</button></div>`});
+  /* Answer mode adds two things the calendar already knows and no variant showed:
+     work due today that was never given a time, and how much of the day is still
+     unspent. Both are arithmetic over data already on screen - no model call. */
+  const freeH = Math.max(0, Math.round((WAKING - loadOf(sel))/60));
+  const extras = ans ? `
+    <div class="loose">${ICON.alert}<b>${esc(t.loose(2))}</b>
+      <div style="flex:1"></div><button class="btn sm">${t.schedule}</button></div>
+    <div class="free">${ICON.clock}<span>${esc(t.freeLeft(freeH))}</span></div>` : '';
+
+  return phone(lang,theme,{active:ans?2:1,sticky,
+    tabs: ans ? NAV4(t) : undefined,
+    fab: ans ? `<button class="fab">${ICON.plus}${t.newTask}</button>` : '',
+    body:`${extras}<div class="agenda">${agenda}</div>
+      <div style="padding:14px 14px ${ans?'96px':'22px'}"><button class="btn ghost" style="width:100%">${t.plan}</button></div>`});
 }
 
 /* ═══ C — THE DECISION STACK ═══ */
-function variantC(lang, view, theme){
+function variantC(lang, view, theme, ans){
   const t = T[lang];
   const props  = OCC.filter(o=>o.st==='PROVISIONAL');
   const aways  = OCC.filter(o=>o.st==='AWAY');
@@ -656,28 +729,51 @@ function variantC(lang, view, theme){
       <div><div class="n" style="color:var(--late)">${late}</div><div class="u">${t.late}</div></div>
       <div style="flex:1"></div><button class="btn tonal sm">${t.resched}</button></div>`;
 
+  /* Answer mode: Profile leaves the bottom bar and becomes the top-right avatar.
+     That is what frees the fourth tab for the calendar - nothing is dropped. */
   const sticky = `<div class="appbar">
       <div><div class="ttl">${t.home}</div>
         <div class="sub">${dayName(TODAY_IDX,lang)} · ${time(NOW_MIN)}</div></div>
       <div class="spacer"></div>
-      <div class="iconbtn">${ICON.cal}</div><div class="iconbtn">${ICON.person}</div></div>`;
+      ${ans ? `<div class="avatar">א</div>`
+            : `<div class="iconbtn">${ICON.cal}</div><div class="iconbtn">${ICON.person}</div>`}</div>`;
 
   return phone(lang,theme,{active:0,sticky,
-    body:`<div class="sect">${t.review}</div>${hero}${queue}${recap}
+    tabs: ans ? NAV4(t) : undefined,
+    body:`<div class="sect">${ans?t.needsYou:t.review}</div>${hero}${queue}${recap}
           <div class="toweek">${t.toweek}</div>`});
 }
 
+/* The calendar's ZOOM. B was never a rival screen - it is the agenda level of
+   this control, which is why the resolution has two surfaces and not three. */
+function zoomSeg(lang, view){
+  const t = T[lang];
+  return `<div class="seg" style="margin:0 18px 11px">
+    <span data-view="0" class="${cx(view===0&&'on')}">${t.zAgenda}</span>
+    <span data-view="3" class="${cx(view===3&&'on')}">${t.z3}</span>
+    <span data-view="7" class="${cx(view===7&&'on')}">${t.z7}</span></div>`;
+}
+/* D - the CALENDAR tab. One surface answering "when?", zoomable from an agenda
+   to three days to a week. Fully actionable, per Ido's answer. */
+const variantD = (lang,view,theme) =>
+  view===0 ? variantB(lang,view,theme,true) : variantA(lang,view,theme,true);
+/* E - HOME. Leads with whatever needs a decision and falls back to the ordinary
+   dashboard when nothing does. Profile is the avatar; the calendar has a tab. */
+const variantE = (lang,view,theme) => variantC(lang,view,theme,true);
+
 /* ═══ switcher ═══ */
 const VARIANTS = [
-  ['A','The Grid','place time',variantA],
-  ['B','The Day Rail','tick things off',variantB],
-  ['C','The Decision Stack','decide, one at a time',variantC],
+  ['D','THE ANSWER · Calendar','when? — agenda / 3 days / week',variantD],
+  ['E','THE ANSWER · Home','what needs me?',variantE],
+  ['A','explored · The Grid','place time',variantA],
+  ['B','explored · The Day Rail','tick things off',variantB],
+  ['C','explored · The Decision Stack','decide, one at a time',variantC],
 ];
 function state(){
   const p = new URLSearchParams(location.search);
-  let i = VARIANTS.findIndex(x=>x[0]===(p.get('variant')||'A').toUpperCase());
+  let i = VARIANTS.findIndex(x=>x[0]===(p.get('variant')||'D').toUpperCase());
   const v = parseInt(p.get('view'),10);
-  return [i<0?0:i, p.get('lang')==='he'?'he':'en', [1,3,7].includes(v)?v:3,
+  return [i<0?0:i, p.get('lang')==='he'?'he':'en', [0,1,3,7].includes(v)?v:3,
           p.get('theme')==='dark'?'dark':'light'];
 }
 function go(i,lang,view,theme){
@@ -695,8 +791,8 @@ function render(){
   document.querySelectorAll('[data-view]').forEach(s=>
     s.onclick = () => go(i, lang, parseInt(s.dataset.view,10), theme));
 }
-document.getElementById('prev').onclick = () => { const [i,l,v,th]=state(); go((i+2)%3,l,v,th); };
-document.getElementById('next').onclick = () => { const [i,l,v,th]=state(); go((i+1)%3,l,v,th); };
+document.getElementById('prev').onclick = () => { const [i,l,v,th]=state(); go((i+VARIANTS.length-1)%VARIANTS.length,l,v,th); };
+document.getElementById('next').onclick = () => { const [i,l,v,th]=state(); go((i+1)%VARIANTS.length,l,v,th); };
 document.querySelectorAll('[data-lang]').forEach(b=>
   b.onclick = () => { const [i,,v,th]=state(); go(i,b.dataset.lang,v,th); });
 document.querySelectorAll('.switcher [data-theme]').forEach(b=>
@@ -704,8 +800,8 @@ document.querySelectorAll('.switcher [data-theme]').forEach(b=>
 addEventListener('keydown', e=>{
   if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)||e.target.isContentEditable) return;
   const [i,l,v,th]=state();
-  if(e.key==='ArrowLeft')  go((i+2)%3,l,v,th);
-  if(e.key==='ArrowRight') go((i+1)%3,l,v,th);
+  if(e.key==='ArrowLeft')  go((i+VARIANTS.length-1)%VARIANTS.length,l,v,th);
+  if(e.key==='ArrowRight') go((i+1)%VARIANTS.length,l,v,th);
 });
 render();
 </script>

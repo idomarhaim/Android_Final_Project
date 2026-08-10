@@ -182,6 +182,49 @@ lines, `0` deleted — and every sibling's *Decisions so far* line was verified 
 **after** the write. `#26`'s own index line is still owed by this session and remains
 unwritten; another session's line is not mine to author.
 
+## 🔁 Rev 5 — the picker was the wrong shape, and Ido said so
+
+The four-question picker got three clean answers and **one refusal**: *"I couldn't fully
+understand you or what each option means — explain it simply and schematically. And
+choose the solution that gives the highest standard and quality… and if you can improve
+it, improve it."*
+
+**That is the question-axis rule firing exactly as written.** Q1 offered four bundles of
+*affordance + placement* and asked which screen the calendar is. The reason it was
+unanswerable is not that Ido lacked context — it is that **the fork was false.** `A`,
+`B` and `C` are not rival screens; they are three **zoom levels of one thing**: `C` is
+*now*, `B` is *today*, `A` is *this week*. Any single pick throws away two, which is why
+none of the options felt right. The right answer sat **outside the option set**, which is
+precisely where the rule says it will be when a fork's premise is unchecked.
+
+**The resolution — two surfaces, one job each, instead of three rivals:**
+
+- **`E` · Home answers *what needs me?*** — leads with the decision stack when decisions
+  are waiting, ordinary dashboard when none are. Adaptive, so never a standing nag. This
+  is also a concrete answer to the map's long-standing `A7` fog.
+- **`D` · a Calendar tab answers *when?*** — with a zoom, **agenda ⇄ 3 days ⇄ week**.
+  `B` stops being a rival and becomes the **agenda level** of that control, which is what
+  it always was.
+
+**Navigation, improved beyond what was offered:** five bottom tabs is a crowded bar, so
+rather than adding one, **Profile moves to Home's top-right avatar** — the Gmail /
+YouTube / Google Calendar pattern — and Calendar takes the freed tab. Four tabs,
+`בית · מטרות · לוח שנה · חברתי`, nothing dropped.
+
+**Ido's three direct answers, applied:** *fully actionable* (FAB, tap-a-slot, drag,
+tick) · *all views available* with **3 days** default (my evidence-based pick stood,
+unoverturned) · *challenge windows and goal deadlines* both on.
+
+**Two additions, on his standing instruction to improve rather than merely choose:**
+a **per-day load bar** (the calendar already knows every block's length, so *"is this day
+full?"* is free arithmetic — no model call, red past 75% of waking hours, spans excluded
+per `C9a`), and a **strip for work due today that was never given a time**, without which
+the calendar quietly understates the day.
+
+**`A`/`B`/`C` are kept, not deleted** — they are the record of what was explored, and the
+prototype skill's primary source. `D` now opens by default; the explored set is relabelled
+rather than removed.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
@@ -233,6 +276,17 @@ identifier colliding with the page's own, and a regex expecting the dash immedia
 before `</span>` when it sits mid-string. Recorded because the honest reading of a red
 run is *"something disagrees"*, not *"the code is wrong"*, and both times the artefact
 was fine.
+
+**Rev 5 raised the matrix to 80 renders** — 5 variants x 2 languages x 4 views x 2
+themes — and added assertions for the navigation answer specifically, because that is
+the part a later session is most likely to undo by accident: **every** resolution screen
+has exactly **four** tabs, the calendar tab is present, **Profile is absent from the
+bottom bar**, Home still carries the avatar, both calendar zooms expose a create
+affordance, the zoom offers all three levels, and the load bar and loose-work strip
+survive. Plus: `A`/`B`/`C` must still exist (they are the record), and `D` must be the
+default. One failure along the way, again in the test: `navLabels` matched
+`<span>x</span></div>` anywhere on the page and counted the free-time line as a fifth
+tab — now scoped to the navbar.
 
 **Rev 4 raised the matrix to 36 renders** — 3 variants × 2 languages × 3 views × 2
 themes — all clean, and added assertions that each of `MOVED`/`AWAY`/`SILENT`/`EXTERNAL`
