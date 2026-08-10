@@ -210,6 +210,11 @@ against the artifact rather than eyeballed:**
   rendered-output test — no browser was driven.
 - **No dead reference to the deleted chart.** `slopeChart` was rev 1's function; after the rev 2
   rewrite the file contains **0** references to it, checked rather than assumed.
+- **Re-run after the rev 3 rebuild**, which replaced the whole file: `node --check` → **OK**;
+  Hebrew guard → **72 literals inside the app, 0 unguarded**. One Hebrew string now lives
+  **outside** the phone frame — the prototype's own `עברית` toggle button, which is chrome and
+  not app UI. Named here rather than folded into the count, because an assertion that quietly
+  moves its own boundary is worth less than the number it reports.
 
 Layer coverage is otherwise unchanged and unowed: nothing in this unit touched `app/`,
 `functions/` or `firestore-tests/`, so no server, client, endpoint, database or UI layer was
@@ -217,6 +222,45 @@ exercised. **The cost is stated in the README rather than hidden: this cannot pr
 chart lays out, animates, or survives a real `LazyColumn`** — that proof belongs to the build
 session, and `ChartAnimation.kt` exists because `animateFloatAsState` initialises *at* its
 target.
+
+## Revision 3 — Ido's three notes, and the third overturned a rule this session wrote
+
+Feedback given 2026-08-11 on rev 2, three items, all taken. Posted as
+[the rev 3 comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5245983955).
+
+1. **"Match prototype 1's colours and design quality."** Rebuilt on `C9b`'s design system rather
+   than restyled toward it: the **committed Aurora tokens from `ui/theme/Color.kt`** in both
+   schemes, the same phone chrome (punch-hole, raking gloss, `feTurbulence` grain), the same
+   five-radial aurora canvas light and dark, the Hebrew-first font stack, tabular numerals, the
+   `.ltr` isolation class. The category hues carry the most weight here because **charts are
+   where that palette lives**: `C9b`'s **tone-80 dark set is kept verbatim** for its four
+   categories and the same recipe cut for the six more this ticket needs, so the two prototypes
+   now render the same life area in the same colour and `C9b`'s light-mode-only finding is
+   answered rather than restated.
+2. **"Widgets at every size class."** `2×2`, `4×2`, `2×4`, `4×4`, plus a mixed **home screen**
+   on a wallpaper with a dock. Built from a 76 dp cell and a 12 dp gutter, so `4×4` lands at
+   340 dp — the width a 392 dp phone actually has after margins. Each size is a **different
+   design**, not one tile scaled.
+3. **"Every card is also a widget."** All seven ship — Decisions, Today, Your goals, This week,
+   Day by day, Effort and outcome, Level.
+
+**The third note overturned rev 1's own rule, and the repair is the finding.** Rev 1 wrote *a
+chart whose honesty depends on a footnote may not be a widget* and used it to **ban the donut**.
+Ido overturned the ban. The right repair was not to drop the invariant but to **re-cut it as a
+size rule**: *the disclosure shrinks to the smallest true sentence the tile can hold, and no size
+ships without one.* `C17` §3 requires the donut to say it **divided** shared minutes, so it says
+so in **three words at 2×2**, one clause at `4×2`/`2×4`, and the full sentence at `4×4`. **The
+ban was the lazy way to keep the invariant.** Same treatment for the **Level** widget that rev 2
+had also refused: it ships carrying the sentence that stops it lying — *points are your minutes,
+scored, not a separate score*.
+
+Worth keeping as a general result rather than a one-off: **"this cannot be a widget" was really
+"this cannot be a widget at every size"**, and the two are different claims. Any future tile
+carrying a derived or divided number inherits the same test.
+
+**Also stated rather than hidden:** this prototype **cannot prove a Glance widget fits its real
+cell** — Android hands a widget a dp size that varies by launcher and by device — on top of the
+Compose-layout proof it already could not give.
 
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
@@ -249,7 +293,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 2 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 3 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

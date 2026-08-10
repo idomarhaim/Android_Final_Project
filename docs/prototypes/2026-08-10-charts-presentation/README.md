@@ -1,73 +1,86 @@
-# `C12` · Charts and presentation strategy — prototype
+# `C12` · Charts, presentation and widgets — prototype
 
 Asset for [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) on map
-[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 2.**
-
-> **Rev 2 · what changed.** Ido was asked the three questions rev 1 tagged *yours* and
-> **handed all three back** with his standing instruction — *take the highest-quality answer and
-> improve it if you can*. So all three are now taken by the agent and on the record, and the
-> improvement was not cosmetic: **rev 1's effort-versus-outcome chart was killed by its own
-> test**. It ranked areas by percentage moved, but a percentage is a fraction of *its own*
-> target — one kilogram off a 5 kg goal scores 20% while one book of twelve scores 8%, for the
-> same act of progress — so the ranking partly ranked *how modest the goals are*. It is kept in
-> the `gap` variant as a rejected exhibit. What replaced it orders **only minutes**, and
-> **names** movement instead of scoring it. Doing that surfaced a better headline than the
-> ranking ever had: the area taking most of the week **has no measure at all**, so the app
-> cannot say whether it moved.
+[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 3.**
 
 ```powershell
 start docs\prototypes\2026-08-10-charts-presentation\index.html
 ```
 
-`←` / `→` cycle variants · **HE** flips the whole frame to RTL · **Light / Dark** ·
-**Committed palette** renders the shipped `GoalCategory` hexes on the dark surface so the
-defect is visible rather than argued. No build, no emulator, no network.
+Buttons pick the screen; `←` / `→` also cycle. **עברית** flips the whole frame to RTL,
+**Light / Dark** switches scheme, and on the widgets screen a second row picks the size class.
+No build, no emulator, no network.
 
-## Variants
+## Rev 3 — Ido's three notes, and what each one changed
 
-| `?variant=` | What it is |
+**1 · "Match the colours and the design quality of prototype 1."** Rebuilt on `C9b`'s design
+system rather than restyled toward it: the **committed Aurora tokens from `ui/theme/Color.kt`**
+in both schemes, the same phone chrome (punch-hole, raking gloss, `feTurbulence` grain), the
+same five-radial aurora canvas in light and dark, the Hebrew-first font stack, tabular numerals,
+and the `.ltr` isolation class. The ten category hues keep `C9b`'s **tone-80 dark set verbatim**
+for the four it defined and extend the same recipe to the six this ticket also needs — so the
+two prototypes now render the same life area in the same colour.
+
+**2 · "Widgets at every size class."** `2×2`, `4×2`, `2×4`, `4×4`, plus a **Home screen** view
+mixing sizes on a real wallpaper with a dock. Sizes are built from a 76 dp cell and a 12 dp
+gutter, so `4×4` lands at 340 dp — the width a 392 dp phone actually has after margins.
+
+**3 · "Every card is also a widget."** All seven are: Decisions · Today · Your goals · This week
+(donut) · Day by day (trend) · Effort and outcome · Level. **This overturns rev 1's rule** that
+*a chart whose honesty depends on a footnote may not be a widget*, which had banned the donut
+outright.
+
+> **The rule became a size rule instead of a ban, which is the better answer.**
+> The donut's disclosure is required by `C17` §3 — it *divides* shared minutes and has to say
+> so. So every tile carries it, sized to the tile: **three words at 2×2** (*"shared time
+> divided"*), one clause at `4×2` and `2×4`, the full sentence at `4×4`. No size ships without
+> one. The ban was the lazy way to keep the invariant; sizing the sentence keeps it *and* gives
+> Ido the widget he asked for.
+
+Same treatment for the **Level** widget, which rev 2 also refused: it ships, and it carries the
+one sentence that stops it lying — *points are your minutes, scored, not a separate score*.
+
+## Screens
+
+| button | what it is |
 |---|---|
-| `home` | **Home, proposed** — decisions banner → Today → your goals → this week → one setup row |
-| `home-before` | **Home as it ships today**, rendered from `DashboardScreen.kt`'s item order, so the comparison is a picture rather than a claim |
-| `analytics` | **The chart set** — donut, stacked column, and the new effort-and-outcome card |
-| `gap` | **The new card on its own**, beside the three forms it deliberately is not — including rev 1's |
-| `widgets` | **The widget pack** ([#10](https://github.com/idomarhaim/Android_Final_Project/issues/10)) — what may and may not be one |
+| **Home** | Decisions banner → Today → your goals → this week → one setup row |
+| **Home today** | The shipped order, from `DashboardScreen.kt`, so the comparison is a picture |
+| **Analytics** | Donut · day-by-day trend · where the time went and what moved |
+| **Effort · rejected forms** | The chosen card beside the three it deliberately is not |
+| **Widgets** | All seven, at four size classes and on a mixed home screen |
 
-One week of data is shared by every variant: these are views of the same week, not five demos.
-Minutes are already **divided** across goal edges (`C17` §3) and spans contribute **nothing**
-(`C9a`, via `C9b`) — so the donut in `home` and the donut in `analytics` agree by construction.
+One week of data is shared by every screen and every widget — minutes already **divided** across
+goal edges (`C17` §3), spans contributing **nothing** (`C9a` via `C9b`) — so a donut in a widget
+cannot disagree with the donut on Home.
 
-## What is derived and what is yours
+## Decisions on the record
 
-Every annotation beside the phone is tagged. **`derived`** — it follows from a closed ticket and
-is logged rather than asked. **`handed back`** — it was put to Ido, he declined to choose, and
-the agent took it. Both are overturnable; neither was guessed silently.
+**Derived** from closed tickets, logged rather than asked: the chart set (`C3`, `C7`, `C16`,
+`C17`) · the divided-minutes disclosure · retiring `HorizontalBarChart` from Analytics · the
+dark palette · the RTL time axis.
 
-Derived: the chart set (`C3`, `C7`, `C16`, `C17`) · the donut's divided-minutes disclosure
-(`C17` §3) · retiring `HorizontalBarChart` from Analytics · the dark palette (`C9b`) ·
-the RTL time axis · the widget rule.
+**Handed back by Ido, then taken** (2026-08-10): the level ring on the avatar instead of a points
+hero, because the hero and the donut were the same minutes twice · no chart picker, replaced by
+cards that hide themselves when they have nothing to say and a range picker that remembers ·
+the effort card ships, rebuilt to rank **only minutes** and to **name** movement rather than
+score it.
 
-Handed back, then taken: **the level ring on the avatar** instead of a points hero (the hero and
-the donut were the same minutes twice) · **no chart picker**, replaced by cards that hide
-themselves when they have nothing to say and a range picker that remembers · **the effort card
-ships**, rebuilt so that it ranks only minutes and names movement rather than scoring it.
+**Overturned by Ido** (2026-08-11): the widget ban, as above.
 
 ## The cost, stated rather than hidden
 
-This is HTML, for the reason `C9b` gave: `#12`'s Notes say *no ticket on this map ships code*,
-and a throwaway Compose route would take the Gradle daemon and an emulator — two exclusive
-singletons — for a question about layout. **So it cannot prove a Compose chart lays out,
-animates, or survives a real `LazyColumn`.** That proof belongs to the build session, and
+HTML, for the reason `C9b` gave — `#12`'s Notes say *no ticket on this map ships code*, and a
+throwaway Compose route would take the Gradle daemon and an emulator for a question about
+layout. **So this cannot prove a Compose chart lays out, animates, or survives a real
+`LazyColumn`, and it cannot prove a Glance widget fits its real cell** — Android gives a widget
+a size in dp that varies by launcher and by device. That proof belongs to the build session;
 `ui/components/ChartAnimation.kt` exists because `animateFloatAsState` initialises *at* its
-target — anything new here inherits that constraint.
+target, and anything new here inherits that.
 
-The compensating gain is exact: `dir="rtl"` mirrors the frame in one attribute, so *"does this
-chart survive Hebrew"* is something to look at. Two things it caught that prose would not have:
-a stacked **time axis does not mirror** (the bars are drawn, not laid out, so Sunday stays on
-the left unless you reverse them in code), and every number and range needs a **bidi isolate**
-or `09:00–12:00` renders as `12:00–09:00`.
-
-**Asserted mechanically, per `C9b`'s finding 3:** every Hebrew character in `index.html` sits in
-one of exactly three guarded places — the second argument of `t(en, he)`, a `he:` / `meHe:` key,
-or an `L === 'he'` branch. Re-run after every revision; **41 literals, 0 unguarded, 0 Hebrew
-outside a string literal** as of rev 2. `node --check` on the extracted script: **OK**.
+**Verified mechanically after every revision, not by eye:** `node --check` on the extracted
+script → **OK**. Hebrew guard → **72 literals inside the app, 0 unguarded** (each is the second
+argument of `t(en, he)`, a `he:` / `meHe:` key, or an `L === 'he'` branch — those three are the
+complete taxonomy). One Hebrew string exists **outside** the phone frame: the prototype's own
+`עברית` toggle button, which is chrome, not app UI. It is a static guard check, not a rendered
+-output test — no browser was driven.

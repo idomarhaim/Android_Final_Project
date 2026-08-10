@@ -1,849 +1,999 @@
-<!DOCTYPE html>
+<!doctype html>
+<!--
+  PROTOTYPE — GoalPilot charts, presentation and widgets (C12, issue #31).
+  THROWAWAY. Not app code.
+  ?variant=home|home-before|analytics|gap|widgets · ?lang=he|en · ?theme=light|dark
+  ?size=2x2|4x2|2x4|4x4|mixed   (widgets variant only)
+
+  Rev 3 — 2026-08-10, all three of Ido's rev-2 notes:
+    1. Rebuilt on C9b's design system — the committed Aurora tokens from
+       ui/theme/Color.kt (both schemes), the same phone chrome, grain, aurora
+       canvas, Hebrew-first font stack, tabular numerals and bidi isolation.
+       The ten category hues keep C9b's tone-80 dark set and extend it to the
+       six categories this ticket needs.
+    2. Widgets at every size class — 2x2, 4x2, 2x4, 4x4, and a mixed home screen.
+    3. EVERY card on every C12 screen is also a widget. This overturns rev 1's
+       "a chart whose honesty depends on a footnote may not be a widget" — it is
+       now a SIZE rule instead of a ban: the disclosure shrinks to the smallest
+       true sentence that fits, and no size ships without one.
+
+  Rev 2 — the three open questions were handed back and taken by the agent:
+    * the level ring rides on the avatar; no points hero (points ARE minutes)
+    * no chart picker; cards hide themselves when they have nothing to say
+    * effort/outcome ships, but ranks only minutes and NAMES movement, because
+      a percentage is a fraction of its own target and ranking it ranks how
+      modest the goals are. Rev 1's ranking is kept in ?variant=gap as a
+      rejected exhibit.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>C12 · Charts and presentation strategy — prototype rev 1</title>
+<title>PROTOTYPE — GoalPilot charts, presentation and widgets (C12 / #31)</title>
 <style>
-/* ─────────────────────────────────────────────────────────────
-   C12 prototype · standalone. No build, no emulator, no network.
-   ←/→ cycle variants · HE flips the whole frame to RTL · theme toggles.
-   ───────────────────────────────────────────────────────────── */
+  /* ═══ tokens — lifted verbatim from ui/theme/Color.kt, both schemes ═══ */
+  .phone,.wall{
+    --s-lowest:#FFFFFF; --s-low:#F2F7FD; --s:#EBF2FB; --s-high:#E4EDF8; --s-highest:#DDE8F5;
+    --bg:#D0E2F5; --s-dim:#B8CBDF; --s-var:#D9E2EF;
+    --primary:#0A56C4; --on-primary:#FFFFFF; --p-container:#D8E2FF; --on-p-container:#001A41;
+    --secondary:#0A6045; --sec-container:#A8F2D3; --on-sec-container:#002014;
+    --on-surface:#131A22; --on-surface-var:#414A57; --outline:#6C7684; --outline-var:#BAC6D6;
+    --hero-1:#0B62D6; --hero-2:#0C7CA4; --hero-3:#0E7F63; --tertiary-a:#00596B;
+    --error:#B3261E; --late:#9A3412; --late-container:#FFE7D6;
+    --ghost:#6C7684; --ghost-container:rgba(108,118,132,.13);
+    --glow:rgba(10,86,196,.28);
+    --hair:rgba(10,30,60,.07); --lift:rgba(255,255,255,.85);
+    --sh-1:0 1px 2px rgba(14,52,120,.07), 0 3px 12px rgba(14,52,120,.08);
+    --sh-2:0 2px 8px rgba(14,52,120,.09), 0 16px 38px rgba(14,52,120,.14);
+  }
+  .phone[data-theme="dark"],.wall[data-theme="dark"]{
+    --s-lowest:#070C13; --s-low:#141D29; --s:#18212E; --s-high:#222C3A; --s-highest:#2D3745;
+    --bg:#0C1520; --s-dim:#0C1520; --s-var:#404A58;
+    --primary:#AFC6FF; --on-primary:#002E6A; --p-container:#004494; --on-p-container:#D8E2FF;
+    --secondary:#8AD6B7; --sec-container:#00513E; --on-sec-container:#A8F2D3;
+    --on-surface:#DEE6F2; --on-surface-var:#BFCADA; --outline:#8A94A5; --outline-var:#404A58;
+    --hero-1:#12406F; --hero-2:#0F4E63; --hero-3:#12513F; --tertiary-a:#57D6F0;
+    --error:#FFB4AB; --late:#FFB68A; --late-container:#5A2408;
+    --ghost:#8A94A5; --ghost-container:rgba(138,148,165,.16);
+    --glow:rgba(175,198,255,.22);
+    --hair:rgba(255,255,255,.07); --lift:rgba(255,255,255,.05);
+    --sh-1:0 1px 2px rgba(0,0,0,.30), 0 2px 8px rgba(0,0,0,.26);
+    --sh-2:0 2px 6px rgba(0,0,0,.34), 0 14px 34px rgba(0,0,0,.45);
+  }
+  :root{--r-sm:12px; --r-md:18px; --r-lg:24px; --r-xl:30px;
+        --spring:cubic-bezier(.2,.9,.22,1)}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 700px at 50% -12%, #22303f 0%, #10161e 62%);
+    color:#dbe6f2;min-height:100vh;
+    font-family:'Rubik','Heebo','Assistant','Inter','Segoe UI Variable Text','Segoe UI',
+                Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    display:flex;flex-direction:column;align-items:center;gap:18px;padding:22px 12px 120px;
+  }
+  .num,.statusbar,.wg .n,.tabnum{font-variant-numeric:tabular-nums}
+  /* a Latin-digit run inside an RTL paragraph is REORDERED by the bidi algorithm:
+     "09:00–12:00" renders "12:00–09:00". Isolation is the fix, not a workaround. */
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+  svg{display:block}
 
-:root{
-  --bg:#0C1520; --surface:#142130; --surface2:#1B2C3E; --line:#25384C;
-  --text:#E8EEF5; --muted:#93A6BA; --accent:#4CC2FF; --accent-ink:#062033;
-  --good:#4FCB86; --warn:#F7A14B; --bad:#FF7B6B;
-  --shadow:0 10px 30px rgba(0,0,0,.45);
-  /* category palette — DARK tones, proposed here (see annotation D2) */
-  --c-health:#FF7B6B; --c-learning:#C58BF2; --c-career:#56ABFF;
-  --c-rel:#FF7BAC; --c-finance:#3FBFD4; --c-other:#9FB0C4;
-}
-body.light{
-  --bg:#EEF2F7; --surface:#FFFFFF; --surface2:#F4F7FB; --line:#DCE4EE;
-  --text:#0F1C28; --muted:#5A6C80; --accent:#0F6FCB; --accent-ink:#FFFFFF;
-  --good:#26804A; --warn:#B85107; --bad:#CF3636;
-  --shadow:0 10px 28px rgba(16,32,48,.13);
-  /* committed GoalCategory.defaultColorHex — light-mode only, by construction */
-  --c-health:#CF3636; --c-learning:#8B39C4; --c-career:#0F6FCB;
-  --c-rel:#D6246E; --c-finance:#0B7285; --c-other:#64748B;
-}
-body.light.raw-palette,
-body.raw-palette{ /* "show the committed palette on dark" — the defect, on demand */
-  --c-health:#CF3636; --c-learning:#8B39C4; --c-career:#0F6FCB;
-  --c-rel:#D6246E; --c-finance:#0B7285; --c-other:#64748B;
-}
+  /* ── prototype chrome (never part of the design) ─────────────────────── */
+  .banner{max-width:860px;text-align:center}
+  .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;color:#eaf2fb}
+  .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#93a7bd}
+  .banner code{background:#0b1219;padding:1.5px 6px;border-radius:5px;font-size:11.5px;color:#b9cde2}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+  .cbtn{border:1px solid #2a3a4c;background:#131c26;color:#cfe0f0;border-radius:999px;
+        padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .cbtn:hover{border-color:#4f7fb5}
+  .cbtn.on{background:#3f7fd4;border-color:#3f7fd4;color:#fff}
+  .cap{font-size:11px;color:#8fa4ba;text-align:center;margin-top:6px;line-height:1.35}
 
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
-  background:var(--bg); color:var(--text);
-  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
+  /* ── device ──────────────────────────────────────────────────────────── */
+  .phone{
+    width:392px;height:848px;border-radius:48px;background:var(--bg);
+    border:11px solid #04080c;position:relative;overflow:hidden;color:var(--on-surface);
+    display:flex;flex-direction:column;
+    box-shadow:0 0 0 1px rgba(255,255,255,.10), 0 1px 0 rgba(255,255,255,.10) inset,
+               0 34px 80px rgba(0,0,0,.65);
+    animation:in .36s var(--spring);
+  }
+  .phone::before{content:'';position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:88px;height:26px;border-radius:999px;background:#04080c;z-index:60}
+  .phone::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:59;
+    background:linear-gradient(128deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 32%);
+    mix-blend-mode:screen}
+  .grain{position:absolute;inset:0;z-index:58;pointer-events:none;opacity:.42;
+    mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .phone[data-theme="dark"] .grain{opacity:.30}
+  @keyframes in{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
 
-/* ── prototype chrome (never part of the design) ───────────────── */
-.chrome{
-  position:sticky; top:0; z-index:50; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-  padding:10px 16px; background:color-mix(in srgb,var(--bg) 88%,transparent);
-  backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
-}
-.chrome b{font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.chrome .name{font-size:15px;font-weight:650;color:var(--text)}
-.btn{
-  border:1px solid var(--line); background:var(--surface); color:var(--text);
-  border-radius:999px; padding:5px 12px; font-size:13px; cursor:pointer; font-weight:600;
-}
-.btn:hover{border-color:var(--accent)}
-.btn.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
-.chrome .spacer{flex:1}
-.chrome .hint{font-size:12px;color:var(--muted)}
+  .statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;
+             padding:6px 26px 0;font-size:12.5px;font-weight:650}
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none;
+    background:
+      radial-gradient(600px 320px at 6% 0%, var(--lift), transparent 62%),
+      radial-gradient(520px 340px at 98% 12%, var(--glow), transparent 64%);}
+  .screen::-webkit-scrollbar{width:0}
 
-.stage{display:flex;gap:28px;align-items:flex-start;padding:24px 16px 80px;flex-wrap:wrap;justify-content:center}
+  /* Dark mode is not "light mode with the lights off" — the canvas keeps an
+     aurora of blue, teal and violet at low opacity, and every raised surface
+     gets a faint chroma lift rather than a lighter grey. Light mode gets the
+     same treatment, warmer. Both lifted from C9b. */
+  .phone[data-theme="light"],.wall[data-theme="light"]{
+    background:linear-gradient(168deg, #C7DCFB 0%, #CFDAFA 38%, #D8D6F7 72%, #DCDCF6 100%);}
+  .phone[data-theme="light"] .screen,.wall[data-theme="light"] .wallpaper{
+    background:
+      radial-gradient(700px 430px at -10% -8%, rgba(88,138,255,.50), transparent 60%),
+      radial-gradient(620px 450px at 110% 0%, rgba(0,198,190,.42), transparent 60%),
+      radial-gradient(720px 520px at 38% 108%, rgba(172,112,246,.38), transparent 62%),
+      radial-gradient(520px 340px at 98% 52%, rgba(255,164,116,.30), transparent 62%),
+      radial-gradient(470px 330px at 2% 64%, rgba(104,228,198,.28), transparent 64%);}
+  .phone[data-theme="dark"] .screen,.wall[data-theme="dark"] .wallpaper{
+    background:
+      radial-gradient(760px 420px at -6% -4%, rgba(72,116,255,.20), transparent 58%),
+      radial-gradient(680px 460px at 104% 6%, rgba(0,190,196,.16), transparent 60%),
+      radial-gradient(820px 560px at 46% 104%, rgba(150,92,230,.16), transparent 64%),
+      radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.12), transparent 66%),
+      radial-gradient(420px 300px at 6% 58%, rgba(230,120,90,.09), transparent 66%);}
 
-/* ── the phone ─────────────────────────────────────────────────── */
-.phone{
-  width:390px; height:844px; flex:none; border-radius:38px; background:var(--bg);
-  border:1px solid var(--line); box-shadow:var(--shadow); overflow:hidden; position:relative;
-  display:flex; flex-direction:column;
-}
-.phone .scroll{overflow-y:auto; overflow-x:hidden; flex:1; padding:0 0 92px}
-.phone .scroll::-webkit-scrollbar{width:0}
+  .phone[data-theme="light"] .card,.phone[data-theme="light"] .iconbtn,
+  .phone[data-theme="light"] .wg,.phone[data-theme="light"] .seg{
+    background:linear-gradient(158deg, #FFFFFF 0%, #F6FAFF 52%, #EFF5FF 100%);
+    box-shadow:var(--sh-1), inset 0 1px 0 #FFFFFF;}
+  .phone[data-theme="dark"] .card,.phone[data-theme="dark"] .iconbtn,
+  .phone[data-theme="dark"] .wg,.phone[data-theme="dark"] .seg{
+    background:linear-gradient(158deg, rgba(126,158,255,.10), rgba(90,220,210,.05) 55%,
+                                       rgba(160,110,235,.08));
+    box-shadow:var(--sh-1), inset 0 1px 0 rgba(180,205,255,.13);}
+  .phone[data-theme="light"] .navbar{
+    background:linear-gradient(to bottom, rgba(226,236,255,.86), rgba(214,226,252,.94));}
+  .phone[data-theme="dark"] .navbar{
+    background:linear-gradient(to bottom, rgba(18,28,44,.90), rgba(14,22,36,.80));}
 
-/* ── app chrome ────────────────────────────────────────────────── */
-.statusbar{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;color:var(--muted);flex:none}
-.topbar{display:flex;align-items:center;gap:12px;padding:6px 18px 12px;flex:none}
-.topbar .hello{flex:1;min-width:0}
-.topbar .hello .k{font-size:12px;color:var(--muted)}
-.topbar .hello .v{font-size:20px;font-weight:700;letter-spacing:-.01em}
-.avatar{
-  width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
-  background:linear-gradient(140deg,var(--accent),var(--c-rel)); color:#06121C; font-weight:800; font-size:15px;
-  border:2px solid var(--surface);
-}
-.iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted);flex:none}
+  /* the one element that should genuinely pop gets the committed hero sweep */
+  .hero{background:linear-gradient(142deg, var(--hero-1) 0%, var(--hero-2) 56%, var(--hero-3) 100%)!important;
+    box-shadow:0 8px 24px color-mix(in srgb, var(--hero-1) 34%, transparent),
+               inset 0 1px 0 rgba(255,255,255,.24)!important;color:#fff}
+  .hero .sub,.hero .n2{color:rgba(255,255,255,.82)!important}
 
-.tabbar{
-  position:absolute;bottom:0;left:0;right:0;height:76px;display:flex;align-items:center;
-  background:color-mix(in srgb,var(--surface) 92%,transparent); backdrop-filter:blur(14px);
-  border-top:1px solid var(--line); padding-bottom:10px;
-}
-.tabbar div{flex:1;text-align:center;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
-.tabbar div .g{width:22px;height:22px;border-radius:7px;background:var(--muted);opacity:.42}
-.tabbar div.sel{color:var(--accent);font-weight:700}
-.tabbar div.sel .g{background:var(--accent);opacity:1}
+  .appbar{padding:2px 18px 12px;display:flex;align-items:flex-start;gap:10px}
+  .appbar .ttl{font-size:29px;font-weight:680;letter-spacing:-.034em;line-height:1.08}
+  .appbar .sub{font-size:12.5px;color:var(--on-surface-var);margin-top:4px;font-weight:500}
+  .appbar .spacer{flex:1}
+  .iconbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    color:var(--on-surface-var);font-size:19px;flex:none}
 
-/* ── cards ─────────────────────────────────────────────────────── */
-.wrap{padding:0 16px;display:flex;flex-direction:column;gap:14px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px}
-.card.tight{padding:14px}
-.card h3{margin:0 0 2px;font-size:15px;font-weight:700;letter-spacing:-.01em}
-.card .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
-.rowhead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
-.rowhead h3{flex:1;margin:0}
-.rowhead a{font-size:12.5px;color:var(--accent);text-decoration:none;font-weight:650}
+  .navbar{flex:none;height:82px;padding-top:12px;display:flex;align-items:flex-start;
+    justify-content:space-around;backdrop-filter:blur(20px);box-shadow:0 -1px 0 var(--hair)}
+  .navbar .t{display:flex;flex-direction:column;align-items:center;gap:5px;width:70px;
+    font-size:11px;font-weight:560;color:var(--on-surface-var)}
+  .navbar .t .pill{padding:0 20px;height:33px;border-radius:17px;font-size:19px;display:grid;
+    place-items:center;transition:all .3s var(--spring)}
+  .navbar .t.on{color:var(--on-p-container);font-weight:680}
+  .navbar .t.on .pill{background:var(--p-container);color:var(--on-p-container);
+    box-shadow:0 4px 12px var(--glow)}
 
-/* the decisions banner */
-.banner{
-  border-radius:20px;padding:15px 16px;display:flex;align-items:center;gap:13px;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),var(--surface));
-  border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line));
-}
-.banner .n{
-  width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;
-  background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:19px;
-}
-.banner .t{flex:1;min-width:0}
-.banner .t .a{font-size:14.5px;font-weight:700}
-.banner .t .b{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.banner .go{color:var(--accent);font-size:20px;font-weight:700}
+  .wrap{padding:0 16px 22px;display:flex;flex-direction:column;gap:13px}
+  .card{border-radius:var(--r-lg);padding:15px 16px;animation:rise .34s both}
+  .card h3{margin:0;font-size:15.5px;font-weight:680;letter-spacing:-.018em}
+  .card .sub{font-size:12px;color:var(--on-surface-var);margin:3px 0 0;font-weight:500}
+  .rowhead{display:flex;align-items:baseline;gap:8px;margin-bottom:11px}
+  .rowhead .g{flex:1;min-width:0}
+  .rowhead .lk{font-size:12.5px;color:var(--primary);font-weight:650;white-space:nowrap}
+  .foot{font-size:11.5px;color:var(--on-surface-var);margin-top:12px;padding-top:11px;
+        border-top:1px solid var(--hair);line-height:1.55}
+  .foot b{color:var(--on-surface);font-weight:650}
 
-/* today list */
-.today{display:flex;flex-direction:column;gap:0}
-.tk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
-.tk:last-child{border-bottom:0;padding-bottom:2px}
-.tick{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;margin-top:1px}
-.tick.done{background:var(--good);border-color:var(--good)}
-.tk .m{flex:1;min-width:0}
-.tk .m .ti{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tk .m .me{font-size:12px;color:var(--muted);display:flex;gap:7px;align-items:center;margin-top:2px;flex-wrap:wrap}
-.tk.done .m .ti{color:var(--muted);text-decoration:line-through}
-.rail{width:4px;border-radius:2px;align-self:stretch;flex:none}
-.pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.pill.due{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));color:var(--warn)}
+  .seg{display:flex;border-radius:999px;padding:4px;gap:2px}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:650;padding:7px 4px;
+    border-radius:999px;color:var(--on-surface-var);white-space:nowrap}
+  .seg span.on{background:var(--p-container);color:var(--on-p-container)}
 
-/* load bar */
-.load{display:flex;align-items:center;gap:12px}
-.load .bar{flex:1;height:9px;border-radius:99px;background:var(--surface2);overflow:hidden;display:flex}
-.load .bar i{display:block;height:100%}
-.load .txt{font-size:12px;color:var(--muted);white-space:nowrap}
+  .area{display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+        padding:3.5px 10px;font-size:11px;font-weight:650;white-space:nowrap}
+  .area i{width:7px;height:7px;border-radius:50%;flex:none}
+  .tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;
+       font-size:10.5px;font-weight:680;white-space:nowrap;
+       background:var(--ghost-container);color:var(--ghost)}
+  .tag.late{background:var(--late-container);color:var(--late)}
+  .tag.good{background:var(--sec-container);color:var(--on-sec-container)}
+  .tag.dash{background:transparent;box-shadow:inset 0 0 0 1.4px var(--outline-var)}
 
-/* goal rows */
-.goal{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line)}
-.goal:last-child{border-bottom:0;padding-bottom:2px}
-.goal .nm{flex:1;min-width:0}
-.goal .nm .a{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.goal .nm .b{font-size:12px;color:var(--muted);margin-top:2px}
-.nomeasure{font-size:11.5px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+  /* rows */
+  .tk{display:flex;gap:11px;align-items:flex-start;padding:10px 0;
+      box-shadow:0 1px 0 var(--hair)}
+  .tk:last-child{box-shadow:none;padding-bottom:0}
+  .tick{width:21px;height:21px;border-radius:7px;flex:none;margin-top:1px;
+        box-shadow:inset 0 0 0 2px var(--outline-var)}
+  .tick.done{background:var(--secondary);box-shadow:none;position:relative}
+  .tick.done::after{content:'';position:absolute;inset:0;
+    background:no-repeat center/11px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")}
+  .rail{width:3.5px;border-radius:999px;align-self:stretch;flex:none}
+  .tk .m{flex:1;min-width:0}
+  .tk .m b{display:block;font-size:14px;font-weight:640;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;letter-spacing:-.012em}
+  .tk .m .me{font-size:11.5px;color:var(--on-surface-var);display:flex;gap:6px;
+             align-items:center;margin-top:3px;flex-wrap:wrap;font-weight:550}
+  .tk.done .m b{color:var(--on-surface-var);text-decoration:line-through}
 
-/* legend */
-.legend{display:flex;flex-direction:column;gap:9px;margin-top:4px}
-.lg{display:flex;align-items:center;gap:9px;font-size:13px}
-.lg .sw{width:10px;height:10px;border-radius:3px;flex:none}
-.lg .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lg .v{color:var(--muted);font-variant-numeric:tabular-nums}
+  .goal{display:flex;align-items:center;gap:12px;padding:10px 0;box-shadow:0 1px 0 var(--hair)}
+  .goal:last-child{box-shadow:none;padding-bottom:0}
+  .goal .nm{flex:1;min-width:0}
+  .goal .nm b{display:block;font-size:14px;font-weight:640;white-space:nowrap;overflow:hidden;
+              text-overflow:ellipsis}
+  .goal .nm span{font-size:11.5px;color:var(--on-surface-var);font-weight:550}
+  .nodial{width:38px;height:38px;border-radius:50%;flex:none;
+          box-shadow:inset 0 0 0 2px var(--outline-var);opacity:.6}
 
-.foot{font-size:11.5px;color:var(--muted);margin-top:12px;padding-top:11px;border-top:1px solid var(--line);line-height:1.5}
-.foot b{color:var(--text);font-weight:650}
+  .lg{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3.5px 0;font-weight:550}
+  .lg i{width:9px;height:9px;border-radius:3px;flex:none}
+  .lg .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg .v{color:var(--on-surface-var);font-size:11.5px}
 
-.setup{display:flex;align-items:center;gap:11px;font-size:13px}
-.setup .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
-.setup .s{flex:1}
+  .load{display:flex;align-items:center;gap:11px;margin-top:12px}
+  .load .t{flex:1;height:9px;border-radius:99px;background:var(--ghost-container);
+           overflow:hidden;display:flex}
+  .load .t i{display:block;height:100%}
+  .load .x{font-size:11.5px;color:var(--on-surface-var);white-space:nowrap;font-weight:550}
 
-/* slope / gap chart */
-.slope{position:relative}
-.slope .hd{display:flex;font-size:11.5px;color:var(--muted);font-weight:650;margin-bottom:8px}
-.slope .hd span:first-child{flex:1}
-.slope .hd span:last-child{flex:1;text-align:end}
-
-/* annotations column */
-.notes{width:520px;max-width:100%;display:flex;flex-direction:column;gap:14px}
-.note{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px}
-.note h4{margin:0 0 7px;font-size:14px;letter-spacing:-.01em}
-.note p{margin:0 0 9px;font-size:13.5px;color:var(--muted);line-height:1.55}
-.note p:last-child{margin-bottom:0}
-.note code{background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
-.note .tag{
-  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
-  padding:2px 8px;border-radius:999px;margin-inline-end:7px;
-  background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);
-  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
-}
-.note .tag.derived{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
-.note .tag.ask{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
-.note .tag.taken{background:color-mix(in srgb,var(--c-rel) 18%,transparent);color:var(--c-rel);border-color:color-mix(in srgb,var(--c-rel) 45%,transparent)}
-.note strong{color:var(--text)}
-
-.dead{opacity:.42}
-h2.sec{width:100%;text-align:center;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 0}
+  /* ── the home screen, for widgets ────────────────────────────────────── */
+  .wall{width:392px;height:848px;border-radius:48px;border:11px solid #04080c;position:relative;
+    overflow:hidden;color:var(--on-surface);display:flex;flex-direction:column;
+    box-shadow:0 0 0 1px rgba(255,255,255,.10), 0 34px 80px rgba(0,0,0,.65)}
+  .wallpaper{position:absolute;inset:0}
+  .wall .inner{position:relative;z-index:2;flex:1;overflow-y:auto;scrollbar-width:none;
+    padding:10px 14px 26px}
+  .wall .inner::-webkit-scrollbar{width:0}
+  .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+  .wg{border-radius:26px;padding:12px 13px;overflow:hidden;position:relative;
+      display:flex;flex-direction:column;animation:rise .3s both}
+  .wg .hd{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;
+          letter-spacing:.05em;text-transform:uppercase;color:var(--on-surface-var);
+          margin-bottom:7px;white-space:nowrap;overflow:hidden}
+  .wg .hd i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+  .wg .n{font-size:31px;font-weight:700;letter-spacing:-.04em;line-height:1}
+  .wg .n2{font-size:12px;color:var(--on-surface-var);font-weight:560;line-height:1.35}
+  .wg .disc{font-size:9px;line-height:1.3;color:var(--on-surface-var);opacity:.9;
+            margin-top:auto;padding-top:7px;font-weight:550}
+  .wg .grow{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+  .dock{position:relative;z-index:2;height:86px;flex:none;margin:0 14px 16px;border-radius:30px;
+        display:flex;align-items:center;justify-content:space-around;padding:0 8px;
+        background:rgba(255,255,255,.16);backdrop-filter:blur(16px)}
+  .wall[data-theme="dark"] .dock{background:rgba(255,255,255,.07)}
+  .dock .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
+            font-size:22px;color:#fff;
+            background:linear-gradient(150deg,var(--hero-1),var(--hero-3))}
+  .gallery{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:flex-start}
+  .cell{width:auto}
 </style>
 </head>
-<body class="dark">
+<body>
 
-<div class="chrome">
-  <b>C12 rev 1</b>
-  <span class="name" id="vname">—</span>
-  <button class="btn" id="prev">←</button>
-  <button class="btn" id="next">→</button>
-  <span class="spacer"></span>
-  <button class="btn" id="lang">HE</button>
-  <button class="btn" id="theme">Light</button>
-  <button class="btn" id="raw" title="Render the committed light-mode hexes on the dark surface">Committed palette</button>
-  <span class="hint" id="hint"></span>
+<div class="banner">
+  <h1>PROTOTYPE — <span id="vtitle">…</span></h1>
+  <p id="vsub">…</p>
 </div>
 
-<div class="stage">
-  <div class="phone" id="phone"><div class="scroll" id="screen"></div><div class="tabbar" id="tabs"></div></div>
-  <div class="notes" id="notes"></div>
+<div class="bar">
+  <button class="cbtn" data-v="home">Home</button>
+  <button class="cbtn" data-v="home-before">Home today</button>
+  <button class="cbtn" data-v="analytics">Analytics</button>
+  <button class="cbtn" data-v="gap">Effort · rejected forms</button>
+  <button class="cbtn" data-v="widgets">Widgets</button>
 </div>
+<div class="bar" id="sizebar" style="display:none">
+  <button class="cbtn" data-s="2x2">2 × 2</button>
+  <button class="cbtn" data-s="4x2">4 × 2</button>
+  <button class="cbtn" data-s="2x4">2 × 4</button>
+  <button class="cbtn" data-s="4x4">4 × 4</button>
+  <button class="cbtn" data-s="mixed">Home screen</button>
+</div>
+<div class="bar">
+  <button class="cbtn" id="lang">עברית</button>
+  <button class="cbtn" id="theme">Light</button>
+</div>
+
+<div id="stage" class="gallery"></div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   Data — one week, shared by every variant, so these are views of
-   the same week rather than separate demos.
-   Minutes are already DIVIDED across goal edges (C17 §3) and spans
-   contribute nothing (C9a via C9b).
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   Category colours. GoalCategory.defaultColorHex is a LIGHT-MODE palette —
+   all ten are picked for contrast against a white-ish surface and go muddy
+   on #0C1520. C9b's four tone-80 dark values are kept verbatim; the six this
+   ticket also needs are cut to the same recipe.
+   ═══════════════════════════════════════════════════════════════════════ */
+const CAT = {
+  HEALTH:   {he:'בריאות',       en:'Health',        c:'#CF3636', d:'#FF8A85'},
+  FITNESS:  {he:'אימון ריצה',   en:'Running',       c:'#B85107', d:'#FFB77A'},
+  LEARNING: {he:'לימודים',      en:'Studies',       c:'#8B39C4', d:'#D8A9FF'},
+  CAREER:   {he:'קריירה',       en:'Career',        c:'#0F6FCB', d:'#93C5FF'},
+  RELATION: {he:'מערכות יחסים', en:'Relationships', c:'#D6246E', d:'#FFB0CB'},
+  FINANCE:  {he:'כספים',        en:'Finance',       c:'#0B7285', d:'#7BD8E8'},
+  OTHER:    {he:'ללא שיוך',     en:'Unfiled',       c:'#64748B', d:'#C3CEDD'},
+};
+let THEME = 'dark', L = 'en', SIZE = '2x2';
+const cc = k => THEME === 'dark' ? CAT[k].d : CAT[k].c;
+const T  = o => L === 'he' ? (o.he ?? o.en) : o.en;
+const t  = (en, he) => L === 'he' ? he : en;
+const ltr = s => `<span class="ltr">${s}</span>`;
+const hm = m => L === 'he'
+  ? `${Math.floor(m/60)} ש׳${m%60 ? ' ' + (m%60) + ' ד׳' : ''}`
+  : `${Math.floor(m/60)}h${m%60 ? ' ' + (m%60) + 'm' : ''}`;
+
+/* ═══ one week, shared by every screen and every widget ═══
+   Minutes are already DIVIDED across goal edges (C17 §3); spans contribute
+   nothing (C9a via C9b). So the donut on Home and the donut in a widget
+   cannot disagree. */
 const AREAS = [
-  {id:'learning', en:'Learning',      he:'לימודים',        v:'--c-learning', min:420, dprog:3,   measured:false,
-   moves:[]},
-  {id:'health',   en:'Health',        he:'בריאות',         v:'--c-health',   min:260, dprog:12,  measured:true,
-   moves:[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',d:12},{en:'Lose 5 kg',he:'לרדת 5 ק״ג',d:4}]},
-  {id:'career',   en:'Career',        he:'קריירה',         v:'--c-career',   min:210, dprog:6,   measured:true,
-   moves:[{en:'Publish the portfolio',he:'לפרסם תיק עבודות',d:6}]},
-  {id:'rel',      en:'Relationships', he:'מערכות יחסים',   v:'--c-rel',      min:120, dprog:18,  measured:true,
-   moves:[{en:'A date night every week',he:'ערב זוגי כל שבוע',d:18}]},
-  {id:'finance',  en:'Finance',       he:'כספים',          v:'--c-finance',  min:60,  dprog:null,measured:false,
-   moves:[]},
-  {id:'other',    en:'Unfiled',       he:'ללא שיוך',       v:'--c-other',    min:40,  dprog:null,measured:false,
-   moves:[]},
+  {k:'LEARNING', min:420, moves:[]},
+  {k:'HEALTH',   min:260, moves:[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',d:12},
+                                 {en:'Lose 5 kg',he:'לרדת 5 ק״ג',d:4}]},
+  {k:'CAREER',   min:210, moves:[{en:'Publish the portfolio',he:'לפרסם תיק עבודות',d:6}]},
+  {k:'RELATION', min:120, moves:[{en:'A date night every week',he:'ערב זוגי כל שבוע',d:18}]},
+  {k:'FINANCE',  min:60,  moves:[]},
+  {k:'OTHER',    min:40,  moves:[]},
 ];
 const TOTAL = AREAS.reduce((s,a)=>s+a.min,0);
-
-const WEEK = [ /* stacked column, Sun→Sat, minutes per area */
-  {en:'Sun',he:'א',  vals:{learning:90, health:40, career:30, rel:0,  finance:0,  other:10}},
-  {en:'Mon',he:'ב',  vals:{learning:60, health:45, career:60, rel:0,  finance:20, other:0 }},
-  {en:'Tue',he:'ג',  vals:{learning:80, health:35, career:40, rel:30, finance:0,  other:10}},
-  {en:'Wed',he:'ד',  vals:{learning:70, health:50, career:20, rel:0,  finance:0,  other:0 }},
-  {en:'Thu',he:'ה',  vals:{learning:60, health:40, career:60, rel:30, finance:20, other:20}},
-  {en:'Fri',he:'ו',  vals:{learning:40, health:20, career:0,  rel:60, finance:0,  other:0 }},
-  {en:'Sat',he:'ש',  vals:{learning:20, health:30, career:0,  rel:0,  finance:20, other:0 }},
+const WEEK = [
+  {en:'Sun',he:'א', v:{LEARNING:90,HEALTH:40,CAREER:30,RELATION:0, FINANCE:0, OTHER:10}},
+  {en:'Mon',he:'ב', v:{LEARNING:60,HEALTH:45,CAREER:60,RELATION:0, FINANCE:20,OTHER:0}},
+  {en:'Tue',he:'ג', v:{LEARNING:80,HEALTH:35,CAREER:40,RELATION:30,FINANCE:0, OTHER:10}},
+  {en:'Wed',he:'ד', v:{LEARNING:70,HEALTH:50,CAREER:20,RELATION:0, FINANCE:0, OTHER:0}},
+  {en:'Thu',he:'ה', v:{LEARNING:60,HEALTH:40,CAREER:60,RELATION:30,FINANCE:20,OTHER:20}},
+  {en:'Fri',he:'ו', v:{LEARNING:40,HEALTH:20,CAREER:0, RELATION:60,FINANCE:0, OTHER:0}},
+  {en:'Sat',he:'ש', v:{LEARNING:20,HEALTH:30,CAREER:0, RELATION:0, FINANCE:20,OTHER:0}},
 ];
-
 const TODAY = [
-  {en:'Draft chapter 3 of the final project', he:'לכתוב פרק 3 בפרויקט הגמר',
-   area:'learning', rung:'BLOCK', time:'09:00–12:00', done:false},
-  {en:'Submit the ethics form', he:'להגיש את טופס האתיקה',
-   area:'career', rung:'DEADLINE', time:'23:59', done:false},
-  {en:'Evening run · 4 km', he:'ריצת ערב · 4 ק״מ',
-   area:'health', rung:'BLOCK', time:'18:30–19:15', done:true},
-  {en:'Call Rachel', he:'להתקשר לרחל',
-   area:'rel', rung:'UNTIMED', time:null, done:false},
+  {en:'Draft chapter 3 of the final project',he:'לכתוב פרק 3 בפרויקט הגמר',
+   k:'LEARNING',rung:'BLOCK',tm:'09:00–12:00',done:false},
+  {en:'Submit the ethics form',he:'להגיש את טופס האתיקה',
+   k:'CAREER',rung:'DEADLINE',tm:'23:59',done:false},
+  {en:'Evening run · 4 km',he:'ריצת ערב · 4 ק״מ',
+   k:'FITNESS',rung:'BLOCK',tm:'18:30–19:15',done:true},
+  {en:'Call Rachel',he:'להתקשר לרחל',k:'RELATION',rung:'UNTIMED',tm:null,done:false},
 ];
-
 const GOALS = [
-  {en:'Run 4 km a week',   he:'לרוץ 4 ק״מ בשבוע',    area:'health',   measure:'3.2 / 4 km',      pct:80,  meHe:'3.2 / 4 ק״מ'},
-  {en:'Lose 5 kg',         he:'לרדת 5 ק״ג',           area:'health',   measure:'77.5 kg · from 80', pct:50, meHe:'77.5 ק״ג · מ־80'},
-  {en:'Finish the final project', he:'לסיים את פרויקט הגמר', area:'learning', measure:null, pct:null},
-  {en:'Understand real estate',   he:'להבין נדל״ן',    area:'learning', measure:null, pct:null},
+  {en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',pct:80,
+   me:'3.2 / 4 km',meHe:'3.2 / 4 ק״מ'},
+  {en:'Lose 5 kg',he:'לרדת 5 ק״ג',k:'HEALTH',pct:50,
+   me:'77.5 kg · from 80',meHe:'77.5 ק״ג · מ־80'},
+  {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
+   me:'3 / 4 weeks',meHe:'3 / 4 שבועות'},
+  {en:'Finish the final project',he:'לסיים את פרויקט הגמר',k:'LEARNING',pct:null},
 ];
+const BOOKED = 225, DONEMIN = 45, DAY = 480;
 
-let L = 'en';                 // 'en' | 'he'
-const T = (o) => L === 'he' ? (o.he ?? o.en) : o.en;
-const t = (en, he) => L === 'he' ? he : en;
-const bidi = (s) => `<bdi>${s}</bdi>`;
-const col = (a) => `var(${AREAS.find(x=>x.id===a).v})`;
-const areaOf = (id) => AREAS.find(x=>x.id===id);
-const hm = (m) => L==='he' ? `${Math.floor(m/60)} ש׳ ${m%60 ? (m%60)+' ד׳' : ''}`.trim()
-                           : `${Math.floor(m/60)}h ${m%60 ? (m%60)+'m' : ''}`.trim();
-
-/* ═══════════════════════════════════════════════════════════════
-   Chart primitives — SVG, no library.
-   ═══════════════════════════════════════════════════════════════ */
-function donut(size, thick, slices, centerHtml){
-  const r = (size - thick)/2, c = size/2, C = 2*Math.PI*r;
-  let acc = 0, segs = '';
-  slices.forEach(s=>{
-    const frac = s.value/TOTAL;
-    segs += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${s.color}"
-      stroke-width="${thick}" stroke-linecap="butt"
-      stroke-dasharray="${(C*frac)-2} ${C-(C*frac)+2}"
+/* ═══ chart primitives ═══ */
+function donut(size, thick, cent){
+  const r=(size-thick)/2, c=size/2, C=2*Math.PI*r;
+  let acc=0, segs='';
+  AREAS.forEach(a=>{
+    const f=a.min/TOTAL;
+    segs+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${cc(a.k)}"
+      stroke-width="${thick}" stroke-dasharray="${Math.max(C*f-2.4,0)} ${C-C*f+2.4}"
       stroke-dashoffset="${-C*acc}" transform="rotate(-90 ${c} ${c})"/>`;
-    acc += frac;
+    acc+=f;
   });
   return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
-    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:scaleX(1)">
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
+    <svg width="${size}" height="${size}">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ghost-container)" stroke-width="${thick}"/>
       ${segs}
     </svg>
-    <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1.25">${centerHtml}</div>
+    ${cent?`<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center">${cent}</div>`:''}
   </div>`;
 }
-
-function ring(size, pct, color){
-  const thick = 5, r=(size-thick)/2, c=size/2, C=2*Math.PI*r;
-  return `<svg width="${size}" height="${size}" style="flex:none">
-    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
-    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${thick}"
-      stroke-linecap="round" stroke-dasharray="${C*pct/100} ${C}" transform="rotate(-90 ${c} ${c})"/>
-    <text x="${c}" y="${c+4}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">${pct}</text>
-  </svg>`;
-}
-
-function stacked(w, h){
-  const max = Math.max(...WEEK.map(d=>Object.values(d.vals).reduce((a,b)=>a+b,0)));
-  const gap = 8, bw = (w - gap*(WEEK.length-1))/WEEK.length;
-  const days = L==='he' ? [...WEEK].reverse() : WEEK;      /* time runs right→left in RTL */
-  let out = '';
-  days.forEach((d,i)=>{
-    const x = i*(bw+gap); let y = h;
-    AREAS.forEach(a=>{
-      const v = d.vals[a.id]||0; if(!v) return;
-      const bh = (v/max)*(h-4); y -= bh;
-      out += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="var(${a.v})" rx="2"/>`;
-    });
-  });
-  return `<svg width="${w}" height="${h+18}" style="display:block">
-    ${out}
-    ${days.map((d,i)=>`<text x="${i*(bw+gap)+bw/2}" y="${h+14}" text-anchor="middle"
-        font-size="10.5" fill="var(--muted)">${T(d)}</text>`).join('')}
-  </svg>`;
-}
-
-/* rev 2 — effort ranked, and what actually moved beside it. See note G1. */
-function movedRows(){
-  const ordered = [...AREAS].filter(a=>a.id!=='other').sort((a,b)=>b.min-a.min);
-  const maxMin = Math.max(...ordered.map(a=>a.min));
-  return ordered.map(a=>`
-    <div style="padding:11px 0;border-bottom:1px solid var(--line)">
-      <div style="display:flex;align-items:baseline;gap:8px">
-        <span style="flex:1;font-size:14px;font-weight:650">${T(a)}</span>
-        <span style="font-size:12px;color:var(--muted)">${bidi(hm(a.min))}</span>
-      </div>
-      <div style="height:7px;border-radius:99px;background:var(--surface2);margin:7px 0 8px;overflow:hidden">
-        <div style="width:${a.min/maxMin*100}%;height:100%;background:var(${a.v})"></div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${a.moves.length
-          ? a.moves.map(m=>`<span class="pill" style="border-color:color-mix(in srgb,var(--good) 45%,var(--line));color:var(--good)">${T(m)} ${bidi('+'+m.d+'%')}</span>`).join('')
-          : `<span class="nomeasure">${t('no measure — nothing here can move','ללא מדד — אין כאן מה שיזוז')}</span>`}
-      </div>
-    </div>`).join('');
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Screens
-   ═══════════════════════════════════════════════════════════════ */
-function tabs(sel){
-  const items = [
-    {en:'Home',he:'בית'},{en:'Goals',he:'מטרות'},
-    {en:'Calendar',he:'לוח שנה'},{en:'Social',he:'חברתי'}];
-  return items.map((it,i)=>`<div class="${i===sel?'sel':''}"><span class="g"></span>${T(it)}</div>`).join('');
-}
-
-function statusbar(){
-  return `<div class="statusbar"><span>${bidi('9:41')}</span><span>${bidi('􀙇 􀛨 100%')}</span></div>`;
-}
-
-/* rev 2 — the level ring lives around the avatar, so nothing is lost and
-   nothing occupies a row of its own. See note H4. */
-function avatarWithLevel(pct, level){
-  const s=48, thick=3, r=(s-thick)/2, c=s/2, C=2*Math.PI*r;
-  return `<div style="position:relative;width:${s}px;height:${s+4}px;flex:none">
-    <svg width="${s}" height="${s}" style="position:absolute;top:0;inset-inline-start:0">
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${thick}"
+function ring(size, pct, color, txt){
+  const th=Math.max(4,size*.105), r=(size-th)/2, c=size/2, C=2*Math.PI*r;
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
+    <svg width="${size}" height="${size}">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ghost-container)" stroke-width="${th}"/>
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${th}"
         stroke-linecap="round" stroke-dasharray="${C*pct/100} ${C}" transform="rotate(-90 ${c} ${c})"/>
     </svg>
-    <div class="avatar" style="position:absolute;top:7px;inset-inline-start:7px;width:34px;height:34px;border:0;font-size:13px">${t('I','ע')}</div>
-    <div style="position:absolute;bottom:0;left:0;right:0;text-align:center;line-height:0">
-      <span style="display:inline-block;background:var(--accent);color:var(--accent-ink);font-size:9.5px;
-        font-weight:800;padding:2px 6px;border-radius:99px;border:2px solid var(--surface);line-height:1">${bidi(String(level))}</span>
-    </div>
+    ${txt!==undefined?`<div style="position:absolute;inset:0;display:grid;place-items:center;
+      font-size:${Math.round(size*.29)}px;font-weight:700;letter-spacing:-.03em">${txt}</div>`:''}
+  </div>`;
+}
+/* A time axis is DRAWN, not laid out — dir="rtl" does not mirror it, so the
+   series is reversed in code. This is the kind of thing that ships wrong. */
+function stacked(w, h, labels){
+  const max=Math.max(...WEEK.map(d=>Object.values(d.v).reduce((a,b)=>a+b,0)));
+  const days = L==='he' ? [...WEEK].reverse() : WEEK;
+  const gap=Math.max(3,w*.022), bw=(w-gap*(days.length-1))/days.length;
+  let out='';
+  days.forEach((d,i)=>{
+    const x=i*(bw+gap); let y=h;
+    AREAS.forEach(a=>{
+      const val=d.v[a.k]||0; if(!val) return;
+      const bh=(val/max)*(h-3); y-=bh;
+      out+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${cc(a.k)}" rx="2"/>`;
+    });
+  });
+  const lab = labels ? days.map((d,i)=>`<text x="${i*(bw+gap)+bw/2}" y="${h+13}"
+      text-anchor="middle" font-size="10" font-weight="600"
+      fill="var(--on-surface-var)">${T(d)}</text>`).join('') : '';
+  return `<svg width="${w}" height="${h+(labels?17:0)}">${out}${lab}</svg>`;
+}
+/* Order only the quantity you may order: minutes are ranked, movement is NAMED.
+   A percentage is a fraction of its OWN target, so ranking movement partly ranks
+   how modest the goals are — rev 1 did that and it is now a rejected exhibit. */
+function movedRows(compact){
+  const ord=[...AREAS].filter(a=>a.k!=='OTHER').sort((a,b)=>b.min-a.min);
+  const mx=Math.max(...ord.map(a=>a.min));
+  return ord.slice(0, compact||ord.length).map(a=>`
+    <div style="padding:${compact?7:9}px 0;box-shadow:0 1px 0 var(--hair)">
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="flex:1;font-size:${compact?12:13.5}px;font-weight:650">${T(CAT[a.k])}</span>
+        <span style="font-size:11px;color:var(--on-surface-var);font-weight:550">${ltr(hm(a.min))}</span>
+      </div>
+      <div style="height:6px;border-radius:99px;background:var(--ghost-container);
+        margin:6px 0 ${compact?4:7}px;overflow:hidden">
+        <div style="width:${a.min/mx*100}%;height:100%;background:${cc(a.k)}"></div></div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${a.moves.length
+          ? a.moves.map(m=>`<span class="tag good">${T(m)} ${ltr('+'+m.d+'%')}</span>`).join('')
+          : `<span class="tag dash">${t('no measure','ללא מדד')}</span>`}
+      </div>
+    </div>`).join('');
+}
+
+/* ═══ shared chrome ═══ */
+const SB = () => `<div class="statusbar"><span>${ltr('9:41')}</span>
+  <span style="font-size:11px">${ltr('▮▮▮ ⌁ 87%')}</span></div>`;
+function navbar(sel){
+  const tabs=[{en:'Home',he:'בית',i:'⌂'},{en:'Goals',he:'מטרות',i:'◎'},
+              {en:'Calendar',he:'לוח שנה',i:'▤'},{en:'Social',he:'חברתי',i:'◍'}];
+  return `<div class="navbar">${tabs.map((x,i)=>
+    `<div class="t ${i===sel?'on':''}"><span class="pill">${x.i}</span>${T(x)}</div>`).join('')}</div>`;
+}
+function avatarLevel(pct, lvl){
+  return `<div style="position:relative;width:46px;height:46px;flex:none">
+    ${ring(46,pct,'var(--primary)')}
+    <div style="position:absolute;inset:7px;border-radius:50%;display:grid;place-items:center;
+      background:linear-gradient(140deg,var(--hero-2),var(--hero-3));color:#fff;
+      font-weight:750;font-size:13px">${t('I','ע')}</div>
+    <div style="position:absolute;bottom:-3px;left:0;right:0;text-align:center;line-height:0">
+      <span style="display:inline-block;background:var(--primary);color:var(--on-primary);
+        font-size:9px;font-weight:750;padding:2px 6px;border-radius:999px;line-height:1;
+        box-shadow:0 2px 6px var(--glow)">${ltr(String(lvl))}</span></div>
   </div>`;
 }
 
-function topbar(){
-  return `${statusbar()}
-  <div class="topbar">
-    <div class="hello">
-      <div class="k">${t('Tuesday, 10 August','יום שלישי, 10 באוגוסט')}</div>
-      <div class="v">${t('Good evening, Ido','ערב טוב, עידו')}</div>
-    </div>
-    <div class="iconbtn">✦</div>
-    ${avatarWithLevel(72, 6)}
-  </div>`;
-}
-
-/* ── HOME (proposed) ──────────────────────────────────────────── */
-function screenHome(){
-  const doneMin = 45, bookedMin = 225;
-  const todayRows = TODAY.map(k=>{
-    const a = areaOf(k.area);
-    return `<div class="tk ${k.done?'done':''}">
-      <div class="tick ${k.done?'done':''}"></div>
-      <div class="rail" style="background:${col(k.area)}"></div>
-      <div class="m">
-        <div class="ti">${T(k)}</div>
+/* ═══ SCREENS ═══ */
+function scHome(){
+  const today = TODAY.map(x=>`
+    <div class="tk ${x.done?'done':''}">
+      <div class="tick ${x.done?'done':''}"></div>
+      <div class="rail" style="background:${cc(x.k)}"></div>
+      <div class="m"><b>${T(x)}</b>
         <div class="me">
-          ${k.time ? `<span>${bidi(k.time)}</span>` : ''}
-          ${k.rung==='DEADLINE' ? `<span class="pill due">${t('Due today','להגשה היום')}</span>` : ''}
-          ${k.rung==='UNTIMED' ? `<span class="pill">${t('No time set','ללא שעה')}</span>` : ''}
-          <span>${T(a)}</span>
+          ${x.tm?`<span>${ltr(x.tm)}</span>`:''}
+          ${x.rung==='DEADLINE'?`<span class="tag late">${t('due today','להגשה היום')}</span>`:''}
+          ${x.rung==='UNTIMED'?`<span class="tag dash">${t('no time set','ללא שעה')}</span>`:''}
+          <span class="area" style="background:color-mix(in srgb,${cc(x.k)} 15%,transparent);
+            color:${cc(x.k)}"><i style="background:${cc(x.k)}"></i>${T(CAT[x.k])}</span>
         </div>
       </div>
-    </div>`;
-  }).join('');
-
-  const goalRows = GOALS.slice(0,3).map(g=>{
-    const c = col(g.area);
-    return `<div class="goal">
-      ${g.pct!==null ? ring(38,g.pct,c)
-        : `<div style="width:38px;height:38px;border-radius:50%;border:2px dashed var(--line);flex:none"></div>`}
-      <div class="nm">
-        <div class="a">${T(g)}</div>
-        <div class="b">${g.measure ? bidi(L==='he'?g.meHe:g.measure) : t('No measure — 3 tasks left','ללא מדד — נותרו 3 משימות')}</div>
-      </div>
-      ${g.pct===null ? `<span class="nomeasure">${t('no measure','ללא מדד')}</span>` : ''}
-    </div>`;
-  }).join('');
-
-  const legend = AREAS.slice(0,4).map(a=>`<div class="lg">
-      <span class="sw" style="background:var(${a.v})"></span>
-      <span class="l">${T(a)}</span>
-      <span class="v">${bidi(Math.round(a.min/TOTAL*100)+'%')}</span>
     </div>`).join('');
 
-  return `${topbar()}
-  <div class="wrap">
+  const goals = GOALS.slice(0,3).map(g=>`
+    <div class="goal">
+      ${g.pct!==null ? ring(40,g.pct,cc(g.k),`<span style="font-size:11px">${ltr(g.pct)}</span>`)
+                     : `<div class="nodial"></div>`}
+      <div class="nm"><b>${T(g)}</b>
+        <span>${g.pct!==null ? ltr(L==='he'?g.meHe:g.me)
+                             : t('no measure — 3 tasks left','ללא מדד — נותרו 3 משימות')}</span></div>
+    </div>`).join('');
 
-    <div class="banner">
-      <div class="n">4</div>
-      <div class="t">
-        <div class="a">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
-        <div class="b">${t('2 missed · 1 left your calendar · 1 to confirm','2 הוחמצו · 1 יצאה מהיומן · 1 לאישור')}</div>
+  const legend = AREAS.slice(0,4).map(a=>`<div class="lg"><i style="background:${cc(a.k)}"></i>
+    <span class="l">${T(CAT[a.k])}</span>
+    <span class="v">${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
+
+  return `${SB()}
+  <div class="screen">
+    <div class="appbar">
+      <div class="g" style="flex:1">
+        <div class="sub">${t('Tuesday, 10 August','יום שלישי, 10 באוגוסט')}</div>
+        <div class="ttl">${t('Good evening','ערב טוב')}</div>
       </div>
-      <div class="go">${L==='he'?'‹':'›'}</div>
+      <div class="iconbtn">✦</div>
+      ${avatarLevel(72,6)}
     </div>
+    <div class="wrap">
 
-    <div class="card">
-      <div class="rowhead">
-        <h3>${t('Today','היום')}</h3>
-        <a>${t('Calendar','לוח שנה')} ${L==='he'?'‹':'›'}</a>
-      </div>
-      <div class="today">${todayRows}</div>
-      <div class="load" style="margin-top:14px">
-        <div class="bar">
-          <i style="width:${doneMin/480*100}%;background:var(--good)"></i>
-          <i style="width:${(bookedMin-doneMin)/480*100}%;background:var(--accent)"></i>
+      <div class="card hero" style="display:flex;align-items:center;gap:13px">
+        <div style="width:46px;height:46px;border-radius:16px;flex:none;display:grid;
+          place-items:center;background:rgba(255,255,255,.20);font-size:21px;font-weight:750">4</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
+          <div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${t('2 missed · 1 left your calendar · 1 to confirm','2 הוחמצו · 1 יצאה מהיומן · 1 לאישור')}</div>
         </div>
-        <div class="txt">${bidi(hm(bookedMin))} ${t('booked','ביומן')} · ${bidi(hm(480-bookedMin))} ${t('free','פנוי')}</div>
+        <div style="font-size:22px;opacity:.9">${L==='he'?'‹':'›'}</div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="rowhead">
-        <h3>${t('Your goals','המטרות שלך')}</h3>
-        <a>${t('All 7','כל ה־7')} ${L==='he'?'‹':'›'}</a>
-      </div>
-      ${goalRows}
-    </div>
-
-    <div class="card">
-      <div class="rowhead">
-        <h3>${t('This week','השבוע')}</h3>
-        <a>${t('Analytics','ניתוח')} ${L==='he'?'‹':'›'}</a>
-      </div>
-      <div style="display:flex;gap:16px;align-items:center">
-        ${donut(104,15,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
-          `<div><div style="font-size:19px;font-weight:750">${bidi(hm(TOTAL))}</div>
-           <div style="font-size:10.5px;color:var(--muted)">${t('tracked','נמדדו')}</div></div>`)}
-        <div class="legend" style="flex:1">${legend}
-          <div class="lg" style="color:var(--muted)"><span class="sw" style="background:var(--surface2)"></span>
-            <span class="l">${t('2 more','עוד 2')}</span><span class="v"></span></div>
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Today','היום')}</h3></div>
+          <span class="lk">${t('Calendar','לוח שנה')} ${L==='he'?'‹':'›'}</span></div>
+        ${today}
+        <div class="load">
+          <div class="t">
+            <i style="width:${DONEMIN/DAY*100}%;background:var(--secondary)"></i>
+            <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:var(--primary)"></i>
+          </div>
+          <div class="x">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div>
         </div>
       </div>
-    </div>
 
-    <div class="card tight">
-      <div class="setup">
-        <span class="dot"></span>
-        <span class="s">${t('Connect Google Tasks to import your list','חברו את Google Tasks כדי לייבא את הרשימה')}</span>
-        <button class="btn" style="padding:4px 11px">${t('Connect','חיבור')}</button>
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Your goals','המטרות שלך')}</h3></div>
+          <span class="lk">${t('All 7','כל ה־7')} ${L==='he'?'‹':'›'}</span></div>
+        ${goals}
       </div>
-    </div>
 
-  </div>`;
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('This week','השבוע')}</h3></div>
+          <span class="lk">${t('Analytics','ניתוח')} ${L==='he'?'‹':'›'}</span></div>
+        <div style="display:flex;gap:15px;align-items:center">
+          ${donut(102,15,`<div><div style="font-size:17px;font-weight:720;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>
+            <div style="font-size:9.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
+          <div style="flex:1;min-width:0">${legend}</div>
+        </div>
+      </div>
+
+      <div class="card" style="display:flex;align-items:center;gap:11px;padding:13px 15px">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--late);flex:none"></span>
+        <span style="flex:1;font-size:12.5px;font-weight:550">
+          ${t('Connect Google Tasks to import your list','חברו את Google Tasks כדי לייבא את הרשימה')}</span>
+        <span class="tag" style="background:var(--p-container);color:var(--on-p-container)">
+          ${t('Connect','חיבור')}</span>
+      </div>
+
+    </div>
+  </div>${navbar(0)}`;
 }
 
-/* ── HOME (as it ships today) ─────────────────────────────────── */
-function screenHomeBefore(){
-  const box = (h,s,extra='') => `<div class="card"><h3>${h}</h3><p class="sub">${s}</p>${extra}</div>`;
-  return `${statusbar()}
-  <div class="topbar"><div class="hello"><div class="k">${t('Dashboard','לוח בקרה')}</div>
-    <div class="v">${t('Good evening, Ido','ערב טוב, עידו')}</div></div></div>
-  <div class="wrap">
-    <div class="card" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 30%,var(--surface)),var(--surface))">
-      <h3>${t('Level 6 · 1,240 points','רמה 6 · 1,240 נקודות')}</h3>
-      <p class="sub" style="margin:0">${t('310 points to level 7','310 נקודות לרמה 7')}</p>
+function scHomeBefore(){
+  const box=(h,s)=>`<div class="card"><h3>${h}</h3><div class="sub">${s}</div></div>`;
+  return `${SB()}
+  <div class="screen">
+    <div class="appbar"><div style="flex:1">
+      <div class="sub">${t('Dashboard','לוח בקרה')}</div>
+      <div class="ttl">${t('Good evening','ערב טוב')}</div></div></div>
+    <div class="wrap">
+      <div class="card hero"><h3 style="color:#fff">${t('Level 6 · 1,240 points','רמה 6 · 1,240 נקודות')}</h3>
+        <div class="sub">${t('310 points to level 7','310 נקודות לרמה 7')}</div></div>
+      <div class="card"><h3>${t('Time allocation','חלוקת זמן')}</h3>
+        <div class="sub" style="margin-bottom:10px">${t('This week','השבוע')}</div>
+        <div style="display:flex;justify-content:center">${donut(150,20,
+          `<div style="font-size:19px;font-weight:720">${ltr(hm(TOTAL))}</div>`)}</div></div>
+      ${box(t('Smart add','הוספה חכמה'),t('Type anything and we will file it','כתבו משהו ונתייק אותו'))}
+      ${box(t('Connect Health Connect','חיבור Health Connect'),t('Sync steps and workouts','סנכרון צעדים ואימונים'))}
+      ${box(t('Import from Google Tasks','ייבוא מ־Google Tasks'),t('Bring your existing list','הביאו את הרשימה הקיימת'))}
+      ${box(t('Tip 1 of 5','טיפ 1 מתוך 5'),t('Break big goals into small tasks','פרקו מטרות גדולות למשימות קטנות'))}
+      ${box(t('Tip 2 of 5','טיפ 2 מתוך 5'),t('Review your week every Sunday','סקרו את השבוע כל יום ראשון'))}
+      <div class="card" style="opacity:.45"><h3>${t('Your goals','המטרות שלך')}</h3>
+        <div class="sub">${t('…roughly four screenfuls down. No task appears anywhere on this screen.',
+          '…בערך ארבעה מסכים למטה. שום משימה לא מופיעה במסך הזה.')}</div></div>
     </div>
-    <div class="card"><h3>${t('Time allocation','חלוקת זמן')}</h3><p class="sub">${t('This week','השבוע')}</p>
-      <div style="display:flex;justify-content:center">${donut(150,20,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
-      `<div style="font-size:19px;font-weight:750">${bidi(hm(TOTAL))}</div>`)}</div></div>
-    ${box(t('Smart add','הוספה חכמה'), t('Type anything and we will file it','כתבו משהו ונתייק אותו'))}
-    ${box(t('Connect Health Connect','חיבור Health Connect'), t('Sync steps and workouts','סנכרון צעדים ואימונים'))}
-    ${box(t('Import from Google Tasks','ייבוא מ־Google Tasks'), t('Bring your existing list','הביאו את הרשימה הקיימת'))}
-    ${box(t('Tip 1 of 5','טיפ 1 מתוך 5'), t('Break big goals into small tasks','פרקו מטרות גדולות למשימות קטנות'))}
-    ${box(t('Tip 2 of 5','טיפ 2 מתוך 5'), t('Review your week every Sunday','סקרו את השבוע כל יום ראשון'))}
-    <div class="card dead"><h3>${t('Your goals','המטרות שלך')}</h3>
-      <p class="sub">${t('…roughly four screenfuls down. No task is shown anywhere on this screen.','…בערך ארבעה מסכים למטה. שום משימה לא מוצגת במסך הזה.')}</p></div>
-  </div>`;
+  </div>${navbar(0)}`;
 }
 
-/* ── ANALYTICS — the chart set ────────────────────────────────── */
-function screenAnalytics(){
-  const legend = AREAS.map(a=>`<div class="lg">
-      <span class="sw" style="background:var(${a.v})"></span>
-      <span class="l">${T(a)}</span>
-      <span class="v">${bidi(hm(a.min))} · ${bidi(Math.round(a.min/TOTAL*100)+'%')}</span>
-    </div>`).join('');
+function scAnalytics(){
+  const legend=AREAS.map(a=>`<div class="lg"><i style="background:${cc(a.k)}"></i>
+    <span class="l">${T(CAT[a.k])}</span>
+    <span class="v">${ltr(hm(a.min))} · ${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
+  const ranges=[['Day','יום'],['Week','שבוע'],['Month','חודש'],['Quarter','רבעון'],['Year','שנה']];
+  return `${SB()}
+  <div class="screen">
+    <div class="appbar"><div style="flex:1">
+      <div class="ttl">${t('Analytics','ניתוח')}</div>
+      <div class="sub">${t('Your week, and what it moved','השבוע שלך, ומה הוא הזיז')}</div></div>
+      <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
+    <div class="wrap">
 
-  return `${statusbar()}
-  <div class="topbar"><div class="hello"><div class="v">${t('Analytics','ניתוח')}</div></div>
-    <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
-  <div class="wrap">
+      <div class="seg">${ranges.map((r,i)=>`<span class="${i===1?'on':''}">${t(r[0],r[1])}</span>`).join('')}</div>
 
-    <div style="display:flex;gap:7px;overflow:auto">
-      ${[['Day','יום'],['Week','שבוע'],['Month','חודש'],['Quarter','רבעון'],['Year','שנה']]
-        .map((r,i)=>`<button class="btn ${i===1?'on':''}" style="white-space:nowrap">${t(r[0],r[1])}</button>`).join('')}
-    </div>
-
-    <div class="card">
-      <h3>${t('Where the week went','לאן הלך השבוע')}</h3>
-      <p class="sub">${bidi(hm(TOTAL))} ${t('across 6 areas','ב־6 תחומים')}</p>
-      <div style="display:flex;justify-content:center;margin:4px 0 14px">
-        ${donut(168,22,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
-          `<div><div style="font-size:24px;font-weight:750">${bidi(hm(TOTAL))}</div>
-           <div style="font-size:11px;color:var(--muted)">${t('tracked','נמדדו')}</div></div>`)}
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Where the week went','לאן הלך השבוע')}</h3>
+          <div class="sub">${ltr(hm(TOTAL))} ${t('across 6 areas','ב־6 תחומים')}</div></div></div>
+        <div style="display:flex;justify-content:center;margin:2px 0 13px">
+          ${donut(166,22,`<div><div style="font-size:23px;font-weight:730;letter-spacing:-.035em">${ltr(hm(TOTAL))}</div>
+            <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
+        </div>
+        ${legend}
+        <div class="foot"><b>${t('Shared work is divided.','עבודה משותפת מחולקת.')}</b>
+          ${t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
+              'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שהעוגה תסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}</div>
       </div>
-      <div class="legend">${legend}</div>
-      <div class="foot">
-        <b>${t('Shared work is divided.','עבודה משותפת מחולקת.')}</b>
-        ${t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
-            'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שהעוגה תסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}
+
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Day by day','יום אחר יום')}</h3>
+          <div class="sub">${t('Same minutes, over time','אותן דקות, לאורך זמן')}</div></div></div>
+        ${stacked(322,142,true)}
       </div>
-    </div>
 
-    <div class="card">
-      <h3>${t('Day by day','יום אחר יום')}</h3>
-      <p class="sub">${t('Same minutes, over time','אותן דקות, לאורך זמן')}</p>
-      ${stacked(322,140)}
-    </div>
-
-    <div class="card">
-      <h3>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</h3>
-      <p class="sub">${t('Ordered by time. Beside each area, the goals that actually moved.',
-                         'מסודר לפי זמן. ליד כל תחום, המטרות שבאמת זזו.')}</p>
-      ${movedRows()}
-      <div class="foot">
-        <b>${t('Learning took most of your week — and it has no measure, so nothing here can tell you whether it moved.',
-               'לימודים לקחו את רוב השבוע — ואין להם מדד, אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</b>
-        ${t('That is worth knowing on its own. Adding a measure to one of those goals is the only thing that changes it.',
-            'זה שווה לדעת בפני עצמו. הוספת מדד לאחת מהמטרות האלה היא הדבר היחיד שישנה את זה.')}
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</h3>
+          <div class="sub">${t('Ordered by time. Beside each area, the goals that moved.',
+                               'מסודר לפי זמן. ליד כל תחום, המטרות שזזו.')}</div></div></div>
+        ${movedRows()}
+        <div class="foot"><b>${t('Learning took most of your week — and it has no measure, so nothing here can tell you whether it moved.',
+          'לימודים לקחו את רוב השבוע — ואין להם מדד, אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</b>
+          ${t('Adding a measure to one of those goals is the only thing that changes it.',
+              'הוספת מדד לאחת מהמטרות האלה היא הדבר היחיד שישנה את זה.')}</div>
       </div>
-    </div>
 
-  </div>`;
+    </div>
+  </div>${navbar(0)}`;
 }
 
-/* ── THE GAP CHART, and the two forms it is not ───────────────── */
-function screenGap(){
-  const measured = AREAS.filter(a=>a.dprog!==null);
-  const maxMin = Math.max(...measured.map(a=>a.min));
-  const maxD   = Math.max(...measured.map(a=>a.dprog));
-  const rows = measured.map(a=>`
-    <div style="margin:13px 0">
-      <div style="display:flex;font-size:13px;margin-bottom:6px">
-        <span style="flex:1;font-weight:600">${T(a)}</span>
-        <span style="color:var(--muted)">${bidi(hm(a.min))} · ${bidi('+'+a.dprog+'%')}</span>
+function scGap(){
+  const ms=AREAS.filter(a=>a.moves.length);
+  const mxm=Math.max(...ms.map(a=>a.min));
+  const mxd=Math.max(...ms.map(a=>a.moves.reduce((s,m)=>s+m.d,0)));
+  const pairs=ms.map(a=>{
+    const d=a.moves.reduce((s,m)=>s+m.d,0);
+    return `<div style="margin:12px 0">
+      <div style="display:flex;font-size:12.5px;margin-bottom:6px;font-weight:600">
+        <span style="flex:1">${T(CAT[a.k])}</span>
+        <span style="color:var(--on-surface-var);font-weight:550">${ltr(hm(a.min))} · ${ltr('+'+d+'%')}</span></div>
+      <div style="height:8px;border-radius:99px;background:var(--ghost-container);overflow:hidden;margin-bottom:4px">
+        <div style="width:${a.min/mxm*100}%;height:100%;background:${cc(a.k)}"></div></div>
+      <div style="height:8px;border-radius:99px;background:var(--ghost-container);overflow:hidden">
+        <div style="width:${d/mxd*100}%;height:100%;background:${cc(a.k)};opacity:.42"></div></div>
+    </div>`;}).join('');
+
+  const cf=(title,step,pct,k)=>`
+    <div style="display:flex;align-items:center;gap:11px;padding:9px 0;box-shadow:0 1px 0 var(--hair)">
+      <span class="rail" style="background:${cc(k)};height:30px"></span>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:640">${title}</div>
+        <div style="font-size:11.5px;color:var(--on-surface-var);font-weight:550">${step}</div></div>
+      <div style="font-size:17px;font-weight:730;color:${cc(k)}">${ltr('+'+pct+'%')}</div></div>`;
+
+  return `${SB()}
+  <div class="screen">
+    <div class="appbar"><div style="flex:1">
+      <div class="ttl">${t('Effort and outcome','מאמץ ותוצאה')}</div>
+      <div class="sub">${t('The chosen form, and the three it is not','הצורה הנבחרת, ושלוש שהיא איננה')}</div></div>
+      <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
+    <div class="wrap">
+
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Chosen — rank minutes, name movement','נבחר — לדרג דקות, לקרוא לתזוזה בשמה')}</h3>
+          <div class="sub">${t('The app orders only the quantity it may order','האפליקציה מדרגת רק את הכמות שמותר לה לדרג')}</div></div></div>
+        ${movedRows()}
       </div>
-      <div style="height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:4px">
-        <div style="width:${a.min/maxMin*100}%;height:100%;background:var(${a.v})"></div></div>
-      <div style="height:8px;border-radius:99px;background:var(--surface2);overflow:hidden">
-        <div style="width:${a.dprog/maxD*100}%;height:100%;background:var(${a.v});opacity:.45"></div></div>
-    </div>`).join('');
 
-  const confound = (title, span, step, pct, v) => `
-    <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)">
-      <span class="rail" style="background:var(${v});height:30px"></span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:600">${title}</div>
-        <div style="font-size:12px;color:var(--muted)">${step}</div>
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Rejected — rank time against rank movement','נדחה — דירוג זמן מול דירוג תזוזה')}</h3>
+          <div class="sub">${t('This was revision 1. Its own test killed it.','זו הייתה גרסה 1. המבחן של עצמה פסל אותה.')}</div></div></div>
+        ${cf(t('Lose 5 kg','לרדת 5 ק״ג'), t('one kilogram','קילוגרם אחד'), 20, 'HEALTH')}
+        ${cf(t('Read 12 books','לקרוא 12 ספרים'), t('one book','ספר אחד'), 8, 'LEARNING')}
+        <div class="foot">${t('The same single act of progress scores 20% or 8% depending only on how large a target you happened to write. So ranking by "movement" partly ranks how modest your goals are — and an ordering that depends on how the goal was phrased is the failure C16 and C3 each killed once already.',
+          'אותו מעשה התקדמות בודד שווה 20% או 8% רק לפי גודל היעד שבמקרה נכתב. כך שדירוג לפי "תזוזה" מדרג בין השאר כמה צנועות המטרות שלכם — וסדר שתלוי בניסוח המטרה הוא הכשל ש־C16 ו־C3 כבר הרגו כל אחד בתורו.')}</div>
       </div>
-      <div style="font-size:17px;font-weight:750;color:var(${v})">${bidi('+'+pct+'%')}</div>
-    </div>`;
 
-  return `${statusbar()}
-  <div class="topbar"><div class="hello"><div class="v">${t('Effort and outcome','מאמץ ותוצאה')}</div></div>
-    <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
-  <div class="wrap">
-
-    <div class="card">
-      <h3>${t('Chosen — effort ranked, movement named','נבחר — מאמץ מדורג, תזוזה בשמה')}</h3>
-      <p class="sub">${t('The app orders only the quantity it may order','האפליקציה מדרגת רק את הכמות שמותר לה לדרג')}</p>
-      ${movedRows()}
-    </div>
-
-    <div class="card">
-      <h3>${t('Rejected — rank time against rank movement','נדחה — דירוג זמן מול דירוג תזוזה')}</h3>
-      <p class="sub">${t('This was revision 1. It was killed by its own test.','זו הייתה גרסה 1. היא נפסלה במבחן של עצמה.')}</p>
-      ${confound(t('Lose 5 kg','לרדת 5 ק״ג'), 5, t('one kilogram','קילוגרם אחד'), 20, '--c-health')}
-      ${confound(t('Read 12 books','לקרוא 12 ספרים'), 12, t('one book','ספר אחד'), 8, '--c-learning')}
-      <div class="foot">${t('The same single act of progress scores 20% or 8% depending only on how large a target you happened to write. So a ranking by "movement" partly ranks how modest your goals are — and an ordering that depends on how you phrased the goal is the exact failure C16 and C3 each killed once already.',
-        'אותו מעשה התקדמות בודד שווה 20% או 8% רק לפי גודל היעד שבמקרה כתבתם. כך שדירוג לפי "תזוזה" מדרג בין השאר כמה צנועות המטרות שלכם — וסדר שתלוי בניסוח המטרה הוא בדיוק הכשל ש־C16 ו־C3 כבר הרגו כל אחד בתורו.')}</div>
-    </div>
-
-    <div class="card">
-      <h3>${t('Rejected — paired bars','נדחה — עמודות זוגיות')}</h3>
-      <p class="sub">${t('Solid = time, faded = progress moved','מלא = זמן, דהוי = התקדמות')}</p>
-      ${rows}
-      <div class="foot">${t('Two bars on one row invite you to compare their lengths — but minutes and percentage points are different quantities, so the comparison the picture offers is one the numbers cannot support.',
-        'שתי עמודות באותה שורה מזמינות להשוות אורכים — אבל דקות ואחוזים הם כמויות שונות, וההשוואה שהתמונה מציעה אינה נתמכת במספרים.')}</div>
-    </div>
-
-    <div class="card">
-      <h3>${t('Rejected — one efficiency number','נדחה — מספר יעילות אחד')}</h3>
-      <div style="display:flex;gap:14px;align-items:center;margin:6px 0 2px">
-        <div style="font-size:34px;font-weight:800;color:var(--bad)">${bidi('0.4')}</div>
-        <div style="font-size:13px;color:var(--muted)">${t('% moved per hour, Learning','% תזוזה לשעה, לימודים')}</div>
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Rejected — paired bars','נדחה — עמודות זוגיות')}</h3>
+          <div class="sub">${t('Solid = time, faded = progress moved','מלא = זמן, דהוי = התקדמות')}</div></div></div>
+        ${pairs}
+        <div class="foot">${t('Two bars on one row invite you to compare their lengths — but minutes and percentage points are different quantities, so the comparison the picture offers is one the numbers cannot support.',
+          'שתי עמודות באותה שורה מזמינות להשוות אורכים — אבל דקות ואחוזים הם כמויות שונות, וההשוואה שהתמונה מציעה אינה נתמכת במספרים.')}</div>
       </div>
-      <div class="foot">${t('One mark carrying two axes — the same failure a chip carrying two axes makes, and it hides the gap it claims to measure. It also ranks your week by productivity, which is not what this app is for.',
-        'סימן אחד שנושא שני צירים — בדיוק הכשל של תווית שנושאת שני צירים, והוא מסתיר את הפער שהוא מתיימר למדוד. הוא גם מדרג שבוע של אדם לפי תפוקה, וזו לא מטרת האפליקציה.')}</div>
+
+      <div class="card">
+        <div class="rowhead"><div class="g"><h3>${t('Rejected — one efficiency number','נדחה — מספר יעילות אחד')}</h3></div></div>
+        <div style="display:flex;gap:14px;align-items:center;margin:4px 0 2px">
+          <div style="font-size:34px;font-weight:750;color:var(--error);letter-spacing:-.04em">${ltr('0.4')}</div>
+          <div style="font-size:12.5px;color:var(--on-surface-var);font-weight:550">
+            ${t('% moved per hour, Learning','% תזוזה לשעה, לימודים')}</div></div>
+        <div class="foot">${t('One mark carrying two axes — the chart form of the rule C9b bought with its unreadable rung glyphs — and it deletes the very gap it claims to measure. It also ranks your week by productivity, which is not what this app is for.',
+          'סימן אחד שנושא שני צירים — גרסת הגרף של הכלל ש־C9b קנה עם תוויות הדרגה הבלתי קריאות — והוא מוחק בדיוק את הפער שהוא מתיימר למדוד. הוא גם מדרג את השבוע שלכם לפי תפוקה, וזו לא מטרת האפליקציה.')}</div>
+      </div>
+
     </div>
-  </div>`;
+  </div>${navbar(0)}`;
 }
 
-/* ── WIDGETS ──────────────────────────────────────────────────── */
-function screenWidgets(){
-  const w = (title, body, ok, why) => `
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:14px 16px;background:var(--surface2)">${body}</div>
-      <div style="padding:11px 16px;display:flex;gap:9px;align-items:flex-start">
-        <span style="color:${ok?'var(--good)':'var(--bad)'};font-weight:800">${ok?'✓':'✕'}</span>
-        <div><div style="font-size:13.5px;font-weight:650">${title}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${why}</div></div>
-      </div>
-    </div>`;
+/* ═══════════════════════════════════════════════════════════════════════
+   WIDGETS — one per card on the screens above, at four size classes.
+   Rev 1 banned the donut outright: "a chart whose honesty depends on a
+   footnote may not be a widget." Ido overturned that — every card is to be a
+   widget — so the rule becomes a SIZE rule instead of a ban: the disclosure
+   shrinks to the smallest TRUE sentence the tile can hold, and no size ships
+   without one. 2x2 gets three words; 4x4 gets the sentence.
+   ═══════════════════════════════════════════════════════════════════════ */
+const CELL = 76, GAP = 12;
+const dim = s => {
+  const [w,h] = s.split('x').map(Number);
+  return {w: w*CELL + (w-1)*GAP, h: h*CELL + (h-1)*GAP, cols:w, rows:h};
+};
 
-  return `${statusbar()}
-  <div class="topbar"><div class="hello"><div class="v">${t('Widgets','ווידג׳טים')}</div>
-    <div class="k">${t('A chart with no room to explain itself','גרף בלי מקום להסביר את עצמו')}</div></div></div>
-  <div class="wrap">
-
-    ${w(t('Next up','הבא בתור'),
-        `<div style="display:flex;gap:12px;align-items:center">
-          <div class="rail" style="background:${col('learning')};height:38px"></div>
-          <div style="flex:1"><div style="font-weight:650;font-size:14px">${t('Draft chapter 3','לכתוב פרק 3')}</div>
-          <div style="font-size:12px;color:var(--muted)">${bidi('09:00–12:00')} · ${t('in 40 min','בעוד 40 ד׳')}</div></div>
-        </div>`, true,
-        t('One fact, no footnote.','עובדה אחת, בלי הערת שוליים.'))}
-
-    ${w(t('Decisions waiting','החלטות ממתינות'),
-        `<div style="display:flex;gap:12px;align-items:center">
-          <div style="width:38px;height:38px;border-radius:13px;background:var(--accent);color:var(--accent-ink);
-            display:grid;place-items:center;font-weight:800">4</div>
-          <div style="font-size:13.5px">${t('4 waiting · 2 missed today','4 ממתינות · 2 הוחמצו היום')}</div>
-        </div>`, true,
-        t('A count of things needing you. Needs nothing explained.','ספירה של דברים שדורשים אותך. לא דורשת הסבר.'))}
-
-    ${w(t('One goal ring','טבעת של מטרה אחת'),
-        `<div style="display:flex;gap:12px;align-items:center">
-          ${ring(46,80,col('health'))}
-          <div><div style="font-weight:650;font-size:14px">${t('Run 4 km a week','לרוץ 4 ק״מ בשבוע')}</div>
-          <div style="font-size:12px;color:var(--muted)">${bidi(L==='he'?'3.2 / 4 ק״מ':'3.2 / 4 km')}</div></div>
-        </div>`, true,
-        t('You pick the goal. Only a goal with a measure is offered.','אתם בוחרים את המטרה. רק מטרה עם מדד מוצעת.'))}
-
-    ${w(t('Time-allocation donut','עוגת חלוקת הזמן'),
-        `<div style="display:flex;gap:14px;align-items:center;opacity:.5">
-          ${donut(58,9,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),'')}
-          <div style="font-size:12px;color:var(--muted)">${t('…divided how? spans excluded? whose week?','…מחולק איך? בלי תקופות? של מי השבוע?')}</div>
-        </div>`, false,
-        t('Its honesty depends on a footnote, and a widget has no room for one.','היושר שלו תלוי בהערת שוליים, ולווידג׳ט אין מקום לכזו.'))}
-
-    ${w(t('Points and level','נקודות ורמה'),
-        `<div style="opacity:.5;font-size:15px;font-weight:700">${t('Level 6 · 1,240 pts','רמה 6 · 1,240 נק׳')}</div>`, false,
-        t('Points are a view of effort, not a fact about your life. On a home screen all day they become the goal.',
-          'נקודות הן תצוגה של מאמץ, לא עובדה על החיים. על מסך הבית כל היום הן הופכות למטרה.'))}
-
-  </div>`;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Variants + annotations
-   ═══════════════════════════════════════════════════════════════ */
-const VARIANTS = [
-  {id:'home', name:'Home — proposed', tab:0, render:screenHome, hint:'The arrangement answer', notes:[
-    {tag:'derived', t:'H1 · A7 was a false fork, and C9b already collapsed it',
-     p:`The map's <code>A7</code> fog asks whether Home should answer <strong>"what do I do now?"</strong>
-        rather than <strong>"how am I doing?"</strong>. Grep the write path before drawing the options:
-        <code>C9b</code> already gave the now-question its own home — a <strong>Calendar tab</strong> plus a
-        <strong>banner on Home that opens the decision stack</strong>. So Home is not choosing between the two.
-        It <em>links</em> to now and it <em>hosts</em> how-am-I-doing, and the only open question is the order.`},
-    {tag:'derived', t:'H2 · The defect was never the donut’s position',
-     p:`<code>A7</code> reads as "the donut is too high". Count the screen instead: two <strong>setup cards that
-        never retire</strong> and <strong>five generic tips</strong> are four of the six blocks above the user's own
-        goals. Those are what push goals four screenfuls down — and no task appears anywhere. Retire the setup cards
-        on completion, drop the tips into the empty state, and the donut can stay without moving Home's centre of gravity.`},
-    {tag:'derived', t:'H3 · Today is the block the screen never had',
-     p:`<code>A7</code>'s sharpest fact is that <strong>no task is shown anywhere on Home</strong>. A task list
-        for today, with the load bar <code>C9b</code> already settled (arithmetic, no model call, free against the
-        free-tier constraint), is the smallest thing that fixes it.`},
-    {tag:'taken', t:'H4 · The points hero and the donut were the same number twice',
-     p:`Handed back on 2026-08-10, so this is the agent's, on the record. <code>C3</code> made points
-        <code>round(minutes / 3) × difficulty</code> — <strong>computed from minutes</strong>. The time donut lower
-        down is built from those same minutes. So Home was showing <strong>one quantity twice</strong>, once as a
-        reward and once as a fact, and removing the hero loses <em>no information at all</em>. What it would have
-        lost is the <strong>motivation</strong>, so that is kept rather than deleted: <strong>the level becomes a
-        ring around the avatar</strong>, with the number on it. Glanceable, zero vertical space, and it is not the
-        headline. Motivation design stays <code>C10</code>'s.`},
-  ]},
-
-  {id:'home-before', name:'Home — as it ships today', tab:0, render:screenHomeBefore, hint:'The comparison', notes:[
-    {tag:'', t:'The order today',
-     p:`Points banner → donut → smart add → two setup cards that never retire → five tips → <em>then</em> your goals.
-        Roughly four screenfuls, and <strong>no task anywhere</strong>. Rendered from the item order in
-        <code>DashboardScreen.kt</code> rather than from memory.`},
-  ]},
-
-  {id:'analytics', name:'Analytics — the chart set', tab:0, render:screenAnalytics, hint:'What stays, what goes, what was missing', notes:[
-    {tag:'derived', t:'S1 · The set: two stay, one is retired, one is added',
-     p:`<strong>Donut</strong> (time allocation) stays — it is the app's central picture and <code>C17</code> made it
-        the only forked quantity. <strong>Stacked column</strong> stays — the only view of change over time.
-        <strong>ProgressRing</strong> stays, on the object it belongs to. <strong>HorizontalBarChart loses both its
-        users:</strong> "Progress by goal" is a bar list over goals that <code>C7</code> now says may have
-        <strong>no measure at all</strong>, so it either drops them silently or draws them at zero; and "Task focus"
-        weights by <strong>count</strong>, the weight <code>C16</code> killed and <code>C3</code> re-killed
-        (split one task into three and the picture changes). It has no honest user left on this screen.`},
-    {tag:'derived', t:'S2 · The missing chart, and C3 names it outright',
-     p:`<code>C3</code>: <em>"the gap between effort and outcome is the most valuable thing this app can show a
-        person."</em> Nothing in the app draws both. That is the set's actual hole — not a chart type nobody
-        implemented, a <strong>question nobody asked</strong>. See the <em>Effort and outcome</em> variant.`},
-    {tag:'derived', t:'S3 · The donut owes a disclosure, in words',
-     p:`<code>C17 §3</code> chose <strong>divide</strong> for shared minutes and required the app to
-        <strong>say out loud that it divided</strong>. <code>C9a</code> via <code>C9b</code> adds that
-        <strong>spans contribute nothing</strong>. Both are in the footnote, in sentences — <em>form and words
-        before iconography</em>, so no asterisk, no "ⓘ".`},
-    {tag:'derived', t:'S4 · In Hebrew the time axis runs right to left',
-     p:`Press <strong>HE</strong>: the stacked column reverses so Sunday sits on the right. A time axis is not
-        mirrored by <code>dir="rtl"</code> — the bars are drawn, not laid out — so this is code, and it is the kind
-        of thing that ships wrong. Every number and range is wrapped in an isolate; in Compose that is an explicit
-        bidi isolate, not a layout property.`},
-  ]},
-
-  {id:'gap', name:'Effort and outcome — the new chart', tab:0, render:screenGap, hint:'And the two forms it is not', notes:[
-    {tag:'taken', t:'G1 · Revision 1 drew this as two rankings. Its own test killed it.',
-     p:`Effort is <strong>minutes</strong>, outcome is <strong>percentage points</strong>, and <code>C17</code>
-        ruled progress <strong>owned, never pooled</strong> — so no single scale is legitimate, and rev 1 fell back
-        on <em>rankings survive incommensurable units</em>. They do; <strong>this ranking does not.</strong>
-        A percentage is a fraction of <em>its own</em> target, so one kilogram off a 5 kg goal scores
-        <strong>20%</strong> while one book of twelve scores <strong>8%</strong> — the same single act of progress.
-        Ranking by "movement" therefore partly ranks <strong>how modest your goals are</strong>, and an ordering
-        that depends on how you phrased the goal is the exact failure <code>C16</code> and <code>C3</code> each
-        killed once already. Rev 1's chart is kept in the <code>gap</code> variant as the rejected exhibit.`},
-    {tag:'taken', t:'G2 · What replaced it: order only the quantity you may order',
-     p:`<strong>Minutes are poolable and comparable, so the app ranks them.</strong> Movement is not, so the app
-        <strong>names</strong> it instead — the goals that actually moved, with their own numbers, beside the bar.
-        No cross-goal ordering is asserted anywhere, and the gap is still the thing you see first, because the
-        longest bar with nothing beside it is unmissable.`},
-    {tag:'taken', t:'G3 · And the honest render found a better headline than the ranking had',
-     p:`With movement named rather than scored, the week says something rev 1 could not: <strong>the area that took
-        most of it has no measure at all</strong>, so the app cannot tell you whether it moved. That is a fact about
-        <em>the model</em>, not a verdict on your week — and it points at the one action that changes it, which is
-        adding a measure. It also replaces the accusation risk: no area is scored, so none is blamed.`},
-  ]},
-
-  {id:'widgets', name:'Widget pack (#10)', tab:0, render:screenWidgets, hint:'What may and may not be a widget', notes:[
-    {tag:'derived', t:'W1 · The rule: a chart whose honesty depends on a footnote may not be a widget',
-     p:`The ticket's own line — <em>a widget is a chart with no room to explain itself</em> — becomes a test rather
-        than a warning. The donut fails it: <code>C17</code> <strong>requires</strong> the divided-minutes
-        disclosure, and a widget cannot carry it. What passes: next block, decisions waiting, one measured goal's
-        ring. <strong>Issue #10 is unblocked by this rule</strong>, not by a list of drawings.`},
-    {tag:'taken', t:'W2 · The points widget is refused on a product argument, not a technical one',
-     p:`It would render perfectly. But points are derived from minutes, and a derived number sitting on a home
-        screen all day becomes the thing being optimised. Decided with <code>H4</code>, which the two always stood
-        or fell together on — and the level ring on the avatar is where that motivation now lives instead.`},
-  ]},
+const WIDGETS = [
+  {
+    id:'decisions', en:'Decisions', he:'החלטות', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      const items=[[t('2 missed yesterday','2 הוחמצו אתמול'),'late'],
+                   [t('1 left your calendar','1 יצאה מהיומן'),''],
+                   [t('1 block to confirm','1 בלוק לאישור'),''],
+                   [t('1 overdue since Sunday','1 באיחור מיום ראשון'),'late']];
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Decisions','החלטות')}</div>
+        <div class="grow"><div class="n">4</div>
+        <div class="n2" style="margin-top:4px">${t('waiting for you','מחכות לך')}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Decisions','החלטות')}</div>
+        <div style="display:flex;gap:14px;align-items:center;flex:1">
+          <div><div class="n">4</div><div class="n2">${t('waiting','ממתינות')}</div></div>
+          <div style="flex:1;min-width:0">
+            ${items.slice(0,2).map(x=>`<div style="display:flex;gap:7px;align-items:center;margin:5px 0">
+              <span class="tag ${x[1]}">•</span><span style="font-size:12px;font-weight:560;
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x[0]}</span></div>`).join('')}
+          </div></div>`;
+      return `<div class="hd"><i></i>${t('Decisions waiting','החלטות ממתינות')}</div>
+        <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:9px">
+          <div class="n">4</div><div class="n2">${t('need a yes or no','דורשות כן או לא')}</div></div>
+        ${items.map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0;
+          box-shadow:0 1px 0 var(--hair)"><span class="tag ${x[1]}">•</span>
+          <span style="font-size:12.5px;font-weight:560;flex:1;min-width:0;white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis">${x[0]}</span></div>`).join('')}`;
+    }
+  },
+  {
+    id:'today', en:'Today', he:'היום', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      const nx=TODAY[0];
+      const row=x=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0">
+        <span class="rail" style="background:${cc(x.k)};height:26px"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:620;white-space:nowrap;overflow:hidden;
+            text-overflow:ellipsis;${x.done?'text-decoration:line-through;opacity:.55':''}">${T(x)}</div>
+          <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:550">
+            ${x.tm?ltr(x.tm):t('no time set','ללא שעה')}</div></div></div>`;
+      const bar=`<div class="load" style="margin-top:8px"><div class="t">
+          <i style="width:${DONEMIN/DAY*100}%;background:var(--secondary)"></i>
+          <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:var(--primary)"></i></div></div>
+        <div class="n2" style="margin-top:5px;font-size:10.5px">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div>`;
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Next up','הבא בתור')}</div>
+        <div class="grow">
+          <div style="font-size:14px;font-weight:660;line-height:1.25">${T(nx)}</div>
+          <div class="n2" style="margin-top:5px">${ltr(nx.tm)} · ${t('in 40 min','בעוד 40 ד׳')}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Today','היום')}</div>
+        <div style="display:flex;gap:14px;flex:1">
+          <div style="flex:1;min-width:0">${row(TODAY[0])}${row(TODAY[1])}</div>
+          <div style="width:118px;flex:none;display:flex;flex-direction:column;justify-content:center">${bar}</div>
+        </div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('Today','היום')}</div>
+        ${TODAY.map(row).join('')}${bar}`;
+      return `<div class="hd"><i></i>${t('Today','היום')} · ${ltr('4')} ${t('items','פריטים')}</div>
+        ${TODAY.map(row).join('')}${bar}`;
+    }
+  },
+  {
+    id:'goals', en:'Goals', he:'מטרות', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      const g=GOALS.filter(x=>x.pct!==null);
+      const row=(x,sz)=>`<div style="display:flex;gap:10px;align-items:center;padding:5px 0">
+        ${ring(sz,x.pct,cc(x.k),`<span style="font-size:${Math.round(sz*.3)}px">${ltr(x.pct)}</span>`)}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:620;white-space:nowrap;overflow:hidden;
+            text-overflow:ellipsis">${T(x)}</div>
+          <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:550">
+            ${ltr(L==='he'?x.meHe:x.me)}</div></div></div>`;
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Goal','מטרה')}</div>
+        <div class="grow" style="align-items:center;text-align:center">
+          ${ring(74,g[0].pct,cc(g[0].k),`<span style="font-size:20px">${ltr(g[0].pct)}</span>`)}
+          <div style="font-size:11.5px;font-weight:620;margin-top:8px;line-height:1.25">${T(g[0])}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
+        <div style="display:flex;gap:16px;flex:1;align-items:center">
+          <div style="flex:1;min-width:0">${row(g[0],40)}</div>
+          <div style="flex:1;min-width:0">${row(g[1],40)}</div></div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
+        ${g.map(x=>row(x,34)).join('')}
+        <div class="disc">${t('1 goal has no measure and is not shown.','למטרה אחת אין מדד והיא לא מוצגת.')}</div>`;
+      return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
+        ${g.map(x=>row(x,44)).join('')}
+        <div class="disc">${t('Only goals with a measure can show a ring — 1 of yours has none.',
+          'רק מטרה עם מדד יכולה להציג טבעת — לאחת מהמטרות שלכם אין.')}</div>`;
+    }
+  },
+  {
+    id:'week', en:'This week', he:'השבוע', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      /* the honesty rule, sized rather than banned */
+      const disc={'2x2':t('shared time divided','זמן משותף מחולק'),
+                  '4x2':t('Shared time is divided across areas; multi-day periods are not counted.',
+                          'זמן משותף מחולק בין תחומים; תקופות רב־יומיות אינן נספרות.'),
+                  '2x4':t('Shared time is divided across areas; multi-day periods are not counted.',
+                          'זמן משותף מחולק בין תחומים; תקופות רב־יומיות אינן נספרות.'),
+                  '4x4':t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
+                          'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שזה יסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}[s];
+      const leg=n=>AREAS.slice(0,n).map(a=>`<div class="lg" style="font-size:11.5px;padding:2px 0">
+        <i style="background:${cc(a.k)}"></i><span class="l">${T(CAT[a.k])}</span>
+        <span class="v">${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
+      if(s==='2x2') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
+        <div class="grow" style="align-items:center">
+          ${donut(72,11,`<div style="font-size:13px;font-weight:720;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>`)}
+        </div><div class="disc">${disc}</div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
+        <div style="display:flex;gap:14px;align-items:center;flex:1">
+          ${donut(78,12,`<div style="font-size:13px;font-weight:720">${ltr(hm(TOTAL))}</div>`)}
+          <div style="flex:1;min-width:0">${leg(3)}</div></div>
+        <div class="disc">${disc}</div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
+        <div style="display:flex;justify-content:center;margin-bottom:9px">
+          ${donut(112,16,`<div><div style="font-size:16px;font-weight:720">${ltr(hm(TOTAL))}</div>
+          <div style="font-size:9px;color:var(--on-surface-var)">${t('tracked','נמדדו')}</div></div>`)}</div>
+        ${leg(4)}<div class="disc">${disc}</div>`;
+      return `<div class="hd"><i></i>${t('Where the week went','לאן הלך השבוע')}</div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px">
+          ${donut(132,19,`<div><div style="font-size:19px;font-weight:730;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>
+          <div style="font-size:9.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
+          <div style="flex:1;min-width:0">${leg(6)}</div></div>
+        <div class="disc">${disc}</div>`;
+    }
+  },
+  {
+    id:'trend', en:'Day by day', he:'יום אחר יום', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-26,62,false)}</div>
+        <div class="disc">${t('7 days · same divided minutes','7 ימים · אותן דקות מחולקות')}</div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-26,64,true)}</div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-26,150,true)}</div>
+        <div class="disc">${t('Busiest: Monday, 3h 5m','העמוס ביותר: יום שני, 3 ש׳ 5 ד׳')}</div>`;
+      return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-26,168,true)}</div>
+        <div class="disc">${t('In Hebrew the week runs right to left — a drawn axis does not mirror itself.',
+          'בעברית השבוע רץ מימין לשמאל — ציר מצויר לא מתהפך מעצמו.')}</div>`;
+    }
+  },
+  {
+    id:'effort', en:'Effort and outcome', he:'מאמץ ותוצאה', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      const head=t('Learning took most of your week','לימודים לקחו את רוב השבוע');
+      const tail=t('and it has no measure','ואין להם מדד');
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Effort','מאמץ')}</div>
+        <div class="grow"><div style="font-size:13px;font-weight:640;line-height:1.32">${head}</div>
+        <div class="n2" style="margin-top:6px">${tail}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Effort and outcome','מאמץ ותוצאה')}</div>
+        <div style="display:flex;gap:14px;flex:1;align-items:center">
+          <div style="flex:1;min-width:0">${movedRows(2)}</div>
+          <div style="width:120px;flex:none;font-size:11.5px;font-weight:560;line-height:1.4;
+            color:var(--on-surface-var)">${head} — ${tail}.</div></div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('Effort and outcome','מאמץ ותוצאה')}</div>
+        ${movedRows(3)}<div class="disc">${head} — ${tail}.</div>`;
+      return `<div class="hd"><i></i>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</div>
+        ${movedRows(4)}
+        <div class="disc">${head} — ${tail}, ${t('so nothing here can say whether it moved.',
+          'אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</div>`;
+    }
+  },
+  {
+    id:'level', en:'Level', he:'רמה', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    render(d,s){
+      const disc=t('Points are your minutes, scored — not a separate score.',
+                   'נקודות הן הדקות שלכם, מנוקדות — לא ניקוד נפרד.');
+      if(s==='2x2') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
+        <div class="grow" style="align-items:center">
+          ${ring(70,72,'var(--primary)',`<span style="font-size:21px">${ltr('6')}</span>`)}
+          <div class="n2" style="margin-top:7px;text-align:center">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
+        <div style="display:flex;gap:15px;align-items:center;flex:1">
+          ${ring(62,72,'var(--primary)',`<span style="font-size:19px">${ltr('6')}</span>`)}
+          <div style="flex:1"><div style="font-size:14px;font-weight:660">${ltr('1,240')} ${t('points','נקודות')}</div>
+            <div class="n2">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div></div>
+        <div class="disc">${disc}</div>`;
+      if(s==='2x4') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
+        <div class="grow" style="align-items:center">
+          ${ring(112,72,'var(--primary)',`<span style="font-size:30px">${ltr('6')}</span>`)}
+          <div style="font-size:14px;font-weight:660;margin-top:11px">${ltr('1,240')} ${t('points','נקודות')}</div>
+          <div class="n2" style="margin-top:2px">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div>
+        <div class="disc">${disc}</div>`;
+      return `<div class="hd"><i></i>${t('Level and points','רמה ונקודות')}</div>
+        <div style="display:flex;gap:18px;align-items:center;flex:1">
+          ${ring(120,72,'var(--primary)',`<span style="font-size:32px">${ltr('6')}</span>`)}
+          <div style="flex:1"><div style="font-size:19px;font-weight:700">${ltr('1,240')} ${t('points','נקודות')}</div>
+            <div class="n2" style="margin-top:3px">${ltr('310')} ${t('to level 7','לרמה 7')}</div>
+            <div class="n2" style="margin-top:9px">${ltr(hm(TOTAL))} ${t('tracked this week','נמדדו השבוע')}</div></div></div>
+        <div class="disc">${disc}</div>`;
+    }
+  },
 ];
 
-/* palette note shown on every variant */
-const GLOBAL_NOTES = [
-  {tag:'derived', t:'D2 · The dark palette is owed here, because charts are where the palette lives',
-   p:`<code>C9b</code> found <code>GoalCategory.defaultColorHex</code> is a <strong>light-mode-only</strong> palette.
-      Every chart on this screen is built from it, so this ticket is where that bill comes due. Press
-      <strong>Committed palette</strong> on the dark theme to see the defect: <code>#3B3BA8</code> and
-      <code>#7C4A21</code> stop being distinguishable on <code>#0C1520</code>. The dark tones proposed here keep the
-      pairwise distinctness <code>ThemePaletteTest</code> already guards.`},
-  {tag:'taken', t:'P1 · No chart picker — and the need behind one is met a better way',
-   p:`Handed back, so this is the agent's. <code>AppPreferencesRepository</code> exists, so cost was never the
-      discriminator. The app <strong>already</strong> lets you pick — the <strong>range</strong> and the
-      <strong>focused slice</strong> — and those are <em>queries</em>. A layout picker is different in kind: it asks
-      the one real user to author his own analysis, against <code>#12</code>'s standard that the app owes a
-      <strong>design</strong>. And the wish behind it is almost always <em>"this card is useless to me"</em>, which
-      is a design failure to fix for everyone, not a preference to store — exactly what retiring
-      <code>HorizontalBarChart</code> did. <strong>Two improvements instead of a picker:</strong> a card with
-      nothing to say <strong>hides itself</strong> (the effort card needs at least one measured goal; the trend
-      needs more than one day), and the <strong>range picker remembers your choice</strong> — which is the honest
-      use for the preference store.`},
-];
+function widgetTile(w, size){
+  const d = dim(size);
+  return `<div class="wg" style="width:${d.w}px;height:${d.h}px">${w.render(d,size)}</div>`;
+}
 
-/* ═══════════════════════════════════════════════════════════════ */
-let vi = 0;
+function scWidgets(){
+  if(SIZE === 'mixed'){
+    const g = id => WIDGETS.find(w=>w.id===id);
+    return `<div class="wallpaper"></div>
+      <div class="inner">
+        <div style="height:10px"></div>
+        <div class="wgrid">
+          <div style="grid-column:span 4">${widgetTile(g('decisions'),'4x2')}</div>
+          <div style="grid-column:span 2">${widgetTile(g('today'),'2x4')}</div>
+          <div style="grid-column:span 2;display:flex;flex-direction:column;gap:12px">
+            ${widgetTile(g('week'),'2x2')}
+            ${widgetTile(g('level'),'2x2')}
+          </div>
+          <div style="grid-column:span 4">${widgetTile(g('effort'),'4x2')}</div>
+        </div>
+      </div>
+      <div class="dock">
+        <div class="ic">◎</div><div class="ic">▤</div><div class="ic">✦</div><div class="ic">◍</div>
+      </div>`;
+  }
+  const d = dim(SIZE);
+  const perRow = SIZE.startsWith('4') ? 1 : 2;
+  let rows='', buf=[];
+  WIDGETS.forEach((w,i)=>{
+    buf.push(`<div>${widgetTile(w,SIZE)}
+      <div class="cap" style="color:var(--on-surface-var);opacity:.75">${T(w)}</div></div>`);
+    if(buf.length===perRow || i===WIDGETS.length-1){
+      rows += `<div style="display:flex;gap:12px;margin-bottom:14px">${buf.join('')}</div>`; buf=[];
+    }
+  });
+  return `<div class="wallpaper"></div>
+    <div class="inner"><div style="height:6px"></div>${rows}</div>`;
+}
+
+/* ═══ render ═══ */
+const VIEWS = {
+  'home':{fn:scHome, t:'Home — proposed', s:'Decisions banner → Today → your goals → this week. The level ring rides on the avatar; there is no points hero, because points and the donut are the same minutes.'},
+  'home-before':{fn:scHomeBefore, t:'Home — as it ships today', s:'Rendered from DashboardScreen.kt’s item order. Two setup cards that never retire and five generic tips are four of the six blocks above your own goals.'},
+  'analytics':{fn:scAnalytics, t:'Analytics — the chart set', s:'Donut and stacked column stay, both bar charts retire, and one card is added: where the time went and what moved.'},
+  'gap':{fn:scGap, t:'Effort and outcome — and the three forms it is not', s:'Including revision 1’s own ranking, kept as a rejected exhibit after its own test killed it.'},
+  'widgets':{fn:scWidgets, t:'Widgets — every card, every size', s:'Each card on the screens above is also a widget, at 2×2, 4×2, 2×4 and 4×4. The honesty rule became a size rule: the disclosure shrinks to the smallest true sentence that fits, and no size ships without one.'},
+};
+let V = 'home';
+
 function render(){
-  const v = VARIANTS[vi];
-  document.getElementById('vname').textContent = v.name;
-  document.getElementById('hint').textContent = v.hint;
-  document.getElementById('screen').innerHTML = v.render();
-  document.getElementById('tabs').innerHTML = tabs(v.tab);
-  document.getElementById('phone').dir = L==='he' ? 'rtl' : 'ltr';
-  document.getElementById('screen').scrollTop = 0;
-  document.getElementById('notes').innerHTML =
-    [...v.notes, ...GLOBAL_NOTES].map(n=>`<div class="note">
-      <h4>${n.tag?`<span class="tag ${n.tag}">${({derived:'derived',ask:'yours',taken:'handed back'})[n.tag]}</span>`:''}${n.t}</h4>
-      <p>${n.p}</p></div>`).join('');
-  const u = new URL(location); u.searchParams.set('variant', v.id); history.replaceState({},'',u);
+  const v = VIEWS[V];
+  document.getElementById('vtitle').textContent = v.t;
+  document.getElementById('vsub').textContent = v.s;
+  document.getElementById('sizebar').style.display = V==='widgets' ? '' : 'none';
+  document.documentElement.lang = L;
+  const cls = V==='widgets' ? 'wall' : 'phone';
+  document.getElementById('stage').innerHTML =
+    `<div class="${cls}" data-theme="${THEME}" dir="${L==='he'?'rtl':'ltr'}">
+       ${v.fn()}<div class="grain"></div></div>`;
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on', b.dataset.v===V));
+  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on', b.dataset.s===SIZE));
+  const u=new URL(location);
+  u.searchParams.set('variant',V); u.searchParams.set('lang',L);
+  u.searchParams.set('theme',THEME); u.searchParams.set('size',SIZE);
+  history.replaceState({},'',u);
 }
-document.getElementById('next').onclick = ()=>{ vi=(vi+1)%VARIANTS.length; render(); };
-document.getElementById('prev').onclick = ()=>{ vi=(vi-1+VARIANTS.length)%VARIANTS.length; render(); };
-document.getElementById('lang').onclick = (e)=>{
-  L = L==='en'?'he':'en';
-  e.target.textContent = L==='en'?'HE':'EN'; e.target.classList.toggle('on', L==='he');
-  document.documentElement.lang = L; render();
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{V=b.dataset.v; render();});
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SIZE=b.dataset.s; render();});
+document.getElementById('lang').onclick = e=>{
+  L = L==='en' ? 'he' : 'en';
+  e.target.textContent = L==='en' ? 'עברית' : 'English';
+  e.target.classList.toggle('on', L==='he'); render();
 };
-document.getElementById('theme').onclick = (e)=>{
-  document.body.classList.toggle('light');
-  e.target.textContent = document.body.classList.contains('light')?'Dark':'Light';
-};
-document.getElementById('raw').onclick = (e)=>{
-  document.body.classList.toggle('raw-palette');
-  e.target.classList.toggle('on', document.body.classList.contains('raw-palette'));
+document.getElementById('theme').onclick = e=>{
+  THEME = THEME==='dark' ? 'light' : 'dark';
+  e.target.textContent = THEME==='dark' ? 'Light' : 'Dark'; render();
 };
 addEventListener('keydown', e=>{
-  if(e.key==='ArrowRight') document.getElementById(L==='he'?'prev':'next').click();
-  if(e.key==='ArrowLeft')  document.getElementById(L==='he'?'next':'prev').click();
+  const ks=Object.keys(VIEWS), i=ks.indexOf(V);
+  if(e.key==='ArrowRight') V=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length], render();
+  if(e.key==='ArrowLeft')  V=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length], render();
 });
-const want = new URL(location).searchParams.get('variant');
-if(want){ const i = VARIANTS.findIndex(v=>v.id===want); if(i>=0) vi=i; }
+const q=new URL(location).searchParams;
+if(VIEWS[q.get('variant')]) V=q.get('variant');
+if(q.get('lang')==='he') { L='he'; document.getElementById('lang').textContent='English';
+                           document.getElementById('lang').classList.add('on'); }
+if(q.get('theme')==='light'){ THEME='light'; document.getElementById('theme').textContent='Dark'; }
+if(['2x2','4x2','2x4','4x4','mixed'].includes(q.get('size'))) SIZE=q.get('size');
 render();
 </script>
 </body>
