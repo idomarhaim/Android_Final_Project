@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: ready
+status: active
 created: 2026-08-10
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/32
 ---
