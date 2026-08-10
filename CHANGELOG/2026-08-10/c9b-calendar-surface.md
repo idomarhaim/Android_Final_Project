@@ -109,6 +109,35 @@ and `surfaceDim`), event fills moved from saturated-with-white-text to **tinted 
 coloured text**, radii onto the M3 Expressive scale, one weight axis in the type scale,
 and **every icon hand-authored as inline SVG** so nothing depends on a font or a CDN.
 
+## 🔁 Rev 3 — Ido's second review
+
+*"The times inside a block in A are being cut off"*, with a screenshot. **Two causes,
+and the second is a product decision rather than a styling fix.**
+
+1. **The bidi algorithm was reordering them.** `09:00–12:00` is a Latin-digit run
+   inside an RTL paragraph, so Unicode bidi reorders it to `12:00–09:00` — which is
+   exactly what the screenshot shows — and *then* the overflow clips it. Every time
+   string now passes through one helper that wraps it in
+   `direction:ltr; unicode-bidi:isolate`. **This will recur in Compose**: it is a
+   property of the text, not of HTML, so the build session owes the same isolation on
+   every time and date string. Named here so it is not rediscovered from a screenshot
+   a second time.
+2. **46 pixels.** Seven columns on a 390 dp phone is ~46 dp per day — no Hebrew title
+   fits and neither does a range, so no amount of type tuning would have worked. **A
+   now carries a `day / 3 days / week` switch and opens on 3 days** (~110 dp per
+   column). Week view stacks the times **start over end**, which is precisely Ido's own
+   suggestion and the only thing that fits at 46 dp.
+
+The switch is **on scope, not a detour**: *"which views — day, week, month, agenda —
+and which one opens by default"* is the first bullet of #26's own "what it must
+settle". The prototype now proposes an answer instead of posing the question.
+
+Craft pass, as asked: tabular figures so a column of times stops looking ragged;
+sticky headers that blur content travelling under them; today's column tinted and
+Fri/Sat shaded; a live `now` pill on the current-time line; part-of-day group headers
+in B so a flat list becomes scannable; staggered entry; a gradient hero and heavier
+display type in C; an M3-Expressive nav indicator; two-layer tinted shadows.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
@@ -145,3 +174,18 @@ surviving `▮` was in the fake status bar, not in a chip — a false positive o
 test. It still earned its keep, because those block characters were visually
 indistinguishable from the glyphs B had just dropped, so the status bar is now drawn
 as inline SVG signal/wifi/battery indicators instead.
+
+**Rev 3 raised the matrix to 3 variants × 2 languages × 3 views = 18 renders**, all
+clean, plus four assertions tied to this round's defects:
+
+- every time string is bidi-isolated, in all six language × view combinations;
+- week view **stacks** (`06:00` / `07:00`, no dash) and 3-day view shows a **range**
+  (`06:00–07:00`) — asserted on the extracted labels, not on the markup;
+- the column count actually follows the switch (1 / 3 / 7);
+- rev 2's glyph and plural checks still pass.
+
+**Two of this round's failures were bugs in the test, not the page** — a `render`
+identifier colliding with the page's own, and a regex expecting the dash immediately
+before `</span>` when it sits mid-string. Recorded because the honest reading of a red
+run is *"something disagrees"*, not *"the code is wrong"*, and both times the artefact
+was fine.

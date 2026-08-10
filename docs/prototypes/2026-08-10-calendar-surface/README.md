@@ -72,6 +72,34 @@ coloured text**, corner radii moved onto the M3 Expressive scale, the type scale
 rebuilt around one weight axis, and every icon is now hand-authored inline SVG so
 nothing depends on a font or a CDN.
 
+## Rev 3 — Ido's second review, 2026-08-10
+
+**The clipped times in A had two causes, and the second one is a product decision.**
+
+1. **Bidi reordering.** `09:00–12:00` is a Latin-digit run inside an RTL paragraph, so
+   the Unicode bidi algorithm reorders it — it renders as `12:00–09:00` and *then*
+   clips. Every time string in the prototype now goes through one helper that wraps it
+   in `direction:ltr; unicode-bidi:isolate`. This is a real Hebrew-app defect class,
+   not a mockup artefact: **the same bug will appear in Compose** unless the build
+   session isolates time and date strings the same way.
+2. **46 pixels.** Seven columns on a 390 dp phone leaves ~46 dp per day. No Hebrew
+   title fits, and neither does `09:00–12:00`. Widening the text was never going to
+   work — so **A now has a `day / 3 days / week` switch and opens on 3 days**, where a
+   column is ~110 dp and both the title and a single-line range fit comfortably.
+   Week view keeps the times **stacked start over end**, which is exactly what Ido
+   proposed and is the only thing that fits at 46 dp.
+
+That switch is not a detour: *"which views — day, week, month, agenda — and which one
+opens by default"* is the **first** thing #26 says it must settle. The prototype now
+has an answer to react to rather than a question to discuss.
+
+Craft pass, since he asked for it: tabular figures so columns of times stop looking
+ragged; sticky headers that blur content passing beneath them; the today column tinted
+and the Fri/Sat weekend columns shaded; a live `now` pill on the current-time line;
+part-of-day group headers in B (morning / afternoon / evening) so a flat list becomes
+scannable; staggered entry animation; a gradient hero card and heavier display type in
+C; M3-Expressive nav pill; two-layer tinted shadows throughout.
+
 ## What the three variants disagree about
 
 They are not three skins. They disagree about the **primary affordance** — what the
