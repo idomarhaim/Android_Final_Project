@@ -1,4 +1,4 @@
-# c9e-event-lifecycle — claimed #28, the calendar half's last open ticket
+# c9e-event-lifecycle — resolved #28, and the prompt the ticket assumed did not survive its own scope model
 
 **Session:** `c9e-event-lifecycle` · **Date:** 2026-08-10 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
@@ -82,10 +82,117 @@ closure was verified by timestamp rather than assumed from the board, the assign
 back out of GitHub, and the map body will be re-fetched immediately before its index line is
 appended.
 
+## The resolution
+
+**`#28` is resolved and closed.** *A synced event is never asked about and never lost.*
+
+Two rounds of `AskUserQuestion`, and **Ido answered neither the way the options were shaped** —
+which turned out to be the finding rather than a hiccup.
+
+**Round 1** offered *remove the event / keep it / retitle it* for a deletion and a re-estimate.
+He answered both identically and from outside the set: **"the app asks the user whether to also
+delete / also update in the synced calendars."** Recorded as a rule rather than two rulings.
+
+**Round 2** asked how often it may ask, and what it does when `C1`'s re-scoring moves 40 blocks
+at once. He could not answer either, in almost the words `c14-challenge-scoring` parked against
+`rules/question-axis-naming.md`: *"I couldn't understand what the implications of each option
+are — explain simply and schematically, choose the solution that gives the highest standard for
+the app, its UX/UI and the software, and if it can be improved, improve it."* That is a
+delegation, not a stall, and it was taken as one: no third picker.
+
+### What was decided, and the argument that decided it
+
+`C9d` had already bought **`calendar.app.created`** and a **dedicated GoalPilot calendar**. The
+app therefore cannot see, let alone write to, any other calendar — so a per-action *"also update
+in Google?"* is the app asking permission to **edit its own sandbox**, and a dialog answered yes
+ten times stops being read by the eleventh. **Ido's own answer was priced against a risk his
+earlier ticket had already removed.**
+
+So the prompt is replaced by the current standard for reversible destructive action:
+
+| Task-side change | Google-side effect |
+|---|---|
+| Retimed / re-estimated | event **patched in place**, `googleEventId` preserved · `Moved to 09:00–10:30 · Undo` |
+| Rung change `BLOCK` → `DEADLINE` | **cancel + recreate** (not a patch of the same shape), `googleEventId` replaced |
+| Renamed / moved to another goal | title written, never read back (`C9c`) / nothing |
+| **Completed** | **nothing** — `C9c` already ruled state never crosses |
+| **Deleted** | **future** events cancel, **past** events **stay** |
+| **Goal archived** | same split by tense |
+| **40 blocks re-scored** | **one batch** → one entry in `C9b`'s daily review, one batch-scoped undo |
+| **Orphaned event** | surfaced in that same review, **never auto-deleted** |
+
+Three things earn the removal of the gate rather than merely asserting it:
+1. **Deletion is cancellation** — the event lands in Google's trash, restorable for **30 days**,
+   so the ticket's own premise (*"a wrong deletion is not recoverable from inside GoalPilot"*)
+   is falsified rather than argued with.
+2. **Every destructive effect splits by tense.** Past events record time actually spent;
+   erasing them rewrites the user's history of their own week. Future events are a claim on time
+   no longer claimed. That single split answers *"removed, or left as a record?"* as **both** —
+   the bullet was one question wearing two hats.
+3. **Ido's instinct survives as exactly one prompt**, shown once ever, beside the incremental
+   scope grant `C9c` §2 already interrupts with: *Keep it automatic* / **Ask me each time**. The
+   second is his original answer, permanent and reversible in Settings — offered rather than
+   defaulted, because undo protects on the day you are not reading.
+
+**Filed nothing, graduated nothing.** Every consequence routed to a ticket that already exists.
+The `GoogleSignIn`-migration fog bullet mentions the calendar scope but was not sharpened by
+this resolution, so it was left untouched.
+
+### One unverified claim, marked on the ticket rather than left standing
+
+The pre-commit re-read caught it: §3's *"restorable from Google's trash for 30 days"* is stated
+from general knowledge and **was not checked against the Calendar API docs in this session** —
+and it is load-bearing, being half the reason the confirmation prompt was removed. A caveat was
+appended to the resolution comment naming what the build session owes (does `events.delete` /
+`status: cancelled` on a `calendar.app.created` calendar trash rather than erase, and for how
+long) and what changes if it is false: §1 survives on the in-app Undo alone, but the **delete
+path** specifically would deserve reopening.
+
+### Hand-off comments posted (flow one-way, nothing another session owns was edited)
+
+- [`C1` #19](https://github.com/idomarhaim/Android_Final_Project/issues/19#issuecomment-5245582791) — a re-scoring pass is a **bulk write into Ido's real calendar**; `C9e` gave it a home, but `C1` should know it is user-visible outside the app.
+- [`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21#issuecomment-5245583067) — *"all future occurrences"* is a batch write, and a rule edit **never reaches backwards** into past occurrences.
+- [`C12` #31](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5245583361) — two more screens for the map's design standard (the undo toast, the review batch entry), both Hebrew-critical: `הועבר ל־09:00–10:30 · בטל` needs **direction isolation** or bidi flips the range.
+
+### The `#12` commons, discharged
+
+Body **re-fetched immediately before the write**, compared byte-for-byte against the copy the
+line was built on (`cmp` — unchanged, no race), then written and verified: **144 → 147 lines,
+16 → 17 decision lines, 0 lines removed.** The only non-inserted difference is a trailing blank
+line GitHub appends. `C13` (#32)'s index gap was left alone — still Ido's to assign.
+
+## `kb-candidates/` — two flagged, neither drained, both **re-based mid-session**
+
+Listed at session start (**7 files**) and again before filing — and the folder had changed
+underneath: `picker-rule-consolidation`, a JARVIS visitor session, **drained the four parked
+picker candidates into `rules/question-axis-naming.md` while this ticket was being resolved**
+(`d9616b9`, `5b5e113`). The folder is now **4 files**, and the consolidated rule already
+carries **Mode 6 — form** and **The widening — the fork check over the derivation closure**,
+which is most of what this session was about to file.
+
+Both entries were **rewritten against the committed text** rather than shipped as drafted.
+What survives is what those sections do *not* cover
+([`kb-candidates/2026-08-10-c9e-event-lifecycle.md`](../../kb-candidates/2026-08-10-c9e-event-lifecycle.md)):
+
+1. **Mode 6's test is stated on the question and needs to be stated on the options** — round 2
+   used **scenario stems** over **mechanism forks** (prompt cadence, dialog shape) and was
+   refused outright, which means an author can satisfy Mode 6 by rewriting the stem and change
+   nothing. Second half: the consolidation table admits *form* as a cause **"only if some
+   question in this batch was answered"**, and here nothing in round 2 was answered — the
+   answered/refused split ran **across two pickers**, so the gate excludes the one correct
+   diagnosis and routes to *density* instead. The comparison window wants to be the session.
+2. **The widening reaches derivation closures in code; it does not reach a closed sibling
+   decision.** Round 1's options were **actions**, not quantities — no closure to intersect and
+   no grep that would fire — and what falsified them was `C9d`'s scope decision on another
+   ticket. On a wayfinder map this is structural: **ticket bodies are written at charting time
+   and the frontier moves while the body does not**, so any ticket that waited behind a blocker
+   may carry a premise its own blocker has since deleted.
+
+Both are **always-ask twice over**: destination `rules/`, and (1) rewrites a claim committed
+30 minutes earlier by another session.
+
 ## Status
 
-**Claim only — the resolution is not written.** `#28` is HITL: deletion, completion,
-rescheduling from either side, goal archival, bulk writes and orphaned events are choices
-about Ido's own shared calendar, where a wrong deletion is not recoverable from inside
-GoalPilot. Whatever is derivable from `C9a`, `C9b` and `C9c` will be taken and logged rather
-than asked.
+**Done.** `#28` resolved, closed, indexed on the map; three hand-off comments posted; board row
+released. The **calendar half of the map is now complete** — `C9a` #25, `C9b` #26, `C9c` #27,
+`C9d` #17 and `C9e` #28 all closed.
