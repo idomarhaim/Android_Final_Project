@@ -214,3 +214,60 @@ the central bundle's `dev/` framing does not fit it.
 **Supersedes.** Nothing.
 
 **Status.** Proposed, not ingested.
+
+---
+
+## 5. Redacting before publication creates a second copy — and no push rule catches it
+
+**Claim.** The standard way to fix "private content is about to be published" in git is
+to redact the file and rewrite the unpushed commit. That is correct, and it silently
+creates a **second artifact with the opposite property**: a backup ref holding the
+*original*, un-redacted blob, sitting in the same local repository as the branch you are
+about to publish. The redaction is only as good as that ref never being pushed — and
+**the usual push safety rules do not cover it**, because they are all written about the
+*current* branch:
+
+- "read the outgoing diff" reads `@{u}..HEAD` — the backup ref is not in it;
+- "fast-forward only / no `--force`" is satisfied — `git push --all` is neither;
+- "no secrets in the diff" is satisfied — the secret is in a different ref entirely.
+
+So the one command that would undo the entire fix, `git push --all` (or a mirror push, or
+a CI job that pushes every ref), passes every check. The rule that actually holds is
+**treat the backup ref as part of the incident**: it is not cleanup to be done later, it
+is the second half of the redaction, and the redaction is not complete until it is gone.
+Where a backup must be kept while the fix is confirmed, it should be a **tag or ref
+outside `refs/heads/`**, or a bundle outside the repo, so no branch-level bulk push can
+reach it.
+
+**Why.** The concrete case: a screenshot committed by an earlier session showed a user's
+private task list, and the repository was public. It was caught by the pre-push
+read-what-you-are-sending check, one commit before publication — the cheap moment. The
+fix (redact, `commit --amend`, `rebase --onto`) worked exactly as intended and the push
+went out clean. What the fix *left behind* was `backup/pre-redact-<date>`, a local branch
+whose only distinguishing content is the un-redacted image. Nothing in the project's
+`AGENTS.md`, its `.github/` instruction files, or the six auto-push preconditions in
+`general.instructions.md` names `git push --all`, mirror pushes, or backup refs at all —
+checked, not assumed. The gap is real and it is in the *general* rules, not in one repo.
+
+Worth a page because the failure is counter-intuitive: it is created **by** doing the
+right thing, it is invisible to every check that exists, and the window in which it is
+cheap to close is the same window in which everyone has stopped paying attention because
+the problem "is fixed".
+
+**Destination.** Central KB — `kb/dev/`. It generalises to any repo and any VCS host.
+**Note the routing consequence:** if the conclusion is that the *global push rule* should
+name `--all`/mirror pushes and backup refs, that is a `rules/` change, which is
+**always-ask** and goes through the 🎬 walkthrough gate — not something an ingest may do.
+The KB page can state the finding; only Ido can move the rule.
+
+**Anchors.** `docs/research/2026-08-09-oauth-production-test/README.md` (the redaction
+note, in place); commit `3b0340c` (the amended commit and its message);
+`CHANGELOG/2026-08-10/c7-what-is-a-unit.md`; `.github/instructions/general.instructions.md`
+(the six preconditions, none of which catches this).
+
+**Supersedes.** Nothing. **Adjacent to** the standing global _Commits & pushing_ rule —
+this does not contradict it, it names a case it does not cover.
+
+**Status.** Proposed, not ingested. Surfaced by Ido's question *"is it written in the
+project's instructions not to do `git push --all`, so the agent knows?"* — the answer was
+no, and that is the finding.

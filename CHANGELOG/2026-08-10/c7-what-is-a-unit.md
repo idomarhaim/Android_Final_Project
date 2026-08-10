@@ -164,3 +164,59 @@ already records twice. The row was also **widened mid-session**, before the firs
 to any of them, from `#14 + #12` to include the four hand-off comment targets; rule 1
 allows a session to correct its own row, and writing to `#23`/`#37`/`#38` without
 declaring them would have been exactly what `c11a-free-model-probe` refused to do.
+
+---
+
+## Post-script — the push check found something, and it was not this session's
+
+Everything above was written before the push. The push itself is recorded here because
+it changed a commit that was not this session's, and a changelog that ends at "committed"
+would leave that invisible.
+
+Ido authorised a push **conditionally** — *verify first that it does not harm anything;
+if it harms, do not* — which turned precondition 2 (*read what you are sending*) from a
+formality into the point of the exercise. Twelve commits from four sessions were
+outgoing. Eleven were clean. One was not:
+
+**`docs/research/2026-08-09-oauth-production-test/4-import-succeeded.png`** — committed
+by `c9f-consent-screen-state` at `093fd98` as proof that `tasks.readonly` worked in
+production — is a screenshot of the Google Tasks import dialog **with Ido's real task
+list rendered in it**, including a personal Hebrew note and the goal the app derived from
+it. **This repository is `PUBLIC`.**
+
+What made it a decision rather than a reflex:
+
+- **The email in screenshots 1–3 was *not* new exposure.** `name.iddo@gmail.com` is
+  already in five files at `origin` (`docs/OPERATIONS.md`, three changelogs, a TODO).
+  Checked before claiming it, because "there is an email in the picture" would have been
+  a true statement and a wrong reason to block a push.
+- **The personal-goal briefs were not new either** — the 08-06 brief and its `.docx` are
+  already public, so the 08-09 entity brief continues a practice Ido chose, and blocking
+  it would have been this session substituting its judgement for his.
+- **One file, and one file only, was the problem.** So the honest report was "11 of 12
+  commits are clean", not "the push is unsafe".
+
+**The fix, on Ido's call, taken at the last cheap moment.** The task rows were redacted
+with an opaque box, `093fd98` was amended to `3b0340c`, and the other eleven commits were
+replayed onto it (`git rebase --onto`) — all before anything had ever been pushed, so no
+published history was rewritten and precondition 3 was never engaged. The tree delta
+between the pre-redaction backup and the new HEAD was verified to be **exactly two
+files**: the image and nine added lines of README explaining the redaction in place.
+What the screenshot is evidence *for* — the dialog title, *"Found 10 open task(s)"*, the
+`Import 2` button — survives intact, so `C9f`'s finding is unweakened. Pushed as
+`1e322f6..21144d5`, fast-forward, and the eleven commits that were not this session's are
+named in the reply and in `SESSIONS.md`.
+
+**And the fix left a hazard behind, which is the part worth keeping.** Redacting created
+`backup/pre-redact-2026-08-10`, a local branch whose only distinguishing content is the
+un-redacted image — and **no push rule in this project or in the global six preconditions
+catches it**, because every one of them is written about the current branch: `git push
+--all` is not a force, not a deletion, and shows nothing in `@{u}..HEAD`. Ido asked
+directly whether the instructions said not to do that; they do not, in `AGENTS.md`,
+`.github/copilot-instructions.md`, or `general.instructions.md`. The branch was therefore
+**deleted** rather than documented — a guard for a thing that no longer exists is worse
+than no guard — and the general lesson was filed as a KB candidate instead, with the
+routing note that naming `--all` in the *global* push rule is a `rules/` change and
+Ido's alone to make.
+
+**KB candidates: 5, not 4** — entry 5 is that finding.
