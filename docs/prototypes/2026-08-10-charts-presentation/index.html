@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C12 · Charts and presentation strategy — prototype rev 1</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   C12 prototype · standalone. No build, no emulator, no network.
+   ←/→ cycle variants · HE flips the whole frame to RTL · theme toggles.
+   ───────────────────────────────────────────────────────────── */
+
+:root{
+  --bg:#0C1520; --surface:#142130; --surface2:#1B2C3E; --line:#25384C;
+  --text:#E8EEF5; --muted:#93A6BA; --accent:#4CC2FF; --accent-ink:#062033;
+  --good:#4FCB86; --warn:#F7A14B; --bad:#FF7B6B;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+  /* category palette — DARK tones, proposed here (see annotation D2) */
+  --c-health:#FF7B6B; --c-learning:#C58BF2; --c-career:#56ABFF;
+  --c-rel:#FF7BAC; --c-finance:#3FBFD4; --c-other:#9FB0C4;
+}
+body.light{
+  --bg:#EEF2F7; --surface:#FFFFFF; --surface2:#F4F7FB; --line:#DCE4EE;
+  --text:#0F1C28; --muted:#5A6C80; --accent:#0F6FCB; --accent-ink:#FFFFFF;
+  --good:#26804A; --warn:#B85107; --bad:#CF3636;
+  --shadow:0 10px 28px rgba(16,32,48,.13);
+  /* committed GoalCategory.defaultColorHex — light-mode only, by construction */
+  --c-health:#CF3636; --c-learning:#8B39C4; --c-career:#0F6FCB;
+  --c-rel:#D6246E; --c-finance:#0B7285; --c-other:#64748B;
+}
+body.light.raw-palette,
+body.raw-palette{ /* "show the committed palette on dark" — the defect, on demand */
+  --c-health:#CF3636; --c-learning:#8B39C4; --c-career:#0F6FCB;
+  --c-rel:#D6246E; --c-finance:#0B7285; --c-other:#64748B;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── prototype chrome (never part of the design) ───────────────── */
+.chrome{
+  position:sticky; top:0; z-index:50; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  padding:10px 16px; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+}
+.chrome b{font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.chrome .name{font-size:15px;font-weight:650;color:var(--text)}
+.btn{
+  border:1px solid var(--line); background:var(--surface); color:var(--text);
+  border-radius:999px; padding:5px 12px; font-size:13px; cursor:pointer; font-weight:600;
+}
+.btn:hover{border-color:var(--accent)}
+.btn.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.chrome .spacer{flex:1}
+.chrome .hint{font-size:12px;color:var(--muted)}
+
+.stage{display:flex;gap:28px;align-items:flex-start;padding:24px 16px 80px;flex-wrap:wrap;justify-content:center}
+
+/* ── the phone ─────────────────────────────────────────────────── */
+.phone{
+  width:390px; height:844px; flex:none; border-radius:38px; background:var(--bg);
+  border:1px solid var(--line); box-shadow:var(--shadow); overflow:hidden; position:relative;
+  display:flex; flex-direction:column;
+}
+.phone .scroll{overflow-y:auto; overflow-x:hidden; flex:1; padding:0 0 92px}
+.phone .scroll::-webkit-scrollbar{width:0}
+
+/* ── app chrome ────────────────────────────────────────────────── */
+.statusbar{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;color:var(--muted);flex:none}
+.topbar{display:flex;align-items:center;gap:12px;padding:6px 18px 12px;flex:none}
+.topbar .hello{flex:1;min-width:0}
+.topbar .hello .k{font-size:12px;color:var(--muted)}
+.topbar .hello .v{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.avatar{
+  width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--accent),var(--c-rel)); color:#06121C; font-weight:800; font-size:15px;
+  border:2px solid var(--surface);
+}
+.iconbtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted);flex:none}
+
+.tabbar{
+  position:absolute;bottom:0;left:0;right:0;height:76px;display:flex;align-items:center;
+  background:color-mix(in srgb,var(--surface) 92%,transparent); backdrop-filter:blur(14px);
+  border-top:1px solid var(--line); padding-bottom:10px;
+}
+.tabbar div{flex:1;text-align:center;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+.tabbar div .g{width:22px;height:22px;border-radius:7px;background:var(--muted);opacity:.42}
+.tabbar div.sel{color:var(--accent);font-weight:700}
+.tabbar div.sel .g{background:var(--accent);opacity:1}
+
+/* ── cards ─────────────────────────────────────────────────────── */
+.wrap{padding:0 16px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px}
+.card.tight{padding:14px}
+.card h3{margin:0 0 2px;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.card .sub{font-size:12px;color:var(--muted);margin:0 0 12px}
+.rowhead{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.rowhead h3{flex:1;margin:0}
+.rowhead a{font-size:12.5px;color:var(--accent);text-decoration:none;font-weight:650}
+
+/* the decisions banner */
+.banner{
+  border-radius:20px;padding:15px 16px;display:flex;align-items:center;gap:13px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),var(--surface));
+  border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line));
+}
+.banner .n{
+  width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;
+  background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:19px;
+}
+.banner .t{flex:1;min-width:0}
+.banner .t .a{font-size:14.5px;font-weight:700}
+.banner .t .b{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.banner .go{color:var(--accent);font-size:20px;font-weight:700}
+
+/* today list */
+.today{display:flex;flex-direction:column;gap:0}
+.tk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.tk:last-child{border-bottom:0;padding-bottom:2px}
+.tick{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;margin-top:1px}
+.tick.done{background:var(--good);border-color:var(--good)}
+.tk .m{flex:1;min-width:0}
+.tk .m .ti{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .m .me{font-size:12px;color:var(--muted);display:flex;gap:7px;align-items:center;margin-top:2px;flex-wrap:wrap}
+.tk.done .m .ti{color:var(--muted);text-decoration:line-through}
+.rail{width:4px;border-radius:2px;align-self:stretch;flex:none}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.due{border-color:color-mix(in srgb,var(--warn) 55%,var(--line));color:var(--warn)}
+
+/* load bar */
+.load{display:flex;align-items:center;gap:12px}
+.load .bar{flex:1;height:9px;border-radius:99px;background:var(--surface2);overflow:hidden;display:flex}
+.load .bar i{display:block;height:100%}
+.load .txt{font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* goal rows */
+.goal{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line)}
+.goal:last-child{border-bottom:0;padding-bottom:2px}
+.goal .nm{flex:1;min-width:0}
+.goal .nm .a{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goal .nm .b{font-size:12px;color:var(--muted);margin-top:2px}
+.nomeasure{font-size:11.5px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+
+/* legend */
+.legend{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.lg{display:flex;align-items:center;gap:9px;font-size:13px}
+.lg .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.lg .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg .v{color:var(--muted);font-variant-numeric:tabular-nums}
+
+.foot{font-size:11.5px;color:var(--muted);margin-top:12px;padding-top:11px;border-top:1px solid var(--line);line-height:1.5}
+.foot b{color:var(--text);font-weight:650}
+
+.setup{display:flex;align-items:center;gap:11px;font-size:13px}
+.setup .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
+.setup .s{flex:1}
+
+/* slope / gap chart */
+.slope{position:relative}
+.slope .hd{display:flex;font-size:11.5px;color:var(--muted);font-weight:650;margin-bottom:8px}
+.slope .hd span:first-child{flex:1}
+.slope .hd span:last-child{flex:1;text-align:end}
+
+/* annotations column */
+.notes{width:520px;max-width:100%;display:flex;flex-direction:column;gap:14px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px}
+.note h4{margin:0 0 7px;font-size:14px;letter-spacing:-.01em}
+.note p{margin:0 0 9px;font-size:13.5px;color:var(--muted);line-height:1.55}
+.note p:last-child{margin-bottom:0}
+.note code{background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+.note .tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;margin-inline-end:7px;
+  background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+}
+.note .tag.derived{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.note .tag.ask{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.note strong{color:var(--text)}
+
+.dead{opacity:.42}
+h2.sec{width:100%;text-align:center;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 0}
+</style>
+</head>
+<body class="dark">
+
+<div class="chrome">
+  <b>C12 rev 1</b>
+  <span class="name" id="vname">—</span>
+  <button class="btn" id="prev">←</button>
+  <button class="btn" id="next">→</button>
+  <span class="spacer"></span>
+  <button class="btn" id="lang">HE</button>
+  <button class="btn" id="theme">Light</button>
+  <button class="btn" id="raw" title="Render the committed light-mode hexes on the dark surface">Committed palette</button>
+  <span class="hint" id="hint"></span>
+</div>
+
+<div class="stage">
+  <div class="phone" id="phone"><div class="scroll" id="screen"></div><div class="tabbar" id="tabs"></div></div>
+  <div class="notes" id="notes"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   Data — one week, shared by every variant, so these are views of
+   the same week rather than separate demos.
+   Minutes are already DIVIDED across goal edges (C17 §3) and spans
+   contribute nothing (C9a via C9b).
+   ═══════════════════════════════════════════════════════════════ */
+const AREAS = [
+  {id:'learning', en:'Learning',      he:'לימודים',        v:'--c-learning', min:420, dprog:3,   measured:true },
+  {id:'health',   en:'Health',        he:'בריאות',         v:'--c-health',   min:260, dprog:12,  measured:true },
+  {id:'career',   en:'Career',        he:'קריירה',         v:'--c-career',   min:210, dprog:6,   measured:true },
+  {id:'rel',      en:'Relationships', he:'מערכות יחסים',   v:'--c-rel',      min:120, dprog:18,  measured:true },
+  {id:'finance',  en:'Finance',       he:'כספים',          v:'--c-finance',  min:60,  dprog:null,measured:false},
+  {id:'other',    en:'Unfiled',       he:'ללא שיוך',       v:'--c-other',    min:40,  dprog:null,measured:false},
+];
+const TOTAL = AREAS.reduce((s,a)=>s+a.min,0);
+
+const WEEK = [ /* stacked column, Sun→Sat, minutes per area */
+  {en:'Sun',he:'א',  vals:{learning:90, health:40, career:30, rel:0,  finance:0,  other:10}},
+  {en:'Mon',he:'ב',  vals:{learning:60, health:45, career:60, rel:0,  finance:20, other:0 }},
+  {en:'Tue',he:'ג',  vals:{learning:80, health:35, career:40, rel:30, finance:0,  other:10}},
+  {en:'Wed',he:'ד',  vals:{learning:70, health:50, career:20, rel:0,  finance:0,  other:0 }},
+  {en:'Thu',he:'ה',  vals:{learning:60, health:40, career:60, rel:30, finance:20, other:20}},
+  {en:'Fri',he:'ו',  vals:{learning:40, health:20, career:0,  rel:60, finance:0,  other:0 }},
+  {en:'Sat',he:'ש',  vals:{learning:20, health:30, career:0,  rel:0,  finance:20, other:0 }},
+];
+
+const TODAY = [
+  {en:'Draft chapter 3 of the final project', he:'לכתוב פרק 3 בפרויקט הגמר',
+   area:'learning', rung:'BLOCK', time:'09:00–12:00', done:false},
+  {en:'Submit the ethics form', he:'להגיש את טופס האתיקה',
+   area:'career', rung:'DEADLINE', time:'23:59', done:false},
+  {en:'Evening run · 4 km', he:'ריצת ערב · 4 ק״מ',
+   area:'health', rung:'BLOCK', time:'18:30–19:15', done:true},
+  {en:'Call Rachel', he:'להתקשר לרחל',
+   area:'rel', rung:'UNTIMED', time:null, done:false},
+];
+
+const GOALS = [
+  {en:'Run 4 km a week',   he:'לרוץ 4 ק״מ בשבוע',    area:'health',   measure:'3.2 / 4 km',      pct:80,  meHe:'3.2 / 4 ק״מ'},
+  {en:'Lose 5 kg',         he:'לרדת 5 ק״ג',           area:'health',   measure:'77.5 kg · from 80', pct:50, meHe:'77.5 ק״ג · מ־80'},
+  {en:'Finish the final project', he:'לסיים את פרויקט הגמר', area:'learning', measure:null, pct:null},
+  {en:'Understand real estate',   he:'להבין נדל״ן',    area:'learning', measure:null, pct:null},
+];
+
+let L = 'en';                 // 'en' | 'he'
+const T = (o) => L === 'he' ? (o.he ?? o.en) : o.en;
+const t = (en, he) => L === 'he' ? he : en;
+const bidi = (s) => `<bdi>${s}</bdi>`;
+const col = (a) => `var(${AREAS.find(x=>x.id===a).v})`;
+const areaOf = (id) => AREAS.find(x=>x.id===id);
+const hm = (m) => L==='he' ? `${Math.floor(m/60)} ש׳ ${m%60 ? (m%60)+' ד׳' : ''}`.trim()
+                           : `${Math.floor(m/60)}h ${m%60 ? (m%60)+'m' : ''}`.trim();
+
+/* ═══════════════════════════════════════════════════════════════
+   Chart primitives — SVG, no library.
+   ═══════════════════════════════════════════════════════════════ */
+function donut(size, thick, slices, centerHtml){
+  const r = (size - thick)/2, c = size/2, C = 2*Math.PI*r;
+  let acc = 0, segs = '';
+  slices.forEach(s=>{
+    const frac = s.value/TOTAL;
+    segs += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${s.color}"
+      stroke-width="${thick}" stroke-linecap="butt"
+      stroke-dasharray="${(C*frac)-2} ${C-(C*frac)+2}"
+      stroke-dashoffset="${-C*acc}" transform="rotate(-90 ${c} ${c})"/>`;
+    acc += frac;
+  });
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:scaleX(1)">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
+      ${segs}
+    </svg>
+    <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1.25">${centerHtml}</div>
+  </div>`;
+}
+
+function ring(size, pct, color){
+  const thick = 5, r=(size-thick)/2, c=size/2, C=2*Math.PI*r;
+  return `<svg width="${size}" height="${size}" style="flex:none">
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="${thick}"/>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${thick}"
+      stroke-linecap="round" stroke-dasharray="${C*pct/100} ${C}" transform="rotate(-90 ${c} ${c})"/>
+    <text x="${c}" y="${c+4}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">${pct}</text>
+  </svg>`;
+}
+
+function stacked(w, h){
+  const max = Math.max(...WEEK.map(d=>Object.values(d.vals).reduce((a,b)=>a+b,0)));
+  const gap = 8, bw = (w - gap*(WEEK.length-1))/WEEK.length;
+  const days = L==='he' ? [...WEEK].reverse() : WEEK;      /* time runs right→left in RTL */
+  let out = '';
+  days.forEach((d,i)=>{
+    const x = i*(bw+gap); let y = h;
+    AREAS.forEach(a=>{
+      const v = d.vals[a.id]||0; if(!v) return;
+      const bh = (v/max)*(h-4); y -= bh;
+      out += `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="var(${a.v})" rx="2"/>`;
+    });
+  });
+  return `<svg width="${w}" height="${h+18}" style="display:block">
+    ${out}
+    ${days.map((d,i)=>`<text x="${i*(bw+gap)+bw/2}" y="${h+14}" text-anchor="middle"
+        font-size="10.5" fill="var(--muted)">${T(d)}</text>`).join('')}
+  </svg>`;
+}
+
+/* the new one — two ranked columns, joined. See note G1. */
+function slopeChart(w){
+  const measured = AREAS.filter(a=>a.measured);
+  const byEffort  = [...measured].sort((a,b)=>b.min-a.min);
+  const byOutcome = [...measured].sort((a,b)=>b.dprog-a.dprog);
+  const rowH = 44, h = rowH*measured.length + 10;
+  const leftX = 8, rightX = w-8, mid1 = w*0.34, mid2 = w*0.66;
+  const flip = L==='he';
+  let out = '';
+  byEffort.forEach((a,i)=>{
+    const j = byOutcome.findIndex(x=>x.id===a.id);
+    const y1 = 18+i*rowH, y2 = 18+j*rowH;
+    const x1 = flip ? w-mid1 : mid1, x2 = flip ? w-mid2 : mid2;
+    const moved = Math.abs(i-j);
+    out += `<path d="M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}"
+      fill="none" stroke="var(${a.v})" stroke-width="${moved>=2?3:2}" opacity="${moved>=2?1:.45}"/>`;
+    out += `<circle cx="${x1}" cy="${y1}" r="4.5" fill="var(${a.v})"/>`;
+    out += `<circle cx="${x2}" cy="${y2}" r="4.5" fill="var(${a.v})"/>`;
+    const lx = flip ? rightX : leftX, la = flip ? 'end' : 'start';
+    out += `<text x="${lx}" y="${y1+4}" text-anchor="${la}" font-size="12.5" font-weight="600"
+      fill="var(--text)">${T(a)}</text>`;
+    const rx = flip ? leftX : rightX, ra = flip ? 'start' : 'end';
+    out += `<text x="${rx}" y="${y2+4}" text-anchor="${ra}" font-size="12" fill="var(--muted)">+${a.dprog}%</text>`;
+  });
+  return `<svg width="${w}" height="${h}" style="display:block;overflow:visible">${out}</svg>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Screens
+   ═══════════════════════════════════════════════════════════════ */
+function tabs(sel){
+  const items = [
+    {en:'Home',he:'בית'},{en:'Goals',he:'מטרות'},
+    {en:'Calendar',he:'לוח שנה'},{en:'Social',he:'חברתי'}];
+  return items.map((it,i)=>`<div class="${i===sel?'sel':''}"><span class="g"></span>${T(it)}</div>`).join('');
+}
+
+function statusbar(){
+  return `<div class="statusbar"><span>${bidi('9:41')}</span><span>${bidi('􀙇 􀛨 100%')}</span></div>`;
+}
+
+function topbar(){
+  return `${statusbar()}
+  <div class="topbar">
+    <div class="hello">
+      <div class="k">${t('Tuesday, 10 August','יום שלישי, 10 באוגוסט')}</div>
+      <div class="v">${t('Good evening, Ido','ערב טוב, עידו')}</div>
+    </div>
+    <div class="iconbtn">✦</div>
+    <div class="avatar">${t('I','ע')}</div>
+  </div>`;
+}
+
+/* ── HOME (proposed) ──────────────────────────────────────────── */
+function screenHome(){
+  const doneMin = 45, bookedMin = 225;
+  const todayRows = TODAY.map(k=>{
+    const a = areaOf(k.area);
+    return `<div class="tk ${k.done?'done':''}">
+      <div class="tick ${k.done?'done':''}"></div>
+      <div class="rail" style="background:${col(k.area)}"></div>
+      <div class="m">
+        <div class="ti">${T(k)}</div>
+        <div class="me">
+          ${k.time ? `<span>${bidi(k.time)}</span>` : ''}
+          ${k.rung==='DEADLINE' ? `<span class="pill due">${t('Due today','להגשה היום')}</span>` : ''}
+          ${k.rung==='UNTIMED' ? `<span class="pill">${t('No time set','ללא שעה')}</span>` : ''}
+          <span>${T(a)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const goalRows = GOALS.slice(0,3).map(g=>{
+    const c = col(g.area);
+    return `<div class="goal">
+      ${g.pct!==null ? ring(38,g.pct,c)
+        : `<div style="width:38px;height:38px;border-radius:50%;border:2px dashed var(--line);flex:none"></div>`}
+      <div class="nm">
+        <div class="a">${T(g)}</div>
+        <div class="b">${g.measure ? bidi(L==='he'?g.meHe:g.measure) : t('No measure — 3 tasks left','ללא מדד — נותרו 3 משימות')}</div>
+      </div>
+      ${g.pct===null ? `<span class="nomeasure">${t('no measure','ללא מדד')}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  const legend = AREAS.slice(0,4).map(a=>`<div class="lg">
+      <span class="sw" style="background:var(${a.v})"></span>
+      <span class="l">${T(a)}</span>
+      <span class="v">${bidi(Math.round(a.min/TOTAL*100)+'%')}</span>
+    </div>`).join('');
+
+  return `${topbar()}
+  <div class="wrap">
+
+    <div class="banner">
+      <div class="n">4</div>
+      <div class="t">
+        <div class="a">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
+        <div class="b">${t('2 missed · 1 left your calendar · 1 to confirm','2 הוחמצו · 1 יצאה מהיומן · 1 לאישור')}</div>
+      </div>
+      <div class="go">${L==='he'?'‹':'›'}</div>
+    </div>
+
+    <div class="card">
+      <div class="rowhead">
+        <h3>${t('Today','היום')}</h3>
+        <a>${t('Calendar','לוח שנה')} ${L==='he'?'‹':'›'}</a>
+      </div>
+      <div class="today">${todayRows}</div>
+      <div class="load" style="margin-top:14px">
+        <div class="bar">
+          <i style="width:${doneMin/480*100}%;background:var(--good)"></i>
+          <i style="width:${(bookedMin-doneMin)/480*100}%;background:var(--accent)"></i>
+        </div>
+        <div class="txt">${bidi(hm(bookedMin))} ${t('booked','ביומן')} · ${bidi(hm(480-bookedMin))} ${t('free','פנוי')}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="rowhead">
+        <h3>${t('Your goals','המטרות שלך')}</h3>
+        <a>${t('All 7','כל ה־7')} ${L==='he'?'‹':'›'}</a>
+      </div>
+      ${goalRows}
+    </div>
+
+    <div class="card">
+      <div class="rowhead">
+        <h3>${t('This week','השבוע')}</h3>
+        <a>${t('Analytics','ניתוח')} ${L==='he'?'‹':'›'}</a>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center">
+        ${donut(104,15,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
+          `<div><div style="font-size:19px;font-weight:750">${bidi(hm(TOTAL))}</div>
+           <div style="font-size:10.5px;color:var(--muted)">${t('tracked','נמדדו')}</div></div>`)}
+        <div class="legend" style="flex:1">${legend}
+          <div class="lg" style="color:var(--muted)"><span class="sw" style="background:var(--surface2)"></span>
+            <span class="l">${t('2 more','עוד 2')}</span><span class="v"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tight">
+      <div class="setup">
+        <span class="dot"></span>
+        <span class="s">${t('Connect Google Tasks to import your list','חברו את Google Tasks כדי לייבא את הרשימה')}</span>
+        <button class="btn" style="padding:4px 11px">${t('Connect','חיבור')}</button>
+      </div>
+    </div>
+
+  </div>`;
+}
+
+/* ── HOME (as it ships today) ─────────────────────────────────── */
+function screenHomeBefore(){
+  const box = (h,s,extra='') => `<div class="card"><h3>${h}</h3><p class="sub">${s}</p>${extra}</div>`;
+  return `${statusbar()}
+  <div class="topbar"><div class="hello"><div class="k">${t('Dashboard','לוח בקרה')}</div>
+    <div class="v">${t('Good evening, Ido','ערב טוב, עידו')}</div></div></div>
+  <div class="wrap">
+    <div class="card" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 30%,var(--surface)),var(--surface))">
+      <h3>${t('Level 6 · 1,240 points','רמה 6 · 1,240 נקודות')}</h3>
+      <p class="sub" style="margin:0">${t('310 points to level 7','310 נקודות לרמה 7')}</p>
+    </div>
+    <div class="card"><h3>${t('Time allocation','חלוקת זמן')}</h3><p class="sub">${t('This week','השבוע')}</p>
+      <div style="display:flex;justify-content:center">${donut(150,20,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
+      `<div style="font-size:19px;font-weight:750">${bidi(hm(TOTAL))}</div>`)}</div></div>
+    ${box(t('Smart add','הוספה חכמה'), t('Type anything and we will file it','כתבו משהו ונתייק אותו'))}
+    ${box(t('Connect Health Connect','חיבור Health Connect'), t('Sync steps and workouts','סנכרון צעדים ואימונים'))}
+    ${box(t('Import from Google Tasks','ייבוא מ־Google Tasks'), t('Bring your existing list','הביאו את הרשימה הקיימת'))}
+    ${box(t('Tip 1 of 5','טיפ 1 מתוך 5'), t('Break big goals into small tasks','פרקו מטרות גדולות למשימות קטנות'))}
+    ${box(t('Tip 2 of 5','טיפ 2 מתוך 5'), t('Review your week every Sunday','סקרו את השבוע כל יום ראשון'))}
+    <div class="card dead"><h3>${t('Your goals','המטרות שלך')}</h3>
+      <p class="sub">${t('…roughly four screenfuls down. No task is shown anywhere on this screen.','…בערך ארבעה מסכים למטה. שום משימה לא מוצגת במסך הזה.')}</p></div>
+  </div>`;
+}
+
+/* ── ANALYTICS — the chart set ────────────────────────────────── */
+function screenAnalytics(){
+  const legend = AREAS.map(a=>`<div class="lg">
+      <span class="sw" style="background:var(${a.v})"></span>
+      <span class="l">${T(a)}</span>
+      <span class="v">${bidi(hm(a.min))} · ${bidi(Math.round(a.min/TOTAL*100)+'%')}</span>
+    </div>`).join('');
+
+  return `${statusbar()}
+  <div class="topbar"><div class="hello"><div class="v">${t('Analytics','ניתוח')}</div></div>
+    <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
+  <div class="wrap">
+
+    <div style="display:flex;gap:7px;overflow:auto">
+      ${[['Day','יום'],['Week','שבוע'],['Month','חודש'],['Quarter','רבעון'],['Year','שנה']]
+        .map((r,i)=>`<button class="btn ${i===1?'on':''}" style="white-space:nowrap">${t(r[0],r[1])}</button>`).join('')}
+    </div>
+
+    <div class="card">
+      <h3>${t('Where the week went','לאן הלך השבוע')}</h3>
+      <p class="sub">${bidi(hm(TOTAL))} ${t('across 6 areas','ב־6 תחומים')}</p>
+      <div style="display:flex;justify-content:center;margin:4px 0 14px">
+        ${donut(168,22,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),
+          `<div><div style="font-size:24px;font-weight:750">${bidi(hm(TOTAL))}</div>
+           <div style="font-size:11px;color:var(--muted)">${t('tracked','נמדדו')}</div></div>`)}
+      </div>
+      <div class="legend">${legend}</div>
+      <div class="foot">
+        <b>${t('Shared work is divided.','עבודה משותפת מחולקת.')}</b>
+        ${t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
+            'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שהעוגה תסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>${t('Day by day','יום אחר יום')}</h3>
+      <p class="sub">${t('Same minutes, over time','אותן דקות, לאורך זמן')}</p>
+      ${stacked(322,140)}
+    </div>
+
+    <div class="card">
+      <h3>${t('Effort and outcome','מאמץ ותוצאה')}</h3>
+      <p class="sub">${t('Ranked by time on the left, by progress moved on the right','מדורג לפי זמן מצד אחד, לפי התקדמות מהצד השני')}</p>
+      <div class="slope">
+        <div class="hd"><span>${t('Most time','הכי הרבה זמן')}</span><span>${t('Most movement','הכי הרבה תזוזה')}</span></div>
+        ${slopeChart(322)}
+      </div>
+      <div class="foot">
+        <b>${t('Learning took the most time and moved the least.','לימודים לקחו הכי הרבה זמן והתקדמו הכי מעט.')}</b>
+        ${t('That is not necessarily wrong — some work pays off later. Two areas are missing because their goals have no measure.',
+            'זה לא בהכרח רע — יש עבודה שמשתלמת בהמשך. שני תחומים חסרים כי למטרות שלהם אין מדד.')}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+/* ── THE GAP CHART, and the two forms it is not ───────────────── */
+function screenGap(){
+  const measured = AREAS.filter(a=>a.measured);
+  const maxMin = Math.max(...measured.map(a=>a.min));
+  const maxD   = Math.max(...measured.map(a=>a.dprog));
+  const rows = measured.map(a=>`
+    <div style="margin:13px 0">
+      <div style="display:flex;font-size:13px;margin-bottom:6px">
+        <span style="flex:1;font-weight:600">${T(a)}</span>
+        <span style="color:var(--muted)">${bidi(hm(a.min))} · ${bidi('+'+a.dprog+'%')}</span>
+      </div>
+      <div style="height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:4px">
+        <div style="width:${a.min/maxMin*100}%;height:100%;background:var(${a.v})"></div></div>
+      <div style="height:8px;border-radius:99px;background:var(--surface2);overflow:hidden">
+        <div style="width:${a.dprog/maxD*100}%;height:100%;background:var(${a.v});opacity:.45"></div></div>
+    </div>`).join('');
+
+  return `${statusbar()}
+  <div class="topbar"><div class="hello"><div class="v">${t('Effort and outcome','מאמץ ותוצאה')}</div></div>
+    <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
+  <div class="wrap">
+    <div class="card">
+      <h3>${t('Chosen form — two rankings, joined','הצורה הנבחרת — שני דירוגים, מחוברים')}</h3>
+      <p class="sub">${t('Crossing lines are the whole story','הקווים שמצטלבים הם כל הסיפור')}</p>
+      <div class="slope">
+        <div class="hd"><span>${t('Most time','הכי הרבה זמן')}</span><span>${t('Most movement','הכי הרבה תזוזה')}</span></div>
+        ${slopeChart(322)}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>${t('Rejected — paired bars','נדחה — עמודות זוגיות')}</h3>
+      <p class="sub">${t('Solid = time, faded = progress moved','מלא = זמן, דהוי = התקדמות')}</p>
+      ${rows}
+      <div class="foot">${t('Two bars on one row invite you to compare their lengths — but minutes and percentage points are different quantities, so the comparison the picture offers is one the numbers cannot support.',
+        'שתי עמודות באותה שורה מזמינות להשוות אורכים — אבל דקות ואחוזים הם כמויות שונות, וההשוואה שהתמונה מציעה אינה נתמכת במספרים.')}</div>
+    </div>
+
+    <div class="card">
+      <h3>${t('Rejected — one efficiency number','נדחה — מספר יעילות אחד')}</h3>
+      <div style="display:flex;gap:14px;align-items:center;margin:6px 0 2px">
+        <div style="font-size:34px;font-weight:800;color:var(--bad)">${bidi('0.4')}</div>
+        <div style="font-size:13px;color:var(--muted)">${t('% moved per hour, Learning','% תזוזה לשעה, לימודים')}</div>
+      </div>
+      <div class="foot">${t('One mark carrying two axes — the same failure a chip carrying two axes makes, and it hides the gap it claims to measure. It also ranks your week by productivity, which is not what this app is for.',
+        'סימן אחד שנושא שני צירים — בדיוק הכשל של תווית שנושאת שני צירים, והוא מסתיר את הפער שהוא מתיימר למדוד. הוא גם מדרג שבוע של אדם לפי תפוקה, וזו לא מטרת האפליקציה.')}</div>
+    </div>
+  </div>`;
+}
+
+/* ── WIDGETS ──────────────────────────────────────────────────── */
+function screenWidgets(){
+  const w = (title, body, ok, why) => `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px;background:var(--surface2)">${body}</div>
+      <div style="padding:11px 16px;display:flex;gap:9px;align-items:flex-start">
+        <span style="color:${ok?'var(--good)':'var(--bad)'};font-weight:800">${ok?'✓':'✕'}</span>
+        <div><div style="font-size:13.5px;font-weight:650">${title}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${why}</div></div>
+      </div>
+    </div>`;
+
+  return `${statusbar()}
+  <div class="topbar"><div class="hello"><div class="v">${t('Widgets','ווידג׳טים')}</div>
+    <div class="k">${t('A chart with no room to explain itself','גרף בלי מקום להסביר את עצמו')}</div></div></div>
+  <div class="wrap">
+
+    ${w(t('Next up','הבא בתור'),
+        `<div style="display:flex;gap:12px;align-items:center">
+          <div class="rail" style="background:${col('learning')};height:38px"></div>
+          <div style="flex:1"><div style="font-weight:650;font-size:14px">${t('Draft chapter 3','לכתוב פרק 3')}</div>
+          <div style="font-size:12px;color:var(--muted)">${bidi('09:00–12:00')} · ${t('in 40 min','בעוד 40 ד׳')}</div></div>
+        </div>`, true,
+        t('One fact, no footnote.','עובדה אחת, בלי הערת שוליים.'))}
+
+    ${w(t('Decisions waiting','החלטות ממתינות'),
+        `<div style="display:flex;gap:12px;align-items:center">
+          <div style="width:38px;height:38px;border-radius:13px;background:var(--accent);color:var(--accent-ink);
+            display:grid;place-items:center;font-weight:800">4</div>
+          <div style="font-size:13.5px">${t('4 waiting · 2 missed today','4 ממתינות · 2 הוחמצו היום')}</div>
+        </div>`, true,
+        t('A count of things needing you. Needs nothing explained.','ספירה של דברים שדורשים אותך. לא דורשת הסבר.'))}
+
+    ${w(t('One goal ring','טבעת של מטרה אחת'),
+        `<div style="display:flex;gap:12px;align-items:center">
+          ${ring(46,80,col('health'))}
+          <div><div style="font-weight:650;font-size:14px">${t('Run 4 km a week','לרוץ 4 ק״מ בשבוע')}</div>
+          <div style="font-size:12px;color:var(--muted)">${bidi(L==='he'?'3.2 / 4 ק״מ':'3.2 / 4 km')}</div></div>
+        </div>`, true,
+        t('You pick the goal. Only a goal with a measure is offered.','אתם בוחרים את המטרה. רק מטרה עם מדד מוצעת.'))}
+
+    ${w(t('Time-allocation donut','עוגת חלוקת הזמן'),
+        `<div style="display:flex;gap:14px;align-items:center;opacity:.5">
+          ${donut(58,9,AREAS.map(a=>({value:a.min,color:`var(${a.v})`})),'')}
+          <div style="font-size:12px;color:var(--muted)">${t('…divided how? spans excluded? whose week?','…מחולק איך? בלי תקופות? של מי השבוע?')}</div>
+        </div>`, false,
+        t('Its honesty depends on a footnote, and a widget has no room for one.','היושר שלו תלוי בהערת שוליים, ולווידג׳ט אין מקום לכזו.'))}
+
+    ${w(t('Points and level','נקודות ורמה'),
+        `<div style="opacity:.5;font-size:15px;font-weight:700">${t('Level 6 · 1,240 pts','רמה 6 · 1,240 נק׳')}</div>`, false,
+        t('Points are a view of effort, not a fact about your life. On a home screen all day they become the goal.',
+          'נקודות הן תצוגה של מאמץ, לא עובדה על החיים. על מסך הבית כל היום הן הופכות למטרה.'))}
+
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Variants + annotations
+   ═══════════════════════════════════════════════════════════════ */
+const VARIANTS = [
+  {id:'home', name:'Home — proposed', tab:0, render:screenHome, hint:'The arrangement answer', notes:[
+    {tag:'derived', t:'H1 · A7 was a false fork, and C9b already collapsed it',
+     p:`The map's <code>A7</code> fog asks whether Home should answer <strong>"what do I do now?"</strong>
+        rather than <strong>"how am I doing?"</strong>. Grep the write path before drawing the options:
+        <code>C9b</code> already gave the now-question its own home — a <strong>Calendar tab</strong> plus a
+        <strong>banner on Home that opens the decision stack</strong>. So Home is not choosing between the two.
+        It <em>links</em> to now and it <em>hosts</em> how-am-I-doing, and the only open question is the order.`},
+    {tag:'derived', t:'H2 · The defect was never the donut’s position',
+     p:`<code>A7</code> reads as "the donut is too high". Count the screen instead: two <strong>setup cards that
+        never retire</strong> and <strong>five generic tips</strong> are four of the six blocks above the user's own
+        goals. Those are what push goals four screenfuls down — and no task appears anywhere. Retire the setup cards
+        on completion, drop the tips into the empty state, and the donut can stay without moving Home's centre of gravity.`},
+    {tag:'derived', t:'H3 · Today is the block the screen never had',
+     p:`<code>A7</code>'s sharpest fact is that <strong>no task is shown anywhere on Home</strong>. A task list
+        for today, with the load bar <code>C9b</code> already settled (arithmetic, no model call, free against the
+        free-tier constraint), is the smallest thing that fixes it.`},
+    {tag:'ask', t:'H4 · Points demoted to the avatar — your call',
+     p:`<code>C3</code> settled that <strong>points are a view of effort</strong>, computed as
+        <code>round(minutes / 3) × difficulty</code> — not a third currency. A derived number as the screen's
+        hero teaches that the derived thing is the point. Here it moves into the profile avatar.
+        <strong>Motivation design is <code>C10</code>'s, not this ticket's</strong>, so this is a proposal you can
+        overturn without touching anything else.`},
+  ]},
+
+  {id:'home-before', name:'Home — as it ships today', tab:0, render:screenHomeBefore, hint:'The comparison', notes:[
+    {tag:'', t:'The order today',
+     p:`Points banner → donut → smart add → two setup cards that never retire → five tips → <em>then</em> your goals.
+        Roughly four screenfuls, and <strong>no task anywhere</strong>. Rendered from the item order in
+        <code>DashboardScreen.kt</code> rather than from memory.`},
+  ]},
+
+  {id:'analytics', name:'Analytics — the chart set', tab:0, render:screenAnalytics, hint:'What stays, what goes, what was missing', notes:[
+    {tag:'derived', t:'S1 · The set: two stay, one is retired, one is added',
+     p:`<strong>Donut</strong> (time allocation) stays — it is the app's central picture and <code>C17</code> made it
+        the only forked quantity. <strong>Stacked column</strong> stays — the only view of change over time.
+        <strong>ProgressRing</strong> stays, on the object it belongs to. <strong>HorizontalBarChart loses both its
+        users:</strong> "Progress by goal" is a bar list over goals that <code>C7</code> now says may have
+        <strong>no measure at all</strong>, so it either drops them silently or draws them at zero; and "Task focus"
+        weights by <strong>count</strong>, the weight <code>C16</code> killed and <code>C3</code> re-killed
+        (split one task into three and the picture changes). It has no honest user left on this screen.`},
+    {tag:'derived', t:'S2 · The missing chart, and C3 names it outright',
+     p:`<code>C3</code>: <em>"the gap between effort and outcome is the most valuable thing this app can show a
+        person."</em> Nothing in the app draws both. That is the set's actual hole — not a chart type nobody
+        implemented, a <strong>question nobody asked</strong>. See the <em>Effort and outcome</em> variant.`},
+    {tag:'derived', t:'S3 · The donut owes a disclosure, in words',
+     p:`<code>C17 §3</code> chose <strong>divide</strong> for shared minutes and required the app to
+        <strong>say out loud that it divided</strong>. <code>C9a</code> via <code>C9b</code> adds that
+        <strong>spans contribute nothing</strong>. Both are in the footnote, in sentences — <em>form and words
+        before iconography</em>, so no asterisk, no "ⓘ".`},
+    {tag:'derived', t:'S4 · In Hebrew the time axis runs right to left',
+     p:`Press <strong>HE</strong>: the stacked column reverses so Sunday sits on the right. A time axis is not
+        mirrored by <code>dir="rtl"</code> — the bars are drawn, not laid out — so this is code, and it is the kind
+        of thing that ships wrong. Every number and range is wrapped in an isolate; in Compose that is an explicit
+        bidi isolate, not a layout property.`},
+  ]},
+
+  {id:'gap', name:'Effort and outcome — the new chart', tab:0, render:screenGap, hint:'And the two forms it is not', notes:[
+    {tag:'derived', t:'G1 · Why two rankings and not a scatter, a pair of bars, or a score',
+     p:`Effort is <strong>minutes</strong>; outcome is <strong>percentage points of progress</strong>, and
+        <code>C17</code> ruled progress <strong>owned, never pooled</strong> — so there is no legitimate total to
+        take a share of, and any chart that puts the two on one scale is arithmetic the model forbids.
+        <strong>Rankings survive incommensurable units</strong>: ordering is all they need. The finding is the
+        <strong>crossing line</strong> — Learning is first for time and fourth for movement.`},
+    {tag:'derived', t:'G2 · The rejected forms fail a rule this map already has',
+     p:`Paired bars invite a length comparison the numbers cannot support. A single efficiency number
+        (<code>% per hour</code>) is <strong>one mark carrying two axes</strong> — the chart form of the rule
+        <code>C9b</code> bought with its unreadable rung glyphs — and it deletes the very gap it claims to measure.`},
+    {tag:'ask', t:'G3 · Two areas are absent, and that is the honest render',
+     p:`Finance and Unfiled have no measured goal, so they have no outcome to rank. They are named as absent rather
+        than drawn at zero — a goal with no measure is <code>C7</code>'s <strong>default</strong>, not a gap to fill.
+        Worth your eye: this chart is <strong>about your week</strong>, and a picture of where your time
+        underperformed can read as an accusation. The footnote says <em>"not necessarily wrong"</em> deliberately.`},
+  ]},
+
+  {id:'widgets', name:'Widget pack (#10)', tab:0, render:screenWidgets, hint:'What may and may not be a widget', notes:[
+    {tag:'derived', t:'W1 · The rule: a chart whose honesty depends on a footnote may not be a widget',
+     p:`The ticket's own line — <em>a widget is a chart with no room to explain itself</em> — becomes a test rather
+        than a warning. The donut fails it: <code>C17</code> <strong>requires</strong> the divided-minutes
+        disclosure, and a widget cannot carry it. What passes: next block, decisions waiting, one measured goal's
+        ring. <strong>Issue #10 is unblocked by this rule</strong>, not by a list of drawings.`},
+    {tag:'ask', t:'W2 · The points widget is refused on a product argument, not a technical one',
+     p:`It would render perfectly. But points are derived from minutes, and a derived number on a home screen all
+        day becomes the thing being optimised. Overturnable — and it belongs beside <code>H4</code>, since the two
+        stand or fall together.`},
+  ]},
+];
+
+/* palette note shown on every variant */
+const GLOBAL_NOTES = [
+  {tag:'derived', t:'D2 · The dark palette is owed here, because charts are where the palette lives',
+   p:`<code>C9b</code> found <code>GoalCategory.defaultColorHex</code> is a <strong>light-mode-only</strong> palette.
+      Every chart on this screen is built from it, so this ticket is where that bill comes due. Press
+      <strong>Committed palette</strong> on the dark theme to see the defect: <code>#3B3BA8</code> and
+      <code>#7C4A21</code> stop being distinguishable on <code>#0C1520</code>. The dark tones proposed here keep the
+      pairwise distinctness <code>ThemePaletteTest</code> already guards.`},
+  {tag:'ask', t:'P1 · No chart picker — derived, and flagged for you to overturn',
+   p:`<code>AppPreferencesRepository</code> exists, so a picker is cheap to build. It is refused on the standard
+      <code>#12</code> made normative: the app owes a <strong>design</strong>, not a configuration space, and a
+      picker asks the one real user to author his own analysis. What stays pickable is the
+      <strong>range</strong> and the <strong>focused slice</strong> — those are queries, not layout.`},
+];
+
+/* ═══════════════════════════════════════════════════════════════ */
+let vi = 0;
+function render(){
+  const v = VARIANTS[vi];
+  document.getElementById('vname').textContent = v.name;
+  document.getElementById('hint').textContent = v.hint;
+  document.getElementById('screen').innerHTML = v.render();
+  document.getElementById('tabs').innerHTML = tabs(v.tab);
+  document.getElementById('phone').dir = L==='he' ? 'rtl' : 'ltr';
+  document.getElementById('screen').scrollTop = 0;
+  document.getElementById('notes').innerHTML =
+    [...v.notes, ...GLOBAL_NOTES].map(n=>`<div class="note">
+      <h4>${n.tag?`<span class="tag ${n.tag}">${n.tag==='derived'?'derived':'yours'}</span>`:''}${n.t}</h4>
+      <p>${n.p}</p></div>`).join('');
+  const u = new URL(location); u.searchParams.set('variant', v.id); history.replaceState({},'',u);
+}
+document.getElementById('next').onclick = ()=>{ vi=(vi+1)%VARIANTS.length; render(); };
+document.getElementById('prev').onclick = ()=>{ vi=(vi-1+VARIANTS.length)%VARIANTS.length; render(); };
+document.getElementById('lang').onclick = (e)=>{
+  L = L==='en'?'he':'en';
+  e.target.textContent = L==='en'?'HE':'EN'; e.target.classList.toggle('on', L==='he');
+  document.documentElement.lang = L; render();
+};
+document.getElementById('theme').onclick = (e)=>{
+  document.body.classList.toggle('light');
+  e.target.textContent = document.body.classList.contains('light')?'Dark':'Light';
+};
+document.getElementById('raw').onclick = (e)=>{
+  document.body.classList.toggle('raw-palette');
+  e.target.classList.toggle('on', document.body.classList.contains('raw-palette'));
+};
+addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') document.getElementById(L==='he'?'prev':'next').click();
+  if(e.key==='ArrowLeft')  document.getElementById(L==='he'?'next':'prev').click();
+});
+const want = new URL(location).searchParams.get('variant');
+if(want){ const i = VARIANTS.findIndex(v=>v.id===want); if(i>=0) vi=i; }
+render();
+</script>
+</body>
+</html>

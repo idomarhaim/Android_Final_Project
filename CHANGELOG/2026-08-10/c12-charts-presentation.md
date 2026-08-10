@@ -102,10 +102,79 @@ immediately before its index line is appended.
 test layer. It compiles nothing and runs no Gradle task, which is why this row claims no build,
 device or Firebase singleton.)*
 
+## Revision 1 — the prototype
+
+`docs/prototypes/2026-08-10-charts-presentation/` — standalone HTML, five variants, `←`/`→`,
+**HE** flips to RTL, **Light/Dark**, and a **Committed palette** toggle that renders the shipped
+`GoalCategory` hexes on the dark surface. Posted to `#31` as
+[the prototype comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5245204579).
+
+**The headline finding is a false fork, caught before options were drawn.** `A7` asks whether
+Home should answer *what do I do now?* rather than *how am I doing?*. `C9b` already gave the
+now-question its own home — a **Calendar tab** plus a **Home banner that opens the decision
+stack** — so Home is not choosing between the two questions at all. It links to one and hosts
+the other, and only the order was ever open. Drawing three rival dashboards would have repeated
+exactly the failure `C9b` spent eight revisions discovering.
+
+**And the arrangement defect was not the donut's position.** Counted off `DashboardScreen.kt`'s
+item order rather than inferred from the complaint: two setup cards that never retire and five
+generic tips are **four of the six blocks above the user's own goals**. `home-before` renders
+that order so the comparison is a picture, not a claim.
+
+**Chart set.** `DonutChart`, `StackedColumnChart` and `ProgressRing` stay. **`HorizontalBarChart`
+is retired from Analytics — it loses both its users to decisions this map already took:**
+*Progress by goal* is a bar list over goals that `C7` says may carry **no measure at all** (and
+"no measure" is `C7`'s **default**), and *Task focus* weights by **count**, the weight `C16`
+killed and `C3` re-killed. **One chart is added** — effort against outcome, which is `C3`'s own
+sentence taken literally (*"the gap … is the most valuable thing this app can show a person"*)
+and which nothing in the app draws.
+
+**Its form is forced rather than chosen, and that is the second finding.** Effort is minutes,
+outcome is percentage points, and `C17` ruled progress **owned, never pooled** — so there is no
+legitimate total to take a share of, and any chart putting both on one scale performs arithmetic
+the model forbids. Rankings survive incommensurable units, so it is two ranked columns joined by
+lines. The two rejected forms are drawn beside it: paired bars invite a length comparison the
+numbers cannot support, and a single `% per hour` score is **one mark carrying two axes** — the
+chart form of the rule `C9b` bought — which deletes the gap it claims to measure.
+
+**Widget rule for [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10):** *a
+chart whose honesty depends on a footnote may not be a widget.* The donut fails it because
+`C17` §3 **requires** the divided-minutes disclosure. Next block, decisions waiting and one
+measured goal's ring pass. `#10` is unblocked by a rule rather than by a list of drawings.
+
+**Two things the prototype caught that prose would not have:** a stacked **time axis does not
+mirror** under `dir="rtl"` — bars are drawn, not laid out, so Sunday stays on the left in Hebrew
+unless the series is reversed in code; and the **dark palette bill falls due on this ticket**,
+because every chart is built from `GoalCategory.defaultColorHex`, which `C9b` found is
+light-mode-only.
+
+Three items are tagged **yours** in the prototype and in the comment, not derived: demoting the
+points banner (it touches `C10`'s motivation design), refusing a chart picker, and whether an
+effort-versus-outcome picture is one Ido wants shown at all.
+
+## 🧪 Tests
+
+**Still none owed — no ticket on this map ships code — but two mechanical assertions were run
+against the artifact rather than eyeballed:**
+
+- **JS parses.** The `<script>` block was extracted and passed through `node --check` → **OK**.
+  A prototype that silently fails to render is worse than no prototype.
+- **No Hebrew literal can reach the English render** — `C9b`'s finding 3, asserted absolutely
+  rather than sampled. Every single-quoted literal containing a character in the Hebrew Unicode
+  block was enumerated: **41 found, 41 language-guarded** (behind `t(en, he)`, a `he:` /`meHe:`
+  key, or an `L === 'he'` conditional), **0 unguarded**, and **0 lines** carry Hebrew outside a
+  string literal.
+
+Layer coverage is otherwise unchanged and unowed: nothing in this unit touched `app/`,
+`functions/` or `firestore-tests/`, so no server, client, endpoint, database or UI layer was
+exercised. **The cost is stated in the README rather than hidden: this cannot prove a Compose
+chart lays out, animates, or survives a real `LazyColumn`** — that proof belongs to the build
+session, and `ChartAnimation.kt` exists because `animateFloatAsState` initialises *at* its
+target.
+
 ## Status
 
-**Claim only — the resolution is not written.** `#31` is HITL by type: arrangement is the
-actual question and it is visual, so it resolves against something Ido can react to, not
-against an argument. Next: read `C9b`'s resolution comment and `C3`/`C7`'s resolutions in full,
-inventory the four charts the app already ships, then put revision 1 of the dashboard in front
-of him.
+**Revision 1 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+visual, so it resolves against something Ido reacts to, not against an argument. Awaiting his
+reaction. Nothing was filed, no other session's ticket, row or file was edited, and `#12`'s
+index line is deliberately **not** written yet: it is written on resolution, after a re-fetch.
