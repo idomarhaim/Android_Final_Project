@@ -265,6 +265,36 @@ inline paddings), a `DONE` block was indistinguishable from a `MISSED` one at a 
 (now carries a check), and the load bar was 3px of unlabelled grey (now 5px with a
 percentage wherever there is room).
 
+## 🔁 Rev 7 — light mode, and a Hebrew letter that escaped into English
+
+**The defect first, because it is the more useful of the two.** Ido spotted `4ש booked`
+on the English build: a Hebrew unit letter **hard-coded inside a string the English
+render also uses**. The class of bug is *"a literal that happens to be correct in one
+language"*, so the fix is not to correct that one letter — it is to make the assertion
+**absolute**: **zero characters in the Hebrew Unicode block may appear anywhere in any
+English render**, across every variant, view and theme.
+
+**Written that way it immediately caught a second instance the eye had skipped** — the
+Home avatar was a hard-coded `א`, so English users would have had a Hebrew initial. Two
+more followed from the same sweep (`ד׳` for minutes). A per-string fix would have shipped
+three of the four.
+
+**Light mode had exactly dark mode's failure, in the other direction.** A pale wash with
+white cards on it is "clean" the way an empty room is clean — and it is what made dark
+mode look better once dark got its aurora. Light now gets the same treatment, tuned
+rather than copied: a **warmer** aurora (a light canvas carries warm chroma that a dark
+one turns to mud), a gradient on every raised surface so the light catches somewhere,
+and **shadows tinted blue** instead of neutral grey — a grey shadow on a blue canvas
+reads as dirt.
+
+**One element was promoted rather than restyled.** `Color.kt` says of the hero gradient:
+*"the hero is the one element that should pop off the canvas rather than sit level with
+it."* The *"4 decisions waiting on you"* banner is that element, so it now carries the
+committed blue→teal→evergreen sweep with white text, in both themes, instead of being
+another pale container among pale containers. Event fills also went from a flat 17%
+tint — which on a tinted canvas went muddy, most visibly on the orange — to a gradient
+between two tints, per theme.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
