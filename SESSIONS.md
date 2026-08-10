@@ -17,6 +17,7 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c9c-calendar-sync` | `/wayfinder 12` **bare**, frontier re-derived out of GitHub → resolve [#27 · `C9c`](https://github.com/idomarhaim/Android_Final_Project/issues/27) (Google Calendar sync: direction and conflicts). `AUTO MODE` from Ido's second message. Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9c-calendar-sync.md`, `kb-candidates/2026-08-10-c9c-calendar-sync.md`, GitHub issues **#27** and **#12** | none — a decision ticket ships no code, so no build, no device, no Firebase, no GROQ call | 2026-08-10 |
+| `c3-points-currency` | `/wayfinder 12` **bare**, frontier re-derived out of GitHub (`blocked_by` queried per ticket, not read off this board) → resolve [#18 · `C3`](https://github.com/idomarhaim/Android_Final_Project/issues/18) (are task points and goal progress one currency or two?). `AUTO MODE` from Ido's first message. Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c3-points-currency.md` *(new)*, `kb-candidates/2026-08-10-c3-points-currency.md` *(new, if anything is flagged)*, GitHub issues **#18** and **#12** | none — a decision ticket ships no code, so no build, no device, no Firebase, no GROQ call | 2026-08-10 |
 
 > ⚠️ **Two sessions, one shared issue — [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), the map — and they are now in the *same half* of it.**
 > `c9b-calendar-surface` (#26, the in-app calendar screen) and `c9c-calendar-sync`
@@ -37,6 +38,22 @@ before your first write. Normative rule:
 >
 > First para recorded by `c9b-calendar-surface` on claiming; widened by
 > `c9c-calendar-sync` on claiming, after `c17-many-to-many` released.
+
+> ⚠️ **A third session joined the same map — `c3-points-currency` on
+> [#18](https://github.com/idomarhaim/Android_Final_Project/issues/18) — and it is
+> disjoint in subject from the calendar pair but *not* from one of their sources.**
+> `C3` is the scoring knot (points vs goal progress); the pair is the calendar. No
+> file, ticket or prototype is shared. Two things to name anyway:
+> 1. **Coupling point 1 above now has three parties, not two.** `#12`'s *Decisions
+>    so far* stays append-only, one line each, re-read immediately before appending;
+>    whoever lands third writes only its own line.
+> 2. **`C9a` (#25, closed) handed `C3` a question the calendar pair is downstream
+>    of** — whether a `MISSED` / `OVERDUE` / `EXPIRED` occurrence moves goal
+>    progress. `C3` owns that answer; `#26`'s surface and `#28`'s event lifecycle
+>    only *draw* it. So the flow is one-way and `C3` will post to `#26`/`#27` rather
+>    than editing anything either session owns — the same discipline `c9c` adopted.
+>
+> Recorded by `c3-points-currency` on claiming.
 
 > 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
 > `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
@@ -135,13 +152,19 @@ Currently unclaimed and ready:
   left standing because **no session held it and it actively misdirected**; the
   claim-provenance rule still applies to the *rows above*, which are each
   session's own.
-  Takeable now:
-  - [#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18) — **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
+  Takeable now — **one, not two: `#18` was taken 2026-08-10 by `c3-points-currency`**
+  (rowed above and assigned on GitHub), so the frontier is down to a single ticket:
+  - ~~[#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18)~~ — **claimed, in flight.** Was **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
   - [#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39) — **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
 
-  **Two tickets are claimed and in flight** as of 2026-08-10 — `#26` (`c9b-calendar-surface`)
-  and `#27` (`c9c-calendar-sync`), both assigned on GitHub as well as rowed above.
+  **Three tickets are claimed and in flight** as of 2026-08-10 — `#26`
+  (`c9b-calendar-surface`), `#27` (`c9c-calendar-sync`) and `#18`
+  (`c3-points-currency`), all three assigned on GitHub as well as rowed above.
   `#38` was live when this block was last refreshed and has since closed.
+  **Frontier re-derived from GitHub 2026-08-10 by `c3-points-currency`** — every open
+  child's `blocked_by` list queried through the dependencies API rather than read off
+  this block, which is how `#18` and `#39` were confirmed as the only unblocked,
+  unassigned children before one of them was taken.
 
   > ⚠️ **Read [`Product and UX Reviews/2026-08-09-entity-model-brief.md`](Product%20and%20UX%20Reviews/2026-08-09-entity-model-brief.md) before taking any of these.**
   > It is a **second source document**, written after the map was charted, and its
