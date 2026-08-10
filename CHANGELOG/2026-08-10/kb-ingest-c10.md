@@ -106,4 +106,41 @@ candidate had **already shipped** hours earlier as `question-axis-naming.md` —
 entry was not a second voice for an existing rule, it was evidence that **the existing
 rule was followed and was still not enough.** That other file's *"awaiting Ido"* status
 line is stale and was **left untouched**: it belongs to a released session and
-correcting another session's record is Ido's call, not this one's.
+correcting another session's record is Ido's call, not this one's. → **Superseded by
+Addendum 2 below:** it was reported to him, he chose to close it, and the file is gone.
+
+---
+
+## Addendum 2 — the stale note in the *other* candidate file, closed on Ido's call
+
+`kb-candidates/2026-08-09-entity-model-intake.md` held exactly one surviving entry, and
+its status read *"⏸️ Always-ask, awaiting Ido — the draft is written to its canonical
+JARVIS home, **uncommitted and unsynced, pending `/walkthrough`**. This entry closes
+when he accepts or rejects that draft."*
+
+**Every claim it made about the *state* of that draft was false by then** — the draft
+existed, which is the one true word in the sentence, and *uncommitted*, *unsynced*,
+*pending `/walkthrough`* and *awaiting Ido* were all wrong. That draft is
+`C:\Dev\JARVIS\rules\question-axis-naming.md`: committed, projected, walkthrough
+**waived**, and **in force since 2026-08-10** — hours before this session read the file.
+So the note was advertising a decision as pending that Ido had already made, in a folder
+**every session reads before its first unit of work**. The concrete cost is not
+untidiness: the next session asks him about a live rule, or drafts it a second time.
+
+With that entry closed the file has nothing left to drain, so it is **`git rm`'d** under
+the same §7.5 clause that deleted this session's own file.
+
+**Where its record survives** — the entry is not lost by deleting the file that carried
+it: `rules/question-axis-naming.md` names this candidate file **and entry number** in its
+provenance line, `kb/log/2026-08-10.md` records the drain that parked it, and
+`C:\Dev\JARVIS\CHANGELOG\2026-08-10\rules-ship-c10.md` records the shipping that closed
+it. Three independent anchors, none of them the deleted file.
+
+**One deliberate simplification, named rather than slipped in:** the approved option was
+*correct the status, then delete the file*. Writing a corrected status into a file
+removed by the same commit is a record nobody can ever read, so the correction is carried
+here and in the commit message instead. Same outcome, one fewer piece of theatre.
+
+**Why this session did it rather than the file's owner:** `entity-model-intake` released
+long ago, and rewriting or deleting a released session's record is on Ido's always-ask
+list — so it was reported, not taken, and done only once he chose it.
