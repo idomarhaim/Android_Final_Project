@@ -2,8 +2,16 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+mode_actual: AUTO MODE — Ido opened the session with it; `/kickoff` §4 gives this session's message precedence over the brief. No collision in practice: AUTO MODE governs committing, pushing and KB ingest, never the authority to answer the grilling questions.
+status: done
 created: 2026-08-10
+completed: 2026-08-10 by `c13-byo-api-key`
+commit: b9df8f7 (resolution artefacts) + the release commit that files this brief
+result: |
+  #32 resolved and closed. Six decisions: four Ido's, three taken by the
+  session on his explicit instruction after the question picker failed, one
+  derived from the map body. #30 commented (not unblocked); one gist line on
+  #12. No code, no test layer applicable, no singleton taken.
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/32
 ---
 
