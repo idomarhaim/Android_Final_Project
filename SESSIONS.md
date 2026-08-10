@@ -17,6 +17,70 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+| `c9e-event-lifecycle` | `/wayfinder 12` → resolve [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) (what happens to a synced event when its task changes). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9e-event-lifecycle.md` *(new)*, `kb-candidates/2026-08-10-c9e-event-lifecycle.md` *(new, if anything is flagged)*, GitHub issues **#28** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+
+> ⚠️ **A seventh session joined the same map — `c9e-event-lifecycle` on
+> [#28](https://github.com/idomarhaim/Android_Final_Project/issues/28) — and it is the
+> first claim of the day taken on a reason that *expired while the session was reading
+> the board*.** `/wayfinder 12` was invoked **bare**, so the pick was the agent's.
+> Frontier **re-derived out of the dependencies API at session start**, not read off the
+> Unclaimed-work block: every open child of `#12` queried for `blocked_by`. Result —
+> **25 children, 16 closed, 9 open**; frontier (open · unblocked · unassigned) =
+> **`#21 · C5`, `#28 · C9e`, `#31 · C12`**, with `#19` unblocked but assigned. Everything
+> else is still blocked **behind `#19` alone**. Sixth derivation of the day; the
+> membership has now changed under it, so **re-derive it yourself.**
+> **`#28` was taken, and the two reasons that governed the last four sessions no longer
+> hold the same way:**
+> 1. **The sole ground on which `#28` was declined four times has expired — 101 seconds
+>    before this claim.** [#26](https://github.com/idomarhaim/Android_Final_Project/issues/26)
+>    **closed at `19:23:52Z`** and its `C9b` line is already in `#12`'s index. So
+>    *"taking it would change a live session's inputs mid-flight"* is now false: there is
+>    no flight. `c9b-calendar-surface`'s row above is **not yet released** — ticket
+>    closed, index line written, working tree clean — which reads as a session
+>    **mid-release**, not mid-work. Its row is left **untouched**: releasing it is that
+>    session's move, and a row edited for another session is a report, not a claim.
+> 2. **Every calendar predecessor is closed *and* released** — `C9d` #17, `C9a` #25,
+>    `C9c` #27, and now `C9b` #26. `#28` is the calendar half's **last open ticket**;
+>    closing it finishes a whole subsystem of the map rather than opening one.
+> 3. **`#21 · C5` — declined because it sits *nearer* the live `#19` than `C9e` does.**
+>    `C5` models a goal with **no target**; what effort and progress arithmetic mean for
+>    such a goal is the very half `c1-points-and-time` is deciding right now. `C9e`
+>    touches `C1` at exactly **one** named point — the bulk re-scoring pass, which
+>    `#28`'s own body already lists — and that is an input to *read* off `#19`'s
+>    resolution, not a question to co-decide.
+> 4. **`#31 · C12` — declined on the prototype contention, unchanged in force though its
+>    sibling changed.** Every ticket on this frontier is HITL, so HITL-ness alone
+>    discriminates nothing. A **prototype** is the heavy kind: `#26` just spent **eight
+>    revisions** of Ido's attention. Opening a second one while a live grilling (`#19`)
+>    is also asking for him contends for the one resource this board cannot serialise.
+>
+> Two coupling points, both named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, and the race it names has fired for real
+>    once** (`c3-points-currency` records it from both sides). Same discipline, no
+>    exceptions: **re-fetch `#12`'s body immediately before appending**, write only this
+>    session's line, verify a pure insertion afterwards. **The standing "`#26`'s line is
+>    still owed by `c9b-calendar-surface`" note in the banners below is now discharged —
+>    that line is written.** `C13` ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))'s
+>    index gap stays Ido's to assign.
+> 2. **`C9e` arrives with four rules already inherited and exactly one live edge.** The
+>    inherited four are `C9c`'s ([hand-off comment](https://github.com/idomarhaim/Android_Final_Project/issues/28#issuecomment-5243682588)):
+>    matching is by `googleEventId` · times cross the sync and state never does · titles
+>    are written but never read back · a cancelled event unsyncs and never deletes. Those
+>    come from a **released** session, so they are inputs, never subjects. The one live
+>    edge is `#19`'s **bulk re-scoring pass** — if it can move times, it is a bulk write
+>    into Ido's real calendar. Flow stays one-way, as `c9c`, `c3`, `c18`, `c14` and `c1`
+>    all established: anything this session finds that bears on `#19` is **posted there**,
+>    and nothing a live or released session owns is edited.
+>
+> 📥 **`kb-candidates/` re-listed at session start, as the folder's existence requires —
+> seven files, agreeing with `c1-points-and-time`'s correction below.** Nothing here is
+> drainable by this session: six are always-ask (five target `rules/`, four of *those*
+> target `rules/question-axis-naming.md` and should be read together), and the seventh,
+> [`2026-08-10-c9b-calendar-surface.md`](kb-candidates/2026-08-10-c9b-calendar-surface.md),
+> is ordinary and `AUTO MODE`-eligible but **owned by a row still on the board above**, so
+> it drains with that session's release and not with this one's.
+>
+> Recorded by `c9e-event-lifecycle` on claiming.
 
 > ⚠️ **A sixth session joined the same map — `c1-points-and-time` on
 > [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) — and it is the
