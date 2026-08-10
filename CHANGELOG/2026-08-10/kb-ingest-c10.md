@@ -69,3 +69,41 @@ and none owns a candidate file or the central bundle, so the working sets are di
 `SESSIONS.md` and `#git-index` were **leased** before the first write and held through
 the commit; a row was claimed on the JARVIS board too, because a cross-repo ingest owes
 one in every repo it writes to. Staged by explicit path in both.
+
+---
+
+## Addendum — the file is now fully drained
+
+Ido approved both held-back entries the same day and **waived the 🎬 walkthrough**, so
+entries **4** and **6b** shipped as rule changes rather than KB pages:
+
+- `C:\Dev\JARVIS\rules\question-axis-naming.md` — **amended** with the option-density
+  clause (the picker carries the choice, the reply above it carries the reasoning; when
+  the user says they don't understand, make the question **smaller**, don't explain
+  more).
+- `C:\Dev\JARVIS\rules\pre-commit-self-review.md` — **new** (three questions about the
+  artifact immediately before `Commit this?`).
+
+Both were applied to `user-rules/my-rules.instructions.md` and projected, so they are
+live for both agents in every session on this machine. JARVIS-side commit `4b6940a`;
+see `C:\Dev\JARVIS\CHANGELOG\2026-08-10\rules-ship-c10.md`.
+
+**`kb-candidates/2026-08-10-c10-quote-feed.md` is therefore `git rm`'d** — 6 of 6
+entries disposed of, nothing left parked. Per §7.5 a fully-drained file is deleted
+rather than rewritten.
+
+**Where the record of it now lives, precisely** — worth stating, because the obvious
+answer is half wrong. The KB journal entry `kb/log/2026-08-10.md` covers entries
+**1, 2, 3 and 5** and describes 4 and 6b as *held back*, which was true when it was
+written and is no longer. The disposition of **4 and 6b** is recorded in
+`C:\Dev\JARVIS\CHANGELOG\2026-08-10\rules-ship-c10.md` and in the two rule files
+themselves, each of which names this candidate file and entry number in its provenance
+line. The journal is append-only, so it is not rewritten; this paragraph is the bridge.
+
+**One correction it forced, worth carrying:** entry 4 described itself as corroborating
+a *parked* candidate in `kb-candidates/2026-08-09-entity-model-intake.md`. That
+candidate had **already shipped** hours earlier as `question-axis-naming.md` — so the
+entry was not a second voice for an existing rule, it was evidence that **the existing
+rule was followed and was still not enough.** That other file's *"awaiting Ido"* status
+line is stale and was **left untouched**: it belongs to a released session and
+correcting another session's record is Ido's call, not this one's.
