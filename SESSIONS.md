@@ -15,16 +15,20 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-*No active claims.*
+| `c17-many-to-many` | `/wayfinder 12` → resolve [#38 · `C17`](https://github.com/idomarhaim/Android_Final_Project/issues/38) (many-to-many linkage). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c17-many-to-many.md`, `kb-candidates/2026-08-10-c17-many-to-many.md`, GitHub issues **#38** and **#12** | none — no build, no device, no Firebase | 2026-08-10 |
 
-> 📥 **`kb-candidates/` is nearly empty for the first time since it was created.**
-> Three files remain and **none of them is a backlog**:
-> `2026-08-10-c7-what-is-a-unit.md` belongs to a session that has just released and
-> owes an ordinary drain; the other two —
+> 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
+> `c17-many-to-many`; the previous version of this note was **three files stale** —
+> `2026-08-10-c7-what-is-a-unit.md` and `2026-08-09-entity-model-intake.md` have since
+> been drained and deleted, so it pointed at two paths that no longer exist. **Two
+> files remain, one always-ask entry each, and neither is a backlog:**
 > [`2026-08-09-c9f-consent-screen-state.md`](kb-candidates/2026-08-09-c9f-consent-screen-state.md)
-> and [`2026-08-09-entity-model-intake.md`](kb-candidates/2026-08-09-entity-model-intake.md)
-> — have been **rewritten down to one always-ask entry each** and are waiting on
-> Ido, not on a session. Both drafts are written; see the released row below.
+> (entry 1 — provenance of untested claims) and
+> [`2026-08-10-c16-milestone-model.md`](kb-candidates/2026-08-10-c16-milestone-model.md)
+> (entry 2 — dated paths in a claim row). Both are destined for `rules/`, which
+> `/kb-ingest` may not take in **either** mode, so both wait on Ido and on
+> `/walkthrough` — not on a session. Refreshed rather than left standing because no
+> session holds it and it actively misdirected.
 
 > **Issue-tracker partition — settled, and now visible in the tracker itself.**
 > Both 2026-08-06 sessions have released, and neither filed from the other's list.
