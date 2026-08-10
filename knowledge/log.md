@@ -49,3 +49,31 @@ never edit an old one.
   `SocialViewModel.report` remains the reference implementation of the domain half.
   Deliberately **not** promoted centrally: it is about this codebase's `Resource`
   convention, and promotion waits for a second project showing the same shape.
+
+---
+
+## 2026-08-10 — `kb-candidates/2026-08-10-c7-what-is-a-unit.md` (entry 4)
+
+**Source:** the `c7-what-is-a-unit` session's own candidate file, drained by that
+session. GitHub issue [#14](https://github.com/idomarhaim/Android_Final_Project/issues/14)
+(`C7` on the decision map), resolved 2026-08-10.
+
+**Page:** **new** [goal-measurement.md](goal-measurement.md) — when a goal resists an
+outcome metric, measure the **leading indicator**: the recurring behaviour that produces
+the outcome. `E6` of the 2026-08-09 entity brief holds both positions in one paragraph —
+the agent might advise making *"understand real estate"* measurable, and maybe not,
+"because that requires some endlessly recurring task" — and the recurring task **is** the
+measurable thing. Ido then stated the product position separately: goals in life usually
+need to be measurable in some form, so if a user may choose an unmeasured goal, the agent
+must recommend one **and recommend how, for that goal**. The leading indicator is the only
+construction satisfying both.
+
+**No claim superseded** — this bundle had no page on measurement. It does not contradict
+`C7`'s decision that absence of a measure is legal and is the default state; it is what
+the app does *about* that absence.
+
+**Deliberately project-local**, and the reason is recorded on the page: product-domain
+reasoning about how GoalPilot measures, not engineering practice. The other four entries
+in the same candidate file went to the central bundle
+(`C:\Dev\JARVIS\kb\log\2026-08-10.md`); this one stays with the repo it describes, and is
+promoted only if a second project shows the same shape.

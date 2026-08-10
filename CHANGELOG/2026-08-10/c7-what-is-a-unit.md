@@ -220,3 +220,38 @@ routing note that naming `--all` in the *global* push rule is a `rules/` change 
 Ido's alone to make.
 
 **KB candidates: 5, not 4** — entry 5 is that finding.
+
+---
+
+## Second post-script — the ingest
+
+Ido invoked `/kb-ingest` bare, which drained this session's own five candidates in one
+pass. **Cross-repo:** four landed in the central bundle, one stayed here, so a claim was
+written on **both** boards before the first write to either.
+
+| Where | What |
+|---|---|
+| `C:\Dev\JARVIS\kb` | **New** `dev/enum-and-label.md`, `dev/absent-by-default.md`, `dev/redaction-leaves-a-second-copy.md`; **updated in place** `dev/llm-structured-output.md` (new **§7**) |
+| here | **New** [`knowledge/goal-measurement.md`](../../knowledge/goal-measurement.md) — measure the leading indicator when a goal resists an outcome metric |
+| both | index rows, journal entries, `Check-KbLinks` **CLEAN** (44 pages central, 6 here) |
+| here | `kb-candidates/2026-08-10-c7-what-is-a-unit.md` **`git rm`'d** — all 5 entries ingested, so the file closes rather than being rewritten down to survivors |
+
+**Entry 4 stayed project-local deliberately.** The leading-indicator claim is
+product-domain reasoning about how *GoalPilot* measures, not engineering practice, and the
+page says so — promote centrally only if a second project shows the shape.
+
+**Entry 5 stopped short of the rule it is about.** The `git push --all` gap is now a KB
+page; naming it in the **global** *Commits & pushing* rule is a `rules/` change, always-ask
+and walkthrough-gated, and remains Ido's to take.
+
+**Two candidate files remain in `kb-candidates/`, and neither is this session's** —
+`2026-08-09-c9f-consent-screen-state.md` and `2026-08-09-entity-model-intake.md`, both
+**always-ask survivors** that `kb-ingest-backlog-drain` correctly parked rather than
+drained. Named here so the next session does not read a non-empty folder as a backlog.
+
+**The bundle check is the finding worth keeping.** These entries carried **no bundle-check
+field at all** — missing, not `not checked`, because the file predates the field. Grepping
+anyway turned up the expected consequence: entry 1 lands beside `dev/edges-not-types.md`,
+a page that **did not exist when the candidate was written** and was created by another
+session earlier the same day. Different concern, so a new page was right — but that is a
+near-miss, and it is exactly the argument for the field.
