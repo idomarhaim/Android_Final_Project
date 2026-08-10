@@ -255,3 +255,26 @@ anyway turned up the expected consequence: entry 1 lands beside `dev/edges-not-t
 a page that **did not exist when the candidate was written** and was created by another
 session earlier the same day. Different concern, so a new page was right — but that is a
 near-miss, and it is exactly the argument for the field.
+
+---
+
+## Correction — the goals in the briefs are examples, not Ido's life
+
+The first post-script above weighed *"the personal-goal briefs"* — the `.docx` in
+`docs/pre-injested-docs/` and their English transcriptions — as personal content that
+happened to be public, and concluded it continued a practice Ido had chosen.
+
+**The premise was wrong, and he corrected it on 2026-08-10:** the goals written in those
+documents — *"be worth $100M"*, *"my partner will feel courted"*, the degree — are
+**illustrative examples**, not statements about his own life. So the public-repo question
+that section raises does not arise for them at all.
+
+Recorded here rather than edited into the text above, because the reasoning is worth
+keeping: the check itself was right and its **conclusion for the screenshot was
+independent of this**. The screenshot carried *actual* private data — a real Google Tasks
+list read live off his account — which is a different category from a worked example a
+person wrote to explain a domain, however personal the example sounds. **A future session
+reading this file must not treat the briefs as sensitive**, and must not use them as
+grounds to restrict the repository.
+
+The screenshot redaction stands unchanged and was correct.
