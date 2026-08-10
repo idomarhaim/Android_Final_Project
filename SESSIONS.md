@@ -16,17 +16,27 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+| `c9c-calendar-sync` | `/wayfinder 12` **bare**, frontier re-derived out of GitHub → resolve [#27 · `C9c`](https://github.com/idomarhaim/Android_Final_Project/issues/27) (Google Calendar sync: direction and conflicts). `AUTO MODE` from Ido's second message. Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9c-calendar-sync.md`, `kb-candidates/2026-08-10-c9c-calendar-sync.md`, GitHub issues **#27** and **#12** | none — a decision ticket ships no code, so no build, no device, no Firebase, no GROQ call | 2026-08-10 |
 
-> ⚠️ **Two sessions, one shared issue — [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), the map.**
-> `c17-many-to-many` and `c9b-calendar-surface` are running concurrently and their
-> tickets are disjoint in subject (`C17` is the object graph, `C9b` is a calendar
-> screen), but **both owe a line in the map's *Decisions so far* when they resolve.**
-> That index is append-only and one line each, so it is a **commons, not territory**:
-> whichever resolves second re-reads `#12`'s body immediately before appending and
-> writes **only its own line**, never a rewrite of the other's. Neither may edit the
-> other's `Decisions so far` entry, and neither may retitle or re-scope the other's
-> ticket. Recorded here by `c9b-calendar-surface` on claiming — the overlap is real
-> and known, not a collision waiting to be discovered.
+> ⚠️ **Two sessions, one shared issue — [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), the map — and they are now in the *same half* of it.**
+> `c9b-calendar-surface` (#26, the in-app calendar screen) and `c9c-calendar-sync`
+> (#27, sync direction and conflicts) are running concurrently. They are **not**
+> disjoint in subject the way the previous pair was: both are the calendar, split
+> at *surface* vs *semantics*. Two live coupling points, named here rather than
+> discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, not territory** — append-only, one
+>    line each. Whichever resolves second re-reads `#12`'s body immediately before
+>    appending and writes **only its own line**, never a rewrite of the other's.
+>    Neither may edit the other's entry, retitle, or re-scope the other's ticket.
+> 2. **A two-way sync gives the surface foreign state to draw.** `C9c` has settled
+>    that Google-side edits come back and that a *move-out* of the GoalPilot
+>    calendar is indistinguishable from a *delete*. If `#26`'s prototype assumes
+>    the app is the only author of an occurrence, that assumption is now false —
+>    read `#27`'s resolution comment before finalising it. `C9c` will post the
+>    hand-off on `#26` rather than editing anything `c9b-calendar-surface` owns.
+>
+> First para recorded by `c9b-calendar-surface` on claiming; widened by
+> `c9c-calendar-sync` on claiming, after `c17-many-to-many` released.
 
 > 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
 > `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
@@ -110,26 +120,28 @@ Currently unclaimed and ready:
   `/kickoff product-model-map`~~ — **both done, 2026-08-07 and 2026-08-08.** They
   ran concurrently, stayed disjoint, and partitioned the tracker by content
   without colliding. What they produced is the unclaimed work below.
-- **The wayfinder map's frontier — four tickets takeable, one session each.**
+- **The wayfinder map's frontier — two tickets takeable, one session each.**
   [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is the map;
   **never resolve more than one ticket per session**, and claim by assigning
   yourself the issue before any work.
-  **Re-queried out of GitHub 2026-08-10 by `c9a-schedule-a-task` after `C9a`
-  ([#25](https://github.com/idomarhaim/Android_Final_Project/issues/25)) closed** —
-  **25 children, 10 resolved** (`C9d` #17, `C11a` #16, `C15` #15, `C9f` #33, `C4` #13,
-  `C7` #14, `C10` #29, `C16` #37, `C13` #32, `C9a` #25). The previous version of this
-  block was **five sessions stale** — it listed `#37`, `#32` and `#25` as takeable and
-  `#14`/`#29` as in flight, and all five have since closed. Refreshed rather than left
-  standing because **no session held it and it actively misdirected**; note the
-  claim-provenance rule still applies to the *rows above*, which are each session's own.
+  **Re-queried out of GitHub 2026-08-10 by `c9c-calendar-sync`, twice — at session
+  start and again after `C17` ([#38](https://github.com/idomarhaim/Android_Final_Project/issues/38))
+  closed underneath it** — **25 children, 11 resolved** (`C9d` #17, `C11a` #16,
+  `C15` #15, `C9f` #33, `C4` #13, `C7` #14, `C10` #29, `C16` #37, `C13` #32,
+  `C9a` #25, `C17` #38). The previous version of this block was **two sessions
+  stale in one direction and wrong in the other**: it offered `#26` and `#38` as
+  takeable when both were assigned, and closed with *"nothing is claimed or in
+  flight"* while the table above it carried two live rows. Refreshed rather than
+  left standing because **no session held it and it actively misdirected**; the
+  claim-provenance rule still applies to the *rows above*, which are each
+  session's own.
   Takeable now:
-  - [#26 · `C9b` the in-app calendar surface](https://github.com/idomarhaim/Android_Final_Project/issues/26) — **prototype, HITL, newly unblocked** by `C9a`. It arrives with four surfaces already specced for it (four rungs, dashed `PROVISIONAL` blocks, the batch review sheet, the daily review) — see `C9a`'s hand-off comment before starting, because the ticket body predates all of them.
-  - [#27 · `C9c` Google Calendar sync: direction and conflicts](https://github.com/idomarhaim/Android_Final_Project/issues/27) — **HITL, newly unblocked** by `C9a`, and it is the **last blocker on [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28)**. Two concrete things waiting for it: how a `DEADLINE` maps onto a Google event (three of four rungs map 1:1; this one does not), and the **read-scope trade**, which `C9a` has now priced — buying it lets the agent place blocks silently.
-  - [#38 · `C17` many-to-many linkage](https://github.com/idomarhaim/Android_Final_Project/issues/38) — **HITL**, unblocked by `C16` closing. A goal in several life areas, a task under several goals (`E17`/`E18`). Breaks the time-allocation chart's arithmetic, which is a decision about what picture of his life the chart tells. **It is the last blocker on [`C3` #18](https://github.com/idomarhaim/Android_Final_Project/issues/18)**, which in turn gates `#21`, `#22`, `#23` and `#31` — so this is the highest-leverage ticket on the map right now.
-  - [#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39) — **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first.
+  - [#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18) — **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
+  - [#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39) — **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
 
-  **Nothing is claimed or in flight** — this board has no active claims as of
-  2026-08-10, and every previously-listed live ticket has closed.
+  **Two tickets are claimed and in flight** as of 2026-08-10 — `#26` (`c9b-calendar-surface`)
+  and `#27` (`c9c-calendar-sync`), both assigned on GitHub as well as rowed above.
+  `#38` was live when this block was last refreshed and has since closed.
 
   > ⚠️ **Read [`Product and UX Reviews/2026-08-09-entity-model-brief.md`](Product%20and%20UX%20Reviews/2026-08-09-entity-model-brief.md) before taking any of these.**
   > It is a **second source document**, written after the map was charted, and its
