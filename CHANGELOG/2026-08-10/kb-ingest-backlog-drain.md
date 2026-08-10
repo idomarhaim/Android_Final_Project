@@ -109,6 +109,31 @@ deliberately; promotion waits for a second project showing the same shape.
 
 Candidate file `git rm`'d. `Check-KbLinks` **CLEAN at 39 pages**.
 
+## Pass 3 — `c9f-consent-screen-state`, 4/5 (entry 1 parked)
+
+**Updated in place (central):** `kb/dev/google-oauth-scopes-and-consent.md` gains
+**§3–§6**, joining the scope half from pass 1 exactly as the candidate predicted —
+the three publishing states measured on a device (**production-unverified does not
+block sensitive scopes**; the override is on the first screen and the scope works
+through it), the seven-day clock sitting on the **grant** rather than the token,
+granular consent arriving **unchecked** so sign-in success is not scope success, and
+the grant living on the **account** so `pm clear` and uninstall prove nothing.
+`kb/dev/learning-pipeline.md` gains entry 2 in general form: silence on the obvious
+page is not evidence — quote a phrase from the answer you expect, don't search the
+concept.
+
+**Parked, not dropped:** entry 1 (*an untested claim written as fact… ends up as an
+order*). The candidate file was **rewritten down to that survivor** with its
+original number, a dated `Status`, and a `## Standing — always-ask` heading — not
+`git rm`'d, because deleting on a partial drain discards precisely what the
+always-ask exclusion protects.
+
+**A flag resolved rather than inherited:** entry 4's *"⚠️ Supersedes — check before
+ingesting"* was checked and cleared, as recorded above. The journal records the
+check, not just the outcome.
+
+`Check-KbLinks` **CLEAN at 39 pages**.
+
 ## 🧪 Tests
 
 **No suite run, and none applicable** — this session created or modified no Kotlin,
