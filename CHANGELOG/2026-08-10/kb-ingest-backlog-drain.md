@@ -74,6 +74,41 @@ answers, it is not a documentation question* → file a **task** ticket.
 
 Candidate file `git rm`'d. `Check-KbLinks` **CLEAN at 38 pages**.
 
+## Pass 2 — `fix-task-completion-feedback`, 5/5 (4 central, 1 project-local)
+
+**The pass where reconciliation earned its place in the skill.** Three of the five
+entries proposed **new** central pages that already existed — written two days
+earlier from `product-device-pass`, the session that *reproduced* the same defect,
+and ingested 2026-08-08. Entry 5 had hedged it explicitly (*"check first — may
+already have been ingested"*), and it had been: as `android-device-verification.md`
+§6, down to the letterboxing trap the entry offered as new. That hedge is the only
+reason this pass did not create a duplicate page, and it is worth copying into
+future candidates.
+
+**New (central):** `kb/dev/optimistic-ui-patterns.md` — retire an optimistic
+overlay against **observed data**, never against the write's completion. The two
+travel on independent channels with no ordering guarantee, so clearing on
+completion re-renders the **old** state for a few frames on every *successful*
+action; retiring on agreement is a no-op and cannot flicker. Failures invert it —
+clear immediately, because clearing *is* the undo.
+
+**Updated in place (central):** `kb/dev/firestore-write-semantics.md` gains §5–§6 —
+the fix side on the same instrument as the before-numbers, whose general lesson is
+**measure how long a failure takes to arrive, not merely that it arrives** (7.9 s of
+retry before `UNAVAILABLE`, so a correct rollback still shows a lie for eight
+seconds); and why the standard swap was refused — `FieldValue.increment` expresses
+neither a clamp nor a derived field, so batch+increment **deletes** the guarantee
+rather than relocating it. `kb/dev/android-device-verification.md` §6.2 gains
+`ffmpeg -vsync 0` and the point that the instrument must be **reused on the fix**,
+not only on the defect.
+
+**New (project-local):** [`knowledge/ui-error-conventions.md`](../../knowledge/ui-error-conventions.md)
+— the `Resource.Error` boundary: repository text for refusals the **domain**
+generated, a written message for failures the **network** generated. Kept local
+deliberately; promotion waits for a second project showing the same shape.
+
+Candidate file `git rm`'d. `Check-KbLinks` **CLEAN at 39 pages**.
+
 ## 🧪 Tests
 
 **No suite run, and none applicable** — this session created or modified no Kotlin,

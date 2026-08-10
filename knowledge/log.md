@@ -31,3 +31,21 @@ never edit an old one.
   Cross-project material from the same session (PowerShell 5.1's encoding traps)
   went to the central KB instead, and is restated here only as the local
   ASCII-scripts convention.
+
+- **2026-08-10** — Source: `kb-candidates/2026-08-08-fix-task-completion-feedback.md`
+  (session `fix-task-completion-feedback`, 2026-08-08), **entry 4 of 5** — the only
+  one of that file's five that is GoalPilot-local; the other four went to the
+  central bundle in the same pass (`kb-ingest-backlog-drain`, pass 2 of 5).
+  **New page** [ui-error-conventions.md](ui-error-conventions.md): the
+  `Resource.Error` house rule refined at its boundary — surface the repository's own
+  message for refusals the **domain** generated, substitute a written message for
+  failures the **network** generated and keep the original in the log. What makes it
+  worth a page is that the convention was **right** and the call site followed it
+  **correctly**, and a raw gRPC `UNAVAILABLE: Unable to resolve host
+  firestore.googleapis.com` still reached a real screen: a boundary case inside an
+  existing rule, not a misapplication of it. It passed unit tests and review because
+  both were checking that the error *reached* the user, which it did.
+  **No claim superseded** — the bundle had no page on UI error conventions;
+  `SocialViewModel.report` remains the reference implementation of the domain half.
+  Deliberately **not** promoted centrally: it is about this codebase's `Resource`
+  convention, and promotion waits for a second project showing the same shape.
