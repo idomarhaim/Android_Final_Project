@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `picker-delegation-clause` (visitor from `C:\Dev\JARVIS`) | Drain the ⛔ always-ask candidate that shipped as a `rules/question-axis-naming.md` amendment in JARVIS — *a hand-back is not a legibility failure*. **This repo's half is the drain only**; the rule work is all in JARVIS | `kb-candidates/2026-08-10-c1-points-and-time.md` (**deleted** — fully drained) | none — no build, no device, no Firebase, no GitHub issue touched | 2026-08-11 |
 | `c6-log-progress` | `/wayfinder 12` → resolve [#22 · `C6`](https://github.com/idomarhaim/Android_Final_Project/issues/22) (which fields a user may set by hand in LOG PROGRESS, whether a hand-set value corrects history or joins it, and what happens when it contradicts what completed tasks imply). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-11/c6-log-progress.md` *(new)*, `docs/prototypes/2026-08-11-log-progress/` *(new, if the screen needs one — see §2 below)*, `kb-candidates/2026-08-11-c6-log-progress.md` *(new, if anything is flagged)*, GitHub issues **#22** and **#12** | **Ido's attention** — the third live HITL ticket on this map at once (`c12`'s prototype is at revision 3, `c8`'s grilling is 30 minutes old); see §3 below. No build, no device, no Firebase | 2026-08-11 |
 
 > ⚠️ **A tenth session joined the same map — `c6-log-progress` on
