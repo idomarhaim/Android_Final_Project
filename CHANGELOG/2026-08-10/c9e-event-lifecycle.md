@@ -138,15 +138,35 @@ Three things earn the removal of the gate rather than merely asserting it:
 The `GoogleSignIn`-migration fog bullet mentions the calendar scope but was not sharpened by
 this resolution, so it was left untouched.
 
-### One unverified claim, marked on the ticket rather than left standing
+### One unverified claim — flagged at commit, then **checked**, and it was half wrong
 
-The pre-commit re-read caught it: §3's *"restorable from Google's trash for 30 days"* is stated
-from general knowledge and **was not checked against the Calendar API docs in this session** —
-and it is load-bearing, being half the reason the confirmation prompt was removed. A caveat was
-appended to the resolution comment naming what the build session owes (does `events.delete` /
-`status: cancelled` on a `calendar.app.created` calendar trash rather than erase, and for how
-long) and what changes if it is false: §1 survives on the in-app Undo alone, but the **delete
-path** specifically would deserve reopening.
+The pre-commit re-read caught it: §3's *"restorable from Google's trash for 30 days"* was stated
+from general knowledge and is load-bearing, being half the reason the confirmation prompt was
+removed. A caveat naming exactly that was appended to the resolution comment first, so nobody
+would inherit it silently.
+
+**Then Ido asked how such an issue actually gets closed, and the honest answer was to close
+it** — it is a documentation lookup, not a session. Result, against Google's own help page:
+
+- ✅ **Confirmed:** *"When you delete an event or mark it as spam, it stays in that calendar's
+  trash for **30 days**."* Restorable by anyone with *Make changes to events*, which is Ido on
+  a calendar he owns.
+- ❌ **A hole, in the worst possible place:** *"If you choose **This and following events** or
+  **All following**, the deleted events are **not moved to the trash and can't be restored**."*
+  That is precisely the shape `C5`'s repeat rules reach for, and `C9e` §5 had routed it to a
+  batch write as if it were ordinary.
+
+**§3a was added to the resolution:** GoalPilot **never** uses Google's *this-and-following*
+delete. It cancels the affected occurrences **one at a time**, which does trash them — more API
+calls on a long series, in exchange for the guarantee the whole no-prompt bargain rests on. The
+change is purely how the batch executes against the API; `C9e` §5's machinery (one batch, one
+review entry, one undo) is unchanged. A [correction was posted to `C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21#issuecomment-5245723024)
+because it makes series length an operational cost in its model, not only `C9e`'s problem.
+
+**Still open, and marked as such on the ticket:** whether `events.delete` **via the API**
+trashes rather than erases. Google's page documents the UI. §3a is the cheap hedge — it is the
+recoverable shape *as documented*, and the in-app Undo does not depend on the answer — but a
+build session touching the delete path owes one empirical check against a real calendar.
 
 ### Hand-off comments posted (flow one-way, nothing another session owns was edited)
 
@@ -196,3 +216,47 @@ Both are **always-ask twice over**: destination `rules/`, and (1) rewrites a cla
 **Done.** `#28` resolved, closed, indexed on the map; three hand-off comments posted; board row
 released. The **calendar half of the map is now complete** — `C9a` #25, `C9b` #26, `C9c` #27,
 `C9d` #17 and `C9e` #28 all closed.
+
+---
+
+## Addendum — `/kb-ingest`, run on request as a **partial drain**
+
+Ido asked for the ingest with one condition: *"just make sure it doesn't harm anything,
+including a session working in parallel."* That condition is what made it partial.
+
+**Not drained — both numbered entries in this session's candidate file.** Both target
+`rules/question-axis-naming.md` (always-ask in both modes), and entry 1 additionally
+**rewrites a standing claim** `picker-rule-consolidation` committed ~40 minutes earlier
+(`bc3b31e`). They survive with their **original numbers** under a new
+`## Standing — always-ask` section, so the next drain does not re-reason about the
+destination. **A 🎬 walkthrough is owed before either is written** — amending how pickers are
+drafted alters the interaction protocol.
+
+**Drained instead — two claims that were not in the file at flag time**, having emerged while
+verifying the §3 caveat after release:
+
+- 📥 **undo replaces a confirmation only where every variant is recoverable** → **new**
+  `C:\Dev\JARVIS\kb\dev\undo-replaces-confirm-only-if-recoverable.md`
+- 📥 **a map ticket's body is written at charting time and never ages** →
+  `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` **§8** (update in place)
+
+`kb/index.md` +1 row, journal entry in `kb/log/2026-08-10.md` naming this candidate file
+**with its repo**. `Check-KbLinks` **CLEAN** at 62 pages.
+
+**Parallel-session safety, since it was the condition.** `kb/` is a singleton on JARVIS's
+board and was claimed (`8d73d39`) before the first write, then released. **One defect was
+made and repaired here:** the ingest commit initially carried
+`sessions/picker-delegation-clause.md`, a brief `c1-points-and-time` had left **staged but
+uncommitted** in JARVIS's index — `git commit` takes the whole index, so explicit `git add`
+paths were not enough. Caught immediately on reading the commit's own `--stat`, repaired with
+`git reset --soft` (nothing lost, nothing pushed) and recommitted with `git commit --only
+<paths>`, which leaves the sibling's file staged exactly as it was. Final commit `ace7bd9`
+carries 7 files, all this session's.
+
+**The three other candidate files** (`c9f`, `c1`, `c16`) belong to other sessions and were
+listed, not touched.
+
+## 🧪 Tests — addendum
+
+`Check-KbLinks.ps1 -BundlePath C:\Dev\JARVIS\kb` — **CLEAN**, 62 pages (61 before), no broken
+links, no orphans, no wikilinks. Still the only test layer a Markdown bundle has.

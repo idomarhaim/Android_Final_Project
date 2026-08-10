@@ -3,6 +3,14 @@
 Session: `c9e-event-lifecycle` · Ticket: [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 Mode: `AUTO MODE`. **Neither entry is drainable in either mode** — both target `rules/`, which is always-ask.
 
+> **Partially drained 2026-08-10 by `c9e-event-lifecycle` itself.** Two claims that were
+> *not* in this file at flag time — they emerged while verifying `#28` **after release** —
+> went into the central bundle `C:\Dev\JARVIS\kb`:
+> **📥 undo-instead-of-confirm needs a per-variant recovery audit → `kb/dev/undo-replaces-confirm-only-if-recoverable.md`** (new)
+> and **📥 a map ticket's body is written at charting time and never ages → `kb/dev/decision-map-charting.md` §8** (update in place).
+> Journal: `kb/log/2026-08-10.md`. **The two numbered entries below were not drained** and
+> keep their original numbers — see *Standing — always-ask*.
+
 > **Re-based before filing.** `picker-rule-consolidation` (a JARVIS visitor session) drained
 > the four parked picker candidates into `rules/question-axis-naming.md` **while this session
 > was resolving `#28`** — commits `d9616b9`, `5b5e113`. Both entries below were written against
@@ -92,9 +100,29 @@ consolidation already rejected the frequency-based fix for the same reason. The 
 is scoped to the ticket's **own closed blockers**, which is a set of two or three.
 
 **Destination:** `rules/question-axis-naming.md`, as a second clause of **The widening**.
-Possibly also `kb/dev/flows/wayfinder.md` — *body drifts, frontier moves* is a flow property
-rather than a picker property, and may belong in both. **Ingest decides; flagging both.**
+**The map half has already been drained** — *body drifts, frontier moves* is a flow property
+rather than a picker property, and landed as `kb/dev/decision-map-charting.md` §8 on
+2026-08-10. What remains here is only the picker-rule half.
 **Anchors:** [`C9d` #17](https://github.com/idomarhaim/Android_Final_Project/issues/17) (the scope decision) · [#28's resolution §1](https://github.com/idomarhaim/Android_Final_Project/issues/28#issuecomment-5245577162) · `rules/question-axis-naming.md` §"The widening" (~392-426)
 **Supersedes:** nothing. **Extends** the widening; the derivation-closure form stays correct for
 the case it was written from.
 **Status:** always-ask. Not drained.
+
+---
+
+## Standing — always-ask
+
+Both entries above survive the 2026-08-10 partial drain and **may not be ingested in either
+mode**. Do not re-reason about the destination on the next drain; the reasons are settled:
+
+| # | Why it is always-ask |
+|---|---|
+| 1 | Destination `rules/` (a behaviour change, not a KB page) **and** it rewrites a standing claim — `picker-rule-consolidation`'s Mode 6 and its consolidation table, committed `bc3b31e` on 2026-08-10, ~40 minutes before this was written. Overwriting committed knowledge is a deletion. |
+| 2 | Destination `rules/` — a second clause on **The widening**. Its *map* half was separable and **has been drained** to `kb/dev/decision-map-charting.md` §8; what remains here is only the picker-rule half. |
+
+**They should be approved and ingested together**, and read against the consolidated file
+rather than folded into it by a session that cannot approve them.
+
+**And a `rules/` change owes a 🎬 walkthrough offer before it is written** — amending how
+pickers are drafted alters the interaction protocol, which is the one thing no repo has a
+test layer for.
