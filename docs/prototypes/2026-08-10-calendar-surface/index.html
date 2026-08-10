@@ -1,0 +1,521 @@
+<!doctype html>
+<!--
+  PROTOTYPE — GoalPilot in-app calendar surface (C9b, issue #26).
+  THROWAWAY. Not app code. Three variants of one week, ?variant=A|B|C, ?lang=he|en.
+  Colours are the committed GoalCategory hexes + the Aurora light skin.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — GoalPilot calendar surface (C9b / #26)</title>
+<style>
+  :root{
+    /* Aurora light skin — ui/theme/Color.kt */
+    --bg:#D0E2F5; --surface:#D0E2F5; --surface-bright:#F4F9FF; --surface-dim:#B8CBDF;
+    --primary:#0A56C4; --on-primary:#fff; --primary-container:#D8E2FF; --on-primary-container:#001A41;
+    --secondary:#0A6045; --secondary-container:#A8F2D3;
+    --on-surface:#131A22; --on-surface-var:#44515F; --outline:#8FA3B8;
+    --desk:#1b2430;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--desk); color:#e7eef7; min-height:100vh;
+    font-family:'Segoe UI',Roboto,system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    padding:24px 12px 120px;
+  }
+
+  /* ── page chrome (not part of the design being judged) ───────────────── */
+  .banner{max-width:820px;text-align:center}
+  .banner h1{margin:0 0 4px;font-size:15px;letter-spacing:.02em;font-weight:600}
+  .banner p{margin:0;font-size:12.5px;line-height:1.5;color:#9fb3c8}
+  .banner code{background:#0e1620;padding:1px 5px;border-radius:4px;font-size:11.5px}
+
+  /* ── phone frame ─────────────────────────────────────────────────────── */
+  .phone{
+    width:390px;height:844px;border-radius:38px;background:var(--bg);
+    border:9px solid #0b1017;box-shadow:0 20px 50px rgba(0,0,0,.55);
+    overflow:hidden;position:relative;color:var(--on-surface);
+    display:flex;flex-direction:column;
+  }
+  .statusbar{
+    height:30px;flex:none;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;font-size:11.5px;font-weight:600;color:var(--on-surface);
+  }
+  .appbar{
+    flex:none;padding:6px 14px 10px;display:flex;align-items:center;gap:10px;
+  }
+  .appbar h2{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em}
+  .appbar .sub{font-size:11.5px;color:var(--on-surface-var);font-weight:400}
+  .appbar .spacer{flex:1}
+  .iconbtn{
+    width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:var(--surface-bright);font-size:15px;flex:none;
+  }
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+  .navbar{
+    flex:none;height:62px;background:var(--surface-bright);
+    display:flex;align-items:center;justify-content:space-around;
+    border-top:1px solid rgba(0,0,0,.06);
+  }
+  .navbar div{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--on-surface-var)}
+  .navbar div.on{color:var(--primary);font-weight:600}
+  .navbar div.on .ico{background:var(--primary-container);}
+  .navbar .ico{font-size:16px;line-height:1;padding:3px 14px;border-radius:12px}
+  .navbar div.new .ico{outline:2px dashed #C2410C;outline-offset:1px}
+
+  /* ── shared bits ─────────────────────────────────────────────────────── */
+  .card{background:var(--surface-bright);border-radius:16px;padding:12px 13px;margin:0 12px 10px}
+  .card h3{margin:0 0 2px;font-size:13.5px;font-weight:600}
+  .muted{color:var(--on-surface-var);font-size:11.5px;line-height:1.45}
+  .chip{
+    display:inline-flex;align-items:center;gap:4px;border-radius:8px;
+    padding:2px 7px;font-size:10.5px;font-weight:600;white-space:nowrap;
+  }
+  .btn{
+    border:0;border-radius:20px;padding:9px 16px;font-size:12.5px;font-weight:600;
+    background:var(--primary);color:var(--on-primary);font-family:inherit;cursor:default;
+  }
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--outline)}
+  .legend{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 8px}
+  .legend .chip{background:var(--surface-dim);color:var(--on-surface-var);font-weight:500}
+
+  /* rung glyphs — the four shapes, used by every variant */
+  .rung{width:16px;flex:none;display:grid;place-items:center;font-size:12px;line-height:1}
+
+  /* ── A · the grid ────────────────────────────────────────────────────── */
+  .daystrip{display:grid;grid-template-columns:34px repeat(7,1fr);padding:0 8px 2px;flex:none}
+  .daystrip .d{text-align:center;font-size:10px;color:var(--on-surface-var);padding-bottom:3px}
+  .daystrip .d b{display:block;font-size:13px;color:var(--on-surface);font-weight:600}
+  .daystrip .d.today b{color:var(--on-primary);background:var(--primary);border-radius:50%;width:22px;height:22px;line-height:22px;margin:0 auto}
+  .allday{
+    display:grid;grid-template-columns:34px repeat(7,1fr);gap:2px;padding:2px 8px 6px;
+    border-bottom:1px solid var(--surface-dim);flex:none;
+  }
+  .allday .lbl{font-size:8.5px;color:var(--on-surface-var);align-self:center;text-align:center;line-height:1.15}
+  .allday .slot{min-height:16px;display:flex;flex-direction:column;gap:2px}
+  .band{font-size:8.5px;padding:1px 3px;border-radius:3px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .grid{display:grid;grid-template-columns:34px repeat(7,1fr);position:relative}
+  .hours{position:relative}
+  .hours .h{height:44px;font-size:9.5px;color:var(--on-surface-var);text-align:end;padding-inline-end:4px;transform:translateY(-6px)}
+  .col{position:relative;border-inline-start:1px solid rgba(0,0,0,.07)}
+  .col .line{height:44px;border-bottom:1px solid rgba(0,0,0,.055)}
+  .block{
+    position:absolute;inset-inline:1px;border-radius:5px;padding:2px 4px;overflow:hidden;
+    font-size:9px;line-height:1.2;color:#fff;
+  }
+  .block b{font-weight:600;display:block;font-size:9.5px}
+  .block.prov{background:transparent!important;border:1.5px dashed;padding:1.5px 3px}
+  .block.missed{opacity:.55;text-decoration:line-through}
+  .nowline{position:absolute;inset-inline:0;height:0;border-top:2px solid #C2410C;z-index:4}
+  .nowline::before{content:'';position:absolute;inset-inline-start:-3px;top:-4px;width:7px;height:7px;border-radius:50%;background:#C2410C}
+
+  /* ── B · the day rail ────────────────────────────────────────────────── */
+  .weekrail{display:flex;gap:6px;padding:2px 12px 10px;flex:none}
+  .weekrail .p{
+    flex:1;text-align:center;border-radius:13px;padding:6px 0 5px;background:var(--surface-bright);
+    font-size:10px;color:var(--on-surface-var);
+  }
+  .weekrail .p b{display:block;font-size:14px;color:var(--on-surface);font-weight:600;margin-bottom:3px}
+  .weekrail .p.on{background:var(--primary)}
+  .weekrail .p.on b,.weekrail .p.on{color:var(--on-primary)}
+  .weekrail .dots{display:flex;gap:2px;justify-content:center;height:4px}
+  .weekrail .dots i{width:4px;height:4px;border-radius:50%;display:block}
+  .agenda{padding:0 12px}
+  .arow{
+    display:flex;gap:9px;align-items:flex-start;background:var(--surface-bright);
+    border-radius:13px;padding:10px 11px;margin-bottom:7px;border-inline-start:4px solid;
+  }
+  .arow.prov{background:transparent;border:1.5px dashed;border-inline-start-width:4px}
+  .arow .tick{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--outline);flex:none;margin-top:1px;
+    display:grid;place-items:center;font-size:12px;color:var(--primary);
+  }
+  .arow .tick.done{background:var(--secondary);border-color:var(--secondary);color:#fff}
+  .arow .body{flex:1;min-width:0}
+  .arow .t{font-size:13px;font-weight:600;line-height:1.25}
+  .arow.done .t{text-decoration:line-through;color:var(--on-surface-var)}
+  .arow .m{font-size:11px;color:var(--on-surface-var);margin-top:2px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .arow .when{font-size:11.5px;font-weight:700;color:var(--on-surface);white-space:nowrap;text-align:end}
+  .seg{display:flex;background:var(--surface-dim);border-radius:20px;padding:3px;margin:0 12px 10px;flex:none}
+  .seg span{flex:1;text-align:center;font-size:12px;padding:5px 0;border-radius:17px;color:var(--on-surface-var);font-weight:600}
+  .seg span.on{background:var(--surface-bright);color:var(--primary)}
+
+  /* ── C · the review ──────────────────────────────────────────────────── */
+  .review{margin:0 12px 10px;border-radius:18px;background:var(--surface-bright);overflow:hidden}
+  .review .hd{padding:13px 14px 10px}
+  .review .hd h3{margin:0;font-size:16px;font-weight:600}
+  .rline{display:flex;gap:9px;align-items:center;padding:9px 14px;border-top:1px solid rgba(0,0,0,.06)}
+  .rline .n{font-size:17px;font-weight:700;width:22px;text-align:center;flex:none}
+  .rline .tx{flex:1;font-size:12px;line-height:1.35}
+  .propose{margin:0 12px 10px;border-radius:18px;background:var(--surface-bright);overflow:hidden;border:1.5px dashed var(--primary)}
+  .prow{display:flex;gap:9px;align-items:flex-start;padding:9px 13px;border-top:1px solid rgba(0,0,0,.06)}
+  .prow .cb{width:19px;height:19px;border-radius:5px;border:2px solid var(--primary);background:var(--primary);color:#fff;display:grid;place-items:center;font-size:12px;flex:none;margin-top:1px}
+  .prow .cb.off{background:transparent;color:transparent}
+  .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px 2px 0}
+  .heat .c{aspect-ratio:1;border-radius:5px;background:var(--surface-dim);display:grid;place-items:center;font-size:9.5px;color:var(--on-surface-var);position:relative}
+  .heat .c.on{outline:2px solid var(--primary)}
+  .heat .c .pips{position:absolute;bottom:3px;display:flex;gap:1.5px}
+  .heat .c .pips i{width:3px;height:3px;border-radius:50%;display:block}
+
+  /* ── floating switcher (deliberately not part of the design) ─────────── */
+  .switcher{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99;
+    display:flex;align-items:center;gap:2px;background:#f8fafc;color:#0f172a;
+    border-radius:999px;padding:5px;box-shadow:0 8px 30px rgba(0,0,0,.5);
+    font-family:'Segoe UI',system-ui,sans-serif;
+  }
+  .switcher button{
+    border:0;background:transparent;font:inherit;font-size:15px;cursor:pointer;
+    width:34px;height:32px;border-radius:999px;color:#0f172a;
+  }
+  .switcher button:hover{background:#e2e8f0}
+  .switcher .lab{padding:0 12px;font-size:12.5px;font-weight:700;white-space:nowrap;min-width:186px;text-align:center}
+  .switcher .lab small{display:block;font-weight:500;font-size:10.5px;color:#64748b}
+  .switcher .lang{border-inline-start:1px solid #cbd5e1;padding-inline-start:5px;margin-inline-start:3px;display:flex;gap:2px}
+  .switcher .lang button{width:auto;padding:0 9px;font-size:11.5px;font-weight:700;color:#64748b}
+  .switcher .lang button.on{background:#0f172a;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <h1>PROTOTYPE · <code>C9b</code> — the in-app calendar surface (<a href="https://github.com/idomarhaim/Android_Final_Project/issues/26" style="color:#7dd3fc">#26</a>)</h1>
+  <p>Three structurally different answers to <em>what a calendar is for in this app</em> — same week, same twelve occurrences.
+     <code>←</code> <code>→</code> to cycle · <b>HE</b> flips the whole frame to RTL. Throwaway; nothing here ships.</p>
+</div>
+
+<div id="stage"></div>
+
+<div class="switcher">
+  <button id="prev" title="Previous variant">‹</button>
+  <span class="lab" id="lab"></span>
+  <button id="next" title="Next variant">›</button>
+  <span class="lang">
+    <button data-lang="en">EN</button>
+    <button data-lang="he">HE</button>
+  </span>
+</div>
+
+<script>
+/* ═══ data — one week, twelve occurrences, every C9a state represented ═══ */
+
+const CAT = {
+  HEALTH:   {he:'בריאות',   en:'Health',   c:'#CF3636'},
+  FITNESS:  {he:'אימון ריצה',en:'Running',  c:'#B85107'},
+  LEARNING: {he:'לימודים',  en:'Studies',  c:'#8B39C4'},
+  CAREER:   {he:'קריירה',   en:'Career',   c:'#0F6FCB'},
+};
+
+/* day 0 = Sunday (C15: region decides week start; Israel = Sunday) */
+const OCC = [
+  {d:0, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'DONE',
+   he:'ריצה 5 ק״מ',            en:'Run 5 km'},
+  {d:0, rung:'BLOCK',    s:1200, e:1230, cat:'LEARNING', st:'EXPIRED',
+   he:'לקרוא פרק',              en:'Read a chapter'},
+  {d:0, rung:'DEADLINE', s:1439,          cat:'LEARNING', st:'OVERDUE',
+   he:'תשלום שכר לימוד',        en:'Pay tuition'},
+
+  {d:1, rung:'SPAN', until:5,             cat:'LEARNING', st:'CONFIRMED',
+   he:'שבוע מבחנים',            en:'Exam week'},
+  {d:1, rung:'ALL_DAY',                   cat:'HEALTH',   st:'CONFIRMED',
+   he:'יום ללא סוכר',           en:'No-sugar day'},
+  {d:1, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'MISSED',
+   he:'ריצה 5 ק״מ',            en:'Run 5 km'},
+  {d:1, rung:'BLOCK',    s:540,  e:660,  cat:'LEARNING', st:'PROVISIONAL',
+   he:'תרגול אלגוריתמים',       en:'Algorithms practice'},
+  {d:1, rung:'BLOCK',    s:1020, e:1110, cat:'CAREER',   st:'PROVISIONAL',
+   he:'הכנה לראיון',            en:'Interview prep'},
+  {d:1, rung:'DEADLINE', s:1439,          cat:'LEARNING', st:'CONFIRMED',
+   he:'הגשת תרגיל 3',           en:'Submit exercise 3'},
+
+  {d:2, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'CONFIRMED',
+   he:'ריצה 8 ק״מ',            en:'Run 8 km'},
+  {d:3, rung:'BLOCK',    s:540,  e:720,  cat:'LEARNING', st:'CONFIRMED',
+   he:'מבחן מערכות הפעלה',      en:'OS exam'},
+  {d:4, rung:'BLOCK',    s:840,  e:900,  cat:'CAREER',   st:'CONFIRMED',
+   he:'ראיון עבודה',            en:'Job interview'},
+  {d:4, rung:'BLOCK',    s:360,  e:420,  cat:'FITNESS',  st:'PROVISIONAL',
+   he:'ריצה קלה',               en:'Easy run'},
+  {d:6, rung:'BLOCK',    s:1080, e:1140, cat:'FITNESS',  st:'PROVISIONAL',
+   he:'ריצה ארוכה 12 ק״מ',     en:'Long run 12 km'},
+];
+
+/* A only — does a challenge window belong on the calendar at all? */
+const CHALLENGE = {from:0, until:6, he:'אתגר: 10,000 צעדים ביום', en:'Challenge: 10k steps a day', c:'#0A6045'};
+
+const T = {
+  he:{title:'לוח שנה', goals:'מטרות', home:'בית', social:'חברתי', profile:'פרופיל', cal:'לוח',
+      allday:'כל היום', today:'היום', week:'השבוע', month:'החודש', day:'יום', agenda:'סדר יום',
+      review:'סיכום היום', done:'הושלמו', missed:'פוספסו', overdue:'באיחור, עדיין פתוח',
+      proposed:'הסוכן הציע', confirm:'אישור', later:'אחר כך', reschedule:'תזמון מחדש',
+      list:'רשימה', due:'עד', prov:'הצעה', spanL:'רב-יומי', dl:'יעד', bl:'בלוק',
+      empty:'אין כלום מתוזמן', plan:'תכנן את מחר', now:'עכשיו',
+      hint:'לחיצה ארוכה גוררת בלוק לשעה אחרת'},
+  en:{title:'Calendar', goals:'Goals', home:'Home', social:'Social', profile:'Profile', cal:'Calendar',
+      allday:'All-day', today:'Today', week:'Week', month:'Month', day:'Day', agenda:'Agenda',
+      review:'Your day', done:'done', missed:'missed', overdue:'late, still owed',
+      proposed:'The agent proposed', confirm:'Confirm', later:'Later', reschedule:'Reschedule',
+      list:'List', due:'due', prov:'proposed', spanL:'multi-day', dl:'deadline', bl:'block',
+      empty:'Nothing scheduled', plan:'Plan tomorrow',now:'now',
+      hint:'long-press drags a block to another hour'},
+};
+
+const RUNG_GLYPH = {ALL_DAY:'▭', DEADLINE:'▼', BLOCK:'▮', SPAN:'⟷'};
+
+/* week containing 2026-08-10, starting Sunday — derived, never guessed */
+const TODAY = new Date(2026, 7, 10);
+const SUNDAY = new Date(TODAY); SUNDAY.setDate(TODAY.getDate() - TODAY.getDay());
+const TODAY_IDX = TODAY.getDay();
+const NOW_MIN = 20*60 + 10;
+
+const H0 = 5, H1 = 23, ROW = 44;          // grid spans 05:00 – 23:00
+const hhmm = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const dayDate = i => { const d = new Date(SUNDAY); d.setDate(SUNDAY.getDate()+i); return d; };
+const dayName = (i,lang) => new Intl.DateTimeFormat(lang==='he'?'he-IL':'en-GB',{weekday:'short'}).format(dayDate(i));
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ═══ shared chrome ═══════════════════════════════════════════════════ */
+
+function phone(lang, {tabs, active, appbar, body, newTab}){
+  const t = T[lang];
+  const TABS = tabs || [['🏠',t.home],['🚩',t.goals],['🏆',t.social],['👤',t.profile]];
+  return `<div class="phone" dir="${lang==='he'?'rtl':'ltr'}" lang="${lang}">
+    <div class="statusbar"><span>${hhmm(NOW_MIN)}</span><span>▮▮▮ ▲ 84%</span></div>
+    ${appbar}
+    <div class="screen">${body}</div>
+    <div class="navbar">${TABS.map((x,i)=>
+      `<div class="${i===active?'on':''} ${i===newTab?'new':''}"><span class="ico">${x[0]}</span><span>${x[1]}</span></div>`
+    ).join('')}</div>
+  </div>`;
+}
+
+function legend(lang){
+  const t = T[lang];
+  return `<div class="legend">
+    <span class="chip">${RUNG_GLYPH.BLOCK} ${t.bl}</span>
+    <span class="chip">${RUNG_GLYPH.DEADLINE} ${t.dl}</span>
+    <span class="chip">${RUNG_GLYPH.ALL_DAY} ${t.allday}</span>
+    <span class="chip">${RUNG_GLYPH.SPAN} ${t.spanL}</span>
+    <span class="chip" style="border:1.5px dashed var(--primary);color:var(--primary)">${t.prov}</span>
+  </div>`;
+}
+
+/* ═══ VARIANT A — “The Grid”: a real time canvas. Affordance: place time ═══ */
+
+function variantA(lang){
+  const t = T[lang];
+  const hours = [];
+  for(let h=H0; h<=H1; h++) hours.push(`<div class="h">${String(h).padStart(2,'0')}:00</div>`);
+
+  const cols = [];
+  for(let d=0; d<7; d++){
+    const lines = Array.from({length:H1-H0}, ()=>`<div class="line"></div>`).join('');
+    const blocks = OCC.filter(o=>o.d===d && o.rung==='BLOCK').map(o=>{
+      const top = ((o.s - H0*60)/60)*ROW, h = ((o.e-o.s)/60)*ROW;
+      const c = CAT[o.cat].c;
+      const prov = o.st==='PROVISIONAL', missed = o.st==='MISSED', expired = o.st==='EXPIRED';
+      const cls = ['block', prov||expired?'prov':'', missed?'missed':''].join(' ');
+      const style = prov||expired
+        ? `top:${top}px;height:${h-1}px;border-color:${c};color:${c}`
+        : `top:${top}px;height:${h-1}px;background:${c}`;
+      return `<div class="${cls}" style="${style}"><b>${esc(o[lang])}</b>${hhmm(o.s)}</div>`;
+    }).join('');
+    const now = d===TODAY_IDX
+      ? `<div class="nowline" style="top:${((NOW_MIN-H0*60)/60)*ROW}px"></div>` : '';
+    cols.push(`<div class="col">${lines}${blocks}${now}</div>`);
+  }
+
+  const strip = [];
+  strip.push(`<div></div>`);
+  for(let d=0; d<7; d++) strip.push(
+    `<div class="d ${d===TODAY_IDX?'today':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b></div>`);
+
+  const bands = [`<div class="lbl">${t.allday}</div>`];
+  for(let d=0; d<7; d++){
+    const here = [];
+    if(d>=CHALLENGE.from && d<=CHALLENGE.until)
+      here.push(`<div class="band" style="background:${CHALLENGE.c}">${d===CHALLENGE.from?esc(CHALLENGE[lang]):'&nbsp;'}</div>`);
+    OCC.filter(o=>o.d===d && o.rung==='SPAN').forEach(o=>
+      here.push(`<div class="band" style="background:${CAT[o.cat].c}">${esc(o[lang])}</div>`));
+    OCC.filter(o=>o.rung==='SPAN' && d>o.d && d<=o.until).forEach(o=>
+      here.push(`<div class="band" style="background:${CAT[o.cat].c}">&nbsp;</div>`));
+    OCC.filter(o=>o.d===d && o.rung==='ALL_DAY').forEach(o=>
+      here.push(`<div class="band" style="background:${CAT[o.cat].c}">${RUNG_GLYPH.ALL_DAY} ${esc(o[lang])}</div>`));
+    OCC.filter(o=>o.d===d && o.rung==='DEADLINE').forEach(o=>{
+      const late = o.st==='OVERDUE';
+      here.push(`<div class="band" style="background:${late?'#C2410C':CAT[o.cat].c}">${RUNG_GLYPH.DEADLINE} ${esc(o[lang])}</div>`);
+    });
+    bands.push(`<div class="slot">${here.join('')}</div>`);
+  }
+
+  const appbar = `<div class="appbar">
+      <div><h2>${t.title}</h2><div class="sub">${t.week} · ${dayDate(0).getDate()}–${dayDate(6).getDate()} Aug</div></div>
+      <div class="spacer"></div><div class="iconbtn">📋</div><div class="iconbtn">＋</div>
+    </div>
+    <div class="daystrip">${strip.join('')}</div>
+    <div class="allday">${bands.join('')}</div>`;
+
+  const body = `<div class="grid"><div class="hours">${hours.join('')}</div>${cols.join('')}</div>
+    <div class="muted" style="padding:8px 12px 14px;text-align:center">${t.hint}</div>`;
+
+  return phone(lang, {
+    active:2, newTab:2,
+    tabs:[['🏠',t.home],['🚩',t.goals],['📅',t.cal],['🏆',t.social],['👤',t.profile]],
+    appbar, body,
+  });
+}
+
+/* ═══ VARIANT B — “The Day Rail”: an agenda that knows about time.
+       Affordance: tick things off. No grid, one day at a time.        ═══ */
+
+function variantB(lang){
+  const t = T[lang];
+  const sel = TODAY_IDX;
+
+  const rail = [];
+  for(let d=0; d<7; d++){
+    const dots = OCC.filter(o=>o.d===d).slice(0,4)
+      .map(o=>`<i style="background:${d===sel?'#fff':CAT[o.cat].c}"></i>`).join('');
+    rail.push(`<div class="p ${d===sel?'on':''}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>
+      <div class="dots">${dots}</div></div>`);
+  }
+
+  const order = {SPAN:0, ALL_DAY:1, BLOCK:2, DEADLINE:3};
+  const rows = OCC.filter(o => o.d===sel || (o.rung==='SPAN' && sel>o.d && sel<=o.until))
+    .concat(OCC.filter(o=>o.st==='OVERDUE' && o.d!==sel))
+    .sort((a,b)=> (order[a.rung]-order[b.rung]) || ((a.s||0)-(b.s||0)))
+    .map(o=>{
+      const c = CAT[o.cat].c;
+      const prov = o.st==='PROVISIONAL', done = o.st==='DONE', missed = o.st==='MISSED';
+      const late = o.st==='OVERDUE';
+      const when = o.rung==='BLOCK' ? `${hhmm(o.s)}<br><span class="muted">${hhmm(o.e)}</span>`
+                 : o.rung==='DEADLINE' ? `${t.due}<br>${hhmm(o.s===1439?1439:o.s).replace('23:59','23:59')}`
+                 : o.rung==='SPAN' ? t.spanL : t.allday;
+      const tags = [`<span class="chip" style="background:${c}22;color:${c}">${RUNG_GLYPH[o.rung]} ${esc(CAT[o.cat][lang])}</span>`];
+      if(prov) tags.push(`<span class="chip" style="border:1px dashed var(--primary);color:var(--primary)">${t.prov}</span>`);
+      if(missed) tags.push(`<span class="chip" style="background:#e2e8f0;color:#64748b">${t.missed}</span>`);
+      if(late) tags.push(`<span class="chip" style="background:#C2410C;color:#fff">${t.overdue}</span>`);
+      return `<div class="arow ${prov?'prov':''} ${done?'done':''}" style="border-color:${prov?'var(--primary)':c}">
+        <div class="tick ${done?'done':''}">${done?'✓':''}</div>
+        <div class="body"><div class="t">${esc(o[lang])}</div><div class="m">${tags.join('')}</div></div>
+        <div class="when">${when}</div>
+      </div>`;
+    }).join('');
+
+  const appbar = `<div class="appbar">
+      <div><h2>${t.goals}</h2><div class="sub">${t.today} · ${dayName(sel,lang)} ${dayDate(sel).getDate()}</div></div>
+      <div class="spacer"></div><div class="iconbtn">🔍</div><div class="iconbtn">＋</div>
+    </div>
+    <div class="seg"><span>${t.list}</span><span class="on">${t.agenda}</span></div>
+    <div class="weekrail">${rail.join('')}</div>`;
+
+  const body = `${legend(lang)}<div class="agenda">${rows}</div>
+    <div style="padding:4px 12px 18px"><button class="btn ghost" style="width:100%">${t.plan} →</button></div>`;
+
+  return phone(lang, {active:1, appbar, body});
+}
+
+/* ═══ VARIANT C — “The Review”: the calendar is a decision queue.
+       Affordance: confirm / reject / reschedule. Grid demoted.       ═══ */
+
+function variantC(lang){
+  const t = T[lang];
+  const done    = OCC.filter(o=>o.st==='DONE').length;
+  const missed  = OCC.filter(o=>o.st==='MISSED').length;
+  const overdue = OCC.filter(o=>o.st==='OVERDUE');
+  const props   = OCC.filter(o=>o.st==='PROVISIONAL');
+
+  const review = `<div class="review">
+    <div class="hd"><h3>${t.review}</h3>
+      <div class="muted">${dayName(TODAY_IDX,lang)} · ${hhmm(NOW_MIN)}</div></div>
+    <div class="rline"><span class="n" style="color:var(--secondary)">${done}</span>
+      <span class="tx">${t.done}</span><span class="chip" style="background:var(--secondary-container)">✓</span></div>
+    <div class="rline"><span class="n" style="color:#64748b">${missed}</span>
+      <span class="tx">${t.missed} — ${esc(OCC.find(o=>o.st==='MISSED')[lang])}</span>
+      <button class="btn ghost" style="padding:5px 11px">${t.reschedule}</button></div>
+    ${overdue.map(o=>`<div class="rline"><span class="n" style="color:#C2410C">!</span>
+      <span class="tx"><b>${esc(o[lang])}</b><br><span class="muted">${t.overdue}</span></span>
+      <button class="btn" style="padding:5px 11px">${t.confirm}</button></div>`).join('')}
+  </div>`;
+
+  const propose = `<div class="propose">
+    <div class="hd" style="padding:12px 13px 9px">
+      <h3 style="margin:0;font-size:14.5px">${t.proposed} ${props.length} ${t.bl}</h3>
+      <div class="muted">${lang==='he'?'שום דבר לא נכתב ליומן עד שתאשר.':'Nothing reaches your Google calendar until you confirm.'}</div>
+    </div>
+    ${props.map((o,i)=>`<div class="prow">
+      <div class="cb ${i===2?'off':''}">✓</div>
+      <div class="body" style="flex:1">
+        <div style="font-size:12.5px;font-weight:600">${esc(o[lang])}</div>
+        <div class="muted">${dayName(o.d,lang)} ${hhmm(o.s)}–${hhmm(o.e)} ·
+          <span style="color:${CAT[o.cat].c};font-weight:600">${esc(CAT[o.cat][lang])}</span></div>
+      </div></div>`).join('')}
+    <div class="prow" style="gap:8px">
+      <button class="btn" style="flex:1">${t.confirm}</button>
+      <button class="btn ghost" style="flex:1">${t.later}</button>
+    </div>
+  </div>`;
+
+  const cells = [];
+  for(let d=0; d<7; d++){
+    const pips = OCC.filter(o=>o.d===d).slice(0,3)
+      .map(o=>`<i style="background:${CAT[o.cat].c}"></i>`).join('');
+    cells.push(`<div class="c ${d===TODAY_IDX?'on':''}">${dayDate(d).getDate()}<div class="pips">${pips}</div></div>`);
+  }
+  const heat = `<div class="card"><h3>${t.week}</h3>
+    <div class="heat">${cells.join('')}</div>
+    <div style="margin-top:9px"><button class="btn ghost" style="width:100%">${t.month} →</button></div></div>`;
+
+  const appbar = `<div class="appbar">
+      <div><h2>${t.home}</h2><div class="sub">${dayName(TODAY_IDX,lang)} ${dayDate(TODAY_IDX).getDate()} Aug</div></div>
+      <div class="spacer"></div><div class="iconbtn">📅</div><div class="iconbtn">👤</div>
+    </div>`;
+
+  return phone(lang, {active:0, appbar, body: review + propose + heat + `<div style="height:10px"></div>`});
+}
+
+/* ═══ switcher ═══════════════════════════════════════════════════════ */
+
+const VARIANTS = [
+  ['A', 'The Grid',     'place time',              variantA],
+  ['B', 'The Day Rail', 'tick things off',         variantB],
+  ['C', 'The Review',   'confirm what was proposed',variantC],
+];
+
+function state(){
+  const p = new URLSearchParams(location.search);
+  const v = (p.get('variant')||'A').toUpperCase();
+  const l = p.get('lang')==='he' ? 'he' : 'en';
+  return [VARIANTS.findIndex(x=>x[0]===v) < 0 ? 0 : VARIANTS.findIndex(x=>x[0]===v), l];
+}
+function go(i, lang){
+  const p = new URLSearchParams(location.search);
+  p.set('variant', VARIANTS[i][0]); p.set('lang', lang);
+  history.replaceState(null,'', location.pathname+'?'+p);
+  render();
+}
+function render(){
+  const [i, lang] = state();
+  document.getElementById('stage').innerHTML = VARIANTS[i][3](lang);
+  document.getElementById('lab').innerHTML =
+    `${VARIANTS[i][0]} — ${VARIANTS[i][1]}<small>${VARIANTS[i][2]}</small>`;
+  document.querySelectorAll('.lang button').forEach(b =>
+    b.classList.toggle('on', b.dataset.lang === lang));
+}
+document.getElementById('prev').onclick = () => { const [i,l]=state(); go((i+2)%3, l); };
+document.getElementById('next').onclick = () => { const [i,l]=state(); go((i+1)%3, l); };
+document.querySelectorAll('.lang button').forEach(b =>
+  b.onclick = () => { const [i]=state(); go(i, b.dataset.lang); });
+addEventListener('keydown', e => {
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  const [i,l] = state();
+  if(e.key==='ArrowLeft')  go((i+2)%3, l);
+  if(e.key==='ArrowRight') go((i+1)%3, l);
+});
+render();
+</script>
+</body>
+</html>

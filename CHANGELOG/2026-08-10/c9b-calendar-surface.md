@@ -44,9 +44,58 @@ tie-break — but two things made it the right pick rather than merely the first
   always-ask entry each**, both destined for `rules/`, so nothing is drainable in
   either mode. They wait on Ido and on `/walkthrough`, not on a session.
 
+## 🎨 The prototype
+
+`docs/prototypes/2026-08-10-calendar-surface/` — one self-contained HTML page, three
+variants on `?variant=A|B|C`, a HE/EN toggle that flips the frame to RTL, `←`/`→` to
+cycle. Opens with `start …\index.html`; no build, no emulator, no Gradle daemon.
+
+**Decision taken per principle, not asked:** the skill's default is a throwaway route
+inside the real app, and it was rejected because #12's Notes say *"No ticket on this
+map ships code"* — a `Routes.CALENDAR_PROTOTYPE` is code in `app/` whatever it is
+named — and because it would take **two exclusive singletons** (Gradle daemon,
+emulator) for a question about layout, while `c17-many-to-many` is live.
+
+**The cost is stated rather than hidden:** HTML cannot prove a Compose layout
+compiles, scrolls, or survives a real `LazyColumn`. Anything needing that proof is the
+build session's, not this ticket's. The compensating gain is specific — `dir="rtl"`
+mirrors the whole frame in one attribute, so *"does a calendar grid survive Hebrew"*
+becomes something Ido can look at, and it is the one of the ticket's six questions
+that prose reliably gets wrong.
+
+The three variants disagree about the **primary affordance**, not the styling, and
+therefore about content and navigation too:
+
+| | A — The Grid | B — The Day Rail | C — The Review |
+|---|---|---|---|
+| For | placing time | ticking off | confirming what the agent proposed |
+| Nav | a **5th** bottom tab | segmented control **inside Goals** | on **Home**; grid behind an icon |
+| Shows | everything, incl. challenge windows | tasks + deadlines only | only what needs a decision |
+
+One week of data, shared by all three, carrying every state `C9a` defined: four rungs,
+`PROVISIONAL` dashed beside confirmed, one `MISSED`, one `OVERDUE` (late but still
+owed), one `EXPIRED` (counts for nothing). Hebrew titles under Ido's real life areas
+in the committed `GoalCategory` hexes.
+
 ## 🧪 Tests
 
-Not applicable so far — no code has been written. `C9b` is a decision ticket and the
-map's standing preference is **plan, don't do**: nothing here ships into `app/`.
-The prototype is a throwaway artifact under `docs/prototypes/`, which has no test
-layer by construction.
+**No app-code layer applies.** `C9b` is a decision ticket and the map's standing
+preference is **plan, don't do** — nothing here ships into `app/`, so the unit,
+instrumented, endpoint, database and rules layers are all untouched and none is
+skipped silently. `docs/prototypes/` has no test layer by construction.
+
+The prototype was still **checked rather than assumed runnable**, because "I wrote a
+mockup and never opened it" is the classic way one ships an artifact that throws on
+first paint:
+
+- `node --check` on the extracted `<script>` — **syntax OK**, 316 lines.
+- Rendered **all six** combinations (3 variants × HE/EN) headlessly against a stubbed
+  DOM, asserting each returns non-thin HTML and contains **no `undefined`, `NaN` or
+  `[object …]`** — the three tokens a template-string bug actually produces. All six
+  pass: 7145/7151, 4633/4628, 3944/3935 chars.
+- The week is **derived, not guessed**: the page computes the Sunday of the week
+  containing 2026-08-10 and gets `Sun Aug 09 2026`, today index 1 → `Mon` / `יום ב׳`.
+  Day names come from `Intl`, so the Hebrew ones are real rather than transliterated.
+
+What this does **not** prove, and the resolution must not claim: that any of it lays
+out correctly in Compose.
