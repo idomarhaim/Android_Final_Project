@@ -30,6 +30,22 @@ Derived rather than asked, and confirmed at the final gate: a quote is **never m
 
 **Themes, fixed here:** `STARTING · CONSISTENCY · SETBACK · PATIENCE · FINISHING · DISCIPLINE · PERSPECTIVE · REST` — every one computable **without a measure** except `FINISHING`.
 
+## The correction pass — and what it says about the grilling that preceded it
+
+After the resolution was written, committed and indexed, Ido asked one question: *"is there anything you can improve in the solutions you chose in this session?"* Nine findings came back, and **three of them were wrong answers rather than missing ones** — none caught by seven grilling questions, a schematic summary, and an explicit final confirmation gate.
+
+That is the finding worth keeping. **A confirmation gate tests whether the user understood the proposal; it does not test whether the proposer was right.** The grilling loop is adversarial about *which option to take* and entirely trusting about *the facts inside each option* — and all three errors lived inside the options, not between them.
+
+| | Correction | What was wrong |
+|---|---|---|
+| **A1** | Hebrew translations are **not** public domain | A translation is a separately copyrighted derivative work. "The original is free" says nothing about the 2010 Hebrew edition. Tier 1 is rebuilt **Hebrew-first from natively-Hebrew sources** (Pirkei Avot, Tanakh) plus lapsed editions verified *per edition, not per author*. |
+| **A2** | The task named is the **smallest**, not the earliest | The resolution argued for *"the one thing you could do now"* and then specced *"the earliest unfinished task"*. On a stale goal those are near opposites — the oldest open task is the one that has been avoided. Corrected to smallest `estimatedMinutes`, with ordering winning once `C8` supplies one. |
+| **A3** | `C2` already claimed this feature's tone | [#20](https://github.com/idomarhaim/Android_Final_Project/issues/20) lists *"it selects the tone of the daily line (`C10`)"* among its candidate purposes, and this session never opened it. The axes turn out **orthogonal** — theme from the goal's *state*, task type from the task's *content* — but the reconciliation had to be written down or `C2` would re-decide it. |
+
+Six spec lines were added beside them. The largest is **B2: the home feed as first specced is a daily list of the goals you are failing at** — *"the 2–3 goals that most need attention"*, run every morning, on a feature whose purpose is motivation, where a goal you are doing well on can never appear. Fixed by reserving one slot for a goal in a good state, at identical cost. The others: **`Goal.deadlineEpochMillis` existed and was used for nothing** ([`Goal.kt:26`](../../app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt#L26)) and becomes a ninth theme plus an urgency weight; a recently-shown ring per edge, because `hash(today + edgeId)` can repeat a quote inside a week; a logical day starting at **04:00**; a life area resolving to the **union** of its goals' categories at theme `PERSPECTIVE`; and the goal screen showing two blocks where `R21` asked for one sentence, left to `C12`.
+
+Posted as a [correction comment](https://github.com/idomarhaim/Android_Final_Project/issues/29#issuecomment-5242005728) on the closed ticket and folded into the map gist. **The map was re-fetched and hashed a fourth time before that second write** — `1ba3381e…c024`, differing from the copy this session had written only by a trailing newline GitHub adds, so no sibling had touched it.
+
 ## The argument that actually decided it was the fallback, not the safety
 
 Four selection mechanisms were on the table, and the two that hand the model a quote id were rejected. The obvious reason is `C11a`'s measured **silent id corruption**, but that is only the second reason and it is the weaker one — a membership check catches it.
@@ -108,7 +124,7 @@ The one shared artifact was the map body `#12`, which carries no lease — handl
 
 ## KB candidates
 
-**4 written, 0 ingested** — normal mode, so the list is a proposal: `kb-candidates/2026-08-10-c10-quote-feed.md`. Candidate 4 is **always-ask by inheritance** — it corroborates a parked `rules/`-shaped entry rather than standing on its own, and says so.
+**6 written, 0 ingested** — normal mode, so the list is a proposal: `kb-candidates/2026-08-10-c10-quote-feed.md`. Candidate 4 is **always-ask by inheritance** — it corroborates a parked `rules/`-shaped entry rather than standing on its own, and says so. Candidates 5 and 6 came out of the correction pass: the translation-copyright fact, and the observation that a confirmation gate tests comprehension rather than correctness.
 
 `kb-candidates/` was listed before the first unit of work, and **what it held changed underneath this session**. At session start it was three files — `2026-08-08-c9d-calendar-scopes`, `2026-08-08-fix-task-completion-feedback`, `2026-08-09-c9f-consent-screen-state` — all owed an ingest and all unowned, which is what was reported to Ido. By the time this session wrote its own file, `kb-ingest-backlog-drain` had drained the backlog and the folder held **two partially-drained files, each down to a single parked always-ask entry** awaiting Ido. Recorded rather than quietly re-stated, because the session-start report is now wrong and someone reading it later would think a backlog still exists.
 
