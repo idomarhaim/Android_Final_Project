@@ -334,6 +334,16 @@ undoing on its merits.
 and the push issued in a **separate** one, so the adjudication sits between them where the rule
 puts it.
 
+**Second disclosure — the rev 4 push, and this time the fix did its job.** The range held two
+foreign commits, `87c5acf` and `e65d48e`, both from `picker-delegation-clause` (a cross-repo
+visitor from JARVIS that drained `c1`'s always-ask candidate). Because the read and the push were
+separate commands there was a moment in which to adjudicate, and it was used: the board was
+re-read, that session sits in **Recently released** with a `2026-08-11` release date and a full
+*Landed in* column, and the working tree was clean. **Released and quiet, so precondition 5 lets
+them ride** — named here rather than only noticed. Also noted while reading the board: two new
+live rows have appeared, `c6-log-progress` on `#22` and `c8-ai-task-plans` on `#24`, so this
+session is no longer the only one on the map.
+
 **Also noticed while adjudicating, and it belongs to no ticket of this session's:** `#19` closed,
 which unblocks `#20`, `#22` and `#24` — and through `#24`, `#30` and `#35`. The map's whole
 blocked half has opened. Reported, not acted on.
