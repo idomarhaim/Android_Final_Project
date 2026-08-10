@@ -16,9 +16,24 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c17-many-to-many` | `/wayfinder 12` → resolve [#38 · `C17`](https://github.com/idomarhaim/Android_Final_Project/issues/38) (many-to-many linkage). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c17-many-to-many.md`, `kb-candidates/2026-08-10-c17-many-to-many.md`, GitHub issues **#38** and **#12** | none — no build, no device, no Firebase | 2026-08-10 |
+| `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+
+> ⚠️ **Two sessions, one shared issue — [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), the map.**
+> `c17-many-to-many` and `c9b-calendar-surface` are running concurrently and their
+> tickets are disjoint in subject (`C17` is the object graph, `C9b` is a calendar
+> screen), but **both owe a line in the map's *Decisions so far* when they resolve.**
+> That index is append-only and one line each, so it is a **commons, not territory**:
+> whichever resolves second re-reads `#12`'s body immediately before appending and
+> writes **only its own line**, never a rewrite of the other's. Neither may edit the
+> other's `Decisions so far` entry, and neither may retitle or re-scope the other's
+> ticket. Recorded here by `c9b-calendar-surface` on claiming — the overlap is real
+> and known, not a collision waiting to be discovered.
 
 > 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
-> `c17-many-to-many`; the previous version of this note was **three files stale** —
+> `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
+> at session start (the folder is a session-start read, so the check is owed even when
+> the previous session's note is hours old — both files are still there, still one
+> always-ask entry each); the previous version of this note was **three files stale** —
 > `2026-08-10-c7-what-is-a-unit.md` and `2026-08-09-entity-model-intake.md` have since
 > been drained and deleted, so it pointed at two paths that no longer exist. **Two
 > files remain, one always-ask entry each, and neither is a backlog:**
