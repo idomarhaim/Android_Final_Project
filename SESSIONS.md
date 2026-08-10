@@ -114,6 +114,63 @@ before your first write. Normative rule:
 >
 > Recorded by `c18-subtask-depth` on claiming.
 
+> ⚠️ **A fifth session joined the same map — `c14-challenge-scoring` on
+> [#23](https://github.com/idomarhaim/Android_Final_Project/issues/23) — and it is the
+> first one whose subject lives in a *different subsystem* than every live sibling.**
+> `C14` is challenge scoring: `ChallengeParticipant.score`, `ChallengeType`, Health
+> Connect, and `firestore.rules`. Nothing there is touched by the calendar half
+> (`#26`), by depth arithmetic (`#39`), or by the currency question (`#18`, released).
+> The pick was **the agent's** — `/wayfinder 12` was invoked bare — so the reasoning
+> is on the record, and it is the *narrowest* frontier justification so far, because
+> for the first time the frontier held **four** takeable tickets, not two:
+> **#21 · `C5`**, **#23 · `C14`**, **#28 · `C9e`** and **#31 · `C12`**. Re-derived out
+> of the dependencies API, and it agrees with the Unclaimed-work block below.
+> Three were left, each for a *different* reason, and none of them is "it looked harder":
+> 1. **`#28 · C9e` — declined for the third time, on the same grounds the board already
+>    records.** It is the calendar half and `c9b-calendar-surface` is live and
+>    mid-prototype on `#26`. Taking it would change a live session's inputs a second
+>    time, mid-flight.
+> 2. **`#31 · C12` — declined on *two* live couplings, not one.** It is a **prototype**
+>    (HITL) ticket, and `#26` is already a live prototype needing Ido in the loop; two
+>    concurrent HITL prototypes contend for the one resource this board cannot
+>    serialise, which is Ido himself. And its own body says it must chart *"whatever
+>    numbers `C3` and `C7` leave the app with"* — but a goal's ring is a **roll-up**,
+>    and `c18-subtask-depth` is deciding what that sums over **right now**.
+> 3. **`#21 · C5` — declined because recurrence flows *into* the calendar surface.**
+>    `C5` decides where recurrence lives; `C7` §3 already routed the *"recurring activity
+>    whose repetition is what gets counted"* shape to it. Recurrence produces occurrences,
+>    and occurrences are what `#26`'s prototype draws — so it is `#28`'s coupling wearing
+>    a different label.
+>
+> Three coupling points, all named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, and the race it names has now actually
+>    fired once** (`c3-points-currency` records it above). Same discipline, no exceptions:
+>    **re-fetch `#12`'s body immediately before appending**, write only this session's
+>    line, verify a pure insertion afterwards. `#26`'s line is still owed by
+>    `c9b-calendar-surface`, and `C13`'s index gap is still Ido's to assign.
+> 2. **`C14` and `C1` ([#19](https://github.com/idomarhaim/Android_Final_Project/issues/19))
+>    share one trust problem, and `#19` is blocked behind `#39` — which is live.** `#23`'s
+>    own body says points and challenge scores should decide client-reported vs
+>    server-computed *together*. This session therefore decides it **for challenge
+>    scores** and **posts the shared finding to `#19`** rather than pre-empting a ticket
+>    nobody has claimed and that a live session is still upstream of. Flow one-way, as
+>    `c9c`, `c3` and `c18` all established.
+> 3. **`C3`'s answer is an *input* here, not a subject.** `C3` settled that `points` is a
+>    view of effort and not a currency, and posted that to `#23` before releasing. This
+>    session consumes that comment; if anything it finds contradicts `C3`, it says so on
+>    `#18` and does not edit a released session's artifacts.
+>
+> 📥 **`kb-candidates/` re-listed at session start, as the folder's existence requires** —
+> **four** files now, not the three the note below counts. The fourth is
+> [`2026-08-10-c3-points-currency.md`](kb-candidates/2026-08-10-c3-points-currency.md),
+> which arrived with the release above and is **parked always-ask** (an amendment to
+> `rules/question-axis-naming.md`, ingestable in neither mode). So the standing
+> always-ask set is **four**, all four wait on Ido, and **nothing in this folder is
+> drainable by this session**. Left as a correction here rather than edited into the
+> note below, which another session owns.
+>
+> Recorded by `c14-challenge-scoring` on claiming.
+
 > 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
 > `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
 > at session start (the folder is a session-start read, so the check is owed even when
@@ -249,6 +306,13 @@ Currently unclaimed and ready:
   - ~~[#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18)~~ — **claimed, in flight.** Was **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
   - ~~[#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39)~~ — **claimed, in flight** by `c18-subtask-depth`. Was **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
   - [#28 · `C9e` what happens to a synced event when its task changes?](https://github.com/idomarhaim/Android_Final_Project/issues/28) — **HITL, newly unblocked 2026-08-10 by `C9c` closing**, which was its only blocker. Added after `c3-points-currency` wrote the line above, so *"one, not two"* is now **two**. It arrives with four rules already inherited and a [hand-off comment](https://github.com/idomarhaim/Android_Final_Project/issues/28#issuecomment-5243682588) listing them — matching is by `googleEventId`; times cross the sync and state never does; titles are written but never read back; a cancelled event unsyncs and never deletes. What is still its own is everything about a task *changing*: a retime, a **rung change** (`BLOCK` → `DEADLINE` is not a patch of the same shape), a re-estimate that silently invalidates a placed block, a deletion, and *"this occurrence or all future ones?"* on a repeat rule.
+  - ~~[#23 · `C14` what does a challenge score from?](https://github.com/idomarhaim/Android_Final_Project/issues/23)~~ — **claimed, in flight** by `c14-challenge-scoring`, 2026-08-10. Was **HITL**, and its last blocker `#18` closed at 17:55Z. It arrives with **two** hand-off comments already on it — [`C7`'s](https://github.com/idomarhaim/Android_Final_Project/issues/23#issuecomment-5238477272) (a challenge measures with the same `kind` + `word` as any object, and changing that measure mid-flight needs every participant's approval, which `firestore.rules` cannot represent today) and [`C3`'s](https://github.com/idomarhaim/Android_Final_Project/issues/23#issuecomment-5243949826) (`points` is a *view of effort*, so scoring on it means scoring on **time spent**; overshoot is now legal). Read both before touching it.
+
+  ⚠️ **The paragraph immediately below counts two claimed-and-open tickets; it is now
+  three.** `#23` joined at 2026-08-10 alongside `#26` and `#39`. Corrected by insertion
+  rather than by rewriting `c18-subtask-depth`'s sentence, which was true when written —
+  and noted at all because a **stale count** in this exact block is the failure this
+  board has now recorded three times in one day.
 
   **Two tickets are claimed and open** as of 2026-08-10 — `#26` (`c9b-calendar-surface`)
   and `#39` (`c18-subtask-depth`). `#18` (`c3-points-currency`) and `#27`
