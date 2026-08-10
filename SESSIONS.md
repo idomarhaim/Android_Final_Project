@@ -15,6 +15,90 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c8-ai-task-plans` | `/wayfinder 12` → resolve [#24 · `C8`](https://github.com/idomarhaim/Android_Final_Project/issues/24) (what a "stage" is, what re-flowing means, what a stage is worth, and whether a proposed plan is a draft or written tasks). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c8-ai-task-plans.md` *(new)*, `kb-candidates/2026-08-10-c8-ai-task-plans.md` *(new, if anything is flagged)*, GitHub issues **#24** and **#12** | **Ido's attention** — a grilling ticket, and `c12-charts-presentation`'s prototype is already live and asking for him; see §3 below. No build, no device, no Firebase: this is Markdown and issues only | 2026-08-10 |
+
+> ⚠️ **A ninth session joined the same map — `c8-ai-task-plans` on
+> [#24](https://github.com/idomarhaim/Android_Final_Project/issues/24) — and it is the
+> first claim taken since `C1` closed, which is the largest change the frontier has had
+> all day.** `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was
+> the agent's. Frontier **re-derived out of the dependencies API at session start**, not
+> read off the Unclaimed-work block: every open child of `#12` queried for `blocked_by`.
+> Result — **25 children, 18 closed, 7 open**; frontier (open · unblocked · unassigned) =
+> **`#20 · C2`, `#21 · C5`, `#22 · C6`, `#24 · C8`**. `#31 · C12` is unblocked but
+> **assigned and live**. `#30 · C11b` and `#35 · C15b` are the only tickets still blocked.
+> Eighth derivation of the day, and the frontier has **doubled from two to four**.
+>
+> 🛠 **The re-derivation corrected a released session's own summary, which is the reason it
+> is done rather than inherited.** `c1-points-and-time`'s release note below states that
+> closing `#19` unblocked *"`#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`
+> … nothing on `#12` is blocked any more — the whole remaining map is frontier."* **The
+> last clause is false.** `#30` is blocked by `#20` **and** `#24`, and `#35` by `#24` —
+> all three of those blockers are **open**, so neither `#30` nor `#35` is on the frontier.
+> `C1` unblocked three tickets, not five. Nothing was edited in that session's note (a
+> released session's row is not this session's to rewrite); the correction lives here,
+> and the **Unclaimed-work block below is separately stale** — it was queried before `#19`
+> closed and still lists five tickets as blocked behind it.
+>
+> **`#24` was taken, and the three declines each rest on a different ground:**
+> 1. **`#24 · C8` is the disjoint one with the most leverage.** Both its blockers —
+>    `C4` ([#13](https://github.com/idomarhaim/Android_Final_Project/issues/13)) and
+>    `C1` ([#19](https://github.com/idomarhaim/Android_Final_Project/issues/19)) — are
+>    closed **and released**, so its inputs are foreign state to *read*. And it is a
+>    blocker of **both** remaining blocked tickets: `#35` is blocked by `#24` **alone**,
+>    and `#30` by `#20` + `#24`. Closing it frees `#35` outright and halves `#30`. No other
+>    frontier ticket frees anything.
+> 2. **`#20 · C2` — declined, because it would change a live session's inputs mid-flight.**
+>    `C2` asks whether an AI-assigned task type is a second axis **or a replacement for
+>    life areas**, and its own body names *"it drives the time-allocation analytics that
+>    already ship"* as a candidate purpose. `c12-charts-presentation` is **live right now**
+>    deciding the chart set and the dashboard arrangement, and `C9b` handed it a rule about
+>    that very chart. Re-cutting what the charts group by, while they are being drawn, is
+>    exactly what this board has refused five times.
+> 3. **`#22 · C6` — declined on prototype contention, the objection that expired for `#31`
+>    and has now re-armed against the ticket behind it.** `C6` decides what a user may edit
+>    in a **screen**, and since the design standard became normative that is prototype-grade
+>    work, not a paragraph. `c12` is already **at revision 2** of a prototype burning Ido's
+>    attention. Every frontier ticket here is HITL, so HITL-ness discriminates nothing —
+>    but a second *screen* does contend for the one singleton this board cannot serialise.
+> 4. **`#21 · C5` — declined on subject overlap, not on the ground four earlier sessions
+>    used.** Their objection (it sits too near the live `#19`) **has expired**; `#19` is
+>    closed and released. What remains is that `C5`'s decay mechanic changes what a goal's
+>    **percentage** means, and a goal's percentage is what `#31`'s charts render. It is also
+>    the heaviest ticket on the frontier — a Firestore schema change over Ido's live data,
+>    with the migration itself still fog.
+>
+> Three coupling points, all named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, and the race it names has fired for real
+>    twice** (`c3-points-currency` and `c1-points-and-time` each record it). Same discipline,
+>    no exceptions: **re-fetch `#12`'s body immediately before appending**, write only this
+>    session's line, verify a pure insertion afterwards. `C13`
+>    ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))'s index gap
+>    stays Ido's to assign.
+> 2. **`C8` arrives with three released decisions binding it, so they are inputs, never
+>    subjects.** `C4` (#13, the goal↔task ontology), `C1` (#19 — **the model never emits a
+>    point value**; the shape is `taskId` + `difficulty ∈ LIGHT · ROUTINE · DEMANDING` +
+>    `estimatedMinutes`), and `C16` (#37, milestones). `C11a` (#16) also measured what the
+>    free model can do against a fixed format — a ten-stage plan is ten estimations in one
+>    shot, which is a direct load on it.
+> 3. **One live edge, and it is posted rather than taken.** Anything found here bearing on
+>    `#31`'s charts is **posted as a comment on `#31`**; nothing a live or released session
+>    owns is edited. Flow stays one-way, as `c9c`, `c3`, `c18`, `c14`, `c1`, `c9e` and `c12`
+>    all established.
+>
+> 📥 **`kb-candidates/` listed before the first unit of work, as the folder's existence
+> requires — four files, and each was opened and its *Destination* line read rather than
+> inherited from the notes below.** Three target `rules/`
+> ([`c1`](kb-candidates/2026-08-10-c1-points-and-time.md) and
+> [`c9e`](kb-candidates/2026-08-10-c9e-event-lifecycle.md) both amend
+> `rules/question-axis-naming.md` and should be read together;
+> [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md) targets
+> `rules/agent-topology-and-model-routing.md` §5), and the fourth,
+> [`c9f`](kb-candidates/2026-08-09-c9f-consent-screen-state.md), names `kb/dev/` but is
+> **parked by Ido's own call** pending a `rules/` proposal. So **all four are always-ask in
+> both modes and none is this session's** — `AUTO MODE` drains nothing here.
+>
+> Recorded by `c8-ai-task-plans` on claiming.
+
 > ✅ **`c9e-event-lifecycle` has released — [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28)
 > is resolved and closed, and with it **the calendar half of the map is complete**:
 > `C9a` #25, `C9b` #26, `C9c` #27, `C9d` #17 and `C9e` #28 are all closed.**
