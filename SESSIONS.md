@@ -40,7 +40,6 @@ before your first write. Normative rule:
 >    three entries ingested into `C:\Dev\JARVIS\kb` (`fe00296`), `Check-KbLinks` CLEAN at
 >    61 pages. **Five candidate files remain and none is this session's** — see the note
 >    below.
-| `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c9e-event-lifecycle` | `/wayfinder 12` → resolve [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) (what happens to a synced event when its task changes). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9e-event-lifecycle.md` *(new)*, `kb-candidates/2026-08-10-c9e-event-lifecycle.md` *(new, if anything is flagged)*, GitHub issues **#28** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c12-charts-presentation` | `/wayfinder 12` → resolve [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) (the chart set, whether the user picks, and how the dashboard is arranged). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c12-charts-presentation.md` *(new)*, `docs/prototypes/2026-08-10-charts-presentation/` *(new)*, `kb-candidates/2026-08-10-c12-charts-presentation.md` *(new, if anything is flagged)*, GitHub issues **#31** and **#12** | **Ido's attention** — a prototype ticket, and two live grillings are already asking for him; see §3 below. No build, no device, no Firebase: the prototype is standalone HTML, as `C9b`'s was | 2026-08-10 |
 > ✅ **`picker-rule-consolidation` claimed and released here 2026-08-10 — a cross-repo
@@ -207,6 +206,65 @@ before your first write. Normative rule:
 >
 > Recorded by `c9e-event-lifecycle` on claiming.
 
+> ✅ **`c1-points-and-time` has released — [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19)
+> is resolved and closed, and it **unblocked every ticket that was still blocked on this
+> map**: `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Nothing on `#12` is
+> blocked any more — the whole remaining map is frontier.**
+> **The verdict:** `R7`'s line is not human-vs-AI, it is **fact-vs-judgement**. `minutes` is
+> a fact about Ido's life and he is its authority; `difficulty` is a judgement and only the
+> model makes it; nobody authors their product. So `R8`'s box wins and points recompute
+> from a typed duration — and a hand-typed value beats a re-estimation **unconditionally**,
+> which answers [#9](https://github.com/idomarhaim/Android_Final_Project/issues/9)'s
+> standing question without the threshold it was waiting for, because any threshold makes
+> the app judge when Ido is wrong about his own day. What is banked on completion is the
+> **inputs, not the number**, which closes a **live** accumulator defect at
+> [`TaskRepositoryImpl.kt:120-127`](app/src/main/java/com/idomarhaim/goalpilot/data/firestore/TaskRepositoryImpl.kt)
+> that `R10`'s own re-scoring pass would otherwise have made routine.
+>
+> **Ido answered none of the three picker questions on their merits** — he said the first
+> was not legible, asked for a schematic explanation, and handed all three back with his
+> standing *take the best answer and improve it*. Per the ❓ rule the second attempt must be
+> **smaller, not louder**; here it was not re-asked at all, because the instruction was a
+> **delegation**, not a request for more words. Every pick is therefore the agent's and is
+> on the record in the resolution comment, exactly as `C3`, `C14` and `C17` each recorded.
+>
+> **Both coupling points below were discharged as written, and the first one *fired for the
+> second time on this board*.** `#12`'s body grew **139 → 141 lines between this session's
+> session-start fetch and its write** — `c9b-calendar-surface` appended `C9b`'s index line
+> in that interval, minutes before. **Re-fetching immediately before the edit is the only
+> reason that line survives.** Verified afterwards: 141 → 143, **0 deleted lines**, all
+> **16** decision lines present including `C9b`'s, and the written body read back identical
+> but for a trailing newline GitHub appends. `c3-points-currency` recorded the first
+> instance; this is the second, and the race is now observed rather than feared. The second
+> coupling held too — `C3`, `C17` and `C18` were consumed as **inputs**, nothing a released
+> session owns was edited, and the two hand-offs went out as **comments** on `#9` and
+> [#34](https://github.com/idomarhaim/Android_Final_Project/issues/34).
+>
+> **What it leaves for the newly-unblocked four:** the model **never emits a point value**.
+> `R9`'s shape is `taskId` (membership-checked — `C11a`'s one measured failure mode) +
+> `difficulty ∈ LIGHT · ROUTINE · DEMANDING` at ×0.75/×1.0/×1.5 + `estimatedMinutes`, which
+> is [`C11b` #30](https://github.com/idomarhaim/Android_Final_Project/issues/30)'s to write
+> and [`C8` #24](https://github.com/idomarhaim/Android_Final_Project/issues/24)'s to plan
+> against. And `points` moving server-side makes this the **fourth** site of the
+> derived-state pattern, sharpening the map's own fog patch on it from *"not sharp until
+> `C1` decides"* into a live architecture question with four call sites.
+>
+> 📥 **`kb-candidates/` re-listed at release, and it changed under this session:
+> **two** files, not the seven found at session start.** `c9b-calendar-surface` drained its
+> own three-entry file, and the cross-repo visitor `picker-rule-consolidation` consolidated
+> and deleted **four** always-ask picker files. This session filed
+> [`2026-08-10-c1-points-and-time.md`](kb-candidates/2026-08-10-c1-points-and-time.md) with
+> **two entries: one drained, one parked.** Entry 1 — *a clamped running accumulator
+> silently destroys history; derive a total by summing timestamped facts* — is an ordinary
+> `kb/dev/` claim and was **ingested**. Entry 2 is a **fresh, post-consolidation** instance
+> of the picker failure mode (*"I could not understand you — choose for me"* arriving as a
+> **delegation**, where the rule's existing guidance says only *make it smaller*), so it
+> targets `rules/question-axis-naming.md` and is **always-ask and parked**, three hours
+> after that rule was consolidated.
+>
+> The claim-time record below stands unedited, because the frontier reasoning it holds is
+> what the release is answerable to:
+>
 > ⚠️ **A sixth session joined the same map — `c1-points-and-time` on
 > [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) — and it is the
 > ticket every remaining blocked ticket on the map is waiting behind.**
