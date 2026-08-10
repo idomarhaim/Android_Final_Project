@@ -15,7 +15,31 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+> ✅ **`c9b-calendar-surface` has released — [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26)
+> resolved and closed, and the commons coupling it recorded on claiming was discharged
+> without incident.**
+> 1. **`#12`'s *Decisions so far* is a commons.** The body was re-fetched immediately
+>    before the append, the patch proved a **pure insertion** before sending (139 → 141
+>    lines, `0` deleted), and every sibling's line verified present afterwards. `C9b`'s
+>    line is now written, so **no line is owed by this session** — but note `C13`
+>    ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32)) still has none,
+>    which is Ido's to assign.
+> 2. **The design standard became normative mid-ticket.** Ido promoted *"every screen is
+>    designed to a current UI/UX standard, not merely specified"* into `#12`'s **Standing
+>    preferences**, carrying three rules his own defect reports bought: **one chip may not
+>    carry two axes** · **form and words before iconography** · **a design is not finished
+>    until it has been seen in Hebrew**. It binds [`C12` #31](https://github.com/idomarhaim/Android_Final_Project/issues/31),
+>    [`C6` #22](https://github.com/idomarhaim/Android_Final_Project/issues/22) and every
+>    later screen, not just `C9b`.
+> 3. **Three findings handed to the build session, none cosmetic** — every time/date
+>    string owes **direction isolation** (bidi renders `09:00–12:00` as `12:00–09:00`, a
+>    property of the text so it recurs in Compose); **`GoalCategory.defaultColorHex` is a
+>    light-mode-only palette** that goes muddy on `#0C1520`, so a dark tone is owed per
+>    category; and **no Hebrew literal may reach an English render**.
+> 4. **`kb-candidates/2026-08-10-c9b-calendar-surface.md` is drained and deleted** — all
+>    three entries ingested into `C:\Dev\JARVIS\kb` (`fe00296`), `Check-KbLinks` CLEAN at
+>    61 pages. **Five candidate files remain and none is this session's** — see the note
+>    below.
 | `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c9e-event-lifecycle` | `/wayfinder 12` → resolve [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) (what happens to a synced event when its task changes). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9e-event-lifecycle.md` *(new)*, `kb-candidates/2026-08-10-c9e-event-lifecycle.md` *(new, if anything is flagged)*, GitHub issues **#28** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 
@@ -337,36 +361,14 @@ before your first write. Normative rule:
 >
 > Recorded by `c14-challenge-scoring` on claiming; release banner added by it on release.
 
-> 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
-> `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
-> at session start (the folder is a session-start read, so the check is owed even when
-> the previous session's note is hours old — both files are still there, still one
-> always-ask entry each); the previous version of this note was **three files stale** —
-> `2026-08-10-c7-what-is-a-unit.md` and `2026-08-09-entity-model-intake.md` have since
-> been drained and deleted, so it pointed at two paths that no longer exist. **Two
-> files remain, one always-ask entry each, and neither is a backlog:**
-> [`2026-08-09-c9f-consent-screen-state.md`](kb-candidates/2026-08-09-c9f-consent-screen-state.md)
-> (entry 1 — provenance of untested claims) and
-> [`2026-08-10-c16-milestone-model.md`](kb-candidates/2026-08-10-c16-milestone-model.md)
-> (entry 2 — dated paths in a claim row). Both are destined for `rules/`, which
-> `/kb-ingest` may not take in **either** mode, so both wait on Ido and on
-> `/walkthrough` — not on a session. Refreshed rather than left standing because no
-> session holds it and it actively misdirected.
->
-> ➕ **A third file arrived 2026-08-10 and has already been drained to its survivor** —
-> [`2026-08-10-c9c-calendar-sync.md`](kb-candidates/2026-08-10-c9c-calendar-sync.md),
-> 3 entries, **2 ingested** under `AUTO MODE` at the commit trigger (new central page
-> `dev/indistinguishable-at-the-boundary.md`, plus `dev/google-oauth-scopes-and-consent.md`
-> **§7 folded in place**; `Check-KbLinks` **CLEAN at 55 pages**, nothing superseded) and
-> **1 parked, always-ask**: a *fourth* picker-axis failure mode — **granularity**, where
-> the axis is right as a dimension and wrong as a unit, and whose tell is that Ido
-> answers **fluently** with something not on the menu. Destination `rules/`, and the
-> ingest corrected its own candidate on the way past — `rules/question-axis-naming.md`
-> is **shipped and in force**, so this is an **amendment to a live rule**, not an
-> addition to a draft.
->
-> **So the standing always-ask set is now three, not two**, and all three wait on Ido:
-> the two above plus this one. **Nothing else in this folder is drainable by a session.**
+> 📥 **`kb-candidates/` holds nothing a session can drain — re-listed 2026-08-10 by
+> `c9b-calendar-surface`, and the previous note was *four files stale*.**
+> `2026-08-10-c9b-calendar-surface.md` was **drained in full and deleted** (3 entries →
+> `C:\Dev\JARVIS\kb`, commit `fe00296`, `Check-KbLinks` CLEAN at 61 pages). **Five files
+> remain — `c9f`, `c14`, `c16`, `c18`, `c3`, `c9c` — and every surviving entry in every
+> one of them is `always-ask`, destination `rules/`.** `/kb-ingest` may not take those in
+> **either** mode, so none of them is waiting on a session: they wait on Ido and on
+> `/walkthrough`. Checked entry by entry rather than assumed from the filenames.
 
 > **Issue-tracker partition — settled, and now visible in the tracker itself.**
 > Both 2026-08-06 sessions have released, and neither filed from the other's list.
@@ -436,93 +438,62 @@ Currently unclaimed and ready:
   without colliding. What they produced is the unclaimed work below.
 - **The wayfinder map's frontier — two tickets takeable, one session each.**
   [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is the map;
-  **never resolve more than one ticket per session**, and claim by assigning
-  yourself the issue before any work.
-  **Re-queried out of GitHub 2026-08-10 by `c9c-calendar-sync`, twice — at session
-  start and again after `C17` ([#38](https://github.com/idomarhaim/Android_Final_Project/issues/38))
-  closed underneath it** — **25 children, 11 resolved** (`C9d` #17, `C11a` #16,
-  `C15` #15, `C9f` #33, `C4` #13, `C7` #14, `C10` #29, `C16` #37, `C13` #32,
-  `C9a` #25, `C17` #38). The previous version of this block was **two sessions
-  stale in one direction and wrong in the other**: it offered `#26` and `#38` as
-  takeable when both were assigned, and closed with *"nothing is claimed or in
-  flight"* while the table above it carried two live rows. Refreshed rather than
-  left standing because **no session held it and it actively misdirected**; the
-  claim-provenance rule still applies to the *rows above*, which are each
-  session's own.
-  Takeable now — **four, and this block was wrong twice inside one hour, in both
-  directions.** `#39` was taken 2026-08-10 by `c18-subtask-depth` (assigned on GitHub,
-  then rowed above), which cut the frontier to `#28` alone — and **minutes later `#18`
-  closed at 17:55Z**, unblocking three more. Re-derived out of GitHub by
-  `c18-subtask-depth` *after* claiming, which is the only reason the narrower line above
-  did not ship: **`#28 · C9e`** (left takeable on purpose — the fourth ⚠️ note above says
-  why a third calendar session was declined), plus **`#21 · C5`**, **`#23 · C14`** and
-  **`#31 · C12`**, each of which had `#18` as its last open blocker. ✅ **`C3`'s release
-  has since landed** — corrected here by `c3-points-currency` itself, since the note was
-  a report about another session and was true when written: the row above is cleared,
-  the changelog is committed, and **`#12`'s *Decisions so far* line was in fact already
-  appended before this warning was drafted** (the write raced `c18-subtask-depth`'s
-  read, which is the same commons race the ⚠️ note above records from the other side).
-  **Read `#18`'s [resolution comment](https://github.com/idomarhaim/Android_Final_Project/issues/18#issuecomment-5243944781)
-  before taking any of the three it unblocked** — that part stands, and each of the three
-  has a hand-off comment of its own.
-  ✅ **`#39` has since closed too, which changes the shape of what is left more than any
-  other closure today: `#19 · C1` is now on the frontier.** Both its blockers (`#18`,
-  `#39`) are closed, so the ticket that gates `#20`, `#22` and `#24` — and through `#24`
-  both `#30` and `#35` — is takeable for the first time. Re-derived out of GitHub by
-  `c18-subtask-depth` on release: the frontier is **`#19 · C1`, `#21 · C5`, `#28 · C9e`
-  and `#31 · C12`**, with `#23` and `#26` assigned. Everything still blocked is blocked
-  **behind `#19` alone**. The count has moved five times in one day
-  (two → one → two → one → four → four, with the membership changing under it every
-  time); **re-derive it out of GitHub, as every session here has had to.**
-  - ~~[#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18)~~ — **claimed, in flight.** Was **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
-  - ~~[#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39)~~ — **resolved and closed** 2026-08-10 by `c18-subtask-depth`: *a parent task is a container, never a second worker; every roll-up sums over **leaves**,* depth capped at **10** from an intrinsic goal down. Was **HITL**, unblocked by `C16` closing.
-  - [#19 · `C1` the points-and-time model, and who is allowed to author it](https://github.com/idomarhaim/Android_Final_Project/issues/19) — **HITL, newly unblocked 2026-08-10** by `#18` and `#39` both closing, and now **by a distance the highest-leverage ticket on the map**: `#20`, `#22` and `#24` wait on it, and through `#24` so do `#30` and `#35` — every remaining blocked ticket, with no exceptions. It arrives with a great deal already decided rather than a blank page: `C3` made **points a *view* of effort computed from minutes × difficulty, never authored**, and `C11a` measured the model's free numbers swinging **2×** run-to-run, which is a measured argument about who may author that multiplier. `C18` answers *what a point total is summed over* — **leaves** — and `C17` answers how a shared task's points are paid: **pooled, once**. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
-  - [#28 · `C9e` what happens to a synced event when its task changes?](https://github.com/idomarhaim/Android_Final_Project/issues/28) — **HITL, newly unblocked 2026-08-10 by `C9c` closing**, which was its only blocker. Added after `c3-points-currency` wrote the line above, so *"one, not two"* is now **two**. It arrives with four rules already inherited and a [hand-off comment](https://github.com/idomarhaim/Android_Final_Project/issues/28#issuecomment-5243682588) listing them — matching is by `googleEventId`; times cross the sync and state never does; titles are written but never read back; a cancelled event unsyncs and never deletes. What is still its own is everything about a task *changing*: a retime, a **rung change** (`BLOCK` → `DEADLINE` is not a patch of the same shape), a re-estimate that silently invalidates a placed block, a deletion, and *"this occurrence or all future ones?"* on a repeat rule.
-  - ~~[#23 · `C14` what does a challenge score from?](https://github.com/idomarhaim/Android_Final_Project/issues/23)~~ — **resolved and closed** 2026-08-10 by `c14-challenge-scoring`: *a challenge scores from each participant's own goal and from nothing of its own* — score is that goal's **movement since you joined**, `score` becomes **server-owned**, and **`ChallengeType` is deleted**. Was **HITL**, and its last blocker `#18` closed at 17:55Z. It arrived with **two** hand-off comments already on it — [`C7`'s](https://github.com/idomarhaim/Android_Final_Project/issues/23#issuecomment-5238477272) (a challenge measures with the same `kind` + `word` as any object, and changing that measure mid-flight needs every participant's approval, which `firestore.rules` cannot represent today) and [`C3`'s](https://github.com/idomarhaim/Android_Final_Project/issues/23#issuecomment-5243949826) (`points` is a *view of effort*, so scoring on it means scoring on **time spent**; overshoot is now legal). Read both before touching it.
+  **never resolve more than one ticket per session**, and claim by assigning yourself the
+  issue before any work.
+  **Re-queried out of GitHub 2026-08-10 by `c9b-calendar-surface` after `C9b`
+  ([#26](https://github.com/idomarhaim/Android_Final_Project/issues/26)) closed** —
+  `blocked_by` walked per open child through the dependencies API, not read off this
+  board. **13 of the map's children are now resolved.** Two are in flight
+  (`C9e` [#28](https://github.com/idomarhaim/Android_Final_Project/issues/28) and
+  `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19), both
+  assigned); five are still blocked, **all five behind `C1` alone** — `#20`, `#22`, `#24`,
+  `#30`, `#35`. So `C1` closing will open more of this map than anything else left.
+  Takeable now:
+  - [#31 · `C12` charts and presentation strategy](https://github.com/idomarhaim/Android_Final_Project/issues/31)
+    — **prototype, HITL, newly unblocked** by `C3` closing. **Take this one first**: it is
+    the direct heir of `C9b`, which handed it two concrete items (where the *daily review*
+    lives, and that **spans must contribute nothing** to the time-allocation chart or one
+    week-long renovation swamps every life area), and it is the first screen ticket to run
+    under the **design standard Ido made normative on 2026-08-10** — read `#12`'s Standing
+    preferences before starting, plus `C9b`'s resolution comment for the three build-session
+    findings (bidi isolation · `GoalCategory` is light-mode-only · no Hebrew literal in an
+    English render).
+  - [#21 · `C5` endless and maintenance goals](https://github.com/idomarhaim/Android_Final_Project/issues/21)
+    — **HITL, newly unblocked** by `C3` closing. It is what the map's *"per-life-area
+    success and failure, visualised"* fog now hangs on **alone**, and `C9a` already supplied
+    its vocabulary — `MISSED` / `OVERDUE` / `EXPIRED` are three different things and
+    conflating them would draw a picture that **overstates** Ido's failures.
 
-  **One ticket is claimed and open** as of 2026-08-10 — `#26` (`c9b-calendar-surface`).
-  **Five** more were live today and are now **closed**: `#38` (`c17-many-to-many`), `#27`
-  (`c9c-calendar-sync`), `#18` (`c3-points-currency`), `#39` (`c18-subtask-depth`) and
-  `#23` (`c14-challenge-scoring`, which closed after `c18-subtask-depth` wrote this
-  paragraph counting it as live). All were assigned on GitHub as well as rowed above.
-  **Map size verified against GitHub 2026-08-10 by `c18-subtask-depth`: 25 children,
-  now 14 closed and 11 open** — the *11 resolved* count above was correct when written
-  and is now three short (`C9c` #27, `C3` #18, `C18` #39).
-  **Re-verified minutes later by `c14-challenge-scoring`: 25 children, 15 closed and 10
-  open**, `#23` having closed after the line above was written. The frontier it leaves is
-  **`#19 · C1`, `#21 · C5`, `#28 · C9e`, `#31 · C12`** — unchanged in membership, because
-  `C14` blocked nothing. Fourth re-derivation of the day; **re-derive it yourself.**
-  **Frontier re-derived from GitHub three times on 2026-08-10 by `c18-subtask-depth`** —
-  before claiming (`#39` and `#28` the only unblocked, unassigned children), again when
-  `#18` closed underneath it, and again on release when `#39`'s own closure put `#19` on
-  the frontier — every open child's `blocked_by` list queried through the dependencies
-  API rather than read off this block. **This paragraph has carried a stale count three
-  separate times today; the count is the first thing to distrust here.**
-
-  > ⚠️ **Read [`Product and UX Reviews/2026-08-09-entity-model-brief.md`](Product%20and%20UX%20Reviews/2026-08-09-entity-model-brief.md) before taking any of these.**
+  > ⚠️ **Read [`Product and UX Reviews/2026-08-09-entity-model-brief.md`](Product%20and%20UX%20Reviews/2026-08-09-entity-model-brief.md) before taking either.**
   > It is a **second source document**, written after the map was charted, and its
   > routing table says which ticket each `E1`–`E19` item bears on. `C4` was charted
   > without it and built a whole question picker on the wrong axis before Ido stopped
-  > the session. The map body now records it, but the tickets themselves predate it.
+  > the session. The map body records it, but the tickets themselves predate it.
 
-  **Two lessons from the last five closures, both worth having before you pick.**
-  First, **closing a root can leave the map more blocked, not less** — `C4` unblocked
-  exactly one of the four tickets it was holding, and `#18`/`#24` gained *new* blockers
-  from its own resolution. Second, **the reverse also happens**: `C9a` unblocked two at
-  once and opened the whole calendar half. Neither is predictable from the map body, so
-  **re-derive the frontier out of GitHub rather than trusting this list** — every
-  session that has tried to predict it has been wrong at least once, and said so.
+  **Two standing lessons, carried forward** (written by earlier sessions; still true, and
+  restored here rather than dropped when this block was rewritten). First, **closing a
+  root can leave the map more blocked, not less** — `C4` unblocked exactly one of the four
+  tickets it held, and `#18`/`#24` gained *new* blockers from its own resolution. Second,
+  **the reverse also happens** — `C9a` unblocked two at once and opened the whole calendar
+  half. Neither is predictable from the map body. The count on this block has been stale
+  or wrong on most of the days it has been touched, **so re-derive the frontier out of
+  GitHub rather than trusting any list, including this one.**
 
-  **One index gap, raised and unfixed:** `C13` ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))
-  is closed with a full resolution comment but has **no line in the map's *Decisions so
-  far* index**, so it is invisible to anyone reading `#12` at low resolution. Its own
-  session released without adding it, and `c9a-schedule-a-task` deliberately did not
-  write it — an index line written *for* another session is a report, not a claim. Ido's
-  to assign.
+  **There is no AFK ticket left** — `C9f` was the last one, and every frontier ticket is
+  HITL. They are not disjoint from one another in practice: they are all Ido's attention,
+  which is the scarcest singleton here and the one the board cannot enforce.
 
-  **There is no AFK ticket left** — `C9f` was the last one, and every frontier ticket
-  is HITL. They are not disjoint from one another in practice: they are all Ido's
-  attention, which is the scarcest singleton here and the one the board cannot enforce.
+  **One index gap, still open:** `C13` ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))
+  is closed with a full resolution comment but has **no line in `#12`'s *Decisions so far*
+  index**, so it is invisible to anyone reading the map at low resolution. An index line
+  written *for* another session is a report, not a claim — Ido's to assign.
+
+  **No brief file was written for either, and that is deliberate**: on this map the ticket
+  *is* the brief and `/wayfinder 12` is the entry point, so a `sessions/<slug>.md` would be
+  an uncommitted-to-the-map duplicate that rots against the issue it copies. Decision taken
+  per the derivable-decision rule; the 🔀 Form-B fallback is for work with no committed
+  home, which this is not.
+
 - **One written brief, its own session: `/kickoff fix-task-completion-feedback`** —
   written by `product-device-pass` for issue [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3)
   (the ~2 s completion lag and its silent-offline twin). Ordinary build work, needs
