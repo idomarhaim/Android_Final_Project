@@ -218,6 +218,35 @@ chart lays out, animates, or survives a real `LazyColumn`** — that proof belon
 session, and `ChartAnimation.kt` exists because `animateFloatAsState` initialises *at* its
 target.
 
+## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
+
+**What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
+
+| Commit | Session | Status on the board at push time |
+|---|---|---|
+| `705619f` | `c1-points-and-time` | **released** — [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) resolved and closed |
+| `5b5e113` · `d9616b9` · `d805616` | `picker-rule-consolidation` (cross-repo visitor from JARVIS) | **released** — claimed and released the same day |
+
+**The outcome is fine and the process was not.** Both sessions had released, the working tree
+was clean, and precondition 5 permits a released-and-quiet session's commits to ride along — so
+the content was legitimately publishable. But `git fetch`, `git log @{u}..HEAD`,
+`git diff --stat` and `git push` were **chained in one shell command**, so the range printed and
+the push landed in the same breath: there was no moment in which the adjudication could have
+stopped anything. **Had `c1-points-and-time` still been live, this session would have published
+over a live sibling and only noticed afterwards.** The ordering, not the outcome, is the defect.
+
+**Not undone, and deliberately so.** Un-publishing needs a force-push, which is a destructive
+shortcut and always-ask in both modes. It is Ido's call, and there is nothing here that wants
+undoing on its merits.
+
+**The fix for the rest of this session, applied immediately:** the range is read in one command
+and the push issued in a **separate** one, so the adjudication sits between them where the rule
+puts it.
+
+**Also noticed while adjudicating, and it belongs to no ticket of this session's:** `#19` closed,
+which unblocks `#20`, `#22` and `#24` — and through `#24`, `#30` and `#35`. The map's whole
+blocked half has opened. Reported, not acted on.
+
 ## Status
 
 **Revision 2 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
