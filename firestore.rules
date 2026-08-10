@@ -3,46 +3,103 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
+    // Helper: check if the request is from an authenticated user
+    function isAuthenticated() {
       return request.auth != null;
     }
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
+
+    // Helper: check if the authenticated user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ── Private per-user data: goals, tasks, progress, friends ──────
-    match /users/{uid} {
-      allow read, write: if isOwner(uid);
-      match /{document=**} {
-        allow read, write: if isOwner(uid);
-      }
+    // Helper: validate a waypoint document structure (v0.3 wayfinder map)
+    function isValidWaypoint() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'goalId', 'title', 'order', 'status', 'createdAt'])
+        && data.userId is string
+        && data.goalId is string
+        && data.title is string
+        && data.order is number
+        && data.status in ['LOCKED', 'AVAILABLE', 'IN_PROGRESS', 'COMPLETED']
+        && data.title.size() <= 200;
     }
 
-    // ── Public leaderboard projection ──────────────────────────────
-    // Any signed-in user can read (for the leaderboard); only the owner writes.
-    // NOTE: points/level are written by the client for this course project. In
-    // production, compute them in a Cloud Function and lock writes down.
-    match /publicProfiles/{uid} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(uid);
+    // Helper: validate a milestone document structure (v0.3 wayfinder map)
+    function isValidMilestone() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['userId', 'goalId', 'title', 'order', 'completed', 'createdAt'])
+        && data.userId is string
+        && data.goalId is string
+        && data.title is string
+        && data.order is number
+        && data.completed is bool
+        && data.title.size() <= 200;
     }
 
-    // ── Shared achievement feed ────────────────────────────────────
-    match /shares/{shareId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
-        && request.resource.data.authorUid == request.auth.uid;
-      allow update, delete: if isSignedIn()
-        && resource.data.authorUid == request.auth.uid;
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
     }
 
-    // ── Challenges (nice-to-have) ──────────────────────────────────
-    match /challenges/{challengeId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
-        && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if isSignedIn()
-        && resource.data.ownerUid == request.auth.uid;
+    // Goals collection
+    match /goals/{goalId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Tasks collection
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Waypoints collection — GoalPilot v0.3 wayfinder map
+    // Waypoints are the stops along the path from start to goal completion.
+    // Each waypoint belongs to a goal and has an ordered position on the map.
+    match /waypoints/{waypointId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && isValidWaypoint();
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Milestones collection — GoalPilot v0.3 wayfinder map
+    // Milestones are significant checkpoints on the wayfinder map,
+    // representing major achievements toward a goal.
+    match /milestones/{milestoneId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && isValidMilestone();
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Recommendations collection (cached LLM results)
+    match /recommendations/{recId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
