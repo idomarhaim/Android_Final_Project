@@ -76,15 +76,20 @@ before your first write. Normative rule:
 > `/walkthrough` — not on a session. Refreshed rather than left standing because no
 > session holds it and it actively misdirected.
 >
-> ➕ **A third file arrived 2026-08-10 and *is* drainable** —
+> ➕ **A third file arrived 2026-08-10 and has already been drained to its survivor** —
 > [`2026-08-10-c9c-calendar-sync.md`](kb-candidates/2026-08-10-c9c-calendar-sync.md),
-> 3 entries: **2 ready** (an OAuth scope is not a permission model, and how to
-> incrementally authorize the promise you cannot enforce; two real events collapsing
-> into one observable, where both auto-behaviours are destructive in opposite
-> directions) and **1 always-ask** (a *fourth* picker-axis failure mode — granularity,
-> where the axis is right as a dimension and wrong as a unit — destined for `rules/`).
-> `c9c-calendar-sync` ran under `AUTO MODE` and drains its own two; the third joins
-> the standing pair above.
+> 3 entries, **2 ingested** under `AUTO MODE` at the commit trigger (new central page
+> `dev/indistinguishable-at-the-boundary.md`, plus `dev/google-oauth-scopes-and-consent.md`
+> **§7 folded in place**; `Check-KbLinks` **CLEAN at 55 pages**, nothing superseded) and
+> **1 parked, always-ask**: a *fourth* picker-axis failure mode — **granularity**, where
+> the axis is right as a dimension and wrong as a unit, and whose tell is that Ido
+> answers **fluently** with something not on the menu. Destination `rules/`, and the
+> ingest corrected its own candidate on the way past — `rules/question-axis-naming.md`
+> is **shipped and in force**, so this is an **amendment to a live rule**, not an
+> addition to a draft.
+>
+> **So the standing always-ask set is now three, not two**, and all three wait on Ido:
+> the two above plus this one. **Nothing else in this folder is drainable by a session.**
 
 > **Issue-tracker partition — settled, and now visible in the tracker itself.**
 > Both 2026-08-06 sessions have released, and neither filed from the other's list.

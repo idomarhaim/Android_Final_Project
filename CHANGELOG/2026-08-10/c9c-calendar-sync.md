@@ -251,5 +251,32 @@ never contacted. Leases: `SESSIONS.md` + `#git-index` for the claim commit,
 
 ## KB candidates
 
-3 written to `kb-candidates/2026-08-10-c9c-calendar-sync.md`, and ingested under
-`AUTO MODE` at the commit trigger.
+**3 written, 2 drained at the `AUTO MODE` commit trigger, 1 parked.** Into the central
+bundle `C:\Dev\JARVIS\kb`:
+
+- 📥 **An OAuth scope is not a permission model** → `dev/google-oauth-scopes-and-consent.md`
+  **§7, folded in place** (old §7 *Adjacent* → §8). Grants are per *scope*, never per
+  *resource*, so the per-calendar control Ido asked for is a promise the client keeps —
+  answered with **incremental authorization**, whose real payoff is that a user who
+  never uses the capability gets a **guarantee** rather than a promise.
+- 📥 **Two actions, one observable** → **new page**
+  `dev/indistinguishable-at-the-boundary.md`. Preserve the superset and defer the
+  disambiguation to a human, because both auto-behaviours are destructive in opposite
+  directions and there is no safe middle.
+- ⛔ **The fourth picker-axis failure mode (*granularity*)** — parked, always-ask in
+  both modes, destination `rules/`. Not dropped: the candidate file was **rewritten
+  down to this survivor**, original numbering kept, under `## Standing — always-ask`.
+
+`Check-KbLinks` **CLEAN at 55 pages**; **nothing superseded** — both writes additive.
+A row was claimed on the **JARVIS board** as well, since the board follows the repo
+being written to, and the ingest half has its own changelog there
+(`CHANGELOG/2026-08-10/c9c-calendar-sync-ingest.md`, commit `526d2b9`).
+
+**Two things the ingest found by checking rather than trusting.** Entry 1's bundle
+check was **present and wrong** — §4 of the OAuth page already carried
+*"request the scope at first use of the feature that needs it"*, written the same day
+by a sibling drain — so the entry landed as a **refinement of §4** rather than as the
+original claim it proposed. And the parked entry described
+`rules/question-axis-naming.md` as an uncommitted draft; the JARVIS board shows it
+**shipped and in force**, so it is an **amendment to a live rule**, which raises what
+it asks of Ido rather than lowering it. Corrected in the candidate file itself.
