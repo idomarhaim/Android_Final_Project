@@ -1,86 +1,89 @@
 # `C12` · Charts, presentation and widgets — prototype
 
 Asset for [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) on map
-[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 3.**
+[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 4.**
 
 ```powershell
 start docs\prototypes\2026-08-10-charts-presentation\index.html
 ```
 
-Buttons pick the screen; `←` / `→` also cycle. **עברית** flips the whole frame to RTL,
-**Light / Dark** switches scheme, and on the widgets screen a second row picks the size class.
-No build, no emulator, no network.
+Buttons pick the view; `←` / `→` cycle. **עברית** flips the frame to RTL, **Light / Dark**
+switches scheme, and the widgets view gets a second row for the size class. No build, no
+emulator, no network.
 
-## Rev 3 — Ido's three notes, and what each one changed
-
-**1 · "Match the colours and the design quality of prototype 1."** Rebuilt on `C9b`'s design
-system rather than restyled toward it: the **committed Aurora tokens from `ui/theme/Color.kt`**
-in both schemes, the same phone chrome (punch-hole, raking gloss, `feTurbulence` grain), the
-same five-radial aurora canvas in light and dark, the Hebrew-first font stack, tabular numerals,
-and the `.ltr` isolation class. The ten category hues keep `C9b`'s **tone-80 dark set verbatim**
-for the four it defined and extend the same recipe to the six this ticket also needs — so the
-two prototypes now render the same life area in the same colour.
-
-**2 · "Widgets at every size class."** `2×2`, `4×2`, `2×4`, `4×4`, plus a **Home screen** view
-mixing sizes on a real wallpaper with a dock. Sizes are built from a 76 dp cell and a 12 dp
-gutter, so `4×4` lands at 340 dp — the width a 392 dp phone actually has after margins.
-
-**3 · "Every card is also a widget."** All seven are: Decisions · Today · Your goals · This week
-(donut) · Day by day (trend) · Effort and outcome · Level. **This overturns rev 1's rule** that
-*a chart whose honesty depends on a footnote may not be a widget*, which had banned the donut
-outright.
-
-> **The rule became a size rule instead of a ban, which is the better answer.**
-> The donut's disclosure is required by `C17` §3 — it *divides* shared minutes and has to say
-> so. So every tile carries it, sized to the tile: **three words at 2×2** (*"shared time
-> divided"*), one clause at `4×2` and `2×4`, the full sentence at `4×4`. No size ships without
-> one. The ban was the lazy way to keep the invariant; sizing the sentence keeps it *and* gives
-> Ido the widget he asked for.
-
-Same treatment for the **Level** widget, which rev 2 also refused: it ships, and it carries the
-one sentence that stops it lying — *points are your minutes, scored, not a separate score*.
-
-## Screens
-
-| button | what it is |
+| view | what it is |
 |---|---|
-| **Home** | Decisions banner → Today → your goals → this week → one setup row |
-| **Home today** | The shipped order, from `DashboardScreen.kt`, so the comparison is a picture |
-| **Analytics** | Donut · day-by-day trend · where the time went and what moved |
-| **Effort · rejected forms** | The chosen card beside the three it deliberately is not |
-| **Widgets** | All seven, at four size classes and on a mixed home screen |
+| **Home** | Decisions → Today → your goals → this week |
+| **Home today** | The shipped order, from `DashboardScreen.kt`, for comparison |
+| **Analytics** | The chart set |
+| **Widgets** | All seven tiles at `2×2`, `4×2`, `2×4`, `4×4`, and a mixed home screen |
+| **Design notes** | Not a screen — what the rejected forms were, what a widget really is, what the palette costs |
 
-One week of data is shared by every screen and every widget — minutes already **divided** across
-goal edges (`C17` §3), spans contributing **nothing** (`C9a` via `C9b`) — so a donut in a widget
-cannot disagree with the donut on Home.
+## Rev 4 — Ido's five notes
+
+**1 · A new palette, and real volume.** The committed `GoalCategory.defaultColorHex` set is seven
+**primaries at full chroma with unevenly spaced hues** — individually fine, but side by side in
+one donut nothing holds them together, which is why they read as crayons. Replaced with a set
+built *as a set*: one lightness, one chroma, hues evenly spaced, and a dark variant holding the
+same relationship against `#0C1520`. **This replaces committed values, so `ThemePaletteTest` is
+owed an update** — logged in the Design notes view rather than done quietly.
+
+Volume is not a gradient bolted on: every arc, bar and ring gets a **three-stop fill** (tint →
+hue → shade), a **specular bevel** (`feSpecularLighting` with a point light above-left), a
+**sheen arc** along the lit edge, a **cast shadow**, and a **`feTurbulence` grain pass** in
+soft-light so the surface has texture rather than flat plastic. The donut's slice caps are
+**butt, not round** — a round cap adds half the stroke width past each endpoint, which at
+`thick = 20` swallows any gap small enough to still read as one ring.
+
+**2 · The donut names every life area.** Direct labels with **leader lines and per-side vertical
+de-collision**, plus the percentage under each name — so no legend round-trip. Works in both
+directions; the label side is geometric, so RTL needs no special case.
+
+**3 · The two "rejected" cards moved out of the phone.** They were never app features — they are
+shapes the effort-and-outcome card was drawn as and then thrown away. Rendering them *as app
+screens* is precisely what made them unreadable, so they now live in a plain **Design notes**
+panel that says, in one sentence each, what the thing was and why it lost. A third was added:
+**revision 1's own ranking**, which its own test killed.
+
+**4 · Widgets rebuilt at the same level** — accent glow keyed to each tile's subject, an icon
+lozenge, a texture pass, denser content, and real gradients on every bar and ring.
+
+**5 · Confirmed, and it changes what the build session owes.** These are **real Android app
+widgets**, placed by the user on the launcher's home screen, outside the app: long-press
+wallpaper → Widgets → GoalPilot → drag → resize. Three consequences are written into the Design
+notes because they are constraints rather than details:
+
+- a widget is **not a live screen** — Android renders a snapshot and refreshes on a schedule, so
+  **nothing animates**, and the entry animation `ui/components/ChartAnimation.kt` exists for does
+  not run there;
+- the **launcher decides the real dp** a `2×2` or `4×4` occupies, and it varies by device and
+  launcher, so every tile must survive being smaller than it is drawn here;
+- a tap can only **open the app at a destination** — a widget cannot show a dialog — so "tick it
+  here" means the app opens on that task.
 
 ## Decisions on the record
 
-**Derived** from closed tickets, logged rather than asked: the chart set (`C3`, `C7`, `C16`,
-`C17`) · the divided-minutes disclosure · retiring `HorizontalBarChart` from Analytics · the
-dark palette · the RTL time axis.
+**Derived** from closed tickets: the chart set (`C3`, `C7`, `C16`, `C17`) · the divided-minutes
+disclosure (`C17` §3) · retiring `HorizontalBarChart` · the RTL time axis.
 
 **Handed back by Ido, then taken** (2026-08-10): the level ring on the avatar instead of a points
-hero, because the hero and the donut were the same minutes twice · no chart picker, replaced by
-cards that hide themselves when they have nothing to say and a range picker that remembers ·
-the effort card ships, rebuilt to rank **only minutes** and to **name** movement rather than
-score it.
+hero · no chart picker · the effort card ranks **only minutes** and **names** movement.
 
-**Overturned by Ido** (2026-08-11): the widget ban, as above.
+**Overturned by Ido**: the widget ban (2026-08-11) — re-cut as a size rule, the disclosure
+shrinking to the smallest true sentence a tile can hold, never dropped · the committed category
+palette (2026-08-11).
 
 ## The cost, stated rather than hidden
 
-HTML, for the reason `C9b` gave — `#12`'s Notes say *no ticket on this map ships code*, and a
-throwaway Compose route would take the Gradle daemon and an emulator for a question about
-layout. **So this cannot prove a Compose chart lays out, animates, or survives a real
-`LazyColumn`, and it cannot prove a Glance widget fits its real cell** — Android gives a widget
-a size in dp that varies by launcher and by device. That proof belongs to the build session;
-`ui/components/ChartAnimation.kt` exists because `animateFloatAsState` initialises *at* its
-target, and anything new here inherits that.
+HTML, because `#12`'s Notes say *no ticket on this map ships code* and a throwaway Compose route
+would take the Gradle daemon and an emulator for a question about layout. **So it cannot prove a
+Compose chart lays out or animates, and it cannot prove a Glance widget fits its real cell** —
+and the specular bevel and turbulence used here are **SVG filters, which Glance has no equivalent
+for**: in a widget that depth has to come from a pre-rendered bitmap or from `Canvas` drawing,
+which is the build session's problem and is named rather than hidden.
 
-**Verified mechanically after every revision, not by eye:** `node --check` on the extracted
-script → **OK**. Hebrew guard → **72 literals inside the app, 0 unguarded** (each is the second
-argument of `t(en, he)`, a `he:` / `meHe:` key, or an `L === 'he'` branch — those three are the
-complete taxonomy). One Hebrew string exists **outside** the phone frame: the prototype's own
-`עברית` toggle button, which is chrome, not app UI. It is a static guard check, not a rendered
--output test — no browser was driven.
+**Verified mechanically after every revision:** `node --check` on the extracted script → **OK**.
+Hebrew guard → **71 literals inside the app, 0 unguarded** (each is the second argument of
+`t(en, he)`, a `he:` / `meHe:` key, or an `L === 'he'` branch). One Hebrew string sits **outside**
+the phone frame — the prototype's own `עברית` toggle, which is chrome, not app UI. Static guard
+check, not a rendered-output test.

@@ -2,28 +2,23 @@
 <!--
   PROTOTYPE — GoalPilot charts, presentation and widgets (C12, issue #31).
   THROWAWAY. Not app code.
-  ?variant=home|home-before|analytics|gap|widgets · ?lang=he|en · ?theme=light|dark
-  ?size=2x2|4x2|2x4|4x4|mixed   (widgets variant only)
+  ?variant=home|home-before|analytics|widgets|notes · ?lang=he|en · ?theme=light|dark
+  ?size=2x2|4x2|2x4|4x4|mixed   (widgets only)
 
-  Rev 3 — 2026-08-10, all three of Ido's rev-2 notes:
-    1. Rebuilt on C9b's design system — the committed Aurora tokens from
-       ui/theme/Color.kt (both schemes), the same phone chrome, grain, aurora
-       canvas, Hebrew-first font stack, tabular numerals and bidi isolation.
-       The ten category hues keep C9b's tone-80 dark set and extend it to the
-       six categories this ticket needs.
-    2. Widgets at every size class — 2x2, 4x2, 2x4, 4x4, and a mixed home screen.
-    3. EVERY card on every C12 screen is also a widget. This overturns rev 1's
-       "a chart whose honesty depends on a footnote may not be a widget" — it is
-       now a SIZE rule instead of a ban: the disclosure shrinks to the smallest
-       true sentence that fits, and no size ships without one.
-
-  Rev 2 — the three open questions were handed back and taken by the agent:
-    * the level ring rides on the avatar; no points hero (points ARE minutes)
-    * no chart picker; cards hide themselves when they have nothing to say
-    * effort/outcome ships, but ranks only minutes and NAMES movement, because
-      a percentage is a fraction of its own target and ranking it ranks how
-      modest the goals are. Rev 1's ranking is kept in ?variant=gap as a
-      rejected exhibit.
+  Rev 4 — 2026-08-11, Ido's five notes on rev 3:
+   1. New categorical palette — the committed GoalCategory hexes are primaries at
+      full chroma and read as crayons next to each other. Replaced with a
+      harmonised set: one lightness, one chroma, hues evenly spaced. Plus real
+      volume: per-slice gradients, a specular bevel filter, a sheen arc, a
+      turbulence texture pass and cast shadows. Charts, rings and bars all.
+   2. The donut carries the life-area NAME beside every slice, with leader lines
+      and vertical de-collision, in both directions.
+   3. The two "rejected" cards were design alternatives, not app features, and
+      rendering them as app screens is what made them unreadable. They moved OUT
+      of the phone into a plain design-notes panel that says what each one is.
+   4. Widgets rebuilt at the same level — accent glow, icons, texture, density.
+   5. Confirmed: these are real Android home-screen widgets, placed by the user
+      on the launcher OUTSIDE the app. Consequences named in the notes panel.
 -->
 <html lang="en">
 <head>
@@ -31,14 +26,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PROTOTYPE — GoalPilot charts, presentation and widgets (C12 / #31)</title>
 <style>
-  /* ═══ tokens — lifted verbatim from ui/theme/Color.kt, both schemes ═══ */
+  /* ═══ surface tokens — from ui/theme/Color.kt, both schemes ═══ */
   .phone,.wall{
     --s-lowest:#FFFFFF; --s-low:#F2F7FD; --s:#EBF2FB; --s-high:#E4EDF8; --s-highest:#DDE8F5;
-    --bg:#D0E2F5; --s-dim:#B8CBDF; --s-var:#D9E2EF;
+    --bg:#D0E2F5; --s-dim:#B8CBDF;
     --primary:#0A56C4; --on-primary:#FFFFFF; --p-container:#D8E2FF; --on-p-container:#001A41;
     --secondary:#0A6045; --sec-container:#A8F2D3; --on-sec-container:#002014;
-    --on-surface:#131A22; --on-surface-var:#414A57; --outline:#6C7684; --outline-var:#BAC6D6;
-    --hero-1:#0B62D6; --hero-2:#0C7CA4; --hero-3:#0E7F63; --tertiary-a:#00596B;
+    --on-surface:#131A22; --on-surface-var:#414A57; --outline-var:#BAC6D6;
+    --hero-1:#0B62D6; --hero-2:#0C7CA4; --hero-3:#0E7F63;
     --error:#B3261E; --late:#9A3412; --late-container:#FFE7D6;
     --ghost:#6C7684; --ghost-container:rgba(108,118,132,.13);
     --glow:rgba(10,86,196,.28);
@@ -48,11 +43,11 @@
   }
   .phone[data-theme="dark"],.wall[data-theme="dark"]{
     --s-lowest:#070C13; --s-low:#141D29; --s:#18212E; --s-high:#222C3A; --s-highest:#2D3745;
-    --bg:#0C1520; --s-dim:#0C1520; --s-var:#404A58;
+    --bg:#0C1520; --s-dim:#0C1520;
     --primary:#AFC6FF; --on-primary:#002E6A; --p-container:#004494; --on-p-container:#D8E2FF;
     --secondary:#8AD6B7; --sec-container:#00513E; --on-sec-container:#A8F2D3;
-    --on-surface:#DEE6F2; --on-surface-var:#BFCADA; --outline:#8A94A5; --outline-var:#404A58;
-    --hero-1:#12406F; --hero-2:#0F4E63; --hero-3:#12513F; --tertiary-a:#57D6F0;
+    --on-surface:#DEE6F2; --on-surface-var:#BFCADA; --outline-var:#404A58;
+    --hero-1:#12406F; --hero-2:#0F4E63; --hero-3:#12513F;
     --error:#FFB4AB; --late:#FFB68A; --late-container:#5A2408;
     --ghost:#8A94A5; --ghost-container:rgba(138,148,165,.16);
     --glow:rgba(175,198,255,.22);
@@ -60,8 +55,7 @@
     --sh-1:0 1px 2px rgba(0,0,0,.30), 0 2px 8px rgba(0,0,0,.26);
     --sh-2:0 2px 6px rgba(0,0,0,.34), 0 14px 34px rgba(0,0,0,.45);
   }
-  :root{--r-sm:12px; --r-md:18px; --r-lg:24px; --r-xl:30px;
-        --spring:cubic-bezier(.2,.9,.22,1)}
+  :root{--r-lg:24px; --spring:cubic-bezier(.2,.9,.22,1)}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
@@ -70,28 +64,25 @@
     font-family:'Rubik','Heebo','Assistant','Inter','Segoe UI Variable Text','Segoe UI',
                 Roboto,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-    display:flex;flex-direction:column;align-items:center;gap:18px;padding:22px 12px 120px;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px 12px 120px;
   }
-  .num,.statusbar,.wg .n,.tabnum{font-variant-numeric:tabular-nums}
-  /* a Latin-digit run inside an RTL paragraph is REORDERED by the bidi algorithm:
-     "09:00–12:00" renders "12:00–09:00". Isolation is the fix, not a workaround. */
+  .num,.statusbar,.wg .n{font-variant-numeric:tabular-nums}
   .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
   svg{display:block}
 
-  /* ── prototype chrome (never part of the design) ─────────────────────── */
-  .banner{max-width:860px;text-align:center}
+  .banner{max-width:880px;text-align:center}
   .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;color:#eaf2fb}
   .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#93a7bd}
-  .banner code{background:#0b1219;padding:1.5px 6px;border-radius:5px;font-size:11.5px;color:#b9cde2}
   .bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
   .cbtn{border:1px solid #2a3a4c;background:#131c26;color:#cfe0f0;border-radius:999px;
         padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
   .cbtn:hover{border-color:#4f7fb5}
   .cbtn.on{background:#3f7fd4;border-color:#3f7fd4;color:#fff}
-  .cap{font-size:11px;color:#8fa4ba;text-align:center;margin-top:6px;line-height:1.35}
+  .cap{font-size:11px;text-align:center;margin-top:6px;line-height:1.35;
+       color:var(--on-surface-var);opacity:.8}
 
-  /* ── device ──────────────────────────────────────────────────────────── */
-  .phone{
+  /* ── device ─────────────────────────────────────────────────────────── */
+  .phone,.wall{
     width:392px;height:848px;border-radius:48px;background:var(--bg);
     border:11px solid #04080c;position:relative;overflow:hidden;color:var(--on-surface);
     display:flex;flex-direction:column;
@@ -99,40 +90,33 @@
                0 34px 80px rgba(0,0,0,.65);
     animation:in .36s var(--spring);
   }
-  .phone::before{content:'';position:absolute;top:11px;left:50%;transform:translateX(-50%);
-    width:88px;height:26px;border-radius:999px;background:#04080c;z-index:60}
-  .phone::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:59;
+  .phone::before,.wall::before{content:'';position:absolute;top:11px;left:50%;
+    transform:translateX(-50%);width:88px;height:26px;border-radius:999px;background:#04080c;z-index:60}
+  .phone::after,.wall::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:59;
     background:linear-gradient(128deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 32%);
     mix-blend-mode:screen}
-  .grain{position:absolute;inset:0;z-index:58;pointer-events:none;opacity:.42;
+  .grain{position:absolute;inset:0;z-index:58;pointer-events:none;opacity:.4;
     mix-blend-mode:soft-light;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E");}
-  .phone[data-theme="dark"] .grain{opacity:.30}
+  [data-theme="dark"] .grain{opacity:.28}
   @keyframes in{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:none}}
   @keyframes rise{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
 
   .statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;
              padding:6px 26px 0;font-size:12.5px;font-weight:650}
-  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none;
-    background:
-      radial-gradient(600px 320px at 6% 0%, var(--lift), transparent 62%),
-      radial-gradient(520px 340px at 98% 12%, var(--glow), transparent 64%);}
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none}
   .screen::-webkit-scrollbar{width:0}
 
-  /* Dark mode is not "light mode with the lights off" — the canvas keeps an
-     aurora of blue, teal and violet at low opacity, and every raised surface
-     gets a faint chroma lift rather than a lighter grey. Light mode gets the
-     same treatment, warmer. Both lifted from C9b. */
   .phone[data-theme="light"],.wall[data-theme="light"]{
     background:linear-gradient(168deg, #C7DCFB 0%, #CFDAFA 38%, #D8D6F7 72%, #DCDCF6 100%);}
-  .phone[data-theme="light"] .screen,.wall[data-theme="light"] .wallpaper{
+  [data-theme="light"] .screen,[data-theme="light"] .wallpaper{
     background:
       radial-gradient(700px 430px at -10% -8%, rgba(88,138,255,.50), transparent 60%),
       radial-gradient(620px 450px at 110% 0%, rgba(0,198,190,.42), transparent 60%),
       radial-gradient(720px 520px at 38% 108%, rgba(172,112,246,.38), transparent 62%),
       radial-gradient(520px 340px at 98% 52%, rgba(255,164,116,.30), transparent 62%),
       radial-gradient(470px 330px at 2% 64%, rgba(104,228,198,.28), transparent 64%);}
-  .phone[data-theme="dark"] .screen,.wall[data-theme="dark"] .wallpaper{
+  [data-theme="dark"] .screen,[data-theme="dark"] .wallpaper{
     background:
       radial-gradient(760px 420px at -6% -4%, rgba(72,116,255,.20), transparent 58%),
       radial-gradient(680px 460px at 104% 6%, rgba(0,190,196,.16), transparent 60%),
@@ -140,30 +124,28 @@
       radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.12), transparent 66%),
       radial-gradient(420px 300px at 6% 58%, rgba(230,120,90,.09), transparent 66%);}
 
-  .phone[data-theme="light"] .card,.phone[data-theme="light"] .iconbtn,
-  .phone[data-theme="light"] .wg,.phone[data-theme="light"] .seg{
+  [data-theme="light"] .card,[data-theme="light"] .iconbtn,
+  [data-theme="light"] .wg,[data-theme="light"] .seg{
     background:linear-gradient(158deg, #FFFFFF 0%, #F6FAFF 52%, #EFF5FF 100%);
     box-shadow:var(--sh-1), inset 0 1px 0 #FFFFFF;}
-  .phone[data-theme="dark"] .card,.phone[data-theme="dark"] .iconbtn,
-  .phone[data-theme="dark"] .wg,.phone[data-theme="dark"] .seg{
+  [data-theme="dark"] .card,[data-theme="dark"] .iconbtn,
+  [data-theme="dark"] .wg,[data-theme="dark"] .seg{
     background:linear-gradient(158deg, rgba(126,158,255,.10), rgba(90,220,210,.05) 55%,
                                        rgba(160,110,235,.08));
     box-shadow:var(--sh-1), inset 0 1px 0 rgba(180,205,255,.13);}
-  .phone[data-theme="light"] .navbar{
+  [data-theme="light"] .navbar{
     background:linear-gradient(to bottom, rgba(226,236,255,.86), rgba(214,226,252,.94));}
-  .phone[data-theme="dark"] .navbar{
+  [data-theme="dark"] .navbar{
     background:linear-gradient(to bottom, rgba(18,28,44,.90), rgba(14,22,36,.80));}
 
-  /* the one element that should genuinely pop gets the committed hero sweep */
   .hero{background:linear-gradient(142deg, var(--hero-1) 0%, var(--hero-2) 56%, var(--hero-3) 100%)!important;
     box-shadow:0 8px 24px color-mix(in srgb, var(--hero-1) 34%, transparent),
                inset 0 1px 0 rgba(255,255,255,.24)!important;color:#fff}
-  .hero .sub,.hero .n2{color:rgba(255,255,255,.82)!important}
+  .hero .sub{color:rgba(255,255,255,.82)!important}
 
   .appbar{padding:2px 18px 12px;display:flex;align-items:flex-start;gap:10px}
   .appbar .ttl{font-size:29px;font-weight:680;letter-spacing:-.034em;line-height:1.08}
   .appbar .sub{font-size:12.5px;color:var(--on-surface-var);margin-top:4px;font-weight:500}
-  .appbar .spacer{flex:1}
   .iconbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
     color:var(--on-surface-var);font-size:19px;flex:none}
 
@@ -172,7 +154,7 @@
   .navbar .t{display:flex;flex-direction:column;align-items:center;gap:5px;width:70px;
     font-size:11px;font-weight:560;color:var(--on-surface-var)}
   .navbar .t .pill{padding:0 20px;height:33px;border-radius:17px;font-size:19px;display:grid;
-    place-items:center;transition:all .3s var(--spring)}
+    place-items:center}
   .navbar .t.on{color:var(--on-p-container);font-weight:680}
   .navbar .t.on .pill{background:var(--p-container);color:var(--on-p-container);
     box-shadow:0 4px 12px var(--glow)}
@@ -203,9 +185,7 @@
   .tag.good{background:var(--sec-container);color:var(--on-sec-container)}
   .tag.dash{background:transparent;box-shadow:inset 0 0 0 1.4px var(--outline-var)}
 
-  /* rows */
-  .tk{display:flex;gap:11px;align-items:flex-start;padding:10px 0;
-      box-shadow:0 1px 0 var(--hair)}
+  .tk{display:flex;gap:11px;align-items:flex-start;padding:10px 0;box-shadow:0 1px 0 var(--hair)}
   .tk:last-child{box-shadow:none;padding-bottom:0}
   .tick{width:21px;height:21px;border-radius:7px;flex:none;margin-top:1px;
         box-shadow:inset 0 0 0 2px var(--outline-var)}
@@ -216,8 +196,8 @@
   .tk .m{flex:1;min-width:0}
   .tk .m b{display:block;font-size:14px;font-weight:640;white-space:nowrap;overflow:hidden;
            text-overflow:ellipsis;letter-spacing:-.012em}
-  .tk .m .me{font-size:11.5px;color:var(--on-surface-var);display:flex;gap:6px;
-             align-items:center;margin-top:3px;flex-wrap:wrap;font-weight:550}
+  .tk .m .me{font-size:11.5px;color:var(--on-surface-var);display:flex;gap:6px;align-items:center;
+             margin-top:3px;flex-wrap:wrap;font-weight:550}
   .tk.done .m b{color:var(--on-surface-var);text-decoration:line-through}
 
   .goal{display:flex;align-items:center;gap:12px;padding:10px 0;box-shadow:0 1px 0 var(--hair)}
@@ -229,46 +209,63 @@
   .nodial{width:38px;height:38px;border-radius:50%;flex:none;
           box-shadow:inset 0 0 0 2px var(--outline-var);opacity:.6}
 
-  .lg{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3.5px 0;font-weight:550}
-  .lg i{width:9px;height:9px;border-radius:3px;flex:none}
-  .lg .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lg .v{color:var(--on-surface-var);font-size:11.5px}
-
   .load{display:flex;align-items:center;gap:11px;margin-top:12px}
-  .load .t{flex:1;height:9px;border-radius:99px;background:var(--ghost-container);
-           overflow:hidden;display:flex}
+  .load .t{flex:1;height:10px;border-radius:99px;background:var(--ghost-container);
+           overflow:hidden;display:flex;box-shadow:inset 0 1px 2px rgba(0,0,0,.18)}
   .load .t i{display:block;height:100%}
   .load .x{font-size:11.5px;color:var(--on-surface-var);white-space:nowrap;font-weight:550}
 
-  /* ── the home screen, for widgets ────────────────────────────────────── */
-  .wall{width:392px;height:848px;border-radius:48px;border:11px solid #04080c;position:relative;
-    overflow:hidden;color:var(--on-surface);display:flex;flex-direction:column;
-    box-shadow:0 0 0 1px rgba(255,255,255,.10), 0 34px 80px rgba(0,0,0,.65)}
+  /* ── home screen + widgets ──────────────────────────────────────────── */
   .wallpaper{position:absolute;inset:0}
   .wall .inner{position:relative;z-index:2;flex:1;overflow-y:auto;scrollbar-width:none;
-    padding:10px 14px 26px}
+    padding:44px 14px 26px}
   .wall .inner::-webkit-scrollbar{width:0}
-  .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
-  .wg{border-radius:26px;padding:12px 13px;overflow:hidden;position:relative;
+  .wg{border-radius:28px;padding:13px 14px;overflow:hidden;position:relative;
       display:flex;flex-direction:column;animation:rise .3s both}
-  .wg .hd{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;
-          letter-spacing:.05em;text-transform:uppercase;color:var(--on-surface-var);
-          margin-bottom:7px;white-space:nowrap;overflow:hidden}
-  .wg .hd i{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
-  .wg .n{font-size:31px;font-weight:700;letter-spacing:-.04em;line-height:1}
+  /* accent glow + texture, so a tile reads as an object rather than a rectangle */
+  .wg::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 80% at 100% 0%, var(--acc-glow), transparent 62%)}
+  .wg::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:.30;
+    mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23m)'/%3E%3C/svg%3E")}
+  .wg > *{position:relative;z-index:1}
+  .wg .hd{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;
+          letter-spacing:.045em;text-transform:uppercase;color:var(--on-surface-var);
+          margin-bottom:8px;white-space:nowrap;overflow:hidden}
+  .wg .hd .ico{width:19px;height:19px;border-radius:7px;display:grid;place-items:center;
+    font-size:11px;color:#fff;flex:none;background:var(--acc);
+    box-shadow:0 2px 7px var(--acc-glow), inset 0 1px 0 rgba(255,255,255,.4)}
+  .wg .n{font-size:33px;font-weight:730;letter-spacing:-.045em;line-height:1}
   .wg .n2{font-size:12px;color:var(--on-surface-var);font-weight:560;line-height:1.35}
-  .wg .disc{font-size:9px;line-height:1.3;color:var(--on-surface-var);opacity:.9;
-            margin-top:auto;padding-top:7px;font-weight:550}
+  .wg .disc{font-size:9px;line-height:1.3;color:var(--on-surface-var);opacity:.85;
+            margin-top:auto;padding-top:8px;font-weight:550}
   .wg .grow{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
-  .dock{position:relative;z-index:2;height:86px;flex:none;margin:0 14px 16px;border-radius:30px;
+  .dock{position:relative;z-index:2;height:84px;flex:none;margin:0 14px 16px;border-radius:30px;
         display:flex;align-items:center;justify-content:space-around;padding:0 8px;
-        background:rgba(255,255,255,.16);backdrop-filter:blur(16px)}
-  .wall[data-theme="dark"] .dock{background:rgba(255,255,255,.07)}
-  .dock .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
-            font-size:22px;color:#fff;
+        background:rgba(255,255,255,.17);backdrop-filter:blur(16px)}
+  [data-theme="dark"] .dock{background:rgba(255,255,255,.07)}
+  .dock .ic{width:52px;height:52px;border-radius:17px;display:grid;place-items:center;
+            font-size:21px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.35);
             background:linear-gradient(150deg,var(--hero-1),var(--hero-3))}
-  .gallery{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:flex-start}
-  .cell{width:auto}
+  .wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+
+  /* ── design-notes panel (never inside the phone) ────────────────────── */
+  .np{width:640px;max-width:100%;background:#111a24;border:1px solid #223244;border-radius:22px;
+      padding:22px 24px;color:#cfdcea}
+  .np h2{margin:0 0 4px;font-size:19px;font-weight:680;letter-spacing:-.02em;color:#eaf3fb}
+  .np .lede{margin:0 0 20px;font-size:13px;line-height:1.6;color:#8ea3b9}
+  .np section{border-top:1px solid #1e2c3b;padding:18px 0 4px}
+  .np h3{margin:0 0 3px;font-size:15px;font-weight:660;color:#eaf3fb}
+  .np .what{font-size:12.5px;color:#7f95ac;margin:0 0 12px;font-weight:550}
+  .np p{font-size:13px;line-height:1.62;margin:10px 0 0;color:#b6c8da}
+  .np .verdict{display:inline-block;font-size:10.5px;font-weight:750;letter-spacing:.05em;
+    text-transform:uppercase;padding:3px 10px;border-radius:999px;margin-bottom:9px;
+    background:rgba(255,120,100,.14);color:#ff9b86;border:1px solid rgba(255,120,100,.35)}
+  .np .verdict.ok{background:rgba(90,220,170,.13);color:#7fe3bb;border-color:rgba(90,220,170,.35)}
+  .np .demo{background:#0b131b;border:1px solid #1d2a38;border-radius:16px;padding:14px 16px;
+    margin-top:12px}
+  .np .demo .rw{display:flex;align-items:center;gap:11px;padding:7px 0}
+  .np b{color:#eaf3fb}
 </style>
 </head>
 <body>
@@ -282,8 +279,8 @@
   <button class="cbtn" data-v="home">Home</button>
   <button class="cbtn" data-v="home-before">Home today</button>
   <button class="cbtn" data-v="analytics">Analytics</button>
-  <button class="cbtn" data-v="gap">Effort · rejected forms</button>
   <button class="cbtn" data-v="widgets">Widgets</button>
+  <button class="cbtn" data-v="notes">Design notes</button>
 </div>
 <div class="bar" id="sizebar" style="display:none">
   <button class="cbtn" data-s="2x2">2 × 2</button>
@@ -297,152 +294,262 @@
   <button class="cbtn" id="theme">Light</button>
 </div>
 
-<div id="stage" class="gallery"></div>
+<div id="stage" style="display:flex;justify-content:center"></div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   Category colours. GoalCategory.defaultColorHex is a LIGHT-MODE palette —
-   all ten are picked for contrast against a white-ish surface and go muddy
-   on #0C1520. C9b's four tone-80 dark values are kept verbatim; the six this
-   ticket also needs are cut to the same recipe.
+   PALETTE — rev 4.
+   The committed GoalCategory.defaultColorHex set is seven primaries at full
+   chroma (#CF3636, #0F6FCB, #8B39C4 …). Individually fine; side by side in a
+   donut they read as crayons, because nothing holds them together — the hues
+   are unevenly spaced and the lightness jumps per slice.
+   This set is built as a SET: one lightness, one chroma, hues evenly spaced,
+   and a dark variant lifted to the same relationship against #0C1520.
+   It replaces the committed hexes, so ThemePaletteTest is owed an update —
+   logged in the notes panel rather than done quietly.
    ═══════════════════════════════════════════════════════════════════════ */
 const CAT = {
-  HEALTH:   {he:'בריאות',       en:'Health',        c:'#CF3636', d:'#FF8A85'},
-  FITNESS:  {he:'אימון ריצה',   en:'Running',       c:'#B85107', d:'#FFB77A'},
-  LEARNING: {he:'לימודים',      en:'Studies',       c:'#8B39C4', d:'#D8A9FF'},
-  CAREER:   {he:'קריירה',       en:'Career',        c:'#0F6FCB', d:'#93C5FF'},
-  RELATION: {he:'מערכות יחסים', en:'Relationships', c:'#D6246E', d:'#FFB0CB'},
-  FINANCE:  {he:'כספים',        en:'Finance',       c:'#0B7285', d:'#7BD8E8'},
-  OTHER:    {he:'ללא שיוך',     en:'Unfiled',       c:'#64748B', d:'#C3CEDD'},
+  LEARNING:{he:'לימודים',      en:'Studies',       l:'#6E56D8', d:'#B6A6F5'},
+  HEALTH:  {he:'בריאות',       en:'Health',        l:'#D8564C', d:'#F5A196'},
+  CAREER:  {he:'קריירה',       en:'Career',        l:'#2E7BC4', d:'#95C4EE'},
+  RELATION:{he:'מערכות יחסים', en:'Relationships', l:'#C24586', d:'#EEA0C6'},
+  FINANCE: {he:'כספים',        en:'Finance',       l:'#1D8C86', d:'#7FCFC7'},
+  FITNESS: {he:'אימון ריצה',   en:'Running',       l:'#C1802F', d:'#E7BE82'},
+  OTHER:   {he:'ללא שיוך',     en:'Unfiled',       l:'#7C8798', d:'#AEB9C7'},
 };
-let THEME = 'dark', L = 'en', SIZE = '2x2';
-const cc = k => THEME === 'dark' ? CAT[k].d : CAT[k].c;
-const T  = o => L === 'he' ? (o.he ?? o.en) : o.en;
-const t  = (en, he) => L === 'he' ? he : en;
+let THEME='dark', L='en', SIZE='2x2', UID=0;
+const cc  = k => THEME==='dark' ? CAT[k].d : CAT[k].l;
+const T   = o => L==='he' ? (o.he ?? o.en) : o.en;
+const t   = (en,he) => L==='he' ? he : en;
 const ltr = s => `<span class="ltr">${s}</span>`;
-const hm = m => L === 'he'
-  ? `${Math.floor(m/60)} ש׳${m%60 ? ' ' + (m%60) + ' ד׳' : ''}`
-  : `${Math.floor(m/60)}h${m%60 ? ' ' + (m%60) + 'm' : ''}`;
+const hm  = m => L==='he'
+  ? `${Math.floor(m/60)} ש׳${m%60 ? ' '+(m%60)+' ד׳' : ''}`
+  : `${Math.floor(m/60)}h${m%60 ? ' '+(m%60)+'m' : ''}`;
 
-/* ═══ one week, shared by every screen and every widget ═══
-   Minutes are already DIVIDED across goal edges (C17 §3); spans contribute
-   nothing (C9a via C9b). So the donut on Home and the donut in a widget
-   cannot disagree. */
-const AREAS = [
-  {k:'LEARNING', min:420, moves:[]},
-  {k:'HEALTH',   min:260, moves:[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',d:12},
-                                 {en:'Lose 5 kg',he:'לרדת 5 ק״ג',d:4}]},
-  {k:'CAREER',   min:210, moves:[{en:'Publish the portfolio',he:'לפרסם תיק עבודות',d:6}]},
-  {k:'RELATION', min:120, moves:[{en:'A date night every week',he:'ערב זוגי כל שבוע',d:18}]},
-  {k:'FINANCE',  min:60,  moves:[]},
-  {k:'OTHER',    min:40,  moves:[]},
+/* hex maths for the volume gradients */
+const hx  = h => [1,3,5].map(i=>parseInt(h.substr(i,2),16));
+const rgb = a => '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const mix = (h,to,amt)=>rgb(hx(h).map((v,i)=>v+(to[i]-v)*amt));
+const lite= (h,a=.34)=>mix(h,[255,255,255],a);
+const dark= (h,a=.26)=>mix(h,[10,16,26],a);
+
+/* ═══ one week — shared by every screen and every widget ═══ */
+const AREAS=[
+  {k:'LEARNING',min:420,moves:[]},
+  {k:'HEALTH',  min:260,moves:[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',d:12},
+                               {en:'Lose 5 kg',he:'לרדת 5 ק״ג',d:4}]},
+  {k:'CAREER',  min:210,moves:[{en:'Publish the portfolio',he:'לפרסם תיק עבודות',d:6}]},
+  {k:'RELATION',min:120,moves:[{en:'A date night every week',he:'ערב זוגי כל שבוע',d:18}]},
+  {k:'FINANCE', min:60, moves:[]},
+  {k:'OTHER',   min:40, moves:[]},
 ];
-const TOTAL = AREAS.reduce((s,a)=>s+a.min,0);
-const WEEK = [
-  {en:'Sun',he:'א', v:{LEARNING:90,HEALTH:40,CAREER:30,RELATION:0, FINANCE:0, OTHER:10}},
-  {en:'Mon',he:'ב', v:{LEARNING:60,HEALTH:45,CAREER:60,RELATION:0, FINANCE:20,OTHER:0}},
-  {en:'Tue',he:'ג', v:{LEARNING:80,HEALTH:35,CAREER:40,RELATION:30,FINANCE:0, OTHER:10}},
-  {en:'Wed',he:'ד', v:{LEARNING:70,HEALTH:50,CAREER:20,RELATION:0, FINANCE:0, OTHER:0}},
-  {en:'Thu',he:'ה', v:{LEARNING:60,HEALTH:40,CAREER:60,RELATION:30,FINANCE:20,OTHER:20}},
-  {en:'Fri',he:'ו', v:{LEARNING:40,HEALTH:20,CAREER:0, RELATION:60,FINANCE:0, OTHER:0}},
-  {en:'Sat',he:'ש', v:{LEARNING:20,HEALTH:30,CAREER:0, RELATION:0, FINANCE:20,OTHER:0}},
+const TOTAL=AREAS.reduce((s,a)=>s+a.min,0);
+const WEEK=[
+  {en:'Sun',he:'א',v:{LEARNING:90,HEALTH:40,CAREER:30,RELATION:0, FINANCE:0, OTHER:10}},
+  {en:'Mon',he:'ב',v:{LEARNING:60,HEALTH:45,CAREER:60,RELATION:0, FINANCE:20,OTHER:0}},
+  {en:'Tue',he:'ג',v:{LEARNING:80,HEALTH:35,CAREER:40,RELATION:30,FINANCE:0, OTHER:10}},
+  {en:'Wed',he:'ד',v:{LEARNING:70,HEALTH:50,CAREER:20,RELATION:0, FINANCE:0, OTHER:0}},
+  {en:'Thu',he:'ה',v:{LEARNING:60,HEALTH:40,CAREER:60,RELATION:30,FINANCE:20,OTHER:20}},
+  {en:'Fri',he:'ו',v:{LEARNING:40,HEALTH:20,CAREER:0, RELATION:60,FINANCE:0, OTHER:0}},
+  {en:'Sat',he:'ש',v:{LEARNING:20,HEALTH:30,CAREER:0, RELATION:0, FINANCE:20,OTHER:0}},
 ];
-const TODAY = [
+const TODAY=[
   {en:'Draft chapter 3 of the final project',he:'לכתוב פרק 3 בפרויקט הגמר',
    k:'LEARNING',rung:'BLOCK',tm:'09:00–12:00',done:false},
-  {en:'Submit the ethics form',he:'להגיש את טופס האתיקה',
-   k:'CAREER',rung:'DEADLINE',tm:'23:59',done:false},
-  {en:'Evening run · 4 km',he:'ריצת ערב · 4 ק״מ',
-   k:'FITNESS',rung:'BLOCK',tm:'18:30–19:15',done:true},
+  {en:'Submit the ethics form',he:'להגיש את טופס האתיקה',k:'CAREER',rung:'DEADLINE',tm:'23:59',done:false},
+  {en:'Evening run · 4 km',he:'ריצת ערב · 4 ק״מ',k:'FITNESS',rung:'BLOCK',tm:'18:30–19:15',done:true},
   {en:'Call Rachel',he:'להתקשר לרחל',k:'RELATION',rung:'UNTIMED',tm:null,done:false},
 ];
-const GOALS = [
-  {en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',pct:80,
-   me:'3.2 / 4 km',meHe:'3.2 / 4 ק״מ'},
-  {en:'Lose 5 kg',he:'לרדת 5 ק״ג',k:'HEALTH',pct:50,
-   me:'77.5 kg · from 80',meHe:'77.5 ק״ג · מ־80'},
-  {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
-   me:'3 / 4 weeks',meHe:'3 / 4 שבועות'},
+const GOALS=[
+  {en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',pct:80,me:'3.2 / 4 km',meHe:'3.2 / 4 ק״מ'},
+  {en:'Lose 5 kg',he:'לרדת 5 ק״ג',k:'HEALTH',pct:50,me:'77.5 kg · from 80',meHe:'77.5 ק״ג · מ־80'},
+  {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,me:'3 / 4 weeks',meHe:'3 / 4 שבועות'},
   {en:'Finish the final project',he:'לסיים את פרויקט הגמר',k:'LEARNING',pct:null},
 ];
-const BOOKED = 225, DONEMIN = 45, DAY = 480;
+const BOOKED=225, DONEMIN=45, DAY=480;
 
-/* ═══ chart primitives ═══ */
-function donut(size, thick, cent){
-  const r=(size-thick)/2, c=size/2, C=2*Math.PI*r;
-  let acc=0, segs='';
+/* ═══════════════════════════════════════════════════════════════════════
+   Volume. A flat fill is the reason a chart looks like a diagram instead of
+   an object: per-slice gradient, a specular bevel, a sheen arc along the top
+   edge, a cast shadow, and a turbulence pass so the surface has grain.
+   ═══════════════════════════════════════════════════════════════════════ */
+function defs(id, keys){
+  const grads = keys.map(k=>{
+    const c=cc(k);
+    return `<linearGradient id="${id}-${k}" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0%"   stop-color="${lite(c,.40)}"/>
+      <stop offset="46%"  stop-color="${c}"/>
+      <stop offset="100%" stop-color="${dark(c,.30)}"/></linearGradient>`;}).join('');
+  return `<defs>${grads}
+    <linearGradient id="${id}-sheen" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%"  stop-color="#fff" stop-opacity=".55"/>
+      <stop offset="42%" stop-color="#fff" stop-opacity=".06"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <filter id="${id}-bevel" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.6" result="b"/>
+      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="0.82"
+        specularExponent="20" lighting-color="#ffffff" result="sp">
+        <fePointLight x="-70" y="-140" z="190"/></feSpecularLighting>
+      <feComposite in="sp" in2="SourceAlpha" operator="in" result="spi"/>
+      <feComposite in="SourceGraphic" in2="spi" operator="arithmetic"
+        k1="0" k2="1" k3="1" k4="0"/></filter>
+    <filter id="${id}-cast" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000" flood-opacity=".30"/></filter>
+    <filter id="${id}-tex"><feTurbulence type="fractalNoise" baseFrequency="0.9"
+      numOctaves="3" stitchTiles="stitch"/></filter>
+    <pattern id="${id}-grain" width="90" height="90" patternUnits="userSpaceOnUse">
+      <rect width="90" height="90" filter="url(#${id}-tex)" opacity=".5"/></pattern>
+  </defs>`;
+}
+const pol=(cx,cy,r,deg)=>[cx+r*Math.cos(deg*Math.PI/180), cy+r*Math.sin(deg*Math.PI/180)];
+function arc(cx,cy,r,a0,a1){
+  const [x0,y0]=pol(cx,cy,r,a0), [x1,y1]=pol(cx,cy,r,a1);
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;
+}
+
+/* The donut, with the life-area name beside every slice (Ido, rev 3 note 2).
+   Labels are placed at the slice mid-angle, then de-collided vertically per
+   side, then joined to the ring with an elbow leader. */
+function donut(w, r, thick, centre, labels){
+  const id='d'+(++UID), cx=w/2, cy=labels? r+thick/2+22 : r+thick/2;
+  const h = labels ? cy + r + thick/2 + 24 : r*2+thick;
+  let acc=0, segs='', lab='';
+  const pts=[];
   AREAS.forEach(a=>{
-    const f=a.min/TOTAL;
-    segs+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${cc(a.k)}"
-      stroke-width="${thick}" stroke-dasharray="${Math.max(C*f-2.4,0)} ${C-C*f+2.4}"
-      stroke-dashoffset="${-C*acc}" transform="rotate(-90 ${c} ${c})"/>`;
+    /* butt caps, not round: a round cap adds half the stroke width past each
+       endpoint, so at thick=20 the caps would swallow any gap small enough to
+       still read as one ring. The separation is the gap itself. */
+    const f=a.min/TOTAL, a0=acc*360-90, a1=a0+f*360-2.6;
+    segs+=`<path d="${arc(cx,cy,r,a0,a1)}" stroke="url(#${id}-${a.k})" stroke-width="${thick}"
+      fill="none" stroke-linecap="butt"/>`;
+    pts.push({a, mid:(a0+a1)/2, f});
     acc+=f;
   });
-  return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
-    <svg width="${size}" height="${size}">
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ghost-container)" stroke-width="${thick}"/>
-      ${segs}
-    </svg>
-    ${cent?`<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center">${cent}</div>`:''}
+  if(labels){
+    const R=r+thick/2;
+    const side=(m)=>{const c=Math.cos(m*Math.PI/180); return c>=0?1:-1;};
+    const rows=pts.map(p=>{
+      const [x,y]=pol(cx,cy,R+4,p.mid);
+      return {p, s:side(p.mid), x, y, ty:y};
+    });
+    [1,-1].forEach(sg=>{
+      const g=rows.filter(o=>o.s===sg).sort((a,b)=>a.ty-b.ty);
+      for(let i=1;i<g.length;i++) if(g[i].ty-g[i-1].ty<15) g[i].ty=g[i-1].ty+15;
+      const over=g.length?g[g.length-1].ty-(h-14):0;
+      if(over>0) g.forEach(o=>o.ty-=over);
+    });
+    rows.forEach(o=>{
+      const ex=cx+o.s*(R+13), lx=cx+o.s*(R+19);
+      lab+=`<path d="M ${o.x} ${o.y} L ${ex} ${o.ty} L ${lx} ${o.ty}" fill="none"
+        stroke="${cc(o.p.a.k)}" stroke-width="1.3" opacity=".75" stroke-linecap="round"/>
+        <circle cx="${lx}" cy="${o.ty}" r="2.4" fill="${cc(o.p.a.k)}"/>
+        <text x="${lx+o.s*7}" y="${o.ty-1}" text-anchor="${o.s>0?'start':'end'}"
+          font-size="11" font-weight="640" fill="var(--on-surface)">${T(CAT[o.p.a.k])}</text>
+        <text x="${lx+o.s*7}" y="${o.ty+11}" text-anchor="${o.s>0?'start':'end'}"
+          font-size="9.5" font-weight="600" fill="var(--on-surface-var)"
+          >${Math.round(o.p.f*100)}%</text>`;
+    });
+  }
+  return `<div style="position:relative;width:${w}px;height:${h}px;flex:none">
+    <svg width="${w}" height="${h}">${defs(id, AREAS.map(a=>a.k))}
+      <g filter="url(#${id}-cast)">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+          stroke="var(--ghost-container)" stroke-width="${thick}"/>
+        <g filter="url(#${id}-bevel)">${segs}</g>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#${id}-grain)"
+          stroke-width="${thick}" opacity=".22" style="mix-blend-mode:soft-light"/>
+        <circle cx="${cx}" cy="${cy}" r="${r+thick*0.30}" fill="none"
+          stroke="url(#${id}-sheen)" stroke-width="${thick*0.34}"/>
+      </g>${lab}</svg>
+    ${centre?`<div style="position:absolute;left:0;width:${w}px;top:${cy-26}px;height:52px;
+      display:grid;place-items:center;text-align:center">${centre}</div>`:''}
   </div>`;
 }
-function ring(size, pct, color, txt){
-  const th=Math.max(4,size*.105), r=(size-th)/2, c=size/2, C=2*Math.PI*r;
+
+function ring(size,pct,key,txt){
+  const id='r'+(++UID), th=Math.max(5,size*.12), r=(size-th)/2, c=size/2;
+  const col = key.startsWith('#')||key.startsWith('var') ? null : key;
+  const base = col ? cc(col) : 'var(--primary)';
+  const stroke = col ? `url(#${id}-${col})` : base;
+  const a0=-90, a1=-90+pct*3.6-0.001;
   return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
     <svg width="${size}" height="${size}">
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ghost-container)" stroke-width="${th}"/>
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${th}"
-        stroke-linecap="round" stroke-dasharray="${C*pct/100} ${C}" transform="rotate(-90 ${c} ${c})"/>
+      ${col?defs(id,[col]):`<defs><linearGradient id="${id}-sheen" x1="0" y1="0" x2=".4" y2="1">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".5"/>
+        <stop offset="45%" stop-color="#fff" stop-opacity=".05"/>
+        <stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <filter id="${id}-bevel" x="-25%" y="-25%" width="150%" height="150%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="b"/>
+        <feSpecularLighting in="b" surfaceScale="3.4" specularConstant=".8" specularExponent="19"
+          lighting-color="#fff" result="sp"><fePointLight x="-40" y="-80" z="120"/></feSpecularLighting>
+        <feComposite in="sp" in2="SourceAlpha" operator="in" result="spi"/>
+        <feComposite in="SourceGraphic" in2="spi" operator="arithmetic" k1="0" k2="1" k3="1" k4="0"/>
+        </filter></defs>`}
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ghost-container)"
+        stroke-width="${th}"/>
+      <g filter="url(#${id}-bevel)">
+        <path d="${arc(c,c,r,a0,a1)}" fill="none" stroke="${stroke}" stroke-width="${th}"
+          stroke-linecap="round"/></g>
+      <circle cx="${c}" cy="${c}" r="${r+th*.3}" fill="none" stroke="url(#${id}-sheen)"
+        stroke-width="${th*.32}"/>
     </svg>
     ${txt!==undefined?`<div style="position:absolute;inset:0;display:grid;place-items:center;
-      font-size:${Math.round(size*.29)}px;font-weight:700;letter-spacing:-.03em">${txt}</div>`:''}
+      font-size:${Math.round(size*.29)}px;font-weight:730;letter-spacing:-.035em">${txt}</div>`:''}
   </div>`;
 }
-/* A time axis is DRAWN, not laid out — dir="rtl" does not mirror it, so the
-   series is reversed in code. This is the kind of thing that ships wrong. */
-function stacked(w, h, labels){
+
+/* A time axis is DRAWN, not laid out — dir="rtl" does not mirror it. */
+function stacked(w,h,labels){
+  const id='s'+(++UID);
   const max=Math.max(...WEEK.map(d=>Object.values(d.v).reduce((a,b)=>a+b,0)));
-  const days = L==='he' ? [...WEEK].reverse() : WEEK;
-  const gap=Math.max(3,w*.022), bw=(w-gap*(days.length-1))/days.length;
+  const days=L==='he'?[...WEEK].reverse():WEEK;
+  const gap=Math.max(4,w*.028), bw=(w-gap*(days.length-1))/days.length, rad=Math.min(6,bw/3);
   let out='';
   days.forEach((d,i)=>{
     const x=i*(bw+gap); let y=h;
-    AREAS.forEach(a=>{
-      const val=d.v[a.k]||0; if(!val) return;
-      const bh=(val/max)*(h-3); y-=bh;
-      out+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${cc(a.k)}" rx="2"/>`;
+    const present=AREAS.filter(a=>d.v[a.k]);
+    present.forEach((a,j)=>{
+      const val=d.v[a.k], bh=(val/max)*(h-4); y-=bh;
+      const top = j===present.length-1;
+      out+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh+(top?0:1)}"
+        fill="url(#${id}-${a.k})" rx="${top?rad:1.5}"/>`;
+      out+=`<rect x="${x}" y="${y}" width="${bw*.30}" height="${bh}"
+        fill="url(#${id}-sheen)" rx="${top?rad:1.5}"/>`;
     });
   });
-  const lab = labels ? days.map((d,i)=>`<text x="${i*(bw+gap)+bw/2}" y="${h+13}"
-      text-anchor="middle" font-size="10" font-weight="600"
-      fill="var(--on-surface-var)">${T(d)}</text>`).join('') : '';
-  return `<svg width="${w}" height="${h+(labels?17:0)}">${out}${lab}</svg>`;
+  const lab=labels?days.map((d,i)=>`<text x="${i*(bw+gap)+bw/2}" y="${h+14}" text-anchor="middle"
+    font-size="10" font-weight="640" fill="var(--on-surface-var)">${T(d)}</text>`).join(''):'';
+  return `<svg width="${w}" height="${h+(labels?18:0)}">${defs(id,AREAS.map(a=>a.k))}
+    <g filter="url(#${id}-cast)">${out}</g>
+    <rect x="0" y="0" width="${w}" height="${h}" fill="url(#${id}-grain)" opacity=".16"
+      style="mix-blend-mode:soft-light"/>${lab}</svg>`;
 }
-/* Order only the quantity you may order: minutes are ranked, movement is NAMED.
-   A percentage is a fraction of its OWN target, so ranking movement partly ranks
-   how modest the goals are — rev 1 did that and it is now a rejected exhibit. */
-function movedRows(compact){
+
+/* Order only the quantity you may order: minutes ranked, movement NAMED. */
+function movedRows(n){
   const ord=[...AREAS].filter(a=>a.k!=='OTHER').sort((a,b)=>b.min-a.min);
-  const mx=Math.max(...ord.map(a=>a.min));
-  return ord.slice(0, compact||ord.length).map(a=>`
-    <div style="padding:${compact?7:9}px 0;box-shadow:0 1px 0 var(--hair)">
+  const mx=Math.max(...ord.map(a=>a.min)), sm=!!n;
+  return ord.slice(0,n||ord.length).map(a=>{
+    const c=cc(a.k);
+    return `<div style="padding:${sm?7:9}px 0;box-shadow:0 1px 0 var(--hair)">
       <div style="display:flex;align-items:baseline;gap:8px">
-        <span style="flex:1;font-size:${compact?12:13.5}px;font-weight:650">${T(CAT[a.k])}</span>
+        <span style="flex:1;font-size:${sm?12:13.5}px;font-weight:650">${T(CAT[a.k])}</span>
         <span style="font-size:11px;color:var(--on-surface-var);font-weight:550">${ltr(hm(a.min))}</span>
       </div>
-      <div style="height:6px;border-radius:99px;background:var(--ghost-container);
-        margin:6px 0 ${compact?4:7}px;overflow:hidden">
-        <div style="width:${a.min/mx*100}%;height:100%;background:${cc(a.k)}"></div></div>
+      <div style="height:9px;border-radius:99px;background:var(--ghost-container);
+        margin:6px 0 ${sm?4:7}px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.20)">
+        <div style="width:${a.min/mx*100}%;height:100%;border-radius:99px;
+          background:linear-gradient(180deg,${lite(c,.36)},${c} 52%,${dark(c,.22)});
+          box-shadow:0 1px 3px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.45)"></div></div>
       <div style="display:flex;gap:5px;flex-wrap:wrap">
         ${a.moves.length
           ? a.moves.map(m=>`<span class="tag good">${T(m)} ${ltr('+'+m.d+'%')}</span>`).join('')
           : `<span class="tag dash">${t('no measure','ללא מדד')}</span>`}
-      </div>
-    </div>`).join('');
+      </div></div>`;}).join('');
 }
 
-/* ═══ shared chrome ═══ */
-const SB = () => `<div class="statusbar"><span>${ltr('9:41')}</span>
+/* ═══ chrome ═══ */
+const SB=()=>`<div class="statusbar"><span>${ltr('9:41')}</span>
   <span style="font-size:11px">${ltr('▮▮▮ ⌁ 87%')}</span></div>`;
 function navbar(sel){
   const tabs=[{en:'Home',he:'בית',i:'⌂'},{en:'Goals',he:'מטרות',i:'◎'},
@@ -450,99 +557,67 @@ function navbar(sel){
   return `<div class="navbar">${tabs.map((x,i)=>
     `<div class="t ${i===sel?'on':''}"><span class="pill">${x.i}</span>${T(x)}</div>`).join('')}</div>`;
 }
-function avatarLevel(pct, lvl){
+function avatarLevel(pct,lvl){
   return `<div style="position:relative;width:46px;height:46px;flex:none">
     ${ring(46,pct,'var(--primary)')}
     <div style="position:absolute;inset:7px;border-radius:50%;display:grid;place-items:center;
       background:linear-gradient(140deg,var(--hero-2),var(--hero-3));color:#fff;
-      font-weight:750;font-size:13px">${t('I','ע')}</div>
+      font-weight:750;font-size:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)">${t('I','ע')}</div>
     <div style="position:absolute;bottom:-3px;left:0;right:0;text-align:center;line-height:0">
       <span style="display:inline-block;background:var(--primary);color:var(--on-primary);
         font-size:9px;font-weight:750;padding:2px 6px;border-radius:999px;line-height:1;
-        box-shadow:0 2px 6px var(--glow)">${ltr(String(lvl))}</span></div>
-  </div>`;
+        box-shadow:0 2px 6px var(--glow)">${ltr(String(lvl))}</span></div></div>`;
 }
 
 /* ═══ SCREENS ═══ */
 function scHome(){
-  const today = TODAY.map(x=>`
-    <div class="tk ${x.done?'done':''}">
-      <div class="tick ${x.done?'done':''}"></div>
-      <div class="rail" style="background:${cc(x.k)}"></div>
-      <div class="m"><b>${T(x)}</b>
-        <div class="me">
-          ${x.tm?`<span>${ltr(x.tm)}</span>`:''}
-          ${x.rung==='DEADLINE'?`<span class="tag late">${t('due today','להגשה היום')}</span>`:''}
-          ${x.rung==='UNTIMED'?`<span class="tag dash">${t('no time set','ללא שעה')}</span>`:''}
-          <span class="area" style="background:color-mix(in srgb,${cc(x.k)} 15%,transparent);
-            color:${cc(x.k)}"><i style="background:${cc(x.k)}"></i>${T(CAT[x.k])}</span>
-        </div>
-      </div>
-    </div>`).join('');
-
-  const goals = GOALS.slice(0,3).map(g=>`
+  const today=TODAY.map(x=>`
+    <div class="tk ${x.done?'done':''}"><div class="tick ${x.done?'done':''}"></div>
+      <div class="rail" style="background:linear-gradient(180deg,${lite(cc(x.k),.3)},${cc(x.k)})"></div>
+      <div class="m"><b>${T(x)}</b><div class="me">
+        ${x.tm?`<span>${ltr(x.tm)}</span>`:''}
+        ${x.rung==='DEADLINE'?`<span class="tag late">${t('due today','להגשה היום')}</span>`:''}
+        ${x.rung==='UNTIMED'?`<span class="tag dash">${t('no time set','ללא שעה')}</span>`:''}
+        <span class="area" style="background:color-mix(in srgb,${cc(x.k)} 16%,transparent);
+          color:${cc(x.k)}"><i style="background:${cc(x.k)}"></i>${T(CAT[x.k])}</span>
+      </div></div></div>`).join('');
+  const goals=GOALS.slice(0,3).map(g=>`
     <div class="goal">
-      ${g.pct!==null ? ring(40,g.pct,cc(g.k),`<span style="font-size:11px">${ltr(g.pct)}</span>`)
-                     : `<div class="nodial"></div>`}
-      <div class="nm"><b>${T(g)}</b>
-        <span>${g.pct!==null ? ltr(L==='he'?g.meHe:g.me)
-                             : t('no measure — 3 tasks left','ללא מדד — נותרו 3 משימות')}</span></div>
-    </div>`).join('');
-
-  const legend = AREAS.slice(0,4).map(a=>`<div class="lg"><i style="background:${cc(a.k)}"></i>
-    <span class="l">${T(CAT[a.k])}</span>
-    <span class="v">${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
-
-  return `${SB()}
-  <div class="screen">
-    <div class="appbar">
-      <div class="g" style="flex:1">
-        <div class="sub">${t('Tuesday, 10 August','יום שלישי, 10 באוגוסט')}</div>
-        <div class="ttl">${t('Good evening','ערב טוב')}</div>
-      </div>
-      <div class="iconbtn">✦</div>
-      ${avatarLevel(72,6)}
-    </div>
+      ${g.pct!==null?ring(42,g.pct,g.k,`<span style="font-size:12px">${ltr(g.pct)}</span>`)
+                    :`<div class="nodial"></div>`}
+      <div class="nm"><b>${T(g)}</b><span>${g.pct!==null?ltr(L==='he'?g.meHe:g.me)
+        :t('no measure — 3 tasks left','ללא מדד — נותרו 3 משימות')}</span></div></div>`).join('');
+  return `${SB()}<div class="screen">
+    <div class="appbar"><div style="flex:1">
+      <div class="sub">${t('Tuesday, 10 August','יום שלישי, 10 באוגוסט')}</div>
+      <div class="ttl">${t('Good evening','ערב טוב')}</div></div>
+      <div class="iconbtn">✦</div>${avatarLevel(72,6)}</div>
     <div class="wrap">
-
       <div class="card hero" style="display:flex;align-items:center;gap:13px">
         <div style="width:46px;height:46px;border-radius:16px;flex:none;display:grid;
-          place-items:center;background:rgba(255,255,255,.20);font-size:21px;font-weight:750">4</div>
+          place-items:center;background:rgba(255,255,255,.20);font-size:21px;font-weight:750;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.35)">4</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:15px;font-weight:700">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
           <div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${t('2 missed · 1 left your calendar · 1 to confirm','2 הוחמצו · 1 יצאה מהיומן · 1 לאישור')}</div>
-        </div>
-        <div style="font-size:22px;opacity:.9">${L==='he'?'‹':'›'}</div>
-      </div>
+            ${t('2 missed · 1 left your calendar · 1 to confirm','2 הוחמצו · 1 יצאה מהיומן · 1 לאישור')}</div></div>
+        <div style="font-size:22px;opacity:.9">${L==='he'?'‹':'›'}</div></div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Today','היום')}</h3></div>
-          <span class="lk">${t('Calendar','לוח שנה')} ${L==='he'?'‹':'›'}</span></div>
+      <div class="card"><div class="rowhead"><div class="g"><h3>${t('Today','היום')}</h3></div>
+        <span class="lk">${t('Calendar','לוח שנה')} ${L==='he'?'‹':'›'}</span></div>
         ${today}
-        <div class="load">
-          <div class="t">
-            <i style="width:${DONEMIN/DAY*100}%;background:var(--secondary)"></i>
-            <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:var(--primary)"></i>
-          </div>
-          <div class="x">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div>
-        </div>
-      </div>
+        <div class="load"><div class="t">
+          <i style="width:${DONEMIN/DAY*100}%;background:linear-gradient(180deg,#9BE9C6,var(--secondary))"></i>
+          <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:linear-gradient(180deg,#8FB6FF,var(--primary))"></i>
+          </div><div class="x">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div></div></div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Your goals','המטרות שלך')}</h3></div>
-          <span class="lk">${t('All 7','כל ה־7')} ${L==='he'?'‹':'›'}</span></div>
-        ${goals}
-      </div>
+      <div class="card"><div class="rowhead"><div class="g"><h3>${t('Your goals','המטרות שלך')}</h3></div>
+        <span class="lk">${t('All 7','כל ה־7')} ${L==='he'?'‹':'›'}</span></div>${goals}</div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('This week','השבוע')}</h3></div>
-          <span class="lk">${t('Analytics','ניתוח')} ${L==='he'?'‹':'›'}</span></div>
-        <div style="display:flex;gap:15px;align-items:center">
-          ${donut(102,15,`<div><div style="font-size:17px;font-weight:720;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>
-            <div style="font-size:9.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
-          <div style="flex:1;min-width:0">${legend}</div>
-        </div>
+      <div class="card"><div class="rowhead"><div class="g"><h3>${t('This week','השבוע')}</h3></div>
+        <span class="lk">${t('Analytics','ניתוח')} ${L==='he'?'‹':'›'}</span></div>
+        ${donut(310,58,20,`<div><div style="font-size:19px;font-weight:730;letter-spacing:-.035em">${ltr(hm(TOTAL))}</div>
+          <div style="font-size:9.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`,true)}
       </div>
 
       <div class="card" style="display:flex;align-items:center;gap:11px;padding:13px 15px">
@@ -550,27 +625,21 @@ function scHome(){
         <span style="flex:1;font-size:12.5px;font-weight:550">
           ${t('Connect Google Tasks to import your list','חברו את Google Tasks כדי לייבא את הרשימה')}</span>
         <span class="tag" style="background:var(--p-container);color:var(--on-p-container)">
-          ${t('Connect','חיבור')}</span>
-      </div>
-
-    </div>
-  </div>${navbar(0)}`;
+          ${t('Connect','חיבור')}</span></div>
+    </div></div>${navbar(0)}`;
 }
 
 function scHomeBefore(){
   const box=(h,s)=>`<div class="card"><h3>${h}</h3><div class="sub">${s}</div></div>`;
-  return `${SB()}
-  <div class="screen">
-    <div class="appbar"><div style="flex:1">
-      <div class="sub">${t('Dashboard','לוח בקרה')}</div>
+  return `${SB()}<div class="screen">
+    <div class="appbar"><div style="flex:1"><div class="sub">${t('Dashboard','לוח בקרה')}</div>
       <div class="ttl">${t('Good evening','ערב טוב')}</div></div></div>
     <div class="wrap">
       <div class="card hero"><h3 style="color:#fff">${t('Level 6 · 1,240 points','רמה 6 · 1,240 נקודות')}</h3>
         <div class="sub">${t('310 points to level 7','310 נקודות לרמה 7')}</div></div>
       <div class="card"><h3>${t('Time allocation','חלוקת זמן')}</h3>
-        <div class="sub" style="margin-bottom:10px">${t('This week','השבוע')}</div>
-        <div style="display:flex;justify-content:center">${donut(150,20,
-          `<div style="font-size:19px;font-weight:720">${ltr(hm(TOTAL))}</div>`)}</div></div>
+        <div class="sub" style="margin-bottom:8px">${t('This week','השבוע')}</div>
+        ${donut(310,62,20,`<div style="font-size:19px;font-weight:730">${ltr(hm(TOTAL))}</div>`,false)}</div>
       ${box(t('Smart add','הוספה חכמה'),t('Type anything and we will file it','כתבו משהו ונתייק אותו'))}
       ${box(t('Connect Health Connect','חיבור Health Connect'),t('Sync steps and workouts','סנכרון צעדים ואימונים'))}
       ${box(t('Import from Google Tasks','ייבוא מ־Google Tasks'),t('Bring your existing list','הביאו את הרשימה הקיימת'))}
@@ -579,231 +648,138 @@ function scHomeBefore(){
       <div class="card" style="opacity:.45"><h3>${t('Your goals','המטרות שלך')}</h3>
         <div class="sub">${t('…roughly four screenfuls down. No task appears anywhere on this screen.',
           '…בערך ארבעה מסכים למטה. שום משימה לא מופיעה במסך הזה.')}</div></div>
-    </div>
-  </div>${navbar(0)}`;
+    </div></div>${navbar(0)}`;
 }
 
 function scAnalytics(){
-  const legend=AREAS.map(a=>`<div class="lg"><i style="background:${cc(a.k)}"></i>
-    <span class="l">${T(CAT[a.k])}</span>
-    <span class="v">${ltr(hm(a.min))} · ${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
   const ranges=[['Day','יום'],['Week','שבוע'],['Month','חודש'],['Quarter','רבעון'],['Year','שנה']];
-  return `${SB()}
-  <div class="screen">
-    <div class="appbar"><div style="flex:1">
-      <div class="ttl">${t('Analytics','ניתוח')}</div>
+  return `${SB()}<div class="screen">
+    <div class="appbar"><div style="flex:1"><div class="ttl">${t('Analytics','ניתוח')}</div>
       <div class="sub">${t('Your week, and what it moved','השבוע שלך, ומה הוא הזיז')}</div></div>
       <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
     <div class="wrap">
-
       <div class="seg">${ranges.map((r,i)=>`<span class="${i===1?'on':''}">${t(r[0],r[1])}</span>`).join('')}</div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Where the week went','לאן הלך השבוע')}</h3>
-          <div class="sub">${ltr(hm(TOTAL))} ${t('across 6 areas','ב־6 תחומים')}</div></div></div>
-        <div style="display:flex;justify-content:center;margin:2px 0 13px">
-          ${donut(166,22,`<div><div style="font-size:23px;font-weight:730;letter-spacing:-.035em">${ltr(hm(TOTAL))}</div>
-            <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
-        </div>
-        ${legend}
+      <div class="card"><div class="rowhead"><div class="g"><h3>${t('Where the week went','לאן הלך השבוע')}</h3>
+        <div class="sub">${ltr(hm(TOTAL))} ${t('across 6 areas','ב־6 תחומים')}</div></div></div>
+        ${donut(310,64,22,`<div><div style="font-size:21px;font-weight:740;letter-spacing:-.04em">${ltr(hm(TOTAL))}</div>
+          <div style="font-size:10px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`,true)}
         <div class="foot"><b>${t('Shared work is divided.','עבודה משותפת מחולקת.')}</b>
           ${t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
-              'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שהעוגה תסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}</div>
-      </div>
+              'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שהעוגה תסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}</div></div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Day by day','יום אחר יום')}</h3>
-          <div class="sub">${t('Same minutes, over time','אותן דקות, לאורך זמן')}</div></div></div>
-        ${stacked(322,142,true)}
-      </div>
+      <div class="card"><div class="rowhead"><div class="g"><h3>${t('Day by day','יום אחר יום')}</h3>
+        <div class="sub">${t('Same minutes, over time','אותן דקות, לאורך זמן')}</div></div></div>
+        ${stacked(310,146,true)}</div>
 
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</h3>
-          <div class="sub">${t('Ordered by time. Beside each area, the goals that moved.',
-                               'מסודר לפי זמן. ליד כל תחום, המטרות שזזו.')}</div></div></div>
+      <div class="card"><div class="rowhead"><div class="g">
+        <h3>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</h3>
+        <div class="sub">${t('Ordered by time. Beside each area, the goals that moved.',
+                             'מסודר לפי זמן. ליד כל תחום, המטרות שזזו.')}</div></div></div>
         ${movedRows()}
         <div class="foot"><b>${t('Learning took most of your week — and it has no measure, so nothing here can tell you whether it moved.',
           'לימודים לקחו את רוב השבוע — ואין להם מדד, אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</b>
           ${t('Adding a measure to one of those goals is the only thing that changes it.',
-              'הוספת מדד לאחת מהמטרות האלה היא הדבר היחיד שישנה את זה.')}</div>
-      </div>
-
-    </div>
-  </div>${navbar(0)}`;
-}
-
-function scGap(){
-  const ms=AREAS.filter(a=>a.moves.length);
-  const mxm=Math.max(...ms.map(a=>a.min));
-  const mxd=Math.max(...ms.map(a=>a.moves.reduce((s,m)=>s+m.d,0)));
-  const pairs=ms.map(a=>{
-    const d=a.moves.reduce((s,m)=>s+m.d,0);
-    return `<div style="margin:12px 0">
-      <div style="display:flex;font-size:12.5px;margin-bottom:6px;font-weight:600">
-        <span style="flex:1">${T(CAT[a.k])}</span>
-        <span style="color:var(--on-surface-var);font-weight:550">${ltr(hm(a.min))} · ${ltr('+'+d+'%')}</span></div>
-      <div style="height:8px;border-radius:99px;background:var(--ghost-container);overflow:hidden;margin-bottom:4px">
-        <div style="width:${a.min/mxm*100}%;height:100%;background:${cc(a.k)}"></div></div>
-      <div style="height:8px;border-radius:99px;background:var(--ghost-container);overflow:hidden">
-        <div style="width:${d/mxd*100}%;height:100%;background:${cc(a.k)};opacity:.42"></div></div>
-    </div>`;}).join('');
-
-  const cf=(title,step,pct,k)=>`
-    <div style="display:flex;align-items:center;gap:11px;padding:9px 0;box-shadow:0 1px 0 var(--hair)">
-      <span class="rail" style="background:${cc(k)};height:30px"></span>
-      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:640">${title}</div>
-        <div style="font-size:11.5px;color:var(--on-surface-var);font-weight:550">${step}</div></div>
-      <div style="font-size:17px;font-weight:730;color:${cc(k)}">${ltr('+'+pct+'%')}</div></div>`;
-
-  return `${SB()}
-  <div class="screen">
-    <div class="appbar"><div style="flex:1">
-      <div class="ttl">${t('Effort and outcome','מאמץ ותוצאה')}</div>
-      <div class="sub">${t('The chosen form, and the three it is not','הצורה הנבחרת, ושלוש שהיא איננה')}</div></div>
-      <div class="iconbtn">${L==='he'?'›':'‹'}</div></div>
-    <div class="wrap">
-
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Chosen — rank minutes, name movement','נבחר — לדרג דקות, לקרוא לתזוזה בשמה')}</h3>
-          <div class="sub">${t('The app orders only the quantity it may order','האפליקציה מדרגת רק את הכמות שמותר לה לדרג')}</div></div></div>
-        ${movedRows()}
-      </div>
-
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Rejected — rank time against rank movement','נדחה — דירוג זמן מול דירוג תזוזה')}</h3>
-          <div class="sub">${t('This was revision 1. Its own test killed it.','זו הייתה גרסה 1. המבחן של עצמה פסל אותה.')}</div></div></div>
-        ${cf(t('Lose 5 kg','לרדת 5 ק״ג'), t('one kilogram','קילוגרם אחד'), 20, 'HEALTH')}
-        ${cf(t('Read 12 books','לקרוא 12 ספרים'), t('one book','ספר אחד'), 8, 'LEARNING')}
-        <div class="foot">${t('The same single act of progress scores 20% or 8% depending only on how large a target you happened to write. So ranking by "movement" partly ranks how modest your goals are — and an ordering that depends on how the goal was phrased is the failure C16 and C3 each killed once already.',
-          'אותו מעשה התקדמות בודד שווה 20% או 8% רק לפי גודל היעד שבמקרה נכתב. כך שדירוג לפי "תזוזה" מדרג בין השאר כמה צנועות המטרות שלכם — וסדר שתלוי בניסוח המטרה הוא הכשל ש־C16 ו־C3 כבר הרגו כל אחד בתורו.')}</div>
-      </div>
-
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Rejected — paired bars','נדחה — עמודות זוגיות')}</h3>
-          <div class="sub">${t('Solid = time, faded = progress moved','מלא = זמן, דהוי = התקדמות')}</div></div></div>
-        ${pairs}
-        <div class="foot">${t('Two bars on one row invite you to compare their lengths — but minutes and percentage points are different quantities, so the comparison the picture offers is one the numbers cannot support.',
-          'שתי עמודות באותה שורה מזמינות להשוות אורכים — אבל דקות ואחוזים הם כמויות שונות, וההשוואה שהתמונה מציעה אינה נתמכת במספרים.')}</div>
-      </div>
-
-      <div class="card">
-        <div class="rowhead"><div class="g"><h3>${t('Rejected — one efficiency number','נדחה — מספר יעילות אחד')}</h3></div></div>
-        <div style="display:flex;gap:14px;align-items:center;margin:4px 0 2px">
-          <div style="font-size:34px;font-weight:750;color:var(--error);letter-spacing:-.04em">${ltr('0.4')}</div>
-          <div style="font-size:12.5px;color:var(--on-surface-var);font-weight:550">
-            ${t('% moved per hour, Learning','% תזוזה לשעה, לימודים')}</div></div>
-        <div class="foot">${t('One mark carrying two axes — the chart form of the rule C9b bought with its unreadable rung glyphs — and it deletes the very gap it claims to measure. It also ranks your week by productivity, which is not what this app is for.',
-          'סימן אחד שנושא שני צירים — גרסת הגרף של הכלל ש־C9b קנה עם תוויות הדרגה הבלתי קריאות — והוא מוחק בדיוק את הפער שהוא מתיימר למדוד. הוא גם מדרג את השבוע שלכם לפי תפוקה, וזו לא מטרת האפליקציה.')}</div>
-      </div>
-
-    </div>
-  </div>${navbar(0)}`;
+              'הוספת מדד לאחת מהמטרות האלה היא הדבר היחיד שישנה את זה.')}</div></div>
+    </div></div>${navbar(0)}`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   WIDGETS — one per card on the screens above, at four size classes.
-   Rev 1 banned the donut outright: "a chart whose honesty depends on a
-   footnote may not be a widget." Ido overturned that — every card is to be a
-   widget — so the rule becomes a SIZE rule instead of a ban: the disclosure
-   shrinks to the smallest TRUE sentence the tile can hold, and no size ships
-   without one. 2x2 gets three words; 4x4 gets the sentence.
+   WIDGETS — real Android home-screen widgets, placed by the user on the
+   launcher, outside the app (Ido, rev 3 note 5 — confirmed).
+   Every card is one, at four size classes. Rev 1's "a chart whose honesty
+   depends on a footnote may not be a widget" is a SIZE rule, not a ban: the
+   disclosure shrinks to the smallest true sentence the tile can hold.
    ═══════════════════════════════════════════════════════════════════════ */
-const CELL = 76, GAP = 12;
-const dim = s => {
-  const [w,h] = s.split('x').map(Number);
-  return {w: w*CELL + (w-1)*GAP, h: h*CELL + (h-1)*GAP, cols:w, rows:h};
-};
+const CELL=76, GAP=12;
+const dim=s=>{const [w,h]=s.split('x').map(Number);
+  return {w:w*CELL+(w-1)*GAP, h:h*CELL+(h-1)*GAP, cols:w, rows:h};};
 
-const WIDGETS = [
-  {
-    id:'decisions', en:'Decisions', he:'החלטות', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+const WIDGETS=[
+  { id:'decisions', en:'Decisions', he:'החלטות', icon:'!', acc:()=>cc('HEALTH'),
     render(d,s){
       const items=[[t('2 missed yesterday','2 הוחמצו אתמול'),'late'],
                    [t('1 left your calendar','1 יצאה מהיומן'),''],
                    [t('1 block to confirm','1 בלוק לאישור'),''],
                    [t('1 overdue since Sunday','1 באיחור מיום ראשון'),'late']];
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Decisions','החלטות')}</div>
-        <div class="grow"><div class="n">4</div>
-        <div class="n2" style="margin-top:4px">${t('waiting for you','מחכות לך')}</div></div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Decisions','החלטות')}</div>
-        <div style="display:flex;gap:14px;align-items:center;flex:1">
-          <div><div class="n">4</div><div class="n2">${t('waiting','ממתינות')}</div></div>
-          <div style="flex:1;min-width:0">
-            ${items.slice(0,2).map(x=>`<div style="display:flex;gap:7px;align-items:center;margin:5px 0">
-              <span class="tag ${x[1]}">•</span><span style="font-size:12px;font-weight:560;
-              white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x[0]}</span></div>`).join('')}
-          </div></div>`;
-      return `<div class="hd"><i></i>${t('Decisions waiting','החלטות ממתינות')}</div>
-        <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:9px">
+      const li=x=>`<div style="display:flex;gap:8px;align-items:center;padding:4.5px 0">
+        <span style="width:6px;height:6px;border-radius:50%;flex:none;
+          background:${x[1]==='late'?'var(--late)':'var(--acc)'}"></span>
+        <span style="font-size:12px;font-weight:570;flex:1;min-width:0;white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis">${x[0]}</span></div>`;
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Decisions','החלטות')}</div>
+        <div class="grow"><div style="display:flex;align-items:baseline;gap:7px">
+          <div class="n">4</div><div class="n2">${t('waiting','ממתינות')}</div></div>
+          <div style="margin-top:7px">${li(items[0])}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Decisions waiting','החלטות ממתינות')}</div>
+        <div style="display:flex;gap:15px;align-items:center;flex:1">
+          <div><div class="n">4</div><div class="n2">${t('need you','דורשות אותך')}</div></div>
+          <div style="flex:1;min-width:0">${items.slice(0,3).map(li).join('')}</div></div>`;
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Decisions waiting','החלטות ממתינות')}</div>
+        <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:8px">
           <div class="n">4</div><div class="n2">${t('need a yes or no','דורשות כן או לא')}</div></div>
-        ${items.map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0;
-          box-shadow:0 1px 0 var(--hair)"><span class="tag ${x[1]}">•</span>
-          <span style="font-size:12.5px;font-weight:560;flex:1;min-width:0;white-space:nowrap;
-          overflow:hidden;text-overflow:ellipsis">${x[0]}</span></div>`).join('')}`;
-    }
-  },
-  {
-    id:'today', en:'Today', he:'היום', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+        ${items.map(li).join('')}
+        <div class="disc">${t('Tap any line to open the decision stack.','הקישו על שורה כדי לפתוח את ערימת ההחלטות.')}</div>`;
+    }},
+
+  { id:'today', en:'Today', he:'היום', icon:'▤', acc:()=>cc('CAREER'),
     render(d,s){
       const nx=TODAY[0];
-      const row=x=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 0">
-        <span class="rail" style="background:${cc(x.k)};height:26px"></span>
+      const row=x=>`<div style="display:flex;gap:9px;align-items:center;padding:5px 0">
+        <span class="rail" style="height:28px;background:linear-gradient(180deg,${lite(cc(x.k),.3)},${cc(x.k)})"></span>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12.5px;font-weight:620;white-space:nowrap;overflow:hidden;
-            text-overflow:ellipsis;${x.done?'text-decoration:line-through;opacity:.55':''}">${T(x)}</div>
+          <div style="font-size:12.5px;font-weight:630;white-space:nowrap;overflow:hidden;
+            text-overflow:ellipsis;${x.done?'text-decoration:line-through;opacity:.5':''}">${T(x)}</div>
           <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:550">
             ${x.tm?ltr(x.tm):t('no time set','ללא שעה')}</div></div></div>`;
-      const bar=`<div class="load" style="margin-top:8px"><div class="t">
-          <i style="width:${DONEMIN/DAY*100}%;background:var(--secondary)"></i>
-          <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:var(--primary)"></i></div></div>
-        <div class="n2" style="margin-top:5px;font-size:10.5px">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div>`;
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Next up','הבא בתור')}</div>
-        <div class="grow">
-          <div style="font-size:14px;font-weight:660;line-height:1.25">${T(nx)}</div>
-          <div class="n2" style="margin-top:5px">${ltr(nx.tm)} · ${t('in 40 min','בעוד 40 ד׳')}</div></div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Today','היום')}</div>
-        <div style="display:flex;gap:14px;flex:1">
-          <div style="flex:1;min-width:0">${row(TODAY[0])}${row(TODAY[1])}</div>
-          <div style="width:118px;flex:none;display:flex;flex-direction:column;justify-content:center">${bar}</div>
-        </div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('Today','היום')}</div>
+      const bar=`<div class="load" style="margin-top:9px"><div class="t">
+        <i style="width:${DONEMIN/DAY*100}%;background:linear-gradient(180deg,#9BE9C6,var(--secondary))"></i>
+        <i style="width:${(BOOKED-DONEMIN)/DAY*100}%;background:linear-gradient(180deg,#8FB6FF,var(--primary))"></i>
+        </div></div><div class="n2" style="margin-top:5px;font-size:10.5px">${ltr(hm(BOOKED))} ${t('booked','ביומן')} · ${ltr(hm(DAY-BOOKED))} ${t('free','פנוי')}</div>`;
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Next up','הבא בתור')}</div>
+        <div class="grow"><div style="font-size:14px;font-weight:670;line-height:1.26">${T(nx)}</div>
+        <div class="n2" style="margin-top:5px">${ltr(nx.tm)}</div>
+        <div style="margin-top:8px"><span class="tag" style="background:color-mix(in srgb,var(--acc) 18%,transparent);
+          color:var(--acc)">${t('in 40 min','בעוד 40 ד׳')}</span></div></div>`;
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Today','היום')}</div>
+        <div style="display:flex;gap:14px;flex:1"><div style="flex:1;min-width:0">${row(TODAY[0])}${row(TODAY[1])}</div>
+        <div style="width:120px;flex:none;display:flex;flex-direction:column;justify-content:center">${bar}</div></div>`;
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Today','היום')}</div>
         ${TODAY.map(row).join('')}${bar}`;
-      return `<div class="hd"><i></i>${t('Today','היום')} · ${ltr('4')} ${t('items','פריטים')}</div>
-        ${TODAY.map(row).join('')}${bar}`;
-    }
-  },
-  {
-    id:'goals', en:'Goals', he:'מטרות', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Today','היום')} · ${ltr('4')} ${t('items','פריטים')}</div>
+        ${TODAY.map(row).join('')}${bar}
+        <div class="disc">${t('Ticking here completes the task in the app.','סימון כאן משלים את המשימה באפליקציה.')}</div>`;
+    }},
+
+  { id:'goals', en:'Goals', he:'מטרות', icon:'◎', acc:()=>cc('RELATION'),
     render(d,s){
       const g=GOALS.filter(x=>x.pct!==null);
-      const row=(x,sz)=>`<div style="display:flex;gap:10px;align-items:center;padding:5px 0">
-        ${ring(sz,x.pct,cc(x.k),`<span style="font-size:${Math.round(sz*.3)}px">${ltr(x.pct)}</span>`)}
+      const row=(x,sz)=>`<div style="display:flex;gap:11px;align-items:center;padding:5px 0">
+        ${ring(sz,x.pct,x.k,`<span style="font-size:${Math.round(sz*.31)}px">${ltr(x.pct)}</span>`)}
         <div style="flex:1;min-width:0">
-          <div style="font-size:12.5px;font-weight:620;white-space:nowrap;overflow:hidden;
+          <div style="font-size:12.5px;font-weight:630;white-space:nowrap;overflow:hidden;
             text-overflow:ellipsis">${T(x)}</div>
           <div style="font-size:10.5px;color:var(--on-surface-var);font-weight:550">
             ${ltr(L==='he'?x.meHe:x.me)}</div></div></div>`;
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Goal','מטרה')}</div>
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Goal','מטרה')}</div>
         <div class="grow" style="align-items:center;text-align:center">
-          ${ring(74,g[0].pct,cc(g[0].k),`<span style="font-size:20px">${ltr(g[0].pct)}</span>`)}
-          <div style="font-size:11.5px;font-weight:620;margin-top:8px;line-height:1.25">${T(g[0])}</div></div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
+          ${ring(78,g[0].pct,g[0].k,`<span style="font-size:22px">${ltr(g[0].pct)}</span>`)}
+          <div style="font-size:11.5px;font-weight:630;margin-top:8px;line-height:1.25">${T(g[0])}</div></div>`;
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Your goals','המטרות שלך')}</div>
         <div style="display:flex;gap:16px;flex:1;align-items:center">
-          <div style="flex:1;min-width:0">${row(g[0],40)}</div>
-          <div style="flex:1;min-width:0">${row(g[1],40)}</div></div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
-        ${g.map(x=>row(x,34)).join('')}
-        <div class="disc">${t('1 goal has no measure and is not shown.','למטרה אחת אין מדד והיא לא מוצגת.')}</div>`;
-      return `<div class="hd"><i></i>${t('Your goals','המטרות שלך')}</div>
-        ${g.map(x=>row(x,44)).join('')}
-        <div class="disc">${t('Only goals with a measure can show a ring — 1 of yours has none.',
+          <div style="flex:1;min-width:0">${row(g[0],44)}</div>
+          <div style="flex:1;min-width:0">${row(g[1],44)}</div></div>`;
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Your goals','המטרות שלך')}</div>
+        ${g.map(x=>row(x,38)).join('')}
+        <div class="disc">${t('1 goal has no measure, so it shows no ring.','למטרה אחת אין מדד, ולכן אין לה טבעת.')}</div>`;
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Your goals','המטרות שלך')}</div>
+        ${g.map(x=>row(x,50)).join('')}
+        <div class="disc">${t('Only a goal with a measure can show a ring — 1 of yours has none.',
           'רק מטרה עם מדד יכולה להציג טבעת — לאחת מהמטרות שלכם אין.')}</div>`;
-    }
-  },
-  {
-    id:'week', en:'This week', he:'השבוע', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    }},
+
+  { id:'week', en:'This week', he:'השבוע', icon:'◔', acc:()=>cc('LEARNING'),
     render(d,s){
-      /* the honesty rule, sized rather than banned */
       const disc={'2x2':t('shared time divided','זמן משותף מחולק'),
                   '4x2':t('Shared time is divided across areas; multi-day periods are not counted.',
                           'זמן משותף מחולק בין תחומים; תקופות רב־יומיות אינן נספרות.'),
@@ -811,188 +787,269 @@ const WIDGETS = [
                           'זמן משותף מחולק בין תחומים; תקופות רב־יומיות אינן נספרות.'),
                   '4x4':t('A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.',
                           'ריצה של 40 דקות שמשרתת שני תחומים נספרת 20 דקות בכל אחד, כדי שזה יסתכם בשבוע האמיתי. תקופות רב־יומיות אינן נספרות כלל.')}[s];
-      const leg=n=>AREAS.slice(0,n).map(a=>`<div class="lg" style="font-size:11.5px;padding:2px 0">
-        <i style="background:${cc(a.k)}"></i><span class="l">${T(CAT[a.k])}</span>
-        <span class="v">${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
-      if(s==='2x2') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
+      const leg=n=>AREAS.slice(0,n).map(a=>`<div style="display:flex;align-items:center;gap:8px;
+        font-size:11.5px;padding:2.5px 0;font-weight:560">
+        <i style="width:9px;height:9px;border-radius:3px;flex:none;
+          background:linear-gradient(160deg,${lite(cc(a.k),.3)},${cc(a.k)});
+          box-shadow:0 1px 3px rgba(0,0,0,.3)"></i>
+        <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${T(CAT[a.k])}</span>
+        <span style="color:var(--on-surface-var);font-size:11px">${ltr(Math.round(a.min/TOTAL*100)+'%')}</span></div>`).join('');
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('This week','השבוע')}</div>
         <div class="grow" style="align-items:center">
-          ${donut(72,11,`<div style="font-size:13px;font-weight:720;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>`)}
+          ${donut(d.w-28,34,11,`<div style="font-size:13px;font-weight:740;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>`,false)}
         </div><div class="disc">${disc}</div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
-        <div style="display:flex;gap:14px;align-items:center;flex:1">
-          ${donut(78,12,`<div style="font-size:13px;font-weight:720">${ltr(hm(TOTAL))}</div>`)}
-          <div style="flex:1;min-width:0">${leg(3)}</div></div>
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('This week','השבוע')}</div>
+        <div style="display:flex;gap:10px;align-items:center;flex:1">
+          ${donut(96,32,11,`<div style="font-size:12.5px;font-weight:740">${ltr(hm(TOTAL))}</div>`,false)}
+          <div style="flex:1;min-width:0">${leg(4)}</div></div>
         <div class="disc">${disc}</div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('This week','השבוע')}</div>
-        <div style="display:flex;justify-content:center;margin-bottom:9px">
-          ${donut(112,16,`<div><div style="font-size:16px;font-weight:720">${ltr(hm(TOTAL))}</div>
-          <div style="font-size:9px;color:var(--on-surface-var)">${t('tracked','נמדדו')}</div></div>`)}</div>
-        ${leg(4)}<div class="disc">${disc}</div>`;
-      return `<div class="hd"><i></i>${t('Where the week went','לאן הלך השבוע')}</div>
-        <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px">
-          ${donut(132,19,`<div><div style="font-size:19px;font-weight:730;letter-spacing:-.03em">${ltr(hm(TOTAL))}</div>
-          <div style="font-size:9.5px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`)}
-          <div style="flex:1;min-width:0">${leg(6)}</div></div>
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('This week','השבוע')}</div>
+        ${donut(d.w-28,42,14,`<div style="font-size:14px;font-weight:740">${ltr(hm(TOTAL))}</div>`,false)}
+        <div style="margin-top:6px">${leg(5)}</div><div class="disc">${disc}</div>`;
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Where the week went','לאן הלך השבוע')}</div>
+        ${donut(d.w-28,62,20,`<div><div style="font-size:18px;font-weight:740;letter-spacing:-.035em">${ltr(hm(TOTAL))}</div>
+          <div style="font-size:9px;color:var(--on-surface-var);font-weight:600">${t('tracked','נמדדו')}</div></div>`,true)}
         <div class="disc">${disc}</div>`;
-    }
-  },
-  {
-    id:'trend', en:'Day by day', he:'יום אחר יום', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    }},
+
+  { id:'trend', en:'Day by day', he:'יום אחר יום', icon:'▥', acc:()=>cc('FINANCE'),
     render(d,s){
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
-        <div class="grow">${stacked(d.w-26,62,false)}</div>
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-28,64,false)}</div>
         <div class="disc">${t('7 days · same divided minutes','7 ימים · אותן דקות מחולקות')}</div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
-        <div class="grow">${stacked(d.w-26,64,true)}</div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
-        <div class="grow">${stacked(d.w-26,150,true)}</div>
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-28,62,true)}</div>`;
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-28,150,true)}</div>
         <div class="disc">${t('Busiest: Monday, 3h 5m','העמוס ביותר: יום שני, 3 ש׳ 5 ד׳')}</div>`;
-      return `<div class="hd"><i></i>${t('Day by day','יום אחר יום')}</div>
-        <div class="grow">${stacked(d.w-26,168,true)}</div>
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Day by day','יום אחר יום')}</div>
+        <div class="grow">${stacked(d.w-28,170,true)}</div>
         <div class="disc">${t('In Hebrew the week runs right to left — a drawn axis does not mirror itself.',
           'בעברית השבוע רץ מימין לשמאל — ציר מצויר לא מתהפך מעצמו.')}</div>`;
-    }
-  },
-  {
-    id:'effort', en:'Effort and outcome', he:'מאמץ ותוצאה', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    }},
+
+  { id:'effort', en:'Effort and outcome', he:'מאמץ ותוצאה', icon:'⇄', acc:()=>cc('FITNESS'),
     render(d,s){
       const head=t('Learning took most of your week','לימודים לקחו את רוב השבוע');
       const tail=t('and it has no measure','ואין להם מדד');
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Effort','מאמץ')}</div>
-        <div class="grow"><div style="font-size:13px;font-weight:640;line-height:1.32">${head}</div>
-        <div class="n2" style="margin-top:6px">${tail}</div></div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Effort and outcome','מאמץ ותוצאה')}</div>
-        <div style="display:flex;gap:14px;flex:1;align-items:center">
-          <div style="flex:1;min-width:0">${movedRows(2)}</div>
-          <div style="width:120px;flex:none;font-size:11.5px;font-weight:560;line-height:1.4;
-            color:var(--on-surface-var)">${head} — ${tail}.</div></div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('Effort and outcome','מאמץ ותוצאה')}</div>
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Effort','מאמץ')}</div>
+        <div class="grow"><div style="font-size:13.5px;font-weight:650;line-height:1.32">${head}</div>
+        <div class="n2" style="margin-top:6px">${tail}</div></div>
+        <div class="disc">${t('ranked by minutes','מדורג לפי דקות')}</div>`;
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Effort and outcome','מאמץ ותוצאה')}</div>
+        <div style="display:flex;gap:14px;flex:1"><div style="flex:1;min-width:0">${movedRows(2)}</div>
+        <div style="width:118px;flex:none;font-size:11.5px;font-weight:560;line-height:1.45;
+          color:var(--on-surface-var);display:flex;align-items:center">${head} — ${tail}.</div></div>`;
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Effort and outcome','מאמץ ותוצאה')}</div>
         ${movedRows(3)}<div class="disc">${head} — ${tail}.</div>`;
-      return `<div class="hd"><i></i>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</div>
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Where your time went, and what moved','לאן הלך הזמן, ומה זז')}</div>
         ${movedRows(4)}
         <div class="disc">${head} — ${tail}, ${t('so nothing here can say whether it moved.',
           'אז שום דבר כאן לא יכול לומר אם הם התקדמו.')}</div>`;
-    }
-  },
-  {
-    id:'level', en:'Level', he:'רמה', span:{'2x2':2,'4x2':4,'2x4':2,'4x4':4},
+    }},
+
+  { id:'level', en:'Level', he:'רמה', icon:'★', acc:()=>'var(--primary)',
     render(d,s){
       const disc=t('Points are your minutes, scored — not a separate score.',
                    'נקודות הן הדקות שלכם, מנוקדות — לא ניקוד נפרד.');
-      if(s==='2x2') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
+      if(s==='2x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Level','רמה')}</div>
         <div class="grow" style="align-items:center">
-          ${ring(70,72,'var(--primary)',`<span style="font-size:21px">${ltr('6')}</span>`)}
+          ${ring(76,72,'var(--primary)',`<span style="font-size:22px">${ltr('6')}</span>`)}
           <div class="n2" style="margin-top:7px;text-align:center">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div>`;
-      if(s==='4x2') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
-        <div style="display:flex;gap:15px;align-items:center;flex:1">
-          ${ring(62,72,'var(--primary)',`<span style="font-size:19px">${ltr('6')}</span>`)}
-          <div style="flex:1"><div style="font-size:14px;font-weight:660">${ltr('1,240')} ${t('points','נקודות')}</div>
-            <div class="n2">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div></div>
+      if(s==='4x2') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Level','רמה')}</div>
+        <div style="display:flex;gap:16px;align-items:center;flex:1">
+          ${ring(66,72,'var(--primary)',`<span style="font-size:20px">${ltr('6')}</span>`)}
+          <div style="flex:1"><div style="font-size:15px;font-weight:680">${ltr('1,240')} ${t('points','נקודות')}</div>
+          <div class="n2">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div></div>
         <div class="disc">${disc}</div>`;
-      if(s==='2x4') return `<div class="hd"><i></i>${t('Level','רמה')}</div>
+      if(s==='2x4') return `<div class="hd"><span class="ico">${this.icon}</span>${t('Level','רמה')}</div>
         <div class="grow" style="align-items:center">
-          ${ring(112,72,'var(--primary)',`<span style="font-size:30px">${ltr('6')}</span>`)}
-          <div style="font-size:14px;font-weight:660;margin-top:11px">${ltr('1,240')} ${t('points','נקודות')}</div>
+          ${ring(118,72,'var(--primary)',`<span style="font-size:32px">${ltr('6')}</span>`)}
+          <div style="font-size:14px;font-weight:670;margin-top:12px">${ltr('1,240')} ${t('points','נקודות')}</div>
           <div class="n2" style="margin-top:2px">${ltr('310')} ${t('to level 7','לרמה 7')}</div></div>
         <div class="disc">${disc}</div>`;
-      return `<div class="hd"><i></i>${t('Level and points','רמה ונקודות')}</div>
+      return `<div class="hd"><span class="ico">${this.icon}</span>${t('Level and points','רמה ונקודות')}</div>
         <div style="display:flex;gap:18px;align-items:center;flex:1">
-          ${ring(120,72,'var(--primary)',`<span style="font-size:32px">${ltr('6')}</span>`)}
-          <div style="flex:1"><div style="font-size:19px;font-weight:700">${ltr('1,240')} ${t('points','נקודות')}</div>
-            <div class="n2" style="margin-top:3px">${ltr('310')} ${t('to level 7','לרמה 7')}</div>
-            <div class="n2" style="margin-top:9px">${ltr(hm(TOTAL))} ${t('tracked this week','נמדדו השבוע')}</div></div></div>
+          ${ring(128,72,'var(--primary)',`<span style="font-size:34px">${ltr('6')}</span>`)}
+          <div style="flex:1"><div style="font-size:20px;font-weight:720">${ltr('1,240')} ${t('points','נקודות')}</div>
+          <div class="n2" style="margin-top:3px">${ltr('310')} ${t('to level 7','לרמה 7')}</div>
+          <div class="n2" style="margin-top:10px">${ltr(hm(TOTAL))} ${t('tracked this week','נמדדו השבוע')}</div></div></div>
         <div class="disc">${disc}</div>`;
-    }
-  },
+    }},
 ];
 
-function widgetTile(w, size){
-  const d = dim(size);
-  return `<div class="wg" style="width:${d.w}px;height:${d.h}px">${w.render(d,size)}</div>`;
+function tile(w,size){
+  const d=dim(size), a=w.acc();
+  return `<div class="wg" style="width:${d.w}px;height:${d.h}px;--acc:${a};
+    --acc-glow:color-mix(in srgb, ${a} 26%, transparent)">${w.render(d,size)}</div>`;
 }
 
 function scWidgets(){
-  if(SIZE === 'mixed'){
-    const g = id => WIDGETS.find(w=>w.id===id);
-    return `<div class="wallpaper"></div>
-      <div class="inner">
-        <div style="height:10px"></div>
-        <div class="wgrid">
-          <div style="grid-column:span 4">${widgetTile(g('decisions'),'4x2')}</div>
-          <div style="grid-column:span 2">${widgetTile(g('today'),'2x4')}</div>
-          <div style="grid-column:span 2;display:flex;flex-direction:column;gap:12px">
-            ${widgetTile(g('week'),'2x2')}
-            ${widgetTile(g('level'),'2x2')}
-          </div>
-          <div style="grid-column:span 4">${widgetTile(g('effort'),'4x2')}</div>
-        </div>
-      </div>
-      <div class="dock">
-        <div class="ic">◎</div><div class="ic">▤</div><div class="ic">✦</div><div class="ic">◍</div>
-      </div>`;
+  const g=id=>WIDGETS.find(w=>w.id===id);
+  if(SIZE==='mixed'){
+    return `<div class="wallpaper"></div><div class="inner">
+      <div class="wgrid">
+        <div style="grid-column:span 4">${tile(g('decisions'),'4x2')}</div>
+        <div style="grid-column:span 2">${tile(g('today'),'2x4')}</div>
+        <div style="grid-column:span 2;display:flex;flex-direction:column;gap:12px">
+          ${tile(g('week'),'2x2')}${tile(g('level'),'2x2')}</div>
+        <div style="grid-column:span 4">${tile(g('effort'),'4x2')}</div>
+      </div></div>
+      <div class="dock"><div class="ic">◎</div><div class="ic">▤</div>
+        <div class="ic">✦</div><div class="ic">◍</div></div>`;
   }
-  const d = dim(SIZE);
-  const perRow = SIZE.startsWith('4') ? 1 : 2;
+  const perRow=SIZE.startsWith('4')?1:2;
   let rows='', buf=[];
   WIDGETS.forEach((w,i)=>{
-    buf.push(`<div>${widgetTile(w,SIZE)}
-      <div class="cap" style="color:var(--on-surface-var);opacity:.75">${T(w)}</div></div>`);
-    if(buf.length===perRow || i===WIDGETS.length-1){
-      rows += `<div style="display:flex;gap:12px;margin-bottom:14px">${buf.join('')}</div>`; buf=[];
+    buf.push(`<div>${tile(w,SIZE)}<div class="cap">${T(w)}</div></div>`);
+    if(buf.length===perRow||i===WIDGETS.length-1){
+      rows+=`<div style="display:flex;gap:12px;margin-bottom:16px">${buf.join('')}</div>`; buf=[];
     }
   });
-  return `<div class="wallpaper"></div>
-    <div class="inner"><div style="height:6px"></div>${rows}</div>`;
+  return `<div class="wallpaper"></div><div class="inner">${rows}</div>`;
+}
+
+/* ═══ design notes — outside the phone, because they are not app screens ═══ */
+function scNotes(){
+  const mini=(k,wA,wB)=>`<div class="rw">
+    <span style="width:78px;font-size:12px;font-weight:600;color:#cfdcea">${T(CAT[k])}</span>
+    <span style="flex:1;height:9px;border-radius:99px;background:#1b2836;overflow:hidden">
+      <span style="display:block;width:${wA}%;height:100%;border-radius:99px;
+        background:linear-gradient(180deg,${lite(CAT[k].d,.3)},${CAT[k].d})"></span></span>
+    <span style="flex:1;height:9px;border-radius:99px;background:#1b2836;overflow:hidden">
+      <span style="display:block;width:${wB}%;height:100%;border-radius:99px;
+        background:${CAT[k].d};opacity:.45"></span></span></div>`;
+  return `<div class="np">
+    <h2>Design notes — what the two “rejected” cards were</h2>
+    <p class="lede">These are <b>not app features</b>. They are two shapes the effort-and-outcome
+      card was drawn as and then thrown away. Rev 3 rendered them <em>as app screens</em>, which is
+      exactly why they read as mystery features — so they now live here, outside the phone.</p>
+
+    <section>
+      <span class="verdict ok">shipped</span>
+      <h3>What the card actually is</h3>
+      <p class="what">“Where your time went, and what moved”</p>
+      <p>Each life area gets <b>one bar for the minutes you spent</b>, ordered biggest first, and
+        beside it <b>the goals that actually moved</b>, named, with their own numbers. The app ranks
+        minutes because minutes are comparable. It does not rank movement, because a percentage is a
+        fraction of <em>its own</em> target.</p>
+    </section>
+
+    <section>
+      <span class="verdict">rejected</span>
+      <h3>1 · “Paired bars”</h3>
+      <p class="what">Two bars per area — a solid one for time, a faded one for progress</p>
+      <div class="demo">${mini('HEALTH',100,80)}${mini('CAREER',81,30)}${mini('RELATION',46,90)}</div>
+      <p><b>Why it was rejected.</b> Two bars sitting on top of each other invite you to compare
+        their <em>lengths</em>. But one is measured in <b>minutes</b> and the other in <b>percent</b>
+        — there is no length at which “4 hours” equals “16%”. The picture offers a comparison the
+        numbers cannot support, and a chart that invites a false reading is worse than no chart.</p>
+    </section>
+
+    <section>
+      <span class="verdict">rejected</span>
+      <h3>2 · “One efficiency number”</h3>
+      <p class="what">A single score per area — percent of progress per hour spent</p>
+      <div class="demo" style="display:flex;align-items:center;gap:16px">
+        <div style="font-size:36px;font-weight:760;color:#ff9b86;letter-spacing:-.04em">0.4</div>
+        <div style="font-size:12.5px;color:#8ea3b9">% moved per hour · Studies</div></div>
+      <p><b>Why it was rejected — two reasons.</b> First, it is <b>one mark carrying two axes</b>:
+        it folds effort and outcome into a single number, and the whole point of the card is the
+        <em>gap between them</em>, which the folding deletes. Second, it turns your week into a
+        <b>productivity score</b>. An evening spent with someone you love scores badly, and the app
+        would be telling you so. GoalPilot is not for that.</p>
+    </section>
+
+    <section>
+      <span class="verdict">rejected</span>
+      <h3>3 · “Two rankings, joined” — this one was my own revision 1</h3>
+      <p class="what">Areas ranked by time on one side, by progress moved on the other</p>
+      <p><b>Why it was rejected.</b> One kilogram off “lose 5 kg” scores <b>+20%</b>; one book of
+        “read 12 books” scores <b>+8%</b> — the same single act of progress. So ranking by movement
+        partly ranks <em>how modest your targets happen to be</em>. It is a real finding that this
+        version was drawn first and then killed by its own test.</p>
+    </section>
+
+    <section>
+      <span class="verdict ok">confirmed</span>
+      <h3>Widgets — yes, on the phone’s home screen, outside the app</h3>
+      <p>Real Android <b>app widgets</b>: long-press the wallpaper → Widgets → GoalPilot → drag one
+        onto a home screen, resize it by its handles. Nothing here lives only inside the app.</p>
+      <p><b>Three consequences the build session owes</b>, and they are real constraints rather than
+        details. A widget is <b>not a live screen</b> — Android renders it from a snapshot and
+        refreshes it on a schedule, so <b>nothing animates</b> and the chart entry animation
+        <code>ChartAnimation.kt</code> exists for simply does not run there. The launcher decides the
+        <b>actual dp</b> a 2×2 or 4×4 occupies, and it differs by device and launcher, so every tile
+        must survive being a bit smaller than drawn here. And a tap can only open the app at a
+        destination — a widget cannot show a dialog — so “tick it here” means the app opens on that
+        task.</p>
+    </section>
+
+    <section>
+      <span class="verdict">owed</span>
+      <h3>The palette replaces committed values</h3>
+      <p>The chart colours here are <b>not</b> <code>GoalCategory.defaultColorHex</code>. Those seven
+        are primaries at full chroma with unevenly spaced hues, which is why they read as crayons
+        when they sit side by side in one donut. This set is built as a set — one lightness, one
+        chroma, hues evenly spaced — with a dark variant holding the same relationship against
+        <code>#0C1520</code>. Adopting it means <b>editing the committed hexes and updating
+        <code>ThemePaletteTest</code></b>, which is the build session's, and is logged here rather
+        than done quietly.</p>
+    </section>
+  </div>`;
 }
 
 /* ═══ render ═══ */
-const VIEWS = {
-  'home':{fn:scHome, t:'Home — proposed', s:'Decisions banner → Today → your goals → this week. The level ring rides on the avatar; there is no points hero, because points and the donut are the same minutes.'},
-  'home-before':{fn:scHomeBefore, t:'Home — as it ships today', s:'Rendered from DashboardScreen.kt’s item order. Two setup cards that never retire and five generic tips are four of the six blocks above your own goals.'},
-  'analytics':{fn:scAnalytics, t:'Analytics — the chart set', s:'Donut and stacked column stay, both bar charts retire, and one card is added: where the time went and what moved.'},
-  'gap':{fn:scGap, t:'Effort and outcome — and the three forms it is not', s:'Including revision 1’s own ranking, kept as a rejected exhibit after its own test killed it.'},
-  'widgets':{fn:scWidgets, t:'Widgets — every card, every size', s:'Each card on the screens above is also a widget, at 2×2, 4×2, 2×4 and 4×4. The honesty rule became a size rule: the disclosure shrinks to the smallest true sentence that fits, and no size ships without one.'},
+const VIEWS={
+  'home':{fn:scHome,box:'phone',t:'Home — proposed',
+    s:'Decisions → Today → your goals → this week. The donut now names every life area beside its slice.'},
+  'home-before':{fn:scHomeBefore,box:'phone',t:'Home — as it ships today',
+    s:'The shipped order, from DashboardScreen.kt. Two setup cards that never retire and five tips sit above your own goals.'},
+  'analytics':{fn:scAnalytics,box:'phone',t:'Analytics — the chart set',
+    s:'New palette, volume and texture; the donut carries direct labels; the effort card ranks only minutes.'},
+  'widgets':{fn:scWidgets,box:'wall',t:'Widgets — every card, every size',
+    s:'Real Android home-screen widgets, placed on the launcher outside the app. 2×2, 4×2, 2×4, 4×4 and a mixed home screen.'},
+  'notes':{fn:scNotes,box:'np',t:'Design notes',
+    s:'What the two “rejected” cards were, what widgets actually are on Android, and what the new palette costs.'},
 };
-let V = 'home';
+let V='home';
 
 function render(){
-  const v = VIEWS[V];
-  document.getElementById('vtitle').textContent = v.t;
-  document.getElementById('vsub').textContent = v.s;
-  document.getElementById('sizebar').style.display = V==='widgets' ? '' : 'none';
-  document.documentElement.lang = L;
-  const cls = V==='widgets' ? 'wall' : 'phone';
-  document.getElementById('stage').innerHTML =
-    `<div class="${cls}" data-theme="${THEME}" dir="${L==='he'?'rtl':'ltr'}">
-       ${v.fn()}<div class="grain"></div></div>`;
-  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on', b.dataset.v===V));
-  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on', b.dataset.s===SIZE));
+  const v=VIEWS[V];
+  document.getElementById('vtitle').textContent=v.t;
+  document.getElementById('vsub').textContent=v.s;
+  document.getElementById('sizebar').style.display=V==='widgets'?'':'none';
+  document.documentElement.lang=L;
+  UID=0;
+  document.getElementById('stage').innerHTML = v.box==='np'
+    ? `<div data-theme="${THEME}">${v.fn()}</div>`
+    : `<div class="${v.box}" data-theme="${THEME}" dir="${L==='he'?'rtl':'ltr'}">
+         ${v.fn()}<div class="grain"></div></div>`;
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===V));
+  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===SIZE));
   const u=new URL(location);
   u.searchParams.set('variant',V); u.searchParams.set('lang',L);
   u.searchParams.set('theme',THEME); u.searchParams.set('size',SIZE);
   history.replaceState({},'',u);
 }
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{V=b.dataset.v; render();});
-document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SIZE=b.dataset.s; render();});
-document.getElementById('lang').onclick = e=>{
-  L = L==='en' ? 'he' : 'en';
-  e.target.textContent = L==='en' ? 'עברית' : 'English';
-  e.target.classList.toggle('on', L==='he'); render();
-};
-document.getElementById('theme').onclick = e=>{
-  THEME = THEME==='dark' ? 'light' : 'dark';
-  e.target.textContent = THEME==='dark' ? 'Light' : 'Dark'; render();
-};
-addEventListener('keydown', e=>{
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{V=b.dataset.v;render();});
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{SIZE=b.dataset.s;render();});
+document.getElementById('lang').onclick=e=>{
+  L=L==='en'?'he':'en';
+  e.target.textContent=L==='en'?'עברית':'English';
+  e.target.classList.toggle('on',L==='he'); render();};
+document.getElementById('theme').onclick=e=>{
+  THEME=THEME==='dark'?'light':'dark';
+  e.target.textContent=THEME==='dark'?'Light':'Dark'; render();};
+addEventListener('keydown',e=>{
   const ks=Object.keys(VIEWS), i=ks.indexOf(V);
-  if(e.key==='ArrowRight') V=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length], render();
-  if(e.key==='ArrowLeft')  V=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length], render();
-});
+  if(e.key==='ArrowRight'){V=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length];render();}
+  if(e.key==='ArrowLeft'){V=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length];render();}});
 const q=new URL(location).searchParams;
 if(VIEWS[q.get('variant')]) V=q.get('variant');
-if(q.get('lang')==='he') { L='he'; document.getElementById('lang').textContent='English';
-                           document.getElementById('lang').classList.add('on'); }
-if(q.get('theme')==='light'){ THEME='light'; document.getElementById('theme').textContent='Dark'; }
+if(q.get('lang')==='he'){L='he';const b=document.getElementById('lang');
+  b.textContent='English';b.classList.add('on');}
+if(q.get('theme')==='light'){THEME='light';document.getElementById('theme').textContent='Dark';}
 if(['2x2','4x2','2x4','4x4','mixed'].includes(q.get('size'))) SIZE=q.get('size');
 render();
 </script>

@@ -210,8 +210,9 @@ against the artifact rather than eyeballed:**
   rendered-output test — no browser was driven.
 - **No dead reference to the deleted chart.** `slopeChart` was rev 1's function; after the rev 2
   rewrite the file contains **0** references to it, checked rather than assumed.
-- **Re-run after the rev 3 rebuild**, which replaced the whole file: `node --check` → **OK**;
-  Hebrew guard → **72 literals inside the app, 0 unguarded**. One Hebrew string now lives
+- **Re-run after the rev 3 rebuild and again after the rev 4 rewrite**, each of which replaced
+  the whole file: `node --check` → **OK** both times; Hebrew guard → **72 literals at rev 3, 71 at
+  rev 4, 0 unguarded** either time. One Hebrew string now lives
   **outside** the phone frame — the prototype's own `עברית` toggle button, which is chrome and
   not app UI. Named here rather than folded into the count, because an assertion that quietly
   moves its own boundary is worth less than the number it reports.
@@ -262,6 +263,52 @@ carrying a derived or divided number inherits the same test.
 cell** — Android hands a widget a dp size that varies by launcher and by device — on top of the
 Compose-layout proof it already could not give.
 
+## Revision 4 — five notes from Ido, and one of them was a property of the set rather than of any colour
+
+Feedback 2026-08-11 on rev 3. Posted as
+[the rev 4 comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5246235946).
+
+**5 · Confirmed first, because it changes what is owed.** These are **real Android app widgets**,
+placed by the user on the launcher's home screen, **outside the app**. Three consequences written
+into the prototype's Design notes rather than left for the build session to discover: a widget is
+**not a live screen** (Android renders a snapshot on a refresh schedule, so **nothing animates**,
+and `ChartAnimation.kt` does not run there) · the **launcher decides the real dp** of a `2×2` or
+`4×4`, varying by device and launcher, so every tile must survive being smaller than drawn · a tap
+can only **open the app at a destination**, since a widget cannot show a dialog.
+
+**1 · The palette, and the diagnosis is the finding.** The charts were using
+`GoalCategory.defaultColorHex` — **seven primaries at full chroma with unevenly spaced hues**.
+Each is fine alone; side by side in one donut nothing holds them together and the lightness jumps
+per slice. **That is a property of the set, not of any one colour**, which is why "pick nicer
+reds" would not have fixed it. Replaced with a set built as a set — one lightness, one chroma,
+hues evenly spaced, dark variant holding the same relationship against `#0C1520`. **It replaces
+committed values, so `ThemePaletteTest` is owed an update**; logged in the Design notes rather
+than done quietly.
+
+**Volume was the other half.** Every arc, bar and ring now carries a three-stop fill
+(tint → hue → shade), a **specular bevel** (`feSpecularLighting`, point light above-left), a sheen
+arc along the lit edge, a cast shadow, and a **`feTurbulence` grain pass** in soft-light. One fix
+worth naming because it is the kind that ships wrong: the donut's slice caps are **butt, not
+round** — a round cap adds half the stroke width past each endpoint, so at `thick = 20` the caps
+swallow any gap small enough to still read as one ring.
+
+**2 · Direct labels.** The donut names every life area beside its slice, with leader lines,
+per-side vertical de-collision and the percentage under each name. The label side is geometric,
+so **RTL needs no special case**.
+
+**3 · The two "rejected" cards left the phone, and that was the actual mistake.** They were never
+app features — they are shapes the effort card was drawn as and thrown away — and **rendering
+them as app screens is what made them unreadable**. They now sit in a plain **Design notes**
+panel outside the phone, one sentence each on what it was and why it lost, with revision 1's own
+ranking added as a third.
+
+**4 · Widgets rebuilt to the same level** — accent glow per subject, icon lozenge, texture pass,
+denser content at every size, gradients on every bar and ring.
+
+**Stated rather than hidden:** the bevel and the turbulence are **SVG filters, and Glance has no
+equivalent** — in a real widget that depth must come from a pre-rendered bitmap or `Canvas`
+drawing. Named here rather than left to be found.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -293,7 +340,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 3 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 4 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the
