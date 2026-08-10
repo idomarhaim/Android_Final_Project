@@ -16,6 +16,72 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+| `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+
+> ⚠️ **A sixth session joined the same map — `c1-points-and-time` on
+> [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) — and it is the
+> ticket every remaining blocked ticket on the map is waiting behind.**
+> `/wayfinder 12` was invoked **bare**, so the pick was the agent's and the reasoning is
+> on the record. Frontier **re-derived out of the dependencies API at session start**, not
+> read off the Unclaimed-work block (which has carried a stale count three times today and
+> says so): every open child of `#12` queried for `blocked_by`. Result — **25 children, 15
+> closed, 10 open**; frontier = **`#19 · C1`, `#21 · C5`, `#28 · C9e`, `#31 · C12`**, with
+> `#26` assigned and live. Membership unchanged from `c14-challenge-scoring`'s fourth
+> derivation; this is the fifth.
+> **`#19` was taken, and the other three were left for the reasons the board already
+> records — none of them has expired:**
+> 1. **`#19` has no live sibling in its half.** Its two blockers, `#18` (`c3-points-currency`)
+>    and `#39` (`c18-subtask-depth`), are both closed **and released**. Nothing live sits in
+>    the scoring/structural half at all.
+> 2. **It is the leverage.** `#20`, `#22` and `#24` wait on it, and through `#24` so do `#30`
+>    and `#35` — **every remaining blocked ticket, with no exceptions.** Leaving it would
+>    leave the map's whole blocked half shut for another session.
+> 3. **`#28 · C9e` — declined for the fourth time, on unchanged grounds.** It is the calendar
+>    half and `c9b-calendar-surface` is live and mid-prototype on `#26` (rev 7 as of this
+>    claim). Taking it would change a live session's inputs again, mid-flight.
+> 4. **`#31 · C12` — declined on the HITL-prototype contention.** `#26` is already a live
+>    prototype needing Ido in the loop; two concurrent prototypes contend for the one
+>    resource this board cannot serialise, which is Ido himself. (Its *other* 2026-08-10
+>    objection — that `C3` and `C18` were still deciding the numbers it charts — **has
+>    expired**, both being closed. The HITL one has not.)
+> 5. **`#21 · C5` — declined because recurrence flows *into* the calendar surface.** `C5`
+>    decides where recurrence lives; recurrence produces occurrences, and occurrences are
+>    what `#26`'s prototype draws. It is `#28`'s coupling wearing a different label.
+>
+> Two coupling points, both named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, and the race it names has fired for real
+>    once** (`c3-points-currency` records it from both sides). Same discipline, no
+>    exceptions: **re-fetch `#12`'s body immediately before appending**, write only this
+>    session's line, verify a pure insertion afterwards. **`#26`'s line is still owed by
+>    `c9b-calendar-surface`** and is not this session's to write; `C13`
+>    ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))'s index gap
+>    stays Ido's to assign.
+> 2. **`#19` arrives with more decided than open, and three of its four inputs came from
+>    *released* sessions — so they are inputs, never subjects.** `C3` §1 already made
+>    `points = round(minutes / 3) × difficulty` — **computed, never authored** — which is
+>    most of `R7`; `C18` answered what a point total sums over (**leaves**); `C17` answered
+>    how a shared task pays (**pooled, once**) and routed the *bonus* question here as
+>    motivation design. If anything this session finds contradicts one of them, it **says so
+>    on that ticket** and edits nothing a released session owns. Flow stays one-way, as
+>    `c9c`, `c3`, `c18` and `c14` all established.
+>
+> 📥 **`kb-candidates/` re-listed at session start, as the folder's existence requires —
+> and the standing note below is now three files stale in the *other* direction: seven
+> files, not four.** The three the note has never counted are
+> [`2026-08-10-c16-milestone-model.md`](kb-candidates/2026-08-10-c16-milestone-model.md),
+> [`2026-08-10-c18-subtask-depth.md`](kb-candidates/2026-08-10-c18-subtask-depth.md) and
+> [`2026-08-10-c14-challenge-scoring.md`](kb-candidates/2026-08-10-c14-challenge-scoring.md).
+> **Nothing here is drainable by this session, and the two reasons are different:**
+> **six** files are always-ask (five of the six target `rules/`, four of *those* target
+> `rules/question-axis-naming.md` — they are one accumulating amendment and should be read
+> together, as `c3-points-currency` and `c14-challenge-scoring` both asked); the seventh,
+> [`2026-08-10-c9b-calendar-surface.md`](kb-candidates/2026-08-10-c9b-calendar-surface.md),
+> holds three **ordinary, `AUTO MODE`-eligible** entries — but it is **owned by a live row
+> in the table above**, so it drains with that session's commit and not with this one's.
+> Left as a correction here rather than edited into the note below, which another session
+> owns.
+>
+> Recorded by `c1-points-and-time` on claiming.
 
 > ⚠️ **The calendar pair shared the *same half* of [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) — and `c9c-calendar-sync` has now released, leaving `c9b-calendar-surface` a live hand-off to read.**
 > `c9b-calendar-surface` (#26, the in-app calendar screen) and `c9c-calendar-sync`
