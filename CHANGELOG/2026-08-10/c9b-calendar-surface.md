@@ -295,6 +295,32 @@ another pale container among pale containers. Event fills also went from a flat 
 tint — which on a tinted canvas went muddy, most visibly on the orange — to a gradient
 between two tints, per theme.
 
+## 🔁 Rev 8 — "this pale sky-blue-grey is boring"
+
+**He is describing the committed token, not the gradients on top of it.**
+`AuroraBackground` is a single flat `#D0E2F5`, and **a flat fill of any hue reads as
+boring, because nothing in it changes across 848px.** So the fix is not a different
+blue — it is to stop the canvas being one colour at all.
+
+- **The base is now a sweep, not a fill**: blue → periwinkle → lilac down the screen, so
+  no two thirds of the canvas are the same colour. It sits on **the phone itself**, not
+  on the scroll container, so the header and nav are in the same field rather than
+  floating on a different one.
+- **Five radial hues on top** — blue, teal, violet, a warm peach and a mint — instead of
+  four faint ones. Dark got a sixth for the same reason, so the two stay siblings rather
+  than one being obviously richer.
+- **Same value range as the committed token**, deliberately: what changed is **chroma and
+  variation, not lightness**, so every card keeps the contrast `ThemePaletteTest` exists
+  to protect.
+- **A grain layer.** A gradient with no texture still reads as plastic; every serious app
+  surface carries a little noise. It is an inline `feTurbulence` data URI at `soft-light`
+  — self-contained, no asset, no network.
+
+**The assertion is about variation, not colour**, because *"pick a nicer blue"* would
+have been the wrong lesson: the check counts mesh stops across both themes and fails
+under eight, and requires the grain layer to exist. A canvas of one hue is the defect
+whatever that hue is.
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing

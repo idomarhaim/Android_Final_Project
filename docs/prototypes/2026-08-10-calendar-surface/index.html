@@ -102,6 +102,14 @@
   .phone::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:59;
     background:linear-gradient(128deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 32%);
     mix-blend-mode:screen}
+  /* A gradient with no texture still reads as plastic - every serious app surface
+     carries a little noise. Self-contained: an inline feTurbulence data URI, no
+     network, no asset. soft-light so it darkens and lightens rather than greying. */
+  .grain{position:absolute;inset:0;z-index:58;pointer-events:none;opacity:.42;
+    mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .phone[data-theme="dark"] .grain{opacity:.30}
+
   @keyframes in{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:none}}
   @keyframes rise{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
 
@@ -122,12 +130,20 @@
      same aurora - warmer, because a light canvas can carry warm chroma that a dark
      one turns to mud - and every raised surface gets a gradient rather than a flat
      fill, so the light catches somewhere. */
+  /* FIVE hues instead of one flat fill. The base sweep travels blue -> periwinkle
+     -> lilac down the screen so no two thirds of the canvas are the same colour,
+     and the radials sit on top of it. Same value range as the committed
+     AuroraBackground, so cards keep their contrast - what changed is chroma and
+     variation, not lightness. */
+  .phone[data-theme="light"]{
+    background:linear-gradient(168deg, #C7DCFB 0%, #CFDAFA 38%, #D8D6F7 72%, #DCDCF6 100%);}
   .phone[data-theme="light"] .screen{
     background:
-      radial-gradient(720px 420px at -8% -6%, rgba(120,160,255,.30), transparent 58%),
-      radial-gradient(640px 440px at 106% 4%, rgba(0,190,190,.20), transparent 60%),
-      radial-gradient(760px 520px at 44% 104%, rgba(168,120,240,.18), transparent 62%),
-      radial-gradient(460px 300px at 92% 58%, rgba(255,176,120,.14), transparent 64%);}
+      radial-gradient(700px 430px at -10% -8%, rgba(88,138,255,.50), transparent 60%),
+      radial-gradient(620px 450px at 110% 0%, rgba(0,198,190,.42), transparent 60%),
+      radial-gradient(720px 520px at 38% 108%, rgba(172,112,246,.38), transparent 62%),
+      radial-gradient(520px 340px at 98% 52%, rgba(255,164,116,.30), transparent 62%),
+      radial-gradient(470px 330px at 2% 64%, rgba(104,228,198,.28), transparent 64%);}
   .phone[data-theme="light"] .card,
   .phone[data-theme="light"] .body,
   .phone[data-theme="light"] .rail .p,
@@ -142,9 +158,10 @@
     box-shadow:var(--sh-1), inset 0 1px 0 #FFFFFF;}
   .phone[data-theme="light"] .deck{
     background:linear-gradient(155deg, #FFFFFF 0%, #F4F9FF 44%, #EEF6F6 100%);}
-  .phone[data-theme="light"] .navbar,
+  .phone[data-theme="light"] .navbar{
+    background:linear-gradient(to bottom, rgba(226,236,255,.86), rgba(214,226,252,.94));}
   .phone[data-theme="light"] .sticky{
-    background:linear-gradient(to bottom, rgba(226,238,253,.94), rgba(214,230,250,.82));}
+    background:linear-gradient(to bottom, rgba(211,228,254,.92), rgba(206,220,252,.76));}
   .phone[data-theme="light"] .col.today{
     background:linear-gradient(to bottom, rgba(180,206,255,.55), rgba(180,206,255,.10) 82%);}
   .phone[data-theme="light"] .col.weekend{background:rgba(150,178,210,.16)}
@@ -166,7 +183,8 @@
       radial-gradient(760px 420px at -6% -4%, rgba(72,116,255,.20), transparent 58%),
       radial-gradient(680px 460px at 104% 6%, rgba(0,190,196,.16), transparent 60%),
       radial-gradient(820px 560px at 46% 104%, rgba(150,92,230,.16), transparent 64%),
-      radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.10), transparent 66%);}
+      radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.12), transparent 66%),
+      radial-gradient(420px 300px at 6% 58%, rgba(230,120,90,.09), transparent 66%);}
   .phone[data-theme="dark"] .card,
   .phone[data-theme="dark"] .body,
   .phone[data-theme="dark"] .rail .p,
@@ -644,6 +662,7 @@ function phone(lang,theme,{tabs,active,newTab,sticky,body,fab}){
   return `<div class="phone" data-theme="${theme}" dir="${lang==='he'?'rtl':'ltr'}" lang="${lang}">
     <div class="statusbar"><span>${hhmm(NOW_MIN)}</span><span class="rt">${SYS}<span>84%</span></span></div>
     <div class="screen"><div class="sticky">${sticky}</div>${body}</div>${fab||''}
+    <div class="grain"></div>
     <div class="navbar">${TABS.map((x,i)=>
       `<div class="${cx('t', i===active&&'on', i===newTab&&'new')}">
          <span class="pill">${x[0]}</span><span>${x[1]}</span></div>`).join('')}</div></div>`;
