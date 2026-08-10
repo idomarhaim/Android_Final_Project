@@ -123,6 +123,11 @@ mode**. Do not re-reason about the destination on the next drain; the reasons ar
 **They should be approved and ingested together**, and read against the consolidated file
 rather than folded into it by a session that cannot approve them.
 
-**And a `rules/` change owes a 🎬 walkthrough offer before it is written** — amending how
-pickers are drafted alters the interaction protocol, which is the one thing no repo has a
-test layer for.
+**🎬 Walkthrough: offered and WAIVED by Ido, 2026-08-10.** Do not re-offer it — the gate is
+discharged, and re-asking is the noise the derivable-decision rule forbids.
+
+**Vehicle:** `C:\Dev\JARVIS\sessions\picker-delegation-clause.md`, a brief
+`c1-points-and-time` wrote independently on *"I couldn't understand you — you choose"* being
+a **delegation**. That is the same exchange entry 1 was written from, described twice by two
+sessions that never spoke. **Read these two entries into `/kickoff picker-delegation-clause`**
+rather than ingesting them separately.

@@ -139,6 +139,22 @@ before your first write. Normative rule:
 > scope ruling on another ticket. Always-ask twice over: destination `rules/`, and the first
 > rewrites a claim committed 30 minutes earlier.
 >
+> **Two corrections by this session after the release above, both on Ido's prompting.**
+> 1. **The §3 claim was flagged as unverified at commit, then checked — and it was half
+>    wrong.** The 30-day trash is real; Google **does not trash a *this-and-following*
+>    delete at all**, which is the exact shape `C5`'s repeat rules reach for. **§3a** added
+>    to the resolution (never use that shape; cancel occurrences one at a time), a
+>    correction posted to [#21](https://github.com/idomarhaim/Android_Final_Project/issues/21#issuecomment-5245723024),
+>    and **`#12`'s index line amended in place** — re-fetched, `cmp`-verified, 147 → 148
+>    lines, 17 → 17 decisions, one line edited and nothing else moved.
+> 2. **The KB candidates are now a *partial* drain, not "none".** The two `rules/` entries
+>    are still parked; two claims that emerged *after* release landed in
+>    `C:\Dev\JARVIS\kb` (`ace7bd9`) — a new page on undo-vs-confirm recoverability and
+>    `decision-map-charting` §8. **Ido waived the 🎬 walkthrough** for the parked pair on
+>    2026-08-10; they stay parked anyway, because
+>    `C:\Dev\JARVIS\sessions\picker-delegation-clause.md` already exists as their vehicle
+>    and one session resolves one thing.
+>
 > Recorded by `c9e-event-lifecycle` on release.
 
 > ✅ **`c9b-calendar-surface` has released — [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26)
