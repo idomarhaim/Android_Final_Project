@@ -43,9 +43,15 @@ before your first write. Normative rule:
 | `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c9e-event-lifecycle` | `/wayfinder 12` → resolve [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) (what happens to a synced event when its task changes). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9e-event-lifecycle.md` *(new)*, `kb-candidates/2026-08-10-c9e-event-lifecycle.md` *(new, if anything is flagged)*, GitHub issues **#28** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c12-charts-presentation` | `/wayfinder 12` → resolve [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) (the chart set, whether the user picks, and how the dashboard is arranged). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c12-charts-presentation.md` *(new)*, `docs/prototypes/2026-08-10-charts-presentation/` *(new)*, `kb-candidates/2026-08-10-c12-charts-presentation.md` *(new, if anything is flagged)*, GitHub issues **#31** and **#12** | **Ido's attention** — a prototype ticket, and two live grillings are already asking for him; see §3 below. No build, no device, no Firebase: the prototype is standalone HTML, as `C9b`'s was | 2026-08-10 |
-| `picker-rule-consolidation` | **Cross-repo visitor — lives in `C:\Dev\JARVIS`** (`/kickoff picker-rule-consolidation`). Consolidated the **four** always-ask picker amendments parked here against `rules/question-axis-naming.md` into one amendment of that rule, then came back to drain the files that held them. Claims a row here because it **writes into this repo**, per the cross-repo clause | `kb-candidates/2026-08-10-c9c-calendar-sync.md` · `kb-candidates/2026-08-10-c14-challenge-scoring.md` · `kb-candidates/2026-08-10-c3-points-currency.md` · `kb-candidates/2026-08-10-c18-subtask-depth.md` · this row. **Touches no ticket, no `#12`, no code, no other candidate file** | none — no build, no device, no Firebase, and no GitHub write | 2026-08-10 |
-
-> 📌 **What the visitor above did to your candidate files, so no session is surprised by a
+> ✅ **`picker-rule-consolidation` claimed and released here 2026-08-10 — a cross-repo
+> visitor from `C:\Dev\JARVIS` (`/kickoff picker-rule-consolidation`), in and out in two
+> commits, `d805616` (claim) and `d9616b9` (drain).** It consolidated the **four**
+> always-ask picker amendments parked in this repo against
+> `C:\Dev\JARVIS\rules\question-axis-naming.md` into one amendment of that rule, then came
+> back only to drain the files that held them. It touched **no ticket, no `#12`, no code and
+> no other candidate file**, and held no singleton.
+>
+> 📌 **What it did to your candidate files, so no session is surprised by a
 > deletion it did not make.** All four sessions that wrote them (`c9c-calendar-sync`,
 > `c14-challenge-scoring`, `c3-points-currency`, `c18-subtask-depth`) have **released**.
 > Each file's only remaining entry was ⛔ always-ask with destination `rules/` — which
