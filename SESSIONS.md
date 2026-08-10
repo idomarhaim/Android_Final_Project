@@ -42,6 +42,86 @@ before your first write. Normative rule:
 >    below.
 | `c1-points-and-time` | `/wayfinder 12` → resolve [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) (the points-and-time model, and who is allowed to author it). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c1-points-and-time.md` *(new)*, `kb-candidates/2026-08-10-c1-points-and-time.md` *(new, if anything is flagged)*, GitHub issues **#19** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c9e-event-lifecycle` | `/wayfinder 12` → resolve [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) (what happens to a synced event when its task changes). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9e-event-lifecycle.md` *(new)*, `kb-candidates/2026-08-10-c9e-event-lifecycle.md` *(new, if anything is flagged)*, GitHub issues **#28** and **#12** | none — a grilling ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
+| `c12-charts-presentation` | `/wayfinder 12` → resolve [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) (the chart set, whether the user picks, and how the dashboard is arranged). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c12-charts-presentation.md` *(new)*, `docs/prototypes/2026-08-10-charts-presentation/` *(new)*, `kb-candidates/2026-08-10-c12-charts-presentation.md` *(new, if anything is flagged)*, GitHub issues **#31** and **#12** | **Ido's attention** — a prototype ticket, and two live grillings are already asking for him; see §3 below. No build, no device, no Firebase: the prototype is standalone HTML, as `C9b`'s was | 2026-08-10 |
+
+> ⚠️ **An eighth session joined the same map — `c12-charts-presentation` on
+> [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) — and it is the
+> first prototype ticket taken since the design standard became normative.**
+> `/wayfinder 12` was invoked **bare**, so the pick was the agent's. Frontier
+> **re-derived out of the dependencies API at session start**, not read off the
+> Unclaimed-work block: every open child of `#12` queried for `blocked_by`. Result —
+> **25 children, 16 closed, 9 open**; frontier (open · unblocked · unassigned) =
+> **`#31 · C12` and `#21 · C5`**, and nothing else. `#19` and `#28` are unblocked but
+> assigned and live; the other five open children (`#20`, `#22`, `#24`, `#30`, `#35`) are
+> **all still blocked behind `#19` alone**. Seventh derivation of the day, and the frontier
+> has **shrunk from three to two** since `c9e-event-lifecycle`'s — it took one of them.
+> **`#31` was taken and `#21` was left, and the grounds have swapped ends since yesterday:**
+> 1. **The sole ground on which `#31` was declined three times has expired.** Every
+>    decline read *"a second concurrent prototype contends for Ido"* — and each named
+>    [#26](https://github.com/idomarhaim/Android_Final_Project/issues/26) as the first one.
+>    `#26` is **closed and released**; there is no live prototype on this board. What
+>    remains is that **every** frontier ticket is HITL, which — as `c9e-event-lifecycle`
+>    established — discriminates nothing on its own. Between two HITL tickets the
+>    discriminator has to be **disjointness of subject**, and there the two separate
+>    cleanly.
+> 2. **`#31` is the disjoint one.** Both its blockers — `C3` ([#18](https://github.com/idomarhaim/Android_Final_Project/issues/18))
+>    and `C7` ([#14](https://github.com/idomarhaim/Android_Final_Project/issues/14)) — are
+>    closed **and released**, so its inputs are foreign state to *read*. It has exactly one
+>    live edge, `#19`'s **re-scoring pass**: what the user sees when a number they were
+>    relying on moves is a fact to read off `#19`'s resolution, not a decision to co-author.
+> 3. **`#21 · C5` — declined, and this is the same objection four earlier sessions raised,
+>    now pointing at a different live row.** `C5` decides **where recurrence lives**;
+>    recurrence produces occurrences; and `#28 · C9e` — **live right now** — is deciding
+>    what happens to a synced event **when its task changes**. Moving recurrence onto a new
+>    concept between goal and task changes what *"its task"* even denotes. That is a live
+>    session's inputs changed mid-flight, which is precisely what the board has refused
+>    four times.
+> 4. **`#31` is also the only frontier ticket with leverage outside this map.** Issue
+>    [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10) (`U5`, the widget
+>    pack) is explicitly waiting on it. The Unclaimed-work block below independently says
+>    *"take this one first"*; that block was read **after** this derivation, not before, and
+>    is recorded here as agreement rather than as the reason.
+>
+> Three coupling points, all named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is a commons, and the race it names has fired for real
+>    once** (`c3-points-currency` records it from both sides). Same discipline, no
+>    exceptions: **re-fetch `#12`'s body immediately before appending**, write only this
+>    session's line, verify a pure insertion afterwards. `C13`
+>    ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))'s index gap
+>    stays Ido's to assign.
+> 2. **`C12` arrives with a standard and two hand-offs already binding it, all from
+>    released sessions — so they are inputs, never subjects.** `#12`'s **Standing
+>    preferences** now carry *"every screen is designed to a current UI/UX standard"* plus
+>    the three rules `C9b`'s eight revisions bought (**one chip may not carry two axes** ·
+>    **form and words before iconography** · **a design is not finished until it has been
+>    seen in Hebrew**). `C9b` also handed this ticket two concrete items: **where the daily
+>    review lives**, and that **spans must contribute nothing** to the time-allocation
+>    chart. Anything found here that bears on `#19` is **posted there**; nothing a live or
+>    released session owns is edited. Flow stays one-way, as `c9c`, `c3`, `c18`, `c14`,
+>    `c1` and `c9e` all established.
+> 3. **The singleton on this row is Ido himself, and the board cannot enforce it.** Two
+>    live grillings (`#19`, `#28`) are already asking for his attention and this adds a
+>    **prototype**, the heavy kind — `#26` spent eight revisions of it. Named here rather
+>    than discovered later: revisions ship **one at a time** and stop the moment he stops
+>    answering, and no revision waits on the other two sessions.
+>
+> 📥 **`kb-candidates/` re-listed at session start, as the folder's existence requires —
+> six files, one fewer than `c9e-event-lifecycle` saw, because `c9b-calendar-surface`
+> drained and deleted its own on release.** Each of the six was opened and its
+> **Destination** line read rather than inherited from the note: **five target `rules/`**
+> ([`c3`](kb-candidates/2026-08-10-c3-points-currency.md),
+> [`c18`](kb-candidates/2026-08-10-c18-subtask-depth.md) and
+> [`c14`](kb-candidates/2026-08-10-c14-challenge-scoring.md) are one accumulating amendment
+> to `rules/question-axis-naming.md` and should be read together;
+> [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md) targets
+> `rules/agent-topology-and-model-routing.md` §5;
+> [`c9c`](kb-candidates/2026-08-10-c9c-calendar-sync.md) the ❓ Ambiguity picker guidance),
+> and the sixth, [`c9f`](kb-candidates/2026-08-09-c9f-consent-screen-state.md), names
+> `kb/dev/` but is **parked by Ido's own call at the last drain** pending a `rules/`
+> proposal. So **all six are always-ask in both modes and none is this session's** —
+> `AUTO MODE` drains nothing here.
+>
+> Recorded by `c12-charts-presentation` on claiming.
 
 > ⚠️ **A seventh session joined the same map — `c9e-event-lifecycle` on
 > [#28](https://github.com/idomarhaim/Android_Final_Project/issues/28) — and it is the
