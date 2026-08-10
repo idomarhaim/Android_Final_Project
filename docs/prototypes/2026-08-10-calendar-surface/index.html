@@ -113,6 +113,32 @@
     background:
       radial-gradient(600px 320px at 6% 0%, var(--lift), transparent 62%),
       radial-gradient(520px 340px at 98% 12%, var(--glow), transparent 64%);}
+  /* Dark mode is not "light mode with the lights off". A flat near-black reads as
+     cheap because real materials still catch coloured light - so the canvas keeps
+     an aurora of blue, teal and violet at low opacity, and every raised surface
+     gets a faint chroma lift rather than a lighter grey. */
+  .phone[data-theme="dark"] .screen{
+    background:
+      radial-gradient(760px 420px at -6% -4%, rgba(72,116,255,.20), transparent 58%),
+      radial-gradient(680px 460px at 104% 6%, rgba(0,190,196,.16), transparent 60%),
+      radial-gradient(820px 560px at 46% 104%, rgba(150,92,230,.16), transparent 64%),
+      radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.10), transparent 66%);}
+  .phone[data-theme="dark"] .card,
+  .phone[data-theme="dark"] .body,
+  .phone[data-theme="dark"] .rail .p,
+  .phone[data-theme="dark"] .recap,
+  .phone[data-theme="dark"] .queue .q,
+  .phone[data-theme="dark"] .free,
+  .phone[data-theme="dark"] .iconbtn{
+    background:linear-gradient(158deg, rgba(126,158,255,.10), rgba(90,220,210,.05) 55%,
+                                       rgba(160,110,235,.08));
+    box-shadow:var(--sh-1), inset 0 1px 0 rgba(180,205,255,.13);}
+  .phone[data-theme="dark"] .deck{
+    background:linear-gradient(155deg, #1B2740 0%, #17283A 45%, #16303A 100%);
+    box-shadow:var(--sh-2), inset 0 1px 0 rgba(190,215,255,.16);}
+  .phone[data-theme="dark"] .navbar,
+  .phone[data-theme="dark"] .sticky{
+    background:linear-gradient(to bottom, rgba(18,28,44,.90), rgba(14,22,36,.80));}
   .screen::-webkit-scrollbar{width:0}
   .sticky{position:sticky;top:0;z-index:20;
     background:linear-gradient(to bottom, color-mix(in srgb, var(--bg) 94%, transparent),
@@ -166,12 +192,15 @@
 
   /* ── A · grid ─────────────────────────────────────────────────────────── */
   .dayhdr{display:grid;padding:2px 10px 6px}
+  /* all three grids must share one inline padding or the all-day bands sit
+     10px off the columns they belong to - visible in Ido's screenshot */
   .dayhdr .d{text-align:center;font-size:10.5px;font-weight:650;color:var(--on-surface-var)}
   .dayhdr .d b{display:block;font-size:16px;font-weight:680;color:var(--on-surface);
     width:31px;height:31px;line-height:31px;margin:3px auto 0;border-radius:50%;transition:all .28s var(--spring)}
   .dayhdr .d.today{color:var(--primary)}
   .dayhdr .d.today b{background:var(--primary);color:var(--on-primary);box-shadow:0 5px 14px var(--glow)}
   .banded{display:grid;gap:3px;padding:2px 10px 9px}
+  .banded .slot{overflow:hidden}
   .banded .lbl{font-size:9px;font-weight:650;color:var(--on-surface-var);align-self:center;
     text-align:center;line-height:1.2}
   .banded .slot{display:flex;flex-direction:column;gap:3px;min-height:18px}
@@ -180,7 +209,7 @@
   .band.cap-s{border-start-start-radius:999px;border-end-start-radius:999px;padding-inline-start:10px}
   .band.cap-e{border-start-end-radius:999px;border-end-end-radius:999px}
 
-  .grid{display:grid;position:relative;padding-inline-end:8px}
+  .grid{display:grid;position:relative;padding:0 10px}
   .hours .h{height:56px;font-size:10px;font-weight:600;color:var(--on-surface-var);
     text-align:end;padding-inline-end:8px;transform:translateY(-6px)}
   .col{position:relative}
@@ -309,7 +338,8 @@
   /* capacity: the calendar already knows every block's length, so "is this day
      full?" is free arithmetic. Spans contribute nothing (C9a: a week-long span
      would otherwise swamp the day it starts on). */
-  .cap-bar{height:3px;border-radius:999px;background:var(--outline-var);margin:5px 6px 0;overflow:hidden}
+  .cap-bar{height:5px;border-radius:999px;background:var(--outline-var);margin:6px 8px 0;overflow:hidden}
+  .cap-n{font-size:9px;font-weight:700;color:var(--on-surface-var);margin-top:2px;opacity:.75}
   .cap-bar i{display:block;height:100%;border-radius:999px;background:var(--primary)}
   .cap-bar.full i{background:var(--late)}
   .avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
@@ -331,6 +361,42 @@
   .slotHint{position:absolute;inset-inline:2px;border-radius:10px;border:1.6px dashed var(--outline);
     color:var(--on-surface-var);display:grid;place-items:center;font-size:10px;font-weight:650;
     opacity:.55}
+
+  .pending{display:flex;align-items:center;gap:12px;margin:6px 14px 12px;padding:14px 15px;
+    border-radius:var(--r-lg);
+    background:linear-gradient(150deg, var(--p-container), color-mix(in srgb,var(--p-container) 55%, var(--s-low)));
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .pending .pl{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:var(--primary);color:var(--on-primary);font-size:19px;box-shadow:0 4px 12px var(--glow)}
+  .pending .pt{flex:1;min-width:0}
+  .pending .pt b{display:block;font-size:14.5px;font-weight:680;letter-spacing:-.018em;
+    color:var(--on-p-container)}
+  .pending .pt span{display:block;font-size:11.5px;font-weight:550;color:var(--on-p-container);
+    opacity:.78;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .daysum{display:flex;align-items:center;gap:12px;margin:0 18px 12px;padding:12px 15px;
+    border-radius:var(--r-lg);background:var(--s-low);box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .daysum .lead{flex:1;min-width:0}
+  .daysum .lead b{display:block;font-size:14px;font-weight:650;letter-spacing:-.015em}
+  .daysum .lead span{font-size:11.5px;color:var(--on-surface-var);font-weight:550}
+  .daysum .lead em{font-style:normal;color:var(--secondary);font-weight:700}
+  .ringwrap{position:relative;width:44px;height:44px;flex:none;display:grid;place-items:center}
+  .ringwrap .ring{position:absolute;inset:0;width:44px;height:44px}
+  .ringwrap span{font-size:11px;font-weight:750}
+
+  .stats{display:flex;gap:9px;margin:0 14px 6px}
+  .stat{flex:1;background:var(--s-low);border-radius:var(--r-md);padding:12px 10px;text-align:center;
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .stat .v{font-size:22px;font-weight:720;letter-spacing:-.03em;line-height:1}
+  .stat .v span{font-size:13px;font-weight:600;color:var(--on-surface-var)}
+  .stat .k{font-size:10.5px;font-weight:600;color:var(--on-surface-var);margin-top:5px}
+  .goalrow{display:flex;align-items:center;gap:9px;margin:0 14px 8px;padding:11px 14px;
+    background:var(--s-low);border-radius:var(--r-md);box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .goalrow .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .goalrow .nm{font-size:13px;font-weight:640;white-space:nowrap}
+  .goalrow .track{flex:1;height:7px;border-radius:999px;background:var(--outline-var);overflow:hidden}
+  .goalrow .track i{display:block;height:100%;border-radius:999px}
+  .goalrow .pc{font-size:11.5px;font-weight:700;color:var(--on-surface-var);width:32px;text-align:end}
 
   /* ── switcher ────────────────────────────────────────────────────────── */
   .switcher{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;
@@ -389,12 +455,20 @@ const SYS = `<svg viewBox="0 0 46 14" style="height:11px;width:36px;fill:current
   <path d="M25.5 4.2a7.6 7.6 0 0 1 8.6 0l-1.5 1.9a5.2 5.2 0 0 0-5.6 0zm2.2 3.1a4 4 0 0 1 4.2 0l-2.1 2.7z"/>
   <rect x="37" y="3" width="8" height="9" rx="2" opacity=".45"/><rect x="38" y="4" width="6" height="7" rx="1.2"/></svg>`;
 
+/* GoalCategory.defaultColorHex is a LIGHT-MODE palette - every one of the ten is
+   picked for contrast against a white-ish surface, and on #0C1520 they go muddy
+   and stop being distinguishable from each other. A dark tone is owed per
+   category. These are M3 tone-80 equivalents of the committed hues; the finding
+   itself belongs to the build session, not the mockup. */
 const CAT = {
-  HEALTH:  {he:'בריאות',    en:'Health',  c:'#CF3636'},
-  FITNESS: {he:'אימון ריצה',en:'Running', c:'#B85107'},
-  LEARNING:{he:'לימודים',   en:'Studies', c:'#8B39C4'},
-  CAREER:  {he:'קריירה',    en:'Career',  c:'#0F6FCB'},
+  HEALTH:  {he:'בריאות',    en:'Health',  c:'#CF3636', d:'#FF8A85'},
+  FITNESS: {he:'אימון ריצה',en:'Running', c:'#B85107', d:'#FFB77A'},
+  LEARNING:{he:'לימודים',   en:'Studies', c:'#8B39C4', d:'#D8A9FF'},
+  CAREER:  {he:'קריירה',    en:'Career',  c:'#0F6FCB', d:'#93C5FF'},
 };
+/* set once per render; colOf() reads it so the colour lookup does not have to be
+   threaded through every helper in a throwaway file */
+let THEME = 'light';
 /* st: DONE · CONFIRMED · SILENT (agent-placed, slot visibly free — C9c)
        PROVISIONAL (agent-placed blind) · MOVED (changed in Google, `was`)
        AWAY (left the GoalPilot calendar) · EXTERNAL (hand-made, no task)
@@ -423,7 +497,8 @@ const OCC = [
   {d:4,rung:'BLOCK',   s:1080,e:1170,cat:null,      st:'EXTERNAL',   he:'ארוחה עם רועי',    en:'Dinner with Roy'},
   {d:6,rung:'BLOCK',   s:1080,e:1140,cat:'FITNESS', st:'PROVISIONAL',he:'ריצה ארוכה 12 ק״מ',en:'Long run 12 km'},
 ];
-const CHALLENGE = {from:0, until:6, he:'אתגר · 10,000 צעדים ביום', en:'Challenge · 10k steps a day', c:'#0A6045'};
+const CHALLENGE = {from:0, until:6, he:'אתגר · 10,000 צעדים ביום', en:'Challenge · 10k steps a day',
+  get c(){ return THEME==='dark' ? '#8AD6B7' : '#0A6045'; }};
 
 const T = {
   he:{home:'בית',goals:'מטרות',social:'חברתי',profile:'פרופיל',cal:'לוח שנה',
@@ -446,7 +521,11 @@ const T = {
       newTask:'משימה חדשה',tapSlot:'הקש כדי לתזמן כאן',
       loose:n=>`${n===1?'משימה אחת':n+' משימות'} להיום בלי שעה`,schedule:'לתזמן',
       freeLeft:h=>`נשארו לך ${h} שעות פנויות היום`,
-      cap:'עומס',needsYou:'ממתין לך',allClear:'הכול מסודר'},
+      cap:'עומס',needsYou:'ממתין לך',allClear:'הכול מסודר',
+      today:'היום',pts:'נקודות',tasksDone:'משימות הושלמו',progress:'התקדמות השבוע',
+      dayAt:'היום שלך',booked:'מתוכנן',freeH:'פנוי',seeAll:'לכל המטרות →',
+      nDecisions:n=>`${n===1?'החלטה אחת ממתינה':n+' החלטות ממתינות'} לך`,
+      openStack:'לפתוח',firstUp:'הראשונה בתור'},
   en:{home:'Home',goals:'Goals',social:'Social',profile:'Profile',cal:'Calendar',
       allday:'All-day',today:'Today',list:'List',agenda:'Agenda',
       vDay:'Day',v3:'3 days',vWeek:'Week',
@@ -467,7 +546,11 @@ const T = {
       newTask:'New task',tapSlot:'Tap to schedule here',
       loose:n=>`${n} task${n===1?'':'s'} due today with no time`,schedule:'Schedule',
       freeLeft:h=>`${h} free hours left today`,
-      cap:'Load',needsYou:'Waiting on you',allClear:'All clear'},
+      cap:'Load',needsYou:'Waiting on you',allClear:'All clear',
+      today:'Today',pts:'points',tasksDone:'tasks done',progress:'This week',
+      dayAt:'Your day',booked:'booked',freeH:'free',seeAll:'All goals →',
+      nDecisions:n=>`${n} decision${n===1?'':'s'} waiting on you`,
+      openStack:'Open',firstUp:'First up'},
 };
 
 const TODAY = new Date(2026,7,10);
@@ -483,7 +566,8 @@ const dayName = (i,l) => new Intl.DateTimeFormat(l==='he'?'he-IL':'en-GB',{weekd
 const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const rgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const tint = (h,a) => `rgba(${rgb(h).join(',')},${a})`;
-const colOf = o => o.cat ? CAT[o.cat].c : '#6C7684';
+const colOf = o => o.cat ? (THEME === 'dark' ? CAT[o.cat].d : CAT[o.cat].c)
+                         : (THEME === 'dark' ? '#94A3B8' : '#6C7684');
 /* class-list join that drops the falsy branches — a bare ternary leaves
    `class="col  weekend"`, which is harmless to render and a nuisance to assert on */
 const cx = (...xs) => xs.filter(Boolean).join(' ');
@@ -503,8 +587,11 @@ const loadOf = d => OCC.filter(o=>o.d===d && o.rung==='BLOCK'
                     && !['AWAY','EXPIRED','MISSED'].includes(o.st))
                       .reduce((a,o)=>a+(o.e-o.s),0);
 const WAKING = 16*60;
-const capBar = d => { const pct = Math.min(100, Math.round(loadOf(d)/WAKING*100));
-  return `<div class="${cx('cap-bar', pct>=75&&'full')}"><i style="width:${pct}%"></i></div>`; };
+const capBar = (d, wide) => {
+  const pct = Math.min(100, Math.round(loadOf(d)/WAKING*100));
+  return `<div class="${cx('cap-bar', pct>=75&&'full')}"><i style="width:${pct}%"></i></div>`
+       + (wide ? `<div class="cap-n">${pct}%</div>` : '');
+};
 
 function phone(lang,theme,{tabs,active,newTab,sticky,body,fab}){
   const t = T[lang];
@@ -519,6 +606,7 @@ function phone(lang,theme,{tabs,active,newTab,sticky,body,fab}){
 
 /* ═══ A — THE GRID ═══ */
 function variantA(lang, view, theme, ans){
+  THEME = theme;
   const t = T[lang];
   const days = view===1 ? [TODAY_IDX]
              : view===3 ? [0,1,2].map(k=>Math.min(4,Math.max(0,TODAY_IDX-1))+k)
@@ -542,8 +630,9 @@ function variantA(lang, view, theme, ans){
       const times = tight
         ? `<span class="tm">${time(o.s)}</span><span class="tm">${time(o.e)}</span>`
         : `<span class="tm">${range(o.s,o.e)}</span>`;
-      const badge = o.st==='MOVED' ? `<span class="badge">${ICON.moved}</span>`
-                  : o.st==='SILENT' ? `<span class="badge">${ICON.spark}</span>` : '';
+      const badge = o.st==='MOVED'  ? `<span class="badge">${ICON.moved}</span>`
+                  : o.st==='SILENT' ? `<span class="badge">${ICON.spark}</span>`
+                  : o.st==='DONE'   ? `<span class="badge">${ICON.check}</span>` : '';
       return `<div class="${cls}" style="${style}">${badge}<b>${esc(o[lang])}</b>${h>=34?times:''}</div>`;
     }).join('');
     const isToday = d===TODAY_IDX, weekend = d===5||d===6;
@@ -555,7 +644,7 @@ function variantA(lang, view, theme, ans){
     ? `<div class="nowpill" style="top:${((NOW_MIN-H0*60)/60)*ROW}px">${time(NOW_MIN)}</div>` : '';
 
   let hdr='<div></div>';
-  days.forEach(d=> hdr += `<div class="${cx('d', d===TODAY_IDX&&'today')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>${ans?capBar(d):''}</div>`);
+  days.forEach(d=> hdr += `<div class="${cx('d', d===TODAY_IDX&&'today')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>${ans?capBar(d, days.length<=3):''}</div>`);
 
   let bands = `<div class="lbl">${t.allday}</div>`;
   days.forEach(d=>{
@@ -589,6 +678,7 @@ function variantA(lang, view, theme, ans){
       <span data-view="1" class="${view===1?'on':''}">${t.vDay}</span>
       <span data-view="3" class="${view===3?'on':''}">${t.v3}</span>
       <span data-view="7" class="${view===7?'on':''}">${t.vWeek}</span></div>`}
+    ${ans ? daySummary(lang) : ''}
     <div class="dayhdr" style="${cols}">${hdr}</div>
     <div class="banded" style="${cols}">${bands}</div>`;
 
@@ -603,6 +693,7 @@ function variantA(lang, view, theme, ans){
 
 /* ═══ B — THE DAY RAIL ═══ */
 function variantB(lang, view, theme, ans){
+  THEME = theme;
   const t = T[lang], sel = TODAY_IDX;
   let rail='';
   for(let d=0;d<7;d++){
@@ -688,6 +779,7 @@ function variantB(lang, view, theme, ans){
 
 /* ═══ C — THE DECISION STACK ═══ */
 function variantC(lang, view, theme, ans){
+  THEME = theme;
   const t = T[lang];
   const props  = OCC.filter(o=>o.st==='PROVISIONAL');
   const aways  = OCC.filter(o=>o.st==='AWAY');
@@ -738,10 +830,63 @@ function variantC(lang, view, theme, ans){
       ${ans ? `<div class="avatar">א</div>`
             : `<div class="iconbtn">${ICON.cal}</div><div class="iconbtn">${ICON.person}</div>`}</div>`;
 
+  /* THE difference between E and the explored C: C was ONLY a decision stack, so
+     an empty queue left an empty screen. E is Home - the queue sits on top of a
+     real dashboard, which is what makes "leads with decisions, falls back to the
+     dashboard" something you can see standing still rather than a claim in prose. */
+  const dash = !ans ? '' : `
+    <div class="sect">${t.today}</div>
+    <div class="stats">
+      <div class="stat"><div class="v">120</div><div class="k">${t.pts}</div></div>
+      <div class="stat"><div class="v">3<span>/7</span></div><div class="k">${t.tasksDone}</div></div>
+      <div class="stat"><div class="v">4<span>ש</span></div><div class="k">${t.booked}</div></div>
+    </div>
+    <div class="sect">${t.progress}</div>
+    ${[['LEARNING',0.62],['FITNESS',0.4],['CAREER',0.25]].map(([c,v])=>`
+      <div class="goalrow">
+        <span class="dot" style="background:${THEME==='dark'?CAT[c].d:CAT[c].c}"></span>
+        <span class="nm">${esc(CAT[c][lang])}</span>
+        <div class="track"><i style="width:${v*100}%;background:${THEME==='dark'?CAT[c].d:CAT[c].c}"></i></div>
+        <span class="pc num">${Math.round(v*100)}%</span></div>`).join('')}
+    <div class="toweek" style="margin-top:12px">${t.seeAll}</div>`;
+
+  /* HOME SUMMARISES; IT DOES NOT HOST. The explored C is a full-screen decision
+     stack - a destination. Putting that same deck on Home made two screens that
+     look identical, which is exactly what Ido reported. So E carries a compact
+     banner that says how many decisions are waiting and what the first one is,
+     and opens C. One deck, one home for it, and the link between them visible. */
+  const banner = `<div class="pending">
+    <div class="pl">${ICON.spark}</div>
+    <div class="pt"><b>${esc(t.nDecisions(4))}</b>
+      <span>${t.firstUp}: ${esc(t.agentTitle(props.length))}</span></div>
+    <button class="btn sm">${t.openStack}</button></div>`;
+
   return phone(lang,theme,{active:0,sticky,
     tabs: ans ? NAV4(t) : undefined,
-    body:`<div class="sect">${ans?t.needsYou:t.review}</div>${hero}${queue}${recap}
-          <div class="toweek">${t.toweek}</div>`});
+    body: ans
+      ? `${banner}${recap}${dash}`
+      : `<div class="sect">${t.review}</div>${hero}${queue}${recap}
+         <div class="toweek">${t.toweek}</div>`});
+}
+
+/* THE difference between D and the explored A: A opened straight onto a grid and
+   said nothing about the day. D opens with what the calendar already knows -
+   how much of today is spoken for and how much is left - which is the question
+   you actually have before you look at any hour. */
+function daySummary(lang){
+  const t = T[lang];
+  const mins = loadOf(TODAY_IDX), freeH = Math.max(0, Math.round((WAKING-mins)/60));
+  const pct = Math.min(100, Math.round(mins/WAKING*100));
+  return `<div class="daysum">
+    <div class="lead"><b>${t.dayAt}</b>
+      <span>${Math.floor(mins/60)}${lang==='he'?'ש׳':'h'} ${mins%60}${lang==='he'?'ד׳':'m'} ${t.booked}
+            · <em>${freeH}${lang==='he'?'ש׳':'h'} ${t.freeH}</em></span></div>
+    <div class="ringwrap"><svg viewBox="0 0 40 40" class="ring">
+      <circle cx="20" cy="20" r="16" fill="none" stroke="var(--outline-var)" stroke-width="5"/>
+      <circle cx="20" cy="20" r="16" fill="none" stroke="var(--primary)" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="${(pct/100*100.5).toFixed(1)} 100.5"
+        transform="rotate(-90 20 20)"/></svg>
+      <span class="num">${pct}%</span></div></div>`;
 }
 
 /* The calendar's ZOOM. B was never a rival screen - it is the agenda level of
@@ -765,10 +910,16 @@ const variantE = (lang,view,theme) => variantC(lang,view,theme,true);
 const VARIANTS = [
   ['D','THE ANSWER · Calendar','when? — agenda / 3 days / week',variantD],
   ['E','THE ANSWER · Home','what needs me?',variantE],
-  ['A','explored · The Grid','place time',variantA],
-  ['B','explored · The Day Rail','tick things off',variantB],
-  ['C','explored · The Decision Stack','decide, one at a time',variantC],
+  ['A','explored · The Grid','?variant=A — kept as the record',variantA],
+  ['B','explored · The Day Rail','?variant=B — kept as the record',variantB],
+  ['C','explored · The Decision Stack','?variant=C — kept as the record',variantC],
 ];
+/* The arrows walk the ANSWER only. A/B/C are the record of what was explored and
+   are still reachable by URL - kept rather than deleted, but off the path,
+   because landing on them by accident is exactly what made D and E hard to read. */
+const CYCLE = [0,1];
+const step = (i,d) => { const at = CYCLE.indexOf(i);
+  return at < 0 ? 0 : CYCLE[(at + d + CYCLE.length) % CYCLE.length]; };
 function state(){
   const p = new URLSearchParams(location.search);
   let i = VARIANTS.findIndex(x=>x[0]===(p.get('variant')||'D').toUpperCase());
@@ -791,8 +942,8 @@ function render(){
   document.querySelectorAll('[data-view]').forEach(s=>
     s.onclick = () => go(i, lang, parseInt(s.dataset.view,10), theme));
 }
-document.getElementById('prev').onclick = () => { const [i,l,v,th]=state(); go((i+VARIANTS.length-1)%VARIANTS.length,l,v,th); };
-document.getElementById('next').onclick = () => { const [i,l,v,th]=state(); go((i+1)%VARIANTS.length,l,v,th); };
+document.getElementById('prev').onclick = () => { const [i,l,v,th]=state(); go(step(i,-1),l,v,th); };
+document.getElementById('next').onclick = () => { const [i,l,v,th]=state(); go(step(i,+1),l,v,th); };
 document.querySelectorAll('[data-lang]').forEach(b=>
   b.onclick = () => { const [i,,v,th]=state(); go(i,b.dataset.lang,v,th); });
 document.querySelectorAll('.switcher [data-theme]').forEach(b=>
@@ -800,8 +951,8 @@ document.querySelectorAll('.switcher [data-theme]').forEach(b=>
 addEventListener('keydown', e=>{
   if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)||e.target.isContentEditable) return;
   const [i,l,v,th]=state();
-  if(e.key==='ArrowLeft')  go((i+VARIANTS.length-1)%VARIANTS.length,l,v,th);
-  if(e.key==='ArrowRight') go((i+1)%VARIANTS.length,l,v,th);
+  if(e.key==='ArrowLeft')  go(step(i,-1),l,v,th);
+  if(e.key==='ArrowRight') go(step(i,+1),l,v,th);
 });
 render();
 </script>

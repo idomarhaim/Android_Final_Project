@@ -225,6 +225,46 @@ the calendar quietly understates the day.
 prototype skill's primary source. `D` now opens by default; the explored set is relabelled
 rather than removed.
 
+## 🔁 Rev 6 — "I can't tell E from C, or D from A"
+
+Fair, and the diagnosis is worse than the symptom: **the resolution differed from the
+explored variants only in chrome.** Everything substantive about `D` and `E` — the zoom,
+the four-tab swap — was invisible until you tapped something, so both pairs read as the
+same screen rendered twice. A design whose difference you have to *interact* to see has
+not been designed, it has been configured.
+
+**`E` was the worse of the two, and the fix is architectural.** It hosted the *same*
+decision deck as `C`. The correction: **Home summarises and links; it does not host.**
+`E` now carries a compact banner — *"4 decisions waiting · first up: …"* — and opens `C`,
+which becomes the destination rather than a duplicate. Below it Home is a real dashboard:
+points, tasks done, hours booked, and per-area weekly progress. One deck, one home for
+it, and the link between them visible.
+
+**`D`** now opens with what the calendar already knows and the explored grid never said —
+*how much of today is spoken for and how much is left*, as a ring plus a sentence — before
+you look at a single hour.
+
+**The arrows now cycle `D` and `E` only.** `A`/`B`/`C` are **not deleted** — they remain
+the record and `?variant=A` still reaches them — but landing on them by accident is
+precisely what made the answer hard to read.
+
+**Dark mode had a real defect under the aesthetic complaint.** *"More colour and tone,
+not just black shading"* — and checking rather than restyling found the cause:
+**`GoalCategory.defaultColorHex` is a light-mode palette.** All ten hues are picked for
+contrast against a near-white surface; on `#0C1520` they go muddy and stop being
+distinguishable from each other, which is why the dark screenshot read as grey. **A dark
+tone is owed per category** — this is a finding for the build session, not a mockup
+choice, and the prototype now carries M3 tone-80 equivalents. On top of that the canvas
+takes an aurora of blue, teal and violet at low opacity and every raised surface gets a
+faint chroma lift, because a flat near-black reads as cheap: real materials still catch
+coloured light.
+
+**Three alignment defects visible in Ido's screenshots, all fixed:** the all-day band
+strip was 10px out of register with the grid beneath it (three grids, two different
+inline paddings), a `DONE` block was indistinguishable from a `MISSED` one at a glance
+(now carries a check), and the load bar was 3px of unlabelled grey (now 5px with a
+percentage wherever there is room).
+
 ## 🧪 Tests
 
 **No app-code layer applies.** `C9b` is a decision ticket and the map's standing
