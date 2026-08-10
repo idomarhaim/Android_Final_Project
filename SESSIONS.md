@@ -17,6 +17,7 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `c9b-calendar-surface` | `/wayfinder 12` → resolve [#26 · `C9b`](https://github.com/idomarhaim/Android_Final_Project/issues/26) (the in-app calendar surface). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c9b-calendar-surface.md`, `kb-candidates/2026-08-10-c9b-calendar-surface.md`, `docs/prototypes/2026-08-10-calendar-surface/` *(new)*, GitHub issues **#26** and **#12** | none — a prototype ticket ships no code, so no build, no device, no Firebase | 2026-08-10 |
 | `c3-points-currency` | `/wayfinder 12` **bare**, frontier re-derived out of GitHub (`blocked_by` queried per ticket, not read off this board) → resolve [#18 · `C3`](https://github.com/idomarhaim/Android_Final_Project/issues/18) (are task points and goal progress one currency or two?). `AUTO MODE` from Ido's first message. Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c3-points-currency.md` *(new)*, `kb-candidates/2026-08-10-c3-points-currency.md` *(new, if anything is flagged)*, GitHub issues **#18** and **#12** | none — a decision ticket ships no code, so no build, no device, no Firebase, no GROQ call | 2026-08-10 |
+| `c18-subtask-depth` | `/wayfinder 12` **bare**, frontier re-derived out of GitHub (`blocked_by` queried per open child through the dependencies API, not read off this board) → resolve [#39 · `C18`](https://github.com/idomarhaim/Android_Final_Project/issues/39) (sub-tasks at arbitrary depth — what does every roll-up sum over?). `AUTO MODE` from Ido's first message. Ticket claimed by assignee on GitHub **before** this row | `CHANGELOG/2026-08-10/c18-subtask-depth.md` *(new)*, `kb-candidates/2026-08-10-c18-subtask-depth.md` *(new, if anything is flagged)*, GitHub issues **#39** and **#12** | none — a decision ticket ships no code, so no build, no device, no Firebase, no GROQ call | 2026-08-10 |
 
 > ⚠️ **The calendar pair shared the *same half* of [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) — and `c9c-calendar-sync` has now released, leaving `c9b-calendar-surface` a live hand-off to read.**
 > `c9b-calendar-surface` (#26, the in-app calendar screen) and `c9c-calendar-sync`
@@ -59,6 +60,46 @@ before your first write. Normative rule:
 >    than editing anything either session owns — the same discipline `c9c` adopted.
 >
 > Recorded by `c3-points-currency` on claiming.
+
+> ⚠️ **A fourth session joined the same map — `c18-subtask-depth` on
+> [#39](https://github.com/idomarhaim/Android_Final_Project/issues/39) — and the
+> choice of *which* frontier ticket was the agent's, so the reasoning is on the record.**
+> `/wayfinder 12` was invoked **bare**, which is the mode where the skill assigns the
+> pick to the session rather than to Ido. The frontier held **two** takeable tickets,
+> not one — **#39** and **#28 · `C9e`** (newly unblocked by `C9c` closing). **#39 was
+> taken and #28 was deliberately left**, on disjointness against the live rows above:
+> 1. **`#28` is the calendar half, and `c9b-calendar-surface` is live and mid-prototype
+>    there.** The board already records the calendar split (*surface* vs *semantics*) as
+>    the **less** disjoint pair; `C9e` decides what happens to a synced event when its
+>    task changes, which is more foreign state `#26`'s prototype would have to draw —
+>    so taking it would change a live session's inputs a second time, mid-flight.
+>    **`#28` stays on the frontier, unassigned and takeable** — see the Unclaimed-work
+>    block below, which already carries its hand-off.
+> 2. **`#39` sits in the structural half, whose two immediate predecessors are closed
+>    *and released*** — `C16` ([#37](https://github.com/idomarhaim/Android_Final_Project/issues/37))
+>    and `C17` ([#38](https://github.com/idomarhaim/Android_Final_Project/issues/38)).
+>    No session is live there.
+>
+> Two coupling points, both named on claiming rather than discovered later:
+> 1. **`#12`'s *Decisions so far* is now a four-party commons.** Same discipline as
+>    above: append-only, one line each, re-read immediately before appending, write
+>    **only** your own line. `#26`'s line is still owed by `c9b-calendar-surface`; `C13`
+>    ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32))'s index gap
+>    is still Ido's to assign and is **not** this session's to fill.
+> 2. **`C3` and `C18` touch the same numbers, and the boundary is statable — so it is
+>    stated here rather than discovered in two contradicting resolutions.** `#39`'s
+>    *Points* and *`progressContribution`* bullets read like `C3`'s subject. They are
+>    not the same question: **`C3` owns which currencies exist and how they relate**
+>    (one or two), **`C18` owns whether a parent holds its own number or only the sum of
+>    the work below it** — the arithmetic of *depth*, which `C16` §4 and `C17` already
+>    assigned away from themselves. The map's own wiring agrees: `#18` and `#39` are
+>    **parallel siblings** with no edge between them, both blocking
+>    [`C1` #19](https://github.com/idomarhaim/Android_Final_Project/issues/19). Flow is
+>    one-way, as `c9c` and `c3` both established — **this session posts to `#18` rather
+>    than editing anything `c3-points-currency` owns**, and defers to `C3` on any
+>    question that turns out to be *which* currency rather than *how it aggregates*.
+>
+> Recorded by `c18-subtask-depth` on claiming.
 
 > 📥 **`kb-candidates/` holds nothing a session can drain.** Re-listed 2026-08-10 by
 > `c17-many-to-many`, and **re-confirmed unchanged 2026-08-10 by `c9b-calendar-surface`**
@@ -172,20 +213,37 @@ Currently unclaimed and ready:
   left standing because **no session held it and it actively misdirected**; the
   claim-provenance rule still applies to the *rows above*, which are each
   session's own.
-  Takeable now — **one, not two: `#18` was taken 2026-08-10 by `c3-points-currency`**
-  (rowed above and assigned on GitHub), so the frontier is down to a single ticket:
+  Takeable now — **four, and this block was wrong twice inside one hour, in both
+  directions.** `#39` was taken 2026-08-10 by `c18-subtask-depth` (assigned on GitHub,
+  then rowed above), which cut the frontier to `#28` alone — and **minutes later `#18`
+  closed at 17:55Z**, unblocking three more. Re-derived out of GitHub by
+  `c18-subtask-depth` *after* claiming, which is the only reason the narrower line above
+  did not ship: **`#28 · C9e`** (left takeable on purpose — the fourth ⚠️ note above says
+  why a third calendar session was declined), plus **`#21 · C5`**, **`#23 · C14`** and
+  **`#31 · C12`**, each of which had `#18` as its last open blocker. ⚠️ **`C3`'s own
+  release had not landed when this was written** — `#18` was closed on GitHub with no
+  commit in the tree, so `c3-points-currency` still owes its release row and its line in
+  `#12`'s *Decisions so far*; **read `#18`'s resolution comment before taking any of the
+  three it unblocked.** Still blocked, and worth knowing who holds them: `#19 · C1` waits
+  on **`#39`, this session's ticket**, and `#20`, `#22`, `#24` — and through `#24`, `#30`
+  and `#35` — all wait behind `#19`. The count has moved four times in one day
+  (two → one → two → one → four); **re-derive it out of GitHub, as every session here has
+  had to.**
   - ~~[#18 · `C3` are task points and goal progress one currency or two?](https://github.com/idomarhaim/Android_Final_Project/issues/18)~~ — **claimed, in flight.** Was **HITL, newly unblocked** by `C17` closing, and **by a distance the highest-leverage ticket on the map**: it gates `#19`, `#21`, `#22`, `#23` and `#31`, and `#19` in turn gates `#20`, `#22`, `#24`, and through `#24` both `#30` and `#35`. Three closed tickets have already handed it work — `C7`'s missing **direction** on a measure (*"lose 5 kg"* is inexpressible), `C4`'s `0..1` clamp on `progressFraction`, and `C9a`'s *"`Task.isDone` is the wrong field for a scheduled task."*
-  - [#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39) — **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
+  - ~~[#39 · `C18` sub-tasks at arbitrary depth](https://github.com/idomarhaim/Android_Final_Project/issues/39)~~ — **claimed, in flight** by `c18-subtask-depth`. Was **HITL**, unblocked by `C16` closing. `E13` says tasks nest with no depth limit; every roll-up in the app is written for one level. `C16` has already settled that a task may attach at **any** level, so read its resolution first — and `C17` (#38) has now settled how one task's contribution divides across several parents, which is the arithmetic this ticket sums over.
   - [#28 · `C9e` what happens to a synced event when its task changes?](https://github.com/idomarhaim/Android_Final_Project/issues/28) — **HITL, newly unblocked 2026-08-10 by `C9c` closing**, which was its only blocker. Added after `c3-points-currency` wrote the line above, so *"one, not two"* is now **two**. It arrives with four rules already inherited and a [hand-off comment](https://github.com/idomarhaim/Android_Final_Project/issues/28#issuecomment-5243682588) listing them — matching is by `googleEventId`; times cross the sync and state never does; titles are written but never read back; a cancelled event unsyncs and never deletes. What is still its own is everything about a task *changing*: a retime, a **rung change** (`BLOCK` → `DEADLINE` is not a patch of the same shape), a re-estimate that silently invalidates a placed block, a deletion, and *"this occurrence or all future ones?"* on a repeat rule.
 
-  **Three tickets are claimed and in flight** as of 2026-08-10 — `#26`
-  (`c9b-calendar-surface`), `#18` (`c3-points-currency`) and, until it released,
-  `#27` (`c9c-calendar-sync`, now closed). All were assigned on GitHub as well as
-  rowed above. `#38` was live when this block was last refreshed and has since closed.
-  **Frontier re-derived from GitHub 2026-08-10 by `c3-points-currency`** — every open
-  child's `blocked_by` list queried through the dependencies API rather than read off
-  this block, which is how `#18` and `#39` were confirmed as the only unblocked,
-  unassigned children before one of them was taken.
+  **Two tickets are claimed and open** as of 2026-08-10 — `#26` (`c9b-calendar-surface`)
+  and `#39` (`c18-subtask-depth`). `#18` (`c3-points-currency`) and `#27`
+  (`c9c-calendar-sync`) were both live today and are now **closed**; `#38` was live when
+  this block was last refreshed and has since closed too. All were assigned on GitHub as
+  well as rowed above. **Map size verified against GitHub 2026-08-10 by
+  `c18-subtask-depth`: 25 children, 13 closed, 12 open** — the *11 resolved* count above
+  was correct when written and is now two short (`C9c` #27, `C3` #18).
+  **Frontier re-derived from GitHub twice on 2026-08-10 by `c18-subtask-depth`** — once
+  before claiming (`#39` and `#28` the only unblocked, unassigned children) and once
+  after, when `#18` closed underneath it — every open child's `blocked_by` list queried
+  through the dependencies API rather than read off this block.
 
   > ⚠️ **Read [`Product and UX Reviews/2026-08-09-entity-model-brief.md`](Product%20and%20UX%20Reviews/2026-08-09-entity-model-brief.md) before taking any of these.**
   > It is a **second source document**, written after the map was charted, and its
