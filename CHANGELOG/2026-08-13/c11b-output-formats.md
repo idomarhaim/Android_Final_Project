@@ -141,3 +141,92 @@ covers the candidates *the committing unit produced*.
 **None, and none applicable.** This commit is Markdown plus GitHub metadata; the map's standing
 preference is **plan, don't do**, and no ticket on `#12` ships code. No build, no device, no
 Firebase, no Gradle daemon, no emulator — no singleton taken.
+
+---
+
+# Resolution — #30 closed
+
+**Posted:** [issue #30, resolution comment](https://github.com/idomarhaim/Android_Final_Project/issues/30#issuecomment-5273699910) · **Closed:** 2026-08-13 · **Map line:** appended to `#12` *Decisions so far*
+
+## No picker was raised, and that is a decision rather than an omission
+
+`#30` is labelled `wayfinder:grilling`, so HITL by the skill's definition. **The fact pass found
+every question on it answered by a closed ticket, by `C11a`'s 248 live calls, or by the code**, so
+per the derivable-decision rule the answers were derived and logged for overturning rather than put
+to Ido. The ownership sort was run explicitly and **nothing survived on his side of it** — every
+question turns on the artifact.
+
+This matters because the **last four decision tickets on this map all ended in a hand-back in
+near-identical words** — `C1`, `C2`, `C8` and `C15b` (twice) — with `C3`, `C14` and `C17` recording
+the same pattern before them by their own accounts. `c15b-stored-ai-text` concluded three hours ago
+that the failure was **premise**, not form. Manufacturing a sixth picker out of derivable material
+would have been the failure this map keeps recording, not the remedy for it.
+
+## What was decided
+
+1. **The ticket's own inventory was wrong — five AI features, not four.** `classifyTask` is one no
+   `C` ticket owned, it is the **highest-volume** call in the app, and it is where `C11a`'s only
+   measured failure mode occurred.
+2. **The wide-vs-narrow fork is false.** *One call means one failure* describes the `catch`, not the
+   call. **Per-field-group validation** buys independent failure at zero extra requests, so the split
+   axis `C11a` offered is retired on `C11a`'s own numbers: 20/20 usable estimates instead of 18/20,
+   at one request instead of three.
+3. **Five schemas written out**, fields, types and enumerated values — `estimate`, `plan`, `daily`,
+   `classify`, plus the shared envelope (`language`, optional `provider·model·key`, membership lists).
+   **No `points` field anywhere, ever.** The model may not mint an id; a new plan step carries no id
+   at all and is identified by array position, which makes `C11a`'s truncation failure structurally
+   unrepresentable rather than merely checked.
+4. **The failure contract: omit, never substitute.** Three classes — transport, structural, semantic
+   — with **no retries** (a retry aims at a class that did not occur once in 248 calls and spends the
+   30-RPM budget the wide call exists to save). Only the failing field is dropped; the client's
+   fallback for an absent field is its own ticket's specced one.
+5. **Validation lives in the Cloud Function, singly**, because `C13` put all four provider adapters
+   server-side; native `json_schema` enforcement stays alongside it, catching a different class.
+6. **`C15`'s per-feature Hebrew veto is declined and rebuilt as a per-response script-share check.**
+   `C11a` measured bad Hebrew as a missing prompt line (0/10 → 3/3), not a ceiling, so vetoing a
+   feature on the Hebrew of a prompt that never asked for Hebrew would be exactly the assumption
+   `C11a` exists to prevent. `C15b`'s `\p{Hebrew}` test — filed three hours ago — is the instrument,
+   and it applies to **speech and never to content**.
+
+## Defects found in live code — filed as spec lines, not fixed
+
+1. **One membership contract, three enforcement sites, two layers.** `suggestedLifeAreaId` is checked
+   in `RecommendationRepositoryImpl.kt:136`; `suggestedGoalId` in `DashboardViewModel.kt:178` and
+   again in the import path.
+2. **The client substitutes plausible values, then reconstructs which were real.**
+   `TaskScoring.looksLikeFallback` (`TaskEstimate.kt:100`) recomputes the fallbacks and compares —
+   and **its own KDoc concedes the method is unsound**: *"Evidence, not proof… a model is free to
+   land on the same two numbers by agreement rather than by failure."* Fifth site of the map's
+   most-repeated defect.
+3. **`TaskDuration.fallbackMinutes` (`TaskEstimate.kt:40`) derives minutes from points**, while
+   `C3`/`C1` make points a product **of** minutes — the fallback runs the app's own arithmetic
+   backwards, and under `C1` §5 there is no `points` on the wire for it to invert.
+4. **`functions/` has no test layer** — no `test/` directory, no `test` script in `package.json`.
+   This ticket creates the most testable object on the map, with `C11a`'s 248 recorded calls sitting
+   ready as fixtures.
+
+## The `#12` commons — a clean run
+
+Body fetched → line built → **re-fetched and `cmp`'d byte-for-byte immediately before the write:
+identical, no race** → written with `--input map_patch.json` (102 KB; `-f body=` still dies with
+`Argument list too long`) → **verified a pure insertion: 0 lines removed, 24 → 25 decision lines,
+`C11b` present once, fog unchanged at 4 bullets.** The single extra added line is the trailing
+newline GitHub appends.
+
+## Frontier after this ticket
+
+**Filed nothing. Graduated nothing. Ruled nothing out of scope. Unblocked nothing** — `#30` was
+terminal, re-checked live against the `blocked_by` of every open issue (`#6`, `#8`, `#34`, `#36`,
+`#41`): none lists it.
+
+**[`C19` #41](https://github.com/idomarhaim/Android_Final_Project/issues/41) is now the only open
+ticket on the map**, claimed and live under `c19-area-success-failure`. When it closes, `#12`'s
+destination is reached and what remains is writing `docs/PRODUCT_v0.3.md` from twenty-six resolutions
+— a build-session hand-off, not a decision.
+
+## 🧪 Tests — resolution unit
+
+**None, and none applicable.** Markdown, GitHub metadata, and read-only greps of Kotlin and
+TypeScript. `#12`'s standing preference is **plan, don't do**; no ticket on this map ships code. The
+missing `functions/` test layer is named above as a spec line for the build session — it is *this
+ticket's finding*, not a layer this session skipped.

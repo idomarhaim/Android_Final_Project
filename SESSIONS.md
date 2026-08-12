@@ -15,8 +15,94 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c11b-output-formats` | `/wayfinder 12` → resolve [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30) (the output-format spec for every AI feature — one schema per feature, wide-vs-narrow call carving, the per-feature failure contract, where validation lives, and `C15`'s per-feature Hebrew veto). **The map's terminal ticket, declined three times, taken because its own four blockers are all closed and it is now the only unclaimed ticket on the frontier.** Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c11b-output-formats.md` *(new)*, `kb-candidates/2026-08-13-c11b-output-formats.md` *(new, if any)*, GitHub issues **#30** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention — contended four ways and this session makes it worse, which is disclosed rather than glossed.** `c15b-stored-ai-text` holds a live `wayfinder:grilling`, `c19-area-success-failure` holds a live `wayfinder:prototype` across revisions, a 🎬 offer is owed from `picker-queue-merge`, and `#30` is **also** `wayfinder:grilling`. The fact pass runs first precisely so that what reaches him is small. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, `docs/prototypes/2026-08-13-area-success-failure/` *(new folder — **added to this claim after the fact; see the note**)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> ✅ **`c11b-output-formats` released 2026-08-13 — [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30)
+> resolved and closed. The map's terminal ticket is gone, and
+> [`#41 · C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) is now the only open
+> ticket on `#12`.**
+>
+> **The claim itself is the first thing worth recording, because three sessions declined this ticket
+> and all three were wrong for one reason.** *"Terminal by design"* is a **sequencing** rule, and
+> sequencing rules **expire by being satisfied** — but it had been written down as a *property*, and
+> a property does not look like something that can expire. `#30`'s body states its condition in its
+> own words: *"deliberately blocked on all four features it serves"* — `C1` #19, `C2` #20, `C8` #24,
+> `C10` #29 — **all four closed hours ago**, and `C2` §6 had already recorded in writing that *"#30
+> is now fully unblocked."* Each session read the **previous decline's ground** instead of the
+> ticket's charter. The two later grounds that were not about those four were checked individually:
+> `#41` asks the model for nothing (a view over `C9a` occurrence states), and `#35`'s collision
+> **expired during this session's fact pass** when `#35` closed.
+>
+> **The resolution is the agent's, and — unusually on this map — it was not handed back, because it
+> was never asked.** The fact pass found **every** question on `#30` answered by a closed ticket, by
+> `C11a`'s 248 live calls, or by the code, so per the derivable-decision rule the answers were
+> derived and logged rather than put to Ido. **No picker was raised.** That is deliberate: the **last
+> four decision tickets on this map all ended in a hand-back** in near-identical words — `C1`, `C2`,
+> `C8` and `C15b` (twice) — and `c15b-stored-ai-text`
+> concluded three hours ago that the failure was **premise**, not form. Manufacturing a sixth picker
+> out of derivable material would have been the failure, not the remedy. Everything is his to
+> overturn.
+>
+> **What it decided.** **The inventory in the ticket was wrong — there are five AI features, not
+> four.** `classifyTask` is one no `C` ticket ever owned, it is the **highest-volume** call in the
+> app (one per Google-Tasks import row), and it is where `C11a`'s only measured failure lives.
+> **The wide-vs-narrow fork is false**: *one call means one failure* describes the `catch`, not the
+> call, so **per-field-group validation** buys independent failure at zero extra requests and retires
+> the split axis on `C11a`'s own numbers. Cardinal rule: **the Function validates and omits; it never
+> substitutes a plausible value.** No retries — a retry aims at a class that did not occur once in
+> 248 calls and spends the 30-RPM budget the wide call exists to save. Validation lives in the Cloud
+> Function **singly**, because `C13` put all four adapters server-side. And **`C15`'s per-feature
+> Hebrew veto is declined and rebuilt as a per-response script-share check** — `C11a` measured bad
+> Hebrew as a **missing prompt line, not a ceiling** (0/10 → 3/3), and `C15b`'s `\p{Hebrew}` test,
+> filed three hours ago, is the instrument.
+>
+> ⚠️ **Three defects found in live code, filed as spec lines and not fixed** (this map ships no code):
+> **(1)** one membership contract enforced in **three places across two layers** —
+> `suggestedLifeAreaId` in the repository, `suggestedGoalId` in the ViewModel twice; **(2)** the
+> client **substitutes plausible values and then reconstructs which were real**, and
+> [`TaskScoring.looksLikeFallback`](app/src/main/java/com/idomarhaim/goalpilot/domain/model/TaskEstimate.kt)'s
+> own KDoc concedes the method is unsound — *"evidence, not proof"* — which is the map's
+> most-repeated defect at its **fifth** site; **(3)** `TaskDuration.fallbackMinutes` derives
+> **minutes from points** while `C3`/`C1` make points a product **of** minutes, so the fallback runs
+> the app's own arithmetic backwards. Also named: `functions/` has **no test layer and no `test`
+> script**, and this ticket creates the single most testable object on the map.
+>
+> **The `#12` commons discipline held — a clean run.** Body fetched, line built, **re-fetched and
+> `cmp`-compared byte-for-byte immediately before the write — identical, no race** — written with
+> **`--input map_patch.json`** (102 KB; `-f body=` still cannot carry it) and verified a **pure
+> insertion: 0 lines removed, 24 → 25 decisions, `C11b` present once, fog unchanged at 4 bullets.**
+> The one extra added line is the trailing newline GitHub appends, exactly as `c6-log-progress` and
+> `c15b-stored-ai-text` each recorded.
+>
+> ⚠️ **A countermeasure was built against the cross-contamination this board has recorded four times
+> tonight, verified, and then defeated — and that is the finding, not the failure.** `c15b`'s 57-line
+> release note landed in `SESSIONS.md` mid-write, so rather than sweep it in, the index was given a
+> blob of `HEAD` + this session's row only (`git hash-object -w` + `git update-index --cacheinfo`),
+> leaving the working tree untouched. `git diff --cached --stat` confirmed **one insertion**. It made
+> no difference: `c15b` committed first, their `git add` read the **working tree**, and `406874d`
+> carries this session's claim row. **The git index is a shared singleton, so index surgery is a
+> strictly one-sided guard — it protects a sibling from you, exactly like per-file staging, and fails
+> in exactly the same direction.** Fifth instance tonight, first with a deliberate countermeasure.
+> Only a worktree per session actually partitions this. Nothing lost, nothing rewritten; the cost is
+> provenance. The claim never depended on the commit — per the wayfinder skill the **assignee is the
+> claim**, and `#30` was assigned before any work.
+>
+> 📥 **Two candidates filed, both genuinely this session's and both 🟢 ordinary `kb/dev/`** —
+> [`kb-candidates/2026-08-13-c11b-output-formats.md`](kb-candidates/2026-08-13-c11b-output-formats.md).
+> The cross-repo hold that parked `c2-task-type`'s, `c15b`'s and `c19`'s entries — *`picker-queue-merge`
+> is live in `C:\Dev\JARVIS`* — **has expired**, that session released at `912d4bc`.
+>
+> **No singleton taken** — no Gradle, no device, no Firebase, no emulator. **No tests and none
+> applicable**: Markdown, GitHub metadata and read-only greps of Kotlin and TypeScript; `#12`'s
+> standing preference is *plan, don't do*. **Filed nothing, graduated nothing, ruled nothing out of
+> scope, unblocked nothing** — `#30` was terminal and blocks no one, re-checked live against every
+> open issue's `blocked_by`.
+>
+> 🛠 **The Unclaimed-work block further down is still stale** — fifth session to flag it without
+> rewriting it, for the unchanged reason: it is a commons and a rewrite is the one edit that collides
+> with everyone.
+>
+> Recorded by `c11b-output-formats` on release.
 
 > ✅ **`c15b-stored-ai-text` released 2026-08-13 — [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35)
 > resolved and closed, and the ticket turned out to have almost nothing in it once the code was
