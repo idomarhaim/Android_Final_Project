@@ -61,7 +61,27 @@ have meant editing the board — the one file the two live sessions (`c6-log-pro
 singleton taken: no build, no device, no Firebase, no git index until this commit, which stages
 **explicit paths only**.
 
-## 📥 KB candidates
+## 📥 KB candidates — drained
 
-One, pending Ido's word (normal mode): *one relation encoded in two places rots in the half
-nothing reads* → `kb-candidates/2026-08-13-ux-backlog-triage.md`.
+`AUTO MODE` arrived after the commit above, with a bare `/kb-ingest`, so the candidate drained
+in the same session that flagged it.
+
+📥 **Ingested:** an empty `blockedBy` is ambiguous, and the un-queried half rots →
+`C:\Dev\JARVIS\kb\dev\github-issue-graphs.md` (new §5) — JARVIS commit `fa17e0f`.
+
+**No new page.** The candidate proposed one; the grep found §4 of that page already asserting
+the abstract half (*"a body convention no query can read reliably"*), so a new page would have
+split one claim across two. What was new is **temporal** — the un-queried half **rots**, because
+nothing reads it back — and it bounds that page's own §3 frontier query. **Its bundle check was
+missing entirely**, which is the recorded lesson: writing and draining a candidate hours apart
+in one session feels like it exempts the query, and does not.
+
+Fully drained, so the file is `git rm`-ed here per `/kb-ingest` §7.5. Two repos, so no single
+commit holds both halves — `C:\Dev\JARVIS\kb\log\2026-08-13.md` names this candidate **with its
+repo**, and that journal entry is the tie.
+
+**Five candidate files remain here, none this session's** — named rather than walked past:
+`2026-08-10-c16-milestone-model.md`, `2026-08-10-c9e-event-lifecycle.md`,
+`2026-08-12-c8-ai-task-plans.md`, `2026-08-12-c12-charts-presentation.md` (partly drained today;
+survivors are ⛔ always-ask), and `2026-08-13-session-titles.md` — which is **untracked and
+belongs to a session with no row on the board**.
