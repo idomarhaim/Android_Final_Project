@@ -102,7 +102,73 @@ before your first write. Normative rule:
 >
 > Recorded by `c6-log-progress` on claiming.
 
-| `c8-ai-task-plans` | `/wayfinder 12` → resolve [#24 · `C8`](https://github.com/idomarhaim/Android_Final_Project/issues/24) (what a "stage" is, what re-flowing means, what a stage is worth, and whether a proposed plan is a draft or written tasks). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-10/c8-ai-task-plans.md` *(new)*, `kb-candidates/2026-08-10-c8-ai-task-plans.md` *(new, if anything is flagged)*, GitHub issues **#24** and **#12** | **Ido's attention** — a grilling ticket, and `c12-charts-presentation`'s prototype is already live and asking for him; see §3 below. No build, no device, no Firebase: this is Markdown and issues only | 2026-08-10 |
+> ✅ **`c8-ai-task-plans` has released — [#24 · `C8`](https://github.com/idomarhaim/Android_Final_Project/issues/24)
+> is resolved and closed, and it **unblocked `#35` outright and left `#30` blocked by `#20`
+> alone** — exactly what the claim predicted, re-derived out of the dependencies API after
+> closing rather than assumed.**
+> **The verdict:** a proposed plan is a **persisted draft with three exits per step**, and the
+> **draft gate is what makes the AI's latitude affordable**. `#24`'s own enumeration of a
+> "stage" (*ordinal · blocks-the-next · a group*) was obsolete before it was read — `C4` had
+> already made goal and milestone **roles carried by an edge**, so a stage is a milestone or a
+> task, decided per item, and `C18`'s container rule means a *state* stage is never priced.
+>
+> **Two of Ido's three answers came from outside the option set, and both times the outside
+> part was load-bearing.** First: a step has **three** exits — **keep · already-done ·
+> delete** — and *already-done is not a soft delete*, it is **evidence flowing backwards** into
+> the next plan. Second: the renumber-or-replan question had **no policy answer at all**; it is
+> two buttons the user picks between after the fact (`Renumber`, mechanical and offline;
+> `explain delete` free-text feeding a batched `Adjust Plan`). He also found a
+> **duplicate-commit vector** the question had missed entirely — an already-done step pays like
+> any completed task *unless it duplicates a task already in the app*, which is `C1`'s
+> just-killed accumulator drift reached by a different road.
+>
+> **The last question was handed back** (*"explain it simply … and choose the solution that
+> gives the highest standard; if it can be improved, improve it"*), so **§7 of the resolution
+> is the agent's decision**, recorded as such — as `C3`, `C14`, `C17` and `C1` each did. The
+> hand-back rule was executed as written: **not re-asked in any form**, the *"couldn't
+> understand"* half paid once in the reply as an explanation rather than a preamble, and the
+> answer **derived** — landing outside all three offered options, because a user-typed step is
+> **two things**, an *existence* the user owns (`C4` §1) and a *treatment* the model owns
+> (`C1` §1).
+>
+> **Both coupling points discharged as written, and the commons was quiet this time.** `#12`'s
+> body was **re-fetched immediately before the write and `cmp`'d byte-for-byte** against the
+> copy the line was built on — **unchanged, no race** — the patch proved a **pure insertion
+> before sending** (151 → 153 lines, **0 deleted**, 18 → 19 decision lines), then read back and
+> diffed: identical but for one trailing blank line GitHub appends. **`C13`'s standing index
+> gap is closed** — not by this session; `c9e` wrote it in `5e4af0f` mid-ticket. Three hand-offs
+> went out as **comments, not edits** — [#30](https://github.com/idomarhaim/Android_Final_Project/issues/30),
+> [#35](https://github.com/idomarhaim/Android_Final_Project/issues/35),
+> [#20](https://github.com/idomarhaim/Android_Final_Project/issues/20).
+>
+> **Frontier after closing:** **`#20 · C2`, `#21 · C5`, `#35 · C15b`** are open, unblocked and
+> unassigned. **`#22 · C6` was claimed by a sibling *during* this session**
+> (`CHANGELOG/2026-08-11/c6-log-progress.md`) and `#31 · C12` is at rev 7 — both live, both
+> untouched.
+>
+> ⚠️ **A defect this session found and deliberately did not fix.** `c1-points-and-time`'s
+> release note **and its `#12` index line** both claim that closing `#19` left *"every remaining
+> ticket on this map on the frontier"*. It was **false when written** — `#30` and `#35` were
+> still blocked behind `#20`/`#24`. Left alone: a released session's own line is not this
+> session's to rewrite. The **Unclaimed-work block below is separately stale**, still listing
+> five tickets as blocked behind `#19`.
+>
+> 🛠 **Deviation, recorded rather than buried.** This session's changelog and candidate file
+> were first written under **`2026-08-10`** — the folder was chosen by matching the sibling
+> files this map's earlier sessions left behind rather than from the date, which is
+> **`2026-08-12`**. Caught when the JARVIS board showed 08-12 rows. Fixed by `git mv`; the
+> already-pushed claim commit `752e6ac` keeps the wrong path in history and was not rewritten.
+>
+> 📥 **Two KB candidates filed, one drained.** Entry 2 — *don't buy a global judgement you can
+> derive from per-item enums* — ingested into `C:\Dev\JARVIS\kb\dev\enum-and-label.md` **§5**
+> (`3d30391`, released `7850e0e`), `Check-KbLinks` **CLEAN at 63 pages**, nothing superseded, a
+> row held on the **JARVIS board** for that unit since the board follows the repo being written
+> to. Entry 1 — *the framing tell can fire with the axis right and the enumeration short* — is
+> ⛔ always-ask (destination `rules/question-axis-naming.md`) and is the **third** pending
+> amendment to that one tell table, alongside `c9e-event-lifecycle`'s two; all three want
+> reading together. The candidate file is **rewritten down to its survivor, not deleted**.
+>
+> Recorded by `c8-ai-task-plans` on release.
 
 > ⚠️ **A ninth session joined the same map — `c8-ai-task-plans` on
 > [#24](https://github.com/idomarhaim/Android_Final_Project/issues/24) — and it is the
