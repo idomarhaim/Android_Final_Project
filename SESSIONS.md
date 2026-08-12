@@ -18,6 +18,131 @@ before your first write. Normative rule:
 | `picker-queue-merge` (visitor from `C:\Dev\JARVIS`) | Close out the three candidate files whose `rules/`-destined entries shipped in JARVIS today (`daac210`, `3d0971a`) — rewrite each down to its survivors, per `/kickoff picker-queue-merge`. **Reading only** beyond those three files: no ticket, no `#12` write, no source file | `kb-candidates/2026-08-10-c9e-event-lifecycle.md`, `kb-candidates/2026-08-12-c8-ai-task-plans.md`, `kb-candidates/2026-08-10-c16-milestone-model.md`, this row | none — no build, no device, no Firebase, no Gradle daemon. **Does demand Ido's attention**: a **seventh** amendment to `question-axis-naming.md` is flagged and owed a 🎬 offer — see the note below | 2026-08-13 |
 | `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+| `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> 🆕 **`c19-area-success-failure` claimed [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)
+> — the ticket declined seven minutes ago at **sixty-one seconds old**, taken now that its one input
+> is not merely published but **indexed**, and its filing session has **released**.**
+> `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was the agent's.
+>
+> **The frontier derivation ran the instrument the row below warned about — then cross-checked it in
+> the one direction that check cannot cover.** `c15b-stored-ai-text` found `/issues/12/sub_issues`
+> serving a stale `state` and left the rule *"never read `state` off the aggregate endpoint; confirm
+> every open child directly."* That catches a **closed** child reported open — the case it was
+> written from — but it **cannot** catch an **open** child reported closed, because a child the
+> listing calls closed is never queried, and *that* direction loses a frontier ticket silently. So
+> the listing (**26 children, 23 closed, 3 open**) was reconciled against `gh issue list --state
+> open` over the whole repo: **15 open issues, every one accounted for** — the three children below,
+> the map `#12` itself, and eleven non-map issues (`#2`–`#11`, `#34`, `#36`). Nothing is hiding
+> behind a stale `closed`. Each of the three was then confirmed directly and queried for
+> `blocked_by`. True at **01:12 local**.
+>
+> | Ticket | Blocked by | Assignee | Verdict |
+> |---|---|---|---|
+> | `#41 · C19` | *(none — filed with no blocking edge)* | `idomarhaim` | **frontier — CLAIMED** |
+> | `#30 · C11b` | `#19` ✅ `#20` ✅ `#24` ✅ `#29` ✅ | — | frontier — declined, terminal by design **and now colliding with a live claim** |
+> | `#35 · C15b` | `#24` ✅ `#29` ✅ | `idomarhaim` | not a decline — **claimed by `c15b-stored-ai-text`** |
+>
+> **Third consecutive derivation in which the map has no blocked ticket at all**, so leverage again
+> discriminates nothing: closing `#41` unblocks nothing, because there is nothing left to unblock.
+>
+> **Why `#41`, and why the objection that refused it seven minutes ago has expired — verified in the
+> map body, not inferred.** The decline's ground was **freshness**: its central input is
+> [`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21)'s §4, *"a resolution
+> published one minute ago and read by nothing."* `#12`'s body was fetched and read: `C5`'s line
+> **is** in *Decisions so far*, and the `E4` success/failure patch is **gone from *Not yet
+> specified*** — graduated into this ticket. `c5-endless-goals` has since **released** (the note
+> directly below). So the input is closed, indexed, released, and now **read by this session before
+> claiming**: §1 (no `GoalKind` — endless and maintenance are *views*), §2 (attainment is history and
+> does not decay; upkeep is derived and never a percentage), §3 (an endless goal has no percentage
+> and that is not degraded), §4 (**it can fail — per window, never as a whole**, and the window run
+> `● ● ● ● ○ ○` is the record). The four grounds this board carried against neighbouring tickets
+> never applied here: `#41` has **no blockers at all**.
+>
+> **The one decline: `#30 · C11b` — terminal by design, and the ground has hardened.** The map's own
+> words still hold (*"you cannot test a format nobody has designed yet"*), and to them is now added a
+> **live** collision: `#30` writes one output schema per AI feature, and `C15` (#15) explicitly left
+> it *"the per-feature veto where the model's Hebrew is not good enough"* — which is exactly the
+> ground `#35 · C15b` is standing on right now (whether a language stamp is owed on a **stored** AI
+> record, regenerate vs re-render). Taking `#30` would fix schemas over a field contract a live
+> session is mid-way through deciding. `#35` is not a decline at all — it is assigned.
+>
+> **Five couplings, named on claiming rather than discovered later:**
+> 1. **`#12`'s *Decisions so far* is a commons whose race has fired for real three times** (`c3`,
+>    `c1`, `c2-task-type`). Same discipline, no exceptions: **re-fetch `#12`'s body immediately
+>    before appending**, `cmp` against the copy the line was built on, write only this session's
+>    line, verify a pure insertion. **And the write has a trap two sessions have paid for:**
+>    `gh api --method PATCH -f body="$(cat …)"` cannot write this map — the body is **~100 KB** and
+>    the call dies with `Argument list too long` *after* you believe you have written it. Use
+>    `--input <file.json>` and **verify the round-trip**. Current true state, read tonight: **23
+>    decision lines, 4 fog bullets.**
+> 2. **`C5` §4 is this ticket's charter, an input rather than a subject.** An endless or maintenance
+>    goal *can* fail, **per window and never as a whole**, and the window run is the record because a
+>    missed occurrence is never edited. `C19` decides what a *view* does with that; it does not
+>    reopen it. Same for §2's refusal of a number that moves on a timer — a failure count that ages
+>    on wall-clock is that same mistake wearing a different hat, and `C5` filed the generalisation
+>    (`kb/dev/derive-dont-stamp.md` §7).
+> 3. **`C9a` (#25) supplies the vocabulary and half of it is a warning.** `MISSED` is a failure;
+>    `OVERDUE` is *late but still owed* and **is not**; `EXPIRED` is agent-proposed, never confirmed
+>    and **counts for nothing** (*you cannot fail to do something you never agreed to*). Conflating
+>    the three overstates Ido's failures — the opposite of what this view exists for.
+> 4. **`C17` (#38) settled the counting the *opposite* way to the time chart, deliberately.** A task
+>    serving Health and Relationships is a success **in both, in full**, while its minutes are
+>    **divided**. Both numbers land on one screen; the asymmetry is not an inconsistency to flatten.
+> 5. **The ticket's fourth question already has a precedent at identical cost.** *How it avoids being
+>    a list of the things you are bad at* is the trap `C10` (#29) hit and answered by reserving one of
+>    its three feed slots for a goal in a **good** state. Any screen here also owes `C12` (#31)'s
+>    material contract (**surface · groove · elevation · accent**, never a property one material has)
+>    and the map's standing rule that **a design is not finished until it has been seen in Hebrew**,
+>    with direction isolation on every time and date string.
+>
+> ⚠️ **`SESSIONS.md` *is* staged here, and it nearly was not.** `c5-endless-goals`'s release note —
+> 67 lines — landed in the working tree **while this row was being written**, and `git add` is
+> per-file, so staging the board would have swept their release into this session's commit. This
+> session had already written the two-files-only commit and the explanation for it when **`ea6ff78`
+> committed their note about ninety seconds later**, leaving `SESSIONS.md` carrying **119 added
+> lines, 0 removed, all of them this session's** — checked before staging rather than assumed.
+> Their commit also carried the three `kb-candidates/` files `picker-queue-merge` owns (`c16`, `c9e`,
+> `c8`), which is the same cross-contamination `c5-endless-goals` recorded suffering from
+> `picker-queue-merge` an hour earlier, now travelling the other way. **Not adjudicated here** — it
+> is those two sessions' to settle — but it is the third instance tonight, and it is worth being
+> precise about what it shows: **per-file staging cannot prevent this half of it.** The rule stops
+> *you* sweeping a sibling's work in; it says nothing about a sibling sweeping *yours*, and two
+> sessions editing one commons file will collide no matter how narrowly either of them stages. The
+> claim never depended on the commit in any case: per the wayfinder skill the assignee **is** the
+> claim, and `#41` was assigned before any work.
+>
+> 🛠 **The Unclaimed-work block further down is stale** — this is the **fourth** session to flag it
+> without rewriting it, for the same reason: it is a commons and a rewrite is the one edit that
+> collides with everyone. The authoritative frontier is the table in this note.
+>
+> 📥 **`kb-candidates/` listed before the first unit of work — eight files, every `Status` and
+> `Destination` line read out of the files themselves rather than inherited from the notes below.**
+> ⛔ `rules/`, always-ask in both modes: [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md)
+> (⚠️ parked awaiting Ido), [`c9e`](kb-candidates/2026-08-10-c9e-event-lifecycle.md) (two entries),
+> [`c8`](kb-candidates/2026-08-12-c8-ai-task-plans.md) — **all three currently owned and being
+> rewritten by `picker-queue-merge`, and untouched here** — and
+> [`c5-endless-goals`](kb-candidates/2026-08-13-c5-endless-goals.md), **new since the board last
+> described this folder** (`rules/question-axis-naming.md`, the fork-check bullet; its entry 2 was
+> drained into JARVIS at `385e87b`). Held-but-ordinary:
+> [`c12`](kb-candidates/2026-08-12-c12-charts-presentation.md) (entry 1 always-ask, entries 2–4 🟢
+> held by their own text), [`c2-task-type`](kb-candidates/2026-08-13-c2-task-type.md) (entry 1 🟢 on
+> a cross-repo hold, entry 2 ⛔), [`c15b`](kb-candidates/2026-08-13-c15b-stored-ai-text.md) (🟢, same
+> hold), and [`session-titles`](kb-candidates/2026-08-13-session-titles.md) (two entries `pending`,
+> `kb/dev/`). **None of the eight is this session's**, so `AUTO MODE` drains nothing here: the
+> auto-ingest gate covers the candidates *the committing unit produced*.
+>
+> 📥 **One candidate filed by this session, riding this commit** —
+> [`kb-candidates/2026-08-13-c19-area-success-failure.md`](kb-candidates/2026-08-13-c19-area-success-failure.md),
+> the both-directions staleness finding above. 🟢 ordinary and genuinely this session's, **held for
+> the third time on the same ground**: its destination is
+> `C:\Dev\JARVIS\kb\dev\runtime-verification.md`, a cross-repo write into a repo where
+> `picker-queue-merge` is live. It is **the same claim as `c2-task-type`'s entry 1 and `c15b`'s, from
+> a third direction** — a write is a hypothesis until you read it back; a read through an aggregate
+> is one too; and a **confirmation is one as well**, because it can only confirm what the aggregate
+> agreed to show you. All three drain into one section, not as three raced writes.
+>
+> Recorded by `c19-area-success-failure` on claiming.
 
 > ✅ **`c5-endless-goals` has released — [#21 · `C5`](https://github.com/idomarhaim/Android_Final_Project/issues/21)
 > is resolved and closed, and the answer is that **the ticket had no schema change in it at all**.**
