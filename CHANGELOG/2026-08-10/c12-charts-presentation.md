@@ -508,6 +508,41 @@ by counting: **zero** stacking loops remain in the file, checked rather than ass
 height reads too shallow or too tall it is now a **single number**, and that is worth saying to
 him explicitly so the next round is a one-line change instead of another rebuild.
 
+## Revision 11 — a silhouette is not a face, and that is why the blocks still read flat
+
+Ido, 2026-08-12: the blocks still do not read as one 3D body — *as if they have no envelope, no
+side faces*. Posted as
+[the envelope comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5269675482).
+
+**He is right, and rev 10's own fix is what left it flat.** Rev 10 replaced the card stack with a
+**union silhouette** behind the top face — which cured the banding but produced no side. **A
+silhouette has no fold, no tone of its own and no end**, so it reads as a shadow *behind* the
+block rather than as the *side of* it. A solid does not have a silhouette; it has **faces**.
+
+Each block now carries four, drawn explicitly: an **outer wall** with its own gradient · an
+**inner wall**, darker because it faces away · and an **end cap at each end of the slice**. The
+caps carry most of the effect: **they are what make a block read as its own slab** rather than as
+a segment of one long painted ring, and their absence was most of what he was seeing.
+
+Two supporting changes, both structural rather than decorative:
+
+- **A fold hairline** where each wall meets the top face. Without a fold the two merge into one
+  gradient and the body flattens again — the same reason the groove needed an *edge* and not
+  just blur.
+- **The clip is widened by the extrusion.** A bar rising out of a groove genuinely extends past
+  the groove's mouth, so clipping it to the channel exactly is what would make a raised block
+  look **flush**. The *face* stays narrower than the channel, so this does **not** re-open the
+  earlier "blocks cut the walls" defect. The extrusion also grew to `3.6 × 5.0`, because a wall
+  two pixels tall is not a wall.
+
+**Same treatment on the goal rings**, which were round-capped strokes and therefore could not
+have an end cap at all. In raised mode they are now solid bars with slab ends, the same four
+faces and the same fold, so a ring and the donut on one screen are made of the same material.
+
+**What is left is tuning, and saying so is the point:** wall height is one vector, wall shade is
+four constants. Neither is structural any more, which is the difference between this round and
+the last two.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -558,7 +593,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 10 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 11 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

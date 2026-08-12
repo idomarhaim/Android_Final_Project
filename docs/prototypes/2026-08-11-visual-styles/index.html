@@ -437,6 +437,21 @@ function sector(cx,cy,ro,ri,a0,a1){
   return `M ${x0} ${y0} A ${ro} ${ro} 0 ${big} 1 ${x1} ${y1} `
        + `L ${x2} ${y2} A ${ri} ${ri} 0 ${big} 0 ${x3} ${y3} Z`;
 }
+/* THE ENVELOPE. A union silhouette behind the top face is not a side face —
+   it has no fold, no separate tone, and no end, so it reads as a shadow. A
+   solid needs its faces drawn as faces: the outer wall, the inner wall, and an
+   END CAP at each end of the slice. The caps are what make each block read as
+   its own slab rather than as a segment of one painted ring. */
+function wallStrip(cx,cy,rad,a0,a1,vx,vy){
+  const [x0,y0]=pol(cx,cy,rad,a0), [x1,y1]=pol(cx,cy,rad,a1);
+  const big=a1-a0>180?1:0;
+  return `M ${x0} ${y0} A ${rad} ${rad} 0 ${big} 1 ${x1} ${y1} `
+       + `L ${x1+vx} ${y1+vy} A ${rad} ${rad} 0 ${big} 0 ${x0+vx} ${y0+vy} Z`;
+}
+function endCap(cx,cy,ro,ri,ang,vx,vy){
+  const [xo,yo]=pol(cx,cy,ro,ang), [xi,yi]=pol(cx,cy,ri,ang);
+  return `M ${xo} ${yo} L ${xi} ${yi} L ${xi+vx} ${yi+vy} L ${xo+vx} ${yo+vy} Z`;
+}
 const arc=(cx,cy,r,a0,a1)=>{
   const [x0,y0]=pol(cx,cy,r,a0),[x1,y1]=pol(cx,cy,r,a1);
   return `M ${x0} ${y0} A ${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;};
@@ -479,7 +494,7 @@ function donut(w, r, thick, style, centre, labels){
   const ch = thick*1.30;              // the channel, as cut by the groove
   const bw = ch*0.66;                 // the block, deliberately narrower
   const ro = r+bw/2, ri = r-bw/2;
-  const HX = 2.4, HY = 3.2;           // extrusion vector: away from the light
+  const HX = 3.6, HY = 5.0;           // extrusion vector: away from the light
   let walls='', faces='';
 
   AREAS.forEach(a=>{
@@ -490,20 +505,26 @@ function donut(w, r, thick, style, centre, labels){
 
     if(RZ){
       const face = sector(cx,cy,ro,ri,a0,a1);
-      const base = sector(cx+HX,cy+HY,ro,ri,a0,a1);
       defs+=`<linearGradient id="${id}-f${a.k}" x1="0" y1="0" x2="0.35" y2="1">
           <stop offset="0%"   stop-color="${lite(c,.40)}"/>
           <stop offset="52%"  stop-color="${c}"/>
-          <stop offset="100%" stop-color="${dk(c,.14)}"/></linearGradient>
-        <linearGradient id="${id}-s${a.k}" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0%"   stop-color="${dk(c,.42)}"/>
-          <stop offset="100%" stop-color="${dk(c,.62)}"/></linearGradient>`;
-      /* one path, two subpaths, one fill — the union is the body, and a single
-         fill cannot produce the stepped edges that read as a stack of cards */
-      walls+=`<path d="${face} ${base}" fill="url(#${id}-s${a.k})" fill-rule="nonzero"/>`;
+          <stop offset="100%" stop-color="${dk(c,.12)}"/></linearGradient>
+        <linearGradient id="${id}-o${a.k}" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0%"   stop-color="${dk(c,.24)}"/>
+          <stop offset="100%" stop-color="${dk(c,.50)}"/></linearGradient>`;
+      /* four faces, each with its own tone, because a face is what a solid has
+         and a silhouette is not one. Draw order is irrelevant among the walls —
+         the top face covers whichever of them faces away from the viewer. */
+      walls+=
+        `<path d="${wallStrip(cx,cy,ro,a0,a1,HX,HY)}" fill="url(#${id}-o${a.k})"/>`   // outer wall
+      + `<path d="${wallStrip(cx,cy,ri,a0,a1,HX,HY)}" fill="${dk(c,.56)}"/>`          // inner wall
+      + `<path d="${endCap(cx,cy,ro,ri,a0,HX,HY)}" fill="${dk(c,.40)}"/>`             // the two
+      + `<path d="${endCap(cx,cy,ro,ri,a1,HX,HY)}" fill="${dk(c,.46)}"/>`;            // slab ends
+      /* the FOLD: a hairline where a wall meets the top face. Without it the
+         wall and the face merge into one gradient and the body flattens. */
       faces+=`<path d="${face}" fill="url(#${id}-f${a.k})"/>
-        <path d="${face}" fill="none" stroke="rgba(255,255,255,.30)" stroke-width=".9"
-          stroke-linejoin="round"/>`;
+        <path d="${face}" fill="none" stroke="${lite(c,.55)}" stroke-width="1.1"
+          stroke-linejoin="round" opacity=".85"/>`;
       return;
     }
 
@@ -560,7 +581,11 @@ function donut(w, r, thick, style, centre, labels){
      clip is the channel annulus itself, so a body physically cannot cross a
      wall of the groove. */
   if(RZ){
-    const co=r+ch/2, ci=r-ch/2;
+    /* widened by the extrusion, on purpose: a bar that rises out of a groove
+       does extend past the groove's mouth, and clipping that away is what makes
+       a raised block look flush. The face stays narrower than the channel, so
+       nothing here re-opens the "blocks cut the walls" defect. */
+    const co=r+ch/2+HY+1, ci=r-ch/2-HY-1;
     defs+=`<clipPath id="${id}-clip"><path fill-rule="evenodd" d="
       M ${cx-co} ${cy} a ${co} ${co} 0 1 0 ${co*2} 0 a ${co} ${co} 0 1 0 ${-co*2} 0 Z
       M ${cx-ci} ${cy} a ${ci} ${ci} 0 1 0 ${ci*2} 0 a ${ci} ${ci} 0 1 0 ${-ci*2} 0 Z
@@ -673,21 +698,25 @@ function ring(size,pct,k,txt,style){
       /* ONE base and ONE face — two draws, never a stack. A stack of strokes is
          what read as a pack of cards, and the fix is not fewer steps, it is no
          steps at all. Clipped to the channel so the body cannot cross a wall. */
+      const CO=rr+ch/2+4, CI=Math.max(2,rr-ch/2-4);
       defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
-          M ${c-(rr+ch/2)} ${c} a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${(rr+ch/2)*2} 0
-            a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${-(rr+ch/2)*2} 0 Z
-          M ${c-(rr-ch/2)} ${c} a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${(rr-ch/2)*2} 0
-            a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${-(rr-ch/2)*2} 0 Z"/></clipPath>
+          M ${c-CO} ${c} a ${CO} ${CO} 0 1 0 ${CO*2} 0 a ${CO} ${CO} 0 1 0 ${-CO*2} 0 Z
+          M ${c-CI} ${c} a ${CI} ${CI} 0 1 0 ${CI*2} 0 a ${CI} ${CI} 0 1 0 ${-CI*2} 0 Z"/></clipPath>
         <filter id="${id}-gw" x="-60%" y="-60%" width="220%" height="220%">
           <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".42"/>
         </filter>`;
+      /* the ring gets the same envelope as the donut — a solid bar with slab
+         ends, not a round-capped stroke, because a body has faces */
+      const A0=-90, A1=-90+pct*3.6, RO=rr+tk/2, RI=rr-tk/2, VX=2.6, VY=3.6;
       bar=`<g clip-path="url(#${id}-cl)">
-          <path d="${dpath}" stroke="${dk('#1E7FD8',.55)}" stroke-width="${tk}" fill="none"
-            stroke-linecap="round" transform="translate(1.8,2.4)"/>
-          <g filter="url(#${id}-gw)"><path d="${dpath}" stroke="url(#${id}-a)"
-            stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>
-          <path d="${dpath}" stroke="rgba(255,255,255,.28)" stroke-width=".9" fill="none"
-            stroke-linecap="round" transform="translate(-0.5,-0.7)"/></g>`;
+          <path d="${wallStrip(c,c,RO,A0,A1,VX,VY)}" fill="#1B4E8E"/>
+          <path d="${wallStrip(c,c,RI,A0,A1,VX,VY)}" fill="#123663"/>
+          <path d="${endCap(c,c,RO,RI,A0,VX,VY)}" fill="#17457C"/>
+          <path d="${endCap(c,c,RO,RI,A1,VX,VY)}" fill="#1A5090"/>
+          <g filter="url(#${id}-gw)"><path d="${sector(c,c,RO,RI,A0,A1)}"
+            fill="url(#${id}-a)"/></g>
+          <path d="${sector(c,c,RO,RI,A0,A1)}" fill="none" stroke="rgba(180,230,255,.75)"
+            stroke-width="1" stroke-linejoin="round"/></g>`;
     } else {
       bar=`<g filter="url(#${id}-gl)"><path d="${dpath}"
         stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
@@ -705,20 +734,23 @@ function ring(size,pct,k,txt,style){
     const dp2=arc(c,c,rr,-90,-90+pct*3.6), bw=ch*0.68;
     if(RAISED){
       /* same rule: one base, one face, no stack */
+      const DO=rr+ch/2+4, DI=Math.max(2,rr-ch/2-4);
       defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
-        M ${c-(rr+ch/2)} ${c} a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${(rr+ch/2)*2} 0
-          a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${-(rr+ch/2)*2} 0 Z
-        M ${c-(rr-ch/2)} ${c} a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${(rr-ch/2)*2} 0
-          a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${-(rr-ch/2)*2} 0 Z"/></clipPath>
+        M ${c-DO} ${c} a ${DO} ${DO} 0 1 0 ${DO*2} 0 a ${DO} ${DO} 0 1 0 ${-DO*2} 0 Z
+        M ${c-DI} ${c} a ${DI} ${DI} 0 1 0 ${DI*2} 0 a ${DI} ${DI} 0 1 0 ${-DI*2} 0 Z"/></clipPath>
         <linearGradient id="${id}-rf" x1="0" y1="0" x2=".35" y2="1">
           <stop offset="0%" stop-color="${lite(col,.34)}"/>
           <stop offset="55%" stop-color="${col}"/>
           <stop offset="100%" stop-color="${dk(col,.14)}"/></linearGradient>`;
+      const B0=-90, B1=-90+pct*3.6, RO2=rr+bw/2, RI2=rr-bw/2, WX=2.4, WY=3.4;
       bar=`<g clip-path="url(#${id}-cl)">
-        <path d="${dp2}" stroke="${dk(col,.52)}" stroke-width="${bw}" fill="none"
-          stroke-linecap="round" transform="translate(1.6,2.2)"/>
-        <path d="${dp2}" stroke="url(#${id}-rf)" stroke-width="${bw}" fill="none"
-          stroke-linecap="round"/></g>`;
+        <path d="${wallStrip(c,c,RO2,B0,B1,WX,WY)}" fill="${dk(col,.30)}"/>
+        <path d="${wallStrip(c,c,RI2,B0,B1,WX,WY)}" fill="${dk(col,.56)}"/>
+        <path d="${endCap(c,c,RO2,RI2,B0,WX,WY)}" fill="${dk(col,.42)}"/>
+        <path d="${endCap(c,c,RO2,RI2,B1,WX,WY)}" fill="${dk(col,.46)}"/>
+        <path d="${sector(c,c,RO2,RI2,B0,B1)}" fill="url(#${id}-rf)"/>
+        <path d="${sector(c,c,RO2,RI2,B0,B1)}" fill="none" stroke="${lite(col,.5)}"
+          stroke-width="1" stroke-linejoin="round" opacity=".8"/></g>`;
     } else {
       bar=`<g filter="url(#${id}-e)"><path d="${dp2}" stroke="${col}"
         stroke-width="${bw}" fill="none" stroke-linecap="round"/></g>`;

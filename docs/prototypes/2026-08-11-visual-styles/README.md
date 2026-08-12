@@ -68,6 +68,25 @@ rather than a matter of fewer or smaller steps:
   wall from landing on top of a face, and the gap between slices widens from 2.4° to 4.2° when
   raised, because a body needs more clearance than a band does.
 
+### The envelope, added after the second look
+
+Ido: the blocks still read as flat — *as if they have no envelope, no side faces*. Correct, and
+the union silhouette from the first rebuild was the reason: **a silhouette is not a face.** It
+has no fold, no tone of its own and no end, so it reads as a shadow behind the block. A solid
+needs its faces **drawn as faces**, so each block now carries four:
+
+- an **outer wall** with its own gradient,
+- an **inner wall**, darker because it faces away,
+- and an **end cap at each end of the slice** — these are what make a block read as its own slab
+  rather than as a segment of one painted ring.
+
+Two supporting changes, both of which the flat version did not need. A **fold hairline** where a
+wall meets the top face, without which the two merge into one gradient and the body flattens
+again. And the **clip is widened by the extrusion**: a bar that rises out of a groove really does
+extend past the groove's mouth, so clipping it to the channel exactly is what would make a raised
+block look flush. The *face* stays narrower than the channel, so this does not re-open the
+"blocks cut the walls" defect.
+
 ## The groove, rebuilt (2026-08-11)
 
 Ido: wherever there should be a **recess** — the donut's track, the day/week/month/year bar —
