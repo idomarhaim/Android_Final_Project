@@ -15,9 +15,33 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> ✅ **`session-titles` released 2026-08-13** — `34dc26a` (the work) → `fb44427` (the drain) here,
+> plus `c5d1fb3` in `C:\Dev\JARVIS`. No map ticket: Ido asked how to open a session that another
+> session refers him to, and the answer was mechanical — **the VS Code picker can search only a
+> session's title**, so a board label like `c6-log-progress` is unreachable from the IDE unless it
+> is written into the title. 34 of 60 transcripts backfilled with a `custom-title` record
+> (`<label> · #<ticket>`), 9 live ones deliberately skipped, 0 corrupt.
+>
+> **Two hazards found, both about other sessions rather than this one.** (1) Appending to a
+> transcript whose last line lacks a newline would have **corrupted that session's final
+> message** — found by re-reading the tool against Ido's *"make sure it harms nothing"*
+> precondition, guarded, and measured at 0 of 60. (2) This session's files were swept into a
+> sibling's commit **twice in one hour** — the `SESSIONS.md` row above, and both new files into
+> `9ebf0e6`, which that sibling caught and redid clean as `8c3868f`. Staging discipline protects
+> the sibling from you, not you from the sibling; the pathspec commit is what does, and both
+> findings are now in `kb/dev/`.
+>
+> **One correction this session owes the board.** It told Ido that `c6-log-progress` had been
+> *silent 44h* and its `#22` claim was probably stale — from `git log` alone, and **wrong**: the
+> transcript showed it mid-question two hours earlier. That is parked as a third clause for
+> `rules/…` §5.3 in [`kb-candidates/2026-08-13-session-titles.md`](kb-candidates/2026-08-13-session-titles.md),
+> ⛔ always-ask, awaiting a 🎬 walkthrough. **The candidate file is the only thing this session
+> leaves open, and it is committed.**
+>
+> Recorded by `session-titles` on release.
 
 > ✅ **`picker-queue-merge` (visitor from `C:\Dev\JARVIS`) claimed `b7abdc0` and released here
 > 2026-08-13.** All three owned candidate files are **rewritten down to their survivors, and every
