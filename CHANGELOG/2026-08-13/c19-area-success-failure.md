@@ -124,3 +124,55 @@ None taken: no Gradle daemon, no build, no device or emulator, no Firebase, noth
 `C:\Dev\JARVIS`. **Ido's attention** is the one contended resource and is named on the board row —
 `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live
 grilling and `picker-queue-merge` owes him a 🎬 offer.
+
+---
+
+## Resolution work — revision 4 of the prototype
+
+`#41` carries `wayfinder:prototype`, so the ticket resolves through a concrete artifact Ido reacts
+to, not through prose. Built to this repo's convention:
+[`docs/prototypes/2026-08-13-area-success-failure/`](../../docs/prototypes/2026-08-13-area-success-failure/)
+— four materials × two themes × two languages, switchable by query string so `shoot.ps1` renders any
+state. Frames: **Health** (good shape), **Career** (bad shape — the frame that tests the tone rule),
+**Analytics** (the counterpart to the time donut), **Learning** (an area where almost nothing was
+ever scheduled).
+
+**Three proposals embodied and derived, each from a closed ticket, each Ido's to overturn:**
+
+1. **A never-scheduled goal is `asleep`, not failed** — `C9a`'s *you cannot fail to do something you
+   never agreed to*. Visible, named, and in neither number, with the exclusion stated on screen.
+2. **Nothing ages out; the window is a query** — `C5` §2 refused any value that moves on wall-clock
+   time, and "failures older than N weeks stop counting" is that value in a different hat. History is
+   permanent (`C5` §4), the view reports over `30 days · 8 weeks · 6 months`, and there is no lifetime
+   failure counter anywhere.
+3. **Both placements, one component** — the area screen because the subject is per-area, analytics
+   because `C17` deliberately put the divided number (minutes) beside the undivided one (successes).
+
+**What a window is** — the ticket's headline question — is answered on the screen, under the run:
+*a window counts as kept when everything due in it was done*.
+
+**Left for Ido, and it is the only question that is his:** should an abandoned goal be `asleep` (as
+drawn), invisible, or a failure? Not derivable — `C9a` covers only work the *app* proposed.
+
+## 🧪 Tests — round two
+
+Still no project test layer in play (Markdown, HTML, GitHub). The acceptance criterion here is
+**visual**, so the check is `shoot.ps1` + look, per the tooling `C12` built: **five rounds, nine
+defects, seven of which were invisible in the source.** Renders inspected: glass/dark/en,
+neo/light/he, darkneo/dark/he, and a probe close-up of liquid/dark/he (the tightest case — Hebrew
+wraps wider and liquid's gradient runs hottest under the lowest rows).
+
+The one worth carrying forward: **an unbalanced `</div>` I introduced in round 3** made every caption
+escape its phone frame and the stage wrap into two rows. The **Hebrew** render exposed it — so the
+"seen in Hebrew" rule caught a *structural* defect, which is not what it was written for. Full list
+in the prototype's README.
+
+## Process slip, recorded
+
+`docs/prototypes/2026-08-13-area-success-failure/` was **written before it was added to this
+session's claim**. Nobody holds `docs/prototypes/`, so nothing collided — but the rule is
+claim-before-write, and this was the reverse. The path is now in the row and the order is on the
+board.
+
+**`#41` is not resolved:** a `wayfinder:prototype` ticket is HITL and the agent may not answer Ido's
+side of it. No resolution comment posted, `#12` untouched, no index line owed until the ticket closes.
