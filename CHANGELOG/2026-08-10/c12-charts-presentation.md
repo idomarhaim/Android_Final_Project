@@ -476,6 +476,38 @@ Still **no `feSpecularLighting`** — worth re-checking on this revision specifi
 "realistic 3D height" is exactly the request that would invite the balloon back. It did not: the
 depth here is walls and edges, not simulated roundness.
 
+## Revision 10 — three reported defects, one cause, and the fix is structural
+
+Ido, 2026-08-12, on rev 9's raised arc: the blocks **climb over each other**, they are **wider
+than the channel and cut its walls**, and each looks like **a pack of cards** rather than one
+body. Posted as
+[the rebuilt-raised comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5269554700).
+
+**They are not three problems.** Rev 9 built height as **N translated copies of one stroke**, and
+each symptom falls out of that single choice: copies offset in one direction spill over the
+neighbouring slice (the climbing) · a stroked arc has no outline, so copies drift outside the
+channel (the cutting) · N discrete strokes each keep their own edges (the cards). **Fewer or
+smaller steps would have fixed none of them**, which is why the repair is structural:
+
+1. **Each slice is a closed annular sector**, not a stroked arc — a stroke has no outline, and
+   without an outline there is no body to extrude and no face to light. Everything else depends
+   on this one change.
+2. **The side wall is one filled path**, holding the face and its offset base as two subpaths
+   under a single fill. One fill → one silhouette → **no banding**. The cure for the pack of
+   cards is not fewer cards but **no cards**.
+3. **The block is narrower than the channel and the group is clipped to the channel annulus**, so
+   a body **cannot** cross a wall — not "is tuned not to".
+4. **Two passes — every wall, then every face** — which is what stops a neighbour's wall landing
+   on a face; and the inter-slice gap widens from 2.4° to 4.2° when raised, because a solid needs
+   more clearance than a painted band.
+
+Same rebuild applied to the goal rings: one base, one face, clipped — no stack anywhere. Verified
+by counting: **zero** stacking loops remain in the file, checked rather than assumed.
+
+**What this leaves as a genuine preference rather than a bug:** the extrusion vector. If the
+height reads too shallow or too tall it is now a **single number**, and that is worth saying to
+him explicitly so the next round is a one-line change instead of another rebuild.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -526,7 +558,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 9 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 10 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

@@ -428,6 +428,15 @@ function wall(id, top, bot){
     <stop offset="0%" stop-color="${top}"/><stop offset="100%" stop-color="${bot}"/></linearGradient>`;
 }
 const pol=(cx,cy,r,d)=>[cx+r*Math.cos(d*Math.PI/180), cy+r*Math.sin(d*Math.PI/180)];
+/* a CLOSED annular sector — a stroked arc has no outline, and without an
+   outline there is no body to extrude and no face to light */
+function sector(cx,cy,ro,ri,a0,a1){
+  const [x0,y0]=pol(cx,cy,ro,a0), [x1,y1]=pol(cx,cy,ro,a1);
+  const [x2,y2]=pol(cx,cy,ri,a1), [x3,y3]=pol(cx,cy,ri,a0);
+  const big=a1-a0>180?1:0;
+  return `M ${x0} ${y0} A ${ro} ${ro} 0 ${big} 1 ${x1} ${y1} `
+       + `L ${x2} ${y2} A ${ri} ${ri} 0 ${big} 0 ${x3} ${y3} Z`;
+}
 const arc=(cx,cy,r,a0,a1)=>{
   const [x0,y0]=pol(cx,cy,r,a0),[x1,y1]=pol(cx,cy,r,a1);
   return `M ${x0} ${y0} A ${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;};
@@ -450,32 +459,51 @@ function donut(w, r, thick, style, centre, labels){
      proposed metric. */
   const DEN = EMPTY ? TARGET : TOTAL;
 
+  /* ── RAISED, rebuilt 2026-08-12 ──────────────────────────────────────
+     The first attempt faked height with a stack of translated copies. Ido saw
+     exactly what that is: a pack of cards, wider than the channel, cutting its
+     walls, and spilling over the neighbouring slice. All three follow from the
+     same mistake — N discrete copies instead of ONE body — so this builds the
+     body properly:
+       · each slice is a CLOSED annular sector, not a stroked arc, so it has a
+         real outline;
+       · the side wall is ONE filled path containing the face and its offset
+         base as two subpaths — a single fill, so there is no banding to read
+         as cards, and a single silhouette, so it is one body;
+       · the block is NARROWER than the channel and the whole group is CLIPPED
+         to the channel annulus, so nothing can cross a wall;
+       · walls are drawn for every slice first and faces second, in two passes,
+         so no neighbour's wall can ever land on top of a face.
+     Soft-UI materials only; height would contradict glass, liquid and metal. */
+  const RZ = RAISED && (style==='neo'||style==='darkneo');
+  const ch = thick*1.30;              // the channel, as cut by the groove
+  const bw = ch*0.66;                 // the block, deliberately narrower
+  const ro = r+bw/2, ri = r-bw/2;
+  const HX = 2.4, HY = 3.2;           // extrusion vector: away from the light
+  let walls='', faces='';
+
   AREAS.forEach(a=>{
-    const f=a.min/DEN, a0=acc*360-90, a1=a0+f*360-2.4, c=cc(a.k);
+    const gap = RZ ? 4.2 : 2.4;
+    const f=a.min/DEN, a0=acc*360-90, a1=a0+f*360-gap, c=cc(a.k);
     const d=arc(cx,cy,r,a0,a1);
     pts.push({a,mid:(a0+a1)/2,f}); acc+=f;
 
-    /* RAISED: the arc is not a painted band, it is a solid with HEIGHT sitting
-       in the channel. There is no z in SVG, so the height is built the way it
-       is actually built — a stack of copies stepping toward the light, dark at
-       the bottom of the wall and lighter as it climbs, then a lit top face and
-       a bright top edge. Soft-UI materials only; it would destroy glass. */
-    if(RAISED && (style==='neo'||style==='darkneo')){
-      const H=Math.max(4, thick*0.34);
-      defs+=`<linearGradient id="${id}-f${a.k}" x1="0" y1="0" x2="0.3" y2="1">
-        <stop offset="0%"   stop-color="${lite(c,.34)}"/>
-        <stop offset="55%"  stop-color="${c}"/>
-        <stop offset="100%" stop-color="${dk(c,.18)}"/></linearGradient>`;
-      for(let i=Math.round(H);i>=1;i--){
-        segs+=`<path d="${d}" stroke="${dk(c,.34+.40*(i/H))}" stroke-width="${thick}"
-          fill="none" stroke-linecap="butt" transform="translate(${-i*0.30},${i})"/>`;
-      }
-      segs+=`<path d="${d}" stroke="url(#${id}-f${a.k})" stroke-width="${thick}" fill="none"
-          stroke-linecap="butt"/>
-        <path d="${arc(cx,cy,r-thick/2+0.8,a0,a1)}" stroke="rgba(255,255,255,.42)"
-          stroke-width="1" fill="none"/>
-        <path d="${arc(cx,cy,r+thick/2-0.8,a0,a1)}" stroke="rgba(0,0,0,.35)"
-          stroke-width="1" fill="none"/>`;
+    if(RZ){
+      const face = sector(cx,cy,ro,ri,a0,a1);
+      const base = sector(cx+HX,cy+HY,ro,ri,a0,a1);
+      defs+=`<linearGradient id="${id}-f${a.k}" x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0%"   stop-color="${lite(c,.40)}"/>
+          <stop offset="52%"  stop-color="${c}"/>
+          <stop offset="100%" stop-color="${dk(c,.14)}"/></linearGradient>
+        <linearGradient id="${id}-s${a.k}" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%"   stop-color="${dk(c,.42)}"/>
+          <stop offset="100%" stop-color="${dk(c,.62)}"/></linearGradient>`;
+      /* one path, two subpaths, one fill — the union is the body, and a single
+         fill cannot produce the stepped edges that read as a stack of cards */
+      walls+=`<path d="${face} ${base}" fill="url(#${id}-s${a.k})" fill-rule="nonzero"/>`;
+      faces+=`<path d="${face}" fill="url(#${id}-f${a.k})"/>
+        <path d="${face}" fill="none" stroke="rgba(255,255,255,.30)" stroke-width=".9"
+          stroke-linejoin="round"/>`;
       return;
     }
 
@@ -526,6 +554,20 @@ function donut(w, r, thick, style, centre, labels){
     }
   });
 
+  /* Two passes, clipped to the channel. Walls for EVERY slice first, faces
+     second — that ordering is what stops a neighbour's wall from landing on
+     top of a face, which is the "blocks climbing over each other" defect. The
+     clip is the channel annulus itself, so a body physically cannot cross a
+     wall of the groove. */
+  if(RZ){
+    const co=r+ch/2, ci=r-ch/2;
+    defs+=`<clipPath id="${id}-clip"><path fill-rule="evenodd" d="
+      M ${cx-co} ${cy} a ${co} ${co} 0 1 0 ${co*2} 0 a ${co} ${co} 0 1 0 ${-co*2} 0 Z
+      M ${cx-ci} ${cy} a ${ci} ${ci} 0 1 0 ${ci*2} 0 a ${ci} ${ci} 0 1 0 ${-ci*2} 0 Z
+      "/></clipPath>`;
+    segs=`<g clip-path="url(#${id}-clip)">${walls}${faces}</g>`;
+  }
+
   /* the track, which is where the two soft-UI materials do their real work */
   let track='';
   if(style==='darkneo'){
@@ -544,12 +586,12 @@ function donut(w, r, thick, style, centre, labels){
         stroke-width=".9"/>
       <circle cx="${cx}" cy="${cy}" r="${r-ch/2}" fill="none" stroke="rgba(0,0,0,.55)"
         stroke-width=".9"/>`;
-    /* raised already carries its own wall and shadow — a second cast shadow on
-       top of it reads as two objects */
-    segs=RAISED ? `<g filter="url(#${id}-gw)">${segs}</g>`
-                : `<g filter="url(#${id}-ex)">${segs}</g>`;
-    if(RAISED) defs+=`<filter id="${id}-gw" x="-45%" y="-45%" width="190%" height="190%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".26"/>
+    /* raised already carries its own wall — a second cast shadow on top of it
+       reads as two objects, so only the glow (which is light) survives */
+    segs=RZ ? `<g filter="url(#${id}-gw)">${segs}</g>`
+            : `<g filter="url(#${id}-ex)">${segs}</g>`;
+    if(RZ) defs+=`<filter id="${id}-gw" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".22"/>
       </filter>`;
   } else if(style==='neo'){
     const ch=thick*1.26;
@@ -561,7 +603,7 @@ function donut(w, r, thick, style, centre, labels){
           flood-opacity="${dark?.8:.55}"/></filter>`;
     track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
       stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
-    if(!RAISED) segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+    if(!RZ) segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
   } else {
     const tr = style==='metal'
       ? (dark?'rgba(0,0,0,.42)':'rgba(120,135,152,.28)')
@@ -628,15 +670,24 @@ function ring(size,pct,k,txt,style){
         stroke-width=".8"/>`;
     const dpath=arc(c,c,rr,-90,-90+pct*3.6);
     if(RAISED){
-      const H=Math.max(3,tk*0.42); let st='';
-      for(let i=Math.round(H);i>=1;i--)
-        st+=`<path d="${dpath}" stroke="${dk('#1E7FD8',.20+.45*(i/H))}" stroke-width="${tk}"
-          fill="none" stroke-linecap="round" transform="translate(${-i*0.3},${i})"/>`;
-      bar=`<g filter="url(#${id}-gw)">${st}<path d="${dpath}" stroke="url(#${id}-a)"
-        stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
-      defs+=`<filter id="${id}-gw" x="-60%" y="-60%" width="220%" height="220%">
-        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".5"/>
+      /* ONE base and ONE face — two draws, never a stack. A stack of strokes is
+         what read as a pack of cards, and the fix is not fewer steps, it is no
+         steps at all. Clipped to the channel so the body cannot cross a wall. */
+      defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
+          M ${c-(rr+ch/2)} ${c} a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${(rr+ch/2)*2} 0
+            a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${-(rr+ch/2)*2} 0 Z
+          M ${c-(rr-ch/2)} ${c} a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${(rr-ch/2)*2} 0
+            a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${-(rr-ch/2)*2} 0 Z"/></clipPath>
+        <filter id="${id}-gw" x="-60%" y="-60%" width="220%" height="220%">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".42"/>
         </filter>`;
+      bar=`<g clip-path="url(#${id}-cl)">
+          <path d="${dpath}" stroke="${dk('#1E7FD8',.55)}" stroke-width="${tk}" fill="none"
+            stroke-linecap="round" transform="translate(1.8,2.4)"/>
+          <g filter="url(#${id}-gw)"><path d="${dpath}" stroke="url(#${id}-a)"
+            stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>
+          <path d="${dpath}" stroke="rgba(255,255,255,.28)" stroke-width=".9" fill="none"
+            stroke-linecap="round" transform="translate(-0.5,-0.7)"/></g>`;
     } else {
       bar=`<g filter="url(#${id}-gl)"><path d="${dpath}"
         stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
@@ -653,12 +704,21 @@ function ring(size,pct,k,txt,style){
       stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
     const dp2=arc(c,c,rr,-90,-90+pct*3.6), bw=ch*0.68;
     if(RAISED){
-      const H=Math.max(3,bw*0.42); let st='';
-      for(let i=Math.round(H);i>=1;i--)
-        st+=`<path d="${dp2}" stroke="${dk(col,.22+.42*(i/H))}" stroke-width="${bw}" fill="none"
-          stroke-linecap="round" transform="translate(${-i*0.3},${i})"/>`;
-      bar=`${st}<path d="${dp2}" stroke="${lite(col,.10)}" stroke-width="${bw}" fill="none"
-        stroke-linecap="round"/>`;
+      /* same rule: one base, one face, no stack */
+      defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
+        M ${c-(rr+ch/2)} ${c} a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${(rr+ch/2)*2} 0
+          a ${rr+ch/2} ${rr+ch/2} 0 1 0 ${-(rr+ch/2)*2} 0 Z
+        M ${c-(rr-ch/2)} ${c} a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${(rr-ch/2)*2} 0
+          a ${rr-ch/2} ${rr-ch/2} 0 1 0 ${-(rr-ch/2)*2} 0 Z"/></clipPath>
+        <linearGradient id="${id}-rf" x1="0" y1="0" x2=".35" y2="1">
+          <stop offset="0%" stop-color="${lite(col,.34)}"/>
+          <stop offset="55%" stop-color="${col}"/>
+          <stop offset="100%" stop-color="${dk(col,.14)}"/></linearGradient>`;
+      bar=`<g clip-path="url(#${id}-cl)">
+        <path d="${dp2}" stroke="${dk(col,.52)}" stroke-width="${bw}" fill="none"
+          stroke-linecap="round" transform="translate(1.6,2.2)"/>
+        <path d="${dp2}" stroke="url(#${id}-rf)" stroke-width="${bw}" fill="none"
+          stroke-linecap="round"/></g>`;
     } else {
       bar=`<g filter="url(#${id}-e)"><path d="${dp2}" stroke="${col}"
         stroke-width="${bw}" fill="none" stroke-linecap="round"/></g>`;

@@ -45,13 +45,28 @@ the circle. That is the point: a groove you can only see *under* an arc cannot b
 picture never claims something the data does not.
 
 **Raised 3D arc** (off by default, and *additional* rather than instead) gives the arc **real
-height** on top of the channel's depth. SVG has no z-axis, so the height is built the way height
-actually is: a **stack of copies stepping toward the light**, dark at the bottom of the wall and
-lighter as it climbs, then a **lit top face** and a **bright top edge** with a dark counter-edge.
-The result is a solid bar *sitting in* a groove rather than a coloured band *painted into* one.
-It applies to the two soft-UI materials only — on glass or liquid it would contradict the
-material — and it replaces their cast shadow rather than adding to it, because a stack that
-already carries its own wall plus a drop shadow reads as two objects.
+height** on top of the channel's depth. It applies to the two soft-UI materials only — on glass,
+liquid or metal it would contradict what the material *is* — and it replaces their cast shadow
+rather than adding to it, because a body that already carries its own wall plus a drop shadow
+underneath reads as two objects.
+
+### Rebuilt 2026-08-12, after three defects that share one cause
+
+The first attempt faked height with a **stack of translated copies**, and Ido named all three
+symptoms: the blocks **climbed over each other**, they were **wider than the channel and cut its
+walls**, and each one looked like **a pack of cards** rather than one body. Every symptom follows
+from the same mistake — *N discrete copies instead of one solid* — so the fix is structural
+rather than a matter of fewer or smaller steps:
+
+- **Each slice is a closed annular sector**, not a stroked arc. A stroke has no outline, and
+  without an outline there is no body to extrude and no face to light.
+- **The side wall is one filled path** holding the face and its offset base as two subpaths.
+  One fill means one silhouette and **no banding**, which is what read as cards.
+- **The block is narrower than the channel** and the whole group is **clipped to the channel
+  annulus**, so a body physically cannot cross a wall of the groove.
+- **Two passes: every wall first, every face second.** That ordering is what stops a neighbour's
+  wall from landing on top of a face, and the gap between slices widens from 2.4° to 4.2° when
+  raised, because a body needs more clearance than a band does.
 
 ## The groove, rebuilt (2026-08-11)
 
