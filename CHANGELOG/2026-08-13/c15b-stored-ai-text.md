@@ -126,9 +126,9 @@ offered rather than done, because `C11a` measured that a regenerated plan is a *
 artifact is a burst against the 30 RPM ceiling. Under this design **the switch makes zero model
 calls**. The burst does not exist.
 
-**Not resolved.** One question survives that genuinely turns on Ido — whether an open Hebrew draft,
-opened after switching to English, is regenerated as a different plan or left on an English screen.
-That is the grilling #35 still owes, and #35 stays open and claimed.
+**Not resolved at this point.** One question appeared to survive — whether an open Hebrew draft,
+opened after switching to English, is regenerated or left. Unit 3 shows that question was itself
+false.
 
 ## 🔀 Push — resolved by facts, not by judgment
 
@@ -150,3 +150,84 @@ intended for this repo ran inside `C:\Dev\JARVIS` against an **empty diff** and 
 Re-run with `git rev-parse --show-toplevel` printed first as evidence of where it ran. This is the
 same claim as the KB candidate above — *a read is a hypothesis until you can see what it read* —
 and it is now the second instance in one session.
+
+---
+
+## Unit 3 — #35 resolved, and the second hand-back was the finding
+
+Ido handed the decision back **a second time, in identical words**. Per
+`rules/question-axis-naming.md` that forbids re-asking, so the resolution was derived.
+
+### The repeat is diagnostic, and it pointed at the check I had skipped
+
+The first picker varied along *how much groundwork before you are in the room* — an axis about **my
+process**, not the artifact. Handed back. The second was deliberately rebuilt to the tell table's
+**form** remedy: the same decision re-asked as a **concrete situation** (*you wrote a plan in
+Hebrew, switched to English, opened it*) with a per-option **ASCII preview of the actual screen**,
+which is as far toward picturable as the harness allows. Handed back **in exactly the same words**.
+
+**A remedy applied without changing the tell falsifies the diagnosis, not the wording.** So the
+**fork check** was finally run over the derivation closure — the check the ownership rule requires
+*before* drafting options — and the fork collapsed.
+
+### The collapse
+
+All four options (*ask · translate · regenerate · leave*) presupposed that a stale-language draft is
+an artifact worth building machinery for. It is not:
+
+- A stale draft needs an unfinished draft **and** a language switch inside that window **and** a
+  return to that same draft — for a **per-device setting** that defaults to the device language, for
+  **an audience of one**, set approximately once ever.
+- `C9a`'s `EXPIRED` **already** governs unendorsed proposals: an agent-proposed thing the user never
+  confirmed counts for nothing, precisely so an over-eager agent cannot manufacture obligations.
+
+**So the right answer was outside the option set**, exactly as the hand-back rule predicts.
+
+### Resolution (posted in full on #35; index line on #12)
+
+- **Bullet 2 is *leave*, bullet 3 is *no stamp*, bullet 4 is *dissolved*.** The discriminator is
+  **speech vs content**; a sorter-written goal title became content the moment it appeared in Ido's
+  list, so the edit was never what made it his.
+- **Speech outliving a view keys its cache by `(date, language)`** — a switch is a miss. No field,
+  no migration, no invalidation logic.
+- **My own Unit-2 recommendation is withdrawn.** No `languageTag` on the `C8` draft, no dialog, no
+  translate step, no regeneration.
+- **The improvement: derive the language from the text, never store it.** Hebrew and English differ
+  by **script**, so one Unicode **script** test carries the *legal but never silent* line. Better
+  than a stamp rather than merely cheaper — **a stored field can lie; the script in front of you
+  cannot.** Boundary stated: a third **Latin-script** language reopens it, and that is `C15`'s scope.
+  **Spec correction posted on #35 the same session:** the resolution wrote the test as `\p{Hebrew}`,
+  which **Java and Kotlin reject** — the valid forms are `\p{IsHebrew}` (script) or
+  `Character.UnicodeScript.of(cp) == HEBREW`. Caught by the pre-commit self-review, not by a test,
+  because no test layer covers a sentence in a spec.
+- **Net schema change none, net new mechanism none, net new field none.** A language switch makes
+  **zero model calls**, reversing the ticket's own third grounded fact.
+
+### The `#12` commons — a clean run, recorded as such
+
+Body fetched → line built → **re-fetched and `cmp`-compared immediately before the write, unchanged,
+no race** → written with **`--input patch.json`** (105 KB; `-f body=` still cannot carry it) →
+verified **0 lines removed, 23 → 24 decisions, `C15b` present once**. The 185 → 188 line delta is
+2 inserted lines plus GitHub's appended trailing newline, exactly as `c6-log-progress` recorded.
+
+## 🧪 Tests
+
+**None run, and none applicable.** Markdown, GitHub issue metadata, and read-only greps of Kotlin —
+no code changed, so the project's unit, instrumented and UI layers are untouched, and `#12`'s
+standing preference is *plan, don't do*. Every write this session made **was read back**: the
+issue comments re-fetched, the close verified as `CLOSED`, the assignee verified as
+`35 OPEN idomarhaim`, and the `#12` body diffed against its pre-write copy.
+
+## 📥 KB candidates — two filed, neither drained
+
+- **Entry 1** — *a read through an aggregate endpoint is a hypothesis, exactly like a write* →
+  `C:\Dev\JARVIS\kb\dev\runtime-verification.md`. 🟢 and this session's; held only as a **cross-repo
+  write** into a repo whose board must be claimed first. Drain it **with `c2-task-type`'s entry 1**.
+- **Entry 2** — *a hand-back repeated on the same subject means the premise is false, not the form*
+  → `rules/question-axis-naming.md`. ⛔ **always-ask**, and the **eighth** parked amendment to that
+  one file. It belongs in the single reading already owed, not raced beside it.
+
+## 🔀 Session
+
+Map ticket resolved and released; two tickets remain (`#30` unclaimed, `#41` live next door). This
+session's unit is complete and carries over nothing beyond the committed record above.

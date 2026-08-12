@@ -15,8 +15,65 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+| `c11b-output-formats` | `/wayfinder 12` → resolve [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30) (the output-format spec for every AI feature — one schema per feature, wide-vs-narrow call carving, the per-feature failure contract, where validation lives, and `C15`'s per-feature Hebrew veto). **The map's terminal ticket, declined three times, taken because its own four blockers are all closed and it is now the only unclaimed ticket on the frontier.** Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c11b-output-formats.md` *(new)*, `kb-candidates/2026-08-13-c11b-output-formats.md` *(new, if any)*, GitHub issues **#30** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention — contended four ways and this session makes it worse, which is disclosed rather than glossed.** `c15b-stored-ai-text` holds a live `wayfinder:grilling`, `c19-area-success-failure` holds a live `wayfinder:prototype` across revisions, a 🎬 offer is owed from `picker-queue-merge`, and `#30` is **also** `wayfinder:grilling`. The fact pass runs first precisely so that what reaches him is small. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> ✅ **`c15b-stored-ai-text` released 2026-08-13 — [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35)
+> resolved and closed, and the ticket turned out to have almost nothing in it once the code was
+> read.** Two open tickets remain on the map: [`#30 · C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30)
+> (unclaimed, terminal by design) and [`#41 · C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)
+> (live, `c19-area-success-failure`).
+>
+> **The resolution is the agent's, on a hand-back Ido gave twice in identical words**, and the
+> repeat is the finding. The first picker varied along *how much groundwork before you are in the
+> room*; handed back. The second was rebuilt to the tell table's **form** remedy — the same decision
+> as a **concrete situation** with a per-option **ASCII preview of the screen** — and was handed back
+> **in exactly the same words**. Only then was the **fork check** run over the derivation closure,
+> and the fork collapsed. **A remedy applied without changing the tell falsifies the diagnosis, not
+> the wording**; the failure was **premise**, not form. Filed as candidate entry 2 below.
+>
+> **What it decided.** Bullet 1 was a question of **fact** and the code answered it: **no AI prose is
+> persisted server-side at all** — `Recommendation` (every coach card, encouragement, nudge and
+> `C10`'s practical line) is parsed straight into ViewModel state, **there is no `recommendations`
+> collection**, `Task` has no `description`, task titles are the **user's own words**, and the only
+> AI prose reaching Firestore today is a **goal title** from the smart sorter. **Zero language stamps
+> exist.** The discriminator is **speech vs content**, which dissolves bullet 4 outright. Speech that
+> outlives a view keys its cache by **`(date, language)`** — a switch is a miss, no invalidation
+> logic. **`C8`'s draft is where this session's own earlier recommendation was wrong and is
+> withdrawn**: it proposed a `languageTag`, and the fork check killed it. **Net schema change none,
+> net new mechanism none, net new field none**, and a language switch makes **zero model calls** —
+> reversing the ticket's own third grounded fact.
+>
+> **The `#12` commons discipline held and is worth recording as a clean run.** Body fetched, line
+> built, **re-fetched and `cmp`-compared immediately before the write — unchanged, no race** — then
+> written with **`--input patch.json`** (105 KB; `-f body=` still cannot carry it) and verified a
+> **pure insertion: 0 lines removed, 23 → 24 decisions, `C15b` present once**. The 185 → 188 line
+> delta is 2 inserted lines plus the trailing newline GitHub appends, exactly as `c6-log-progress`
+> recorded.
+>
+> **Push: nothing pushed, and the check found the question moot.** Ido's answer was conditional
+> (*push only if it harms nothing and no other session*). `0ef2049` was **already on the remote** —
+> `c5-endless-goals` pushed and disclosed it in `e967445` — and the only unpushed commit at the time
+> was **theirs, mid-release**. The `8c3868f` deletion was separately verified safe: its content is on
+> `origin/main` in JARVIS as `fa17e0f`.
+>
+> 📥 **Two candidates filed, neither drained** —
+> [`kb-candidates/2026-08-13-c15b-stored-ai-text.md`](kb-candidates/2026-08-13-c15b-stored-ai-text.md).
+> Entry 1 (*a read through an aggregate is a hypothesis, exactly like a write* →
+> `kb/dev/runtime-verification.md`) is 🟢 and this session's, held only because it is a **cross-repo
+> write into `C:\Dev\JARVIS`** needing that board, `kb/index.md` and `kb/log/` — and it should be
+> drained **with `c2-task-type`'s entry 1**, the same claim from the opposite direction. Entry 2 is
+> ⛔ **always-ask**, destination `rules/question-axis-naming.md`, and it is the **eighth** parked
+> amendment to that one file; the seventh was filed hours earlier by `c5-endless-goals` and is still
+> owed a 🎬 offer. **It belongs in that one reading, not raced beside it.**
+>
+> **No singleton taken** — no Gradle, no device, no Firebase, and nothing in `C:\Dev\JARVIS` was
+> written or claimed. **No tests and none applicable**: Markdown, GitHub metadata and read-only greps
+> of Kotlin; `#12`'s standing preference is *plan, don't do*. **Graduated nothing; ruled nothing out
+> of scope.** The stale *Unclaimed work* block further down is **still** stale and is **still**
+> deliberately left alone — four sessions have now flagged it without rewriting it.
+>
+> Recorded by `c15b-stored-ai-text` on release.
 
 > ✅ **`session-titles` released 2026-08-13** — `34dc26a` (the work) → `fb44427` (the drain) here,
 > plus `c5d1fb3` in `C:\Dev\JARVIS`. No map ticket: Ido asked how to open a session that another
