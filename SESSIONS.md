@@ -16,7 +16,76 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c6-log-progress` | `/wayfinder 12` → resolve [#22 · `C6`](https://github.com/idomarhaim/Android_Final_Project/issues/22) (which fields a user may set by hand in LOG PROGRESS, whether a hand-set value corrects history or joins it, and what happens when it contradicts what completed tasks imply). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-11/c6-log-progress.md` *(new)*, `docs/prototypes/2026-08-11-log-progress/` *(new, if the screen needs one — see §2 below)*, `kb-candidates/2026-08-11-c6-log-progress.md` *(new, if anything is flagged)*, GitHub issues **#22** and **#12** | **Ido's attention** — the third live HITL ticket on this map at once (`c12`'s prototype is at revision 3, `c8`'s grilling is 30 minutes old); see §3 below. No build, no device, no Firebase | 2026-08-11 |
+| `c2-task-type` | `/wayfinder 12` → resolve [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20) (does a task carry an AI-assigned type, what is the taxonomy, and is it a second axis or a replacement for the life areas the app already ships). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c2-task-type.md` *(new)*, `kb-candidates/2026-08-13-c2-task-type.md` *(new, if anything is flagged)*, GitHub issues **#20** and **#12**, `SESSIONS.md` (**this row only** — the orphaned banner was committed by a sibling as `7915bb7`, 60 s before this claim; see §0) | **Ido's attention** — `c6-log-progress`'s row still holds it nominally; see §3. No build, no device, no Firebase | 2026-08-13 |
 
+> 🆕 **`c2-task-type` claimed [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
+> — the ticket this board has declined six times, taken now because the objection that carried
+> every one of those refusals expired last night.** `/wayfinder 12` was invoked with the **map**,
+> not a ticket, so the pick was the agent's. Frontier **re-derived out of the dependencies API**
+> at session start, never read off the Unclaimed-work block: `/issues/12/sub_issues` enumerated
+> (**25 children — 20 closed, 5 open**), then every open child queried for `blocked_by`.
+>
+> | Ticket | Blocked by | Assignee | Verdict |
+> |---|---|---|---|
+> | `#20 · C2` | `#19` ✅ | — | **frontier — CLAIMED** |
+> | `#21 · C5` | `#13` ✅ `#18` ✅ | — | frontier — left |
+> | `#35 · C15b` | `#24` ✅ `#29` ✅ | — | frontier — left, and **newly arrived** |
+> | `#22 · C6` | `#19` ✅ `#18` ✅ | `idomarhaim` | claimed by `c6-log-progress` |
+> | `#30 · C11b` | `#19` ✅ `#24` ✅ `#29` ✅ **`#20` open** | — | **blocked — by this ticket alone** |
+>
+> **The frontier moved for the first time in three derivations, and in two directions at once.**
+> `c6-log-progress` found it frozen (*"every ticket that could unblock anything is already
+> claimed"*); since then `#24` and `#31` both closed, which **graduated `#35 · C15b` onto the
+> frontier** — nobody has recorded that — and **stripped `#30 · C11b` down to a single blocker,
+> `#20`**. `#20` is therefore the only ticket on this map whose closure unblocks anything at all.
+>
+> **Why the standing objection no longer holds.** `#20` was declined by `c6-log-progress` on the
+> ground that it *"changes the inputs of **both** live sessions"* — its own body names *"it drives
+> the time-allocation analytics that already ship"* (`#31`, then live) **and** *"it informs point
+> and time estimation"* (`#24`, then live) — with the explicit instruction that it *"should be
+> taken **after** `c12` and `c8` release, not against them."* **Both have released and both
+> tickets are closed** (`#24` at `c8b0ce3`, `#31` at `22ac7d9`). The condition the refusal itself
+> named is met, so taking `#20` now is obeying that decision rather than overturning it.
+>
+> **Three couplings, named on claiming rather than discovered later:**
+> 1. **`#12`'s *Decisions so far* is a commons and its race has fired twice for real.** Same
+>    discipline, no exceptions: **re-fetch `#12`'s body immediately before appending**, `cmp`
+>    against the copy the line was built on, write only this session's line, verify a pure
+>    insertion afterwards.
+> 2. **Two of the ticket's three candidate purposes may already be dead, and the ticket does not
+>    know it.** `C12` **retired `HorizontalBarChart` from Analytics** and killed count-weighting
+>    twice over (`C16`, `C3`), so *"it drives the time-allocation analytics that already ship"*
+>    cannot be assumed; and `C1` fixed the estimation payload at **`difficulty ∈ LIGHT · ROUTINE ·
+>    DEMANDING` + `estimatedMinutes`, with the model never emitting a point value**, so *"it
+>    informs point and time estimation"* now has to earn a **fourth** field against `C11a`'s
+>    measured cost. Read as inputs, never re-decided.
+> 3. **`C17` already made the life-area edge many-to-many** (`Goal.lifeAreaIds`,
+>    `Task.goalEdges`), which changes what *"a second axis or a replacement"* can even mean —
+>    a task already reaches several areas through its goals.
+>
+> ⚠️ **A live session is committing into this repo with no row on this board.** `b5322e2`,
+> `50200ac`, `c49f4a4` and `7915bb7` landed between 00:20 and 00:26 tonight; `7915bb7` committed
+> the `SESSIONS.md` that `b5322e2`'s own message promised but never staged — **60 seconds before
+> this claim**, and it is why this row does not adopt that banner. No row is written **for**
+> them: a row another session invents is a report, not a claim, and would understate their paths.
+> They are holding `SESSIONS.md` and `kb-candidates/`; this session touches neither beyond its
+> own row and its own new file.
+>
+> 📥 **`kb-candidates/` listed before the first unit of work — four files, and each was opened
+> rather than inherited from the previous session's summary** (`Show-CandidateQueue.ps1`, the
+> check `c12`'s entry 6 was written to force, run first and its flags checked by hand). The set
+> has **changed under the board's last description of it**: `c1-points-and-time` was drained and
+> deleted, `c9f-consent-screen-state` was retired last night on Ido's word, and `c12` and `c8`
+> filed two new ones. Now: [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md) ⚠️ and
+> [`c9e`](kb-candidates/2026-08-10-c9e-event-lifecycle.md) ⛔ (both `rules/`),
+> [`c8`](kb-candidates/2026-08-12-c8-ai-task-plans.md) ⛔ (`rules/`), and
+> [`c12`](kb-candidates/2026-08-12-c12-charts-presentation.md) — entry 1 always-ask, the rest
+> **`AUTO MODE`-eligible in themselves but held with it by their own text**. ⚠️ **`c12`'s file is
+> being rewritten by the unrowed session *while this was read*** — six `Status` lines at 00:31,
+> four at 00:33 — so no count of it is asserted here; it is theirs and is left alone. **None of
+> the four files is this session's**, so `AUTO MODE` drains nothing here: the auto-ingest gate
+> covers the candidates *the committing unit produced*, and every one belongs to another session.
+>
 > ✅ **`candidate-queue-audit` (visitor from `C:\Dev\JARVIS`) claimed and released 2026-08-12 —
 > in and out in one unit, one file, one annotation.** No singleton: no build, no device, no
 > Firebase, no GitHub issue touched. `c12` was live and committing throughout (`72fddef`,
