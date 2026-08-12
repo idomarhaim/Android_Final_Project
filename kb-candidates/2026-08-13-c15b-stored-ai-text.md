@@ -9,65 +9,24 @@ below, including what was rejected and why.
 
 ---
 
-## 1 · A read through an aggregate endpoint is a hypothesis, exactly like a write
+## 1 · ~~A read through an aggregate endpoint is a hypothesis, exactly like a write~~ — **DRAINED 2026-08-13**
 
-**Claim.** Verification duty is usually stated over *writes* — you do not know a write landed until
-you read it back. The same duty applies to **reads served by an aggregate or index endpoint**: such
-an endpoint answers from its own materialised copy of the underlying records, and that copy can lag
-the records themselves. A field read from the aggregate is a **hypothesis about the record**, not
-the record; when a decision turns on it, confirm it against the primary object.
+**Ingested** into `C:\Dev\JARVIS\kb\dev\runtime-verification.md` as **new §6**, *"Your own
+effect on the system is a hypothesis too — and so is a read that came through an aggregate"*,
+together with entry 1 of `kb-candidates/2026-08-13-c2-task-type.md` — the same claim from the
+opposite end. Index row rewritten; journalled in `kb/log/2026-08-13.md` with both source commits.
 
-**Observed twice in one session, 2026-08-13, and the second instance is the sharper one.**
+**Not drained separately, deliberately.** Each file proposed a section on the same page. A *write*
+is a hypothesis until you read it back; an *aggregate read* is one too. Apart they read as two war
+stories; together they state the boundary as **remote-state vs your belief about it**. A third case
+from `c15b` was folded in and generalises both — a scan that ran in the wrong repo against an empty
+range reported *clean*, because **a call reports its result and never its scope**.
 
-1. **A stale field.** Deriving the wayfinder frontier calls
-   `gh api repos/<owner>/<repo>/issues/12/sub_issues`, which returns each child with `number`,
-   `state`, `assignees` and `title` — everything the frontier query needs, in one call. It returned
-   **26 children, 4 open**, listing `#21 · C5` as `open`. A direct `gh issue view 21` seconds later
-   returned **CLOSED**, resolution comment timestamped `2026-08-12T22:03:10Z`, about sixty seconds
-   earlier. Trusting it would have produced a frontier containing an already-resolved ticket.
-2. **A read that ran somewhere else entirely.** Two `Bash` calls issued in one message **shared a
-   working directory**. The second had been written to scan this repo's push range for secrets; it
-   executed inside `C:\Dev\JARVIS`, where `@{u}..HEAD` was **empty**, and reported **clean**. A
-   clean secret scan over an empty diff is indistinguishable, in its output, from a clean secret
-   scan over the intended one. The fix that makes it self-verifying is to have the command **print
-   the evidence of its own scope** — `git rev-parse --show-toplevel` and `--abbrev-ref @{u}` first,
-   in the same output — so the reader can see *what was read*, not merely *what was concluded*.
+**Drained by** session `c15b-stored-ai-text`, visiting `C:\Dev\JARVIS` with a row on that board,
+on Ido's explicit *"do what you think is right, but verify it harms nothing"*. This entry was the committing session's own and `AUTO MODE`-eligible.
 
-**Why this is worth a page rather than a footnote.** Both failures are silent and shaped to be
-believed: the response is well-formed, complete, internally consistent, and every *other* field in
-it is correct. Nothing in either output says the read was wrong. The second instance generalises the
-first — the danger is not staleness specifically but that **a read reports its result and never its
-scope**, so the one fact that would falsify it is the one fact it omits.
-
-**What was rejected.** *"Just always re-query everything"* — rejected as unaffordable and as the
-wrong generalisation: the aggregate exists because N+1 direct reads are expensive, and 22 of the 26
-children here were closed and irrelevant. The rule that survives is narrower: **confirm only the
-records a decision turns on**, and **make every read print its own scope**. The asymmetry is what
-makes it cheap — a stale `closed` merely hides a ticket and the next derivation finds it, while a
-stale `open` costs a wasted claim.
-
-**Relationship to the `c2-task-type` candidate, and why they should be drained together.**
-`kb-candidates/2026-08-13-c2-task-type.md` entry 1 records *a write is a hypothesis until you read
-it back*, from a `gh api --method PATCH` that silently did nothing. This is **the same claim from
-the opposite direction**. Together they say the boundary is not read-vs-write but
-**remote-state-vs-your-belief-about-it**, and that the confirming call must be a *different* call
-from the one that formed the belief. Drained separately they would produce two half-arguments that
-each read as a war story.
-
-**Destination.** `C:\Dev\JARVIS\kb\dev\runtime-verification.md` — the same new section
-`c2-task-type` entry 1 proposes, extended, **not** a second page.
-
-**Anchors.** `SESSIONS.md` → the `c15b-stored-ai-text` claim note and release note, 2026-08-13.
-`CHANGELOG/2026-08-13/c15b-stored-ai-text.md`. Prior art:
-`kb-candidates/2026-08-13-c2-task-type.md` entry 1.
-
-**Supersedes.** Nothing. It **extends** an un-ingested candidate; it contradicts no standing KB
-claim.
-
-**Status.** 🟢 Ordinary `kb/dev/` material, **`AUTO MODE`-eligible and genuinely this session's** —
-held for one reason only: the destination is a **cross-repo write into `C:\Dev\JARVIS`**, whose own
-board must be read and claimed first, and which needs `kb/index.md` and `kb/log/` alongside. That is
-its own small unit. **Not drained here.**
+**The full text of this entry is not reproduced here** — it is the committed §6, which is the
+canonical form. This file is kept, not deleted, because entry 2 below is still parked.
 
 ---
 
