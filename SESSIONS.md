@@ -87,10 +87,28 @@ before your first write. Normative rule:
 > provenance. The claim never depended on the commit — per the wayfinder skill the **assignee is the
 > claim**, and `#30` was assigned before any work.
 >
-> 📥 **Two candidates filed, both genuinely this session's and both 🟢 ordinary `kb/dev/`** —
-> [`kb-candidates/2026-08-13-c11b-output-formats.md`](kb-candidates/2026-08-13-c11b-output-formats.md).
-> The cross-repo hold that parked `c2-task-type`'s, `c15b`'s and `c19`'s entries — *`picker-queue-merge`
-> is live in `C:\Dev\JARVIS`* — **has expired**, that session released at `912d4bc`.
+> 📥 **Two candidates filed — [`kb-candidates/2026-08-13-c11b-output-formats.md`](kb-candidates/2026-08-13-c11b-output-formats.md)
+> — and ⚠️ both Status blocks had to be rewritten after reading the destination files, because the
+> first draft of each was wrong.** Entry 1 was filed as new `🟢 kb/dev/` material; it is not —
+> `picker-queue-merge` committed the governing block into `rules/agent-topology-and-model-routing.md`
+> §5 hours earlier (`843a0b4`). What survives is **one clause that *corrects* that text**: the rule
+> puts the exposure window at *"the moment you `git add`"*, and this session's row shipped in a
+> sibling's commit **having never been `git add`-ed at all**, because their `git add` reads the
+> **working tree**. Exposure opens when the content reaches the file. That makes entry 1 ⛔
+> **always-ask three times over** — `rules/` destination, contradicts a standing claim, and that file
+> is owned by the live `liveness-from-transcript` claim.
+>
+> **Entry 2 (`🟢`, a new section beside `kb/dev/decision-map-charting.md` §8 — checked, the page
+> exists) is `AUTO MODE`-eligible and was still not drained, on a singleton rather than on its
+> merits:** every `/kb-ingest` writes `kb/index.md` and `kb/log/2026-08-13.md`, and both are
+> **uncommitted in the tree of a live JARVIS visitor** — `c15b-stored-ai-text`, mid-drain. Racing a
+> second ingest through those two files is the exact contamination entry 1 is about.
+>
+> **This also corrects a claim made earlier in this same note's first draft:** the cross-repo hold
+> that parked `c2-task-type`'s, `c15b`'s and `c19`'s entries **has not expired**. `picker-queue-merge`
+> released at `912d4bc`, but two sessions are live in `C:\Dev\JARVIS` right now. The hold moved; it
+> did not lift — and it was asserted here without reading that board, which is the same
+> read-it-don't-infer-it failure this map keeps recording.
 >
 > **No singleton taken** — no Gradle, no device, no Firebase, no emulator. **No tests and none
 > applicable**: Markdown, GitHub metadata and read-only greps of Kotlin and TypeScript; `#12`'s

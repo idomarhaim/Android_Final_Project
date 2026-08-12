@@ -230,3 +230,36 @@ destination is reached and what remains is writing `docs/PRODUCT_v0.3.md` from t
 TypeScript. `#12`'s standing preference is **plan, don't do**; no ticket on this map ships code. The
 missing `functions/` test layer is named above as a spec line for the build session — it is *this
 ticket's finding*, not a layer this session skipped.
+
+---
+
+## 📥 The `AUTO MODE` drain — attempted, and correctly refused
+
+`AUTO MODE` drains the candidates *the committing unit produced*, so both entries were taken to the
+drain. **Neither landed, and reading the destinations is what stopped them — both Status blocks as
+first written were wrong.**
+
+**Entry 1 was filed as new `kb/dev/` material and is not.** `picker-queue-merge` committed the
+governing block into `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md` §5 hours earlier
+(`843a0b4`), already carrying the one-direction-only finding and its three remedies. What survives is
+**one clause that corrects that text**: the rule locates the exposure window at *"the moment you
+`git add`"*, and this session's row shipped inside a sibling's commit **having never been
+`git add`-ed** — their `git add` reads the **working tree**. Exposure opens when the content reaches
+the file, which kills the fourth remedy (index surgery) and weakens the first (*stage as late as
+possible* measures lateness from the wrong event). That makes entry 1 ⛔ always-ask **three times
+over**: `rules/` destination, a contradiction of a standing claim, and a file under the live
+`liveness-from-transcript` claim.
+
+**Entry 2 is 🟢 and `AUTO MODE`-eligible, and was still not drained — on a singleton, not on its
+merits.** Its destination is a new section beside `kb/dev/decision-map-charting.md` §8 (checked: the
+page exists, and §8 is the near neighbour — *a ticket body never ages*; this is the sibling case
+where a previous session's *verdict* never ages). But every `/kb-ingest` writes `kb/index.md` and
+`kb/log/2026-08-13.md`, and both sit **uncommitted in the working tree of a live JARVIS visitor** —
+`c15b-stored-ai-text`, mid-drain on `runtime-verification.md`. Racing a second ingest through those
+two commons files is precisely the contamination entry 1 is about, so it waits for the next session.
+
+**And the drain corrected a claim this session had already committed to the board:** that the
+cross-repo hold parking `c2-task-type`'s, `c15b`'s and `c19`'s entries *"has expired"* because
+`picker-queue-merge` released. It has not — **two** sessions are live in `C:\Dev\JARVIS`. The hold
+moved; it did not lift. It was asserted from a release commit without reading that board, which is
+the same read-it-don't-infer-it failure this map has now recorded three nights running.
