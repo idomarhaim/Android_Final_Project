@@ -204,8 +204,42 @@ exact cross-contamination the explicit-path staging rule exists to prevent, arri
 sibling sweeping *yours*. The narrow lesson: in a repo with a live sibling, **stage and commit in
 one breath** — the window between `git add` and `git commit` is the whole exposure.
 
-**The JARVIS commit is deliberately not pushed.** `picker-queue-merge` is still live on that board
-and its commits are in the range, which is a stop-and-ask under auto-push precondition 5.
+## Push — held, escalated, verified, then sent
+
+**Both repos were held first.** Precondition 5 stops on a foreign commit whose paths sit under a
+**live** row, and at commit time GoalPilot carried four and JARVIS three. Ido's answer was
+conditional — *"if you think it is right to push then push, but first make sure it does not harm
+anything and does not harm any other session; if it harms, do not"* — so the checks were **run**,
+not asserted:
+
+| Check | GoalPilot | JARVIS |
+|---|---|---|
+| Fast-forward (`HEAD..@{u}` empty) | ✅ | ✅ |
+| Non-`.md` files in range | none | none |
+| Binaries / large blobs | none | none |
+| Secret-shaped strings | none | one false positive — the session slug `c13-byo-api-key` in a rules table |
+| Deletions / renames | **1 deletion** — `kb-candidates/2026-08-13-ux-backlog-triage.md`, `git rm` by its **own** session's `/kb-ingest` §7.5 after a full drain, and that session has **released**; the derivable-decision rule's carve-out covers it exactly | **1 rename** — `sessions/picker-queue-merge.md` → `sessions/done/`, the standard `/kickoff` completion move by its own session, which has released |
+
+**The decisive finding is the one that made it safe rather than merely permitted.** By push time
+**every commit in both ranges was already buried under a later commit** — `34dc26a` under five,
+`0ef2049` under four, `460c2eb` under one — so **no live session still had the ability to amend
+anything this publishes**; amending a non-HEAD commit needs a rebase, which is always-ask for them
+too. The push therefore removed no capability anyone still held. Two more properties held: **a push
+is commit-scoped**, so `session-titles`' five modified-but-uncommitted files across the two repos
+could not ride along; and **a push never touches a sibling's working tree or index**, so nothing
+they are mid-way through was disturbed.
+
+**Foreign commits published, named here because a reply scrolls away and this does not:**
+
+- **GoalPilot** → `71f9413..498d224`. Live rows at the time: `498d224` (release, `picker-queue-merge`
+  — *released*), `460c2eb` (claim, `c19-area-success-failure` — **live**), `b7abdc0` (claim,
+  `picker-queue-merge` — *released*), `0ef2049` (claim, `c15b-stored-ai-text` — **live**),
+  `34dc26a` (`session-titles` — **live**), `8c3868f` (`ux-backlog-triage` — *released*). The three
+  live ones are **two claim commits and one finished unit**; a claim commit is published-by-design,
+  since its whole purpose is that siblings can see it.
+- **JARVIS** → `1ba040a..e826f18`. `e826f18`, `8d4a479`, `3d0971a`, `daac210`, `90ab73d`
+  (`picker-queue-merge`) and `fa17e0f` (`ux-backlog-triage`) — **every one belongs to a session that
+  had already released**, so nothing there was even contested.
 
 ## 🧪 Tests — resolution half
 

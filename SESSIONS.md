@@ -230,9 +230,25 @@ before your first write. Normative rule:
 > `3d0971a` instead of this session's `385e87b`. Nothing was lost and nothing was rewritten (a
 > history rewrite is always-ask), but it is the exact cross-contamination the explicit-path staging
 > rule exists to prevent, arriving from the **other** direction: the rule stops *you* sweeping a
-> sibling's work in, and has nothing to say about a sibling sweeping *yours*. The JARVIS commit is
-> **not pushed** — `picker-queue-merge` is still live on that board with foreign commits in the
-> range, which is a stop-and-ask under auto-push precondition 5.
+> sibling's work in, and has nothing to say about a sibling sweeping *yours*.
+>
+> 🚀 **Both repos were pushed, and the foreign commits are named here because a reply scrolls away.**
+> The pushes were **held first** under precondition 5, escalated to Ido, and released on his
+> conditional answer — *"if you think it is right to push then push, but first make sure it does not
+> harm anything and does not harm any other session"* — so the checks were **run**: fast-forward
+> both, all-markdown, no binaries, no secrets, and the two non-additive changes each traced to the
+> session that made them (`kb-candidates/2026-08-13-ux-backlog-triage.md` `git rm`'d by its **own**
+> `/kb-ingest` after a full drain; `sessions/picker-queue-merge.md` moved to `done/` by its own
+> `/kickoff`) — **both of those sessions had released.** **The finding that made it safe rather than
+> merely permitted: every commit in both ranges was already buried under a later commit**, so no live
+> session still had the ability to amend anything published — amending a non-HEAD commit needs a
+> rebase, always-ask for them too. Uncommitted work cannot ride a push, and a push touches no
+> sibling's working tree.
+> **GoalPilot `71f9413..498d224`** — `498d224` · `460c2eb` (**live**, `c19-area-success-failure`) ·
+> `b7abdc0` · `0ef2049` (**live**, `c15b-stored-ai-text`) · `34dc26a` (**live**, `session-titles`) ·
+> `8c3868f`; the three live ones are two **claim** commits — published-by-design — and one finished
+> unit. **JARVIS `1ba040a..e826f18`** — `e826f18` · `8d4a479` · `3d0971a` · `daac210` · `90ab73d` ·
+> `fa17e0f`, **every one belonging to a session that had already released**.
 >
 > Recorded by `c5-endless-goals` on release.
 
