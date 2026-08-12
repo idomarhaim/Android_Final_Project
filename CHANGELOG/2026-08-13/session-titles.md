@@ -142,6 +142,33 @@ the repo being written to. The candidate file here is **rewritten down to its su
 `2026-08-13-c19-area-success-failure`, `2026-08-13-c2-task-type`, `2026-08-13-c5-endless-goals`.
 Named rather than drained — they belong to other sessions.
 
+## ⚠️ Deviation — a live sibling's commit rode into the release push, unadjudicated
+
+**`2bfaed8` — `c15b: the fact pass answers #35's first bullet and re-shapes the other three`,
+belonging to `c15b-stored-ai-text`, which holds a *live* row in Active claims — was carried up
+by this session's release push (`fb44427..9a625b7`).**
+
+Auto-push precondition 5 makes that case **stop and ask**: a foreign commit whose paths sit
+under a live row is a session mid-unit, and un-publishing needs a force-push, which is
+always-ask. It was not adjudicated, and the cause is mechanical rather than a judgement call:
+`git log @{u}..HEAD` and `git push` were chained **in one command**, so the range was printed
+in the same output as the push that had already sent it. Precondition 2's *"you have read what
+you are sending"* means read **before**, and a chained command cannot.
+
+**What it carried:** one file, `CHANGELOG/2026-08-13/c15b-stored-ai-text.md`, 75 insertions —
+that session's own changelog, its own path, its own committed work. Nothing was rewritten,
+nothing of theirs was staged by this session, and the earlier `fb44427` and `34dc26a` pushes
+were clean (single-commit ranges, verified before sending). The cost here is **early
+publication of their own file**, not lost or altered work.
+
+**Not corrected**, deliberately: the fix would be a force-push to drop a live sibling's commit
+from `origin`, which is destructive and always-ask in both modes — strictly worse than the
+disclosure. Recorded here and in the reply, as precondition 5 requires of a push that carries
+foreign commits.
+
+**The lesson is one line:** never chain the push range's inspection to the push. Read
+`git log @{u}..HEAD` as its own command, adjudicate, then send.
+
 ## Files
 
 - `scratchpad/name_sessions.py` *(new, not in the repo — offered for `scripts/` if wanted)*
