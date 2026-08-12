@@ -260,3 +260,31 @@ listed, not touched.
 
 `Check-KbLinks.ps1 -BundlePath C:\Dev\JARVIS\kb` — **CLEAN**, 62 pages (61 before), no broken
 links, no orphans, no wikilinks. Still the only test layer a Markdown bundle has.
+
+---
+
+## Addendum 2 — the `C13` index gap, closed rather than deferred a fourth time
+
+Ido asked whether the gap was still real and whether declining it was right. **It was still
+real** — verified live: **18 closed children of `#12`, 17 index lines**, exactly one missing,
+`C13` ([#32](https://github.com/idomarhaim/Android_Final_Project/issues/32), closed
+`15:17:19Z`).
+
+**Three sessions declined it on a misapplied rule.** The phrase they inherited — *a row
+written for another session is a report, not a claim* — is `SESSIONS.md` discipline, where a
+guessed path list misleads about **ownership**. `#12`'s *Decisions so far* is not that. The map
+is **an index, not a store**; the skill's own words are that a decision *"lives in exactly one
+place — its ticket — so the map never restates it, only gists it and links."* Gisting a
+resolution comment that is already public on a closed ticket decides nothing and claims nothing.
+
+**The cost of deferring was not neutral, which is what made a fourth deferral wrong.** The
+index is *the low-res view every session loads once*. A missing line does not mean *"look it up
+elsewhere"*; it means **`C13` is invisible** to every future session that does not happen to
+open `#32` — and the map has now had ten sessions whose first act was reading this index. The
+gap was compounding, not waiting.
+
+Written with the same commons discipline as every other line: re-fetched, `cmp`-compared,
+verified a **pure insertion — 148 → 151 lines, 17 → 18 decisions, 0 removed** — and inserted in
+**chronological position** (after `C16`, before `C9a`) rather than appended, so the index still
+reads as the route actually walked. The line says on its face that it was written by
+`c9e-event-lifecycle` and not by `c13-byo-api-key`.
