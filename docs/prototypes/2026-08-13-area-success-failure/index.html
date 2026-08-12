@@ -130,14 +130,18 @@
   .g-row .gm.keep{background:var(--keep);border-color:transparent}
   .g-row .gm.miss{background:transparent}
   .g-row .gm.late{background:transparent;border-color:var(--acc);border-style:dashed}
-  .g-row .gm.sleep{border-style:none;background:none;display:grid;place-items:center;
-                   font-size:13px;opacity:.62}
+  /* rev 5: no dormancy marker any more. A goal with nothing due is showing a
+     MISSING NEXT STEP, so its marker is an invitation (dashed ring, plus sign),
+     deliberately unlike all four outcome dots — kept, missed, still-owed,
+     nothing-due — because it is not an outcome at all. */
+  .g-row .gm.next{border-style:dashed;background:none;display:grid;place-items:center;
+                  font-size:11px;font-weight:800;opacity:.75;line-height:1}
   .g-row .gt{flex:1;font-size:13px;font-weight:650;line-height:1.35}
   /* .64 was unreadable where liquid glass's page gradient runs bright behind
      the card — the asleep rows sit lowest on the screen, which is exactly where
      that gradient is hottest. */
   .g-row .gt small{display:block;font-size:11px;font-weight:560;opacity:.76;margin-top:2px}
-  .g-row.asleep .gt{opacity:.82}
+  .g-row.quiet .gt{opacity:.86}
   .foot{font-size:11px;font-weight:600;opacity:.7;padding:0 4px;display:flex;gap:7px;
         align-items:baseline;line-height:1.45}
 
@@ -316,12 +320,13 @@
 
 <h1>C19 · What counts as a success and a failure inside a life area</h1>
 <p class="lede">
-  Prototype for <b>#41</b> on map <b>#12</b>, revision 4. Drawn against the <b>material
+  Prototype for <b>#41</b> on map <b>#12</b>, revision 5. Drawn against the <b>material
   contract</b> (surface · groove · elevation · accent), so switching material changes the surface
   and nothing else. Three proposals are embodied here rather than argued:
   <b>the pair is two numbers, never one rate</b> (<code>C3</code>);
-  <b>a goal nobody ever scheduled is <i>dormant</i>, not failed</b> (<code>C9a</code> — you cannot
-  fail to do something you never agreed to);
+  <b>a goal nobody ever scheduled has <i>no next step</i> — neither a failure nor a state of its
+  own</b> (<code>C9a</code> — you cannot fail to do something you never agreed to — read through
+  <code>C10</code>'s already-decided <i>days idle · open work · age</i>);
   and <b>nothing ages out of history — the window is a query, not decay</b> (<code>C5</code> §2).
   Outcome state never rides on hue: kept is <b>filled</b>, missed is <b>hollow</b>, still-owed is
   <b>dashed</b>. There is no red on this screen.
@@ -375,7 +380,7 @@ const T = {
     },
     f3:{
       hold:['Finish the Kotlin course','<bdi>5</bdi> weeks unbroken — the only thing here with a rhythm'],
-      slip:['Nothing was missed here','<bdi>2</bdi> of <bdi>3</bdi> goals were never scheduled, so nothing was ever owed'],
+      slip:['Nothing was missed here','<bdi>2</bdi> of <bdi>3</bdi> goals have no next step — so nothing was owed, and nothing counted against you'],
     },
     dorm:{
       hd:'Asleep, not failed',
@@ -388,19 +393,20 @@ const T = {
     list:{
       health:[['keep','Drink 2 L a day','<bdi>6</bdi> weeks unbroken'],
               ['late','Run 20 km a week','<bdi>2</bdi> days late — still owed, not missed'],
-              ['sleep','Stretch every morning','asleep · never scheduled']],
+              ['next','Stretch every morning','no next step · idle <bdi>3</bdi> months','plan']],
       career:[['keep','Update the CV','kept last week'],
               ['miss','Apply to 2 roles a week','missed <bdi>7</bdi> of <bdi>8</bdi> weeks'],
-              ['sleep','Ask for a review meeting','asleep · never scheduled']],
+              ['next','Ask for a review meeting','<bdi>1</bdi> task, never scheduled · idle <bdi>5</bdi> weeks','sched']],
       learn:[['keep','Finish the Kotlin course','<bdi>5</bdi> weeks unbroken'],
-             ['sleep','Learn to cook','created <bdi>4</bdi> months ago · never scheduled'],
-             ['sleep','Read 12 books this year','<bdi>1</bdi> of <bdi>12</bdi> · nothing scheduled since March']],
+             ['next','Learn to cook','no next step · idle <bdi>4</bdi> months','plan'],
+             ['next','Read 12 books this year','<bdi>3</bdi> tasks, none scheduled · idle <bdi>5</bdi> months','sched']],
     },
     /* "1 goals here are asleep" in rev 2 — a plural bug, and the render is the
        only place it showed, since the count is data. */
+    act:{plan:'Break it into steps', sched:'Schedule the first one'},
     foot: n => n===1
-      ? `<bdi>1</bdi> goal here is <b>asleep</b> — nothing was owed, so nothing was missed, and it is in neither number above.`
-      : `<bdi>${n}</bdi> goals here are <b>asleep</b> — nothing was ever owed, so nothing was missed. They are in neither number above.`,
+      ? `<bdi>1</bdi> goal here has <b>no next step</b> — nothing was owed, so nothing was missed, and neither number above counts it.`
+      : `<bdi>${n}</bdi> goals here have <b>no next step</b> — nothing was owed, so nothing was missed, and neither number above counts them.`,
     /* what a window IS — the ticket's headline question, answered on the screen
        rather than in the spec, because the numbers are meaningless without it */
     windowIs:'a window counts as kept when everything due in it was done',
@@ -429,7 +435,7 @@ const T = {
     },
     f3:{
       hold:['לסיים את הקורס בקוטלין','<bdi>5</bdi> שבועות רצוף — הדבר היחיד כאן עם קצב'],
-      slip:['כאן לא הוחמץ כלום','ל<bdi>2</bdi> מתוך <bdi>3</bdi> המטרות לא נקבע מועד מעולם, ולכן שום דבר לא נדרש'],
+      slip:['כאן לא הוחמץ כלום','ל<bdi>2</bdi> מתוך <bdi>3</bdi> המטרות אין צעד הבא — ולכן שום דבר לא נדרש, ושום דבר לא נספר לרעתך'],
     },
     dorm:{
       hd:'רדום, לא נכשל',
@@ -439,17 +445,18 @@ const T = {
     list:{
       health:[['keep','לשתות 2 ליטר ביום','<bdi>6</bdi> שבועות רצוף'],
               ['late','לרוץ 20 ק״מ בשבוע','באיחור של <bdi>2</bdi> ימים — עוד פתוח, לא הוחמץ'],
-              ['sleep','למתוח כל בוקר','רדום · לא נקבע לו מועד']],
+              ['next','למתוח כל בוקר','אין צעד הבא · <bdi>3</bdi> חודשים ללא תנועה','plan']],
       career:[['keep','לעדכן קורות חיים','עמדת בזה בשבוע שעבר'],
               ['miss','להגיש ל־2 משרות בשבוע','הוחמצו <bdi>7</bdi> מתוך <bdi>8</bdi> שבועות'],
-              ['sleep','לבקש שיחת משוב','רדום · לא נקבע לו מועד']],
+              ['next','לבקש שיחת משוב','משימה אחת, לא נקבע לה מועד · <bdi>5</bdi> שבועות ללא תנועה','sched']],
       learn:[['keep','לסיים את הקורס בקוטלין','<bdi>5</bdi> שבועות רצוף'],
-             ['sleep','ללמוד לבשל','נוצר לפני <bdi>4</bdi> חודשים · לא נקבע לו מועד'],
-             ['sleep','לקרוא 12 ספרים בשנה','<bdi>1</bdi> מתוך <bdi>12</bdi> · לא נקבע כלום מאז מרץ']],
+             ['next','ללמוד לבשל','אין צעד הבא · <bdi>4</bdi> חודשים ללא תנועה','plan'],
+             ['next','לקרוא 12 ספרים בשנה','<bdi>3</bdi> משימות, לאף אחת אין מועד · <bdi>5</bdi> חודשים ללא תנועה','sched']],
     },
+    act:{plan:'לפרק לצעדים', sched:'לקבוע מועד לראשונה'},
     foot: n => n===1
-      ? `מטרה אחת כאן <b>רדומה</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. היא לא נכללת במספרים שלמעלה.`
-      : `<bdi>${n}</bdi> מטרות כאן <b>רדומות</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. הן לא נכללות במספרים שלמעלה.`,
+      ? `למטרה אחת כאן <b>אין צעד הבא</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. היא לא נכללת במספרים שלמעלה.`
+      : `ל<bdi>${n}</bdi> מטרות כאן <b>אין צעד הבא</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. הן לא נכללות במספרים שלמעלה.`,
     windowIs:'מועד נחשב «עמדת בו» כשכל מה שנדרש בו נעשה',
     disc:'משימה שמשרתת שני תחומים נספרת כהצלחה <b>במלואה בשניהם</b>. רק הדקות מתחלקות — האי־סימטריה הזאת מכוונת.',
     an:{
@@ -522,26 +529,25 @@ const line = (icon, label, title, sub) => `
    a row like any other — visible, unscored, and not gathered into a panel that
    would read as a list of things you abandoned. */
 const goalList = (t, id, acts) => {
-  let firstSleep = true;
-  const rows = t.list[id].map(([st, name, detail]) => {
-    const showActs = st==='sleep' && acts && firstSleep;
-    if (st==='sleep') firstSleep = false;
-    return `
-    <div class="g-row${st==='sleep'?' asleep':''}">
-      <span class="gm ${st}">${st==='sleep'?'☾':''}</span>
+  /* the action is the step that is actually missing, never one generic verb:
+     no tasks at all      -> break it down   (C8's territory)
+     tasks but no dates   -> schedule one    (C9a's)
+     C10's theme axis already derives which, from open work + days idle. */
+  const rows = t.list[id].map(([st, name, detail, need]) => `
+    <div class="g-row${st==='next'?' quiet':''}">
+      <span class="gm ${st}">${st==='next'?'+':''}</span>
       <span class="gt">${name}<small>${detail}</small></span>
     </div>
-    ${showActs ? `<div class="acts" style="padding:0 2px 4px">
-        <div class="btn primary">${t.dorm.a1}</div>
-        <div class="btn ghost">${t.dorm.a2}</div></div>` : ''}`;
-  }).join('');
-  const asleep = t.list[id].filter(r=>r[0]==='sleep').length;
+    ${st==='next' && acts ? `<div class="acts" style="padding:0 2px 4px">
+        <div class="btn primary">${t.act[need]}</div>
+        <div class="btn ghost">${t.dorm.a2}</div></div>` : ''}`).join('');
+  const asleep = t.list[id].filter(r=>r[0]==='next').length;
   return `
   <div class="card">
     <span class="h3">${t.goals}</span>
     <div class="glist">${rows}</div>
   </div>
-  <div class="foot"><span>☾</span><span>${t.foot(asleep)}</span></div>`;
+  <div class="foot"><span>+</span><span>${t.foot(asleep)}</span></div>`;
 };
 
 /* ── frames ─────────────────────────────────────────────────────────────── */
@@ -635,7 +641,11 @@ function learnFrame(t) {
     </div>
 
     ${line('◆', t.holding, t.f3.hold[0], t.f3.hold[1])}
-    ${line('☾', t.slipped, t.f3.slip[0], t.f3.slip[1])}
+    ${/* rev 5 deleted the "nothing was missed here" line: the footer under the
+         list now says it, and better, because it says it beside the goals it is
+         about. Two statements of one fact, and the duplicate was crowding the
+         two action pairs — which differ, and are the whole point of this frame
+         — off the bottom of the screen. */''}
     ${goalList(t, 'learn', true)}
   </div>`;
 }
@@ -647,13 +657,13 @@ const CAPS = {
     '<b>Good shape.</b> Two numbers, never a rate. The run is the record — <code>C5</code> §4 — and the first line is always the good one.',
     '<b>Bad shape, and this is the frame that matters.</b> Same component, no red, and the good line is still filled: the one kept window, named.',
     '<b>The counterpart to the time donut.</b> Minutes divide; successes do not. <code>C17</code> put both on one screen deliberately.',
-    '<b>The open question, and it is yours.</b> An area where almost nothing was ever scheduled: asleep is a row in the list, unscored, with a way out in both directions.',
+    '<b>The case no closed ticket covered.</b> Nothing here was ever due, so the screen names the <b>missing step</b> — break it down, or schedule it — never a dormancy badge, and counts it in neither number.',
   ],
   he:[
     '<b>מצב טוב.</b> שני מספרים, לא אחוז. הרצף הוא הרשומה — <code>C5</code> §4 — והשורה הראשונה תמיד הטובה.',
     '<b>מצב רע, וזה הפריים שקובע.</b> אותו רכיב, בלי אדום, והשורה הטובה עדיין מלאה: השבוע האחד שעמדת בו, בשמו.',
     '<b>המשלים לדונאט הזמן.</b> הדקות מתחלקות, ההצלחות לא. <code>C17</code> שם את שניהם על מסך אחד בכוונה.',
-    '<b>השאלה הפתוחה, והיא שלך.</b> תחום שכמעט לא נקבע בו מועד לכלום: «רדום» היא שורה ברשימה, לא נספרת, ועם מוצא לשני הכיוונים.',
+    '<b>המקרה שאף כרטיס סגור לא כיסה.</b> כאן מעולם לא נדרש כלום, ולכן המסך מציג את <b>הצעד החסר</b> — לפרק, או לקבוע מועד — לא תווית של רדימה, ולא נספר באף מספר.',
   ],
 };
 

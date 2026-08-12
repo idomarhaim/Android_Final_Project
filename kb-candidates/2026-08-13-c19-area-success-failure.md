@@ -31,13 +31,22 @@
   observation, with timestamps) and the `c19-area-success-failure` claim note (the reconciliation);
   `CHANGELOG/2026-08-13/c19-area-success-failure.md`. No in-repo source file — the instrument is the
   GitHub API, not project code.
-- **Supersedes:** nothing, but it **extends** the rule stated in `c15b-stored-ai-text`'s claim note.
-  If that rule reaches the KB first as written, this entry rewrites it rather than sitting beside it
-  — which makes it always-ask under the supersedes gate at that point, though not today.
-- **Status.** 🟢 Ordinary `kb/dev/` material, **`AUTO MODE`-eligible and genuinely this session's**
-  — **held**, for one reason and it is the same reason the two sibling entries are held: the
-  destination is a cross-repo write into `C:\Dev\JARVIS`, where `picker-queue-merge` is **live**.
-  `kb/` is not in that session's claimed paths, so the ingest is legitimate; it needs a visitor row
-  on **that** board plus `kb/index.md` and `kb/log/`, which is its own small unit — and it should
-  drain **together with** `c2-task-type` entry 1 and `c15b` entry 1, since separately they would
-  write the same section three times.
+- **Supersedes:** **it now partially contradicts a committed claim, and that changed the gate.**
+  Predicted above: *"if that rule reaches the KB first as written, this entry rewrites it rather than
+  sitting beside it."* It did — `kb/dev/runtime-verification.md` **§6** was created at `385e87b`
+  /`dfb8707` from `c2-task-type`'s and `c15b`'s entries, about forty-five minutes before this was
+  written, and its **duty 2** rests on an *asymmetry of consequence*: *"a stale `closed` merely hides
+  an item and the next pass finds it, while a stale `open` costs a wasted claim."* **That is exactly
+  the half this entry disputes.** In a frontier derivation the hidden item is not merely delayed: the
+  derived set **is** the input to the decision made now — which ticket to claim, and the leverage
+  argument computed over it — and the output is silent about being short, which is §6's own
+  *"a call reports its result and never its scope"*. The correction is narrow and cheap, and it is
+  **not** the "always re-query everything" that §6 already rejects: reconcile the aggregate's
+  **totals** against one **collection-wide authoritative query**, which either balances or does not.
+- **Status.** ⛔ **Always-ask in both modes — not drained, and the reason has changed.** The
+  cross-repo hold that held it (a live `picker-queue-merge` in `C:\Dev\JARVIS`) has **expired**: that
+  board is now empty and §6 exists. But per `rules/memory-promotion.md` the second always-ask class
+  applies — *anything that supersedes or contradicts a standing KB claim* — because this rewrites
+  §6's duty 2 in place rather than appending beside it, and overwriting committed knowledge is a
+  deletion. So `AUTO MODE` does **not** cover it. It wants Ido's word and then one small unit: a
+  visitor row on the JARVIS board, the §6 edit, `kb/log/`, and a lint.

@@ -176,3 +176,62 @@ board.
 
 **`#41` is not resolved:** a `wayfinder:prototype` ticket is HITL and the agent may not answer Ido's
 side of it. No resolution comment posted, `#12` untouched, no index line owed until the ticket closes.
+
+---
+
+## Resolved — and the resolution came from the code and the closed tickets, not the picker
+
+Ido **handed the decision back**: *"לא הצלחתי להבין אותך עד הסוף ומה המשמעויות של כל אפשרות – תסביר
+לי בצורה פשוטה וסכמתית. ותבחר את הפתרון שייתן את הסטנדרט והאיכות הגבוה ביותר… ואם אתה חושב שיש איך
+לשפר את הפתרון שבחרת – אז תשפר אותו."* Per `rules/question-axis-naming.md` that forbids re-asking in
+any form, requires paying the *couldn't-understand* half once as an explanation, and requires
+**deriving**. **The decision is the agent's** and is recorded as the agent's on `#41`, on `#12`, and
+here.
+
+**The fork was false — for the third time on this map, and the tell was again Ido's inability to read
+it.** `asleep` / `invisible` / `counts as a failure` were three labels for a quantity already
+decided: `C10`'s theme axis (*"the goal's state — **days idle, open work, age, deadline**"*, values
+`STARTING … REST`). "Never scheduled" **is** its `STARTING` value, so no new state was needed — and a
+stored or even named dormancy state would be the *stored judgement derivable from per-item facts*
+that `kb/dev/enum-and-label.md` §5 forbids and `C5` §1 used to kill `GoalKind`.
+
+**The answer, outside all three options:** a goal with nothing due is **missing a step**, and the app
+names *which* step, because `open work` already separates the two cases one label flattened —
+`open work = 0` → **Break it into steps** (`C8`'s existing feature, no new AI surface);
+work-without-dates → **Schedule the first one** (`C9a`). Counted in **neither** number, stated in
+words on the screen, and `Let it go` stays as a **command, never an inference** (`C4` forbids the app
+asserting an intrinsic edge unasked). Zero fields on `Goal`, zero migration.
+
+The other three bullets: **a failure is a `MISSED` window and nothing else** (`OVERDUE` is
+still-owed, `EXPIRED` counts for nothing); **nothing ages out** — history is permanent, the view
+reports over a window you pick, and there is **no lifetime failure counter**; **one component, two
+placements**, with `C17`'s asymmetry sentence only where the two numbers meet.
+
+**Deliberately not decided, and now fog on `#12` rather than a ticket:** whether very long idleness
+may ever retire a goal by itself.
+
+## The `#12` commons race fired for a fourth time — and this time it fired twice over
+
+`#12`'s body was re-fetched immediately before the append and compared against the copy the line was
+built on at 01:10: **CHANGED**. Two siblings had appended in the interval (`c15b` closing `#35`,
+`c11b` closing `#30`), so the line was rebased onto the fresh body rather than written over theirs.
+Verified as a pure insertion: **25 → 26 decision lines, 4 → 5 fog bullets, 191 → 194 lines, 0
+pre-existing lines lost**, round-trip re-read and both new blocks confirmed present. Written with
+`--input <file.json>`, never `-f body=…`, per the ~100 KB `Argument list too long` trap.
+
+## The map is out of tickets, and its destination is still one file away
+
+**No map child is open** — `#35`, `#30` and `#41` all closed within the hour, so `#12` has three
+open non-children only in the sense that the eleven UX/defect issues were never its children.
+But `#12`'s Destination is *"a v0.3 product spec — `docs/PRODUCT_v0.3.md` — that a build session can
+implement from without reopening a decision"*, and **that file does not exist**. Brief written:
+[`sessions/product-v03-spec.md`](../../sessions/product-v03-spec.md) — `/kickoff product-v03-spec`.
+
+## 🧪 Tests — final
+
+No project test layer applies (Markdown, HTML, GitHub API). The acceptance criterion is **visual**,
+so the instrument is `shoot.ps1` + look: **six rounds, ten defects, eight of them invisible in the
+source.** Renders inspected: glass/dark/en, neo/light/he, darkneo/dark/he, liquid/dark/he close-up,
+and a darkneo/he close-up of frame 4 to confirm both *different* action pairs and the footer fit.
+One factual claim in the resolution was verified in the code before posting:
+`RecommendationRepositoryImpl.kt:175` does filter on `progressFraction < 0.34f`.

@@ -15,7 +15,75 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, `docs/prototypes/2026-08-13-area-success-failure/` *(new folder — **added to this claim after the fact; see the note**)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+| *(none — the map is out of tickets; see the release note below)* | | | | |
+
+> ✅ **`c19-area-success-failure` has released — [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)
+> is resolved and closed, and with it **map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
+> has no open ticket left at all**.** `#35`, `#30` and `#41` all closed within the hour. **26
+> decisions, 5 fog bullets, 0 open children.**
+>
+> ⚠️ **But the map is *not* done, and this is the thing worth carrying forward.** Its own Destination
+> is *"a **v0.3 product spec** — `docs/PRODUCT_v0.3.md` — that a build session can implement from
+> without reopening a decision […] The map is done when the spec is whole **and** no ticket is
+> open."* The second half is now true and **the first half does not exist**: there is no
+> `docs/PRODUCT_v0.3.md`. Brief written rather than left as advice —
+> [`sessions/product-v03-spec.md`](sessions/product-v03-spec.md), entry point
+> **`/kickoff product-v03-spec`**. That session is also where *plan, don't do* stops binding, since
+> the spec is the handoff **to** building.
+>
+> **The verdict, and it is the agent's on Ido's hand-back.** *"לא הצלחתי להבין אותך עד הסוף… תסביר
+> בצורה פשוטה וסכמתית, ותבחר את הפתרון שייתן את הסטנדרט והאיכות הגבוה ביותר… ואם אתה חושב שיש איך
+> לשפר — תשפר."* So per `rules/question-axis-naming.md`: not re-asked in any form, the
+> couldn't-understand half paid **once** as an explanation, the answer **derived**, and recorded as
+> the agent's on `#41`, on `#12` and in the changelog. **A failure is a `MISSED` window and nothing
+> else** (`OVERDUE` is late-but-owed, `EXPIRED` counts for nothing); **two numbers, never a rate**;
+> **nothing ages out** — history is permanent and the view reports over a window you pick, with **no
+> lifetime failure counter**; **one component, two placements**.
+>
+> **The fork was false for the third time on this map — and again Ido's inability to read the picker
+> was the tell.** `asleep` / `invisible` / `failure` were three labels for `C10`'s already-decided
+> theme axis (**days idle · open work · age**), whose `STARTING` value *is* "never scheduled". So
+> **there is no dormancy state, stored or even named** — that would be the stored-judgement defect
+> `kb/dev/enum-and-label.md` §5 forbids and `C5` §1 used to kill `GoalKind`. The answer, **outside all
+> three options**: the goal is **missing a step**, and `open work` already says which — **Break it
+> into steps** (`C8`'s existing feature, no new AI surface) or **Schedule the first one** (`C9a`) —
+> counted in **neither** number, with `Let it go` staying a **command, never an inference** (`C4`).
+> Zero fields on `Goal`, zero migration. Prototype rev 5, six render rounds:
+> [`docs/prototypes/2026-08-13-area-success-failure/`](docs/prototypes/2026-08-13-area-success-failure/README.md).
+>
+> **The `#12` commons race fired a fourth time, and this row is the proof the discipline is not
+> ceremony.** The body was re-fetched immediately before the append and compared against the copy the
+> line was built on at 01:10: **CHANGED** — `c15b` and `c11b` had both appended in the interval. The
+> line was rebased onto the fresh body and verified a pure insertion: **25 → 26 decisions, 4 → 5 fog,
+> 191 → 194 lines, 0 pre-existing lines lost**, round-trip re-read. Written with `--input`, never
+> `-f body=…`.
+>
+> 📥 **One candidate filed, none drained — and its hold changed reason mid-session, which is the
+> interesting part.** [`kb-candidates/2026-08-13-c19-area-success-failure.md`](kb-candidates/2026-08-13-c19-area-success-failure.md)
+> was held on the **cross-repo** ground every sibling used; that ground **expired** (the JARVIS board
+> is empty and `kb/dev/runtime-verification.md` §6 now exists, drained from `c2-task-type` and `c15b`
+> forty-five minutes ago). But §6's **duty 2** rests on *"a stale `closed` merely hides an item and
+> the next pass finds it"* — **precisely the half this candidate disputes**, because in a frontier
+> derivation the hidden item changes the decision taken *now* and the output is silent about being
+> short. So it moved from 🟢-held-on-logistics to ⛔ **always-ask in both modes**: it rewrites a
+> standing KB claim in place, which `rules/memory-promotion.md` treats as a deletion. **`AUTO MODE`
+> does not cover it**, and it is not dropped — it wants Ido's word plus one small unit.
+>
+> 🛠 **Two things recorded rather than tidied away.** (1) `docs/prototypes/2026-08-13-area-success-failure/`
+> was **written before it was added to the claim** — nobody holds `docs/prototypes/`, so nothing
+> collided, but claim-before-write is the rule and this was the reverse. (2) `ea6ff78`
+> (`c5-endless-goals`) swept the three `kb-candidates/` files `picker-queue-merge` owned into its own
+> commit — the third cross-contamination of the night, and **not adjudicated here**; it belongs to
+> those two sessions. What it shows is worth stating once: explicit-path staging prevents *you*
+> sweeping a sibling in, and can do nothing about a sibling sweeping *you*.
+>
+> **No singleton taken** — no Gradle, no build, no device or emulator, no Firebase, nothing written in
+> `C:\Dev\JARVIS`. **No tests and none applicable** (Markdown, HTML, GitHub); the acceptance criterion
+> was visual, so the instrument was `shoot.ps1` + look: **six rounds, ten defects, eight invisible in
+> the source.** **Not pushed** — foreign commits from other sessions sit in `@{u}..HEAD` and
+> precondition 5 stops there.
+>
+> Recorded by `c19-area-success-failure` on release.
 
 > ✅ **`liveness-from-transcript` (visitor from `C:\Dev\JARVIS`) claimed and released 2026-08-13
 > — in and out in one unit, this commit.** Owned `kb-candidates/2026-08-13-session-titles.md`

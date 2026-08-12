@@ -1,7 +1,7 @@
 # `C19` · Success and failure inside a life area — prototype
 
 Asset for [`C19` #41](https://github.com/idomarhaim/Android_Final_Project/issues/41) on map
-[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 4.**
+[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). **Revision 5** — the ticket is **resolved** by the comment on `#41`; this asset is what it was resolved against.
 Open `index.html`; material, theme and language switch in the bar or by query string so
 `shoot.ps1` can render any state:
 
@@ -20,19 +20,24 @@ cd docs\prototypes\tools
 | 1 | **Health** — an area in good shape | the pair is **two numbers, never a rate** (`C3`); the run is the record (`C5` §4); the block sits **above the goals it summarises**, not on a screen of its own |
 | 2 | **Career** — an area in bad shape | the tone rule survives bad news: same component, **no red**, and the good line is still filled by naming the one kept window |
 | 3 | **Analytics** | the counterpart to the time donut, with `C17`'s asymmetry **stated on the screen** rather than hidden |
-| 4 | **Learning** — almost nothing ever scheduled | the case none of the closed tickets covers: `asleep` is a **row in the goal list**, unscored, with a way out in both directions |
+| 4 | **Learning** — almost nothing ever scheduled | the case no closed ticket covered: the row names the **missing step** and offers *that* step — **break it down** where nothing has been, **schedule the first one** where work exists without dates — counted in neither number |
 
 ## The three proposals embodied here
 
 Each is derived from a closed ticket, so it is an input rather than a fresh opinion — and each is
 Ido's to overturn.
 
-1. **A never-scheduled goal is `asleep`, not failed.** `C9a` ruled that an unconfirmed occurrence
-   expires silently because *you cannot fail to do something you never agreed to*. Nothing was ever
-   owed on a goal with no repeat rule, so it cannot be missed — but it does not vanish either, or
-   the app quietly agrees you gave up. It is therefore **visible, named, and in neither number**.
-   The footer says so in words, because a state that is silently excluded from a count reads as a
-   bug.
+1. **A never-scheduled goal is missing a *step*, and the app names which step — there is no
+   dormancy state at all.** `C9a` gives the floor (*you cannot fail to do something you never agreed
+   to*), so it is in **neither** number and the footer says so in words. But revisions 1–4 drew it as
+   an `asleep` **state**, and that was wrong: `C10` had already decided a *"what moment is this
+   goal in?"* axis over **days idle · open work · age**, whose `STARTING` value *is* "never
+   scheduled". A stored or even named dormancy state duplicates it — the same objection `C5` §1 used
+   to decline `GoalKind`, generalised in `kb/dev/enum-and-label.md` §5. `open work` also separates
+   two situations one label flattens: **nothing broken down yet** wants *Break it into steps*
+   (`C8`'s feature, no new AI surface), **work without dates** wants *Schedule the first one*
+   (`C9a`'s). `Let it go` stays beside the offer as a **command, never an inference** — `C4` forbids
+   the app asserting an intrinsic edge unasked.
 2. **Nothing ages out of history; the *window* is a query.** `C5` §2 refused any value that moves
    on wall-clock time, and a "failures older than N weeks stop counting" rule is that same value
    wearing a different hat. So the record is permanent (`C5` §4 — a missed occurrence is never
@@ -50,12 +55,21 @@ Ido's to overturn.
 run: *a window counts as kept when everything due in it was done*. The numbers are meaningless
 without it, so it is not spec-only text.
 
-## The one question that is genuinely Ido's
+## The question that was put to Ido, and what came back
 
-Frame 4 is the proposal, not the answer. **Should an abandoned goal be `asleep` (as drawn),
-invisible, or a failure?** It turns on how he wants the app to treat him when he has quietly
-stopped, which is not derivable from any closed ticket — `C9a` fixes only the case where the *app*
-proposed the work.
+He was asked whether an abandoned goal should be `asleep`, invisible, or a failure, and he
+**handed the decision back** — *explain it simply, pick the highest-quality solution, improve it if
+you can*. Per `rules/question-axis-naming.md` that forbids re-asking and requires **deriving**, and
+the derivation found the **fork was false**: all three options were labels for `C10`'s existing
+theme axis. Hence the *missing step* above, which was **not one of the three**. The decision is
+**the agent's** and is recorded as such on
+[#41](https://github.com/idomarhaim/Android_Final_Project/issues/41) and on `#12`; Ido can overturn
+it.
+
+**Held back deliberately, and now fog on `#12` rather than a ticket:** whether very long idleness
+should ever retire a goal by itself. `C4` points at *never*; an area listing nine `no next step`
+rows is its own accusation, which points at *something*. It cannot be phrased sharply until the
+`STARTING` offer has been lived with.
 
 ## Material contract
 
@@ -68,12 +82,14 @@ named in words beside its dot, because dark neo collapses the categorical hues i
 
 One rule this screen adds, for the same reason: **outcome state never rides on hue either.** Kept is
 **filled**, missed is **hollow**, still-owed is **dashed with a centre pip**, nothing-due is
-**dotted**. The run therefore reads in dark neo, in greyscale, and to a colour-blind eye — and
+**dotted**, and *no next step* is a **dashed ring carrying a `+`** — deliberately unlike all four,
+because it is an invitation and not an outcome. The run therefore reads in dark neo, in greyscale,
+and to a colour-blind eye — and
 **there is no red on this screen at all**, which is a tone decision as much as an accessibility one.
 
 ## Rounds, and what the renders caught
 
-Five rounds. **Seven of the nine defects were invisible in the source** — the rule `C12` established
+Six rounds. **Eight of the ten defects were invisible in the source** — the rule `C12` established
 and `C6` reproduced, holding a third time.
 
 1. **`30 days` wrapped to two lines inside its own pill.** One `white-space:nowrap`.
@@ -95,8 +111,12 @@ and `C6` reproduced, holding a third time.
    its phone and the stage wrapped into two rows. Visible instantly in the render, invisible in a
    diff of the string it lives in — and it was the **Hebrew** render that surfaced it, which is why
    *a design is not finished until it has been seen in Hebrew* keeps earning its place.
-9. **Secondary text at `opacity:.64` was unreadable in liquid glass**, because the asleep rows sit
+9. **Secondary text at `opacity:.64` was unreadable in liquid glass**, because the quiet rows sit
    lowest on the screen and that is exactly where the page gradient runs hottest.
+10. **Rev 5 said one thing twice.** With the footer naming the missing step beside the goals it is
+    about, frame 4's *"nothing was missed here"* line was a duplicate — and it was pushing the two
+    action pairs, which **differ** and are the entire point of that frame, off the bottom of the
+    screen. Deleted; both offers now fit, verified in a Hebrew dark-neo close-up.
 
 Numbers, dates and ranges are wrapped in `<bdi>`, since bidi reorders `2 of 8` — the same finding
 `C9b` recorded, and it recurs in Compose.
