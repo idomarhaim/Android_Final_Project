@@ -66,8 +66,32 @@ property of the relationship.
 (`d9616b9`) built and that `c9e-event-lifecycle`'s two parked entries also amend — those three
 should be read together before anyone edits that file.
 
-**Status.** ⛔ **Always-ask — not drained.** Destination `rules/`, which `/kb-ingest` may not
-take in either mode. `AUTO MODE` does not apply.
+**Status.** ✅ **SHIPPED 2026-08-13** by `picker-queue-merge` into `C:\Dev\JARVIS` commit
+**`daac210`** — `rules/question-axis-naming.md` § *Amendment — the checks are searches*, item 3,
+plus the off-menu row of the loaded check-order bullet in `user-rules/my-rules.instructions.md`.
+🎬 walkthrough **offered and waived by Ido, 2026-08-13** (`waive`, the strong form); the
+declined-branch fallback ran and is recorded beside the shipped text.
+
+**This entry's central demand was honoured: it was not folded into the *framing* row.** It
+shipped as a **second cause under the existing off-menu tell**, named **enumeration**, carrying
+the discriminator this entry argued for — *did the answer move **along** the axis (granularity),
+or **add a member to the set the axis ranges over** (enumeration)?* Folding it under framing
+would have deleted precisely that, and the entry is right that framing's remedy (*more options
+on that axis would not have helped*) is **false** here: a fourth option reading *"mark it
+already done"* would have landed the answer exactly.
+
+The pre-emptive half shipped whole, including the part no grep can reach — when a question
+quantifies over a set of actions or states **the agent enumerated itself**, check that set's
+completeness before adjudicating between its members, and where the object being acted on
+**does not exist in the product yet**, assume the set is short and ask Ido to complete it.
+
+**Read together with the other two, as this entry asked.** It named `c9e-event-lifecycle`'s two
+parked entries and said *"those three should be read together before anyone edits that file"*.
+They were — all three landed in one amendment alongside a fourth from the JARVIS queue, and the
+reading they produced is that amendment's thesis: **every check that file prescribes is a
+search, and each was recorded at the width of the single instance that found it.** This entry
+supplied one of the four axes: the check was watching the *axis*, and had to watch the *set the
+axis ranges over*.
 
 ---
 

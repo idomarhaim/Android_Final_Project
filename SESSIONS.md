@@ -19,6 +19,73 @@ before your first write. Normative rule:
 | `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 
+> ✅ **`c5-endless-goals` has released — [#21 · `C5`](https://github.com/idomarhaim/Android_Final_Project/issues/21)
+> is resolved and closed, and the answer is that **the ticket had no schema change in it at all**.**
+> **The verdict: there is no third goal kind and nothing decays.** *Endless* is an intrinsic
+> objective with **no measure** (`C7` made absence the default) whose instrumental tasks carry
+> `C9a`'s repeat rule; *maintenance* is the same plus a measure reached once. **Zero new fields on
+> `Goal`, zero migration** — so `E9`'s third-goal-kind invitation, folded here by `C4`, is declined
+> (a `GoalKind` enum is a stored judgement derivable from per-item facts, `kb/dev/enum-and-label.md`
+> §5). The ticket's own headline — *"a Firestore schema change over Ido's live data, not a UI
+> addition"* — **was false by the time it was read**, because `C7`, `C9a` and `C16` all closed after
+> it was written.
+>
+> **The decision is the agent's.** Ido **handed it back** — *"I couldn't fully understand you or
+> what each option means; explain it simply and schematically, and pick the solution that gives the
+> highest standard and quality, and improve it if you can"* — so per
+> `rules/question-axis-naming.md` it was **not re-asked in any form**, the *couldn't-understand*
+> half was paid once in the reply as an explanation rather than a preamble, and the answer was
+> **derived**. It landed **outside all three offered options**, and the reason is the finding:
+> **the fork was false, and Ido's inability to read it was the tell.** All three were renderings of
+> one occurrence stream, and two of them were not rivals at all — the falling bar and the held bar
+> **measure different quantities**, which is the *effort vs outcome* pair `C3` had already decided
+> and called *the app's most valuable signal, not a bug to tidy away*. So the answer is **two
+> numbers**: attainment is history and does not decay; **upkeep** is derived from occurrences,
+> stored nowhere, and is **never a percentage**.
+>
+> **Ido's own decay proposal was overridden**, on four committed grounds rather than taste — and
+> the third is the one that would have shipped a defect: [`DashboardViewModel.kt:103`](../blob/feat/goalpilot-implementation/app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt#L103)
+> takes a plain **mean** of `progressFraction` and [`RecommendationRepositoryImpl.kt:175`](../blob/feat/goalpilot-implementation/app/src/main/java/com/idomarhaim/goalpilot/data/remote/RecommendationRepositoryImpl.kt#L175)
+> filters *needs attention* on `< 0.34f`, so a decaying bar makes the dashboard **drift downward
+> while Ido sleeps** and the app nag about work neglected in no event it recorded. `C12` drew every
+> chart it shipped yesterday against a number that only moves when he moves it.
+>
+> **The commons was quiet.** `#12`'s body was **re-fetched immediately before the write and `cmp`'d
+> byte-for-byte** against the copy the line was built on — **unchanged, no race** — then verified as
+> **22 → 23 decision lines** and **6 → 4 fog bullets**, exactly two deletions, both intended, and
+> read back identical but for the trailing blank line GitHub appends. **Filed
+> [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)** (per-life-area
+> success and failure), graduating the fog whose own text said it hung on `C5` alone, and **retired
+> the Firestore-migration fog outright** — `C5` was the last ticket it was waiting on, and its share
+> is **zero fields on `Goal`** plus one nullable `pausedUntil` on the repeat rule. **Commented on
+> nothing:** every hand-off this ticket held (`C3`'s convergence constraint, `C7`'s period, `C4`'s
+> `E9` invitation, `C9a`'s inherited shape) is on a **closed** ticket.
+>
+> 📥 **Two candidates filed, one drained cross-repo.** Entry 2 — *a value that changes with
+> wall-clock time silently rewrites every aggregate over it* — ingested as
+> `C:\Dev\JARVIS\kb\dev\derive-dont-stamp.md` **§7** (`385e87b`), **no new page**: the grep found
+> that page already owning derived-vs-stored from **this same repo and this same map** (`C9a`), and
+> what was new was the **consumer**-side argument. `Check-KbLinks` **CLEAN, 65 pages**; a visitor row
+> held on the **JARVIS** board for that unit, since the board follows the repo being written to.
+> Entry 1 is ⛔ always-ask (`rules/question-axis-naming.md`'s **fork check**) and stays parked — but
+> it did work while parked: `picker-queue-merge` read it off the board note and used it to
+> **correct a clause it had shipped two minutes earlier** (`3d0971a`), widening *"when the options
+> are actions"* to *"whenever the closure grep terminates without collapsing the fork"*. Its own
+> distinct claim is the **seventh** parked amendment to that file and is flagged in place, not
+> folded.
+>
+> ⚠️ **A defect this session caused rather than found, recorded rather than buried.** Its JARVIS
+> changelog `CHANGELOG/2026-08-13/c5-endless-goals.md` and the regenerated `CHANGELOG_README.md`
+> were **staged when `picker-queue-merge` committed**, so both rode into **their** commit
+> `3d0971a` instead of this session's `385e87b`. Nothing was lost and nothing was rewritten (a
+> history rewrite is always-ask), but it is the exact cross-contamination the explicit-path staging
+> rule exists to prevent, arriving from the **other** direction: the rule stops *you* sweeping a
+> sibling's work in, and has nothing to say about a sibling sweeping *yours*. The JARVIS commit is
+> **not pushed** — `picker-queue-merge` is still live on that board with foreign commits in the
+> range, which is a stop-and-ask under auto-push precondition 5.
+>
+> Recorded by `c5-endless-goals` on release.
+
 > 🆕 **`c15b-stored-ai-text` claimed [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35)
 > — the ticket the previous claim named *"the natural next claim"*, taken the minute its freshness
 > objection expired.** `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was

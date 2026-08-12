@@ -16,11 +16,12 @@ Written during `/wayfinder 12` (resolved
 
 ---
 
-## Standing — always-ask
+## ✅ Fully drained — the last survivor shipped 2026-08-13
 
-One survivor. It is a **behaviour change rather than knowledge**, which is the
-`rules/`-shaped exclusion `/kb-ingest` may not decide on its own. It is **not dropped**,
-and it goes into `/handoff` if a session ends before Ido rules on it.
+The one remaining entry was a **behaviour change rather than knowledge**, the `rules/`-shaped
+exclusion `/kb-ingest` may never decide on its own. It went to Ido as a 🎬 offer on 2026-08-13,
+was **waived**, and shipped — see its Status below. **This file is kept, not deleted**: the
+merge brief instructs that in writing, and deleting is always-ask regardless.
 
 ---
 
@@ -61,8 +62,32 @@ territory.
 
 **Supersedes.** Nothing. Extends the stale-claim guidance rather than replacing it.
 
-**Status.** ⚠️ **Always-ask — parked 2026-08-10, awaiting Ido.** Destination `rules/`, so
-`/kb-ingest` may not take it in either mode. Held, not dropped.
+**Status.** ✅ **SHIPPED 2026-08-13** by `picker-queue-merge` into `C:\Dev\JARVIS` commit
+**`daac210`** — new `rules/agent-topology-and-model-routing.md` **§5.3(a)**, one clause on §5's
+*release when done*, and a new 🧭 bullet in `user-rules/my-rules.instructions.md`. 🎬 walkthrough
+**offered and waived by Ido, 2026-08-13** (`waive`, the strong form); the declined-branch
+fallback ran and is recorded in §5.3.
+
+**Both halves shipped, and the entry's own ranking of them was kept.** Half (b) —
+`ls CHANGELOG/*/<label>.md`, because *the label is stable and the date is not* — is the operative
+check. Half (a) (write a row's dated paths from the day you actually work) shipped as the cheap
+upstream prevention, and §5.3 records it as **the weaker of the two, exactly as this entry
+said**: every recorded sighting is of a **reader** misjudging, not of a writer being caught, so
+(a) has no instance of its own.
+
+**It did not ship alone, and the pairing is the finding.** §5.3 also carries
+`picker-delegation-clause` entry 2 — *"commit, don't push" holds nothing in a shared tree,
+because `git push` is branch-scoped outbound as well as inbound*. Both are the same claim that
+auto-push precondition 5 already makes in **one** direction — ***an absent row is not proof the
+session is finished*** — restated in the direction it was not: a **present** row is not proof
+either, and neither is your own decision to hold. The section's heading is that unification;
+the two clauses are kept separate because one is answered by a different *command* and the other
+by a check at a different *moment*.
+
+**This entry's near-miss is what the shipped clause is anchored on.** `c16-milestone-model`
+opened by reporting `#29 (C10)` abandoned on four true observations, and was one round-trip from
+proposing Ido unassign a **live** sibling's ticket. The session was writing into the *next* day's
+folder. That is now the founding instance in §5.3's regression table.
 
 ---
 

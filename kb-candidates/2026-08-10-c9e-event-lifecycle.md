@@ -1,7 +1,9 @@
 # KB candidates — `c9e-event-lifecycle`, 2026-08-10
 
 Session: `c9e-event-lifecycle` · Ticket: [#28 · `C9e`](https://github.com/idomarhaim/Android_Final_Project/issues/28) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
-Mode: `AUTO MODE`. **Neither entry is drainable in either mode** — both target `rules/`, which is always-ask.
+Mode: `AUTO MODE`. **Neither entry was drainable in either mode** — both targeted `rules/`, which
+is always-ask. Both **shipped 2026-08-13** under Ido's 2026-08-10 waiver; see the drained record
+at the foot of this file.
 
 > **Partially drained 2026-08-10 by `c9e-event-lifecycle` itself.** Two claims that were
 > *not* in this file at flag time — they emerged while verifying `#28` **after release** —
@@ -110,24 +112,52 @@ the case it was written from.
 
 ---
 
-## Standing — always-ask
+## ✅ FULLY DRAINED 2026-08-13 by `picker-queue-merge` — kept, not deleted
 
-Both entries above survive the 2026-08-10 partial drain and **may not be ingested in either
-mode**. Do not re-reason about the destination on the next drain; the reasons are settled:
+Both entries shipped into `C:\Dev\JARVIS` commit **`daac210`**, with one clause widened in
+**`3d0971a`**. The 2026-08-10 waiver was honoured and the gate was **not re-offered**. The file
+is rewritten to a record rather than deleted: the merge brief instructs that in writing, and
+deleting is always-ask regardless. Full account:
+`C:\Dev\JARVIS\CHANGELOG\2026-08-13\picker-queue-merge.md`.
 
-| # | Why it is always-ask |
-|---|---|
-| 1 | Destination `rules/` (a behaviour change, not a KB page) **and** it rewrites a standing claim — `picker-rule-consolidation`'s Mode 6 and its consolidation table, committed `bc3b31e` on 2026-08-10, ~40 minutes before this was written. Overwriting committed knowledge is a deletion. |
-| 2 | Destination `rules/` — a second clause on **The widening**. Its *map* half was separable and **has been drained** to `kb/dev/decision-map-charting.md` §8; what remains here is only the picker-rule half. |
+**Entry 1 → `rules/question-axis-naming.md` § *Amendment — the checks are searches*, item 1.**
+Refinement (a) shipped intact: **Mode 6's test reads the option set, never the question stem**,
+because a scenario stem in front of a mechanism fork is a mechanism question with a story
+attached, and an author who satisfies the mode by rewriting the stem has changed nothing. The
+shipped clause adds what this entry implied but did not state — the situation must be *the
+thing being chosen between*, or the reader is still simulating the consequence themselves.
 
-**They should be approved and ingested together**, and read against the consolidated file
-rather than folded into it by a session that cannot approve them.
+> ⚠️ **Refinement (b) was refuted by the corpus, and the reasoning is recorded here because
+> this file is where the next reader will look.** The entry proposed moving Mode 6's step-3 gate
+> from the **batch** to the **session**. `CHANGELOG/2026-08-10/c10-quote-feed.md` records **six
+> of seven questions answered** — *"from Q5 on, the pickers were short and were answered
+> directly"* — so at session width `c10` acquires exactly the split the gate keys on, its
+> refusal does not sort by owner, and step 3 routes it to *form*: the consolidation's own
+> finding 🔴2, reintroduced verbatim. **The diagnosis was right and the remedy was wrong** —
+> batch width gives a false negative here, session width a false positive there. So the gate was
+> **replaced** rather than moved, with what the split was always proxying for: ***step 3 fires
+> when the options are already reduced and are still unanswerable***. That is legible off the
+> option text, and it routes this entry's round 2 correctly (*every action · once then remember
+> · once per launch* is reduced) while leaving `c10`'s Q3 to density (long bodies, nested
+> reasoning, ticket jargon — its own changelog names all three).
 
-**🎬 Walkthrough: offered and WAIVED by Ido, 2026-08-10.** Do not re-offer it — the gate is
-discharged, and re-asking is the noise the derivable-decision rule forbids.
+**Entry 2 → the same amendment, item 2** — the fork check's second clause: a premise can be
+killed **documentarily**, by a closed sibling decision, where no derivation closure exists to
+intersect. `C9d`'s `calendar.app.created` is the instance, and the map half stayed where it had
+already landed (`kb/dev/decision-map-charting.md` §8).
 
-**Vehicle:** `C:\Dev\JARVIS\sessions\picker-delegation-clause.md`, a brief
-`c1-points-and-time` wrote independently on *"I couldn't understand you — you choose"* being
-a **delegation**. That is the same exchange entry 1 was written from, described twice by two
-sessions that never spoke. **Read these two entries into `/kickoff picker-delegation-clause`**
-rather than ingesting them separately.
+> **Scoped wider the same day.** As first shipped it read *"when the options are **actions**
+> rather than quantities"*. `c5-endless-goals` filed a counter-case hours later whose options
+> were **quantities** — a maintenance goal's bar *falling · absent · held*: the closure grep
+> ran, widened one hop, and still framed them as rivals, and what resolved it was `C3`
+> ([#18](https://github.com/idomarhaim/Android_Final_Project/issues/18)), already closed. The
+> trigger is therefore **whenever the closure grep terminates without collapsing the fork**;
+> *actions* was a property of this instance, not the rule. Corrected in `3d0971a`.
+
+**The vehicle named here drove off empty, and that is what produced the merge.** This file said
+*"read these two entries into `/kickoff picker-delegation-clause`"*. That session ran on
+2026-08-11, amended exactly that rule file, and never saw them — the instruction lived in this
+repo's `kb-candidates/`, and the session listed only its own. `candidate-queue-audit` found it
+on 2026-08-12 and wrote `sessions/picker-queue-merge.md` instead.
+`scripts/Show-CandidateQueue.ps1` now prints both repos' queues at once, which is the mechanism
+that would have caught it.
