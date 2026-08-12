@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `picker-queue-merge` (visitor from `C:\Dev\JARVIS`, second visit) | Delete the three candidate files this session fully drained earlier tonight, under the deletion carve-out **corrected on Ido's instruction** in JARVIS `6f81490` — the trigger is now the *condition* (every entry promoted), not the *skill* (`/kb-ingest`), which structurally could never reach a `rules/`-destined entry. Every entry verified against its present destination before removal | `kb-candidates/2026-08-10-c9e-event-lifecycle.md`, `kb-candidates/2026-08-12-c8-ai-task-plans.md`, `kb-candidates/2026-08-10-c16-milestone-model.md`, this row | none — no build, no device, no Firebase, no Gradle daemon, no emulator, and **no demand on Ido's attention**: he asked for this directly and waived the 🎬 run | 2026-08-13 |
 | `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 
@@ -44,8 +43,36 @@ before your first write. Normative rule:
 >
 > Recorded by `session-titles` on release.
 
+> ✅ **`picker-queue-merge` second visit — claimed `8eaec46`, released this commit. The three
+> candidate files it drained earlier tonight are now `git rm`-ed.** Not a reversal of the first
+> visit's *"kept, not deleted"*: that was correct under the wording in force at the time, and
+> **Ido changed the wording.** He asked why fully-drained files were waiting on his approval, and
+> the answer was that the carve-out in `derivable-decision.md` and in the loaded
+> `user-rules/my-rules.instructions.md` was scoped to the **skill** (`/kb-ingest`) rather than
+> the **condition** (every entry promoted) — while `memory-promotion.md` had always been
+> condition-shaped. The two disagreed, and the narrower one governed because it is the one
+> carrying the always-ask. Corrected in JARVIS `6f81490`; 🎬 offered and **waived**, fallback run.
+>
+> **The skill-scoping excluded exactly this case.** A `rules/`-destined entry may **never** be
+> taken by `/kb-ingest` in either mode, so a file full of them is always drained by a **drafting**
+> session — which the carve-out did not name. The blind spot fired precisely where the skill
+> could not go. Measured cost: `2026-08-06-board-claim-scope.md` sat **seven days** in JARVIS
+> saying in its own text *"Fully drained. Nothing pending. `/kb-ingest` §7.5 would `git rm` a
+> fully-drained file."*
+>
+> **Every entry verified against its present destination before removal**, as Ido asked — ten
+> entries across five files, all resolving: `c9e` 1+2 → `question-axis-naming.md`, and its earlier
+> partial drain → `kb/dev/undo-replaces-confirm-only-if-recoverable.md` +
+> `kb/dev/decision-map-charting.md` §8 · `c8` 1 → `question-axis-naming.md`, 2 →
+> `kb/dev/enum-and-label.md` §5 · `c16` 1 → `kb/dev/one-metric-and-its-mechanism.md`, 2 →
+> `agent-topology-and-model-routing.md` §5.3(a). Git keeps all three files; the reasoning is in
+> `C:\Dev\JARVIS\CHANGELOG\2026-08-13\picker-queue-merge.md`.
+>
+> **No other session's candidate file touched** — the six survivors all carry pending entries and
+> belong to `c12`, `c15b`, `c19`, `c2`, `c5` and `session-titles`.
+
 > ✅ **`picker-queue-merge` (visitor from `C:\Dev\JARVIS`) claimed `b7abdc0` and released here
-> 2026-08-13.** All three owned candidate files are **rewritten down to their survivors, and every
+> 2026-08-13 — first visit.** All three owned candidate files are **rewritten down to their survivors, and every
 > survivor is now zero** — `2026-08-10-c9e-event-lifecycle.md`, `2026-08-12-c8-ai-task-plans.md`,
 > `2026-08-10-c16-milestone-model.md`. **None deleted**: the merge brief instructs that in writing
 > and deleting is always-ask regardless, so all three are kept as drained records. No singleton
