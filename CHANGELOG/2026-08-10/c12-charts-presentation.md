@@ -309,6 +309,53 @@ denser content at every size, gradients on every bar and ring.
 equivalent** — in a real widget that depth must come from a pre-rendered bitmap or `Canvas`
 drawing. Named here rather than left to be found.
 
+## Revision 5 — the material is a separate question, so it got a separate prototype
+
+Ido, 2026-08-11: rev 4's charts *"look like a balloon — dated, not pretty"*, with reference
+images and a request for **one prototype per style: glassmorphism · metal · liquid glass · neo**.
+Built as `docs/prototypes/2026-08-11-visual-styles/` and posted as
+[the four-materials comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5267476085).
+The C12 prototype is deliberately **untouched**: the material is a different question from the
+layout, and mixing them would re-open decisions already taken.
+
+**The balloon has a name, and naming it changed the fix.** It was
+**`feSpecularLighting` over a fat stroke** — a filter that simulates a lit, rounded *solid*, so a
+20 px arc inflates into a tube. That means the repair is not "less shadow" but **getting depth
+from something other than simulated roundness**, which is exactly what separates the four
+candidates:
+
+| material | depth from |
+|---|---|
+| Glassmorphism | **blur** — the canvas stays legible through the panel |
+| Metal | **anisotropic reflection** — sheen banded across the stroke, hairline edges, milled groove |
+| Liquid glass | **refraction at the edge** — bright entry rim, dim counter-rim, one specular streak |
+| Neo (soft UI) | **a shadow pair** on one flat surface — inset track, extruded arc, muted hues |
+
+There is **no `feSpecularLighting` anywhere** in the new file; checked mechanically, not assumed.
+
+**One file rather than four, and the reason is the question's shape.** Four separate files are
+four pages looked at alone; this question is **comparative**. So the content is held absolutely
+constant — same screen, same week, same harmonised palette — and only the surface varies, which
+is also what makes the **Compare all four** view possible. Two things carry across all four
+because they are decisions rather than styling: the donut's direct labels, and the palette.
+
+**Each candidate's cost is stated, because it is part of choosing:** glass needs a busy canvas or
+the frost has nothing to frost · metal is the only one that works with no background art but its
+light scheme drifts to grey · liquid glass is closest to the references and the most expensive,
+since real refraction needs `RenderEffect` (**API 31+**) and a fallback below it · neo is the
+calmest and most legible in Hebrew but its shadow-only affordances **fail contrast checks**
+without a real anchor.
+
+**And the platform caveat is named rather than found later:** `backdrop-filter`, SVG filters and
+CSS shadow pairs are **web** primitives; Compose's equivalents are `Modifier.blur`,
+`RenderEffect` and hand-drawn `Canvas` shadows — and **a widget has none of them**, so whichever
+material wins, the tiles need a version that survives being drawn into a `RemoteViews` bitmap.
+
+**Consequence flagged for Ido rather than assumed:** once he picks, the material belongs in
+`#12`'s **Standing preferences** beside the design standard, which makes it binding on
+`C6` [#22](https://github.com/idomarhaim/Android_Final_Project/issues/22) — now live under
+`c6-log-progress` — and every later screen, not only this ticket's.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -350,7 +397,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 4 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 5 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

@@ -1,0 +1,573 @@
+<!doctype html>
+<!--
+  PROTOTYPE — GoalPilot visual language, four candidates (C12, issue #31).
+  THROWAWAY. Not app code.
+  ?style=glass|metal|liquid|neo|compare · ?lang=he|en · ?theme=light|dark
+
+  Rev 1 — 2026-08-11. Ido: rev 4's charts "look like a balloon — dated, not
+  pretty". The balloon is one specific thing: feSpecularLighting over a fat
+  stroke inflates the ring into a tube. Every style here deletes that filter and
+  gets its depth from somewhere else:
+
+    glass   — depth from BLUR and translucency. Thin flat arcs over a frosted
+              panel; the background is visible through the surface.
+    metal   — depth from ANISOTROPIC REFLECTION. Banded sheen along the arc,
+              hairline edges, brushed texture. No roundness at all.
+    liquid  — depth from REFRACTION. A bright thin rim, a dark counter-rim, one
+              specular streak, and the canvas showing through the body.
+    neo     — depth from SHADOW PAIRS on one flat surface. Inset track, softly
+              extruded arc, muted hues.
+
+  Same screen, same week, same palette in all four, so the only variable is the
+  material. "compare" puts the same card in all four side by side.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — GoalPilot visual language, four candidates</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:#0b1017;color:#dbe6f2;min-height:100vh;
+    font-family:'Rubik','Heebo','Assistant','Inter','Segoe UI Variable Text','Segoe UI',
+                Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px 12px 120px;
+  }
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+  svg{display:block}
+  .banner{max-width:900px;text-align:center}
+  .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;color:#eaf2fb}
+  .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#93a7bd}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .cbtn{border:1px solid #2a3a4c;background:#131c26;color:#cfe0f0;border-radius:999px;
+        padding:6px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .cbtn:hover{border-color:#4f7fb5}
+  .cbtn.on{background:#3f7fd4;border-color:#3f7fd4;color:#fff}
+  #stage{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+       text-align:center;color:#8ba1b8;margin-top:9px}
+
+  /* ── device shell (identical in every style, so it is not a variable) ── */
+  .ph{width:392px;height:836px;border-radius:46px;border:11px solid #04080c;position:relative;
+      overflow:hidden;display:flex;flex-direction:column;
+      box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 30px 70px rgba(0,0,0,.6)}
+  .ph::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:86px;height:25px;border-radius:999px;background:#04080c;z-index:60}
+  .sb{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:6px 26px 0;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums}
+  .sc{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;position:relative;z-index:2}
+  .sc::-webkit-scrollbar{width:0}
+  .hdr{padding:2px 20px 14px;display:flex;align-items:center;gap:11px}
+  .hdr .ttl{font-size:27px;font-weight:700;letter-spacing:-.035em;line-height:1.05;flex:1}
+  .hdr .sub{font-size:12px;opacity:.7;font-weight:500;margin-top:3px}
+  .wrap{padding:0 18px 26px;display:flex;flex-direction:column;gap:15px}
+  .row{display:flex;align-items:center;gap:12px}
+  .grow{flex:1;min-width:0}
+  .nm{font-size:14px;font-weight:640;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mt{font-size:11.5px;opacity:.66;font-weight:550;margin-top:2px}
+  .h3{font-size:16px;font-weight:700;letter-spacing:-.02em}
+  .sub2{font-size:12px;opacity:.65;font-weight:500;margin-top:2px}
+  .sep{height:1px;margin:11px 0}
+  .avat{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+        font-weight:750;font-size:14px}
+  .seg{display:flex;padding:4px;gap:3px}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:640;padding:8px 4px}
+
+  /* ════════════════════════ 1 · GLASSMORPHISM ════════════════════════
+     Frosted panels over a colourful canvas. Depth comes from BLUR: the
+     background is legible through the surface, so the panel reads as a sheet
+     of glass rather than a painted rectangle. */
+  .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass .card,.st-glass .seg,.st-glass .btn,.st-glass .chip,.st-glass .avat{
+    background:rgba(255,255,255,.13);
+    backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+    border:1px solid rgba(255,255,255,.26);
+    box-shadow:0 10px 30px rgba(6,12,28,.30), inset 0 1px 0 rgba(255,255,255,.42);}
+  .st-glass[data-theme="light"] .card,.st-glass[data-theme="light"] .seg,
+  .st-glass[data-theme="light"] .btn,.st-glass[data-theme="light"] .chip,
+  .st-glass[data-theme="light"] .avat{
+    background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.85);
+    box-shadow:0 10px 26px rgba(40,60,110,.13), inset 0 1px 0 rgba(255,255,255,.9);}
+  .st-glass .card{border-radius:var(--rad);padding:17px 18px}
+  .st-glass .seg{border-radius:999px}
+  .st-glass .seg span{border-radius:999px}
+  .st-glass .seg span.on{background:rgba(255,255,255,.30)}
+  .st-glass .sep{background:rgba(255,255,255,.16)}
+  .st-glass .btn{border-radius:999px;padding:13px 20px;font-weight:660;font-size:14px;
+    text-align:center}
+  .st-glass .chip{border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:650}
+
+  /* ═══════════════════════ 2 · METAL / METALMORPHISM ═══════════════════
+     Brushed and machined. Depth comes from ANISOTROPIC REFLECTION — a sheen
+     that runs along the surface — plus hairline edges and a milled groove.
+     Deliberately the least round of the four. */
+  .st-metal{--fg:#E9EEF4;--fg2:rgba(233,238,244,.66);--rad:16px;
+    background:linear-gradient(163deg,#232A31 0%,#171C22 42%,#1B2229 70%,#262E36 100%);}
+  .st-metal[data-theme="light"]{--fg:#1A1F26;--fg2:rgba(26,31,38,.62);
+    background:linear-gradient(163deg,#E6EAEE 0%,#CFD6DD 44%,#DCE2E8 72%,#EEF2F6 100%);}
+  .st-metal .card,.st-metal .seg,.st-metal .btn,.st-metal .chip,.st-metal .avat{
+    background:
+      repeating-linear-gradient(96deg, rgba(255,255,255,.030) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg,#39424C 0%,#242C34 38%,#2B343D 58%,#1D242B 100%);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 12px 26px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.20),
+               inset 0 -1px 0 rgba(0,0,0,.55);}
+  .st-metal[data-theme="light"] .card,.st-metal[data-theme="light"] .seg,
+  .st-metal[data-theme="light"] .btn,.st-metal[data-theme="light"] .chip,
+  .st-metal[data-theme="light"] .avat{
+    background:
+      repeating-linear-gradient(96deg, rgba(0,0,0,.022) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg,#FFFFFF 0%,#DFE5EB 40%,#EFF3F7 62%,#CFD7DF 100%);
+    border-color:rgba(255,255,255,.9);
+    box-shadow:0 10px 22px rgba(30,42,60,.20), inset 0 1px 0 #FFFFFF,
+               inset 0 -1px 0 rgba(120,135,150,.45);}
+  .st-metal .card{border-radius:var(--rad);padding:17px 18px;position:relative;overflow:hidden}
+  /* the machined highlight band every metal surface carries */
+  .st-metal .card::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(102deg, transparent 28%, rgba(255,255,255,.10) 44%,
+               rgba(255,255,255,.02) 50%, transparent 62%)}
+  .st-metal .seg{border-radius:12px}
+  .st-metal .seg span{border-radius:9px}
+  .st-metal .seg span.on{background:linear-gradient(180deg,#4A5764,#333E49);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 2px 6px rgba(0,0,0,.4)}
+  .st-metal[data-theme="light"] .seg span.on{background:linear-gradient(180deg,#FFF,#D3DAE2);
+    box-shadow:inset 0 1px 0 #fff, 0 2px 5px rgba(40,55,75,.22)}
+  .st-metal .sep{background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
+  .st-metal[data-theme="light"] .sep{background:linear-gradient(90deg,transparent,rgba(40,55,75,.18),transparent)}
+  .st-metal .btn{border-radius:12px;padding:13px 20px;font-weight:660;font-size:14px;text-align:center}
+  .st-metal .chip{border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:650}
+  .st-metal .avat{border-radius:13px}
+
+  /* ═══════════════════════ 3 · LIQUID GLASS ═══════════════════════════
+     Thick refractive glass. Depth comes from REFRACTION at the edge: a bright
+     rim where light enters, a dark counter-rim where it leaves, one specular
+     streak, and the canvas bending through the body. Capsules everywhere. */
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
+    background:
+      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid .card,.st-liquid .seg,.st-liquid .btn,.st-liquid .chip,.st-liquid .avat{
+    position:relative;overflow:hidden;
+    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
+               rgba(255,255,255,.14));
+    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    box-shadow:
+      inset 1.4px 1.4px 0 rgba(255,255,255,.72),      /* light enters here  */
+      inset -1.4px -1.4px 0 rgba(255,255,255,.16),    /* and leaves here    */
+      inset 0 0 24px rgba(255,255,255,.10),
+      0 18px 40px rgba(4,10,24,.42);}
+  .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .seg,
+  .st-liquid[data-theme="light"] .btn,.st-liquid[data-theme="light"] .chip,
+  .st-liquid[data-theme="light"] .avat{
+    background:linear-gradient(150deg, rgba(255,255,255,.72), rgba(255,255,255,.34) 52%,
+               rgba(255,255,255,.55));
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
+               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
+               0 18px 36px rgba(40,60,110,.18);}
+  /* the moving specular streak that makes it read as liquid rather than frost */
+  .st-liquid .card::after,.st-liquid .btn::after{content:'';position:absolute;
+    inset:-40% -10%;pointer-events:none;
+    background:linear-gradient(108deg, transparent 34%, rgba(255,255,255,.30) 46%,
+               rgba(255,255,255,.06) 52%, transparent 64%)}
+  .st-liquid .card{border-radius:var(--rad);padding:18px 19px}
+  .st-liquid .seg{border-radius:999px}
+  .st-liquid .seg span{border-radius:999px}
+  .st-liquid .seg span.on{background:rgba(255,255,255,.34);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.8)}
+  .st-liquid .sep{background:rgba(255,255,255,.22)}
+  .st-liquid .btn{border-radius:999px;padding:14px 22px;font-weight:670;font-size:14px;
+    text-align:center}
+  .st-liquid .chip{border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:660}
+
+  /* ═════════════════════════ 4 · NEO (neumorphism) ═════════════════════
+     One flat surface, and every element is pressed out of it or into it.
+     Depth comes from a SHADOW PAIR — light from the top-left, dark from the
+     bottom-right — so nothing is translucent and nothing has an edge. */
+  .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
+    --lo:#FFFFFF;--sh:rgba(163,177,198,.62);background:#E7ECF3;}
+  .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
+    --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);background:#252A32;}
+  .st-neo .card,.st-neo .seg,.st-neo .btn,.st-neo .chip,.st-neo .avat{
+    background:var(--bgc,inherit);
+    box-shadow:7px 7px 16px var(--sh), -7px -7px 16px var(--lo);}
+  .st-neo .card{border-radius:var(--rad);padding:18px 19px;background:transparent}
+  .st-neo .seg{border-radius:999px;
+    box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
+  .st-neo .seg span{border-radius:999px}
+  .st-neo .seg span.on{box-shadow:4px 4px 9px var(--sh), -4px -4px 9px var(--lo)}
+  .st-neo .sep{background:var(--sh);opacity:.35}
+  .st-neo .btn{border-radius:999px;padding:13px 20px;font-weight:660;font-size:14px;
+    text-align:center}
+  .st-neo .chip{border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:650}
+  .st-neo .avat{border-radius:50%}
+  .st-neo .inset{box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
+
+  .st{color:var(--fg)}
+  .st .mt,.st .sub,.st .sub2{color:var(--fg2)}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <h1>PROTOTYPE — <span id="ttl">…</span></h1>
+  <p id="sub">…</p>
+</div>
+
+<div class="bar">
+  <button class="cbtn" data-s="glass">Glassmorphism</button>
+  <button class="cbtn" data-s="metal">Metal</button>
+  <button class="cbtn" data-s="liquid">Liquid glass</button>
+  <button class="cbtn" data-s="neo">Neo (soft UI)</button>
+  <button class="cbtn" data-s="compare">Compare all four</button>
+</div>
+<div class="bar">
+  <button class="cbtn" id="lang">עברית</button>
+  <button class="cbtn" id="theme">Light</button>
+</div>
+
+<div id="stage"></div>
+
+<script>
+/* the harmonised category set from C12 rev 4 — held constant so the only
+   variable between these four screens is the MATERIAL, not the colour */
+const CAT={
+  LEARNING:{he:'לימודים',      en:'Studies',       l:'#6E56D8', d:'#B6A6F5'},
+  HEALTH:  {he:'בריאות',       en:'Health',        l:'#D8564C', d:'#F5A196'},
+  CAREER:  {he:'קריירה',       en:'Career',        l:'#2E7BC4', d:'#95C4EE'},
+  RELATION:{he:'מערכות יחסים', en:'Relationships', l:'#C24586', d:'#EEA0C6'},
+  FINANCE: {he:'כספים',        en:'Finance',       l:'#1D8C86', d:'#7FCFC7'},
+  OTHER:   {he:'ללא שיוך',     en:'Unfiled',       l:'#7C8798', d:'#AEB9C7'},
+};
+const AREAS=[{k:'LEARNING',min:420},{k:'HEALTH',min:260},{k:'CAREER',min:210},
+             {k:'RELATION',min:120},{k:'FINANCE',min:60},{k:'OTHER',min:40}];
+const TOTAL=AREAS.reduce((s,a)=>s+a.min,0);
+const GOALS=[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',pct:80,
+              me:'3.2 / 4 km',meHe:'3.2 / 4 ק״מ'},
+             {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
+              me:'3 / 4 weeks',meHe:'3 / 4 שבועות'}];
+
+let S='glass', L='en', THEME='dark', UID=0;
+const T=o=>L==='he'?(o.he??o.en):o.en;
+const t=(en,he)=>L==='he'?he:en;
+const ltr=s=>`<span class="ltr">${s}</span>`;
+/* neo needs muted, low-chroma hues or the shadows fight the fill; the others
+   take the palette straight */
+const cc=k=>{
+  const base = THEME==='dark' ? CAT[k].d : CAT[k].l;
+  return S==='neo' ? mix(base, THEME==='dark'?[37,42,50]:[231,236,243], .30) : base;
+};
+const hx=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));
+const rgbs=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const mix=(h,to,a)=>rgbs(hx(h).map((v,i)=>v+(to[i]-v)*a));
+const lite=(h,a=.35)=>mix(h,[255,255,255],a);
+const dk=(h,a=.30)=>mix(h,[8,14,24],a);
+const pol=(cx,cy,r,d)=>[cx+r*Math.cos(d*Math.PI/180), cy+r*Math.sin(d*Math.PI/180)];
+const arc=(cx,cy,r,a0,a1)=>{
+  const [x0,y0]=pol(cx,cy,r,a0),[x1,y1]=pol(cx,cy,r,a1);
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The donut, once per material. Same geometry, same data, same labels —
+   only the surface treatment differs. NO feSpecularLighting anywhere: that
+   filter over a fat stroke is what inflated rev 4's ring into a balloon.
+   ═══════════════════════════════════════════════════════════════════════ */
+function donut(w, r, thick, style, centre, labels){
+  const id='u'+(++UID), cx=w/2, cy=(labels?r+thick/2+22:r+thick/2);
+  const h=labels? cy+r+thick/2+24 : r*2+thick;
+  const dark=THEME==='dark';
+  let defs='', segs='', over='', acc=0;
+  const pts=[];
+
+  AREAS.forEach(a=>{
+    const f=a.min/TOTAL, a0=acc*360-90, a1=a0+f*360-2.4, c=cc(a.k);
+    const d=arc(cx,cy,r,a0,a1);
+    pts.push({a,mid:(a0+a1)/2,f}); acc+=f;
+
+    if(style==='glass'){
+      /* flat, slightly transparent, with a coloured bloom instead of a bevel */
+      defs+=`<filter id="${id}-b${a.k}" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="${c}" flood-opacity=".55"/></filter>`;
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt" opacity=".92" filter="url(#${id}-b${a.k})"/>`;
+      over+=`<path d="${d}" stroke="rgba(255,255,255,.34)" stroke-width="1.2" fill="none"
+        transform="translate(0,-${thick/2-0.6})" opacity=".5"/>`;
+    }
+
+    if(style==='metal'){
+      /* anisotropic sheen: hard light/dark banding ACROSS the stroke, which is
+         what makes brushed metal read as metal rather than as a gradient */
+      defs+=`<linearGradient id="${id}-g${a.k}" x1="0" y1="0" x2="0" y2="1"
+        gradientUnits="objectBoundingBox">
+        <stop offset="0%"   stop-color="${dk(c,.42)}"/>
+        <stop offset="14%"  stop-color="${lite(c,.52)}"/>
+        <stop offset="30%"  stop-color="${c}"/>
+        <stop offset="46%"  stop-color="${lite(c,.72)}"/>
+        <stop offset="58%"  stop-color="${c}"/>
+        <stop offset="82%"  stop-color="${dk(c,.34)}"/>
+        <stop offset="100%" stop-color="${lite(c,.30)}"/></linearGradient>`;
+      segs+=`<path d="${d}" stroke="url(#${id}-g${a.k})" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt"/>`;
+      over+=`<path d="${d}" stroke="rgba(255,255,255,.5)" stroke-width=".9" fill="none"
+        transform="translate(0,-${thick/2-0.45})"/>
+        <path d="${d}" stroke="rgba(0,0,0,.42)" stroke-width=".9" fill="none"
+        transform="translate(0,${thick/2-0.45})"/>`;
+    }
+
+    if(style==='liquid'){
+      /* refraction: translucent body, bright inner rim, dark outer rim */
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt" opacity="${dark?.62:.55}"/>`;
+      over+=`<path d="${arc(cx,cy,r-thick/2+1.1,a0,a1)}" stroke="rgba(255,255,255,${dark?.78:.9})"
+          stroke-width="1.5" fill="none"/>
+        <path d="${arc(cx,cy,r+thick/2-1.1,a0,a1)}" stroke="rgba(255,255,255,${dark?.22:.45})"
+          stroke-width="1.1" fill="none"/>`;
+    }
+
+    if(style==='neo'){
+      /* one soft extrusion, no rim, no gloss */
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt"/>`;
+    }
+  });
+
+  /* the track, which is where neo does its real work */
+  let track='';
+  if(style==='neo'){
+    defs+=`<filter id="${id}-in" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="2.5" dy="2.5" stdDeviation="3" flood-color="${dark?'#0b0e13':'#A3B1C6'}"
+        flood-opacity="${dark?.85:.75}"/>
+      <feDropShadow dx="-2.5" dy="-2.5" stdDeviation="3"
+        flood-color="${dark?'#3a4150':'#FFFFFF'}" flood-opacity="${dark?.55:.95}"/></filter>
+     <filter id="${id}-ex" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="3" dy="3" stdDeviation="3.4" flood-color="${dark?'#0b0e13':'#A3B1C6'}"
+        flood-opacity="${dark?.8:.62}"/>
+      <feDropShadow dx="-2.5" dy="-2.5" stdDeviation="3"
+        flood-color="${dark?'#3a4150':'#FFFFFF'}" flood-opacity="${dark?.45:.85}"/></filter>`;
+    track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${dark?'#252A32':'#E7ECF3'}" stroke-width="${thick}"/></g>`;
+    segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+  } else {
+    const tr = style==='metal'
+      ? (dark?'rgba(0,0,0,.42)':'rgba(120,135,152,.28)')
+      : 'rgba(255,255,255,.14)';
+    track=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${tr}"
+      stroke-width="${thick}"/>`;
+    if(style==='metal') track+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="rgba(255,255,255,.10)" stroke-width="${thick}" transform="translate(0,-1)"/>`;
+  }
+
+  /* one specular streak for liquid, drawn as a short arc rather than a filter */
+  if(style==='liquid'){
+    over+=`<path d="${arc(cx,cy,r-thick*0.22,-152,-104)}" stroke="rgba(255,255,255,.85)"
+      stroke-width="${thick*0.26}" fill="none" stroke-linecap="round" opacity=".9"/>`;
+  }
+
+  /* direct labels — kept from rev 4, they are a decision, not a style */
+  let lab='';
+  if(labels){
+    const R=r+thick/2, rows=pts.map(p=>{
+      const [x,y]=pol(cx,cy,R+4,p.mid);
+      return {p, s:Math.cos(p.mid*Math.PI/180)>=0?1:-1, x, y, ty:y};});
+    [1,-1].forEach(sg=>{
+      const g=rows.filter(o=>o.s===sg).sort((a,b)=>a.ty-b.ty);
+      for(let i=1;i<g.length;i++) if(g[i].ty-g[i-1].ty<16) g[i].ty=g[i-1].ty+16;
+      const ov=g.length?g[g.length-1].ty-(h-14):0;
+      if(ov>0) g.forEach(o=>o.ty-=ov);});
+    rows.forEach(o=>{
+      const ex=cx+o.s*(R+13), lx=cx+o.s*(R+19), c=cc(o.p.a.k);
+      lab+=`<path d="M ${o.x} ${o.y} L ${ex} ${o.ty} L ${lx} ${o.ty}" fill="none" stroke="${c}"
+          stroke-width="1.2" opacity=".8" stroke-linecap="round"/>
+        <circle cx="${lx}" cy="${o.ty}" r="2.3" fill="${c}"/>
+        <text x="${lx+o.s*7}" y="${o.ty-1}" text-anchor="${o.s>0?'start':'end'}" font-size="11"
+          font-weight="640" fill="var(--fg)">${T(CAT[o.p.a.k])}</text>
+        <text x="${lx+o.s*7}" y="${o.ty+11}" text-anchor="${o.s>0?'start':'end'}" font-size="9.5"
+          font-weight="600" fill="var(--fg2)">${Math.round(o.p.f*100)}%</text>`;});
+  }
+
+  return `<div style="position:relative;width:${w}px;height:${h}px;flex:none">
+    <svg width="${w}" height="${h}"><defs>${defs}</defs>${track}${segs}${over}${lab}</svg>
+    ${centre?`<div style="position:absolute;left:0;width:${w}px;top:${cy-26}px;height:52px;
+      display:grid;place-items:center;text-align:center">${centre}</div>`:''}</div>`;
+}
+
+function ring(size,pct,k,txt,style){
+  const id='v'+(++UID), th=Math.max(5,size*.13), r=(size-th)/2, c=size/2, col=cc(k);
+  const dark=THEME==='dark';
+  let defs='',trk='',bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="${col}"
+    stroke-width="${th}" fill="none" stroke-linecap="round"/>`, ov='';
+  if(style==='neo'){
+    defs=`<filter id="${id}-i" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2.2" flood-color="${dark?'#0b0e13':'#A3B1C6'}" flood-opacity=".8"/>
+      <feDropShadow dx="-2" dy="-2" stdDeviation="2" flood-color="${dark?'#3a4150':'#fff'}" flood-opacity=".8"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${r}" fill="none"
+      stroke="${dark?'#252A32':'#E7ECF3'}" stroke-width="${th}"/></g>`;
+    bar=`<g filter="url(#${id}-i)">${bar}</g>`;
+  } else if(style==='metal'){
+    defs=`<linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${dk(col,.4)}"/><stop offset="22%" stop-color="${lite(col,.6)}"/>
+      <stop offset="50%" stop-color="${col}"/><stop offset="78%" stop-color="${dk(col,.34)}"/>
+      <stop offset="100%" stop-color="${lite(col,.3)}"/></linearGradient>`;
+    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none"
+      stroke="${dark?'rgba(0,0,0,.45)':'rgba(120,135,152,.3)'}" stroke-width="${th}"/>`;
+    bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="url(#${id}-g)" stroke-width="${th}"
+      fill="none" stroke-linecap="butt"/>`;
+  } else if(style==='liquid'){
+    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.16)"
+      stroke-width="${th}"/>`;
+    bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="${col}" stroke-width="${th}" fill="none"
+      stroke-linecap="round" opacity="${dark?.62:.55}"/>`;
+    ov=`<path d="${arc(c,c,r-th/2+.9,-90,-90+pct*3.6)}" stroke="rgba(255,255,255,.8)"
+      stroke-width="1.2" fill="none"/>`;
+  } else {
+    defs=`<filter id="${id}-b" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3.4" flood-color="${col}" flood-opacity=".6"/></filter>`;
+    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.16)"
+      stroke-width="${th}"/>`;
+    bar=`<g filter="url(#${id}-b)">${bar}</g>`;
+  }
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
+    <svg width="${size}" height="${size}"><defs>${defs}</defs>${trk}${bar}${ov}</svg>
+    ${txt!==undefined?`<div style="position:absolute;inset:0;display:grid;place-items:center;
+      font-size:${Math.round(size*.3)}px;font-weight:730;letter-spacing:-.03em">${txt}</div>`:''}
+  </div>`;
+}
+
+/* ═══ one screen, rendered in whichever material is selected ═══ */
+function screen(style){
+  const heroCol = style==='metal' ? cc('CAREER') : cc('LEARNING');
+  const goals=GOALS.map((g,i)=>`
+    ${i?'<div class="sep"></div>':''}
+    <div class="row">${ring(46,g.pct,g.k,`<span style="font-size:13px">${ltr(g.pct)}</span>`,style)}
+      <div class="grow"><div class="nm">${T(g)}</div>
+      <div class="mt">${ltr(L==='he'?g.meHe:g.me)}</div></div></div>`).join('');
+
+  return `<div class="sb"><span>${ltr('9:41')}</span><span style="font-size:11px">${ltr('▮▮▮ ⌁ 87%')}</span></div>
+  <div class="sc">
+    <div class="hdr"><div class="grow"><div class="sub">${t('Tuesday, 11 August','יום שלישי, 11 באוגוסט')}</div>
+      <div class="ttl">${t('Good evening','ערב טוב')}</div></div>
+      <div class="avat">${t('I','ע')}</div></div>
+    <div class="wrap">
+
+      <div class="card" style="display:flex;align-items:center;gap:13px">
+        <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;
+          border-radius:${style==='metal'?'13px':'50%'};font-size:19px;font-weight:750;
+          color:${style==='neo'?'var(--fg)':'#fff'};
+          background:${style==='neo'?'transparent':`linear-gradient(150deg,${lite(heroCol,.25)},${dk(heroCol,.2)})`};
+          ${style==='neo'?'box-shadow:4px 4px 9px var(--sh),-4px -4px 9px var(--lo)':''}">4</div>
+        <div class="grow"><div class="nm">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
+          <div class="mt">${t('2 missed · 1 to confirm','2 הוחמצו · 1 לאישור')}</div></div>
+        <div style="font-size:20px;opacity:.6">${L==='he'?'‹':'›'}</div></div>
+
+      <div class="seg"><span class="">${t('Day','יום')}</span><span class="on">${t('Week','שבוע')}</span>
+        <span>${t('Month','חודש')}</span><span>${t('Year','שנה')}</span></div>
+
+      <div class="card">
+        <div class="row" style="align-items:baseline;margin-bottom:4px">
+          <div class="grow"><div class="h3">${t('This week','השבוע')}</div>
+          <div class="sub2">${t('Where the time went','לאן הלך הזמן')}</div></div></div>
+        ${donut(310, 58, style==='metal'?22:20, style,
+          `<div><div style="font-size:20px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
+           <div style="font-size:9.5px;opacity:.65;font-weight:600">${t('tracked','נמדדו')}</div></div>`, true)}
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:11px"><div class="grow">
+          <div class="h3">${t('Your goals','המטרות שלך')}</div></div>
+          <span class="chip">${t('All 7','כל ה־7')}</span></div>
+        ${goals}
+      </div>
+
+      <div class="btn" style="${style==='neo'?'':`background:linear-gradient(150deg,${lite(heroCol,.2)},${dk(heroCol,.25)});color:#fff;border:0`}">
+        ${t('Plan tomorrow','לתכנן את מחר')}</div>
+
+    </div></div>`;
+}
+
+const NAMES={glass:'Glassmorphism',metal:'Metal',liquid:'Liquid glass',neo:'Neo · soft UI'};
+const BLURB={
+  glass:'Frosted panels over a colourful canvas. Depth comes from BLUR — the background stays legible through the surface, so a panel reads as a sheet of glass. Arcs are thin, flat and slightly transparent, with a coloured bloom instead of a bevel.',
+  metal:'Brushed and machined. Depth comes from ANISOTROPIC REFLECTION — banded sheen running across the stroke, hairline bright and dark edges, a milled groove for the track. The least round of the four, on purpose.',
+  liquid:'Thick refractive glass. Depth comes from REFRACTION at the edge — a bright rim where light enters, a dim counter-rim where it leaves, one specular streak, and the canvas bending through the body. Capsules everywhere.',
+  neo:'One flat surface; everything is pressed out of it or into it. Depth comes from a SHADOW PAIR — light top-left, dark bottom-right. Nothing is translucent, nothing has an edge, and the hues are muted or the shadows fight the fill.',
+  compare:'The same card, the same week, the same palette, in all four materials. The only variable is the surface.',
+};
+
+function render(){
+  const st=document.getElementById('stage');
+  document.getElementById('ttl').textContent = S==='compare' ? 'Four materials, one card' : NAMES[S];
+  document.getElementById('sub').textContent = BLURB[S];
+  document.documentElement.lang=L;
+  UID=0;
+  const dir = L==='he'?'rtl':'ltr';
+  if(S==='compare'){
+    st.innerHTML = ['glass','metal','liquid','neo'].map(s=>{
+      const cur=S; S=s;
+      const html=`<div>
+        <div class="st st-${s}" data-theme="${THEME}" dir="${dir}"
+          style="width:352px;border-radius:30px;padding:16px;overflow:hidden">
+          <div class="card">
+            <div class="h3" style="margin-bottom:2px">${t('This week','השבוע')}</div>
+            <div class="sub2" style="margin-bottom:6px">${t('Where the time went','לאן הלך הזמן')}</div>
+            ${donut(310,54,s==='metal'?21:19,s,
+              `<div><div style="font-size:19px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
+               <div style="font-size:9px;opacity:.65;font-weight:600">${t('tracked','נמדדו')}</div></div>`,true)}
+          </div>
+          <div style="height:14px"></div>
+          <div class="row" style="gap:10px">
+            <div class="btn" style="flex:1">${t('Plan tomorrow','לתכנן את מחר')}</div>
+            ${ring(46,80,'HEALTH',`<span style="font-size:13px">${ltr('80')}</span>`,s)}
+          </div>
+        </div>
+        <div class="lbl">${NAMES[s]}</div></div>`;
+      S=cur; return html;}).join('');
+  } else {
+    st.innerHTML = `<div class="ph st st-${S}" data-theme="${THEME}" dir="${dir}">${screen(S)}</div>`;
+  }
+  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===S));
+  const u=new URL(location);
+  u.searchParams.set('style',S); u.searchParams.set('lang',L); u.searchParams.set('theme',THEME);
+  history.replaceState({},'',u);
+}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S=b.dataset.s;render();});
+document.getElementById('lang').onclick=e=>{L=L==='en'?'he':'en';
+  e.target.textContent=L==='en'?'עברית':'English';e.target.classList.toggle('on',L==='he');render();};
+document.getElementById('theme').onclick=e=>{THEME=THEME==='dark'?'light':'dark';
+  e.target.textContent=THEME==='dark'?'Light':'Dark';render();};
+addEventListener('keydown',e=>{
+  const ks=['glass','metal','liquid','neo','compare'], i=ks.indexOf(S);
+  if(e.key==='ArrowRight'){S=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length];render();}
+  if(e.key==='ArrowLeft'){S=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length];render();}});
+const q=new URL(location).searchParams;
+if(NAMES[q.get('style')]||q.get('style')==='compare') S=q.get('style');
+if(q.get('lang')==='he'){L='he';const b=document.getElementById('lang');
+  b.textContent='English';b.classList.add('on');}
+if(q.get('theme')==='light'){THEME='light';document.getElementById('theme').textContent='Dark';}
+render();
+</script>
+</body>
+</html>
