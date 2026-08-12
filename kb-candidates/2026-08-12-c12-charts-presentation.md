@@ -1,7 +1,28 @@
 # KB candidates — `c12-charts-presentation` (2026-08-10 → 12)
 
-Session working `#31` (`C12`, charts and presentation) on map `#12`. Written in `AUTO MODE`;
-none of these is drainable by this session on its own judgement — see each entry's Status.
+Session working `#31` (`C12`, charts and presentation) on map `#12`. Written in `AUTO MODE`.
+
+**Partly drained 2026-08-13.** Entry 5 — *a preference store belongs exactly where there is
+nothing to be right about* — was ingested into `C:\Dev\JARVIS\kb` as the new page
+`dev/preference-or-defect.md` (journal: `kb/log/2026-08-13.md`). It is **not** reproduced below;
+the page is the record now.
+
+**The four that remain are all one blocked group, not four independent items** — see
+*Standing — always-ask*. Original numbering kept, so nothing below renumbers when the group
+finally drains.
+
+---
+
+## Standing — always-ask
+
+Entry 1 gates the other three: it is `rules/`-shaped, which is ⛔ always-ask in **both** modes
+and owned by the 🎬 walkthrough rule, and entries 2–4 each belong in the `kb/dev/` page entry 1
+would create. So the group drains together or not at all, and **no `AUTO MODE` drain applies to
+any of them** — the eligibility of 2–4 in isolation is not a licence to split the page.
+
+The question for Ido is one question, not four: **is *"an agent must render and look at its own
+output when the acceptance criterion is visual"* a change to how agents work (`rules/`), or an
+ordinary KB page?** If it is a KB page, all four drain in one pass with no further gate.
 
 ---
 
@@ -143,85 +164,3 @@ it looks through can lie, and names the shape of the lie.
 **Status.** 🟢 Ordinary `kb/dev/` page material, **`AUTO MODE`-eligible** in itself — but **held with
 entries 2 and 3**, for the same reason they are held: it belongs in the page entry 1 would create,
 and entry 1 is always-ask. Drain all four together.
-
----
-
-## 5 · A preference store belongs exactly where there is nothing to be right about
-
-**Claim.** The question *should the user be able to choose this?* is not answered by what a picker
-costs. It is answered by asking **whether a wrong answer would be a defect**:
-
-- If a user disliking the current behaviour is **evidence the behaviour is wrong**, a setting is the
-  wrong response. It preserves the defect *and* hides it — the one user who would have reported it
-  now has a workaround, and everyone else keeps the broken default.
-- If a user disliking it is **evidence of nothing** — no measurement settles it, no version of the
-  product is worse for their preference — then there is nothing to be right about, and a setting is
-  the honest answer.
-
-Compressed: **a picker over taste is a feature; a picker over layout is a bug with a settings screen
-in front of it.**
-
-**Why.** `C12` refused a chart picker at revision 2 and accepted a *material* picker at revision 13,
-and without this rule the two look like the session changing its mind. The rejected discriminator is
-the obvious one — **cost** (a preference store, a migration, a settings row). Cost was equal in both
-directions and would have licensed either answer. The rule also generalises past UI: it is why a
-"strict mode" flag over a correctness bug is a smell, and why theme, language and density are not.
-A second-order benefit worth keeping: it tells you *what to build instead* when the answer is no —
-`C12` replaced the refused picker with **a card that hides itself when it has nothing to say**,
-which is the defect actually being reported.
-
-**Destination.** `kb/` — product/design decision-making, not `kb/dev/`. Likely a short page of its
-own; check overlap with `dev/enum-and-label.md` §5 (*don't buy a global judgement you can derive
-from per-item enums*), which is a neighbouring "resist the configurable answer" claim from a
-different angle.
-
-**Anchors.** [#31 resolution comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5270370393) §1
-· `CHANGELOG/2026-08-10/c12-charts-presentation.md` → *Revision 13* · `#12`'s *Decisions so far*,
-`C12` line.
-
-**Supersedes.** Nothing.
-
-**Status.** 🟢 Ordinary, **`AUTO MODE`-eligible, and genuinely independent of entry 1** — it needs no
-page that entry 1 might create. It is the one entry in this file this session may drain on its own
-judgement, and it is the one being drained.
-
----
-
-## 6 · A status is written by the session that files it and never revisited by the one that consumes it
-
-**Claim.** In any queue where an entry carries its **own** status line — a KB candidate, a TODO,
-a board row, a ticket description — the status is written **once**, by the session that files it,
-and the session that later **consumes** the entry closes its own work without going back to
-correct it. So the queue accumulates entries that are *finished in fact and open in text*, and
-every later reader repeats the stale text rather than re-deriving it. The listing habit does not
-catch this: **a listing shows filenames, and a filename cannot go stale.** What catches it is
-printing each entry's **status together with its age**, because an entry that has been "awaiting
-a decision" for days is not information — it is a question nobody answered.
-
-**Why.** Observed 2026-08-12/13. `kb-candidates/2026-08-09-c9f-consent-screen-state.md` declared
-its `rules/` draft *"uncommitted and unsynced, pending `/walkthrough`"*. That draft had shipped
-**two days earlier** as `rules/claim-provenance.md`, which credits the entry **by name** — so its
-own close condition was met and nothing pointed at it. **Four sessions re-reported it verbatim**
-as "parked, awaiting Ido", including this one, twice, in a board banner and a changelog. Each had
-listed the folder correctly; each then copied the previous session's *summary of the contents*
-rather than opening the file. The failure is structural, not sloppiness: nothing in the workflow
-gives the consumer a reason to return to the producer's text.
-
-**Rejected alternative:** "sessions should re-read every candidate" — that is what they believe
-they are doing, and it is what four of them did not do. The fix has to be **mechanical output**,
-not a reminder.
-
-**Destination.** `kb/dev/` — a page on queues whose entries carry their own state. Neighbouring,
-worth checking for overlap: whatever page entry 1 creates, and anything on board discipline.
-
-**Anchors.** `C:\Dev\JARVIS\scripts\Show-CandidateQueue.ps1` (the check, written for this) ·
-`C:\Dev\JARVIS` `f9364f1` · this repo `b5322e2`, `50200ac` · the deleted file's annotation, which
-survives in `b5322e2`.
-
-**Supersedes.** Nothing. It is the **generalisation** of what `candidate-queue-audit` found in one
-entry.
-
-**Status.** 🟢 Ordinary `kb/dev/` page material, **`AUTO MODE`-eligible in itself** — but **held
-with entry 1**, which is always-ask and may create the page this belongs in. Note the irony
-deliberately: this entry is now parked in exactly the queue it describes, which is why the check
-above was written rather than a note left here.
