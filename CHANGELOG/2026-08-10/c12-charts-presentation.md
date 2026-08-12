@@ -356,6 +356,33 @@ material wins, the tiles need a version that survives being drawn into a `Remote
 `C6` [#22](https://github.com/idomarhaim/Android_Final_Project/issues/22) — now live under
 `c6-log-progress` — and every later screen, not only this ticket's.
 
+## Revision 6 — one canvas for all four, and neo is the one it changes
+
+Ido, 2026-08-11: put all four materials on the **glassmorphism background** so the comparison
+isolates the surface, then he picks. Done and made the **default**, with a
+**Shared canvas / Native canvas** toggle so the background each material was designed against is
+one click away rather than deleted. Posted as
+[the shared-canvas comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5268496000).
+
+**The finding is that the request is not neutral for every candidate, and neo's case is
+definitional rather than cosmetic.** Neumorphism **is** the surface being the same colour as what
+is behind it — that identity is what makes the shadow pair read as an *extrusion of the
+background* instead of a card floating over it. A gradient has no single such colour, so the
+honest rendering on a shared canvas is a **neutral plate carrying the shadow pair**, which gives
+the card an **edge it would not otherwise have**. On this background Ido is therefore choosing
+between *soft UI on a canvas* and three others — not between neumorphism and three others. Told
+to him plainly rather than rendered silently, because the two are different offers and the
+difference only shows up after the choice.
+
+**Metal shifts mildly** — designed against graphite where it reads as a machined object, it now
+reads as a metal panel *placed on* something. **Glass and liquid glass are unaffected**: glass
+was already this canvas, and liquid glass needs a colourful background anyway, since refraction
+has nothing to refract without one.
+
+Implementation note kept small on purpose: the shared canvas is **two class selectors**
+(`.st.shared`), which outranks each material's own single-class background rule without touching
+any of them — so the native rendering is preserved exactly rather than reconstructed.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -397,7 +424,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 5 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 6 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

@@ -227,6 +227,46 @@
   .st-neo .avat{border-radius:50%}
   .st-neo .inset{box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
 
+  /* ═════════════════ SHARED CANVAS (Ido, 2026-08-11) ═══════════════════
+     All four materials on the glassmorphism canvas, so the only variable left
+     is the surface itself. Two class selectors, so this beats each style's own
+     one-class background rule. */
+  .st.shared{
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st.shared[data-theme="light"]{
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  /* Metal and liquid keep their own text colours; glass is already this canvas.
+     NEO is the one that genuinely changes, and it is worth knowing why:
+     neumorphism is DEFINED by the surface being the same colour as what is
+     behind it — that is what makes the shadow pair read as an extrusion rather
+     than as a floating card. On a gradient there is no single "same colour", so
+     the honest rendering is a neutral plate, slightly translucent, carrying the
+     shadow pair. It is soft UI on a canvas rather than true neumorphism, and
+     the difference is visible: the card now has an edge. */
+  .st-neo.shared{--fg:#F0F4FA;--fg2:rgba(240,244,250,.72)}
+  .st-neo.shared[data-theme="light"]{--fg:#18202C;--fg2:rgba(24,32,44,.64)}
+  .st-neo.shared .card,.st-neo.shared .seg,.st-neo.shared .btn,
+  .st-neo.shared .chip,.st-neo.shared .avat{
+    background:rgba(30,36,46,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:7px 7px 16px rgba(0,0,0,.52), -7px -7px 16px rgba(255,255,255,.07);}
+  .st-neo.shared[data-theme="light"] .card,.st-neo.shared[data-theme="light"] .seg,
+  .st-neo.shared[data-theme="light"] .btn,.st-neo.shared[data-theme="light"] .chip,
+  .st-neo.shared[data-theme="light"] .avat{
+    background:rgba(233,238,246,.80);
+    box-shadow:7px 7px 16px rgba(120,138,166,.40), -7px -7px 16px rgba(255,255,255,.80);}
+  .st-neo.shared .seg{
+    box-shadow:inset 5px 5px 11px rgba(0,0,0,.52), inset -5px -5px 11px rgba(255,255,255,.07)}
+  .st-neo.shared[data-theme="light"] .seg{
+    box-shadow:inset 5px 5px 11px rgba(120,138,166,.40), inset -5px -5px 11px rgba(255,255,255,.85)}
+
   .st{color:var(--fg)}
   .st .mt,.st .sub,.st .sub2{color:var(--fg2)}
 </style>
@@ -246,6 +286,7 @@
   <button class="cbtn" data-s="compare">Compare all four</button>
 </div>
 <div class="bar">
+  <button class="cbtn on" id="canvas">Shared canvas</button>
   <button class="cbtn" id="lang">עברית</button>
   <button class="cbtn" id="theme">Light</button>
 </div>
@@ -271,7 +312,7 @@ const GOALS=[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',
              {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
               me:'3 / 4 weeks',meHe:'3 / 4 שבועות'}];
 
-let S='glass', L='en', THEME='dark', UID=0;
+let S='glass', L='en', THEME='dark', UID=0, SHARED=true;
 const T=o=>L==='he'?(o.he??o.en):o.en;
 const t=(en,he)=>L==='he'?he:en;
 const ltr=s=>`<span class="ltr">${s}</span>`;
@@ -516,11 +557,18 @@ const BLURB={
   neo:'One flat surface; everything is pressed out of it or into it. Depth comes from a SHADOW PAIR — light top-left, dark bottom-right. Nothing is translucent, nothing has an edge, and the hues are muted or the shadows fight the fill.',
   compare:'The same card, the same week, the same palette, in all four materials. The only variable is the surface.',
 };
+const CANVAS_NOTE={
+  shared:' · On the SHARED canvas: all four sit on the glassmorphism background, so the only variable left is the material.',
+  native:' · On each material’s NATIVE canvas — the background it was designed for.',
+};
+const NEO_NOTE=' Neumorphism is defined by the surface being the same colour as what is behind it, and a gradient has no single such colour — so on the shared canvas it becomes a neutral plate carrying the shadow pair, which gives the card an edge it would not otherwise have. That is a real difference, not a rendering shortcut.';
 
 function render(){
   const st=document.getElementById('stage');
   document.getElementById('ttl').textContent = S==='compare' ? 'Four materials, one card' : NAMES[S];
-  document.getElementById('sub').textContent = BLURB[S];
+  document.getElementById('sub').textContent =
+    BLURB[S] + CANVAS_NOTE[SHARED?'shared':'native']
+    + (SHARED && (S==='neo'||S==='compare') ? NEO_NOTE : '');
   document.documentElement.lang=L;
   UID=0;
   const dir = L==='he'?'rtl':'ltr';
@@ -528,7 +576,7 @@ function render(){
     st.innerHTML = ['glass','metal','liquid','neo'].map(s=>{
       const cur=S; S=s;
       const html=`<div>
-        <div class="st st-${s}" data-theme="${THEME}" dir="${dir}"
+        <div class="st st-${s}${SHARED?' shared':''}" data-theme="${THEME}" dir="${dir}"
           style="width:352px;border-radius:30px;padding:16px;overflow:hidden">
           <div class="card">
             <div class="h3" style="margin-bottom:2px">${t('This week','השבוע')}</div>
@@ -546,14 +594,19 @@ function render(){
         <div class="lbl">${NAMES[s]}</div></div>`;
       S=cur; return html;}).join('');
   } else {
-    st.innerHTML = `<div class="ph st st-${S}" data-theme="${THEME}" dir="${dir}">${screen(S)}</div>`;
+    st.innerHTML = `<div class="ph st st-${S}${SHARED?' shared':''}" data-theme="${THEME}"
+      dir="${dir}">${screen(S)}</div>`;
   }
   document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===S));
   const u=new URL(location);
   u.searchParams.set('style',S); u.searchParams.set('lang',L); u.searchParams.set('theme',THEME);
+  u.searchParams.set('canvas',SHARED?'shared':'native');
   history.replaceState({},'',u);
 }
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S=b.dataset.s;render();});
+document.getElementById('canvas').onclick=e=>{SHARED=!SHARED;
+  e.target.textContent=SHARED?'Shared canvas':'Native canvas';
+  e.target.classList.toggle('on',SHARED);render();};
 document.getElementById('lang').onclick=e=>{L=L==='en'?'he':'en';
   e.target.textContent=L==='en'?'עברית':'English';e.target.classList.toggle('on',L==='he');render();};
 document.getElementById('theme').onclick=e=>{THEME=THEME==='dark'?'light':'dark';
@@ -567,6 +620,8 @@ if(NAMES[q.get('style')]||q.get('style')==='compare') S=q.get('style');
 if(q.get('lang')==='he'){L='he';const b=document.getElementById('lang');
   b.textContent='English';b.classList.add('on');}
 if(q.get('theme')==='light'){THEME='light';document.getElementById('theme').textContent='Dark';}
+if(q.get('canvas')==='native'){SHARED=false;const b=document.getElementById('canvas');
+  b.textContent='Native canvas';b.classList.remove('on');}
 render();
 </script>
 </body>

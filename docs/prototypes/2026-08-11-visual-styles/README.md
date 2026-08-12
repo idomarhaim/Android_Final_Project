@@ -12,6 +12,22 @@ start docs\prototypes\2026-08-11-visual-styles\index.html
 Buttons pick the material; `←` / `→` cycle. **עברית** flips to RTL, **Light / Dark** switches
 scheme. **Compare all four** puts the same card in every material at once.
 
+## Shared canvas — the default, at Ido's request (2026-08-11)
+
+All four materials now sit on the **glassmorphism background**, so the only variable left is the
+surface itself. **Native canvas** toggles back to the background each material was designed for,
+which is worth one look because two of them change character:
+
+- **Metal** was designed against graphite, where it reads as a machined object. On the colourful
+  canvas it reads as a metal panel *placed on* something — still good, but a different claim.
+- **Neo changes the most, and the reason is definitional.** Neumorphism *is* the surface being
+  the same colour as what is behind it — that is what makes the shadow pair read as an extrusion
+  rather than a floating card. A gradient has no single such colour, so on the shared canvas the
+  honest rendering is a **neutral plate carrying the shadow pair**, which gives the card an
+  **edge it would not otherwise have**. Real difference, not a rendering shortcut — and worth
+  knowing before choosing, because "neo on a colourful background" is not the same offer as
+  "neo".
+
 ## Why one file rather than four
 
 Four separate files would each be a page you look at alone, and the question here is
