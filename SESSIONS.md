@@ -17,6 +17,46 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | *(none — the map is out of tickets; see the release note below)* | | | | |
 
+> ✅ **`picker-decomposition-clause` (visitor from `C:\Dev\JARVIS`) claimed and released
+> 2026-08-13 — in and out in one unit, this commit.** Owned exactly one path:
+> `kb-candidates/2026-08-13-c5-endless-goals.md`, **deleted**, plus this note. **No singleton**
+> — nothing built, no emulator, no Gradle daemon, no `docs/` or `app/` path touched. Active
+> claims was empty at claim time and this tree was clean.
+>
+> **Why a visitor row for a one-file deletion.** §5's mechanical-sweep exception covers a
+> verbatim projection refreshed by a script; disposing of an ⛔ always-ask entry is a judgement,
+> and *unsure means you owe one*. Same reasoning `c12-charts-presentation` recorded here.
+>
+> 📥 **Entry 1 is shipped, and the file is therefore fully drained.** It was the **seventh**
+> parked amendment to `C:\Dev\JARVIS\rules\question-axis-naming.md` — *name the quantity each
+> option measures; two options measuring different quantities are not a fork, so the answer is
+> "both" and the question was a decomposition failure*. It landed in JARVIS at **`3bdf4c3`**,
+> which is the tie that survives: cross-repo means two commits, so the deletion names the
+> promotion rather than riding it. Entry 2 had already landed 2026-08-13 in
+> `kb/dev/derive-dont-stamp.md` §7.
+>
+> **The deletion is the carve-out, not an unasked deletion.** Every entry promoted ⇒ deleted
+> without asking, in the same commit as the promotion — *the trigger is the condition, not the
+> skill that met it*, as corrected at JARVIS `6f81490`. This entry is exactly the case that
+> correction was written for: destination `rules/`, so `/kb-ingest` could never have taken it in
+> either mode and only a **drafting** session could drain it.
+>
+> ⚠️ **What shipped is not what entry 1 proposed, and the entry is gone, so it is recorded here.**
+> The declined-branch fallback (13 instances) changed it twice and cut it once. Its verdict as
+> written — *"if two options measure different quantities, the answer is both"* — **endorses
+> `show both` on `c16-milestone-model`**, the option that file's coverage amendment explicitly
+> disqualified, so the verdict is now gated on the closure grep having already **failed** to
+> collapse the fork: different measurands are a **trigger**, never a verdict. Its placement
+> (*"before offering options"*) fired on every multi-attribute picker including `c4`, so the step
+> moved **inside** the existing fork-check branch. And its proposed tell-table row was **cut** —
+> the observable already routes step 0 → 1 → 2. Full account:
+> `C:\Dev\JARVIS\CHANGELOG\2026-08-13\picker-decomposition-clause.md`.
+>
+> **Six candidate files remain here**, all other sessions', all with pending entries. None was
+> touched, and nothing else in this repo was read or written.
+>
+> Recorded by `picker-decomposition-clause` on claiming.
+
 > ✅ **`c19-area-success-failure` has released — [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)
 > is resolved and closed, and with it **map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 > has no open ticket left at all**.** `#35`, `#30` and `#41` all closed within the hour. **26
