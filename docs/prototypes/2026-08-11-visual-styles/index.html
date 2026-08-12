@@ -592,7 +592,12 @@ function donut(w, r, thick, style, centre, labels){
 
     if(style==='glass'){
       /* flat, slightly transparent, with a coloured bloom instead of a bevel */
-      defs+=`<filter id="${id}-b${a.k}" x="-40%" y="-40%" width="180%" height="180%">
+      /* The filter region defaults to 120% of the OBJECT's bounding box. A 3%
+         slice has a tiny box, so a 5px bloom overruns it and is cut off square
+         — which is why the small slices grew grey rectangles. The region has to
+         be stated in USER SPACE, sized to the chart, not to the slice. */
+      defs+=`<filter id="${id}-b${a.k}" filterUnits="userSpaceOnUse"
+        x="${cx-r-thick*2}" y="${cy-r-thick*2}" width="${(r+thick*2)*2}" height="${(r+thick*2)*2}">
         <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="${c}" flood-opacity=".55"/></filter>`;
       segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
         stroke-linecap="butt" opacity=".92" filter="url(#${id}-b${a.k})"/>`;
