@@ -15,10 +15,35 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `picker-queue-merge` (visitor from `C:\Dev\JARVIS`) | Close out the three candidate files whose `rules/`-destined entries shipped in JARVIS today (`daac210`, `3d0971a`) — rewrite each down to its survivors, per `/kickoff picker-queue-merge`. **Reading only** beyond those three files: no ticket, no `#12` write, no source file | `kb-candidates/2026-08-10-c9e-event-lifecycle.md`, `kb-candidates/2026-08-12-c8-ai-task-plans.md`, `kb-candidates/2026-08-10-c16-milestone-model.md`, this row | none — no build, no device, no Firebase, no Gradle daemon. **Does demand Ido's attention**: a **seventh** amendment to `question-axis-naming.md` is flagged and owed a 🎬 offer — see the note below | 2026-08-13 |
 | `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> ✅ **`picker-queue-merge` (visitor from `C:\Dev\JARVIS`) claimed `b7abdc0` and released here
+> 2026-08-13.** All three owned candidate files are **rewritten down to their survivors, and every
+> survivor is now zero** — `2026-08-10-c9e-event-lifecycle.md`, `2026-08-12-c8-ai-task-plans.md`,
+> `2026-08-10-c16-milestone-model.md`. **None deleted**: the merge brief instructs that in writing
+> and deleting is always-ask regardless, so all three are kept as drained records. No singleton
+> held; nothing outside those three files was written, and no ticket, `#12` line or source file
+> was touched.
+>
+> ⚠️ **The content landed in `ea6ff78`, which is `c5-endless-goals`'s commit, not this session's.**
+> Both sessions staged by explicit path; this session verified the index empty before staging, and
+> `c5` staged and committed in the interval. It is the mirror of what this session's own `3d0971a`
+> did to `c5` in JARVIS an hour earlier, and `c19-area-success-failure`'s note below calls it the
+> **third instance tonight**. Nothing was lost and every rewrite is intact — the cost is
+> **provenance**: three files' drain records sit under a commit message about `#21`. Filed as
+> `C:\Dev\JARVIS\kb-candidates\2026-08-13-picker-queue-merge.md` entry 1, ⛔ always-ask, destination
+> `rules/`; `c19`'s framing is quoted there, because it is sharper than this session's on the half
+> that cannot be fixed by staging discipline at all. **Not adjudicated here, and no history
+> rewritten** — un-picking it needs a force-push, which is always-ask in both modes.
+>
+> **What it owes Ido:** a **seventh** parked amendment to `rules/question-axis-naming.md`, filed
+> today by `c5-endless-goals`, is flagged and **owed a 🎬 offer that has never been made**. Reading
+> it caught a real defect in what this session shipped an hour earlier — the closed-blocker clause
+> was scoped to *"options are actions"* and `c5`'s case is **quantities** — corrected in `3d0971a`.
+> `c5`'s own distinct claim was deliberately **not** shipped. Full account:
+> `C:\Dev\JARVIS\CHANGELOG\2026-08-13\picker-queue-merge.md`.
 
 > 🆕 **`c19-area-success-failure` claimed [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41)
 > — the ticket declined seven minutes ago at **sixty-one seconds old**, taken now that its one input
