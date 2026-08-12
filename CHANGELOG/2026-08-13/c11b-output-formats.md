@@ -78,7 +78,7 @@ line, verify a pure insertion.** The body is **~99 KB**, so `gh api --method PAT
 for that. Use `--input <file.json>` and verify the round-trip. State read tonight: **24 decision
 lines** (23 plus `C15b`'s, appended minutes ago), **4 fog bullets**.
 
-## Staging — the cross-contamination this board has recorded four times was avoided, mechanically
+## Staging — a clean fix was built, verified, and then **defeated**, and the defeat is the finding
 
 `c15b-stored-ai-text` wrote its **57-line release note** into `SESSIONS.md` while this row was being
 written. `git add SESSIONS.md` would have swept it — plus their own row-removal — into this claim
@@ -87,7 +87,8 @@ commit, which is exactly the failure `c5-endless-goals`, `picker-queue-merge` an
 prevent, because it stops *you* sweeping a sibling in and says nothing about one commons file
 holding two sessions' edits.
 
-There is a clean fix and it is mechanical, non-destructive, and does not touch the working tree:
+So this session built the fix that appears to close it — mechanical, non-destructive, never touching
+the working tree:
 
 ```bash
 git show HEAD:SESSIONS.md > head.md          # reconstruct the committed file
@@ -96,10 +97,27 @@ SHA=$(git hash-object -w staged.md)          # write a blob that is HEAD + one r
 git update-index --cacheinfo 100644,$SHA,SESSIONS.md
 ```
 
-The index then holds `HEAD + my row`; the working tree still holds **everything**, including their
-release note, which stays theirs to commit. **Verified: `git diff --cached --stat` reported
-`SESSIONS.md | 1 +`, a single insertion.** Filed as a KB candidate — this generalises past
-`SESSIONS.md` to any commons two sessions edit concurrently.
+It worked exactly as intended and was **verified**: `git diff --cached --stat` reported
+`SESSIONS.md | 1 +`, a single insertion, with their note left in the worktree as theirs to commit.
+
+**And it made no difference, because between that verification and this commit, `c15b` committed.**
+Their `git add SESSIONS.md` read the **working tree** — which held both their note and this row —
+so `406874d` (*"c15b: resolve #35"*) carries **this session's claim row**, and by the time
+`git commit` ran here the index had been refreshed out from under it and only the changelog
+remained. Confirmed rather than assumed: `406874d` adds both `c11b-output-formats` and their own
+release note to `SESSIONS.md`, and `git show HEAD:SESSIONS.md` contains this row exactly once.
+
+**The finding, and it corrects the section this replaced.** The index is a **shared singleton**, and
+a sibling committing from the same working tree reads the *tree*, not your *index*. So index-level
+surgery is not a fix for the two-sessions-one-commons problem at all — it is a **strictly one-sided**
+guard, protecting a sibling from you, precisely like per-file staging, and failing in precisely the
+same direction. It is the fifth instance tonight and the first in which a deliberate countermeasure
+was tried and lost. **The only thing that actually partitions this is a worktree per session**,
+which is heavier and off by default under the standing no-worktrees rule.
+
+**Nothing was lost and nothing is rewritten** — un-picking it would need a history rewrite, which is
+always-ask in both modes. The cost is provenance: a claim row filed under another session's commit
+message. Filed as a KB candidate.
 
 ## 📥 `kb-candidates/` listed before the first unit of work — six files, each opened
 
