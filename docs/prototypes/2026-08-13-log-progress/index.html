@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C6 · LOG PROGRESS — GoalPilot prototype</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     C6 · LOG PROGRESS  —  prototype for issue #22 on map #12.
+
+     The four material blocks below are adapted from
+     docs/prototypes/2026-08-11-visual-styles/index.html (C12 #31), because
+     #12's Standing preferences now require every screen to be designed
+     against the MATERIAL CONTRACT — surface · groove · elevation · accent —
+     rather than against one look.
+
+     Two additions this screen forces, both from C12's own warning:
+       --edge  every control carries a hairline contrast anchor, so no
+               affordance is ever shadow-only (neo's WCAG failure mode).
+       .tag    a category is named in words; colour never carries it alone
+               (dark neo collapses the six category hues into one ramp).
+     ══════════════════════════════════════════════════════════════════════ */
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+       background:#070A0F;color:#C9D6E4;padding:26px 20px 60px;-webkit-font-smoothing:antialiased}
+  h1{font-size:19px;font-weight:700;letter-spacing:-.02em;color:#EAF1F8}
+  .lede{font-size:13px;line-height:1.65;color:#8FA3B8;max-width:940px;margin-top:8px}
+  .lede b{color:#C9D6E4;font-weight:640}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 8px;align-items:center}
+  .bar .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+            color:#5C7086;font-weight:700;margin-right:2px}
+  .bar button{background:#111823;color:#9FB3C8;border:1px solid #1E2A3A;border-radius:999px;
+    padding:7px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .bar button.on{background:#1C4C7A;border-color:#2F7FC4;color:#EAF6FF}
+  .bar .gap{width:14px}
+  .stage{display:flex;flex-wrap:wrap;gap:28px;margin-top:22px;align-items:flex-start}
+  .cap{font-size:11.5px;color:#7C90A6;text-align:center;margin-top:10px;max-width:392px;
+       line-height:1.5}
+  .cap b{color:#AEC2D6}
+
+  /* ── device shell (identical in every material, so it is not a variable) ── */
+  /* colour lives on the frame, not on the scroller: the sheet is a SIBLING of
+     .sc, so setting it there left the sheet inheriting the page's own grey —
+     which looked right on a dark canvas and failed outright in neo light. */
+  .ph{width:392px;height:812px;border-radius:46px;border:11px solid #04080c;position:relative;
+      overflow:hidden;display:flex;flex-direction:column;color:var(--fg);
+      box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 30px 70px rgba(0,0,0,.6)}
+  .ph::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:86px;height:25px;border-radius:999px;background:#04080c;z-index:60}
+  .sb{height:40px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:6px 26px 0;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;
+      color:var(--fg)}
+  .sc{flex:1;overflow:hidden;position:relative;z-index:2;display:flex;flex-direction:column;
+      color:var(--fg)}
+
+  /* ── the sheet: a modal bottom sheet, the current idiom for quick entry ── */
+  .scrim{position:absolute;inset:0;background:rgba(4,8,16,.52);z-index:3}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:10px 16px 20px;
+         display:flex;flex-direction:column;gap:13px;max-height:88%}
+  .grab{width:38px;height:4px;border-radius:99px;background:var(--fg2);opacity:.5;
+        margin:2px auto 4px;flex:none}
+  .sh-hd{display:flex;align-items:flex-start;gap:10px}
+  .sh-ttl{font-size:19px;font-weight:720;letter-spacing:-.02em;line-height:1.2}
+  .sh-sub{font-size:12px;opacity:.7;font-weight:520;margin-top:3px;line-height:1.45}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;flex:none;
+       display:inline-flex;align-items:center;gap:5px;letter-spacing:.01em}
+  .tag i{width:7px;height:7px;border-radius:50%;flex:none;display:block}
+
+  .fld{display:flex;flex-direction:column;gap:8px}
+  .fld > .cap2{font-size:11.5px;font-weight:660;opacity:.72;letter-spacing:.01em}
+  .req{display:flex;align-items:baseline;gap:7px}
+  .opt{font-size:10.5px;font-weight:640;opacity:.55}
+
+  /* the amount ladder — C7's target/16 at 1x 2x 3x 4x, repeat-tappable (#11) */
+  .ladder{display:flex;gap:8px}
+  .ladder .chip{flex:1;text-align:center;padding:13px 4px;font-size:14px;font-weight:680;
+                font-variant-numeric:tabular-nums;cursor:pointer;position:relative}
+  .ladder .chip small{display:block;font-size:10px;font-weight:600;opacity:.6;margin-top:2px}
+  .tally{position:absolute;top:-7px;inset-inline-end:-4px;min-width:19px;height:19px;
+         border-radius:99px;font-size:10.5px;font-weight:750;display:grid;place-items:center;
+         padding:0 5px;background:var(--acc);color:var(--accfg);
+         box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .num{display:flex;align-items:center;gap:10px}
+  .num .box{flex:1;padding:14px 16px;font-size:24px;font-weight:700;
+            font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:8px}
+  .num .box span.u{font-size:13px;font-weight:620;opacity:.65}
+  .num .step{width:50px;height:50px;display:grid;place-items:center;font-size:21px;
+             font-weight:700;cursor:pointer;flex:none}
+  /* the number actually being logged is the biggest thing in the ladder block —
+     rev 1 put it in 12.5px muted text under four large chips, so the primary
+     value of the screen was the smallest thing on it */
+  .total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+         padding:2px 4px 0}
+  .total .tl{font-size:11.5px;font-weight:640;opacity:.62}
+  .total .tv{font-size:21px;font-weight:720;font-variant-numeric:tabular-nums}
+
+  /* the optional duration row — never pre-filled, never guessed */
+  .dur{display:flex;gap:7px;flex-wrap:wrap}
+  .dur .chip{padding:9px 14px;font-size:12.5px;font-weight:650;cursor:pointer}
+  .note{padding:12px 14px;font-size:13px;font-weight:520;opacity:.62;display:flex;
+        align-items:center;gap:9px}
+  .actions{display:flex;gap:10px;margin-top:2px}
+  .actions .btn{flex:1;cursor:pointer}
+  .actions .btn.ghost{flex:0 0 42%}
+
+  /* ── history ── */
+  .hist{padding:14px 16px 0;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .h-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .h3{font-size:15.5px;font-weight:710;letter-spacing:-.015em}
+  .ent{display:flex;align-items:flex-start;gap:11px;padding:12px 13px}
+  .ent .val{font-size:14.5px;font-weight:690;font-variant-numeric:tabular-nums;
+            display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ent .met{font-size:11px;opacity:.62;font-weight:550;margin-top:3px;line-height:1.5}
+  .ent.gone .val,.ent.gone .met{opacity:.42}
+  .ent.gone .val .amt{text-decoration:line-through}
+  .flag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.02em;
+        border:1px solid var(--edge);opacity:.95}
+  .orig{font-size:11px;font-weight:600;opacity:.72;margin-top:6px;padding:7px 10px;
+        border-radius:10px;border:1px dashed var(--edge);display:flex;gap:7px;
+        align-items:center}
+  .lock{font-size:14px;opacity:.5;flex:none;margin-top:2px}
+  .disc{font-size:11.5px;font-weight:560;line-height:1.55;opacity:.72;padding:10px 12px;
+        border-radius:12px;border:1px solid var(--edge);display:flex;gap:8px}
+  .disc b{font-weight:730;opacity:.95}
+
+  /* ════════════════════════ 1 · GLASSMORPHISM ════════════════════════ */
+  .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;--edge:rgba(255,255,255,.34);
+    --acc:#7FE8DC;--accfg:#06222B;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
+    --edge:rgba(20,36,66,.26);--acc:#0E7C8F;--accfg:#EAFBFF;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass .card,.st-glass .chip,.st-glass .btn,.st-glass .box,.st-glass .step,
+  .st-glass .sheet,.st-glass .tag,.st-glass .note{
+    background:rgba(255,255,255,.13);
+    backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+    border:1px solid var(--edge);
+    box-shadow:0 10px 30px rgba(6,12,28,.30), inset 0 1px 0 rgba(255,255,255,.42);}
+  .st-glass[data-theme="light"] .card,.st-glass[data-theme="light"] .chip,
+  .st-glass[data-theme="light"] .btn,.st-glass[data-theme="light"] .box,
+  .st-glass[data-theme="light"] .step,.st-glass[data-theme="light"] .sheet,
+  .st-glass[data-theme="light"] .tag,.st-glass[data-theme="light"] .note{
+    background:rgba(255,255,255,.62);
+    box-shadow:0 10px 26px rgba(40,60,110,.13), inset 0 1px 0 rgba(255,255,255,.9);}
+  .st-glass .card,.st-glass .ent,.st-glass .disc{border-radius:var(--rad)}
+  .st-glass .chip,.st-glass .btn,.st-glass .tag{border-radius:999px}
+  .st-glass .box,.st-glass .note{border-radius:18px}
+  .st-glass .step{border-radius:50%}
+  .st-glass .sheet{border-radius:30px 30px 0 0;padding-bottom:24px}
+  .st-glass .chip.on{background:rgba(255,255,255,.34);border-color:rgba(255,255,255,.75)}
+  .st-glass[data-theme="light"] .chip.on{background:rgba(255,255,255,.95);
+    border-color:rgba(20,36,66,.5)}
+
+  /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════ */
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;--edge:rgba(255,255,255,.42);
+    --acc:#9BEFE5;--accfg:#04262A;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
+    --edge:rgba(16,28,54,.28);--acc:#0C6C7E;--accfg:#F0FEFF;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid .card,.st-liquid .chip,.st-liquid .btn,.st-liquid .box,.st-liquid .step,
+  .st-liquid .sheet,.st-liquid .tag,.st-liquid .note{
+    position:relative;overflow:hidden;border:1px solid var(--edge);
+    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
+               rgba(255,255,255,.14));
+    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    box-shadow:
+      inset 1.4px 1.4px 0 rgba(255,255,255,.72),
+      inset -1.4px -1.4px 0 rgba(255,255,255,.16),
+      0 18px 40px rgba(4,10,24,.42);}
+  .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .chip,
+  .st-liquid[data-theme="light"] .btn,.st-liquid[data-theme="light"] .box,
+  .st-liquid[data-theme="light"] .step,.st-liquid[data-theme="light"] .sheet,
+  .st-liquid[data-theme="light"] .tag,.st-liquid[data-theme="light"] .note{
+    background:linear-gradient(150deg, rgba(255,255,255,.74), rgba(255,255,255,.4) 52%,
+               rgba(255,255,255,.58));
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
+               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
+               0 18px 36px rgba(40,60,110,.18);}
+  .st-liquid .card,.st-liquid .ent,.st-liquid .disc{border-radius:var(--rad)}
+  .st-liquid .chip,.st-liquid .btn,.st-liquid .tag{border-radius:999px}
+  .st-liquid .box,.st-liquid .note{border-radius:22px}
+  .st-liquid .step{border-radius:50%}
+  .st-liquid .sheet{border-radius:36px 36px 0 0;padding-bottom:24px}
+  .st-liquid .chip.on{background:rgba(255,255,255,.4);
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.9), 0 6px 16px rgba(4,10,24,.3)}
+  .st-liquid[data-theme="light"] .chip.on{background:rgba(255,255,255,.96);
+    border-color:rgba(16,28,54,.5)}
+
+  /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════ */
+  .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
+    --lo:#FFFFFF;--sh:rgba(163,177,198,.62);--edge:rgba(42,51,64,.26);
+    --acc:#3B7DA8;--accfg:#F2FAFF;background:#E7ECF3;}
+  .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
+    --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);--edge:rgba(221,228,238,.26);
+    --acc:#6FB6E8;--accfg:#06202E;background:#252A32;}
+  .st-neo .card,.st-neo .chip,.st-neo .btn,.st-neo .box,.st-neo .step,.st-neo .tag,
+  .st-neo .note{
+    background:transparent;border:1px solid var(--edge);
+    box-shadow:6px 6px 14px var(--sh), -6px -6px 14px var(--lo);}
+  .st-neo .sheet{background:#E7ECF3;box-shadow:0 -14px 34px rgba(120,138,163,.4)}
+  .st-neo[data-theme="dark"] .sheet{background:#252A32;
+    box-shadow:0 -14px 34px rgba(0,0,0,.55)}
+  .st-neo .card,.st-neo .ent,.st-neo .disc{border-radius:var(--rad)}
+  .st-neo .chip,.st-neo .btn,.st-neo .tag{border-radius:999px}
+  .st-neo .box,.st-neo .note{border-radius:18px}
+  .st-neo .step{border-radius:50%}
+  .st-neo .sheet{border-radius:28px 28px 0 0;padding-bottom:24px}
+  .st-neo .ent{box-shadow:inset 4px 4px 10px var(--sh), inset -4px -4px 10px var(--lo);
+    border:1px solid var(--edge)}
+  .st-neo .chip.on{box-shadow:inset 4px 4px 9px var(--sh), inset -4px -4px 9px var(--lo);
+    border-color:var(--acc);border-width:2px}
+
+  /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════ */
+  .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
+    --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);--edge:rgba(237,242,248,.22);
+    --a1:#5FD8FF;--a2:#1170E4;--acc:#5FD8FF;--accfg:#04121F;background:#1B1F26;}
+  .st-darkneo[data-theme="light"]{background:#22262E;} /* it has no light scheme */
+  .st-darkneo .card,.st-darkneo .chip,.st-darkneo .box,.st-darkneo .step,.st-darkneo .tag,
+  .st-darkneo .note{
+    background:linear-gradient(158deg,#232830,#1A1E25);border:1px solid var(--edge);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo),
+               inset 0 1px 0 rgba(255,255,255,.05);}
+  .st-darkneo .sheet{background:linear-gradient(180deg,#242932,#1A1E25);
+    box-shadow:0 -16px 40px rgba(0,0,0,.7);border-top:1px solid var(--edge)}
+  .st-darkneo .card,.st-darkneo .ent,.st-darkneo .disc{border-radius:var(--rad)}
+  .st-darkneo .chip,.st-darkneo .tag{border-radius:999px}
+  .st-darkneo .box,.st-darkneo .note{border-radius:22px}
+  .st-darkneo .step{border-radius:50%}
+  .st-darkneo .sheet{border-radius:34px 34px 0 0;padding-bottom:24px}
+  .st-darkneo .ent{background:linear-gradient(158deg,#1F242C,#191D24);
+    border:1px solid var(--edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  .st-darkneo .btn{border-radius:999px;background:linear-gradient(110deg,var(--a2),var(--a1));
+    color:#06121C;border:1px solid rgba(255,255,255,.2);
+    box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
+  .st-darkneo .btn.ghost{background:linear-gradient(158deg,#232830,#1A1E25);color:var(--fg);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo)}
+  .st-darkneo .chip.on{background:linear-gradient(120deg,var(--a1),var(--a2));color:#04121F;
+    border-color:rgba(255,255,255,.45);
+    box-shadow:0 5px 14px rgba(23,130,228,.5), inset 0 1px 0 rgba(255,255,255,.5)}
+
+  /* shared button skin for the three materials that do not override it */
+  .btn{padding:14px 20px;font-size:14.5px;font-weight:690;text-align:center;
+       border-radius:999px}
+  /* .st .btn.primary, not .btn.primary: the light-theme material overrides are
+     (class + attr + class) and re-paint every .btn with the surface gradient,
+     which left Save as white-on-white in liquid light. Only visible in a render. */
+  .st .btn.primary{background:var(--acc);color:var(--accfg);border:1px solid var(--edge)}
+  .st-neo .btn.primary{box-shadow:5px 5px 12px var(--sh), -5px -5px 12px var(--lo)}
+  .flag.edit{background:var(--acc);color:var(--accfg);border-color:transparent}
+
+  /* RTL: only the flow mirrors. Numbers and clock times are isolated in the
+     markup with <bdi>, because the bidi algorithm reorders 09:00–12:00. */
+  [dir="rtl"] .tally{inset-inline-end:-4px}
+</style>
+</head>
+<body>
+
+<h1>C6 · LOG PROGRESS — what a person may set by hand</h1>
+<p class="lede">
+  Prototype for <b>#22</b> on map <b>#12</b>. Drawn against the <b>material contract</b>
+  (surface · groove · elevation · accent), so switching material changes the surface and
+  nothing else. Every control carries a <b>hairline edge</b> — no affordance is shadow-only,
+  which is neo's WCAG failure mode — and every category is <b>named in words</b>, because dark
+  neo collapses the six category hues into one accent ramp.
+  Ido's two decisions are visible in the history: an entry is <b>always editable</b> and every
+  edit is <b>always marked</b>, with the original one tap away.
+</p>
+
+<div class="bar">
+  <span class="lbl">Material</span>
+  <button data-m="glass" class="on">Glassmorphism</button>
+  <button data-m="liquid">Liquid glass</button>
+  <button data-m="neo">Neo</button>
+  <button data-m="darkneo">Dark neo</button>
+  <span class="gap"></span>
+  <span class="lbl">Theme</span>
+  <button data-t="dark" class="on">Dark</button>
+  <button data-t="light">Light</button>
+  <span class="gap"></span>
+  <span class="lbl">Language</span>
+  <button data-l="en" class="on">English</button>
+  <button data-l="he">עברית</button>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+/* ── the three goals, chosen to prove the three rules ───────────────────────
+   water   VOLUME   · buttons ladder · ADDITIVE  · no duration row (meaningless)
+   run     DISTANCE · number         · ADDITIVE  · duration row offered
+   weight  MASS     · number         · ABSOLUTE  · no duration row, and it may fall
+   ------------------------------------------------------------------------ */
+const GOALS = {
+  water:  {kind:'VOLUME',   mode:'buttons', absolute:false, dur:false,
+           word:{en:'ml', he:'מ״ל'}, title:{en:'Drink 2 L a day', he:'לשתות 2 ליטר ביום'},
+           cat:{en:'Health', he:'בריאות'}, hue:'#4ADE9B', target:2000, current:1250,
+           ladder:[125,250,375,500]},
+  run:    {kind:'DISTANCE', mode:'number', absolute:false, dur:true,
+           word:{en:'km', he:'ק״מ'}, title:{en:'Run 20 km a week', he:'לרוץ 20 ק״מ בשבוע'},
+           cat:{en:'Fitness', he:'כושר'}, hue:'#7FB0FF', target:20, current:12.4, step:0.5},
+  weight: {kind:'MASS',     mode:'number', absolute:true, dur:false,
+           word:{en:'kg', he:'ק״ג'}, title:{en:'Lose 5 kg', he:'לרדת 5 ק״ג'},
+           cat:{en:'Health', he:'בריאות'}, hue:'#4ADE9B', start:83, target:78, current:80.4,
+           step:0.1},
+  sleep:  {kind:'DURATION', mode:'number', absolute:false, dur:false, synced:true,
+           word:{en:'h', he:'ש׳'}, title:{en:'Sleep 56 h a week', he:'לישון 56 ש׳ בשבוע'},
+           cat:{en:'Health', he:'בריאות'}, hue:'#4ADE9B', target:56, current:38.5, step:0.5},
+};
+
+const T = {
+  en:{
+    log:'Log progress', save:'Save', cancel:'Cancel', amount:'Amount', reading:'Reading now',
+    optional:'optional', took:'Took me', note:'Add a note or a photo',
+    history:'This week', edited:'edited', deleted:'deleted', synced:'from Health Connect',
+    was:'was', undo:'Undo', today:'today', yst:'yesterday',
+    tap:'tap to see the original', thisEntry:'this entry',
+    of:(a,b,u)=>`${a} of ${b} ${u}`,
+    lost:(a,b,u)=>`${a} of ${b} ${u} lost`,
+    over:(n,u)=>`target beaten by ${n} ${u}`,
+    effort:(t,e)=>`${t} logged from tasks · ${e} from entries you typed`,
+    readonly:'a reading, not yours to edit — log your own beside it',
+  },
+  he:{
+    log:'תיעוד התקדמות', save:'שמירה', cancel:'ביטול', amount:'כמות', reading:'מדידה עכשיו',
+    optional:'לא חובה', took:'לקח לי', note:'הוספת הערה או תמונה',
+    /* "מ‑Health Connect" puts a Hebrew prefix on a Latin run, and bidi lays the
+       prefix out on the far side of it — it renders as "Health Connect‑מ".
+       A colon avoids the join entirely. Found in the Hebrew render, not the code. */
+    history:'השבוע', edited:'נערך', deleted:'נמחק', synced:'מקור: Health Connect',
+    was:'היה', undo:'ביטול', today:'היום', yst:'אתמול',
+    tap:'הקישו כדי לראות את המקור', thisEntry:'ברישום הזה',
+    of:(a,b,u)=>`⁦${a}⁩ מתוך ⁦${b} ${u}⁩`,
+    lost:(a,b,u)=>`ירדו ⁦${a}⁩ מתוך ⁦${b} ${u}⁩`,
+    over:(n,u)=>`⁦${n} ${u}⁩ מעל היעד`,
+    effort:(t,e)=>`⁦${t}⁩ נרשמו ממשימות · ⁦${e}⁩ מרישום ידני`,
+    readonly:'מדידה, לא לעריכה — אפשר לרשום רישום משלכם לידה',
+  },
+};
+
+/* entry history — one of each state the two decisions produce */
+const ENTRIES = {
+  water:[
+    {v:500,  when:{en:'today 08:20',he:'היום 08:20'}, note:{en:'',he:''}},
+    {v:250,  when:{en:'today 11:05',he:'היום 11:05'}, was:750, edited:true,
+     note:{en:'mistyped — it was one glass, not three',he:'טעות הקלדה — כוס אחת, לא שלוש'}},
+    {v:500,  when:{en:'yesterday 19:40',he:'אתמול 19:40'}, gone:true},
+  ],
+  run:[
+    {v:4,    when:{en:'today 06:15',he:'היום 06:15'}, mins:26, prov:'TYPED',
+     note:{en:'unplanned — no task existed',he:'לא מתוכנן — לא הייתה משימה'}},
+    {v:8.4,  when:{en:'Monday 18:00',he:'שני 18:00'}, mins:52, prov:'TYPED'},
+  ],
+  weight:[
+    {v:80.4, when:{en:'today 07:02',he:'היום 07:02'}, abs:true},
+    {v:80.9, when:{en:'Sunday 07:10',he:'ראשון 07:10'}, abs:true, was:81.9, edited:true,
+     note:{en:'read the scale wrong',he:'קראתי לא נכון את המשקל'}},
+    {v:81.6, when:{en:'Friday 07:00',he:'שישי 07:00'}, abs:true},
+  ],
+  sleep:[
+    {v:7.5, when:{en:'today',he:'היום'}, synced:true, first:true},
+    {v:6.2, when:{en:'yesterday',he:'אתמול'}, synced:true},
+    {v:0.7, when:{en:'yesterday 23:10',he:'אתמול 23:10'},
+     note:{en:'a nap Health Connect never saw',he:'תנומה ש‑Health Connect לא ראה'}},
+  ],
+};
+
+/* query params so shoot.ps1 can render any state headlessly:
+   ?m=glass|liquid|neo|darkneo  &t=dark|light  &l=en|he */
+const Q = new URLSearchParams(location.search);
+let M = Q.get('m') || 'glass', TH = Q.get('t') || 'dark', L = Q.get('l') || 'en';
+
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const bdi = s => `<bdi>${esc(s)}</bdi>`;
+
+function sheet(key){
+  const g = GOALS[key], t = T[L], w = g.word[L];
+  const isRtl = L==='he';
+
+  /* the amount control — per goal, never global */
+  let amount;
+  if (g.mode==='buttons'){
+    amount = `<div class="ladder">${g.ladder.map((n,i)=>`
+      <div class="chip${i===1?' on':''}">${bdi(n)}<small>${esc(w)}</small>
+        ${i===1?`<span class="tally">×2</span>`:''}</div>`).join('')}</div>
+      <div class="total"><span class="tl">${esc(t.thisEntry)}</span>
+        <span class="tv"><bdi>+500</bdi> ${esc(w)}</span></div>`;
+  } else {
+    const shown = g.absolute ? g.current : 0;
+    amount = `<div class="num">
+        <div class="step">−</div>
+        <div class="box"><bdi>${esc(g.absolute?shown:'+'+shown)}</bdi>
+          <span class="u">${esc(w)}</span></div>
+        <div class="step">+</div>
+      </div>`;
+  }
+
+  /* the optional duration row — present only where the answer exists */
+  const duration = g.dur ? `
+    <div class="fld">
+      <div class="req"><span class="cap2">${esc(t.took)}</span>
+        <span class="opt">${esc(t.optional)}</span></div>
+      <div class="dur">
+        <div class="chip">${bdi('15m')}</div>
+        <div class="chip on">${bdi('30m')}</div>
+        <div class="chip">${bdi('45m')}</div>
+        <div class="chip">${bdi('1h')}</div>
+        <div class="chip">${esc(L==='he'?'אחר':'custom')}</div>
+      </div>
+    </div>` : '';
+
+  const head = g.absolute ? t.reading : t.amount;
+  /* C3: progress is (current − start) / (target − start), so a loss goal reads
+     in its own word rather than as a percentage of nothing. */
+  const pct  = g.absolute
+      ? t.lost((g.start-g.current).toFixed(1), (g.start-g.target).toFixed(0), w)
+      : t.of(g.current, g.target, w);
+
+  return `
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="sh-hd">
+      <div class="grow" style="flex:1;min-width:0">
+        <div class="sh-ttl">${esc(g.title[L])}</div>
+        <div class="sh-sub">${esc(pct)}</div>
+      </div>
+      <span class="tag"><i style="background:${g.hue}"></i>${esc(g.cat[L])}</span>
+    </div>
+
+    <div class="fld">
+      <div class="req"><span class="cap2">${esc(head)}</span></div>
+      ${amount}
+    </div>
+
+    ${duration}
+
+    <div class="note">＋ ${esc(t.note)}</div>
+
+    <div class="actions">
+      <div class="btn ghost">${esc(t.cancel)}</div>
+      <div class="btn primary">${esc(t.save)}</div>
+    </div>
+  </div>`;
+}
+
+function history(key){
+  const g=GOALS[key], t=T[L], w=g.word[L];
+  const rows = ENTRIES[key].map(e=>{
+    const unit = e.unit ? e.unit[L] : w;
+    const sign = (g.absolute||e.abs||e.synced) ? '' : '+';
+    const flags = [];
+    if (e.edited) flags.push(`<span class="flag edit">${esc(t.edited)}</span>`);
+    if (e.gone)   flags.push(`<span class="flag">${esc(t.deleted)}</span>`);
+    if (e.synced) flags.push(`<span class="flag">${esc(t.synced)}</span>`);
+    const meta = [];
+    if (e.mins) meta.push(`<bdi>${e.mins}m</bdi>`);
+    meta.push(esc(e.when[L]));
+    if (e.note && e.note[L]) meta.push(esc(e.note[L]));
+    return `<div class="ent card${e.gone?' gone':''}">
+      ${e.synced?`<span class="lock">🔒</span>`:''}
+      <div class="grow" style="flex:1;min-width:0">
+        <div class="val"><span class="amt"><bdi>${esc(sign+e.v)}</bdi> ${esc(unit)}</span>
+          ${flags.join('')}</div>
+        <div class="met">${meta.join(' · ')}</div>
+        ${e.edited?`<div class="orig">↩ ${esc(t.was)} <bdi>${esc(e.was)}</bdi>
+           ${esc(unit)} · <b>${esc(t.undo)}</b></div>`:''}
+        ${e.synced&&e.first?`<div class="met">${esc(t.readonly)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const eff = key==='run'
+    ? `<div class="disc"><span>◷</span><span>${esc(t.effort('2h 10m','26m'))}</span></div>`
+    : '';
+
+  return `<div class="hist">
+      <div class="h-hd"><span class="h3">${esc(t.history)}</span></div>
+      ${rows}${eff}
+    </div>`;
+}
+
+function render(){
+  const dir = L==='he' ? 'rtl' : 'ltr';
+  const frames = [
+    ['water', L==='he'
+      ? 'כמות לפי כפתורים, חיבור — אין שורת משך: "כמה זמן לקח לשתות" אינה שאלה'
+      : 'Buttons ladder, additive — <b>no duration row</b>: "how long did drinking take" is not a question'],
+    ['run',   L==='he'
+      ? 'מספר, חיבור — שורת משך אופציונלית, לעולם לא ממולאת מראש ולעולם לא מנוחשת'
+      : 'Number, additive — <b>optional duration</b>, never pre-filled and never guessed'],
+    ['weight',L==='he'
+      ? 'מדידה מוחלטת שיכולה לרדת — ההתקדמות נקראת במילה של היעד, לא באחוזים'
+      : 'Absolute reading that may fall — progress reads in the goal\'s own word, not in %'],
+    ['sleep', L==='he'
+      ? 'מדידות שמקורן בחיישן נעולות לעריכה — רישום ידני נרשם לצידן'
+      : 'Health Connect rows are <b>locked</b> — your own entry is logged beside them'],
+  ];
+  document.getElementById('stage').innerHTML = frames.map(([k,cap])=>`
+    <div>
+      <div class="ph st st-${M}" data-theme="${TH}" dir="${dir}">
+        <div class="sb"><span>9:41</span><span>▮▮▮ ⌁</span></div>
+        <div class="sc">${history(k)}</div>
+        ${sheet(k)}
+      </div>
+      <div class="cap">${cap}</div>
+    </div>`).join('');
+}
+
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+  M=b.dataset.m; document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b));
+  if(M==='darkneo'){TH='dark';document.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==='dark'));}
+  render();});
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+  TH=b.dataset.t; document.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));
+  render();});
+document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{
+  L=b.dataset.l; document.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b));
+  render();});
+render();
+</script>
+</body>
+</html>

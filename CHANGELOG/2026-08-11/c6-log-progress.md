@@ -99,3 +99,97 @@ names `kb/dev/` but is **parked by Ido's own call** pending a `rules/` proposal.
 Not applicable to this commit: it claims a ticket and writes Markdown. No code layer is
 touched, so no server, client, database or UI layer runs. `C6` ships no code — `#12`'s
 standing preference is *plan, don't do*.
+
+---
+
+# Resolution — 2026-08-13
+
+`#22` is resolved and closed. The session spanned three days; this entry stays in its
+`2026-08-11` folder because a session owns one file, which is the convention `c12` followed
+across the same boundary.
+
+## What the ticket settled
+
+**A person sets the outcome, never the effort.** Three sub-questions, three different kinds of
+answer:
+
+| Sub-question | Answered by | Answer |
+|---|---|---|
+| Which fields are user-writable | the code + `C7` | `R14`'s premise is **false** — there is no percentage field; the box takes an Amount and the write **adds** it. The illogic was `Goal.unit`'s `"%"` default labelling it *Amount (%)*, which `C7` already deleted |
+| Correction or entry | **Ido**, twice, both overturning this session's recommendation | **editable forever**, and **every edit always marked** with the original recoverable; a delete stays struck through |
+| Contradiction with what tasks imply | **the agent**, on Ido's delegation | an **optional duration** that emits the same timestamped completion fact a ticked task emits |
+
+## The two calls, and what they cost
+
+Ido rejected the day-boundary scope and the conditional trace, taking the maximal pair:
+freedom with a receipt. It is not an affordance — **`currentValue` stops being a stored
+aggregate and becomes a sum over entries**, because editing a three-week-old entry cannot walk
+back a number that was incremented in a transaction. That is `C14`'s move for `score`, `C1`'s
+for the points total and `C9a`'s for temporal state, claiming a fourth site.
+
+Schema: `originalValue: Double?` + `editedAtEpochMillis: Long?`, **one nullable field backfilled
+to `null`** — `C18`'s migration shape, so day one reads identically.
+
+## The delegated decision, recorded as the agent's
+
+Ido replied that he could not follow the options and handed the decision back
+(*"choose the solution that gives the highest standard … and if it can be improved, improve
+it"*). Per the hand-back rule the question was **not re-asked**, the explanation was paid once
+in the reply, and the decision was **derived** — and it was **not one of the three options
+offered**, which is exactly what that rule predicts.
+
+All three were rejected on stated grounds: guessing a duration violates `C1`'s *`minutes` is a
+fact Ido owns*; asking every time is meaningless on most measure kinds; silence is not neutral,
+because this is a **missing fact**, not `C3`'s effort-vs-outcome **gap**. What replaced them
+reuses `C1`'s completion fact unchanged, so there is one sum rather than a second pipe into
+`C17`'s chart.
+
+The framing error is on the record too: the picker asked Ido to judge a **mechanism** when the
+part that was his was a value judgement — the *form* failure in the check-order table, not
+density.
+
+## The screen
+
+Asset: `docs/prototypes/2026-08-13-log-progress/` (four goals × four materials × two themes ×
+two languages). Drawn against `C12`'s **material contract**, which became normative in `#12`'s
+Standing preferences one day into this session and was delivered to `#22` as a comment rather
+than discovered late.
+
+**Six render rounds via `docs/prototypes/tools/shoot.ps1`, and four of the five defects were
+invisible in the source** — `C12`'s central finding reproduced on a different screen:
+
+1. the sheet is a **sibling** of `.sc`, so it never inherited the material's foreground colour —
+   correct on every dark canvas, unreadable in neo light;
+2. `.st-liquid[data-theme="light"] .btn` out-specifies `.btn.primary`, rendering **Save
+   white-on-white** in liquid light;
+3. the number actually being logged was the **smallest thing on the screen**;
+4. Hebrew: `מ‑Health Connect` lays out as `Health Connect‑מ` — a Hebrew prefix on a Latin run;
+5. (visible in source) a steps reading filed under a weight goal — corrected by giving the
+   synced rows a sleep goal, which is what Health Connect actually provides.
+
+## Defects named as spec lines, not fixed
+
+`GoalRepositoryImpl.kt:91`'s **fourth clamp** (`C3` counted three), `GoalDetailScreen.kt:513`
+making a **negative amount untypable**, and `ProgressRepository` having **no edit and no
+delete**. This map plans; it does not build.
+
+## Commons and hand-offs
+
+- `#12`'s *Decisions so far*: re-fetched, `cmp`-verified against the copy the line was built on
+  (**clean, no race**), inserted and proved a pure insertion — **178 → 180 lines, 20 → 21
+  decisions, 0 removed**; GitHub's trailing newline is the only non-inserted difference.
+- Commented on **`#31`** (the held edge: the chart's source becomes completion facts, and the
+  past is now mutable). `#31` closed before this ticket resolved, so it is a record, not an
+  input change.
+- **Filed nothing** — every hand-off landed on an existing ticket (`#9`, `#11`, `#31`, `#34`).
+
+## 🧪 Tests
+
+No code layer is touched — this ticket ships a decision, a prototype and Markdown. The
+prototype's acceptance criterion is visual and was met by **rendering and looking** six times,
+which is the only check this artifact admits; the five findings above are its results.
+
+## 📥 KB candidates
+
+None flagged by this session. The four files in `kb-candidates/` at session start are other
+sessions' and are all always-ask; `AUTO MODE` drained nothing.
