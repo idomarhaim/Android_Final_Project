@@ -17,6 +17,104 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c5-endless-goals` | `/wayfinder 12` → resolve [#21 · `C5`](https://github.com/idomarhaim/Android_Final_Project/issues/21) (how endless and maintenance goals are modelled — what percentage an endless goal has if any, whether Ido's decay proposal survives, where recurrence lives in the schema, what decay does to history, and whether it costs points). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c5-endless-goals.md` *(new)*, `kb-candidates/2026-08-13-c5-endless-goals.md` *(new, if anything is flagged)*, GitHub issues **#21** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `c6-log-progress`'s row is still Active though it closed `#22` at `faddfc7`; see §0. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+| `c15b-stored-ai-text` | `/wayfinder 12` → resolve [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35) (what happens to already-generated, **stored** AI text when the language picker changes — which AI output is persisted at all, regenerate vs re-render vs leave, whether a language stamp is owed on the record, and whether user-edited AI output is treated differently). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c15b-stored-ai-text.md` *(new)*, `kb-candidates/2026-08-13-c15b-stored-ai-text.md` *(new)*, GitHub issues **#35** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `session-titles` is live and awaiting his reply, and `c5-endless-goals` is mid-release. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> 🆕 **`c15b-stored-ai-text` claimed [#35 · `C15b`](https://github.com/idomarhaim/Android_Final_Project/issues/35)
+> — the ticket the previous claim named *"the natural next claim"*, taken the minute its freshness
+> objection expired.** `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was
+> the agent's.
+>
+> ⚠️ **The frontier derivation surfaced a defect in the instrument itself, and it is the finding
+> worth carrying forward: `/issues/12/sub_issues` served a stale `state`.** The listing returned
+> **26 children, 22 closed, 4 open** — `#21 · C5` among the open — and a direct `gh issue view 21`
+> seconds later returned **CLOSED**, with `C5`'s resolution comment timestamped `22:03:10Z`, about
+> sixty seconds earlier. Had the listing been trusted, this session would have derived a frontier
+> containing a ticket that was already resolved. **Never read `state` off the aggregate endpoint;
+> confirm every open child directly.** True state at 01:03 local: **26 children, 23 closed, 3
+> open**, every one of them unblocked and unassigned — the second consecutive derivation where the
+> map has **no blocked ticket at all**, so leverage again discriminates nothing.
+>
+> | Ticket | Blocked by | Assignee | Verdict |
+> |---|---|---|---|
+> | `#35 · C15b` | `#24` ✅ `#29` ✅ | `idomarhaim` | **frontier — CLAIMED** |
+> | `#41 · C19` | *(none)* | — | frontier — declined, **61 seconds old** |
+> | `#30 · C11b` | `#19` ✅ `#20` ✅ `#24` ✅ `#29` ✅ | — | frontier — declined, terminal by design |
+>
+> **Why `#35`, and why the objection that refused it last time has expired.** `c5-endless-goals`
+> declined it ninety minutes ago on a **freshness** collision — it asks what happens to
+> already-generated AI text, and *"the set of AI-generated fields was being rewritten while this
+> session was choosing"*, because `c2-task-type` was mid-flight on `#20` (whether a task carries an
+> AI-assigned type at all). **`#20` closed at `b9d1be7` and released at `71f9413`**, so that set is
+> now settled and foreign — and that same row named `#35` *"now takeable and the natural next
+> claim"*. Both its own blockers, `C8` ([#24](https://github.com/idomarhaim/Android_Final_Project/issues/24))
+> and `C10` ([#29](https://github.com/idomarhaim/Android_Final_Project/issues/29)), are closed and
+> long released.
+>
+> **The two declines:**
+> 1. **`#41 · C19` — declined on the freshest collision this board has ever recorded.** It was
+>    **created at `22:02:41Z`, sixty-one seconds before this derivation ran**, by
+>    `c5-endless-goals`, which is **mid-release** — its row is still Active and its `#12` index line
+>    is still unwritten. Its own body says it is graduated by *"`C5` #21, whose §4 supplied the last
+>    missing piece"*, so its central input is a resolution published one minute ago and read by
+>    nothing. It is also labelled **`wayfinder:prototype`**, which means Ido in the room across
+>    several revisions, and `session-titles` is already holding his attention.
+> 2. **`#30 · C11b` — declined as the map's terminal ticket by design**, on the map's own words:
+>    *"you cannot test a format nobody has designed yet."* It is the per-feature output-format spec
+>    for **every** AI feature, and `#41` is an open, unresolved, AI-touching ticket filed minutes
+>    ago. This is the same ground `c5-endless-goals` declined it on, and it has not expired — `#41`
+>    arriving has **reinforced** it.
+>
+> **Four couplings, named on claiming rather than discovered later:**
+> 1. **`#12`'s *Decisions so far* is a commons whose race has fired for real three times** (`c3`,
+>    `c1`, `c2-task-type`). Same discipline, no exceptions: **re-fetch `#12`'s body immediately
+>    before appending**, `cmp` against the copy the line was built on, write only this session's
+>    line, verify a pure insertion. **And the write itself has a trap `c2-task-type` paid for:**
+>    `gh api --method PATCH -f body="$(cat …)"` **cannot write this map any more** — the body is
+>    ~103 KB and the call dies with `Argument list too long` *after* you believe you have written
+>    it. Use `--input <file.json>` and **verify the round-trip**.
+> 2. **`C5` (#21) closed sixty seconds before this claim, and its `#12` index line is not yet
+>    written.** So the very next append to the commons is contended by definition — and `C5`'s
+>    resolution (*"there is no third goal kind, and nothing decays"*) is an **input to read**, never
+>    a subject to reopen.
+> 3. **`C15` (#15) is this ticket's parent and it already assigned the neighbouring question
+>    elsewhere** — *"leaving [#30] the per-feature veto where the model's Hebrew is not good
+>    enough"* — and `C13` (#32) reinforced it: the veto stays `#30`'s, operating on top of `C13`'s
+>    one switch. `C15b` must not decide what belongs to `#30`.
+> 4. **The ticket's first bullet is a question of *fact*, not a decision, and three closed tickets
+>    have since answered it.** *Which AI output is actually persisted* is settled by `C8` (#24,
+>    numbered plans), `C10` (#29, the quote feed — explicitly cached **on the phone** by date, with
+>    the quote itself needing no storage) and `C6` (#22, progress entries editable forever). Read
+>    the code and those three resolutions **before** grilling Ido on anything.
+>
+> 📥 **`kb-candidates/` listed before the first unit of work — six files, each opened rather than
+> inherited from the notes above.** [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md) ⚠️ and
+> [`c9e`](kb-candidates/2026-08-10-c9e-event-lifecycle.md) ⛔ (both `rules/`),
+> [`c8`](kb-candidates/2026-08-12-c8-ai-task-plans.md) ⛔ (`rules/`),
+> [`c12`](kb-candidates/2026-08-12-c12-charts-presentation.md) (entry 1 always-ask, the rest held by
+> their own text), [`c2-task-type`](kb-candidates/2026-08-13-c2-task-type.md) (entry 1 🟢 but held
+> on a cross-repo hold into the live `C:\Dev\JARVIS`, entry 2 ⛔), and
+> [`session-titles`](kb-candidates/2026-08-13-session-titles.md), which belongs to the live session
+> next door. The `ux-backlog-triage` file is **gone — fully drained** at `8c3868f`. **None of the
+> six is this session's**, so `AUTO MODE` drains nothing here: the auto-ingest gate covers the
+> candidates *the committing unit produced*.
+>
+> 📥 **One candidate filed by this session, riding this commit** —
+> [`kb-candidates/2026-08-13-c15b-stored-ai-text.md`](kb-candidates/2026-08-13-c15b-stored-ai-text.md),
+> the stale-`sub_issues`-state finding above. 🟢 ordinary and genuinely this session's, but **held
+> for the same reason `c2-task-type`'s entry 1 is held**: its destination is
+> `C:\Dev\JARVIS\kb\dev\runtime-verification.md`, a cross-repo write into a repo where
+> `picker-queue-merge` is live. The two entries are **the same claim from opposite directions** — a
+> *write* is a hypothesis until you read it back, and a *read through an aggregate* is one too — and
+> should be drained together into one section, not raced as two.
+>
+> ⚠️ **Two rows on this board are stale and both are deliberately left alone.** `c5-endless-goals`
+> closed `#21` and has not released; `session-titles` is genuinely live. A released row is that
+> session's to write. The **Unclaimed-work block further down is stale too** — it still lists
+> tickets as blocked behind `#19`, and three sessions have now flagged it without rewriting it, for
+> the same reason: it is a commons and a rewrite is the one edit that collides with everyone. The
+> authoritative frontier is the table in this note.
+>
+> Recorded by `c15b-stored-ai-text` on claiming.
 
 > ✅ **`c6-log-progress` has released — [#22 · `C6`](https://github.com/idomarhaim/Android_Final_Project/issues/22)
 > is resolved and closed (`faddfc7`), and this row's lateness is the one thing worth recording
