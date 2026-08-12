@@ -193,3 +193,25 @@ which is the only check this artifact admits; the five findings above are its re
 
 None flagged by this session. The four files in `kb-candidates/` at session start are other
 sessions' and are all always-ask; `AUTO MODE` drained nothing.
+
+## Release — 2026-08-13
+
+Row moved from *Active claims* to *Recently released* on `SESSIONS.md`, and the lateness is
+recorded rather than tidied: `#22` closed at `faddfc7` (`00:41`) and the row stayed Active until
+now, because Ido asked the session to stop before the release edit while `SESSIONS.md` was
+carrying **24 uncommitted lines belonging to `candidate-queue-audit`** — `git add` is per-file,
+so releasing then would have staged another session's work. `c5-endless-goals` flagged the stale
+row in its own claim note, which is the board working as intended.
+
+Before touching the board, three checks, because Ido's instruction was to act only if it harms
+nothing: `SESSIONS.md` **clean** in the working tree · HEAD **level with** `origin` · two other
+sessions live (`session-titles`, `c5-endless-goals`) and **neither owns a path this edit
+touches**. The edit is one row removed, one row added, one note — `44 insertions, 1 deletion` —
+and it deliberately leaves the stale *Unclaimed work* block exactly as `c8` and `c12` left it.
+
+**Hand-off to the live `C5` posted, not taken** —
+[#21 comment](https://github.com/idomarhaim/Android_Final_Project/issues/21#issuecomment-5273243888):
+`currentValue` becomes a sum over entries, so a decay mechanic would move a **derived** number,
+and the fourth clamp that makes a percentage physically unable to fall is already condemned by
+`C6` §8. It is published state — `C6` closed five minutes before `C5` was claimed — so it changes
+nothing under a live session.
