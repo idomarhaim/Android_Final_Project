@@ -51,5 +51,14 @@ modes and keeps its original number.
 - **Supersedes:** partially — it **narrows** §5's *"read the log and the working tree before
   concluding it is released"* by adding a signal that outranks both. Superseding a standing
   claim is itself always-ask, so this entry is doubly gated.
-- **Status:** pending — always-ask (`rules/`), and blocked on the 🎬 walkthrough. Not droppable;
-  carries into `/handoff`.
+- **Status:** ✅ **drained 2026-08-13** by session `liveness-from-transcript` in `C:\Dev\JARVIS`
+  (`e0c80fb`; claim `72b36ba`). Shipped as **§5.3 clause (c)** on Ido's `waive` — the strong form
+  — with a declined-branch fallback over **12 instances** recorded beside the clause.
+  **The entry's claim held; two of its three prescriptions did not**, and the drafting session
+  found it only by running them: `mtime` is falsified in the *dangerous* direction (a
+  title-backfill set four transcripts' mtimes to *now*, two of them dead since 08-10), so the
+  clause reads the last `user`/`assistant` record's own `timestamp` and bans `stat`; and
+  `grep -l <label>` returns every session that **read the board** — 12 hits for one owner, the
+  owner ranked 7th by recency — so the clause keys on `file-history-*` records instead. The
+  fallback additionally caught that one label can own **several** transcripts, which the first
+  draft got wrong. Account: `C:\Dev\JARVIS\CHANGELOG\2026-08-13\liveness-from-transcript.md`.

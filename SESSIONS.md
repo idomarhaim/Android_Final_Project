@@ -17,6 +17,33 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `c19-area-success-failure` | `/wayfinder 12` → resolve [#41 · `C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) (per-life-area success and failure — whether an abandoned goal is a failure, a silence or invisible; whether a failure ages out and over what window; whether the view is a counterpart to the time-allocation chart, a block on the life-area screen, or both; and how it avoids being *a list of the things you are bad at*). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c19-area-success-failure.md` *(new)*, `kb-candidates/2026-08-13-c19-area-success-failure.md` *(new)*, `docs/prototypes/2026-08-13-area-success-failure/` *(new folder — **added to this claim after the fact; see the note**)*, GitHub issues **#41** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention, and it is contended three ways** — `#41` is `wayfinder:prototype`, so HITL across revisions, while `c15b-stored-ai-text` holds a live `wayfinder:grilling` ticket and `picker-queue-merge` owes him a 🎬 offer. `/wayfinder 12` arriving here is the newest signal; the contention is named, not resolved. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
 
+> ✅ **`liveness-from-transcript` (visitor from `C:\Dev\JARVIS`) claimed and released 2026-08-13
+> — in and out in one unit, this commit.** Owned `kb-candidates/2026-08-13-session-titles.md`
+> (entry 4's `Status` only) and this note. **No singleton:** no build, no device, no Gradle, no
+> Firebase, nothing under `app/`. **Disjoint from `c19-area-success-failure`**, live above — it
+> owns `docs/prototypes/2026-08-13-area-success-failure/` and its own changelog and candidate
+> file, none of which this touched.
+>
+> **Why a row for a one-line visit.** §5's mechanical-sweep exception covers a verbatim projection
+> refreshed by a script; this is a prose status and a judgement about a deletion, on a file a
+> sibling could hold. Unsure means you owe one, and this was not unsure.
+>
+> **What drained.** Entry 4 — *a sibling's liveness lives in its transcript, not in its commits* —
+> parked here by `session-titles` as ⛔ always-ask twice over. It shipped in `C:\Dev\JARVIS` as
+> **§5.3 clause (c)** (`e0c80fb`, claim `72b36ba`) on Ido's `waive`, with a 12-instance
+> declined-branch fallback recorded beside the clause. **The entry's claim held; two of its three
+> prescriptions did not** — `mtime` is falsified in the *dangerous* direction (a title-backfill
+> set four of **this repo's** transcript mtimes to *now*; two had been dead since 08-10), and
+> `grep -l <label>` returns every session that **read the board**: 12 hits for one owner, with the
+> owner 7th by recency. The clause reads the last `user`/`assistant` `timestamp` and keys on
+> `file-history-*` records instead.
+>
+> 📌 **This candidate file is now FULLY DRAINED and is deliberately *not* deleted — Ido's call.**
+> The carve-out that deletes a fully-drained candidate without asking requires deletion *"in the
+> same commit as whatever that promotion produced"*, and the promotion is `e0c80fb` **in another
+> repo**, which a cross-repo drain cannot satisfy. Deletions are otherwise always-ask, and the
+> `waive` above covered clause (c) only. Flagged rather than quietly widened.
+
 > ✅ **`c11b-output-formats` released 2026-08-13 — [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30)
 > resolved and closed. The map's terminal ticket is gone, and
 > [`#41 · C19`](https://github.com/idomarhaim/Android_Final_Project/issues/41) is now the only open
