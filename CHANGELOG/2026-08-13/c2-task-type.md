@@ -1,4 +1,82 @@
-# c2-task-type — claimed #20, the ticket six refusals said to take exactly now
+# c2-task-type — resolved #20: the duplication the ticket existed to prevent had already shipped
+
+> **Outcome first.** `#20` is **resolved and closed**. The map now has **no blocked tickets at
+> all** — three open, all unblocked, all unassigned (`#21 · C5`, `#30 · C11b`, `#35 · C15b`).
+> **Decision: a task carries `granularity ∈ DEEP · FRAGMENTED`** — two values, closed, no
+> `OTHER`, nullable — and `R11`'s nine kinds live in the **prompt**, never in the schema.
+> **The decision is the agent's**, taken on Ido's hand-back; §Resolution records why and how he
+> can overturn it.
+
+## Resolution — what was decided, and on whose authority
+
+Ido answered the picker with a **hand-back**: *"I couldn't fully understand you or what each
+option means — explain it simply and schematically, and pick the solution that gives the app the
+highest standard and quality, and improve it if you can."*
+
+Per `C:\Dev\JARVIS\rules\question-axis-naming.md` that governs the whole turn: **do not re-ask**
+(not smaller, not as a scenario, not a narrower picker), pay the *couldn't understand* half once
+as an explanation, **decide by deriving rather than by picking your own Recommended**, and put
+the reasoning on the durable record **saying the decision was the agent's**. All four are done —
+the explanation in the reply, the derivation on [`#20`](https://github.com/idomarhaim/Android_Final_Project/issues/20#issuecomment-5273109754),
+the attribution on `#20`, on `#12`'s index line and here.
+
+**The derivation did not land on any option that was offered**, which is what the rule warns to
+expect. Reading the code rather than the ticket found its premise false:
+
+| | `LifeArea` | `GoalCategory` | `R11`'s nine |
+|---|---|---|---|
+| cut | **domain** | **domain** | kind of work |
+| author | the **user** (Hebrew, Google Tasks) | the **app / model** | proposed |
+| shape | open, coloured, reorderable | closed at ten, **English labels hardcoded in `domain/model/`** | nine |
+| on | the goal | the goal | the task — does not exist |
+
+**Rows 1 and 2 are the duplicate**, and [`Mappers.kt:29`](../../app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Mappers.kt)
+already resolves the conflict quietly by falling the goal's colour back to
+`GoalCategory.defaultColorHex`. So *"second axis or replacement"* was a **false fork whose
+replacement half pointed at the wrong object** — and the model already classifies a task twice,
+with `suggestedLifeAreaId` implementing `C11a`'s membership check today.
+
+**Why `granularity` and not `R11`'s nine:** the nine die to three committed decisions at once —
+`C11a` priced prompt-declared enums at **50/50** and nine near-synonyms are worse; `C12` retired
+the count-weighted chart that would read them (killed twice, by `C16` and `C3`); `C1` fixed the
+payload with the model **never emitting a point value**, so a type is a fourth field arguing with
+`difficulty`. What survives is the one cut nothing else covers: `estimatedMinutes` says *how
+long*, `difficulty` says *how hard*, **neither says whether the work survives interruption**. All
+four cells populate, so it does not collapse into `difficulty`.
+
+**Authorship lands opposite to `difficulty`, and that is the derived result rather than an
+assertion:** by `C1`'s own fact-vs-judgement discriminator, fragmentability is a **fact about how
+Ido works**, so he is its authority and a corrected value is **sticky** — which answers `#20`'s
+fourth bullet without touching `R7`, since `R7` bans authoring a *product* and this is an *input*.
+
+**One consumer, nothing computes from it:** `C9b`'s daily review. A wrong value costs one ignored
+suggestion — `C12`'s discriminator in its converse form, **a field may only feed a surface where
+being wrong is cheap**, which every purpose the ticket itself proposed fails.
+
+## Two mechanics the next session should not rediscover
+
+1. **The `#12` commons race fired for a third time, live.** `c6-log-progress` appended `C6`'s line
+   while this session worked. `cmp` against the copy the line was built on caught it, the line was
+   rebased onto the fresh body, and the write verified as **0 removed, 21 → 22 decisions**. Third
+   real firing (`c3-points-currency`, `c1-points-and-time`, here).
+2. **`gh api --method PATCH -f body="$(cat …)"` can no longer write this map.** The body is
+   **103 KB**; the call fails with `Argument list too long` — *after* you believe you have written
+   it. Use `--input <file.json>` and **verify the round-trip**. This session's first write silently
+   did nothing and only the diff-back caught it.
+
+## Out of scope, posted not taken
+
+`GoalCategory`'s fate is a **goal**-model question, so it went to
+[`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21#issuecomment-5273112080)
+— which already owns the last unsized migration over Ido's live data — carrying a **third `C15`
+defect of a class it filed twice** (a hardcoded English label in the domain layer) and a **`C17`
+gap**: `Goal.lifeAreaId` went plural, `Goal.category` did not move with it.
+
+**Filed nothing. Graduated nothing.** Unblocked `#30 · C11b`, the last blocked ticket on the map.
+
+---
+
+# How the ticket was chosen — claimed #20, the ticket six refusals said to take exactly now
 
 **Session:** `c2-task-type` · **Date:** 2026-08-13 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)

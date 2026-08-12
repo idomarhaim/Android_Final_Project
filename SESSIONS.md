@@ -16,9 +16,47 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c6-log-progress` | `/wayfinder 12` → resolve [#22 · `C6`](https://github.com/idomarhaim/Android_Final_Project/issues/22) (which fields a user may set by hand in LOG PROGRESS, whether a hand-set value corrects history or joins it, and what happens when it contradicts what completed tasks imply). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-11/c6-log-progress.md` *(new)*, `docs/prototypes/2026-08-11-log-progress/` *(new, if the screen needs one — see §2 below)*, `kb-candidates/2026-08-11-c6-log-progress.md` *(new, if anything is flagged)*, GitHub issues **#22** and **#12** | **Ido's attention** — the third live HITL ticket on this map at once (`c12`'s prototype is at revision 3, `c8`'s grilling is 30 minutes old); see §3 below. No build, no device, no Firebase | 2026-08-11 |
-| `c2-task-type` | `/wayfinder 12` → resolve [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20) (does a task carry an AI-assigned type, what is the taxonomy, and is it a second axis or a replacement for the life areas the app already ships). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c2-task-type.md` *(new)*, `kb-candidates/2026-08-13-c2-task-type.md` *(new, if anything is flagged)*, GitHub issues **#20** and **#12**, `SESSIONS.md` (**this row only** — the orphaned banner was committed by a sibling as `7915bb7`, 60 s before this claim; see §0) | **Ido's attention** — `c6-log-progress`'s row still holds it nominally; see §3. No build, no device, no Firebase | 2026-08-13 |
 
-> 🆕 **`c2-task-type` claimed [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
+> ✅ **`c2-task-type` claimed and released 2026-08-13 — [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
+> resolved and closed, and with it the map has **no blocked tickets left at all**.** Three open,
+> all unblocked, all unassigned: `#21 · C5`, `#30 · C11b`, `#35 · C15b`. The claim reasoning is
+> below and stands; what release adds is the outcome and two things the next session needs.
+>
+> **The resolution came from the code, not the picker.** Ido **handed the decision back** — *"I
+> couldn't fully understand you or what each option means; explain it simply and schematically,
+> and pick the solution that gives the highest standard and quality, and improve it if you can"* —
+> which per `rules/question-axis-naming.md` forbids re-asking and requires **deriving**. Deriving
+> found the ticket's premise false: [`GoalCategory`](../blob/feat/goalpilot-implementation/app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt#L59)
+> (app-authored, closed at ten, **English labels hardcoded in `domain/model/`**, model-assigned as
+> `suggestedCategory`) and `LifeArea` (user-authored, open, Hebrew, coloured) are **already two
+> answers to one question** on the goal — so *"second axis or replacement"* was a **false fork
+> whose replacement half pointed at the wrong object**, and the duplication the ticket existed to
+> prevent shipped long ago. **Decision: `granularity ∈ DEEP · FRAGMENTED`**, two values, closed,
+> no `OTHER`, nullable; `R11`'s nine kinds live in the **prompt**, never in the schema. **The
+> decision is the agent's and is recorded as such** on `#20` and on `#12` — Ido can overturn any
+> of it.
+>
+> **Two things the next session must not re-derive.**
+> 1. **The `#12` commons race fired for a third time, during this session.** `c6-log-progress`
+>    appended `C6`'s line while this one worked — `cmp` caught it, the line was rebased onto the
+>    fresh body, and the write verified as **0 lines removed, 21 → 22 decisions**. The discipline
+>    is not ceremony; it has now paid three times (`c3`, `c1`, here).
+> 2. **`gh api --method PATCH -f body="$(cat …)"` cannot write this map any more.** The body is
+>    **103 KB** and the call dies with `Argument list too long` — and it dies *after* you think you
+>    have written it. Use `--input <file.json>`, and **verify the round-trip**; this session's
+>    first write silently did nothing and only the diff-back caught it.
+>
+> ⚠️ **Ruled out of scope and posted, not taken:** `GoalCategory`'s fate is a **goal**-model
+> question, so it went to [`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21)
+> (which already owns the last unsized migration) carrying a **third `C15` defect of a class it
+> filed twice** — a hardcoded English label in the domain layer — and a **`C17` gap**:
+> `Goal.lifeAreaId` went plural, `Goal.category` did not move with it.
+>
+> **Filed nothing. Graduated nothing. No singleton taken** — no Gradle, no device, no Firebase.
+> **No tests and none applicable**: Markdown and GitHub only, and `#12`'s standing preference is
+> *plan, don't do*.
+>
+> 🆕 **The claim reasoning, kept: `c2-task-type` claimed [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
 > — the ticket this board has declined six times, taken now because the objection that carried
 > every one of those refusals expired last night.** `/wayfinder 12` was invoked with the **map**,
 > not a ticket, so the pick was the agent's. Frontier **re-derived out of the dependencies API**
