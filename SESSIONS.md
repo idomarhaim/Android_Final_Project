@@ -186,9 +186,24 @@ before your first write. Normative rule:
 > filed twice** — a hardcoded English label in the domain layer — and a **`C17` gap**:
 > `Goal.lifeAreaId` went plural, `Goal.category` did not move with it.
 >
-> **Filed nothing. Graduated nothing. No singleton taken** — no Gradle, no device, no Firebase.
-> **No tests and none applicable**: Markdown and GitHub only, and `#12`'s standing preference is
-> *plan, don't do*.
+> 📥 **Two KB candidates filed, neither drained** —
+> [`kb-candidates/2026-08-13-c2-task-type.md`](kb-candidates/2026-08-13-c2-task-type.md).
+> Entry 1 (*a write is a hypothesis until you read it back* → `kb/dev/runtime-verification.md`) is
+> **ordinary, `AUTO MODE`-eligible and genuinely this session's** — the only undrained candidate in
+> that folder that is not ⛔ — and is held back for **one** reason: it is a cross-repo write into
+> `C:\Dev\JARVIS`, which is **live** (`picker-queue-merge`, claimed 00:37, four files uncommitted).
+> `kb/` is *not* in that session's claimed paths, so the ingest is legitimate — it needs a row on
+> **that** board plus `kb/index.md` and `kb/log/`, which is its own small unit. Entry 2 (*the fork
+> check must run against the code, not the ticket's statement of the fork* → `rules/`) is ⛔
+> **always-ask and doubly blocked**: destination `rules/`, **and** `rules/question-axis-naming.md`
+> is the exact file `picker-queue-merge` is merging six parked amendments into *as one reading*.
+> This would be a **seventh**, arriving mid-merge; it belongs in that reading, not raced beside it.
+> It is also **adjacent to `c9e`'s entry 2**, which proposes a second clause on the same section —
+> the two should merge into one clause rather than ship as two.
+>
+> **Filed two candidates, ingested none. Graduated nothing. No singleton taken** — no Gradle, no
+> device, no Firebase, and nothing in `C:\Dev\JARVIS` was written or claimed. **No tests and none
+> applicable**: Markdown and GitHub only, and `#12`'s standing preference is *plan, don't do*.
 >
 > 🆕 **The claim reasoning, kept: `c2-task-type` claimed [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
 > — the ticket this board has declined six times, taken now because the objection that carried

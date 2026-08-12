@@ -72,7 +72,31 @@ being wrong is cheap**, which every purpose the ticket itself proposed fails.
 defect of a class it filed twice** (a hardcoded English label in the domain layer) and a **`C17`
 gap**: `Goal.lifeAreaId` went plural, `Goal.category` did not move with it.
 
-**Filed nothing. Graduated nothing.** Unblocked `#30 · C11b`, the last blocked ticket on the map.
+**Graduated nothing.** Unblocked `#30 · C11b`, the last blocked ticket on the map.
+
+## 📤 KB candidates filed — two, neither drained
+
+[`kb-candidates/2026-08-13-c2-task-type.md`](../../kb-candidates/2026-08-13-c2-task-type.md).
+
+1. **A write is a hypothesis until you have read it back** → `kb/dev/runtime-verification.md`, a
+   new section on that page's write-side. 🟢 **Ordinary, `AUTO MODE`-eligible, and genuinely this
+   session's** — the only undrained candidate in the folder that is not ⛔. Held back for **one**
+   reason: it is a cross-repo write into `C:\Dev\JARVIS`, which is **live** — `picker-queue-merge`
+   claimed that board at 00:37 with four files uncommitted. `kb/` is **not** in its claimed paths,
+   so the ingest is legitimate; it needs a **row on that board** plus `kb/index.md` and
+   `kb/log/2026-08-13.md`, which is its own unit rather than a tail on this one.
+2. **The fork check must run against the code, not the ticket's own statement of the fork** →
+   `rules/question-axis-naming.md`. ⛔ **Always-ask and doubly blocked** — destination `rules/`,
+   **and** that exact file is what `picker-queue-merge` is merging **six** parked amendments into
+   *as one reading*. This would be a **seventh** arriving mid-merge, and it is **adjacent to
+   `c9e`'s entry 2**, which proposes another clause on the same section; the two should become one
+   clause rather than two. It belongs in that reading, not raced beside it.
+
+This is the finding the session is most likely to be judged on later, so it is stated plainly:
+**the picker was built on the ticket's framing and all four options were wrong.** Three greps of
+`domain/model/` falsified the premise in under a minute. The rule's widening check passed —
+because it was run over the two quantities the ticket *named*, never over the premise the ticket
+*assumed*.
 
 ---
 
