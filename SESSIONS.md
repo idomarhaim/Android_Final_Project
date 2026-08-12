@@ -15,7 +15,99 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `session-titles` | Ido's question, no map ticket — make a board label findable from the VS Code session picker (the extension can only search a session's **title**, so the label has to be written into it) | `CHANGELOG/2026-08-13/session-titles.md` *(new)*, `kb-candidates/2026-08-13-session-titles.md` *(new)*, this row. **No map ticket, no `#12` write, no source file** | none — no build, no device, no Firebase, and **no demand on Ido's attention beyond the reply**; the two live grillings are untouched | 2026-08-13 |
 | `c6-log-progress` | `/wayfinder 12` → resolve [#22 · `C6`](https://github.com/idomarhaim/Android_Final_Project/issues/22) (which fields a user may set by hand in LOG PROGRESS, whether a hand-set value corrects history or joins it, and what happens when it contradicts what completed tasks imply). Ticket claimed by assignee on GitHub | `CHANGELOG/2026-08-11/c6-log-progress.md` *(new)*, `docs/prototypes/2026-08-11-log-progress/` *(new, if the screen needs one — see §2 below)*, `kb-candidates/2026-08-11-c6-log-progress.md` *(new, if anything is flagged)*, GitHub issues **#22** and **#12** | **Ido's attention** — the third live HITL ticket on this map at once (`c12`'s prototype is at revision 3, `c8`'s grilling is 30 minutes old); see §3 below. No build, no device, no Firebase | 2026-08-11 |
+| `c5-endless-goals` | `/wayfinder 12` → resolve [#21 · `C5`](https://github.com/idomarhaim/Android_Final_Project/issues/21) (how endless and maintenance goals are modelled — what percentage an endless goal has if any, whether Ido's decay proposal survives, where recurrence lives in the schema, what decay does to history, and whether it costs points). Ticket claimed by assignee on GitHub **before any work** | `CHANGELOG/2026-08-13/c5-endless-goals.md` *(new)*, `kb-candidates/2026-08-13-c5-endless-goals.md` *(new, if anything is flagged)*, GitHub issues **#21** and **#12**, `SESSIONS.md` (**this row and its note only**) | **Ido's attention** — `c6-log-progress`'s row is still Active though it closed `#22` at `faddfc7`; see §0. No build, no device, no Firebase, no Gradle daemon, no emulator | 2026-08-13 |
+
+> 🆕 **`c5-endless-goals` claimed [#21 · `C5`](https://github.com/idomarhaim/Android_Final_Project/issues/21)
+> — the heaviest ticket on the map, and the only one of the three survivors whose blockers have
+> been closed *and released* long enough to be foreign state.** `/wayfinder 12` was invoked with
+> the **map**, not a ticket, so the pick was the agent's.
+>
+> **Frontier re-derived out of the dependencies API — twice, because it moved underneath the
+> derivation.** `/issues/12/sub_issues` enumerated, then every open child queried for
+> `blocked_by`. At session start (00:36): **25 children, 21 closed, 4 open**; frontier =
+> **`#21 · C5`** and **`#35 · C15b`**, with `#20 · C2` unblocked-but-assigned (`c2-task-type`,
+> live) and `#30 · C11b` blocked by `#20` alone. `#21` was claimed on that reading. Re-derived
+> after the claim, because two siblings released mid-session — `c6-log-progress` closed `#22` at
+> `faddfc7` (00:41) and `c2-task-type` closed `#20` at `b9d1be7` (00:43):
+>
+> | Ticket | Blocked by | Assignee | Verdict |
+> |---|---|---|---|
+> | `#21 · C5` | `#13` ✅ `#18` ✅ | `idomarhaim` | **frontier — CLAIMED** |
+> | `#30 · C11b` | `#19` ✅ `#20` ✅ `#24` ✅ `#29` ✅ | — | frontier — **newly unblocked by `#20` closing** |
+> | `#35 · C15b` | `#24` ✅ `#29` ✅ | — | frontier — left |
+>
+> **The map now has no blocked ticket at all** — three open, three unblocked — and this is the
+> first derivation of the effort where that is true. It also means **leverage discriminates
+> nothing**: closing any of the three unblocks nothing, because there is nothing left to unblock.
+>
+> **Why `#21`, and why the objection that refused it at every earlier derivation has expired.** `C5` was declined
+> by `c8-ai-task-plans` and again by `c6-log-progress` on a **subject** collision — *"`C5`'s decay
+> mechanic changes what a goal's **percentage** means, and a goal's percentage is what `#31`'s
+> charts render"*, with `c12-charts-presentation` then at revision 3 with Ido. **`#31` is closed
+> and released** (`22ac7d9`, 2026-08-12 20:52), so the collision is now foreign state to *read*,
+> exactly as `c2-task-type` argued when it took `#20` on the same shape of reasoning thirteen
+> minutes earlier. The four grounds older than that (proximity to the then-live `#19`, then `#28`) had already
+> expired. Both of `#21`'s own blockers — `C4` ([#13](https://github.com/idomarhaim/Android_Final_Project/issues/13))
+> and `C3` ([#18](https://github.com/idomarhaim/Android_Final_Project/issues/18)) — are closed and
+> long released.
+>
+> **The two declines:**
+> 1. **`#35 · C15b` — declined on a *freshness* collision.** It asks what happens to
+>    already-generated AI text when the language changes, and the **set of AI-generated fields was
+>    being rewritten while this session was choosing**: `c2-task-type` closed `#20` at 00:43,
+>    deciding whether a task carries an AI-assigned type at all. Resolving a policy *over* a field
+>    set that is being re-cut in the same minute is the refusal this board has made repeatedly. It
+>    is now takeable and is the natural next claim.
+> 2. **`#30 · C11b` — declined because it graduated onto the frontier ninety seconds before this
+>    row was written.** It is the per-feature output-format spec for **every** AI feature, and it
+>    was blocked by `#20` until `b9d1be7`; the resolution of `#20` is minutes old and has not been
+>    read by anything. It is also the map's terminal ticket by design (*"you cannot test a format
+>    nobody has designed yet"*), so taking it before the surviving decisions land inverts the map.
+>
+> **Three couplings, named on claiming rather than discovered later:**
+> 1. **`#12`'s *Decisions so far* is a commons and its race has fired for real twice.** Same
+>    discipline, no exceptions: **re-fetch `#12`'s body immediately before appending**, `cmp`
+>    against the copy the line was built on, write only this session's line, verify a pure
+>    insertion afterwards.
+> 2. **`C7` ([#14](https://github.com/idomarhaim/Android_Final_Project/issues/14)) already handed
+>    this ticket work by name** — *"The period is `C5`'s: `E18`'s '4 km' is settled here, 'a week'
+>    is [#21](https://github.com/idomarhaim/Android_Final_Project/issues/21)"* — and `C4`
+>    ([#13](https://github.com/idomarhaim/Android_Final_Project/issues/13)) **folded `E9`'s
+>    third-goal-kind invitation into this ticket rather than filing it**. Both are inputs to read,
+>    never decisions to reopen.
+> 3. **The ticket's own framing may be partly obsolete and it does not know it.** It asks *"what
+>    is its percentage, if it has one at all?"* — but `C7` since made **a measure optional, with
+>    absence the default** (`E6`), and `C4` made goal/milestone **roles carried by an edge**. So
+>    "endless" may already be sayable without a new kind. Read as an input; the ticket is not
+>    re-scoped unilaterally.
+>
+> 📥 **`kb-candidates/` listed before the first unit of work — five files, each opened rather
+> than inherited from the notes above.** [`c16`](kb-candidates/2026-08-10-c16-milestone-model.md)
+> ⚠️ and [`c9e`](kb-candidates/2026-08-10-c9e-event-lifecycle.md) ⛔ (both `rules/`),
+> [`c8`](kb-candidates/2026-08-12-c8-ai-task-plans.md) ⛔ (`rules/`),
+> [`c12`](kb-candidates/2026-08-12-c12-charts-presentation.md) (entry 1 always-ask, the rest held
+> by their own text), and a **fifth that is untracked and belongs to a session with no row on this
+> board** — `kb-candidates/2026-08-13-ux-backlog-triage.md`, alongside an untracked
+> `CHANGELOG/2026-08-13/ux-backlog-triage.md`. **None of the five is this session's**, so
+> `AUTO MODE` drains nothing here: the auto-ingest gate covers the candidates *the committing unit
+> produced*.
+>
+> ⚠️ **A live session is committing into this repo with no row on this board — again.**
+> `ux-backlog-triage` has two untracked files on disk and no claim. No row is written **for** them:
+> a row another session invents is a report, not a claim. They are holding
+> `CHANGELOG/2026-08-13/ux-backlog-triage.md` and `kb-candidates/2026-08-13-ux-backlog-triage.md`;
+> this session touches neither. **`c6-log-progress`'s row is also stale** — it closed `#22` at
+> `faddfc7` and has not released — and is deliberately **not** cleared here, because a released
+> row is that session's to write.
+>
+> 🛠 **The Unclaimed-work block further down is stale and is deliberately left alone** — it still
+> lists tickets as blocked behind `#19`. Two sessions have now flagged it without rewriting it, for
+> the same reason: it is a commons and a rewrite is the one edit that collides with everyone. The
+> authoritative frontier is the table at the top of this note.
+>
+> Recorded by `c5-endless-goals` on claiming.
 
 > ✅ **`c2-task-type` claimed and released 2026-08-13 — [#20 · `C2`](https://github.com/idomarhaim/Android_Final_Project/issues/20)
 > resolved and closed, and with it the map has **no blocked tickets left at all**.** Three open,
