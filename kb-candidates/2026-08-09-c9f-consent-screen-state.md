@@ -66,3 +66,32 @@ rule. Ido's call at the drain was **park it and be given the `rules/` proposal**
 draft is written to its canonical JARVIS home, uncommitted and unsynced, pending
 `/walkthrough`. This entry closes when he accepts or rejects that draft; if he rejects
 the `rules/` framing, it drains here as an ordinary `kb/dev/` page.
+
+> ✅ **Resolved 2026-08-10 — the status above is stale and is kept for the record rather
+> than rewritten.** The draft it describes as *"uncommitted and unsynced"* was **accepted
+> and shipped**: `C:\Dev\JARVIS\rules\claim-provenance.md`, commit `a7180c6`
+> (*"rules-drafts-ship: claim-provenance and question-axis-naming in force"*), listed in
+> [`rules/README.md`](file:///C:/Dev/JARVIS/rules/README.md) as *"Promoted 2026-08-10 from
+> GoalPilot `c9f-consent-screen-state`"* — this entry, by name. The entry's own close
+> condition (*"closes when he accepts or rejects that draft"*) was therefore met **two days
+> before this note**, and nothing has pointed at it since.
+>
+> **Two consequences, neither of them this visitor's to take.**
+> 1. **This file is now fully drained**, and `/kb-ingest` §7.5 would `git rm` it. It is
+>    **not** deleted here: deleting is always-ask regardless of derivability, and the
+>    carve-out for a fully-drained file applies only in *the same commit as the pages it
+>    produced* — that commit was `a7180c6`, two days ago. **Awaiting Ido's word.**
+> 2. **The rule shipped but never reached the file agents load.** `claim-provenance.md` is
+>    cited **nowhere** in `user-rules/my-rules.instructions.md`, while
+>    [`AGENTS.md`](file:///C:/Dev/JARVIS/AGENTS.md) line 77 states that file *"carries the
+>    same duties in the form the agent sees in **every** repo"*. So a session in **this**
+>    repo — the repo the rule was promoted from — cannot reach it. `decision-ladder.md` has
+>    the same gap. That is **one more sighting** of the `rules/` → `user-rules/` parity gap
+>    (*Inferred*: `picker-delegation-clause` counted six on 2026-08-11 and those six were not
+>    re-counted here), and it is named as a standing item in
+>    `C:\Dev\JARVIS\sessions\picker-queue-merge.md`.
+>
+> Annotated by `candidate-queue-audit` (visitor from `C:\Dev\JARVIS`, 2026-08-12) while
+> auditing the parked always-ask queue. The stale text above is **left intact on purpose**:
+> another session's committed reasoning is not silently rewritten, and how the status came
+> to be two days wrong is itself the evidence for the queue-surfacing problem.
