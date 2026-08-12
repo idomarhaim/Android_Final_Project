@@ -184,3 +184,44 @@ different angle.
 **Status.** 🟢 Ordinary, **`AUTO MODE`-eligible, and genuinely independent of entry 1** — it needs no
 page that entry 1 might create. It is the one entry in this file this session may drain on its own
 judgement, and it is the one being drained.
+
+---
+
+## 6 · A status is written by the session that files it and never revisited by the one that consumes it
+
+**Claim.** In any queue where an entry carries its **own** status line — a KB candidate, a TODO,
+a board row, a ticket description — the status is written **once**, by the session that files it,
+and the session that later **consumes** the entry closes its own work without going back to
+correct it. So the queue accumulates entries that are *finished in fact and open in text*, and
+every later reader repeats the stale text rather than re-deriving it. The listing habit does not
+catch this: **a listing shows filenames, and a filename cannot go stale.** What catches it is
+printing each entry's **status together with its age**, because an entry that has been "awaiting
+a decision" for days is not information — it is a question nobody answered.
+
+**Why.** Observed 2026-08-12/13. `kb-candidates/2026-08-09-c9f-consent-screen-state.md` declared
+its `rules/` draft *"uncommitted and unsynced, pending `/walkthrough`"*. That draft had shipped
+**two days earlier** as `rules/claim-provenance.md`, which credits the entry **by name** — so its
+own close condition was met and nothing pointed at it. **Four sessions re-reported it verbatim**
+as "parked, awaiting Ido", including this one, twice, in a board banner and a changelog. Each had
+listed the folder correctly; each then copied the previous session's *summary of the contents*
+rather than opening the file. The failure is structural, not sloppiness: nothing in the workflow
+gives the consumer a reason to return to the producer's text.
+
+**Rejected alternative:** "sessions should re-read every candidate" — that is what they believe
+they are doing, and it is what four of them did not do. The fix has to be **mechanical output**,
+not a reminder.
+
+**Destination.** `kb/dev/` — a page on queues whose entries carry their own state. Neighbouring,
+worth checking for overlap: whatever page entry 1 creates, and anything on board discipline.
+
+**Anchors.** `C:\Dev\JARVIS\scripts\Show-CandidateQueue.ps1` (the check, written for this) ·
+`C:\Dev\JARVIS` `f9364f1` · this repo `b5322e2`, `50200ac` · the deleted file's annotation, which
+survives in `b5322e2`.
+
+**Supersedes.** Nothing. It is the **generalisation** of what `candidate-queue-audit` found in one
+entry.
+
+**Status.** 🟢 Ordinary `kb/dev/` page material, **`AUTO MODE`-eligible in itself** — but **held
+with entry 1**, which is always-ask and may create the page this belongs in. Note the irony
+deliberately: this entry is now parked in exactly the queue it describes, which is why the check
+above was written rather than a note left here.
