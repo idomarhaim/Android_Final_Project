@@ -113,6 +113,35 @@ already historical. Within the hour: `c6-log-progress` **released** (#22 closed,
 `c5-endless-goals` **claimed #21**, and a `c2-task-type` session took **#20** and filed
 candidates. So of the three named, two were taken and the third (#35) is the one still open.
 
+## 📥 Ingested — `AUTO MODE`, `C:\Dev\JARVIS` commit `c5d1fb3`
+
+Ido switched the session to `AUTO MODE` and invoked `/kb-ingest`. Five candidates, **four
+ingested into two existing pages, zero new pages, one parked**:
+
+- 📥 *The picker searches title + branch only; the title is writable state* (with two
+  sub-claims: attribute a transcript by what it **wrote**, and check for a terminating newline
+  before appending to a file another process owns) → `kb/dev/claude-code-surfaces.md`, new
+  § *Session identity*.
+- 📥 *`git add -A` seen from the swept side, and the pathspec commit that defeats it* →
+  `kb/dev/agent-topology-and-routing.md`, § *Concurrent sessions*.
+- ⛔ *A sibling's liveness lives in its transcript, not its commits* → **held**. Destination
+  `rules/agent-topology-and-model-routing.md` §5.3, so always-ask in both modes, and it
+  **narrows** a standing claim — always-ask twice over. `AUTO MODE` drains neither.
+
+**Both bundle checks still matched at the drain**, which is why nothing new was created: the
+grep run at flag time and the grep run at ingest time found the same pages. `Check-KbLinks`
+**CLEAN at 65 pages**; nothing superseded. Journal: `kb/log/2026-08-13.md`, naming this
+candidate file **with its repo** — the tie that survives the ingest being cross-repo.
+
+A row was claimed and released on the **JARVIS** board for that write, since the board follows
+the repo being written to. The candidate file here is **rewritten down to its survivor**.
+
+**Eight other candidate files sit undrained in `kb-candidates/`** and none is this session's:
+`2026-08-10-c16-milestone-model`, `2026-08-10-c9e-event-lifecycle`,
+`2026-08-12-c12-charts-presentation`, `2026-08-12-c8-ai-task-plans`, `2026-08-13-c15b-stored-ai-text`,
+`2026-08-13-c19-area-success-failure`, `2026-08-13-c2-task-type`, `2026-08-13-c5-endless-goals`.
+Named rather than drained — they belong to other sessions.
+
 ## Files
 
 - `scratchpad/name_sessions.py` *(new, not in the repo — offered for `scripts/` if wanted)*

@@ -1,42 +1,55 @@
+---
+session: session-titles
+repo: c:\Dev\Android_Final_Project
+branch: feat/goalpilot-implementation
+created: 2026-08-13
+mode: AUTO MODE
+transcript: ~/.claude/projects/c--Dev-Android-Final-Project/ab9b1f29-be41-4fca-b5bf-6771da6c6e03.jsonl   # breadcrumb, never a source
+---
+
 # KB candidates — `session-titles`, 2026-08-13
 
-## 1. A Claude Code session's title is writable state, and it is the only handle the VS Code extension exposes
+**Drained 2026-08-13 under `AUTO MODE`.** Entries 1, 2, 3 and 5 are ingested into
+`C:\Dev\JARVIS\kb` — entries 1, 2 and 5 as one new *Session identity* section on
+`dev/claude-code-surfaces.md`, entry 3 as an extension to `dev/agent-topology-and-routing.md`
+§ *Concurrent sessions*. Journal: `kb/log/2026-08-13.md`. `Check-KbLinks` **CLEAN at 65 pages**.
+Nothing superseded.
 
-- **Claim:** In the Claude Code VS Code extension (read at v2.1.228), the session picker
-  filters on **title and git branch only** —
-  `filter(s => LN(s).includes(q) || s.gitBranch.value?.includes(q))`, `LN(s) = s.summary.value` —
-  never on the session UUID and never on transcript content. No contributed command accepts a
-  session id, and the extension registers no URI handler. So a cross-session reference
-  ("see `c6-log-progress`") is only clickable if the label is **in the title**.
-  The title itself is one appended JSONL record on the session's own transcript,
-  `{"type":"custom-title","sessionId":…,"customTitle":…}`, resolved
-  **`customTitle` → `aiTitle` → `lastPrompt` → `summary`** with head *and* tail scanned.
-- **Why:** Ten wayfinder sessions on one map, five of them opened with a byte-identical
-  first message, produced five indistinguishable picker rows — the fallback chain reaching
-  `lastPrompt`. Rejected alternatives: the CLI's `claude --resume <uuid>` (works, but it is a
-  terminal pane, not the panel Ido works in) and searching transcript content (the filter
-  does not read it).
-- **Destination:** `kb/dev/` — a page on Claude Code session identity, alongside the existing
-  agent-topology material. It bears directly on the JARVIS board convention, since the board
-  label is the string a human then has to find in an IDE.
-- **Anchors:** `~/.vscode/extensions/anthropic.claude-code-2.1.228-win32-x64/webview/index.js`
-  (filter, rename UI), `extension.js` (`renameSession`, record shapes). Version-stamped: this
-  is read from a shipped bundle and can change between releases.
-- **Supersedes:** nothing.
-- **Status:** pending.
+**This file is rewritten down to its survivor, not deleted** — entry 4 is always-ask in both
+modes and keeps its original number.
 
-## 2. Attribute a session by what it *wrote*, not by what it mentions
+## Standing — always-ask
 
-- **Claim:** To identify which transcript belongs to which JARVIS session label, count
-  **Write/Edit tool calls against `CHANGELOG/<date>/<label>.md`**, never mentions of that
-  path. Mentions are dominated by *reading* — any session that inspects a sibling's changelog
-  outranks the session that wrote it.
-- **Why:** The mention-count heuristic confidently labelled the session that had merely read
-  `c6-log-progress`'s changelog as being `c6-log-progress`. Cross-checked and corrected by the
-  session's own **claim commit hash**, which is unambiguous. Generalises past this repo:
-  agent-authored artifacts carry provenance in the tool call, not in the prose.
-- **Destination:** `kb/dev/` — same page as entry 1, or the session-forensics page if one
-  exists.
-- **Anchors:** none in-repo (the tool lives in the session scratchpad).
-- **Supersedes:** nothing.
-- **Status:** pending.
+## 4. ⛔ A sibling session's liveness lives in its transcript, not in its commits
+
+- **Claim:** To judge whether another session is still working, read **its transcript**
+  (`~/.claude/projects/<project>/<uuid>.jsonl` — last turn, mtime), not only its commits and
+  the working tree. A session mid-question makes no commits for hours and leaves the tree
+  clean, and is nonetheless live.
+- **Why:** This session told Ido that `c6-log-progress` had been *"silent for 44h"* and that
+  its claim on `#22` was probably stale — derived from `git log` alone, and **wrong**. The
+  transcript showed it working two hours earlier, with its own last status line reading
+  *"#22 is still open … the session is not finished."* Had the claim been treated as stale,
+  a second session would have taken a ticket that was three-quarters resolved. The board rule
+  already warns that an absent row is not proof (`SESSIONS.md`, `board-claim-scope`,
+  2026-08-06) and prescribes *read the log and the working tree* — both of which returned the
+  wrong answer here. The transcript is the signal that didn't.
+- **Destination:** ⛔ **`rules/agent-topology-and-model-routing.md` §5.3** — a behaviour change,
+  so **always-ask in both modes**, and the 🎬 walkthrough gate owns it.
+- **Checked bundle 2026-08-13.** `rg 'stale lease|stale claim|liveness|still working'` across
+  `kb/` → one hit, `dev/disclosure-is-not-a-gate.md`, a different subject. **Re-checked at the
+  drain:** §5.3 *What a session may conclude from state it did not write* was **written hours
+  earlier the same day** by `picker-queue-merge`, on exactly this diagnosis — *a conclusion
+  about another session is true only at the instant it is drawn, and every artifact §5 offers
+  for drawing one is lossy in a way its own contents do not reveal*. This is a **third clause**
+  for that section, beside (a) *a present row's date lies* and (b) *commit-don't-push does not
+  hold anything back*. It also supplies what §5.3 says it lacks: every sighting there is a
+  **reader misjudging**, and so is this one.
+- **Anchors:** `SESSIONS.md` (the `c6-log-progress` row and its release note),
+  transcript `3086aeaa-4ea7-4ee9-a692-b05d4b372546`,
+  `rules/agent-topology-and-model-routing.md` §5.3.
+- **Supersedes:** partially — it **narrows** §5's *"read the log and the working tree before
+  concluding it is released"* by adding a signal that outranks both. Superseding a standing
+  claim is itself always-ask, so this entry is doubly gated.
+- **Status:** pending — always-ask (`rules/`), and blocked on the 🎬 walkthrough. Not droppable;
+  carries into `/handoff`.
