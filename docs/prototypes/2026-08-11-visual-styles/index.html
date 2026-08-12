@@ -222,8 +222,13 @@
     background:var(--bgc,inherit);
     box-shadow:7px 7px 16px var(--sh), -7px -7px 16px var(--lo);}
   .st-neo .card{border-radius:var(--rad);padding:18px 19px;background:transparent}
-  .st-neo .seg{border-radius:999px;
-    box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
+  .st-neo .seg{border-radius:999px;padding:5px;
+    box-shadow:
+      inset 0 2.5px 2px color-mix(in srgb, var(--sh) 70%, transparent),
+      inset 8px 8px 16px var(--sh),
+      inset -7px -7px 15px var(--lo),
+      inset 0 -2px 1.5px var(--lo),
+      0 1px 0 var(--lo)}
   .st-neo .seg span{border-radius:999px}
   .st-neo .seg span.on{box-shadow:4px 4px 9px var(--sh), -4px -4px 9px var(--lo)}
   .st-neo .sep{background:var(--sh);opacity:.35}
@@ -248,12 +253,21 @@
     box-shadow:10px 10px 22px var(--sh), -8px -8px 20px var(--lo),
                inset 0 1px 0 rgba(255,255,255,.05);}
   .st-darkneo .card{border-radius:var(--rad);padding:19px 20px}
-  .st-darkneo .seg{border-radius:999px;
-    background:linear-gradient(158deg,#191D23,#20242C);
-    box-shadow:inset 6px 6px 14px rgba(0,0,0,.75), inset -5px -5px 12px rgba(255,255,255,.05)}
+  /* a recess is DARKER than the surface it is cut into, and it has two hard
+     edges: a near-black lip where the light is blocked at the top, and a bright
+     rim at the bottom where it spills out. Blur alone reads as a smudge. */
+  .st-darkneo .seg{border-radius:999px;padding:5px;
+    background:linear-gradient(180deg,#101419,#1C212A 62%,#232935);
+    box-shadow:
+      inset 0 2.5px 2px rgba(0,0,0,.95),
+      inset 9px 9px 18px rgba(0,0,0,.92),
+      inset -7px -7px 16px rgba(255,255,255,.055),
+      inset 0 -2px 1.5px rgba(255,255,255,.10),
+      0 1px 0 rgba(255,255,255,.055)}
   .st-darkneo .seg span{border-radius:999px}
   .st-darkneo .seg span.on{background:linear-gradient(120deg,var(--a1),var(--a2));color:#04121F;
-    box-shadow:0 4px 14px rgba(23,130,228,.5)}
+    box-shadow:0 5px 14px rgba(23,130,228,.55), 0 1px 3px rgba(0,0,0,.5),
+               inset 0 1px 0 rgba(255,255,255,.55)}
   .st-darkneo .sep{background:rgba(255,255,255,.07)}
   .st-darkneo .btn{border-radius:999px;padding:15px 22px;font-weight:700;font-size:14.5px;
     text-align:center;background:linear-gradient(110deg,var(--a2),var(--a1));color:#06121C;
@@ -297,9 +311,11 @@
     background:rgba(233,238,246,.80);
     box-shadow:7px 7px 16px rgba(120,138,166,.40), -7px -7px 16px rgba(255,255,255,.80);}
   .st-neo.shared .seg{
-    box-shadow:inset 5px 5px 11px rgba(0,0,0,.52), inset -5px -5px 11px rgba(255,255,255,.07)}
+    box-shadow:inset 0 2.5px 2px rgba(0,0,0,.6), inset 8px 8px 16px rgba(0,0,0,.55),
+      inset -7px -7px 15px rgba(255,255,255,.075), inset 0 -2px 1.5px rgba(255,255,255,.09)}
   .st-neo.shared[data-theme="light"] .seg{
-    box-shadow:inset 5px 5px 11px rgba(120,138,166,.40), inset -5px -5px 11px rgba(255,255,255,.85)}
+    box-shadow:inset 0 2.5px 2px rgba(120,138,166,.5), inset 8px 8px 16px rgba(120,138,166,.45),
+      inset -7px -7px 15px rgba(255,255,255,.9), inset 0 -2px 1.5px rgba(255,255,255,.95)}
   /* dark neo has the same problem as neo, one shade darker: its shadows need a
      charcoal to sit on. On the shared canvas it becomes a charcoal plate. */
   .st-darkneo.shared .card,.st-darkneo.shared .seg,.st-darkneo.shared .chip,
@@ -378,6 +394,33 @@ const rgbs=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).
 const mix=(h,to,a)=>rgbs(hx(h).map((v,i)=>v+(to[i]-v)*a));
 const lite=(h,a=.35)=>mix(h,[255,255,255],a);
 const dk=(h,a=.30)=>mix(h,[8,14,24],a);
+/* A REAL groove. feDropShadow casts OUTSIDE a shape, which is why the earlier
+   track read as a flat dark ring with a halo rather than as a channel milled
+   into the surface. An inner shadow has to be built: offset the alpha, blur it,
+   subtract it from the original, and fill what is left — that band is the wall
+   of the channel. Twice, opposite directions: dark where the light is blocked
+   (top-left) and a bright rim where it spills out (bottom-right). */
+function groove(id, darkC, liteC, d, blur, o1, o2){
+  return `<filter id="${id}" x="-35%" y="-35%" width="170%" height="170%">
+    <feOffset in="SourceAlpha" dx="${d}" dy="${d}" result="oa"/>
+    <feGaussianBlur in="oa" stdDeviation="${blur}" result="ba"/>
+    <feComposite operator="out" in="SourceAlpha" in2="ba" result="ma"/>
+    <feFlood flood-color="${darkC}" flood-opacity="${o1}" result="ca"/>
+    <feComposite operator="in" in="ca" in2="ma" result="sa"/>
+    <feOffset in="SourceAlpha" dx="${-d}" dy="${-d}" result="ob"/>
+    <feGaussianBlur in="ob" stdDeviation="${blur}" result="bb"/>
+    <feComposite operator="out" in="SourceAlpha" in2="bb" result="mb"/>
+    <feFlood flood-color="${liteC}" flood-opacity="${o2}" result="cb"/>
+    <feComposite operator="in" in="cb" in2="mb" result="sb"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="sa"/>
+      <feMergeNode in="sb"/></feMerge></filter>`;
+}
+/* the channel wall is not one flat tone — a cylinder cut into a solid is darker
+   where it faces the light source and lighter where it faces away */
+function wall(id, top, bot){
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="0.25" y2="1">
+    <stop offset="0%" stop-color="${top}"/><stop offset="100%" stop-color="${bot}"/></linearGradient>`;
+}
 const pol=(cx,cy,r,d)=>[cx+r*Math.cos(d*Math.PI/180), cy+r*Math.sin(d*Math.PI/180)];
 const arc=(cx,cy,r,a0,a1)=>{
   const [x0,y0]=pol(cx,cy,r,a0),[x1,y1]=pol(cx,cy,r,a1);
@@ -450,30 +493,32 @@ function donut(w, r, thick, style, centre, labels){
   /* the track, which is where the two soft-UI materials do their real work */
   let track='';
   if(style==='darkneo'){
-    defs+=`<filter id="${id}-ex" x="-45%" y="-45%" width="190%" height="190%">
-      <feDropShadow dx="5" dy="6" stdDeviation="6" flood-color="#05070A" flood-opacity=".85"/>
-      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#2AA6F0" flood-opacity=".26"/>
-      </filter>
-     <filter id="${id}-in" x="-35%" y="-35%" width="170%" height="170%">
-      <feDropShadow dx="4" dy="4" stdDeviation="5" flood-color="#05070A" flood-opacity=".9"/>
-      <feDropShadow dx="-4" dy="-4" stdDeviation="5" flood-color="#39414E" flood-opacity=".55"/>
-      </filter>`;
+    /* the channel is drawn WIDER than the arcs sitting in it, so its walls stay
+       visible on both sides — that is most of what makes it read as solid */
+    const ch=thick*1.30;
+    defs+=groove(`${id}-in`, '#000000', '#79879B', 4, 3.4, .95, .58)
+        + wall(`${id}-w`, '#12161C', '#2B323C')
+        + `<filter id="${id}-ex" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow dx="3" dy="4" stdDeviation="4" flood-color="#04060A" flood-opacity=".8"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".30"/>
+        </filter>`;
     track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
-      stroke="#1E232B" stroke-width="${thick}"/></g>`;
+        stroke="url(#${id}-w)" stroke-width="${ch}"/></g>
+      <circle cx="${cx}" cy="${cy}" r="${r+ch/2}" fill="none" stroke="rgba(255,255,255,.07)"
+        stroke-width=".9"/>
+      <circle cx="${cx}" cy="${cy}" r="${r-ch/2}" fill="none" stroke="rgba(0,0,0,.55)"
+        stroke-width=".9"/>`;
     segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
   } else if(style==='neo'){
-    defs+=`<filter id="${id}-in" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="2.5" dy="2.5" stdDeviation="3" flood-color="${dark?'#0b0e13':'#A3B1C6'}"
-        flood-opacity="${dark?.85:.75}"/>
-      <feDropShadow dx="-2.5" dy="-2.5" stdDeviation="3"
-        flood-color="${dark?'#3a4150':'#FFFFFF'}" flood-opacity="${dark?.55:.95}"/></filter>
-     <filter id="${id}-ex" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="3" dy="3" stdDeviation="3.4" flood-color="${dark?'#0b0e13':'#A3B1C6'}"
-        flood-opacity="${dark?.8:.62}"/>
-      <feDropShadow dx="-2.5" dy="-2.5" stdDeviation="3"
-        flood-color="${dark?'#3a4150':'#FFFFFF'}" flood-opacity="${dark?.45:.85}"/></filter>`;
+    const ch=thick*1.26;
+    defs+=groove(`${id}-in`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
+                 3.4, 3, dark?.92:.85, dark?.5:.95)
+        + wall(`${id}-w`, dark?'#1E222A':'#DDE3EC', dark?'#2C323C':'#F4F7FC')
+        + `<filter id="${id}-ex" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="2.5" dy="3" stdDeviation="3" flood-color="${dark?'#0b0e13':'#9DAAC0'}"
+          flood-opacity="${dark?.8:.55}"/></filter>`;
     track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
-      stroke="${dark?'#252A32':'#E7ECF3'}" stroke-width="${thick}"/></g>`;
+      stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
     segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
   } else {
     const tr = style==='metal'
@@ -527,25 +572,32 @@ function ring(size,pct,k,txt,style){
   if(style==='darkneo'){
     /* the reference's signature: a thick round-capped arc in the one accent
        gradient, glowing, sitting in a groove pressed into the charcoal */
-    const tk=size*.155;
+    const ch=size*.19, tk=ch*0.66, rr=(size-ch)/2;
     defs=`<linearGradient id="${id}-a" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stop-color="#1170E4"/><stop offset="100%" stop-color="#6FDEFF"/></linearGradient>
-      <filter id="${id}-i" x="-45%" y="-45%" width="190%" height="190%">
-        <feDropShadow dx="3" dy="3" stdDeviation="4" flood-color="#05070A" flood-opacity=".9"/>
-        <feDropShadow dx="-3" dy="-3" stdDeviation="4" flood-color="#39414E" flood-opacity=".5"/></filter>
-      <filter id="${id}-gl" x="-60%" y="-60%" width="220%" height="220%">
-        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#2AA6F0" flood-opacity=".55"/></filter>`;
-    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${(size-tk)/2}" fill="none"
-      stroke="#1E232B" stroke-width="${tk}"/></g>`;
-    bar=`<g filter="url(#${id}-gl)"><path d="${arc(c,c,(size-tk)/2,-90,-90+pct*3.6)}"
+        <stop offset="0%" stop-color="#1170E4"/><stop offset="100%" stop-color="#6FDEFF"/></linearGradient>`
+      + groove(`${id}-i`, '#000000', '#79879B', 3.2, 2.6, .95, .6)
+      + wall(`${id}-w`, '#12161C', '#2B323C')
+      + `<filter id="${id}-gl" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="2.4" flood-color="#04060A" flood-opacity=".75"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".6"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${rr}" fill="none"
+        stroke="url(#${id}-w)" stroke-width="${ch}"/></g>
+      <circle cx="${c}" cy="${c}" r="${rr+ch/2}" fill="none" stroke="rgba(255,255,255,.07)"
+        stroke-width=".8"/>`;
+    bar=`<g filter="url(#${id}-gl)"><path d="${arc(c,c,rr,-90,-90+pct*3.6)}"
       stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
   } else if(style==='neo'){
-    defs=`<filter id="${id}-i" x="-40%" y="-40%" width="180%" height="180%">
-      <feDropShadow dx="2" dy="2" stdDeviation="2.2" flood-color="${dark?'#0b0e13':'#A3B1C6'}" flood-opacity=".8"/>
-      <feDropShadow dx="-2" dy="-2" stdDeviation="2" flood-color="${dark?'#3a4150':'#fff'}" flood-opacity=".8"/></filter>`;
-    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${r}" fill="none"
-      stroke="${dark?'#252A32':'#E7ECF3'}" stroke-width="${th}"/></g>`;
-    bar=`<g filter="url(#${id}-i)">${bar}</g>`;
+    const ch=th*1.32, rr=(size-ch)/2;
+    defs=groove(`${id}-i`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
+                2.8, 2.4, dark?.9:.85, dark?.5:.95)
+      + wall(`${id}-w`, dark?'#1E222A':'#DDE3EC', dark?'#2C323C':'#F4F7FC')
+      + `<filter id="${id}-e" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow dx="2" dy="2.5" stdDeviation="2.4"
+          flood-color="${dark?'#0b0e13':'#9DAAC0'}" flood-opacity="${dark?.8:.55}"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${rr}" fill="none"
+      stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
+    bar=`<g filter="url(#${id}-e)"><path d="${arc(c,c,rr,-90,-90+pct*3.6)}" stroke="${col}"
+      stroke-width="${ch*0.68}" fill="none" stroke-linecap="round"/></g>`;
   } else if(style==='metal'){
     defs=`<linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${dk(col,.4)}"/><stop offset="22%" stop-color="${lite(col,.6)}"/>

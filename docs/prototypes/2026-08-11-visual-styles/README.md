@@ -36,6 +36,32 @@ Four separate files would each be a page you look at alone, and the question her
 That is also what makes "Compare all four" possible, which is the view the choice is actually
 made in.
 
+## The groove, rebuilt (2026-08-11)
+
+Ido: wherever there should be a **recess** — the donut's track, the day/week/month/year bar —
+it should look **deeper, more three-dimensional, like something solid**, per the Magnetic UI Kit
+reference.
+
+**The old one could not have worked, and the reason is mechanical.** It used `feDropShadow`,
+which casts **outside** a shape. On a ring that produces a dark halo around the track, never a
+channel cut into it. An inner shadow has to be **built**: offset the alpha, blur it, subtract it
+from the original — the band that survives *is* the wall of the channel — then flood it. Twice,
+in opposite directions: **dark where the light is blocked** (top-left) and a **bright rim where
+it spills out** (bottom-right).
+
+Three more moves, all of which the reference has and the old version did not:
+
+1. **The channel is wider than the arc sitting in it** (`×1.30`), so its walls stay visible on
+   both sides. This is most of what makes it read as solid rather than as a two-tone ring.
+2. **The wall carries a gradient**, dark where it faces the light and lighter where it faces
+   away — a cylinder cut into a solid is never one flat tone.
+3. **Two hairlines**, a bright one on the outer lip and a near-black one on the inner lip.
+   Blur alone reads as a smudge; an edge is what says *cut*.
+
+The **segmented bar** gets the same treatment in CSS: a background **darker than the card it sits
+in**, a hard near-black lip at the top, a bright rim at the bottom, and the selected pill
+extruded above it with its own shadow and glow.
+
 ## The balloon, named
 
 It was one specific thing: **`feSpecularLighting` over a fat stroke**. That filter simulates a

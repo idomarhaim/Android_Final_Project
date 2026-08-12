@@ -410,6 +410,38 @@ GoalPilot is dark-only or that light mode is a *different* material; and on the 
 takes **a plate**, like `neo` and for the same definitional reason, so it is the candidate that
 loses the most on a colourful background.
 
+## Revision 8 — the groove was built with the wrong filter, so no amount of tuning would have fixed it
+
+Ido, 2026-08-11: wherever there should be a **recess** — the donut track, the day/week/month/year
+bar — make it deeper, more three-dimensional, like something solid, per the Magnetic UI Kit
+reference. Posted as
+[the groove comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5269131005).
+
+**The finding is that the previous version could not have worked.** It used `feDropShadow`, which
+casts **outside** a shape — on a ring that is a dark halo *around* the track, never a channel
+*cut into* it. The failure was the **mechanism**, not the parameters, which is why it looked flat
+at every opacity tried. An inner shadow has to be built: offset the alpha, blur it, **subtract it
+from the original** — the surviving band *is* the wall — then flood it, twice, in opposite
+directions: dark where light is blocked, bright rim where it spills out.
+
+Three more things the reference has and the old version did not, each of which is a separate
+reason it read as printed rather than machined:
+
+1. **The channel is wider than the arc in it** (`×1.30`), so its walls stay visible on both
+   sides — in the reference the accent arc clearly sits *inside* a wider dark groove.
+2. **The wall carries a gradient**, dark facing the light and lighter facing away; a cylinder cut
+   into a solid is never one flat tone.
+3. **Two hairlines**, bright on the outer lip and near-black on the inner. **Blur alone reads as
+   a smudge; an edge is what says *cut*.**
+
+Applied to both soft-UI materials (`darkneo` and `neo`), on the donut track **and** the goal
+rings. The **segmented bar** gets the same reasoning in CSS: darker than the card it sits in — a
+recess always is — with a hard lip at the top, a bright rim at the bottom, and the selected pill
+**extruded above** it, so the contrast between pressed-in and raised-out carries the depth.
+
+Still **no `feSpecularLighting` anywhere**: the depth here is channel geometry, not simulated
+roundness, which is what the balloon complaint was about in the first place.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -451,7 +483,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 7 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 8 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the
