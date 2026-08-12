@@ -430,6 +430,14 @@ function wall(id, top, bot){
 const pol=(cx,cy,r,d)=>[cx+r*Math.cos(d*Math.PI/180), cy+r*Math.sin(d*Math.PI/180)];
 /* a CLOSED annular sector — a stroked arc has no outline, and without an
    outline there is no body to extrude and no face to light */
+/* A label that runs off the card is not a label. SVG cannot wrap or ellipsise,
+   so the budget has to be computed: the space left on that side, minus what the
+   percentage will take. Found by rendering the real card, not by reading code. */
+function clampLabel(name, avail, pct){
+  const CW=4.9, need=(' '+pct+'%').length*CW;
+  const max=Math.max(3, Math.floor((avail-need)/CW));
+  return name.length>max ? name.slice(0,max-1)+'…' : name;
+}
 function sector(cx,cy,ro,ri,a0,a1){
   const [x0,y0]=pol(cx,cy,ro,a0), [x1,y1]=pol(cx,cy,ro,a1);
   const [x2,y2]=pol(cx,cy,ri,a1), [x3,y3]=pol(cx,cy,ri,a0);
@@ -491,10 +499,20 @@ function donut(w, r, thick, style, centre, labels){
          so no neighbour's wall can ever land on top of a face.
      Soft-UI materials only; height would contradict glass, liquid and metal. */
   const RZ = RAISED && (style==='neo'||style==='darkneo');
+  let bevDefs='';
   const ch = thick*1.30;              // the channel, as cut by the groove
-  const bw = ch*0.66;                 // the block, deliberately narrower
+  /* The body must FIT the channel, walls included — so the extrusion is part of
+     the width budget, not an addition to it. h is the height, the block is what
+     is left over, and the body is centred by offsetting the face half a height
+     toward the light. Then nothing can reach a wall of the groove even before
+     the clip catches it. */
+  const H  = RZ ? ch*0.34 : 0;
+  const HX = H*0.58, HY = H*0.81;     // one light direction: from the top-left
+  /* the body is CENTRED in the channel, so it swings only ±H/2 — the margin
+     owed is H, not 2H. Budgeting 2H is what made the blocks thin. */
+  const bw = RZ ? ch*0.62 : ch*0.66;
+  const fx = cx-HX/2, fy = cy-HY/2;   // face centre, half a height up-light
   const ro = r+bw/2, ri = r-bw/2;
-  const HX = 3.6, HY = 5.0;           // extrusion vector: away from the light
   let walls='', faces='';
 
   AREAS.forEach(a=>{
@@ -504,27 +522,71 @@ function donut(w, r, thick, style, centre, labels){
     pts.push({a,mid:(a0+a1)/2,f}); acc+=f;
 
     if(RZ){
-      const face = sector(cx,cy,ro,ri,a0,a1);
-      defs+=`<linearGradient id="${id}-f${a.k}" x1="0" y1="0" x2="0.35" y2="1">
-          <stop offset="0%"   stop-color="${lite(c,.40)}"/>
-          <stop offset="52%"  stop-color="${c}"/>
-          <stop offset="100%" stop-color="${dk(c,.12)}"/></linearGradient>
-        <linearGradient id="${id}-o${a.k}" x1="0" y1="0" x2="0.2" y2="1">
-          <stop offset="0%"   stop-color="${dk(c,.24)}"/>
-          <stop offset="100%" stop-color="${dk(c,.50)}"/></linearGradient>`;
-      /* four faces, each with its own tone, because a face is what a solid has
-         and a silhouette is not one. Draw order is irrelevant among the walls —
-         the top face covers whichever of them faces away from the viewer. */
+      const face = sector(fx,fy,ro,ri,a0,a1);
+      const mid=(a0+a1)/2;
+      const L0=cx-r-thick, L1=cy-r-thick, L2=cx+r+thick, L3=cy+r+thick;
+      /* userSpaceOnUse, spanning the WHOLE chart: an objectBoundingBox gradient
+         is relative to each slice's own box, so every block ends up lit from a
+         different direction and the ring stops being one scene. This is one
+         light, from the top-left, for every face and every wall. */
+      defs+=`<linearGradient id="${id}-f${a.k}" gradientUnits="userSpaceOnUse"
+          x1="${L0}" y1="${L1}" x2="${L2}" y2="${L3}">
+          <stop offset="0%"   stop-color="${lite(c,.46)}"/>
+          <stop offset="50%"  stop-color="${c}"/>
+          <stop offset="100%" stop-color="${dk(c,.20)}"/></linearGradient>
+        <linearGradient id="${id}-o${a.k}" gradientUnits="userSpaceOnUse"
+          x1="${L0}" y1="${L1}" x2="${L2}" y2="${L3}">
+          <stop offset="0%"   stop-color="${dk(c,.14)}"/>
+          <stop offset="100%" stop-color="${dk(c,.44)}"/></linearGradient>
+        <clipPath id="${id}-fc${a.k}"><path d="${face}"/></clipPath>`;
+      /* CONTACT SHADOW. Half the ring never shows a wall — the light comes from
+         one direction, so the blocks on the lit side present only their face.
+         Those blocks were reading as flat plates because nothing tied them to
+         the floor of the groove. An object in a scene casts onto what it sits
+         on; without that it is a decal. Drawn first, so every wall and face
+         lands on top of it. */
       walls+=
-        `<path d="${wallStrip(cx,cy,ro,a0,a1,HX,HY)}" fill="url(#${id}-o${a.k})"/>`   // outer wall
-      + `<path d="${wallStrip(cx,cy,ri,a0,a1,HX,HY)}" fill="${dk(c,.56)}"/>`          // inner wall
-      + `<path d="${endCap(cx,cy,ro,ri,a0,HX,HY)}" fill="${dk(c,.40)}"/>`             // the two
-      + `<path d="${endCap(cx,cy,ro,ri,a1,HX,HY)}" fill="${dk(c,.46)}"/>`;            // slab ends
-      /* the FOLD: a hairline where a wall meets the top face. Without it the
-         wall and the face merge into one gradient and the body flattens. */
+        `<path d="${sector(fx+HX*0.75,fy+HY*0.75,ro+H*0.5,ri-H*0.5,a0-1.4,a1+1.4)}"
+           fill="#000" opacity=".72" filter="url(#${id}-ao)"/>`
+      + `<path d="${wallStrip(fx,fy,ro,a0,a1,HX,HY)}" fill="url(#${id}-o${a.k})"/>`
+      + `<path d="${wallStrip(fx,fy,ri,a0,a1,HX,HY)}" fill="${dk(c,.46)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a0,HX,HY)}" fill="${dk(c,.22)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a1,HX,HY)}" fill="${dk(c,.32)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a0,HX,HY)}" fill="none" stroke="${lite(c,.30)}"
+           stroke-width=".8" opacity=".7"/>`
+      /* the FOLD, where the face turns into the wall — one line, on the one
+          edge that actually folds, so it defines the envelope instead of
+          outlining the shape */
+      + `<path d="${arc(fx,fy,ro,a0,a1)}" fill="none" stroke="${lite(c,.18)}"
+           stroke-width="1.1" opacity=".8"/>`
+      /* and the RIM, but ONLY where a wall is actually facing the viewer. On a
+          slice whose outer face turns away from the extrusion there is no wall
+          to catch light, and drawing the rim anyway puts a bright line around a
+          block that has no side — which is a frame again, on exactly the small
+          slices where it is most visible. */
+      + (Math.cos(mid*Math.PI/180)*0.58 + Math.sin(mid*Math.PI/180)*0.81 > 0.12
+          ? `<path d="${arc(fx+HX,fy+HY,ro,a0,a1)}" fill="none" stroke="${lite(c,.34)}"
+               stroke-width="1.1" opacity=".42"/>` : '');
+      /* Edges are DIRECTIONAL. A rim drawn all the way round is a white frame,
+         and a frame is the one thing that guarantees a shape reads as flat —
+         it says "sticker", not "solid". Light bevel only where the face turns
+         toward the light; dark fold only where it turns down into a wall. Both
+         clipped to the face, so they are bevels on the plane rather than an
+         outline around it. */
+      /* A stroked rim — even an offset one — is still a LINE, and a line all
+         round a shape is a frame. A bevel is not a line: it is the face itself
+         catching more light near the edge that turns toward the source. So the
+         highlight is a soft gradient wash clipped to the face, brightest at the
+         up-light border and gone within a third of the block, with the matching
+         shadow wash from the opposite side. No outline anywhere. */
       faces+=`<path d="${face}" fill="url(#${id}-f${a.k})"/>
-        <path d="${face}" fill="none" stroke="${lite(c,.55)}" stroke-width="1.1"
-          stroke-linejoin="round" opacity=".85"/>`;
+        <g clip-path="url(#${id}-fc${a.k})">
+          <rect x="${L0}" y="${L1}" width="${L2-L0}" height="${L3-L1}" fill="url(#${id}-bev)"/>
+          <rect x="${L0}" y="${L1}" width="${L2-L0}" height="${L3-L1}" fill="url(#${id}-shd)"/>
+          <path d="${sector(fx,fy,ro-0.7,ri+0.7,a0,a1)}" fill="none"
+            stroke="${lite(c,.75)}" stroke-width="1" opacity=".55"
+            transform="translate(${-HX*0.30},${-HY*0.30})"/>
+        </g>`;
       return;
     }
 
@@ -581,11 +643,21 @@ function donut(w, r, thick, style, centre, labels){
      clip is the channel annulus itself, so a body physically cannot cross a
      wall of the groove. */
   if(RZ){
-    /* widened by the extrusion, on purpose: a bar that rises out of a groove
-       does extend past the groove's mouth, and clipping that away is what makes
-       a raised block look flush. The face stays narrower than the channel, so
-       nothing here re-opens the "blocks cut the walls" defect. */
-    const co=r+ch/2+HY+1, ci=r-ch/2-HY-1;
+    const G0=cx-r-thick, G1=cy-r-thick, G2=cx+r+thick, G3=cy+r+thick;
+    defs+=`<filter id="${id}-ao" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="${Math.max(1.6,H*0.42)}"/></filter>
+      <linearGradient id="${id}-bev" gradientUnits="userSpaceOnUse"
+        x1="${G0}" y1="${G1}" x2="${G2}" y2="${G3}">
+        <stop offset="0%"  stop-color="#ffffff" stop-opacity=".34"/>
+        <stop offset="34%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${id}-shd" gradientUnits="userSpaceOnUse"
+        x1="${G2}" y1="${G3}" x2="${G0}" y2="${G1}">
+        <stop offset="0%"  stop-color="#000000" stop-opacity=".30"/>
+        <stop offset="30%" stop-color="#000000" stop-opacity="0"/></linearGradient>`;
+    /* strict again, and this time it costs nothing: the block was sized as
+       ch - 2H, so the whole body already fits between the walls and the clip
+       never has anything to cut. It is a guarantee, not a crop. */
+    const co=r+ch/2, ci=r-ch/2;
     defs+=`<clipPath id="${id}-clip"><path fill-rule="evenodd" d="
       M ${cx-co} ${cy} a ${co} ${co} 0 1 0 ${co*2} 0 a ${co} ${co} 0 1 0 ${-co*2} 0 Z
       M ${cx-ci} ${cy} a ${ci} ${ci} 0 1 0 ${ci*2} 0 a ${ci} ${ci} 0 1 0 ${-ci*2} 0 Z
@@ -653,18 +725,22 @@ function donut(w, r, thick, style, centre, labels){
       return {p, s:Math.cos(p.mid*Math.PI/180)>=0?1:-1, x, y, ty:y};});
     [1,-1].forEach(sg=>{
       const g=rows.filter(o=>o.s===sg).sort((a,b)=>a.ty-b.ty);
-      for(let i=1;i<g.length;i++) if(g[i].ty-g[i-1].ty<16) g[i].ty=g[i-1].ty+16;
+      for(let i=1;i<g.length;i++) if(g[i].ty-g[i-1].ty<15) g[i].ty=g[i-1].ty+15;
       const ov=g.length?g[g.length-1].ty-(h-14):0;
       if(ov>0) g.forEach(o=>o.ty-=ov);});
     rows.forEach(o=>{
-      const ex=cx+o.s*(R+13), lx=cx+o.s*(R+19), c=cc(o.p.a.k);
+      const ex=fx+o.s*(R+8), lx=fx+o.s*(R+13), c=cc(o.p.a.k);
+      /* one line, not two. Two stacked lines need ~22px of vertical room and the
+         de-collision only guarantees 15, so on the crowded side the name of one
+         area landed on the percentage of the next — visible in a full render,
+         invisible in the geometry. */
       lab+=`<path d="M ${o.x} ${o.y} L ${ex} ${o.ty} L ${lx} ${o.ty}" fill="none" stroke="${c}"
           stroke-width="1.2" opacity=".8" stroke-linecap="round"/>
         <circle cx="${lx}" cy="${o.ty}" r="2.3" fill="${c}"/>
-        <text x="${lx+o.s*7}" y="${o.ty-1}" text-anchor="${o.s>0?'start':'end'}" font-size="11"
-          font-weight="640" fill="var(--fg)">${T(CAT[o.p.a.k])}</text>
-        <text x="${lx+o.s*7}" y="${o.ty+11}" text-anchor="${o.s>0?'start':'end'}" font-size="9.5"
-          font-weight="600" fill="var(--fg2)">${Math.round(o.p.f*100)}%</text>`;});
+        <text x="${lx+o.s*7}" y="${o.ty+3.5}" text-anchor="${o.s>0?'start':'end'}" font-size="10.5"
+          font-weight="640" fill="var(--fg)">${clampLabel(T(CAT[o.p.a.k]),
+            o.s>0 ? w-(lx+7)-3 : (lx-7-3), Math.round(o.p.f*100))}<tspan font-size="9.5"
+          font-weight="600" fill="var(--fg2)"> ${Math.round(o.p.f*100)}%</tspan></text>`;});
   }
 
   return `<div style="position:relative;width:${w}px;height:${h}px;flex:none">
@@ -818,7 +894,7 @@ function screen(style){
         <div class="row" style="align-items:baseline;margin-bottom:4px">
           <div class="grow"><div class="h3">${t('This week','השבוע')}</div>
           <div class="sub2">${t('Where the time went','לאן הלך הזמן')}</div></div></div>
-        ${donut(310, 58, style==='metal'?22:20, style,
+        ${donut(310, 50, style==='metal'?20:18, style,
           `<div><div style="font-size:20px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
            <div style="font-size:9.5px;opacity:.65;font-weight:600">${EMPTY
              ? t('of a 26h week','מתוך שבוע של 26 ש׳') : t('tracked','נמדדו')}</div></div>`, true)}

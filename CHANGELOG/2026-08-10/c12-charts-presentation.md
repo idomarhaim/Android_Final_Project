@@ -543,6 +543,41 @@ faces and the same fold, so a ring and the donut on one screen are made of the s
 four constants. Neither is structural any more, which is the difference between this round and
 the last two.
 
+## Revision 12 — a screenshot loop, because reading the code was never going to catch this
+
+Ido, 2026-08-12: still cutting the channel, still not a solid, *"maybe partly because the white
+frame is only on the top face — check it yourself"* — and, decisively: **take the screenshot
+myself after every change, judge it against his requirement without him in the loop, and keep
+looping**, reporting result / remaining defects / planned fix at the end of each round.
+
+**The instrument came first, and it is the finding.** Headless Edge renders the prototype and a
+probe page that draws only the donut, so each round ends with an image that gets *looked at*
+rather than reasoned about. Eight of the nine defects below were **invisible in the source** and
+obvious in the render — including two nobody had reported.
+
+| round | what the render showed | fix |
+|---|---|---|
+| 1 | blocks crossed the groove walls | extrusion budgeted **inside** the channel width, body centred, strict clip |
+| 2 | walls too dark to register; blocks thin | margin is `H`, not `2H`; walls lightened |
+| 3 | the white rim was a **frame** — Ido's own suspicion, confirmed | rim replaced by a **bevel wash**: light where the face turns to the light, shadow opposite, no outline |
+| 4 | no change — the contact shadow was hidden **behind its own caster** | — |
+| 5 | shadow now visible | shadow drawn **larger than the block**; block narrowed so channel shows |
+| 6 | wall present but shallow | taller extrusion, **fold line** at face↔wall, **rim light** on the wall silhouette |
+| 7 | rim light became a frame on small slices | rim drawn **only where a wall actually faces the viewer** (`normal · light > 0.12`) |
+| 8 | *(full card)* left labels **collided** | one line per label instead of two |
+| 9–10 | *(full card)* `Relationships` **ran off the card** | label clamped to real available width; leaders shortened; ring sized down |
+
+**One light for the whole chart** also landed in round 1 and is the least visible, most important
+of them: the face gradients were `objectBoundingBox`, i.e. **relative to each slice's own box**,
+so every block was lit from a different direction and the ring could not read as one scene.
+
+**What is still true and is not a defect:** on the lit side the blocks present only their face,
+because there is one light and one view direction — that is what an extruded ring does. And
+`Relationships` truncates at 310 dp, which is a width fact, not a rendering one.
+
+**Verified after the final round:** `node --check` OK · Hebrew guard 0 unguarded · no
+`feSpecularLighting` · all five materials re-rendered together with no regression.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -593,7 +628,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 11 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 12 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the
