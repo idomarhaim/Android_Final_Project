@@ -1,0 +1,125 @@
+# c11b-output-formats — claiming #30 · `C11b`, the map's terminal ticket, after three declines
+
+**Session:** `c11b-output-formats` · **Date:** 2026-08-13 · **Mode:** `AUTO MODE`
+**Branch:** `feat/goalpilot-implementation` · **Ticket:** [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30)
+**Invoked as:** `/wayfinder 12` — the **map**, no ticket named, so the pick was the agent's.
+
+## The claim
+
+**[#30 · `C11b` — *The output-format spec for every AI feature*](https://github.com/idomarhaim/Android_Final_Project/issues/30)**,
+assigned to `idomarhaim` on GitHub **before any other work**. Per the wayfinder skill the assignee
+*is* the claim, so the claim does not depend on this commit.
+
+## Frontier derivation — and it ran the two-directional check the last two sessions established
+
+Both halves were run, because each catches what the other cannot:
+
+```
+gh api …/issues/12/sub_issues   → 26 children, 23 closed, 3 open   (aggregate — state is untrusted)
+gh issue view 30|35|41          → each open child confirmed DIRECTLY (c15b's rule)
+gh issue list --state open      → 15 open in the repo, all accounted for (c19's cross-check)
+```
+
+The three open children (`#30`, `#35`, `#41`) plus the map `#12` plus eleven non-map issues
+(`#2`–`#11`, `#34`, `#36`) = **15**, matching the repo-wide query exactly. Nothing hiding behind a
+stale `closed`, nothing reported open that had closed. `blocked_by` queried directly per ticket.
+
+| Ticket | `blocked_by` | Assignee | Verdict |
+|---|---|---|---|
+| `#30 · C11b` | `#19` ✅ `#20` ✅ `#24` ✅ `#29` ✅ | — | **frontier — CLAIMED** |
+| `#35 · C15b` | `#24` ✅ `#29` ✅ | `idomarhaim` | claimed by `c15b-stored-ai-text` (live at derivation; **closed minutes later**) |
+| `#41 · C19` | *(none)* | `idomarhaim` | claimed by `c19-area-success-failure` (live) |
+
+**The frontier — open, unblocked, unassigned children — was exactly `{#30}`.** Not a pick among
+candidates: the other two open tickets were both under live claim, so there was one takeable ticket
+or none.
+
+## Why `#30` is taken now, after `c5-endless-goals`, `c15b-stored-ai-text` and `c19-area-success-failure` each declined it
+
+Three sessions declined it as *terminal by design*, on the map's own sentence — *"you cannot test a
+format nobody has designed yet."* **That sentence is a sequencing rule, not a prohibition, and
+sequencing rules expire by being satisfied.** `#30`'s body names its condition precisely: *"It is
+deliberately blocked on all four features it serves"* — `C1` (#19), `C2` (#20), `C8` (#24), `C10`
+(#29). **All four are closed, and `C2` §6 recorded #30 as "now fully unblocked — this was its last
+open blocker."**
+
+The two declines that were **not** about the four blockers were checked rather than inherited:
+
+1. **`c15b`'s ground — *"`#41` is an open, unresolved, AI-touching ticket."*** `#41`'s body was
+   read. Its four questions are *is an abandoned goal a failure*, *does a failure age out*, *what is
+   the view*, and *how does it avoid being a list of things you are bad at*. **None asks the model
+   for anything**; it is a view over `C9a` occurrence states, labelled `wayfinder:prototype`. It
+   adds no fifth AI feature, so it is not one of the four `#30` waits on.
+2. **`c19`'s ground — *"`#30` fixes a field contract `#35` is mid-way through deciding."*** Real at
+   the time, and **it expired during this session's fact pass: `#35` closed.** Its resolution is now
+   an input rather than a collision, and it is a strong one — *no AI prose is persisted server-side
+   at all*, so `#30` writes **response** schemas over nothing `#35` still owns. `C15`'s resolution
+   had already drawn that boundary explicitly, leaving `#30` only *"the per-feature veto where the
+   model's Hebrew is not good enough."*
+
+**What is honestly conceded:** `#30` is `wayfinder:grilling`, so it is HITL, and Ido's attention is
+contended — `c19-area-success-failure` holds a live prototype ticket and a 🎬 offer is owed from
+`picker-queue-merge`. That is recorded in the board's Singletons column rather than glossed, and it
+is the reason the fact pass ran **first**: `#30`'s four bullets are largely answered by closed
+tickets, so what reaches him should be small.
+
+**Leverage, stated plainly:** `#30` is the **last** ticket on this map. The destination is *"the map
+is done when the spec is whole and no ticket is open"*, and closing `#30` and `#41` is all that
+stands between here and that. A terminal ticket that every session declines is a map that never
+finishes.
+
+## The `#12` commons — the coupling named on claiming, not discovered later
+
+The map's *Decisions so far* is a commons whose race has fired for real three times (`c3`, `c1`,
+`c2-task-type`). Discipline for the resolution append, unchanged: **re-fetch `#12`'s body
+immediately before writing, `cmp` against the copy the line was built on, write only this session's
+line, verify a pure insertion.** The body is **~99 KB**, so `gh api --method PATCH -f body="$(cat …)"`
+**dies with `Argument list too long` after you believe you have written it** — two sessions have paid
+for that. Use `--input <file.json>` and verify the round-trip. State read tonight: **24 decision
+lines** (23 plus `C15b`'s, appended minutes ago), **4 fog bullets**.
+
+## Staging — the cross-contamination this board has recorded four times was avoided, mechanically
+
+`c15b-stored-ai-text` wrote its **57-line release note** into `SESSIONS.md` while this row was being
+written. `git add SESSIONS.md` would have swept it — plus their own row-removal — into this claim
+commit, which is exactly the failure `c5-endless-goals`, `picker-queue-merge` and
+`c19-area-success-failure` each recorded suffering tonight, and which per-file staging **cannot**
+prevent, because it stops *you* sweeping a sibling in and says nothing about one commons file
+holding two sessions' edits.
+
+There is a clean fix and it is mechanical, non-destructive, and does not touch the working tree:
+
+```bash
+git show HEAD:SESSIONS.md > head.md          # reconstruct the committed file
+#   …insert this session's row into head.md, and nothing else…
+SHA=$(git hash-object -w staged.md)          # write a blob that is HEAD + one row
+git update-index --cacheinfo 100644,$SHA,SESSIONS.md
+```
+
+The index then holds `HEAD + my row`; the working tree still holds **everything**, including their
+release note, which stays theirs to commit. **Verified: `git diff --cached --stat` reported
+`SESSIONS.md | 1 +`, a single insertion.** Filed as a KB candidate — this generalises past
+`SESSIONS.md` to any commons two sessions edit concurrently.
+
+## 📥 `kb-candidates/` listed before the first unit of work — six files, each opened
+
+`Status` and `Destination` read out of the files themselves, not inherited from board notes. The
+three that `picker-queue-merge` drained (`c16`, `c9e`, `c8`) are **gone**, deleted at `912d4bc`.
+
+| File | Status |
+|---|---|
+| [`c12-charts-presentation`](../../kb-candidates/2026-08-12-c12-charts-presentation.md) | entry 1 ⏸️ always-ask; entries 2–4 🟢 held by their own text |
+| [`c2-task-type`](../../kb-candidates/2026-08-13-c2-task-type.md) | entry 1 🟢 held on a cross-repo hold into `C:\Dev\JARVIS`; entry 2 ⛔ `rules/` |
+| [`c5-endless-goals`](../../kb-candidates/2026-08-13-c5-endless-goals.md) | ⛔ `rules/question-axis-naming.md`, parked, 🎬 offer owed |
+| [`session-titles`](../../kb-candidates/2026-08-13-session-titles.md) | ⛔ `rules/agent-topology-and-model-routing.md` §5.3, 🎬 offer owed |
+| [`c15b-stored-ai-text`](../../kb-candidates/2026-08-13-c15b-stored-ai-text.md) | entry 1 🟢 cross-repo hold; entry 2 ⛔ `rules/` — the **eighth** parked amendment to one file |
+| [`c19-area-success-failure`](../../kb-candidates/2026-08-13-c19-area-success-failure.md) | 🟢 cross-repo hold, same section as `c2`'s and `c15b`'s entry 1 |
+
+**None of the six is this session's**, so `AUTO MODE` drains nothing here — the auto-ingest gate
+covers the candidates *the committing unit produced*.
+
+## 🧪 Tests
+
+**None, and none applicable.** This commit is Markdown plus GitHub metadata; the map's standing
+preference is **plan, don't do**, and no ticket on `#12` ships code. No build, no device, no
+Firebase, no Gradle daemon, no emulator — no singleton taken.
