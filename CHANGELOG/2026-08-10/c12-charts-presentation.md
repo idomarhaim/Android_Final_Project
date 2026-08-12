@@ -383,6 +383,33 @@ Implementation note kept small on purpose: the shared canvas is **two class sele
 (`.st.shared`), which outranks each material's own single-class background rule without touching
 any of them — so the native rendering is preserved exactly rather than reconstructed.
 
+## Revision 7 — a fifth material, and picking it would make an earlier decision load-bearing
+
+Ido, 2026-08-11, with a reference image: add another style to the comparison — dark soft-UI with
+a single neon accent. Added as **Dark neo · one neon accent**; *Compare all five* now shows it
+beside the rest on the shared canvas. Posted as
+[the fifth-material comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5268733102).
+
+**The finding is a coupling nobody would see from the reference image.** The style's mechanism is
+that **exactly one** saturated gradient exists and everything else is monochrome — that is what
+makes the accent read as bright. But this app's donut has to show **six life areas**. Six
+saturated hues would destroy the single-accent idea outright, so the honest rendering is a
+**ramp of the accent**, and the consequence is that **colour stops carrying category identity**:
+in the other four materials purple *means* Studies, here the slices are five shades of one hue.
+
+**That is survivable only because of a decision already taken.** C12 rev 4 put the life-area
+**name directly beside every slice**, so identity is carried by the label rather than the colour.
+Without those labels this style would not be a candidate for this app at all — which means
+**picking dark neo makes the direct labels load-bearing rather than a nicety**, and that is now
+on the record for him before he chooses rather than after.
+
+Two smaller facts stated rather than left to be discovered: it is **a dark-mode style with no
+real light scheme** — forcing it light yields an ordinary grey soft-UI that is neither this nor
+`neo`, so the light toggle deliberately keeps it dark, and choosing it is also choosing that
+GoalPilot is dark-only or that light mode is a *different* material; and on the shared canvas it
+takes **a plate**, like `neo` and for the same definitional reason, so it is the candidate that
+loses the most on a colourful background.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -424,7 +451,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 6 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 7 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the

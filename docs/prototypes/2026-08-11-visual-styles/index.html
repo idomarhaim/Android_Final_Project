@@ -1,8 +1,9 @@
 <!doctype html>
 <!--
-  PROTOTYPE — GoalPilot visual language, four candidates (C12, issue #31).
+  PROTOTYPE — GoalPilot visual language, five candidates (C12, issue #31).
   THROWAWAY. Not app code.
-  ?style=glass|metal|liquid|neo|compare · ?lang=he|en · ?theme=light|dark
+  ?style=glass|metal|liquid|neo|darkneo|compare · ?lang=he|en · ?theme=light|dark
+  ?canvas=shared|native
 
   Rev 1 — 2026-08-11. Ido: rev 4's charts "look like a balloon — dated, not
   pretty". The balloon is one specific thing: feSpecularLighting over a fat
@@ -17,15 +18,20 @@
               specular streak, and the canvas showing through the body.
     neo     — depth from SHADOW PAIRS on one flat surface. Inset track, softly
               extruded arc, muted hues.
+    darkneo — Ido's reference, added 2026-08-11. Charcoal, deep soft shadows,
+              very large radii, and exactly ONE cyan-to-blue accent. Its donut
+              runs a RAMP of that accent, because six category hues would
+              destroy the single-accent idea the style is built on — so colour
+              stops carrying category identity and the labels carry it instead.
 
-  Same screen, same week, same palette in all four, so the only variable is the
-  material. "compare" puts the same card in all four side by side.
+  Same screen, same week, same palette in all five, so the only variable is the
+  material. "compare" puts the same card in all five side by side.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROTOTYPE — GoalPilot visual language, four candidates</title>
+<title>PROTOTYPE — GoalPilot visual language, five candidates</title>
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -227,6 +233,34 @@
   .st-neo .avat{border-radius:50%}
   .st-neo .inset{box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
 
+  /* ═══════════════ 5 · DARK NEO · one neon accent ═════════════════════
+     Ido's reference, 2026-08-11. Charcoal canvas, deep soft shadows, very large
+     radii — and exactly ONE saturated gradient, cyan → blue, reserved for the
+     thing that matters on the screen. Everything else is monochrome, which is
+     what makes the accent read as bright rather than as another colour. */
+  .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
+    --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);
+    --a1:#5FD8FF;--a2:#1170E4;background:#1B1F26;}
+  .st-darkneo[data-theme="light"]{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);
+    background:#22262E;}  /* it has no light scheme — see the blurb */
+  .st-darkneo .card,.st-darkneo .seg,.st-darkneo .chip,.st-darkneo .avat{
+    background:linear-gradient(158deg,#232830,#1A1E25);
+    box-shadow:10px 10px 22px var(--sh), -8px -8px 20px var(--lo),
+               inset 0 1px 0 rgba(255,255,255,.05);}
+  .st-darkneo .card{border-radius:var(--rad);padding:19px 20px}
+  .st-darkneo .seg{border-radius:999px;
+    background:linear-gradient(158deg,#191D23,#20242C);
+    box-shadow:inset 6px 6px 14px rgba(0,0,0,.75), inset -5px -5px 12px rgba(255,255,255,.05)}
+  .st-darkneo .seg span{border-radius:999px}
+  .st-darkneo .seg span.on{background:linear-gradient(120deg,var(--a1),var(--a2));color:#04121F;
+    box-shadow:0 4px 14px rgba(23,130,228,.5)}
+  .st-darkneo .sep{background:rgba(255,255,255,.07)}
+  .st-darkneo .btn{border-radius:999px;padding:15px 22px;font-weight:700;font-size:14.5px;
+    text-align:center;background:linear-gradient(110deg,var(--a2),var(--a1));color:#06121C;
+    box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
+  .st-darkneo .chip{border-radius:999px;padding:6px 13px;font-size:11.5px;font-weight:660}
+  .st-darkneo .avat{border-radius:50%}
+
   /* ═════════════════ SHARED CANVAS (Ido, 2026-08-11) ═══════════════════
      All four materials on the glassmorphism canvas, so the only variable left
      is the surface itself. Two class selectors, so this beats each style's own
@@ -266,6 +300,12 @@
     box-shadow:inset 5px 5px 11px rgba(0,0,0,.52), inset -5px -5px 11px rgba(255,255,255,.07)}
   .st-neo.shared[data-theme="light"] .seg{
     box-shadow:inset 5px 5px 11px rgba(120,138,166,.40), inset -5px -5px 11px rgba(255,255,255,.85)}
+  /* dark neo has the same problem as neo, one shade darker: its shadows need a
+     charcoal to sit on. On the shared canvas it becomes a charcoal plate. */
+  .st-darkneo.shared .card,.st-darkneo.shared .seg,.st-darkneo.shared .chip,
+  .st-darkneo.shared .avat{
+    background:linear-gradient(158deg,rgba(35,40,48,.88),rgba(26,30,37,.90));
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 
   .st{color:var(--fg)}
   .st .mt,.st .sub,.st .sub2{color:var(--fg2)}
@@ -283,7 +323,8 @@
   <button class="cbtn" data-s="metal">Metal</button>
   <button class="cbtn" data-s="liquid">Liquid glass</button>
   <button class="cbtn" data-s="neo">Neo (soft UI)</button>
-  <button class="cbtn" data-s="compare">Compare all four</button>
+  <button class="cbtn" data-s="darkneo">Dark neo · neon accent</button>
+  <button class="cbtn" data-s="compare">Compare all five</button>
 </div>
 <div class="bar">
   <button class="cbtn on" id="canvas">Shared canvas</button>
@@ -316,9 +357,19 @@ let S='glass', L='en', THEME='dark', UID=0, SHARED=true;
 const T=o=>L==='he'?(o.he??o.en):o.en;
 const t=(en,he)=>L==='he'?he:en;
 const ltr=s=>`<span class="ltr">${s}</span>`;
+/* Dark neo is built on ONE accent, so a six-hue categorical palette would break
+   the very thing that makes it work. Its donut therefore runs a ramp of the
+   accent — and the cost is real and worth seeing rather than arguing about:
+   COLOUR STOPS CARRYING CATEGORY IDENTITY. The direct labels added in C12 rev 4
+   are what make that survivable, since the name is on the slice either way. */
+const RAMP=['#6FDEFF','#39C0F5','#22A2E8','#1A82DC','#1663CE','#2A49A6'];
 /* neo needs muted, low-chroma hues or the shadows fight the fill; the others
    take the palette straight */
 const cc=k=>{
+  if(S==='darkneo'){
+    const i=AREAS.findIndex(a=>a.k===k);
+    return RAMP[i<0 ? 1 : i];
+  }
   const base = THEME==='dark' ? CAT[k].d : CAT[k].l;
   return S==='neo' ? mix(base, THEME==='dark'?[37,42,50]:[231,236,243], .30) : base;
 };
@@ -389,16 +440,28 @@ function donut(w, r, thick, style, centre, labels){
           stroke-width="1.1" fill="none"/>`;
     }
 
-    if(style==='neo'){
+    if(style==='neo'||style==='darkneo'){
       /* one soft extrusion, no rim, no gloss */
       segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
         stroke-linecap="butt"/>`;
     }
   });
 
-  /* the track, which is where neo does its real work */
+  /* the track, which is where the two soft-UI materials do their real work */
   let track='';
-  if(style==='neo'){
+  if(style==='darkneo'){
+    defs+=`<filter id="${id}-ex" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="5" dy="6" stdDeviation="6" flood-color="#05070A" flood-opacity=".85"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#2AA6F0" flood-opacity=".26"/>
+      </filter>
+     <filter id="${id}-in" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="4" dy="4" stdDeviation="5" flood-color="#05070A" flood-opacity=".9"/>
+      <feDropShadow dx="-4" dy="-4" stdDeviation="5" flood-color="#39414E" flood-opacity=".55"/>
+      </filter>`;
+    track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="#1E232B" stroke-width="${thick}"/></g>`;
+    segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+  } else if(style==='neo'){
     defs+=`<filter id="${id}-in" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="2.5" dy="2.5" stdDeviation="3" flood-color="${dark?'#0b0e13':'#A3B1C6'}"
         flood-opacity="${dark?.85:.75}"/>
@@ -461,7 +524,22 @@ function ring(size,pct,k,txt,style){
   const dark=THEME==='dark';
   let defs='',trk='',bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="${col}"
     stroke-width="${th}" fill="none" stroke-linecap="round"/>`, ov='';
-  if(style==='neo'){
+  if(style==='darkneo'){
+    /* the reference's signature: a thick round-capped arc in the one accent
+       gradient, glowing, sitting in a groove pressed into the charcoal */
+    const tk=size*.155;
+    defs=`<linearGradient id="${id}-a" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1170E4"/><stop offset="100%" stop-color="#6FDEFF"/></linearGradient>
+      <filter id="${id}-i" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow dx="3" dy="3" stdDeviation="4" flood-color="#05070A" flood-opacity=".9"/>
+        <feDropShadow dx="-3" dy="-3" stdDeviation="4" flood-color="#39414E" flood-opacity=".5"/></filter>
+      <filter id="${id}-gl" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#2AA6F0" flood-opacity=".55"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${(size-tk)/2}" fill="none"
+      stroke="#1E232B" stroke-width="${tk}"/></g>`;
+    bar=`<g filter="url(#${id}-gl)"><path d="${arc(c,c,(size-tk)/2,-90,-90+pct*3.6)}"
+      stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
+  } else if(style==='neo'){
     defs=`<filter id="${id}-i" x="-40%" y="-40%" width="180%" height="180%">
       <feDropShadow dx="2" dy="2" stdDeviation="2.2" flood-color="${dark?'#0b0e13':'#A3B1C6'}" flood-opacity=".8"/>
       <feDropShadow dx="-2" dy="-2" stdDeviation="2" flood-color="${dark?'#3a4150':'#fff'}" flood-opacity=".8"/></filter>`;
@@ -549,13 +627,15 @@ function screen(style){
     </div></div>`;
 }
 
-const NAMES={glass:'Glassmorphism',metal:'Metal',liquid:'Liquid glass',neo:'Neo · soft UI'};
+const NAMES={glass:'Glassmorphism',metal:'Metal',liquid:'Liquid glass',neo:'Neo · soft UI',
+             darkneo:'Dark neo · one neon accent'};
 const BLURB={
   glass:'Frosted panels over a colourful canvas. Depth comes from BLUR — the background stays legible through the surface, so a panel reads as a sheet of glass. Arcs are thin, flat and slightly transparent, with a coloured bloom instead of a bevel.',
   metal:'Brushed and machined. Depth comes from ANISOTROPIC REFLECTION — banded sheen running across the stroke, hairline bright and dark edges, a milled groove for the track. The least round of the four, on purpose.',
   liquid:'Thick refractive glass. Depth comes from REFRACTION at the edge — a bright rim where light enters, a dim counter-rim where it leaves, one specular streak, and the canvas bending through the body. Capsules everywhere.',
   neo:'One flat surface; everything is pressed out of it or into it. Depth comes from a SHADOW PAIR — light top-left, dark bottom-right. Nothing is translucent, nothing has an edge, and the hues are muted or the shadows fight the fill.',
-  compare:'The same card, the same week, the same palette, in all four materials. The only variable is the surface.',
+  darkneo:'Charcoal, deep soft shadows, very large radii — and exactly ONE saturated gradient, cyan to blue, reserved for the thing that matters. Everything else is monochrome, which is what makes the accent read as bright rather than as another colour. The cost is visible in the donut: with one accent there is no room for six category hues, so the slices run a RAMP of the accent and colour stops carrying category identity. The direct labels are what make that survivable.',
+  compare:'The same card, the same week, the same palette, in all five materials. The only variable is the surface.',
 };
 const CANVAS_NOTE={
   shared:' · On the SHARED canvas: all four sit on the glassmorphism background, so the only variable left is the material.',
@@ -565,19 +645,19 @@ const NEO_NOTE=' Neumorphism is defined by the surface being the same colour as 
 
 function render(){
   const st=document.getElementById('stage');
-  document.getElementById('ttl').textContent = S==='compare' ? 'Four materials, one card' : NAMES[S];
+  document.getElementById('ttl').textContent = S==='compare' ? 'Five materials, one card' : NAMES[S];
   document.getElementById('sub').textContent =
     BLURB[S] + CANVAS_NOTE[SHARED?'shared':'native']
-    + (SHARED && (S==='neo'||S==='compare') ? NEO_NOTE : '');
+    + (SHARED && (S==='neo'||S==='darkneo'||S==='compare') ? NEO_NOTE : '');
   document.documentElement.lang=L;
   UID=0;
   const dir = L==='he'?'rtl':'ltr';
   if(S==='compare'){
-    st.innerHTML = ['glass','metal','liquid','neo'].map(s=>{
+    st.innerHTML = ['glass','metal','liquid','neo','darkneo'].map(s=>{
       const cur=S; S=s;
       const html=`<div>
         <div class="st st-${s}${SHARED?' shared':''}" data-theme="${THEME}" dir="${dir}"
-          style="width:352px;border-radius:30px;padding:16px;overflow:hidden">
+          style="width:340px;border-radius:30px;padding:15px;overflow:hidden">
           <div class="card">
             <div class="h3" style="margin-bottom:2px">${t('This week','השבוע')}</div>
             <div class="sub2" style="margin-bottom:6px">${t('Where the time went','לאן הלך הזמן')}</div>
@@ -612,7 +692,7 @@ document.getElementById('lang').onclick=e=>{L=L==='en'?'he':'en';
 document.getElementById('theme').onclick=e=>{THEME=THEME==='dark'?'light':'dark';
   e.target.textContent=THEME==='dark'?'Light':'Dark';render();};
 addEventListener('keydown',e=>{
-  const ks=['glass','metal','liquid','neo','compare'], i=ks.indexOf(S);
+  const ks=['glass','metal','liquid','neo','darkneo','compare'], i=ks.indexOf(S);
   if(e.key==='ArrowRight'){S=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length];render();}
   if(e.key==='ArrowLeft'){S=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length];render();}});
 const q=new URL(location).searchParams;

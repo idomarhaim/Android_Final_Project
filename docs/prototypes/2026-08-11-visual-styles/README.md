@@ -1,4 +1,4 @@
-# Visual language — four candidates
+# Visual language — five candidates
 
 Asset for [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) on map
 [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). Ido, 2026-08-11: rev 4's
@@ -49,6 +49,25 @@ else, and the four differ precisely in *where*.
 | **Metal** | **anisotropic reflection** — sheen banded across the stroke | hard light/dark banding, hairline bright and dark edges, a milled groove for the track |
 | **Liquid glass** | **refraction at the edge** | translucent body, bright inner rim where light enters, dim outer counter-rim, one specular streak |
 | **Neo (soft UI)** | **a shadow pair** on one flat surface | inset track, softly extruded arc, muted hues, no rim and no gloss |
+| **Dark neo · one neon accent** | **a deep shadow pair plus one saturated gradient** | charcoal groove, softly extruded arc, and a single cyan→blue accent that everything monochrome around it makes look bright |
+
+## The fifth candidate, added 2026-08-11 from Ido's reference
+
+Charcoal canvas, deep soft shadows, very large radii, and **exactly one saturated gradient**
+(cyan → blue) reserved for whatever matters most on the screen. It is the most *fashionable* of
+the five and the closest to the reference image, and it has one structural cost that only shows
+up when you draw this app in it:
+
+> **One accent leaves no room for six category hues.** The whole reason the accent reads as
+> bright is that everything around it is monochrome — so a donut with six saturated life-area
+> colours destroys the idea the style is built on. The honest rendering is a **ramp of the
+> accent**, cyan through deep blue, and the consequence is that **colour stops carrying category
+> identity**. The direct labels added in C12 rev 4 are what make that survivable: the name is on
+> the slice either way.
+
+It also has **no light scheme worth the name** — the style is a dark-mode style, and forcing it
+light produces an ordinary grey soft-UI that is neither this nor `neo`. The light toggle keeps it
+dark on purpose rather than pretending otherwise.
 
 Two things carry across all four because they are **decisions, not styling**: the donut's
 **direct labels** with leader lines, and the **harmonised category palette**. Only the material
