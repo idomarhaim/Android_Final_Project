@@ -42,8 +42,13 @@ $src = (Resolve-Path $Page).Path
 $target = $src
 
 if ($Probe -ne "") {
-  # write a throwaway copy with the probe appended, so the prototype is untouched
-  $html = Get-Content $src -Raw
+  # write a throwaway copy with the probe appended, so the prototype is untouched.
+  # -Encoding UTF8 on the READ is load-bearing: a prototype saved as UTF-8 without a
+  # BOM is otherwise read in the ANSI codepage and written back out as UTF-8, which
+  # double-encodes every non-ASCII character — every Hebrew label in the probe render
+  # came out as mojibake, i.e. the one instrument for judging Hebrew close up could
+  # not show Hebrew. Found by looking at a probe render, 2026-08-12.
+  $html = Get-Content $src -Raw -Encoding UTF8
   $target = Join-Path ([System.IO.Path]::GetTempPath()) ("probe-" + [guid]::NewGuid().ToString("N") + ".html")
   ($html -replace '</body>', "<script>$Probe</script>`n</body>") | Out-File $target -Encoding utf8
 }

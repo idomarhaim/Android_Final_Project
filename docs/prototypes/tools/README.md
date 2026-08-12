@@ -21,3 +21,13 @@ top-level `let` in a classic script is shared across `<script>` tags.
 **The rule this exists to serve:** when the acceptance criterion is visual, render and *look*
 between revisions. A round whose render is unchanged is a **result** — it falsifies the fix
 immediately, which prose review cannot do.
+
+## The encoding trap, fixed 2026-08-12
+
+`-Probe` copies the page before appending the script. That copy was read with `Get-Content -Raw`
+and **no `-Encoding`**, so a UTF-8 file *without a BOM* — which is every prototype here — was read
+in the machine's ANSI codepage and written back out as UTF-8. Every non-ASCII character was
+double-encoded, so **probe renders showed mojibake wherever Hebrew should be**: the instrument
+built to judge a design close up could not display the language the design standard says it must
+be judged in. Fixed by reading with `-Encoding UTF8`. Whole-page renders were never affected,
+which is exactly why it survived — the failure only appears on the path that rewrites the file.

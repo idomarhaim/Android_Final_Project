@@ -112,6 +112,14 @@ Backlog index. Per-area files live under three priority subfolders next to this 
       weeks in a month or quarter, months in a year, four-hour blocks in a day).
       See `CHANGELOG/2026-08-04/time-insights.md`.
 
+- [Presentation.TODO.optional.md](TODO_OPTIONAL/Presentation.TODO.optional.md) —
+  what [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) left open
+  after resolving the visual language on 12/08/2026. The decision itself is closed — **all four
+  materials ship as a user-selectable skin, metal is deleted** — so this file is only the
+  remainder: six open prototype refinements (two of them Hebrew-only defects **found by
+  rendering the prototype**, not reported) and five items of build cost the choice creates,
+  including the `AppSkin` **name collision** and `ThemePaletteTest`'s widened matrix.
+  Nothing in it blocks submission.
 - [Distribution.TODO.optional.md](TODO_OPTIONAL/Distribution.TODO.optional.md) —
   loose ends from putting the app on Firebase App Distribution (05/08/2026).
   None blocks submission; they are the cost of shipping outside Google Play.

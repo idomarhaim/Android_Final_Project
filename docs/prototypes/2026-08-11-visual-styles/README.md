@@ -1,9 +1,27 @@
-# Visual language — five candidates
+# Visual language — the four that ship
 
 Asset for [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) on map
 [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12). Ido, 2026-08-11: rev 4's
 charts *"look like a balloon — dated, not pretty"*, with reference images for
 **glassmorphism · metal · liquid glass · neo**, and a request for one prototype per style.
+
+## Resolved 2026-08-12 — this is the picker, not a shortlist
+
+Ido's decision: **all four remaining materials ship as a user-selectable skin** —
+**glassmorphism · liquid glass · neo · dark neo** — **metal is deleted**, and the **raised-3D**
+and **empty-channel** toggles stay.
+
+So this file stopped being a comparison and became a **specification of four surfaces**. Metal was
+**removed rather than hidden behind a flag**: a candidate nobody can pick is dead code that still
+has to be carried through every later revision, and this file has already had twelve. What it cost
+to delete is recorded here because it was genuinely the odd one out — it was the only material that
+read well against **no background art at all**, and the only one whose *light* scheme was hard
+rather than merely different (brushed metal on white drifts to grey).
+
+What remains open after the decision is filed as
+[`TODO/TODO_OPTIONAL/Presentation.TODO.optional.md`](../../../TODO/TODO_OPTIONAL/Presentation.TODO.optional.md),
+including two Hebrew-only defects **this session found by rendering the page** and nobody had
+reported.
 
 ```powershell
 start docs\prototypes\2026-08-11-visual-styles\index.html
@@ -16,10 +34,8 @@ scheme. **Compare all four** puts the same card in every material at once.
 
 All four materials now sit on the **glassmorphism background**, so the only variable left is the
 surface itself. **Native canvas** toggles back to the background each material was designed for,
-which is worth one look because two of them change character:
+which is worth one look because one of them changes character:
 
-- **Metal** was designed against graphite, where it reads as a machined object. On the colourful
-  canvas it reads as a metal panel *placed on* something — still good, but a different claim.
 - **Neo changes the most, and the reason is definitional.** Neumorphism *is* the surface being
   the same colour as what is behind it — that is what makes the shadow pair read as an extrusion
   rather than a floating card. A gradient has no single such colour, so on the shared canvas the
@@ -45,8 +61,8 @@ the circle. That is the point: a groove you can only see *under* an arc cannot b
 picture never claims something the data does not.
 
 **Raised 3D arc** (off by default, and *additional* rather than instead) gives the arc **real
-height** on top of the channel's depth. It applies to the two soft-UI materials only — on glass,
-liquid or metal it would contradict what the material *is* — and it replaces their cast shadow
+height** on top of the channel's depth. It applies to the two soft-UI materials only — on glass or
+liquid it would contradict what the material *is* — and it replaces their cast shadow
 rather than adding to it, because a body that already carries its own wall plus a drop shadow
 underneath reads as two objects.
 
@@ -123,16 +139,15 @@ else, and the four differ precisely in *where*.
 | | depth comes from | how the arcs are drawn |
 |---|---|---|
 | **Glassmorphism** | **blur** — the canvas stays legible through the panel | thin, flat, slightly transparent, with a coloured bloom instead of a bevel |
-| **Metal** | **anisotropic reflection** — sheen banded across the stroke | hard light/dark banding, hairline bright and dark edges, a milled groove for the track |
 | **Liquid glass** | **refraction at the edge** | translucent body, bright inner rim where light enters, dim outer counter-rim, one specular streak |
 | **Neo (soft UI)** | **a shadow pair** on one flat surface | inset track, softly extruded arc, muted hues, no rim and no gloss |
 | **Dark neo · one neon accent** | **a deep shadow pair plus one saturated gradient** | charcoal groove, softly extruded arc, and a single cyan→blue accent that everything monochrome around it makes look bright |
 
-## The fifth candidate, added 2026-08-11 from Ido's reference
+## Dark neo, added 2026-08-11 from Ido's reference
 
 Charcoal canvas, deep soft shadows, very large radii, and **exactly one saturated gradient**
 (cyan → blue) reserved for whatever matters most on the screen. It is the most *fashionable* of
-the five and the closest to the reference image, and it has one structural cost that only shows
+the four and the closest to the reference image, and it has one structural cost that only shows
 up when you draw this app in it:
 
 > **One accent leaves no room for six category hues.** The whole reason the accent reads as
@@ -150,13 +165,10 @@ Two things carry across all four because they are **decisions, not styling**: th
 **direct labels** with leader lines, and the **harmonised category palette**. Only the material
 is in question here.
 
-## Notes per material, for choosing
+## Notes per material — now read as *what each one costs to ship*, not as how to choose
 
 - **Glassmorphism** needs a busy canvas underneath or the frost has nothing to frost. Cheap in
   Compose (`Modifier.blur` + translucent surfaces) and it survives both schemes well.
-- **Metal** is the most distinctive and the least conventional for a personal-goals app; it is
-  also the only one that reads well with **no** background art. Its light scheme is genuinely
-  hard — brushed metal on white tends toward grey.
 - **Liquid glass** is the current Apple direction and the closest to your reference images. It is
   the most expensive to imitate faithfully: real refraction needs a runtime blur of *what is
   behind*, which in Compose means `RenderEffect` (API 31+) and a fallback below that.
@@ -168,8 +180,28 @@ is in question here.
 
 `backdrop-filter`, SVG filters and CSS shadow pairs are **web** primitives. In Compose the
 equivalents are `Modifier.blur`, `RenderEffect`, and hand-drawn `Canvas` shadows — and **a widget
-has none of them**, so whichever material wins, the home-screen tiles need a version that
-survives being drawn into a `RemoteViews` bitmap. Named here rather than found later.
+has none of them**, so the home-screen tiles need a version that survives being drawn into a
+`RemoteViews` bitmap. Named here rather than found later — and the decision that **all four ship**
+multiplies it rather than picking one, which is why it is now a TODO item and not a footnote.
 
-**Verified:** `node --check` on the extracted script → **OK**. Hebrew guard → **14 literals, 0
-unguarded**; one Hebrew string outside the phone frame, the prototype's own `עברית` toggle.
+## Verified
+
+Re-run after the metal deletion (rev 13), against the file as it now stands:
+
+- `node --check` on the extracted `<script>` → **OK**.
+- **Hebrew guard: 32 Hebrew-bearing string literals, 0 unguarded.** One Hebrew string sits outside
+  the phone frame — the prototype's own `עברית` toggle, which is chrome rather than app UI, and is
+  named rather than folded into the count.
+- **No `metal` identifier survives** anywhere in the file except the changelog comment recording
+  the deletion; checked mechanically rather than assumed.
+- **Rendered and looked at**: `compare` in dark, and `neo` raised on its native canvas **in
+  Hebrew**. No regression from the deletion — and the Hebrew render is where the two open defects
+  in [`Presentation.TODO.optional.md`](../../../TODO/TODO_OPTIONAL/Presentation.TODO.optional.md)
+  came from.
+
+**A bug in the instrument, fixed in the same pass.** `shoot.ps1 -Probe` read the page with
+`Get-Content -Raw` and no `-Encoding`, so a UTF-8 file with no BOM was read in the ANSI codepage
+and written back as UTF-8 — double-encoding every Hebrew character. Every close-up probe render
+therefore showed mojibake where Hebrew should be, which means **the one instrument for judging a
+Hebrew design close up could not display Hebrew**. One-word fix (`-Encoding UTF8`), verified by
+re-rendering the same probe.

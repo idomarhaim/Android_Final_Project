@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-  PROTOTYPE — GoalPilot visual language, five candidates (C12, issue #31).
+  PROTOTYPE — GoalPilot visual language, four candidates (C12, issue #31).
   THROWAWAY. Not app code.
-  ?style=glass|metal|liquid|neo|darkneo|compare · ?lang=he|en · ?theme=light|dark
+  ?style=glass|liquid|neo|darkneo|compare · ?lang=he|en · ?theme=light|dark
   ?canvas=shared|native
 
   Rev 1 — 2026-08-11. Ido: rev 4's charts "look like a balloon — dated, not
@@ -12,8 +12,6 @@
 
     glass   — depth from BLUR and translucency. Thin flat arcs over a frosted
               panel; the background is visible through the surface.
-    metal   — depth from ANISOTROPIC REFLECTION. Banded sheen along the arc,
-              hairline edges, brushed texture. No roundness at all.
     liquid  — depth from REFRACTION. A bright thin rim, a dark counter-rim, one
               specular streak, and the canvas showing through the body.
     neo     — depth from SHADOW PAIRS on one flat surface. Inset track, softly
@@ -24,14 +22,19 @@
               destroy the single-accent idea the style is built on — so colour
               stops carrying category identity and the labels carry it instead.
 
-  Same screen, same week, same palette in all five, so the only variable is the
-  material. "compare" puts the same card in all five side by side.
+  Rev 13 — 2026-08-12. METAL DELETED, on Ido's decision: the other four all ship
+  as a user-selectable material and metal does not. Removed rather than hidden
+  behind a flag, because a candidate nobody can pick is dead code that still has
+  to be maintained through every later revision.
+
+  Same screen, same week, same palette in all four, so the only variable is the
+  material. "compare" puts the same card in all four side by side.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROTOTYPE — GoalPilot visual language, five candidates</title>
+<title>PROTOTYPE — GoalPilot visual language, four candidates</title>
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -117,48 +120,7 @@
     text-align:center}
   .st-glass .chip{border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:650}
 
-  /* ═══════════════════════ 2 · METAL / METALMORPHISM ═══════════════════
-     Brushed and machined. Depth comes from ANISOTROPIC REFLECTION — a sheen
-     that runs along the surface — plus hairline edges and a milled groove.
-     Deliberately the least round of the four. */
-  .st-metal{--fg:#E9EEF4;--fg2:rgba(233,238,244,.66);--rad:16px;
-    background:linear-gradient(163deg,#232A31 0%,#171C22 42%,#1B2229 70%,#262E36 100%);}
-  .st-metal[data-theme="light"]{--fg:#1A1F26;--fg2:rgba(26,31,38,.62);
-    background:linear-gradient(163deg,#E6EAEE 0%,#CFD6DD 44%,#DCE2E8 72%,#EEF2F6 100%);}
-  .st-metal .card,.st-metal .seg,.st-metal .btn,.st-metal .chip,.st-metal .avat{
-    background:
-      repeating-linear-gradient(96deg, rgba(255,255,255,.030) 0 1px, transparent 1px 3px),
-      linear-gradient(158deg,#39424C 0%,#242C34 38%,#2B343D 58%,#1D242B 100%);
-    border:1px solid rgba(255,255,255,.10);
-    box-shadow:0 12px 26px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.20),
-               inset 0 -1px 0 rgba(0,0,0,.55);}
-  .st-metal[data-theme="light"] .card,.st-metal[data-theme="light"] .seg,
-  .st-metal[data-theme="light"] .btn,.st-metal[data-theme="light"] .chip,
-  .st-metal[data-theme="light"] .avat{
-    background:
-      repeating-linear-gradient(96deg, rgba(0,0,0,.022) 0 1px, transparent 1px 3px),
-      linear-gradient(158deg,#FFFFFF 0%,#DFE5EB 40%,#EFF3F7 62%,#CFD7DF 100%);
-    border-color:rgba(255,255,255,.9);
-    box-shadow:0 10px 22px rgba(30,42,60,.20), inset 0 1px 0 #FFFFFF,
-               inset 0 -1px 0 rgba(120,135,150,.45);}
-  .st-metal .card{border-radius:var(--rad);padding:17px 18px;position:relative;overflow:hidden}
-  /* the machined highlight band every metal surface carries */
-  .st-metal .card::after{content:'';position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(102deg, transparent 28%, rgba(255,255,255,.10) 44%,
-               rgba(255,255,255,.02) 50%, transparent 62%)}
-  .st-metal .seg{border-radius:12px}
-  .st-metal .seg span{border-radius:9px}
-  .st-metal .seg span.on{background:linear-gradient(180deg,#4A5764,#333E49);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 2px 6px rgba(0,0,0,.4)}
-  .st-metal[data-theme="light"] .seg span.on{background:linear-gradient(180deg,#FFF,#D3DAE2);
-    box-shadow:inset 0 1px 0 #fff, 0 2px 5px rgba(40,55,75,.22)}
-  .st-metal .sep{background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
-  .st-metal[data-theme="light"] .sep{background:linear-gradient(90deg,transparent,rgba(40,55,75,.18),transparent)}
-  .st-metal .btn{border-radius:12px;padding:13px 20px;font-weight:660;font-size:14px;text-align:center}
-  .st-metal .chip{border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:650}
-  .st-metal .avat{border-radius:13px}
-
-  /* ═══════════════════════ 3 · LIQUID GLASS ═══════════════════════════
+  /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════
      Thick refractive glass. Depth comes from REFRACTION at the edge: a bright
      rim where light enters, a dark counter-rim where it leaves, one specular
      streak, and the canvas bending through the body. Capsules everywhere. */
@@ -210,7 +172,7 @@
     text-align:center}
   .st-liquid .chip{border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:660}
 
-  /* ═════════════════════════ 4 · NEO (neumorphism) ═════════════════════
+  /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════
      One flat surface, and every element is pressed out of it or into it.
      Depth comes from a SHADOW PAIR — light from the top-left, dark from the
      bottom-right — so nothing is translucent and nothing has an edge. */
@@ -238,7 +200,7 @@
   .st-neo .avat{border-radius:50%}
   .st-neo .inset{box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
 
-  /* ═══════════════ 5 · DARK NEO · one neon accent ═════════════════════
+  /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════
      Ido's reference, 2026-08-11. Charcoal canvas, deep soft shadows, very large
      radii — and exactly ONE saturated gradient, cyan → blue, reserved for the
      thing that matters on the screen. Everything else is monochrome, which is
@@ -291,7 +253,7 @@
       radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
       radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
       linear-gradient(170deg,#EAF0FF,#DCE6FA);}
-  /* Metal and liquid keep their own text colours; glass is already this canvas.
+  /* Liquid keeps its own text colours; glass is already this canvas.
      NEO is the one that genuinely changes, and it is worth knowing why:
      neumorphism is DEFINED by the surface being the same colour as what is
      behind it — that is what makes the shadow pair read as an extrusion rather
@@ -336,11 +298,10 @@
 
 <div class="bar">
   <button class="cbtn" data-s="glass">Glassmorphism</button>
-  <button class="cbtn" data-s="metal">Metal</button>
   <button class="cbtn" data-s="liquid">Liquid glass</button>
   <button class="cbtn" data-s="neo">Neo (soft UI)</button>
   <button class="cbtn" data-s="darkneo">Dark neo · neon accent</button>
-  <button class="cbtn" data-s="compare">Compare all five</button>
+  <button class="cbtn" data-s="compare">Compare all four</button>
 </div>
 <div class="bar">
   <button class="cbtn on" id="empty">Empty channel</button>
@@ -497,7 +458,7 @@ function donut(w, r, thick, style, centre, labels){
          to the channel annulus, so nothing can cross a wall;
        · walls are drawn for every slice first and faces second, in two passes,
          so no neighbour's wall can ever land on top of a face.
-     Soft-UI materials only; height would contradict glass, liquid and metal. */
+     Soft-UI materials only; height would contradict glass and liquid. */
   const RZ = RAISED && (style==='neo'||style==='darkneo');
   let bevDefs='';
   const ch = thick*1.30;              // the channel, as cut by the groove
@@ -605,26 +566,6 @@ function donut(w, r, thick, style, centre, labels){
         transform="translate(0,-${thick/2-0.6})" opacity=".5"/>`;
     }
 
-    if(style==='metal'){
-      /* anisotropic sheen: hard light/dark banding ACROSS the stroke, which is
-         what makes brushed metal read as metal rather than as a gradient */
-      defs+=`<linearGradient id="${id}-g${a.k}" x1="0" y1="0" x2="0" y2="1"
-        gradientUnits="objectBoundingBox">
-        <stop offset="0%"   stop-color="${dk(c,.42)}"/>
-        <stop offset="14%"  stop-color="${lite(c,.52)}"/>
-        <stop offset="30%"  stop-color="${c}"/>
-        <stop offset="46%"  stop-color="${lite(c,.72)}"/>
-        <stop offset="58%"  stop-color="${c}"/>
-        <stop offset="82%"  stop-color="${dk(c,.34)}"/>
-        <stop offset="100%" stop-color="${lite(c,.30)}"/></linearGradient>`;
-      segs+=`<path d="${d}" stroke="url(#${id}-g${a.k})" stroke-width="${thick}" fill="none"
-        stroke-linecap="butt"/>`;
-      over+=`<path d="${d}" stroke="rgba(255,255,255,.5)" stroke-width=".9" fill="none"
-        transform="translate(0,-${thick/2-0.45})"/>
-        <path d="${d}" stroke="rgba(0,0,0,.42)" stroke-width=".9" fill="none"
-        transform="translate(0,${thick/2-0.45})"/>`;
-    }
-
     if(style==='liquid'){
       /* refraction: translucent body, bright inner rim, dark outer rim */
       segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
@@ -707,13 +648,8 @@ function donut(w, r, thick, style, centre, labels){
       stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
     if(!RZ) segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
   } else {
-    const tr = style==='metal'
-      ? (dark?'rgba(0,0,0,.42)':'rgba(120,135,152,.28)')
-      : 'rgba(255,255,255,.14)';
-    track=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${tr}"
+    track=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.14)"
       stroke-width="${thick}"/>`;
-    if(style==='metal') track+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
-      stroke="rgba(255,255,255,.10)" stroke-width="${thick}" transform="translate(0,-1)"/>`;
   }
 
   /* one specular streak for liquid, drawn as a short arc rather than a filter */
@@ -836,15 +772,6 @@ function ring(size,pct,k,txt,style){
       bar=`<g filter="url(#${id}-e)"><path d="${dp2}" stroke="${col}"
         stroke-width="${bw}" fill="none" stroke-linecap="round"/></g>`;
     }
-  } else if(style==='metal'){
-    defs=`<linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${dk(col,.4)}"/><stop offset="22%" stop-color="${lite(col,.6)}"/>
-      <stop offset="50%" stop-color="${col}"/><stop offset="78%" stop-color="${dk(col,.34)}"/>
-      <stop offset="100%" stop-color="${lite(col,.3)}"/></linearGradient>`;
-    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none"
-      stroke="${dark?'rgba(0,0,0,.45)':'rgba(120,135,152,.3)'}" stroke-width="${th}"/>`;
-    bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="url(#${id}-g)" stroke-width="${th}"
-      fill="none" stroke-linecap="butt"/>`;
   } else if(style==='liquid'){
     trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.16)"
       stroke-width="${th}"/>`;
@@ -868,7 +795,7 @@ function ring(size,pct,k,txt,style){
 
 /* ═══ one screen, rendered in whichever material is selected ═══ */
 function screen(style){
-  const heroCol = style==='metal' ? cc('CAREER') : cc('LEARNING');
+  const heroCol = cc('LEARNING');
   const goals=GOALS.map((g,i)=>`
     ${i?'<div class="sep"></div>':''}
     <div class="row">${ring(46,g.pct,g.k,`<span style="font-size:13px">${ltr(g.pct)}</span>`,style)}
@@ -884,7 +811,7 @@ function screen(style){
 
       <div class="card" style="display:flex;align-items:center;gap:13px">
         <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;
-          border-radius:${style==='metal'?'13px':'50%'};font-size:19px;font-weight:750;
+          border-radius:50%;font-size:19px;font-weight:750;
           color:${style==='neo'?'var(--fg)':'#fff'};
           background:${style==='neo'?'transparent':`linear-gradient(150deg,${lite(heroCol,.25)},${dk(heroCol,.2)})`};
           ${style==='neo'?'box-shadow:4px 4px 9px var(--sh),-4px -4px 9px var(--lo)':''}">4</div>
@@ -899,7 +826,7 @@ function screen(style){
         <div class="row" style="align-items:baseline;margin-bottom:4px">
           <div class="grow"><div class="h3">${t('This week','השבוע')}</div>
           <div class="sub2">${t('Where the time went','לאן הלך הזמן')}</div></div></div>
-        ${donut(310, 50, style==='metal'?20:18, style,
+        ${donut(310, 50, 18, style,
           `<div><div style="font-size:20px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
            <div style="font-size:9.5px;opacity:.65;font-weight:600">${EMPTY
              ? t('of a 26h week','מתוך שבוע של 26 ש׳') : t('tracked','נמדדו')}</div></div>`, true)}
@@ -918,15 +845,14 @@ function screen(style){
     </div></div>`;
 }
 
-const NAMES={glass:'Glassmorphism',metal:'Metal',liquid:'Liquid glass',neo:'Neo · soft UI',
+const NAMES={glass:'Glassmorphism',liquid:'Liquid glass',neo:'Neo · soft UI',
              darkneo:'Dark neo · one neon accent'};
 const BLURB={
   glass:'Frosted panels over a colourful canvas. Depth comes from BLUR — the background stays legible through the surface, so a panel reads as a sheet of glass. Arcs are thin, flat and slightly transparent, with a coloured bloom instead of a bevel.',
-  metal:'Brushed and machined. Depth comes from ANISOTROPIC REFLECTION — banded sheen running across the stroke, hairline bright and dark edges, a milled groove for the track. The least round of the four, on purpose.',
   liquid:'Thick refractive glass. Depth comes from REFRACTION at the edge — a bright rim where light enters, a dim counter-rim where it leaves, one specular streak, and the canvas bending through the body. Capsules everywhere.',
   neo:'One flat surface; everything is pressed out of it or into it. Depth comes from a SHADOW PAIR — light top-left, dark bottom-right. Nothing is translucent, nothing has an edge, and the hues are muted or the shadows fight the fill.',
   darkneo:'Charcoal, deep soft shadows, very large radii — and exactly ONE saturated gradient, cyan to blue, reserved for the thing that matters. Everything else is monochrome, which is what makes the accent read as bright rather than as another colour. The cost is visible in the donut: with one accent there is no room for six category hues, so the slices run a RAMP of the accent and colour stops carrying category identity. The direct labels are what make that survivable.',
-  compare:'The same card, the same week, the same palette, in all five materials. The only variable is the surface.',
+  compare:'The same card, the same week, the same palette, in all four materials. The only variable is the surface. All four ship — this is the picker, not a shortlist.',
 };
 const CANVAS_NOTE={
   shared:' · On the SHARED canvas: all four sit on the glassmorphism background, so the only variable left is the material.',
@@ -936,7 +862,7 @@ const NEO_NOTE=' Neumorphism is defined by the surface being the same colour as 
 
 function render(){
   const st=document.getElementById('stage');
-  document.getElementById('ttl').textContent = S==='compare' ? 'Five materials, one card' : NAMES[S];
+  document.getElementById('ttl').textContent = S==='compare' ? 'Four materials, one card' : NAMES[S];
   document.getElementById('sub').textContent =
     BLURB[S] + CANVAS_NOTE[SHARED?'shared':'native']
     + (SHARED && (S==='neo'||S==='darkneo'||S==='compare') ? NEO_NOTE : '');
@@ -944,7 +870,7 @@ function render(){
   UID=0;
   const dir = L==='he'?'rtl':'ltr';
   if(S==='compare'){
-    st.innerHTML = ['glass','metal','liquid','neo','darkneo'].map(s=>{
+    st.innerHTML = ['glass','liquid','neo','darkneo'].map(s=>{
       const cur=S; S=s;
       const html=`<div>
         <div class="st st-${s}${SHARED?' shared':''}" data-theme="${THEME}" dir="${dir}"
@@ -952,7 +878,7 @@ function render(){
           <div class="card">
             <div class="h3" style="margin-bottom:2px">${t('This week','השבוע')}</div>
             <div class="sub2" style="margin-bottom:6px">${t('Where the time went','לאן הלך הזמן')}</div>
-            ${donut(310,54,s==='metal'?21:19,s,
+            ${donut(310,54,19,s,
               `<div><div style="font-size:19px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
                <div style="font-size:9px;opacity:.65;font-weight:600">${EMPTY
                  ? t('of 26h','מתוך 26 ש׳') : t('tracked','נמדדו')}</div></div>`,true)}
@@ -990,7 +916,7 @@ document.getElementById('lang').onclick=e=>{L=L==='en'?'he':'en';
 document.getElementById('theme').onclick=e=>{THEME=THEME==='dark'?'light':'dark';
   e.target.textContent=THEME==='dark'?'Light':'Dark';render();};
 addEventListener('keydown',e=>{
-  const ks=['glass','metal','liquid','neo','darkneo','compare'], i=ks.indexOf(S);
+  const ks=['glass','liquid','neo','darkneo','compare'], i=ks.indexOf(S);
   if(e.key==='ArrowRight'){S=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length];render();}
   if(e.key==='ArrowLeft'){S=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length];render();}});
 const q=new URL(location).searchParams;

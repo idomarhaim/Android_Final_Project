@@ -106,3 +106,81 @@ gradients) · `CHANGELOG/2026-08-10/c12-charts-presentation.md` → *Revision 12
 **Supersedes.** Nothing.
 
 **Status.** 🟢 Ordinary, **`AUTO MODE`-eligible**; held with entry 2 for the same reason.
+
+---
+
+## 4 · A verification instrument can be broken on exactly the input it exists to check
+
+**Claim.** When you build a tool to *look at* something, check it against the **hardest case the
+tool exists for**, not against the easy one — because a tool can degrade silently on precisely the
+input that motivated it, and every other input will keep saying it works. The tell is a failure
+that appears on **one code path only** (the rewrite path, the transform path, the export path) while
+the common path stays clean, so ordinary use never surfaces it.
+
+**Why.** Concrete case, and the shape is what generalises. `C12` built `shoot.ps1` so an agent could
+render and look at its own output; the project's standing design rule is *a design is not finished
+until it has been seen in Hebrew*. Its `-Probe` mode copies the page before appending the probe
+script, and it read that copy with PowerShell's `Get-Content -Raw` and **no `-Encoding`** — so a
+BOM-less UTF-8 file was read in the machine's ANSI codepage and written back as UTF-8, double-
+encoding every non-ASCII character. **Every close-up probe render showed mojibake where Hebrew
+should be:** the one instrument for judging a design closely could not display the language the
+standard requires it to be judged in. It survived several revisions because **whole-page renders
+never touch that path**, so the tool looked perfect right up until it was pointed at its hardest
+case. Rejected framing: "a PowerShell encoding gotcha" — true and useless; the reusable part is that
+the instrument's blind spot lined up with its purpose.
+
+**Destination.** `kb/dev/` — a section of whatever page entry 1 creates on verification instruments
+for non-textual work; it is the same page's *"and then check the instrument"* half. Check overlap
+with anything on Windows/PowerShell encoding, which is the shallow reading of it.
+
+**Anchors.** `docs/prototypes/tools/shoot.ps1` (the `-Encoding UTF8` fix and its comment) ·
+`docs/prototypes/tools/README.md` → *The encoding trap* ·
+`CHANGELOG/2026-08-10/c12-charts-presentation.md` → *Revision 13 · two Hebrew-only defects*.
+
+**Supersedes.** Nothing. **Extends entry 1** — entry 1 says the agent must look; this says the thing
+it looks through can lie, and names the shape of the lie.
+
+**Status.** 🟢 Ordinary `kb/dev/` page material, **`AUTO MODE`-eligible** in itself — but **held with
+entries 2 and 3**, for the same reason they are held: it belongs in the page entry 1 would create,
+and entry 1 is always-ask. Drain all four together.
+
+---
+
+## 5 · A preference store belongs exactly where there is nothing to be right about
+
+**Claim.** The question *should the user be able to choose this?* is not answered by what a picker
+costs. It is answered by asking **whether a wrong answer would be a defect**:
+
+- If a user disliking the current behaviour is **evidence the behaviour is wrong**, a setting is the
+  wrong response. It preserves the defect *and* hides it — the one user who would have reported it
+  now has a workaround, and everyone else keeps the broken default.
+- If a user disliking it is **evidence of nothing** — no measurement settles it, no version of the
+  product is worse for their preference — then there is nothing to be right about, and a setting is
+  the honest answer.
+
+Compressed: **a picker over taste is a feature; a picker over layout is a bug with a settings screen
+in front of it.**
+
+**Why.** `C12` refused a chart picker at revision 2 and accepted a *material* picker at revision 13,
+and without this rule the two look like the session changing its mind. The rejected discriminator is
+the obvious one — **cost** (a preference store, a migration, a settings row). Cost was equal in both
+directions and would have licensed either answer. The rule also generalises past UI: it is why a
+"strict mode" flag over a correctness bug is a smell, and why theme, language and density are not.
+A second-order benefit worth keeping: it tells you *what to build instead* when the answer is no —
+`C12` replaced the refused picker with **a card that hides itself when it has nothing to say**,
+which is the defect actually being reported.
+
+**Destination.** `kb/` — product/design decision-making, not `kb/dev/`. Likely a short page of its
+own; check overlap with `dev/enum-and-label.md` §5 (*don't buy a global judgement you can derive
+from per-item enums*), which is a neighbouring "resist the configurable answer" claim from a
+different angle.
+
+**Anchors.** [#31 resolution comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5270370393) §1
+· `CHANGELOG/2026-08-10/c12-charts-presentation.md` → *Revision 13* · `#12`'s *Decisions so far*,
+`C12` line.
+
+**Supersedes.** Nothing.
+
+**Status.** 🟢 Ordinary, **`AUTO MODE`-eligible, and genuinely independent of entry 1** — it needs no
+page that entry 1 might create. It is the one entry in this file this session may drain on its own
+judgement, and it is the one being drained.
