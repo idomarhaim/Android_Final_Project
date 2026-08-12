@@ -467,6 +467,15 @@ undoing on its merits.
 and the push issued in a **separate** one, so the adjudication sits between them where the rule
 puts it.
 
+**Third disclosure — the rev 8 push.** One foreign commit in the range, `c8b0ce3` from
+`c8-ai-task-plans` (which resolved [#24 · `C8`](https://github.com/idomarhaim/Android_Final_Project/issues/24)).
+Adjudicated before pushing, not after: the board shows that session **released**, and the working
+tree was clean, so precondition 5 lets it ride. Its commit also **deletes**
+`CHANGELOG/2026-08-10/c8-ai-task-plans.md` — moved to `CHANGELOG/2026-08-12/`, since the session
+finished on the 12th — and a deletion inside a *foreign* commit is precondition 5's to judge
+rather than precondition 2's, exactly as the rule splits them. Named here because a deletion
+riding up in someone else's commit is the kind of thing worth being findable in a month.
+
 **Second disclosure — the rev 4 push, and this time the fix did its job.** The range held two
 foreign commits, `87c5acf` and `e65d48e`, both from `picker-delegation-clause` (a cross-repo
 visitor from JARVIS that drained `c1`'s always-ask candidate). Because the read and the push were
