@@ -36,6 +36,23 @@ Four separate files would each be a page you look at alone, and the question her
 That is also what makes "Compare all four" possible, which is the view the choice is actually
 made in.
 
+## Two toggles for judging the groove (2026-08-12)
+
+**Empty channel** (on by default) sizes the slices against a **26-hour week** instead of against
+the tracked total, so the ring stops at ~71% and **the bare channel is visible** for the rest of
+the circle. That is the point: a groove you can only see *under* an arc cannot be judged. It is a
+**rendering test, not a proposed metric** — the centre caption says *of a 26h week* so the
+picture never claims something the data does not.
+
+**Raised 3D arc** (off by default, and *additional* rather than instead) gives the arc **real
+height** on top of the channel's depth. SVG has no z-axis, so the height is built the way height
+actually is: a **stack of copies stepping toward the light**, dark at the bottom of the wall and
+lighter as it climbs, then a **lit top face** and a **bright top edge** with a dark counter-edge.
+The result is a solid bar *sitting in* a groove rather than a coloured band *painted into* one.
+It applies to the two soft-UI materials only — on glass or liquid it would contradict the
+material — and it replaces their cast shadow rather than adding to it, because a stack that
+already carries its own wall plus a drop shadow reads as two objects.
+
 ## The groove, rebuilt (2026-08-11)
 
 Ido: wherever there should be a **recess** — the donut's track, the day/week/month/year bar —

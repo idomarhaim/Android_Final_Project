@@ -343,6 +343,10 @@
   <button class="cbtn" data-s="compare">Compare all five</button>
 </div>
 <div class="bar">
+  <button class="cbtn on" id="empty">Empty channel</button>
+  <button class="cbtn" id="raised">Raised 3D arc</button>
+</div>
+<div class="bar">
   <button class="cbtn on" id="canvas">Shared canvas</button>
   <button class="cbtn" id="lang">עברית</button>
   <button class="cbtn" id="theme">Light</button>
@@ -369,7 +373,9 @@ const GOALS=[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',
              {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
               me:'3 / 4 weeks',meHe:'3 / 4 שבועות'}];
 
-let S='glass', L='en', THEME='dark', UID=0, SHARED=true;
+let S='glass', L='en', THEME='dark', UID=0, SHARED=true, EMPTY=true, RAISED=false;
+/* a 26-hour week, used only when EMPTY is on so the ring stops short */
+const TARGET=26*60;
 const T=o=>L==='he'?(o.he??o.en):o.en;
 const t=(en,he)=>L==='he'?he:en;
 const ltr=s=>`<span class="ltr">${s}</span>`;
@@ -438,10 +444,40 @@ function donut(w, r, thick, style, centre, labels){
   let defs='', segs='', over='', acc=0;
   const pts=[];
 
+  /* EMPTY: size the slices against the 26-hour week rather than against the
+     tracked total, so the ring stops short and the bare channel is visible.
+     This exists to let the groove be JUDGED — it is a rendering test, not a
+     proposed metric. */
+  const DEN = EMPTY ? TARGET : TOTAL;
+
   AREAS.forEach(a=>{
-    const f=a.min/TOTAL, a0=acc*360-90, a1=a0+f*360-2.4, c=cc(a.k);
+    const f=a.min/DEN, a0=acc*360-90, a1=a0+f*360-2.4, c=cc(a.k);
     const d=arc(cx,cy,r,a0,a1);
     pts.push({a,mid:(a0+a1)/2,f}); acc+=f;
+
+    /* RAISED: the arc is not a painted band, it is a solid with HEIGHT sitting
+       in the channel. There is no z in SVG, so the height is built the way it
+       is actually built — a stack of copies stepping toward the light, dark at
+       the bottom of the wall and lighter as it climbs, then a lit top face and
+       a bright top edge. Soft-UI materials only; it would destroy glass. */
+    if(RAISED && (style==='neo'||style==='darkneo')){
+      const H=Math.max(4, thick*0.34);
+      defs+=`<linearGradient id="${id}-f${a.k}" x1="0" y1="0" x2="0.3" y2="1">
+        <stop offset="0%"   stop-color="${lite(c,.34)}"/>
+        <stop offset="55%"  stop-color="${c}"/>
+        <stop offset="100%" stop-color="${dk(c,.18)}"/></linearGradient>`;
+      for(let i=Math.round(H);i>=1;i--){
+        segs+=`<path d="${d}" stroke="${dk(c,.34+.40*(i/H))}" stroke-width="${thick}"
+          fill="none" stroke-linecap="butt" transform="translate(${-i*0.30},${i})"/>`;
+      }
+      segs+=`<path d="${d}" stroke="url(#${id}-f${a.k})" stroke-width="${thick}" fill="none"
+          stroke-linecap="butt"/>
+        <path d="${arc(cx,cy,r-thick/2+0.8,a0,a1)}" stroke="rgba(255,255,255,.42)"
+          stroke-width="1" fill="none"/>
+        <path d="${arc(cx,cy,r+thick/2-0.8,a0,a1)}" stroke="rgba(0,0,0,.35)"
+          stroke-width="1" fill="none"/>`;
+      return;
+    }
 
     if(style==='glass'){
       /* flat, slightly transparent, with a coloured bloom instead of a bevel */
@@ -508,7 +544,13 @@ function donut(w, r, thick, style, centre, labels){
         stroke-width=".9"/>
       <circle cx="${cx}" cy="${cy}" r="${r-ch/2}" fill="none" stroke="rgba(0,0,0,.55)"
         stroke-width=".9"/>`;
-    segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+    /* raised already carries its own wall and shadow — a second cast shadow on
+       top of it reads as two objects */
+    segs=RAISED ? `<g filter="url(#${id}-gw)">${segs}</g>`
+                : `<g filter="url(#${id}-ex)">${segs}</g>`;
+    if(RAISED) defs+=`<filter id="${id}-gw" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".26"/>
+      </filter>`;
   } else if(style==='neo'){
     const ch=thick*1.26;
     defs+=groove(`${id}-in`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
@@ -519,7 +561,7 @@ function donut(w, r, thick, style, centre, labels){
           flood-opacity="${dark?.8:.55}"/></filter>`;
     track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
       stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
-    segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+    if(!RAISED) segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
   } else {
     const tr = style==='metal'
       ? (dark?'rgba(0,0,0,.42)':'rgba(120,135,152,.28)')
@@ -584,8 +626,21 @@ function ring(size,pct,k,txt,style){
         stroke="url(#${id}-w)" stroke-width="${ch}"/></g>
       <circle cx="${c}" cy="${c}" r="${rr+ch/2}" fill="none" stroke="rgba(255,255,255,.07)"
         stroke-width=".8"/>`;
-    bar=`<g filter="url(#${id}-gl)"><path d="${arc(c,c,rr,-90,-90+pct*3.6)}"
-      stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
+    const dpath=arc(c,c,rr,-90,-90+pct*3.6);
+    if(RAISED){
+      const H=Math.max(3,tk*0.42); let st='';
+      for(let i=Math.round(H);i>=1;i--)
+        st+=`<path d="${dpath}" stroke="${dk('#1E7FD8',.20+.45*(i/H))}" stroke-width="${tk}"
+          fill="none" stroke-linecap="round" transform="translate(${-i*0.3},${i})"/>`;
+      bar=`<g filter="url(#${id}-gw)">${st}<path d="${dpath}" stroke="url(#${id}-a)"
+        stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
+      defs+=`<filter id="${id}-gw" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".5"/>
+        </filter>`;
+    } else {
+      bar=`<g filter="url(#${id}-gl)"><path d="${dpath}"
+        stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
+    }
   } else if(style==='neo'){
     const ch=th*1.32, rr=(size-ch)/2;
     defs=groove(`${id}-i`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
@@ -596,8 +651,18 @@ function ring(size,pct,k,txt,style){
           flood-color="${dark?'#0b0e13':'#9DAAC0'}" flood-opacity="${dark?.8:.55}"/></filter>`;
     trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${rr}" fill="none"
       stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
-    bar=`<g filter="url(#${id}-e)"><path d="${arc(c,c,rr,-90,-90+pct*3.6)}" stroke="${col}"
-      stroke-width="${ch*0.68}" fill="none" stroke-linecap="round"/></g>`;
+    const dp2=arc(c,c,rr,-90,-90+pct*3.6), bw=ch*0.68;
+    if(RAISED){
+      const H=Math.max(3,bw*0.42); let st='';
+      for(let i=Math.round(H);i>=1;i--)
+        st+=`<path d="${dp2}" stroke="${dk(col,.22+.42*(i/H))}" stroke-width="${bw}" fill="none"
+          stroke-linecap="round" transform="translate(${-i*0.3},${i})"/>`;
+      bar=`${st}<path d="${dp2}" stroke="${lite(col,.10)}" stroke-width="${bw}" fill="none"
+        stroke-linecap="round"/>`;
+    } else {
+      bar=`<g filter="url(#${id}-e)"><path d="${dp2}" stroke="${col}"
+        stroke-width="${bw}" fill="none" stroke-linecap="round"/></g>`;
+    }
   } else if(style==='metal'){
     defs=`<linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${dk(col,.4)}"/><stop offset="22%" stop-color="${lite(col,.6)}"/>
@@ -663,7 +728,8 @@ function screen(style){
           <div class="sub2">${t('Where the time went','לאן הלך הזמן')}</div></div></div>
         ${donut(310, 58, style==='metal'?22:20, style,
           `<div><div style="font-size:20px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
-           <div style="font-size:9.5px;opacity:.65;font-weight:600">${t('tracked','נמדדו')}</div></div>`, true)}
+           <div style="font-size:9.5px;opacity:.65;font-weight:600">${EMPTY
+             ? t('of a 26h week','מתוך שבוע של 26 ש׳') : t('tracked','נמדדו')}</div></div>`, true)}
       </div>
 
       <div class="card">
@@ -715,7 +781,8 @@ function render(){
             <div class="sub2" style="margin-bottom:6px">${t('Where the time went','לאן הלך הזמן')}</div>
             ${donut(310,54,s==='metal'?21:19,s,
               `<div><div style="font-size:19px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
-               <div style="font-size:9px;opacity:.65;font-weight:600">${t('tracked','נמדדו')}</div></div>`,true)}
+               <div style="font-size:9px;opacity:.65;font-weight:600">${EMPTY
+                 ? t('of 26h','מתוך 26 ש׳') : t('tracked','נמדדו')}</div></div>`,true)}
           </div>
           <div style="height:14px"></div>
           <div class="row" style="gap:10px">
@@ -733,9 +800,15 @@ function render(){
   const u=new URL(location);
   u.searchParams.set('style',S); u.searchParams.set('lang',L); u.searchParams.set('theme',THEME);
   u.searchParams.set('canvas',SHARED?'shared':'native');
+  u.searchParams.set('fill',EMPTY?'partial':'full');
+  u.searchParams.set('arc',RAISED?'raised':'flat');
   history.replaceState({},'',u);
 }
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S=b.dataset.s;render();});
+document.getElementById('empty').onclick=e=>{EMPTY=!EMPTY;
+  e.target.classList.toggle('on',EMPTY);render();};
+document.getElementById('raised').onclick=e=>{RAISED=!RAISED;
+  e.target.classList.toggle('on',RAISED);render();};
 document.getElementById('canvas').onclick=e=>{SHARED=!SHARED;
   e.target.textContent=SHARED?'Shared canvas':'Native canvas';
   e.target.classList.toggle('on',SHARED);render();};
@@ -754,6 +827,8 @@ if(q.get('lang')==='he'){L='he';const b=document.getElementById('lang');
 if(q.get('theme')==='light'){THEME='light';document.getElementById('theme').textContent='Dark';}
 if(q.get('canvas')==='native'){SHARED=false;const b=document.getElementById('canvas');
   b.textContent='Native canvas';b.classList.remove('on');}
+if(q.get('fill')==='full'){EMPTY=false;document.getElementById('empty').classList.remove('on');}
+if(q.get('arc')==='raised'){RAISED=true;document.getElementById('raised').classList.add('on');}
 render();
 </script>
 </body>

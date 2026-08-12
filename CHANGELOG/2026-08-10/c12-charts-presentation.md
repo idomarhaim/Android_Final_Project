@@ -442,6 +442,40 @@ recess always is — with a hard lip at the top, a bright rim at the bottom, and
 Still **no `feSpecularLighting` anywhere**: the depth here is channel geometry, not simulated
 roundness, which is what the balloon complaint was about in the first place.
 
+## Revision 9 — a groove you can only see under an arc cannot be judged
+
+Ido, 2026-08-12: make a chart that is **not 100%**, so the channel underneath is visible and the
+groove can be assessed; and add — **as an extra option, not a replacement** — an arc with
+**realistic 3D height** on top of the channel's depth. Both shipped as top-bar toggles. Posted as
+[the two-toggles comment](https://github.com/idomarhaim/Android_Final_Project/issues/31#issuecomment-5269367558).
+
+**1 · Empty channel** (default on). The donut summed to 100% by construction, so the channel was
+only ever visible *underneath* an arc — which made the request a genuine gap in the artifact
+rather than a preference. Slices are now sized against a **26-hour week** instead of the tracked
+total, so the ring stops at ~71% and the remainder is bare channel with the lip, the wall
+gradient and both hairlines on show. **Stated as a rendering test, not a proposed metric**: the
+centre caption reads *of a 26h week* so the picture never claims something the data does not, and
+a real weekly-hours target would be `C1`/`C3`'s question, not this one.
+
+**2 · Raised 3D arc** (default off, additional). SVG has no z-axis, so height is built the way
+height is: a **stack of copies stepping toward the light** — that stack *is* the side wall — plus
+a **lit top face** and a **bright top edge with a dark counter-edge**, because an edge is what
+separates a face from a wall. Applied to the donut and the goal rings on both soft-UI materials.
+
+**One decision named rather than left implicit:** when the arc is raised, its **cast shadow is
+removed**, not kept. A stack that already carries its own wall, plus a drop shadow underneath,
+reads as **two objects** — a bar and a separate dark smear — which is the same class of error as
+the original halo. Dark neo keeps its glow, because that is light rather than shadow.
+
+**Deliberately not applied to glass, liquid or metal.** Height would contradict what each of
+those materials *is*: glass has no solid to extrude, liquid's whole claim is refraction through a
+body, and metal's depth is reflection along a surface. The toggle is a **no-op** there rather
+than a worse version of them.
+
+Still **no `feSpecularLighting`** — worth re-checking on this revision specifically, since
+"realistic 3D height" is exactly the request that would invite the balloon back. It did not: the
+depth here is walls and edges, not simulated roundness.
+
 ## ⚠️ Push disclosure — four foreign commits rode up with rev 2, and the adjudication happened *after* the push
 
 **What happened.** The rev 2 push (`8b6c36a`) carried four commits this session did not write:
@@ -492,7 +526,7 @@ blocked half has opened. Reported, not acted on.
 
 ## Status
 
-**Revision 8 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
+**Revision 9 is out; the ticket is not resolved.** `#31` is HITL by type — arrangement is
 visual, so it resolves against something Ido reacts to, not against an argument. The three
 questions the prototype could not settle have been put to him once and handed back, so they are
 answered on the record and remain overturnable; what is still owed is his reaction to the
