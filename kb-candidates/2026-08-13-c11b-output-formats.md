@@ -4,10 +4,14 @@ Session: `c11b-output-formats` · Ticket: [#30 · `C11b`](https://github.com/ido
 
 Each entry stands alone. No transcript is a source: everything needed to write the page is below.
 
-**Neither entry is drainable by this session** — see each Status, and note that both Status blocks
-were **rewritten after reading the destination files**, because the first draft of each was wrong.
+**Drained 2026-08-14 — partial.** Entry 2 shipped as
+`C:\Dev\JARVIS\kb\dev\decision-map-charting.md` **§9** (a new section; the old §9 *Adjacent*
+renumbered to §10). **No new page** — the bundle check was confirming and re-confirmed 32 hours
+later. Journal: `kb/log/2026-08-14.md`. **Entry 1 survives below and keeps its original number.**
 
 ---
+
+## Standing — always-ask
 
 ## 1 · Exposure to a sibling's commit opens when the content reaches the **working tree**, not when you `git add` ⛔
 
@@ -43,7 +47,7 @@ minutes rediscovering it.
 (`git diff --cached` → `SESSIONS.md | 1 +`). `c15b-stored-ai-text` then committed `406874d`
 (*"c15b: resolve #35"*), which carries **this session's claim row** alongside their own 57-line
 release note; this session's `86f3f87` shipped with only its changelog. **Fifth cross-contamination
-of the night** across `c5-endless-goals`, `picker-queue-merge`, `c19-area-success-failure` and
+of that night** across `c5-endless-goals`, `picker-queue-merge`, `c19-area-success-failure` and
 `session-titles` — and the **first in which a deliberate countermeasure was tried and lost**, which
 is the part none of the other four could record.
 
@@ -61,67 +65,31 @@ addition** — the exposure-window sentence above.
 **Supersedes.** ⚠️ **It narrows a standing committed claim** — the *"exposure opens the moment you
 `git add`"* sentence.
 
-**Status.** ⛔ **Always-ask in both modes, and held three times over. Not drained, and not proposed as
-a diff.**
+**Status.** ⛔ **Always-ask in both modes. Not drained, and not proposed as a diff.** Two gates, and
+both are still standing as of **2026-08-14**:
 1. Destination is `rules/`, which `/kb-ingest` may not write and the 🎬 walkthrough gate owns.
 2. It **contradicts a standing claim**, which is always-ask regardless of mode.
-3. `rules/agent-topology-and-model-routing.md` is **owned by a live claim** — `liveness-from-transcript`
-   on the JARVIS board, working §5.3 right now, with that file uncommitted in its tree.
 
-**The first draft of this Status said the cross-repo hold "has expired" because `picker-queue-merge`
-released. That was asserted without reading the JARVIS board, and it was wrong: the hold did not
-expire, it moved.**
+**The third hold has lifted and is recorded so the next session does not re-derive it.** On
+2026-08-13 this entry was also blocked because `rules/agent-topology-and-model-routing.md` was owned
+by the live `liveness-from-transcript` claim. **That session has released; the JARVIS board's Active
+claims table is empty as of 2026-08-14 19:50.** Only the two always-ask gates remain, and neither is
+an agent's to clear.
+
+**One correction this file owes its own earlier draft.** Its first Status block said the cross-repo
+hold *"has expired"* because `picker-queue-merge` released. That was asserted from a release commit
+without reading the JARVIS board, and it was wrong at the time: two other sessions were live. It is
+true **now**, for a different reason, and the difference between those two states is exactly what
+reading the board tells you and inferring from a commit does not.
 
 ---
 
-## 2 · On a wayfinder map, a **terminal** ticket accumulates declines — because each session inherits the last decline's *verdict* instead of re-deriving it
+## Drained
 
-**Claim.** A ticket that is *last by design* is declined by session after session, and the mechanism
-is specific and avoidable: the first session declines on a **real** ground; the board and changelogs
-record that decline in the first session's words; and every later session reads **that sentence**
-rather than the ticket's own charter. The charter is a **sequencing** rule, and sequencing rules
-**expire by being satisfied** — but a recorded decline is phrased as a *property* (*"terminal by
-design"*), and a property does not look like something that can expire.
-
-**Why (the reasoning, and what was rejected).** The check that breaks the chain is mechanical: the
-**frontier query is authoritative** — open, unblocked, unassigned — and a prose decline is a *note*,
-which must be **re-derived**, never inherited. The failure survives precisely because the grounds
-being cited were **not** wired edges: they were prose arguments in changelogs, invisible to the query
-that decides what is takeable.
-
-**Rejected: wire the extra grounds as blocking edges.** Attractive, and wrong. The later grounds were
-about the **liveness of sibling claims** — board state, not ticket state — so encoding them as edges
-would make the map lie the moment the sibling released, which is exactly what happened here twice in
-one night.
-
-**Observed, 2026-08-13, GoalPilot map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12).**
-`#30 · C11b` was declined by three consecutive sessions — `c5-endless-goals`, `c15b-stored-ai-text`,
-`c19-area-success-failure` — all citing the map's sentence *"you cannot test a format nobody has
-designed yet."* The ticket's body states its condition exactly: *"deliberately blocked on all four
-features it serves"* (`C1` #19, `C2` #20, `C8` #24, `C10` #29). **All four had been closed for
-hours**, and `C2`'s own resolution §6 had recorded in writing that *"#30 is now fully unblocked —
-this was its last open blocker."* `#30` was the **map's terminal ticket**, so each decline delayed
-the map's destination by a whole session.
-
-**Destination — `C:\Dev\JARVIS\kb\dev\decision-map-charting.md`, as a new section beside §8. Checked,
-not guessed: that page exists and §8 is the near neighbour** — *"a ticket body is written at charting
-time and never ages — re-read its blockers before answering it."* **No new page.**
-
-**Why it is a section and not a duplicate of §8.** §8 is about the ticket's **body** going stale, and
-its remedy is *read the ticket's own closed blockers*. This is about a **previous session's prose
-verdict** going stale — a different artifact with a different remedy. §8's failure is answering a
-question that no longer exists; this one's failure is **never answering it at all**. They compound: a
-session that inherits a decline never reaches §8's check, because it never opens the ticket.
-
-**Anchors.** Issues `#12`, `#30`, `#20` §6, `#16` (`C11a`) §8; the decline notes in
-`c:\Dev\Android_Final_Project\SESSIONS.md` recorded by `c5-endless-goals`, `c15b-stored-ai-text` and
-`c19-area-success-failure`.
-
-**Supersedes.** Nothing — extends `decision-map-charting.md`.
-
-**Status.** 🟢 Ordinary `kb/dev/` material, genuinely this session's, and the only one of the two that
-is `AUTO MODE`-eligible — **held on a live singleton, not on its own merits.** Every `/kb-ingest`
-writes `kb/index.md` and `kb/log/2026-08-13.md`, and both are **uncommitted in the working tree of a
-live visitor session**: `c15b-stored-ai-text`, mid-drain on `kb/dev/runtime-verification.md`, per the
-JARVIS board. Racing a second ingest through those two commons files is the exact contamination
-entry 1 is about. **Drainable by the next session into JARVIS once that visitor releases.**
+- **Entry 2 — *on a wayfinder map, a terminal ticket accumulates declines, because each session
+  inherits the last decline's verdict instead of re-deriving it*.**
+  **Status: ingested 2026-08-14.** Landed as `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` **§9**,
+  updated in place — **no new page**, because §8 (*a ticket body never ages*) was already the near
+  neighbour and this is its sibling case: §8 is the ticket's **body** going stale, §9 is a previous
+  session's **verdict** going stale. `Check-KbLinks` **CLEAN, 67 pages**. A visitor row was held on
+  the JARVIS board for the unit, since the board follows the repo being written to.
