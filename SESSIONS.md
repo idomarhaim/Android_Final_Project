@@ -15,8 +15,66 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c20-derived-state` | [#42 · `C20` — who owns derived state, and in what shape?](https://github.com/idomarhaim/Android_Final_Project/issues/42), graduated from `#12`'s fog | `CHANGELOG/2026-08-14/c20-derived-state.md`, `kb-candidates/2026-08-14-c20-derived-state.md`, this row | *(none)* | 2026-08-14 |
+| *(none — see the release note below)* | | | | |
 
+> ✅ **`c20-derived-state` released 2026-08-14 — `f08192d` (claim) → this commit.
+> [#42 · `C20`](https://github.com/idomarhaim/Android_Final_Project/issues/42) is resolved and closed, and
+> map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is back to **0 open children —
+> now with 27 decisions and 4 fog bullets**, one fewer than it started the session with.**
+>
+> **What it decided.** The ticket's own trichotomy — *one Function · one trigger per site · a shared module* —
+> was **false**, because all three answers presume every derived number needs a writer. One rule kills the
+> premise: **a derived number gets a stored writer if and only if somebody who cannot read its inputs has to
+> read it**, and that is a grep of `firestore.rules` rather than a matter of taste. Of seven derived quantities
+> **five need no writer**, `publicProfiles.level` is **deleted** (a stored function of `points` in the same
+> document, whose `resolvedLevel()` fallback can never fire), and the two survivors are exactly the two numbers
+> that cross from one user to another. So: **one projection function, two trigger registrations, zero client
+> writers of derived state.** `C1`'s *project-from-facts* shape generalises and `#34`'s *recompute-and-store*
+> does not — selected by **`#34`'s own stated risk**, since a projection is idempotent structurally while an
+> accumulator makes idempotency a duty. **The offline win is free:** `#34` priced its proposal at *"a second or
+> two before the donut moves"* and that cost is **not paid at all**, so completing a task offline works for real
+> (`A5`) and `#3`'s optimistic overlay, undo and pre-check are **deleted rather than kept**.
+>
+> **No picker was raised** — every question resolved to a closed ticket, the rules file or the code, so the
+> answers were derived and logged per the derivable-decision rule. Following `c11b-output-formats`'s precedent —
+> `Inferred:` from that note and `c19`'s, `C1`, `C2`, `C8`, `C15b` (twice) and `C19` each ended in a hand-back.
+> Everything is Ido's to overturn.
+>
+> ⚠️ **One fog bullet was left with a weaker verdict than the other three and is named rather than buried.** The
+> dashboard patch (`A7`) states no *"not sharp until X"* clause; it says the remaining question is
+> [`C12` #31](https://github.com/idomarhaim/Android_Final_Project/issues/31)'s and asks whether it lives in
+> [`C9b` #26](https://github.com/idomarhaim/Android_Final_Project/issues/26). `Observed:` both are closed.
+> `Untested:` whether either answered it — their decision lines were **not read**, one ticket per session being
+> the rule. It may be *un-owned* rather than *un-sharp*, and it is the next session's cheapest lead.
+>
+> ⚠️ **Three of this session's own ticket's four listed sites were wrong, and it found that out by reading the
+> code afterwards.** `User.level` was filed as a site needing a server owner and is in fact the **worked
+> example** (`User.kt:14`, a computed property; `users/{uid}` has no `level` field at all). Also found: the
+> **fact stream for goals already exists**, and `logProgress` writes the fact and **then** mutates the counter
+> in **two non-atomic steps with nothing reconciling them** — a crash between them leaves `currentValue`
+> permanently wrong, a new live defect at a site no ticket had named. Four defects filed as spec lines; **no
+> code written**, per *plan, don't do*.
+>
+> **The `#12` commons discipline held — a clean run.** Body fetched, patch built, **re-fetched and
+> `cmp`-compared immediately before the write — unchanged, no race** — written with **`--input map_patch.json`**
+> (107 KB; `-f body=` still cannot carry it) and verified: **26 → 27 decisions**, **5 → 4 fog bullets**, and the
+> only two pre-existing lines lost are the two intended. The 195 → 196 delta is the trailing newline GitHub
+> appends, exactly as `c6-log-progress`, `c15b-stored-ai-text` and `c11b-output-formats` each recorded.
+>
+> 📥 **Three candidates filed, none drained** —
+> [`kb-candidates/2026-08-14-c20-derived-state.md`](kb-candidates/2026-08-14-c20-derived-state.md). All three are
+> 🟢 `AUTO MODE`-eligible (`kb/dev/`, no standing claim contradicted) and all three are held on the same thing:
+> a **cross-repo write** into `C:\Dev\JARVIS` needing that board, `kb/index.md` and `kb/log/`. They are one
+> ingest — entries 1 and 2 are one new page, entry 3 a section on `kb/dev/decision-map-charting.md`.
+>
+> **No tests run and none applicable** — Markdown, GitHub metadata and read-only greps of Kotlin, TypeScript and
+> `firestore.rules`. `functions/` still has **no test layer and no `test` script**; `C20` §7 is the second ticket
+> to name it. **Not pushed** — see the changelog.
+>
+> Recorded by `c20-derived-state` on release. The claim note follows.
+>
+> ---
+>
 > 🆕 **`c20-derived-state` claimed [#42 · `C20`](https://github.com/idomarhaim/Android_Final_Project/issues/42) — a ticket
 > that did not exist when the session started, because the frontier was empty and the map was not done.**
 > `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was the agent's.
