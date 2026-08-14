@@ -15,7 +15,50 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| *(none — the map is out of tickets; see the release note below)* | | | | |
+| `c20-derived-state` | [#42 · `C20` — who owns derived state, and in what shape?](https://github.com/idomarhaim/Android_Final_Project/issues/42), graduated from `#12`'s fog | `CHANGELOG/2026-08-14/c20-derived-state.md`, `kb-candidates/2026-08-14-c20-derived-state.md`, this row | *(none)* | 2026-08-14 |
+
+> 🆕 **`c20-derived-state` claimed [#42 · `C20`](https://github.com/idomarhaim/Android_Final_Project/issues/42) — a ticket
+> that did not exist when the session started, because the frontier was empty and the map was not done.**
+> `/wayfinder 12` was invoked with the **map**, not a ticket, so the pick was the agent's.
+>
+> **The frontier derivation returned nothing, and that is a verified result rather than a lookup failure.**
+> `/issues/12/sub_issues` reports **26 children, 26 closed, 0 open**. That endpoint is the one
+> `c15b-stored-ai-text` caught serving a stale `state`, and the direction it cannot catch is an **open**
+> child reported closed — so the listing was reconciled against `gh issue list --state open` over the whole
+> repo: **12 open issues, every one accounted for** — the map `#12` itself and eleven non-map issues
+> (`#2`, `#4`–`#11`, `#34`, `#36`). No child is hiding behind a stale `closed`. True at **claim time,
+> 2026-08-14**.
+>
+> **So the map has no ticket, and by its own Destination it is still not done** — *"the map is done when the
+> spec is whole **and** no ticket is open"*, and `docs/PRODUCT_v0.3.md` does not exist. `c19-area-success-failure`
+> wrote [`sessions/product-v03-spec.md`](sessions/product-v03-spec.md) for that half. This session took the
+> **other** half: the map's **Not yet specified** block still holds five fog bullets, and one of them names its
+> own precondition and that precondition is now discharged.
+>
+> **Bullet 1 said in its own words *"it is not sharp until `C1` decides whether `points` moves at all."***
+> [`C1` #19](https://github.com/idomarhaim/Android_Final_Project/issues/19) closed deciding **`points` moves
+> server-side** — and **filed nothing**, so the patch it discharged was never graduated. That gap is this
+> session's unit. The other four bullets were each checked and left: the offline story and the dashboard
+> reorientation have no stated precondition that changed; the `GoogleSignIn` migration says of itself that it is
+> **build work, not a product decision**; and *whether idleness may retire a goal* states that it cannot be
+> phrased sharply until `C19`'s `STARTING` offer has been lived with.
+>
+> ⚠️ **This session authored the ticket it is about to resolve, which is unusual on this map and is recorded
+> rather than glossed.** Every other ticket here was framed by one session and answered by another. The
+> skill's own limit — *never resolve more than one ticket per session* — is respected (one ticket), but the
+> independent-framing property that limit protects is not, and the question wording is therefore the agent's
+> alone.
+>
+> **No singleton taken** — no Gradle, no build, no device or emulator, no Firebase deploy, nothing written in
+> `C:\Dev\JARVIS`.
+>
+> 📥 **Six `kb-candidates/` files were listed before the first unit of work, and none is this session's to
+> drain.** `c12-charts-presentation`, `c11b-output-formats`, `c15b-stored-ai-text`, `c19-area-success-failure`,
+> `c2-task-type`, `session-titles` — all other sessions', all carrying entries their own release notes recorded
+> as ⛔ always-ask or held on a cross-repo singleton. `session-titles` is fully drained and deliberately kept:
+> its promotion landed in another repo, so the same-commit carve-out cannot be satisfied and Ido's word is owed.
+>
+> Recorded by `c20-derived-state` on claiming.
 
 > ✅ **`picker-decomposition-clause` (visitor from `C:\Dev\JARVIS`) claimed and released
 > 2026-08-13 — in and out in one unit, this commit.** Owned exactly one path:
