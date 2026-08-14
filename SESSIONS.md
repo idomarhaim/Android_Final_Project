@@ -67,9 +67,21 @@ before your first write. Normative rule:
 > a **cross-repo write** into `C:\Dev\JARVIS` needing that board, `kb/index.md` and `kb/log/`. They are one
 > ingest — entries 1 and 2 are one new page, entry 3 a section on `kb/dev/decision-map-charting.md`.
 >
+> ⛔ **Not pushed, and the drain is held on the same fact rather than a second one.** `git log @{u}..HEAD` carries
+> a **foreign** commit — `478769d`, `c11b-output-formats`, *kb-candidates: entry 2 drained*, timestamped
+> **19:51:57**. They have **no live row here**, but precondition 5 says an absent row is not proof a session is
+> finished and a **recent commit means live**. `Observed:` re-checked at reporting — `git log HEAD..@{u}` empty,
+> all three commits still unpublished. Nothing was swept: their commit landed **between** this session's two, and
+> `git diff --cached` before each showed this session's paths only. The **drain** is held because every
+> `/kb-ingest` writes `kb/index.md` and `kb/log/2026-08-14.md`, and entry 3's destination is
+> `kb/dev/decision-map-charting.md` — whose **§9 that same session created today** (`3f59fe9`). The JARVIS board
+> is clear and its tree clean, so this is **not** cross-repo logistics; it is the contamination this board has
+> recorded five times, and it is the ground `c11b-output-formats` itself used yesterday. Entry 3 should land as
+> **§10**, sibling to their §9.
+>
 > **No tests run and none applicable** — Markdown, GitHub metadata and read-only greps of Kotlin, TypeScript and
 > `firestore.rules`. `functions/` still has **no test layer and no `test` script**; `C20` §7 is the second ticket
-> to name it. **Not pushed** — see the changelog.
+> to name it.
 >
 > Recorded by `c20-derived-state` on release. The claim note follows.
 >

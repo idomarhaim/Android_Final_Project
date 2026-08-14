@@ -160,3 +160,32 @@ in `C:\Dev\JARVIS`. Active claims was empty at claim time and the tree was clean
 that file for status per entry.
 
 Six other sessions' candidate files were listed before the first unit of work and **none was touched**.
+
+## Push: held, and the drain is held on the same fact
+
+**Not pushed.** `git log @{u}..HEAD` carries three commits, and one is **foreign**:
+
+| Commit | Session | Verdict |
+|---|---|---|
+| `f08192d` | `c20-derived-state` | this session's claim |
+| `478769d` | **`c11b-output-formats`** | *kb-candidates: entry 2 drained — it shipped as JARVIS decision-map-charting §9* |
+| `5533bc1` | `c20-derived-state` | this session's resolution |
+
+`c11b-output-formats` has **no live row** on this board, but precondition 5 is explicit that an absent row is
+not proof a session is finished — and their commit is timestamped **19:51:57**, minutes before this check. A
+recent commit of theirs means **live**, so the range stops here. Nothing is broken and nothing was swept: their
+commit landed between this session's two, both of which staged and committed by **explicit path**, and
+`git diff --cached` before the commit showed this session's three files only.
+
+`Observed:` re-checked at the moment of reporting — `git log HEAD..@{u}` is empty and all three commits are
+**still unpublished**. Stated dated rather than bare, because a sibling's push is branch-scoped and would carry
+them without any gate of this session's.
+
+**📥 The KB drain is held on the same fact, not on a second one.** All three candidates are 🟢 and the JARVIS
+board's Active claims is empty with a clean tree there — so the hold is **not** cross-repo logistics. It is
+that every `/kb-ingest` writes `kb/index.md` and `kb/log/2026-08-14.md`, and entry 3's destination is
+`kb/dev/decision-map-charting.md`, whose **§9 `c11b-output-formats` created at `3f59fe9` today**. Racing an
+ingest through those three files against a session that committed three minutes ago is the exact
+cross-contamination this board has now recorded five times — and it is the same ground `c11b-output-formats`
+itself used yesterday to hold an `AUTO MODE`-eligible entry. The candidates are **committed**, so nothing is
+lost by the wait; entry 3 should land as **§10**, sibling to their §9.
