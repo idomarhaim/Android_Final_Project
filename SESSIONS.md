@@ -15,10 +15,16 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `backlog-triage` | Triage every open backlog issue against `docs/PRODUCT_v0.3.md`; comment, reword or close each, and file what the spec implies | `sessions/backlog-triage.md`, `CHANGELOG/2026-08-15/backlog-triage.md`, `kb-candidates/2026-08-15-backlog-triage.md`, the GitHub tracker (issues `#2`–`#11`, `#34`, `#36` and any new issue it files) | GitHub tracker (issue bodies/state) | 2026-08-15 |
+
+> 🏁 **THE MAP IS CLOSED. [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12) was
+> closed by Ido on 2026-08-15**, at his instruction and as its own last act — **31 children, all
+> closed**, zero open `wayfinder:*` issues left in the repo. The artifact is `docs/PRODUCT_v0.3.md`.
+> **The product-model effort is over; what follows is build work.**
 
 > ✅ **`C24` #46 APPROVED BY IDO and closed for good, 2026-08-15 — all four decisions signed off after
-> he reviewed the prototype.** With it, **`#12` is fully answered**; closing the map is the one act
-> left and it is his. **The next session is [`sessions/backlog-triage.md`](sessions/backlog-triage.md)**,
+> he reviewed the prototype.** With it, **`#12` is fully answered**; closing the map was the one act
+> left and it was his. **The next session is [`sessions/backlog-triage.md`](sessions/backlog-triage.md)**,
 > whose precondition (`C22`, `C23`, `C24` all closed) is now **met** — it runs **alone**, before any
 > build session, and produces the build order for `/implement #N`.
 >
