@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.feature.lifeareas
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -212,9 +213,21 @@ private fun LifeAreaCard(
 ) {
     val accent = area.colorHex.toGoalAccent()
     GpCard(
-        // The whole card opens the area (#2). The drag handle below consumes its
-        // own pointer events, so long-pressing it to reorder never lands here.
-        onClick = onOpen,
+        // NOT `GpCard(onClick = ...)`. #2 put the click on the whole card, which
+        // put it *around* the drag handle, and the two then competed for the same
+        // press — the card won and drag-to-reorder stopped working entirely
+        // (`LifeAreaReorderUiTest`, red the moment that suite could compile again).
+        //
+        // The comment that used to sit here claimed the handle "consumes its own
+        // pointer events, so long-pressing it to reorder never lands here." It does
+        // not: `change.consume()` runs inside `onDrag`, which is *after* the long
+        // press has been recognised, and nothing stops the enclosing clickable
+        // claiming the press before that.
+        //
+        // So the click moved inward, onto the content after the handle. The race is
+        // now structurally impossible rather than carefully arbitrated — and it is
+        // the better interaction anyway: tapping a drag handle should never
+        // navigate.
         modifier = Modifier
             .fillMaxWidth()
             // Above its neighbours while it is in the air, or the cards it passes
@@ -268,42 +281,58 @@ private fun LifeAreaCard(
             } else {
                 Box(Modifier.size(width = 12.dp, height = 1.dp))
             }
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(accent.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = iconForKey(area.iconKey),
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-            Column(
+            // Everything from the icon to the subtitle opens the area (#2). This is
+            // the click target the whole card used to carry — it stops short of the
+            // drag handle on the left and of Edit/Delete on the right, which is
+            // what keeps all four gestures from competing.
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 14.dp),
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable(
+                        onClickLabel = "Open ${area.name}",
+                        onClick = onOpen,
+                    )
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    area.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    buildString {
-                        // The count is direction-isolated (§4.8): a Latin digit run
-                        // inside a Hebrew paragraph is reordered by the bidi
-                        // algorithm, and this one sits in a sentence.
-                        append(goalCountLabel(goalCount))
-                        if (area.isLinkedToGoogleTasks) append(" · synced from Google Tasks")
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(accent.copy(alpha = 0.16f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = iconForKey(area.iconKey),
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 14.dp),
+                ) {
+                    Text(
+                        area.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        buildString {
+                            // The count is direction-isolated (§4.8): a Latin digit run
+                            // inside a Hebrew paragraph is reordered by the bidi
+                            // algorithm, and this one sits in a sentence.
+                            append(goalCountLabel(goalCount))
+                            if (area.isLinkedToGoogleTasks) append(" · synced from Google Tasks")
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             IconButton(onClick = onEdit) {
                 Icon(Icons.Filled.Edit, contentDescription = "Edit ${area.name}")

@@ -11,6 +11,8 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import com.google.common.truth.Truth.assertThat
@@ -44,6 +46,7 @@ class LifeAreaReorderUiTest {
     }
 
     private val moves = mutableListOf<Pair<Int, Int>>()
+    private val opened = mutableListOf<String>()
 
     @Composable
     private fun Subject(rows: List<LifeAreaRow>) {
@@ -54,9 +57,10 @@ class LifeAreaReorderUiTest {
                 lifeAreaRows(
                     state = state,
                     onMove = { from, to -> moves += from to to },
-                    // #2 made the whole card a click target; this suite is about
-                    // reordering, so the route is stubbed rather than asserted.
-                    onOpen = {},
+                    // Recorded, not stubbed: #2's click target and this suite's
+                    // drag gesture compete for the same press, so the only way to
+                    // know the fix holds is to watch *both* outputs at once.
+                    onOpen = { opened += it.name },
                     onEdit = {},
                     onDelete = {},
                 )
@@ -129,5 +133,41 @@ class LifeAreaReorderUiTest {
         composeRule.waitForIdle()
 
         assertThat(moves).containsExactly(0 to 1)
+        // The half that actually regressed: #2 put a clickable around the handle,
+        // the card won the press, and the drag silently produced nothing. Asserting
+        // the move alone told us reordering broke but not why — this says the route
+        // did not fire, which is the thing that was stealing the gesture.
+        assertThat(opened).isEmpty()
+    }
+
+    // ── The click target #2 added, and the boundary that keeps it off the handle ──
+
+    @Test
+    fun tappingTheCardOpensThatArea() {
+        composeRule.setContent { Subject(rows) }
+
+        // Selected by its name rather than a content description: the click target
+        // carries an `onClickLabel` ("Open Studies") so a screen reader announces the
+        // action, and labelling the node itself as well would make it announce twice.
+        composeRule.onNodeWithText("Studies").performClick()
+        composeRule.waitForIdle()
+
+        assertThat(opened).containsExactly("Studies")
+        assertThat(moves).isEmpty()
+    }
+
+    @Test
+    fun tappingTheDragHandleDoesNotOpenTheArea() {
+        // The invariant no test held, and the one whose absence let the regression
+        // ship: the handle is a *reorder* affordance. A tap on it must do nothing —
+        // navigating from it is how the click target came to enclose the gesture in
+        // the first place.
+        composeRule.setContent { Subject(rows) }
+
+        composeRule.onNodeWithContentDescription("Reorder Studies").performClick()
+        composeRule.waitForIdle()
+
+        assertThat(opened).isEmpty()
+        assertThat(moves).isEmpty()
     }
 }
