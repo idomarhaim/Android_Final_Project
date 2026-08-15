@@ -16,22 +16,47 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
-| `c23-goal-category` | `/wayfinder 12` → resolve **[`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)** — does `GoalCategory` stay closed at ten, and where do its labels live once they translate. `grilling` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c23-goal-category.md`, `kb-candidates/2026-08-15-c23-goal-category.md`, `sessions/c23-*.md` (file-level only — see the overlap note below) | issue **`#45`** (assigned to `idomarhaim` = the wayfinder claim). **Does *not* hold the `#12` map body** — that singleton is `c22-measure-proposal`'s and this session will need it only at resolution, which a HITL ticket cannot reach without Ido | 2026-08-15 |
 
-> ⚠️ **Two `/wayfinder 12` sessions are live at once, and they are disjoint by ticket — but two overlaps are named
-> rather than assumed away.** `c22-measure-proposal` holds **`#44`**; `c23-goal-category` holds **`#45`**; **`#46`
-> is still unclaimed** and is the next frontier ticket for whoever comes third.
+> ✅ **`c23-goal-category` released 2026-08-15 — `d5a9d13` (claim) → this commit. [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)
+> is resolved and CLOSED.** No brief was written and none is owed: the ticket is answered, not handed on.
 >
-> **(a) The `#12` map body is a genuine singleton and `c22` holds it.** Both sessions must append to *Decisions so
-> far* to record a resolution, and neither can reach that step alone: both tickets are **HITL**, so they close only
-> through live exchange with Ido. `c23-goal-category` will **lease** the body at resolution time rather than claim
-> it now, and will not touch `#12` before then. `Observed:` `c22`'s transcript last wrote at **14:45Z**, one minute
-> before this row — that session is **live**, not stale, so `#44` was never takeable.
+> **The decision is the agent's, not Ido's.** He was asked one question and handed it back — *"I couldn't fully
+> understand you … explain simply and schematically … choose the solution that gives the highest standard and
+> quality … and if you can improve it, improve it"* — near-identical wording to the delegation `product-v03-spec`
+> received three hours earlier. No re-ask, comprehension paid once in the reply, decision derived and recorded as
+> the agent's. `Untested:` whether Ido agrees with any of it; all of it is his to overturn.
 >
-> **(b) `sessions/` is claimed folder-wide by `c22` for a brief it may hand off.** `c23-goal-category` claims
-> **file-level only** (`sessions/c23-*.md`), so the two do not collide; recorded because a directory claim beside a
-> file claim reads as a conflict to the next session, and because the pathspec-commit remedy cannot cover a file
-> both sessions write.
+> **What it decided:** the enum survives as **machinery** — the classifier's closed vocabulary and the no-area
+> fallback — and is **never rendered beside a life area**, which owns colour, icon and grouping. Ten → **seven**
+> (`SLEEP`, `NUTRITION`, `OTHER` deleted; `Goal.category` nullable, zero-write migration). `GoalCategory.label` is
+> **deleted**, not moved, so English in a Hebrew screen becomes a compile error. The model classifies into **Ido's
+> own areas** when he has any, and the seven double as the first-run seed list.
+>
+> **The fork in the question was false, and the palette is what proved it.** The two models grep clean against each
+> other; `LifeAreaPalette` holds the *same ten hexes copy-pasted* plus a **bilingual** `iconKeyFor(name)` already
+> mapping `בריאות`→favorite. Three of the four options put to Ido were already delivered by the user-authored
+> object, and delivered better.
+>
+> 🐞 **One defect found and filed — [#47](https://github.com/idomarhaim/Android_Final_Project/issues/47).**
+> `BuildHealthProposalsUseCase:167` matches an existing goal by `category == metric.category`, and the category is a
+> **user-editable chip**: editing it orphans the goal from the automatic, unreviewed Health Connect sync, which then
+> creates a duplicate "Weekly steps" goal. `Observed:` the code path. `Untested:` not reproduced on a device. It makes
+> the shrink a **strict hand-off** — delete `SLEEP` without moving the matcher and the sleep metric points at nothing.
+>
+> 🛑 **One thing is owed and deliberately not taken: the `#12` *Decisions so far* line.** That body is a claimed
+> singleton and `c22-measure-proposal` **still holds it** (`Observed:` its transcript's last record, 14:58Z, ~15
+> minutes before this release). The exact line to paste is posted as a
+> [comment on #12](https://github.com/idomarhaim/Android_Final_Project/issues/12#issuecomment-5302797690) for whoever
+> holds the body next. **`C24` #46 is the remaining unclaimed frontier ticket**; `#12` stays open and closing it is Ido's.
+>
+> 📥 **Nothing ingested; three candidates written** to `kb-candidates/2026-08-15-c23-goal-category.md`. Two are ⛔
+> always-ask (`rules/` destination — the fork-check refinement, and a **second data point** on the comprehension
+> complaint that says the first diagnosis was incomplete). One is 🟢 eligible (*a display attribute is not an
+> identity*) and **not drained on purpose**: it is a cross-repo JARVIS visit, and this repo already carries an
+> undrained JARVIS-bound entry from `product-v03-spec` — one board row there should cover both. **Work left, not a defect.**
+>
+> ⚠️ **`c22-measure-proposal` was still live at release** (14:58Z), holding `#44`, `sessions/` and the `#12` body.
+> Its claim was honoured throughout; this commit takes explicit paths only and carries no foreign commit.
 
 > ✅ **`social-share-bugs` released 2026-08-15 — `b99c5da` (claim) → `b762520`, pushed. Brief moved to
 > `sessions/done/`. `#4` and `#5` are fixed and tested, and both are deliberately left OPEN.**
