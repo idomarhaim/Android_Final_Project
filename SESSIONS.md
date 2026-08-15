@@ -15,8 +15,38 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `social-share-bugs` **(reopened, 2nd)** | The **live delete round-trip** — does the *deployed* `storage.rules` let the author's image delete through on `goalpilot-56e30`? Ido chose the non-destructive form: **create a throwaway post with a photo, then delete that one**. His two real posts are not touched. Then close [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) / [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) per the brief's own condition. | `CHANGELOG/2026-08-15/social-share-bugs.md` | emulator **`Pixel_10_Pro_XL`**, live project **`goalpilot-56e30`** (one write + one delete of throwaway data), issues **`#4`** + **`#5`** | 2026-08-15 |
 
+> 🎉 **`social-share-bugs` FULLY released 2026-08-15 — [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)
+> and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) are CLOSED, with the evidence on each
+> issue.** Emulator **`Pixel_10_Pro_XL`** and live project **`goalpilot-56e30`** released. **Nothing in this
+> session is `Untested:` any more.**
+>
+> **The live round-trip is proven, and Ido chose the non-destructive way to prove it.** A throwaway post was
+> created with a photo — *one of this session's own screenshots*, not Ido's content — and then deleted through the
+> UI. His two real posts were never touched.
+>
+> ⚠️ **Two instruments were tried and discarded as uninformative rather than read as passes, which is the part
+> worth keeping.** Coil's disk-cache metadata holds response headers but **not the request URL**, so the tokenised
+> download URL could not be recovered — and without the token an HTTP GET returns 403 whether or not the object
+> exists, which is not a test. Then **logcat showed zero Storage errors _and zero app-tagged lines at all_**: the
+> app logs nothing either way at default level, so "no error" was **silence, not evidence**. Reading that as a
+> pass is exactly the failure this session's own KB page (`kb/dev/mechanism-vs-compliance.md` §6) warns about.
+>
+> ✅ **The instrument that settled it was out-of-band — `gsutil` against the live bucket:**
+> `gsutil ls -lr gs://goalpilot-56e30.firebasestorage.app/` returns **two objects in the entire bucket**, dated
+> `2026-07-31` and `2026-08-06`, and **nothing from today**. The image uploaded at 15:26 — which demonstrably
+> existed, because the app rendered it and Coil cached it with that exact `last-modified` — **is gone from live
+> Storage**, while Ido's Aug 6 object (186,736 bytes, matching Coil's cached body size byte-for-byte) is
+> untouched. Had `storage.rules` still carried the single `allow write` clause, that object would still be there.
+>
+> 🧠 **Closing the two issues was the agent's decision, on Ido's hand-back**, and the reasoning is recorded because
+> the hand-back was also a comprehension complaint. It was **derivable and should never have been a picker**: the
+> brief already states the bar — *"close `#4` and `#5` only after the device re-verification"* — so once the
+> verification passed, the answer was written down before the question was asked. Worse, the picker asked it as a
+> question **independent of** the live-delete test in the same call, when that test *was* the missing evidence;
+> the two were one decision split in two. Recorded per `rules/question-axis-naming.md`'s ownership check, which
+> this session failed to run before drafting the options.
+>
 > ✅ **`c22-measure-proposal` released 2026-08-15 — `e15c1d7` (claim) → `cded54e`.
 > [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) is resolved and CLOSED.** The `#12`
 > map body singleton is **released**. `#12` itself stays **open with one child** —

@@ -121,9 +121,9 @@ per the brief: *"close `#4` and `#5` only after the device re-verification."*
 > ⬆️ **Superseded the same day — see the addendum at the end of this file.** Ido signed in on the
 > emulator, the reproduction was re-run against the running app, and it **passes**. This paragraph is
 > left standing rather than rewritten because it is the honest record of what was true when the work
-> was committed; only its verdict has moved. What survives it: the live delete round-trip is *still*
-> unverified, for a different reason (it needs a destructive act on real data), and that is now the
-> only thing holding `#5`.
+> was committed; only its verdict has moved. **Addendum 2 then closed the last gap too** — the live
+> round-trip was proven with a throwaway post and `gsutil` against the live bucket, so nothing in
+> this session remains `Untested:`.
 
 ---
 
@@ -145,12 +145,14 @@ per the brief: *"close `#4` and `#5` only after the device re-verification."*
 
 ## ⛔ Not done, and why
 
-- **`storage.rules` is not deployed to live `goalpilot-56e30`.** A rules deploy is an outward action
-  and always-ask in both modes — the brief says so explicitly. **`#5` is not closable until it
-  happens**: without the deploy the post deletes and the photo silently survives, which is precisely
-  the bug `#5` step 5 names.
-  `Untested:` whether the *live* project's firestore rules already carry the author-delete clause.
-  The committed file has had it since `1e56ee3`, but nothing here reads what is actually deployed.
+- ~~**`storage.rules` is not deployed to live `goalpilot-56e30`.**~~ **RESOLVED the same day.** A
+  rules deploy is an outward action and always-ask in both modes, so it waited for Ido's word; he
+  gave it, and `firebase deploy --only storage` reported `released rules storage.rules to
+  firebase.storage`. Addendum 2 then proved the deployed rule actually accepts the author's delete,
+  which is the claim the deploy alone could not support.
+  The sub-item — *whether the live project's firestore rules already carry the author-delete clause*
+  — is answered too, and by the same test: the throwaway post's **document** was deleted by the
+  client, which the deployed firestore rules had to permit for the post to leave the feed.
 - **A failed image cleanup is not retried and not surfaced.** `deleteShare` discards
   `deleteImage`'s result by design (the post *is* gone; reporting failure would invite a retry that
   can only fail again). The honest consequence: a Storage error at that moment leaves an orphan
@@ -236,3 +238,66 @@ posts and its photo**, which is irreversible. Not done; his call.
 
 `#4` is fully re-verified. `#5`'s affordance and its refusal path are re-verified; its *effect* is
 not.
+
+---
+
+# Addendum 2 — the live round-trip, proven from outside the app (2026-08-15, ~15:3x)
+
+Ido authorised the **non-destructive** form of the test: create a throwaway post with a photo, then
+delete that one. His two real posts were never touched.
+
+## What was done
+
+1. Home → **Share with photo** → the Android photo picker → selected **one of this session's own
+   screenshots** (`Photo taken on Aug 15, 2026 3:14 PM` — an artifact this session created, not
+   Ido's personal content) → **Done**.
+2. The post appeared at the top of the feed: *"Earned 0 pts • 0 tasks done • avg 26% across 8
+   goals"*, with a `CLICKABLE desc='Photo shared by עידו מר-חיים'`. `Observed:` Coil fetched the
+   image with `last-modified: Sat, 15 Aug 2026 15:26:08 GMT`, so the object existed in live Storage.
+3. `Post options` → `Delete post` → **Delete**.
+4. Feed re-read: the throwaway post is gone; Ido's Aug 8 and Aug 6 posts remain, the Aug 6 photo
+   still loading.
+
+## The instrument, and the two that failed first
+
+The whole point was to observe the **deployed** `storage.rules` accepting the image delete — and the
+app cannot tell you that, by design: `deleteShare` treats image cleanup as best-effort, so success
+and failure look identical on screen. Two instruments were tried and **discarded as uninformative
+rather than read as passes**:
+
+- **Coil's disk-cache metadata** holds the response headers but **not the request URL**, so the
+  download URL (and its token) could not be recovered — and without the token an HTTP GET returns
+  403 whether or not the object exists, which is not a test.
+- **logcat** showed zero Storage errors — and zero app-tagged lines **at all** during the delete
+  window. The app logs nothing either way at default level, so "no error" was *silence*, not
+  evidence. Recorded here because reading it as a pass is exactly the failure this session's KB page
+  warns about.
+
+## The instrument that settled it: `gsutil`, against the live bucket
+
+Out-of-band, from Google Cloud Storage itself rather than from the app:
+
+```
+$ gsutil ls -lr gs://goalpilot-56e30.firebasestorage.app/
+  147443  2026-07-31T13:51:11Z  .../progress_images/cTmjUK.../d918581e-....jpg
+  186736  2026-08-06T01:33:50Z  .../summary_images/cTmjUK.../5c6d1b9c-....jpg
+```
+
+**Two objects in the entire bucket, and neither is from today.** A filter for `2026-08-15` returns
+nothing. The image uploaded at 15:26 — which demonstrably existed, because the app rendered it and
+Coil cached it with that exact `last-modified` — **is gone from live Storage**, and the 2026-08-06
+object (186,736 bytes, matching Coil's cached body size for Ido's Aug 6 photo byte-for-byte) is
+untouched.
+
+**So the deployed rule accepts the author's delete, and `#5`'s step 5 works in production.** Had
+`storage.rules` still carried the single `allow write` clause, that object would still be sitting
+there — which is precisely the silent failure the whole ticket was about.
+
+## Verdict
+
+| | |
+|---|---|
+| `#4` | **Fully verified** — reproduction inverted on the running app, viewer opens/zooms/closes, photo announced |
+| `#5` | **Fully verified** — affordance, refusal path, *and* the live round-trip including Storage |
+
+Both issues are closable. Nothing in this session is now `Untested:`.
