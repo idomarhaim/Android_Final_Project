@@ -20,6 +20,17 @@ certainly superseded outright, and **nothing has reconciled them.** A build sess
 point of its position: it is cheap, and it is the only thing standing between a finished spec and
 someone building from a ticket the spec contradicts.
 
+> ⚠️ **Precondition added 2026-08-15, after this brief was written.** `docs/PRODUCT_v0.3.md` now
+> **exists** (`d271355`), but writing it **found three gaps and filed them as new map tickets** —
+> [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) (the measure proposal
+> surface), [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)
+> (`GoalCategory`'s list and where its labels live), [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46)
+> (the settings surface v0.3 requires and does not have). **Wait for all three to close before
+> running this brief.** Each changes a spec section this triage compares tickets against — `C23`
+> bears on `#2`, `C24` on `#9` and `#36`, `C22` on `#6`/`#7` — so triaging now buys a second triage
+> later. `Observed:` `gh issue list --state open` under `#12`; the brief's own first check
+> (*does the spec exist*) is necessary but **no longer sufficient**, and that is the amendment.
+
 ## Read first
 
 1. `AGENTS.md` and the rules it links.
