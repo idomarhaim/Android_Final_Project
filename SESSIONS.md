@@ -15,7 +15,30 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `#36-tasks-consent` *(report, not a claim — see the note below)* | `/implement #36` — the Google Tasks consent checkbox ([#36](https://github.com/idomarhaim/Android_Final_Project/issues/36)) | **Observed** dirty at 20:27–20:30 on 2026-08-15, not declared: `data/tasks/GoogleTasksClient.kt` · `feature/dashboard/DashboardViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/lifeareas/LifeAreasViewModel.kt` · `res/values/strings.xml` · `res/values-he/strings.xml` *(new)* | — | 2026-08-15 *(recorded by `d2-life-area-route`)* |
 | `d2-life-area-route` | `/implement #2` — the route from a life area into its goals, and the screen that hosts it ([#2](https://github.com/idomarhaim/Android_Final_Project/issues/2), spec §4.7 / §1.2 / §4.8) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt` · `domain/repository/GoalRepository.kt` · `domain/usecase/GroupGoalsByLifeAreaUseCase.kt` · `domain/usecase/TimeAllocationUseCase.kt` · `data/firestore/dto/` · `data/firestore/GoalRepositoryImpl.kt` · `data/firestore/LifeAreaRepositoryImpl.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/lifeareas/` · `feature/goals/` · `feature/dashboard/DashboardViewModel.kt` · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `ui/components/BidiText.kt` *(new)* · `app/src/test/java/…/domain/` · `app/src/test/java/…/data/` · `CHANGELOG/2026-08-15/d2-life-area-route.md` · `kb-candidates/2026-08-15-d2-life-area-route.md` | Gradle daemon · git index (at stage/commit only) | 2026-08-15 |
+
+> 📣 **To the session building `#36` — you have no row, and we overlap.** Written by
+> `d2-life-area-route` at 20:31 on 2026-08-15. I claimed an empty Active-claims table at 20:26
+> (`94c9653`); your first write landed at 20:27, so neither of us could have seen the other. The row
+> above is a **report** reconstructed from `git status` — it will understate your paths, so please
+> **correct it or replace it with your own**.
+>
+> **Two files we both write:** `feature/dashboard/DashboardViewModel.kt` and
+> `feature/lifeareas/LifeAreasViewModel.kt`. Nothing has been lost — every edit on both sides has
+> been a surgical `Edit`, never a whole-file write, and both units currently coexist in the tree.
+> But `git commit -- <path>` commits the **working tree**, so whichever of us commits those two
+> paths first publishes the other's half. I will name in my commit message anything of yours that
+> rides along, and I would ask the same.
+>
+> ⚠️ **My unit renames a field yours reads.** `#2` takes `Goal.lifeAreaId: String?` →
+> `lifeAreaIds: List<String>` (spec §1.2 / §7.1). `DashboardViewModel.kt` reads it at five sites
+> (`:182`, `:196`, `:215`, `:344`, `:403`+`:431` on the pre-edit file) and I am updating those to the
+> plural. If your build breaks on `lifeAreaId`, that is mine and not yours — the fix is
+> `goal.lifeAreaIds`, and *unfiled* is now the empty list rather than `null`.
+>
+> 🚦 **Commit order:** `#36` is additive and does not depend on my rename, so **please commit
+> first**; I will re-check the tree before staging and go second.
 
 > 🏁 **`backlog-triage` RELEASED 2026-08-15 — `ed71060` (claim) → `373a8d5` (the triage) → this
 > commit; plus `e359f2a` in `C:\Dev\JARVIS` for the KB drain. Brief closed to
