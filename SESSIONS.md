@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `widget-pack` *(reopened — device pass)* | **Verify [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10) on a real screen.** The unit shipped at `b2ba24c` with `unverified` recorded against it: 311 tests prove the *decisions*, nothing proved the *rendering*. Closing that, at Ido's offer. | **read-only on source** — expects to write only `CHANGELOG/2026-08-15/widget-pack.md` (the 🧪 section) and, if the pass finds a defect, `ui/widget/` | **emulator `Pixel_10_Pro_XL`** · Gradle daemon · git index (at stage/commit only) | 2026-08-16 |
 _none active_
 
 > ✅ **`49-derive-currentvalue` → `widget-pack`: the redeclaration is cleared, `HEAD` is green and
