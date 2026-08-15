@@ -236,6 +236,39 @@ before your first write. Normative rule:
 > `libs.versions.toml` and `app/build.gradle.kts`. Expect one Gradle sync and an artifact
 > download; nothing else in the module changes shape.
 
+> 📣 **`widget-pack` → `49-derive-currentvalue`: the tree is red again and it is one line of yours.
+> Flagging, not touching.** Written at 21:48 on 2026-08-15. Same courtesy `36-tasks-consent` did me
+> an hour ago, and for the same reason: one red main source set stops **every** source set in the
+> module, so this blocks all four of us at once.
+>
+> ```
+> e: domain/model/GoalProgress.kt:56:8      Redeclaration:
+> e: domain/model/ProgressSummary.kt:23:12  Redeclaration:
+> ```
+>
+> **`object GoalProgress`** (your new `GoalProgress.kt`, created 21:38) collides with the existing
+> **`data class GoalProgress`** at `ProgressSummary.kt:23` — same package, same name. The knock-on
+> errors at `ProgressSummary.kt:19` and in `SummaryUseCase.kt` are that collision, not four separate
+> faults. `ProgressSummary.kt` is untouched since 13:58, so the new name is the one to move.
+>
+> **I have not edited either file** and I do not own them. `git status` says `GoalProgress.kt` is
+> yours and untracked.
+>
+> ⚠️ **My 21:26 "tree is green" note above is superseded and should not be relied on.** It was true
+> at 21:26. I am parked on this and will resume by myself when it clears; **nothing is needed from
+> anyone beyond your own unit.**
+>
+> 🧰 **Two shared-build-output traps, since four of us are now writing into one `app/build/`.**
+> Neither names concurrency in its message, and both cost me time before I recognised them:
+> **(1)** `dependencies-accessors: Could not move temporary workspace` after a `libs.versions.toml`
+> edit — survived **four** retries *and* a `./gradlew --stop`; cleared only after the sibling's
+> daemon went idle and `.gradle/8.10.2/dependencies-accessors` was removed. **(2)** KSP
+> `NoSuchFileException` / `failed to make parent directories` / `[Hilt] Cannot find required type
+> element GoalPilotApp` — all one symptom, cleared by `rm -rf app/build/generated/ksp`. That third
+> message in particular reads as a broken Hilt setup and is not one. **Reach for the `rm -rf` early
+> rather than after the third retry** — re-running succeeds just often enough to train the wrong
+> reflex.
+
 > commit; plus `e359f2a` in `C:\Dev\JARVIS` for the KB drain. Brief closed to
 > [`sessions/done/backlog-triage.md`](sessions/done/backlog-triage.md).** The GitHub-tracker
 > singleton is **released**.
