@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `d2-life-area-route` | `/implement #2` — the route from a life area into its goals, and the screen that hosts it ([#2](https://github.com/idomarhaim/Android_Final_Project/issues/2), spec §4.7 / §1.2 / §4.8) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt` · `domain/repository/GoalRepository.kt` · `domain/usecase/GroupGoalsByLifeAreaUseCase.kt` · `domain/usecase/TimeAllocationUseCase.kt` · `data/firestore/dto/` · `data/firestore/GoalRepositoryImpl.kt` · `data/firestore/LifeAreaRepositoryImpl.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/lifeareas/` · `feature/goals/` · `feature/dashboard/DashboardViewModel.kt` · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `ui/components/BidiText.kt` *(new)* · `app/src/test/java/…/domain/` · `app/src/test/java/…/data/` · `CHANGELOG/2026-08-15/d2-life-area-route.md` · `kb-candidates/2026-08-15-d2-life-area-route.md` | Gradle daemon · git index (at stage/commit only) | 2026-08-15 |
 
 > 🏁 **`backlog-triage` RELEASED 2026-08-15 — `ed71060` (claim) → `373a8d5` (the triage) → this
 > commit; plus `e359f2a` in `C:\Dev\JARVIS` for the KB drain. Brief closed to
