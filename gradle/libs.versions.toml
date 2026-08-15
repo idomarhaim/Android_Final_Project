@@ -12,6 +12,16 @@ activityCompose = "1.9.3"
 composeBom = "2024.12.01"
 navigationCompose = "2.8.5"
 
+# ── Glance (home-screen widgets, spec §4.5) ────────────────────────
+# Glance is Compose-shaped but does NOT render Compose: it compiles a composable
+# tree down to a RemoteViews, which the launcher inflates in its own process.
+# That is why the widget pack draws its charts into bitmaps rather than reusing
+# ui/components/ — there is no Canvas, no Modifier.blur and no animation on the
+# other side of that boundary (§4.5). 1.1.1 is the current stable line and the
+# newest that does not require an AGP bump; the toolchain constraint is the same
+# one pinning Health Connect below.
+glance = "1.1.1"
+
 # ── DI ─────────────────────────────────────────────────────────────
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
@@ -105,6 +115,9 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Health Connect (fitness & sleep)
 androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
+
+# Glance (home-screen widgets)
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 
 # Unit test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -43,10 +43,29 @@ object Bidi {
      * Already-isolated input is returned untouched too, so composing two
      * builders that both isolate cannot nest the marks.
      */
-    fun isolate(text: String): String = when {
-        text.isEmpty() -> text
-        text.first() == FSI && text.last() == PDI -> text
-        else -> "$FSI$text$PDI"
+    fun isolate(text: String): String =
+        if (text.isEmpty() || text.isWholeIsolate()) text else "$FSI$text$PDI"
+
+    /**
+     * True when the string is *one* isolate spanning its whole length.
+     *
+     * Not `first() == FSI && last() == PDI`: that is also true of
+     * `⁨a⁩ · ⁨b⁩`, which is **two** isolates with text between them. A
+     * composite assembled from two already-isolated parts would then be left
+     * un-isolated while looking isolated — which is §4.8's defect surviving the
+     * fix for it. So the depth is walked, and it must reach zero only at the end.
+     */
+    private fun String.isWholeIsolate(): Boolean {
+        if (first() != FSI) return false
+        var depth = 0
+        forEachIndexed { index, ch ->
+            when (ch) {
+                FSI -> depth++
+                PDI -> depth--
+            }
+            if (depth == 0 && index != lastIndex) return false
+        }
+        return depth == 0
     }
 
     /** Strips every isolate mark — for tests and for logging, never for display. */

@@ -77,6 +77,81 @@
             </intent-filter>
         </activity-alias>
 
+        <!--
+          The widget pack (spec §4.5). One <receiver> per tile, because the
+          launcher's widget picker lists receivers — so five entries with five
+          descriptions is what the user chooses from, rather than one entry and a
+          configuration screen standing between "show me my week" and seeing it.
+
+          Every one is exported: the component is launched by the *launcher*,
+          which is a different app, so android:exported="false" would make the
+          tile un-placeable with no error the user could act on.
+
+          APPWIDGET_UPDATE is the only action declared. Glance's own receiver
+          handles the rest of the AppWidgetProvider protocol (options changed,
+          deleted, enabled) through the base class, and re-declaring them here
+          would mean two places to keep in step.
+        -->
+        <receiver
+            android:name=".ui.widget.GoalsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_goals">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_goals_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WeekWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_week">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_week_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.TrendWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_trend">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_trend_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.EffortWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_effort">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_effort_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.LevelWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_level">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_level_info" />
+        </receiver>
+
     </application>
 
 </manifest>

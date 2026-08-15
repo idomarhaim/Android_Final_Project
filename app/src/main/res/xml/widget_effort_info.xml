@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  effort tile (spec §4.5).
+
+  minWidth/minHeight are the two-cell floor, and targetCellWidth/Height are the
+  Android 12+ way of saying the same thing in cells the launcher understands.
+  Both are declared because they are read by different platform versions, and a
+  widget that declares only one lands at a size somebody's launcher invented.
+
+  The resize range spans 2..4 in both directions on purpose: §4.5 ships every
+  card at 2×2, 4×2, 2×4 and 4×4, and a user reaches those four by dragging a
+  handle rather than by placing four different widgets. BuildWidgetTileUseCase
+  picks the layout from the dp the launcher actually granted, so every point in
+  that range renders something designed rather than something stretched.
+
+  updatePeriodMillis is 30 minutes, the platform floor. Anything smaller is
+  silently clamped, and the tile carries an as-of stamp precisely because this
+  interval is a request rather than a promise — the system defers it while the
+  device dozes.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="280dp"
+    android:maxResizeHeight="280dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen"
+    android:description="@string/gp_widget_pick_effort_desc"
+    android:previewImage="@mipmap/ic_launcher"
+    android:initialLayout="@layout/glance_default_loading_layout" />

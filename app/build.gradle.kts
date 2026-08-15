@@ -187,6 +187,14 @@ dependencies {
     // ── Health Connect (fitness & sleep, spec §5 nice-to-have) ────
     implementation(libs.androidx.health.connect)
 
+    // ── Glance (home-screen widget pack, spec §4.5) ───────────────
+    // Compose-shaped, but it does not render Compose: the composable tree is
+    // compiled to a RemoteViews that the *launcher* inflates in its own process.
+    // Nothing from ui/components/ crosses that line — no Canvas, no
+    // Modifier.blur, no animation — which is why ui/widget/ draws its charts
+    // into bitmaps instead of reusing them.
+    implementation(libs.androidx.glance.appwidget)
+
     // ── Unit tests ────────────────────────────────────────────────
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

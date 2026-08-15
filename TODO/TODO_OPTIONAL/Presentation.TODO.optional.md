@@ -90,3 +90,55 @@ not discovered during implementation.
   bitmap: no blur, no filters, no animation (`ChartAnimation.kt` does not run there), and the
   launcher — not the app — decides the real dp. Each material owes a tile version that survives
   that, or the widget pack picks one material and says so.
+
+## 3 · What `/implement #10` left open (widget pack, 2026-08-15)
+
+`#10` shipped **five of §4.5's seven tiles** — `goals · week · trend · effort · level`, each at
+`2×2` / `4×2` / `2×4` / `4×4`. Everything below is what that build could not close, written here
+so it is not re-derived from the code.
+
+- [ ] **`decisions` and `today` are not built, and the reason is data rather than design.** Both
+  are schedule surfaces and §2 scheduling does not exist: `Task` carries **no due time at all**,
+  and §7.2 already records that
+  [`GoogleTasksClient.kt:145`](../../app/src/main/java/com/idomarhaim/goalpilot/data/tasks/GoogleTasksClient.kt)
+  parses Google's `due` into a field no other line in the repo reads. A *"4 decisions waiting"*
+  tile computed from nothing would be §0.3's *second number that quietly disagrees* manufactured
+  on purpose, so the two were **left out rather than faked**. They become nearly free once §2
+  lands — the tile builder, the neo surface, the size rule and the string table are all already
+  there, and each is one `when` branch in
+  [`BuildWidgetTileUseCase`](../../app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildWidgetTileUseCase.kt)
+  plus one receiver.
+- [ ] **`refreshAllWidgets()` has no call site, and two are owed.** It exists in
+  [`ui/widget/WidgetReceivers.kt`](../../app/src/main/java/com/idomarhaim/goalpilot/ui/widget/WidgetReceivers.kt).
+  The pack is *correct* without it — every tile re-reads on its own schedule and stamps what it
+  got — but it stays **wrong for up to half an hour** at two moments: after **sign-out**, where
+  the tiles keep showing the previous account's week to whoever picks the phone up next; and
+  after a **skin change**, where the picker appears to do nothing on the home screen, which is
+  §4.1's *a skin picker no material reads is a control that does nothing* arriving one surface
+  later. Both call sites are in files `#10` did not own — sign-out in `data/auth/`, the picker in
+  `feature/profile/`, which §4.9 is about to move to Settings
+  ([#48](https://github.com/idomarhaim/Android_Final_Project/issues/48)) — so wiring them belongs
+  to whoever touches those next, not to a blind edit.
+- [ ] **A widget tap opens the app, not yet a destination.** §4.5's contract is *a tap can only
+  open the app at a destination*. The tile already puts one in the intent
+  (`WidgetDestination.INTENT_EXTRA`); nothing reads it yet, because routes live in
+  `ui/navigation/Destinations.kt`. One `when` in `MainActivity` closes it, and until then every
+  tile still opens the app — the half of the contract that must never fail.
+- [ ] **The pack ships neo, and that is the ticket's own decision, on the record.** Derived from
+  §4.9, which defaults the material to neo *partly for this ticket*: the only material with both
+  a light and a dark scheme **and** no blur under it. Glass and liquid glass are *made of* blur
+  and refraction and have no `RemoteViews` form at all; dark neo is brightness-locked and a home
+  screen must follow the device's own switch. If the material picker later offers a per-surface
+  choice, the widget is the surface where three of the four cannot be honoured — say so in the
+  picker rather than letting it silently do nothing.
+- [ ] **Hebrew is written but not seen.** `values-he/widget_strings.xml` ships and the bidi
+  isolation is in code
+  ([`core/util/Bidi.kt`](../../app/src/main/java/com/idomarhaim/goalpilot/core/util/Bidi.kt)),
+  but §0.8 asks for a screen **seen** in Hebrew and the app has no language picker until §5.1.
+  Render the five tiles on an RTL device once
+  [#51](https://github.com/idomarhaim/Android_Final_Project/issues/51) lands — in particular the
+  trend tile, whose columns are a **bitmap** and are reversed in code rather than by the layout.
+- [ ] **`core/util/Bidi.kt` should collapse into `ui/components/BidiText.kt`.** `#2` is adding the
+  Compose-side helper for the same §4.8 defect class. Mine is the string half and has no Android
+  dependency, which is what let it be tested on the JVM; when both exist, the Compose one should
+  call it rather than repeat it.
