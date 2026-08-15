@@ -158,3 +158,92 @@ to a file) · `#30` and `#14` resolution comments · `Product and UX Reviews/202
 
 **Not touched:** `app/src/` (the brief's *no code* boundary) · `#12`'s body (`c21`'s singleton) ·
 `kb-candidates/` (nothing drainable)
+
+---
+
+# Unit 2 — the blocked half unblocked itself, and the spec was amended for decision 28
+
+**Same session, 14:2x.** Everything above stands as written; this is what happened next rather than a
+rewrite of it.
+
+## What changed under the file while it was being written
+
+`c21-offline-story` **released** at 14:09 — it created, resolved and closed
+[#43 · `C21`](https://github.com/idomarhaim/Android_Final_Project/issues/43) inside its own session,
+which is what *never resolve more than one ticket per session* permits and what an empty frontier
+required. So the premise of this session's own board note — *"`c21` is adding a new open child, so
+'no ticket is open' cannot be satisfied"* — **went false 7 minutes after it was written**, and `c21`
+corrected it on the board rather than leaving it to rot.
+
+`Observed:` at 14:2x, `gh issue list --state open` returns **zero** children of `#12`; the map holds
+**28** decisions and **3** fog bullets.
+
+**Both halves of the blocked `Exit` therefore became doable**, and the singleton was **taken after the
+release, not held from the start** — the board row now says so explicitly, because a claim that reads
+as though it had been held all along would misdescribe the sequence.
+
+## The spec amendment — `C21` is not a footnote, it changed three sections
+
+`C21`'s resolution is *"the ticket's own question was the false premise: v0.3 owes no offline story, it
+owes an **as-of stamp**"* — **staleness is a property of the data, not of the connection.** A
+leaderboard fetched forty minutes ago over perfect Wi-Fi is exactly as old as one served from cache
+with the radio off.
+
+Amended:
+
+| Section | Change |
+|---|---|
+| Opening caveat | *"the map is not closed, this spec is one decision short"* → **the map reopened and re-closed underneath the file**, 28 of 28 covered, and what remains is Ido's to do |
+| **§5.3** | rewritten from a two-line placeholder into the full ruling: **no global banner and no "cached" styling** · which surfaces can be stale is **a grep of `firestore.rules`, returning exactly two screens** · **the stamp is unconditional** and rides a write `C20` already specced · *empty* vs *never loaded* is a real distinction and `isFromCache` is the discriminator · `ConnectivityMonitor` dies |
+| §7.1 | `publicProfiles.updatedAt` and `challengeParticipant.updatedAt` — **one field each, no new trigger, no new read path**, because `C20` had already given exactly these two numbers a server writer |
+| §7.2 | five sites added: `ConnectivityMonitor.kt` + its one caller, `OFFLINE_MESSAGE` as a hardcoded English literal, both DTOs' missing timestamps, and `isFromCache` being unused anywhere today |
+| §9 | 4 fog bullets → **3**, and the two that left did so for **different reasons** — offline **graduated** into `C21`; most of the `A7` dashboard patch was **stale rather than unsolved**, `C12` having ruled the fork false with nobody trimming the bullet |
+| §11 | 27 rows + 1 open → **28 rows, all closed** |
+
+**The two rulings are the same ruling read from both ends**, and the spec now says so: *a number needs
+a server writer iff it crosses the ownership boundary* ⇔ *a number needs an as-of stamp iff it crosses
+the ownership boundary*.
+
+## `#12`'s body updated — the singleton, taken and used
+
+Followed the commons discipline four prior sessions established: **fetch → build the patch →
+re-fetch and `cmp` immediately before the write → write with `--input` → read back and verify.**
+
+- `cmp` before the write: **unchanged, no race.**
+- Written with `--input` (117 KB; `-f body=` cannot carry it).
+- Read back: **28 decisions intact**, the new *Destination reached* block present, both `⚠️ GAP`
+  entries present. **117,521 → 117,522 bytes — the +1 is the trailing newline GitHub appends**, exactly
+  as `c6-log-progress`, `c15b-stored-ai-text`, `c11b-output-formats` and `c20-derived-state` each
+  recorded.
+
+What was added: a **Destination reached** block naming `docs/PRODUCT_v0.3.md`, its spine, and the rule
+that a resolution comment outranks the spec; the **two gaps**, written as *the map believes it decided
+these and did not*, each with `Observed:` / `Inferred:` provenance; the three missing settings; and
+*What is left* — closing the issue.
+
+**`#12` was NOT closed.** The brief reserves it: *"closing the map is the last act, and it is Ido's
+call to confirm."* Left for him.
+
+## 🧪 Tests
+
+**Still no test layer** — the deliverable is still a Markdown spec and a GitHub issue body, and
+`plan, don't do` still forbids touching `app/src/`. Re-ran the mechanical checks after the amendment:
+
+| Check | Result |
+|---|---|
+| Internal anchors | **50/50 resolve** (one broke on the §5.3 rename and was repaired) |
+| Duplicated headers | **0** |
+| Traceability rows vs `#12` decisions | **28 = 28** |
+| Stale phrases from unit 1 (`27 closed`, `27 rows`, `open and live`, `not closed`) | **0 occurrences of each** |
+| `#12` body written vs read back | **byte-identical + 1** (GitHub's newline) |
+
+## Push
+
+**Held in unit 1, sent in unit 2.** At 14:1x the range carried **two foreign commits** —
+`d187649` and `5b1b6f9`, both `c21-offline-story`'s — while `c21` still had a **live row in Active
+claims**, so precondition 5 said *stop*. `5b1b6f9`'s own message records `c21` holding **its** push for
+the mirror-image reason: **the third double-hold in three days.** It resolved the way the previous two
+did — one session released. By 14:2x `c21` was **released with an explicit release note** (a positive
+signal it wrote about itself, so precondition 5's transcript escalation does not apply) and the tree
+was quiet, so the two commits are *released on the board and quiet in the tree* and **ride along
+legitimately**. They are named here, per the duty to say it where it is still findable in a month.

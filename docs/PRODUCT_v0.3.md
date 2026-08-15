@@ -1,7 +1,7 @@
 # GoalPilot — product spec v0.3
 
 **Status:** the destination artifact of wayfinder map
-[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), written from its **27 closed
+[#12](https://github.com/idomarhaim/Android_Final_Project/issues/12), written from its **28 closed
 decisions** on 2026-08-15. It exists so a build session can implement v0.3 **without reopening a
 decision**.
 
@@ -14,17 +14,22 @@ is new product design; the two places where a decision is genuinely *missing* ar
 **What this file is not.** It is not a build plan, a task breakdown, or an estimate. It says what
 v0.3 *is*; sequencing is the build session's.
 
-> ### ⚠️ Two live caveats on this document's own completeness
+> ### On this document's own completeness
 >
-> 1. **The map is not closed.** [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43)
->    — *does v0.3 owe an offline story* — was **opened on 2026-08-15**, graduated from the fog
->    patch in [§9](#9--not-yet-specified-fog-on-12). It is being resolved by a live session as this
->    file is written. So `#12`'s own rule — *"the map is done when the spec is whole and **no ticket
->    is open**"* — is **not satisfied yet**, and this spec is one decision short by construction.
->    When `#43` closes, [§5.3](#53-offline-c20-and-c21-43--open) is the section that needs
->    amending.
-> 2. **This file was written against `#12` as read at 14:0x on 2026-08-15**, at 27 decisions. It has
->    not been reconciled against decision 28.
+> **The map reopened and re-closed underneath this file while it was being written, and the record of
+> that is kept rather than tidied away.** At 14:0x on 2026-08-15 a sibling session opened
+> [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) — *does v0.3 owe an
+> offline story* — graduating the last live fog patch, which made `#12`'s own rule (*"the map is done
+> when the spec is whole and **no ticket is open**"*) momentarily unsatisfiable. It resolved and
+> closed `#43` at 14:09.
+>
+> `Observed:` as of **14:2x on 2026-08-15**, `gh issue list --state open` returns **zero** children of
+> `#12`, and `#12` carries **28** decisions and **3** fog bullets. **This file covers all 28** —
+> [§5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) is `C21`, written from its
+> resolution rather than from its title.
+>
+> **What remains is `#12`'s own closure**, which the brief that commissioned this file reserves to Ido:
+> *"closing the map is the last act, and it is Ido's call to confirm."*
 
 ---
 
@@ -1299,7 +1304,7 @@ also why `FieldValue.increment` stays rejected: **`increment` *is* the accumulat
 **`firestore.rules` gets its first field-level condition** (the participant row keeps three writers
 with different rights), which is the one place this makes the rules harder.
 
-### 5.3 Offline *(`C20`, and `C21` #43 — **open**)*
+### 5.3 Offline — an *as-of* stamp, not a connectivity story *(`C21` #43, `C20` #42)*
 
 **The offline win is free, and it is the product half of `C20`.**
 [#34](https://github.com/idomarhaim/Android_Final_Project/issues/34) priced its proposal at *"a second
@@ -1313,10 +1318,83 @@ are ordinary writes that hit the offline cache, so
 
 **Only other people's numbers are eventually consistent, which they always were.**
 
-⚠️ **What is left is `A6` and it is an open ticket, not a spec section.**
-[`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) — *whether the app must
-**say** it is offline, and whether a cached number must look different from a live one* — was opened
-**2026-08-15** and is live. **This section is incomplete until it closes.**
+#### `A6`'s question was the false premise *(`C21`)*
+
+> **Staleness is a property of the *data*, not of the *connection*.**
+
+A leaderboard fetched forty minutes ago over perfect Wi-Fi is **exactly as old** as one served from
+cache with the radio off. So an affordance keyed to the connection is keyed to the wrong variable — it
+**fires when nothing has changed** about the number and **stays silent when the number is hours
+stale**. This is `C9b`'s distinction in a new place: it put `SILENT` and `PROVISIONAL` on the same day
+because they differ by **visibility, not confidence**, and a cached cross-user score is the same shape
+— **it is not *uncertain*, it is *old***, and greying it out makes a confidence claim the app cannot
+support.
+
+**1 · No global connectivity banner, and no per-number "cached" styling.** Firestore's persistent
+cache is on by default and the app never overrides it (`FirebaseModule.kt:22`; no
+`FirebaseFirestoreSettings` call exists), so after `C20` the owner's goals, tasks, points, donut and
+every per-area number are **complete and correct offline** — not degraded, not approximate. A banner
+across the top asserts that what is below it is suspect. It is not. `C12`'s standard applies
+unchanged, in the opposite direction: **the disclosure shrinks to the smallest true sentence the
+surface can hold**, and a global banner is a **larger claim than the facts support**.
+
+**2 · Which surfaces can be stale is a grep, not a judgement.** `C20` made the boundary checkable — a
+number crosses it exactly when `firestore.rules` lets somebody other than `isOwner(uid)` read it:
+
+| Path | Read rule | Can it be stale to the reader? |
+|---|---|---|
+| `users/{uid}/**` | `isOwner(uid)` | **No** — the reader is the writer; the cache holds it |
+| `publicProfiles/{uid}` | `isSignedIn()` | **Yes** — someone else's points |
+| `challenges/{id}/participants/{uid}` | `isSignedIn()` | **Yes** — someone else's score |
+| `shares/{shareId}` | `isSignedIn()` | a share is an **immutable event** — nothing an as-of stamp fixes |
+| `challenges/{id}` | `isSignedIn()` | owner-authored title/dates, not a derived number |
+
+So the affordance lands on **exactly two screens** — `feature/social` and `feature/challenges` — and
+**no other surface in v0.3 owes anything about offline at all.** *A number needs a server writer iff
+it crosses the boundary* ⇔ *a number needs an as-of stamp iff it crosses the boundary*: **the same
+ruling read from both ends.**
+
+**3 · The stamp is unconditional, and it costs one field in a function `C20` already specced.** A
+cross-boundary number renders with **when its owner last wrote it** — *"Standings as of 09:14"*, never
+*"You're offline"* — **always, online and offline alike**. It is a **caption, not a warning**, so it
+obeys the material contract because it is text.
+
+`Observed:` neither projection can draw one today — `PublicProfileDto` carries **no timestamp of any
+kind**, and `ChallengeParticipantDto` carries `joinedAt`, which says nothing about when the score
+moved. **Both gain a server-set `updatedAt`, written by `C20`'s projection function on the same write
+that sets the number.** One field, **no new trigger, no new read path** — and that is not a
+coincidence: `C20` established that these two numbers, and only these two, have a server writer.
+
+**4 · One case *is* genuinely connection-dependent, and it is an empty state, not a banner.** The
+cache serves what it has previously seen, so a cross-boundary list **never fetched on this device**
+returns an **empty** snapshot — and a first-run-offline Social tab renders as *"you have no friends"*.
+That is **the app stating a fact about someone else's data it has never read**, which is a different
+failure from a stale number. `C12`'s *a card with nothing to say hides itself* does **not** cover it:
+that rule is about a card with genuinely nothing to show, whereas here **the app does not know whether
+there is something to show**.
+
+> **Spec line:** on the two cross-boundary surfaces, *empty* and *never loaded* are different states
+> and must render differently. The discriminator is `snapshot.metadata.isFromCache && snapshot.isEmpty`
+> — a property of the read, available on every snapshot, and **used nowhere in the codebase today**.
+> The copy is the smallest true sentence again: **"Not loaded yet"**, never *"No friends"*.
+>
+> `Untested:` that a never-fetched cross-boundary collection returns an **empty** snapshot rather than
+> an error is `Inferred:` from Firestore's documented cache-first read path and from the app never
+> having handled such an error; observing it needs a first-run install with the radio off, which no
+> session has done. **It changes the copy, not the shape** — if it errors, the same surface shows the
+> same *"Not loaded yet"* state from the error branch.
+
+**5 · What this deletes.** `ConnectivityMonitor` and its one caller die with `C20`, and `C21` does not
+resurrect them. It exists for exactly one reason, stated in its own KDoc — `setDone` was a
+**server-only transaction**, so offline the tick had to be taken back after a measured **7.9 s** — and
+`C20` removes the transaction. Its only consumer is `GoalDetailViewModel.kt:168`, the pre-check `C20`
+already deleted. §4's surviving case does **not** need it: `isFromCache` is a property of the
+snapshot, so **nothing in v0.3 needs to ask the OS about the radio.**
+
+**Why this was a product decision and not defect work:** `C12` already made *how a surface discloses
+the honesty of a number* a **product rule** rather than a bug fix, and applied it to widgets. §§1–4 are
+that rule on a second axis — and §3 changes a **stored schema** that `C20`'s function must write,
+which a defect ticket cannot carry.
 
 ---
 
@@ -1397,6 +1475,8 @@ permitted to write**, and the Function applies it when every row agrees.
 | `…/participants/{uid}` | `approvedChangeId` | **new** | — |
 | | `score` | **server-owned**; client writes the fact | — |
 | `publicProfiles/{uid}` | `level` | **deleted outright** | `resolvedLevel()` and `SERVER_FALLBACK` go with it |
+| | `updatedAt` | **new**, server-set — the *as-of* stamp (`C21` §3) | written by `C20`'s projection on the write that already sets `points` |
+| `challenges/{id}/participants/{uid}` | `updatedAt` | **new**, server-set (`C21` §3) | same write; `joinedAt` stays and is a **different** fact |
 | *(device, not Firestore)* | language, region, week start, skin, material, **the encrypted API key**, the quote cache, the daily-planning hour, waking hours | **per-device** | — |
 
 **Migration posture, everywhere: additive with a readable half-way state.** Every new field is
@@ -1436,6 +1516,10 @@ Named by the decisions, so the build session does not re-find them:
 | `Mappers.kt:176` `resolvedLevel()` | dead fallback that **can never fire** |
 | `firestore.rules:53` | its own comment already names this as the same defect |
 | `functions/src/index.ts:52-55` | throws the provider's **raw error body** into Cloud Logging |
+| `ConnectivityMonitor.kt` + `GoalDetailViewModel.kt:168` | **deleted** — its whole premise was `setDone` being a server-only transaction, which `C20` removes; `C21` §5 does not resurrect it |
+| `GoalDetailViewModel.kt:238` `OFFLINE_MESSAGE` | a **hardcoded English literal in Kotlin**, not a resource (`grep -i offline strings.xml` → nothing). Deleted with the monitor — but **it is evidence the class exists**, so sweep `feature/` for user-facing literals outside `strings.xml` rather than trusting it was the only one |
+| `PublicProfileDto` / `ChallengeParticipantDto` (`Dtos.kt:77`, `:118`) | **neither can draw an as-of stamp today** — one has no timestamp at all, the other has `joinedAt`, which is a different fact |
+| `snapshot.metadata.isFromCache` | **used nowhere in the codebase today**; `C21` §4 needs it on the two cross-boundary surfaces |
 | `GoalCategory.defaultColorHex` | replaced by the harmonised set; **light-mode-only today**, so a dark tone is owed per category |
 | `ThemePaletteTest` | **owed an update** — `C12` replaces committed palette values |
 | `functions/` | **has no test layer at all** — no `test/` dir, no `test` script. This spec creates the single most testable object on the map: a pure function from `(response, membership lists, language)` to `(validated fields, omitted fields)`, with `C11a`'s 248 recorded calls as fixtures |
@@ -1473,24 +1557,23 @@ deleted** by decisions above and are cited where that happens — notably #3 (de
 
 ## 9 · Not yet specified (fog on `#12`)
 
-In-scope, real, and **deliberately not sharp enough to spec**. Recorded so a build session knows these
-are *open*, not *forgotten*.
+**Three bullets, as `#12` stands at 28 decisions.** In-scope, real, and **deliberately not sharp enough
+to spec** — recorded so a build session knows these are *open*, not *forgotten*.
 
-1. **Whether v0.3 owes an offline story.** **Half discharged, half now a ticket.** `A5` (completing a
-   task offline) is discharged by `C20` as a side effect. `A6` — must the app *say* it is offline, and
-   must a cached number look different from a live one — **is now
-   [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43), open and live.** See
-   [§5.3](#53-offline-c20-and-c21-43--open).
-2. **Whether the dashboard should answer *"what do I do now?"*** rather than *"how am I doing?"*
-   (`A7`). Narrowed twice — `C10` put the quote + 2–3 goals needing attention on Home, and `C9a`'s
-   **daily review on app open** is a second concrete answer that arrives with a reason the other blocks
-   lack: because `C9a` stores no state and fires no miss-notification, **that review is the only place
-   a missed or overdue thing surfaces at all**. What stays open is whether the *rest* of the dashboard
-   reorients, and whether the review lives on the dashboard or inside the Calendar tab.
-   ⚠️ `C20` flagged this as **possibly un-owned rather than un-sharp**: `C12` and `C9b` are both
-   **closed**, and whether either actually answered it was **not read**. **The cheapest lead on this
-   list.**
-3. **Whether v0.3 carries the migration off the deprecated `GoogleSignIn` stack.** `GoogleSignIn` /
+**Two patches that were on this list earlier in the day are gone, and they left for different
+reasons.** The **offline** patch **graduated into `C21`** and is now
+[§5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) — solved. Most of the **`A7`
+dashboard** patch turned out to be **stale rather than unsolved**: `C12` had already ruled the fork
+false and nobody trimmed the bullet. *(`C20` flagged that patch as **possibly un-owned rather than
+un-sharp** and called it the next session's cheapest lead. It was right.)*
+
+1. **Whether a goal card on Home is tappable to complete.** All that survives of `A7`. `C12` closed
+   **last** of the four tickets that narrowed it and ruled the fork **false**: `C9b` had already given
+   *what do I do now?* its own home — a Calendar tab plus a Home banner onto the decision stack — so
+   **Home hosts one question and links to the other**, and `C12` settled the order and demoted the
+   points hero besides. What is left is **one affordance no ticket has spoken to**, plausibly the build
+   session's or an ordinary issue rather than a decision here.
+2. **Whether v0.3 carries the migration off the deprecated `GoogleSignIn` stack.** `GoogleSignIn` /
    `GoogleSignInOptions` are deprecated in favour of **Credential Manager** for authentication plus
    **`AuthorizationClient`** for authorization — which is also the modern way to ask for an extra OAuth
    scope. Nothing is broken today and it is **build work, not a product decision** — but `C9c`'s
@@ -1499,7 +1582,7 @@ are *open*, not *forgotten*.
    for and what bolting another `GoogleSignIn` scope request onto the deprecated stack would have to
    fake **three times over**. So it is now the **main** consumer of the migration rather than an
    incidental one.
-4. **Whether very long idleness should eventually retire a goal by itself.** `C19` settled what a goal
+3. **Whether very long idleness should eventually retire a goal by itself.** `C19` settled what a goal
    with nothing due *shows* and deliberately did **not** settle this. `C4` points at **never**; an area
    whose list is nine `no next step` rows is its own kind of accusation, which points at **something**.
    **It cannot be phrased sharply until the `STARTING` offer has been lived with**, so it stays fog.
@@ -1615,9 +1698,10 @@ with their sites; these are the ones that are **live bugs today** rather than pl
 
 ## 11 · Traceability
 
-Every decision on `#12`, and where it lands here. **This table is the completeness check**: `#12`'s
-27 closed decisions get 27 rows, and the **28th row is `C21`, which is open** and is the one section
-this file cannot finish.
+Every decision on `#12`, and where it lands here. **This table is the completeness check**: `#12` holds
+**28 closed decisions** and this table has **28 rows**, each pointing at the section that carries it.
+`Observed:` decision count read off `#12`'s body at 14:2x on 2026-08-15; `gh issue list --state open`
+returns **zero** children.
 
 | Ticket | Decision | Section |
 |---|---|---|
@@ -1647,8 +1731,8 @@ this file cannot finish.
 | [`C17` #38](https://github.com/idomarhaim/Android_Final_Project/issues/38) | many-to-many linkage | [1.2](#12-edges-c16-3-c17-38-c18-39), [1.5](#15-progress-arithmetic-c3-c16-4-c17-c18) |
 | [`C18` #39](https://github.com/idomarhaim/Android_Final_Project/issues/39) | sub-tasks at arbitrary depth | [1.2](#12-edges-c16-3-c17-38-c18-39), [1.5](#15-progress-arithmetic-c3-c16-4-c17-c18) |
 | [`C19` #41](https://github.com/idomarhaim/Android_Final_Project/issues/41) | per-area success and failure | [4.7](#47-per-life-area-success-and-failure-c19-41-e4) |
-| [`C20` #42](https://github.com/idomarhaim/Android_Final_Project/issues/42) | who owns derived state | [5.2](#52-who-owns-a-derived-number-c20-42), [5.3](#53-offline-c20-and-c21-43--open) |
-| [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) | **OPEN** — does v0.3 owe an offline story | [5.3](#53-offline-c20-and-c21-43--open) ⚠️ |
+| [`C20` #42](https://github.com/idomarhaim/Android_Final_Project/issues/42) | who owns derived state | [5.2](#52-who-owns-a-derived-number-c20-42), [5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) |
+| [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) | an *as-of* stamp, not an offline story | [5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) |
 
 ### Sources
 
@@ -1667,6 +1751,6 @@ this file cannot finish.
 ---
 
 <sub>Written by the `product-v03-spec` session, 2026-08-15, from brief `sessions/product-v03-spec.md`
-and the 27 closed decisions on [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12).
-**`#12` is not closed** — [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43)
-is open. Where this file and a resolution comment disagree, the resolution comment wins.</sub>
+and the **28 closed decisions** on [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12),
+which has **zero open children**. **`#12` itself is still open** — closing the map is Ido's call.
+Where this file and a resolution comment disagree, the resolution comment wins.</sub>

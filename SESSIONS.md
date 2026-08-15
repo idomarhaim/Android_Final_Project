@@ -15,8 +15,18 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row | **none — `#12`'s body is deliberately *not* claimed** (see note) | 2026-08-15 |
+| `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row · **GitHub `#12` body** (taken 14:2x, see note) | **GitHub `#12` body (map commons)** — taken *after* `c21` released, not held from the start | 2026-08-15 |
 
+> ✅ **The blocked half of this session's `Exit` unblocked itself at 14:09, and the singleton is now taken.**
+> `c21-offline-story` **released** — [#43 · `C21`](https://github.com/idomarhaim/Android_Final_Project/issues/43)
+> was created, resolved and closed inside its own session — so `Observed:` at 14:2x `gh issue list --state open`
+> returns **zero** children of `#12`, the map holds **28** decisions and **3** fog bullets, and the `#12` body is
+> released on the board with a quiet tree. This session therefore **takes the singleton it declined at 14:02**
+> and does the half of its brief that was blocked: `docs/PRODUCT_v0.3.md` is amended to cover decision 28
+> (`C21` → §5.3, and it changed the schema table too), and `#12`'s body is updated to record that the
+> destination is reached. **Closing `#12` is not taken** — the brief reserves it: *"closing the map is the last
+> act, and it is Ido's call to confirm."*
+>
 > ⚠️ **`product-v03-spec` opened at 14:0x with `c21-offline-story` live — its row was 3 minutes old and
 > still uncommitted in the working tree.** Files are disjoint (this session writes one new doc plus its own
 > changelog and brief; `c21` writes its own changelog and candidates), so the two run side by side. **But the
