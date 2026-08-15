@@ -146,3 +146,87 @@ regression test.
   always-ask (`rules/` destination).
 - GitHub: `#45` assigned, resolution comment, **closed**; `#47` **created**; `#12` comment with the owed
   index line.
+
+---
+
+# Unit 2 — [#47](https://github.com/idomarhaim/Android_Final_Project/issues/47) fixed *(session reopened)*
+
+## 🤝 A third delegation, and this one was not a product question
+
+Asked which session to open next — four thin options, concrete actions, a table of consequences above the
+picker — Ido replied with the **same words a third time**: *"I couldn't fully understand you … explain
+simply and schematically … choose the solution that gives the highest standard and quality … and if you
+can improve it, improve it."*
+
+That is the informative instance. The first two were product decisions and were diagnosed as picker-design
+faults (dense options, a false premise). This one had neither, so **the diagnosis was wrong**: the variable
+is not the question's density, axis or premise — the standing request is for *a schematic explanation and a
+decision, not a menu*. Recorded as a third data point in `kb-candidates/`, which is `rules/`-destined and
+therefore always-ask.
+
+**Derived, and the answer was again not one of the options offered.** The picker's own recommendation was
+*"open a new session on `#47`"*. Opening a session is ceremony: a brief, a `/kickoff`, a claim, a fresh
+agent re-deriving from the issue body — for a one-field fix whose full reasoning was already in this
+session's head, with both singletons free. So the decision was **do it here, now**, and the reply carried
+the explanation. Decision taken per `rules/scale-adaptive-ceremony.md`; recorded as the agent's.
+
+## 🔑 The fix: a display attribute is not an identity
+
+`BuildHealthProposalsUseCase` answered *"does a goal for this metric already exist?"* by matching
+`goal.category == metric.category`. The category is a **chip the user can edit**, so one edit orphaned the
+goal from a sync that runs on every foreground with **no human watching**, and the next run created a
+second "Weekly steps" goal.
+
+- **`Goal.healthSourceKey: String?`** *(new)* — `"hc:goal:steps"` / `"hc:goal:sleep"`, from
+  `HealthMetric.goalSourceKey`. Per-**metric**, unlike the existing per-**reading**
+  `BuildHealthProposalsUseCase.sourceKey`.
+- **`match()` is pinned-first**: a goal carrying the key wins outright, whatever its category now says.
+- **The old heuristic survives, for unpinned goals only** — a goal the *user* made ("Move more") carries no
+  key and must still be found the first time. A goal pinned to the **other** metric is excluded from it
+  outright, which is also what keeps steps and sleep apart once `C23`'s shrink deletes `GoalCategory.SLEEP`.
+- **`pinMatchedGoals()`** stamps whatever the heuristic matched, so each goal goes through it **at most
+  once** — the exposure is one-time rather than standing. Placed after the dedupe lookup, so a sync that
+  owes nothing writes nothing.
+- **Additive schema, zero migration.** `GoalDto.healthSourceKey` defaults to null; an existing document
+  reads back null and is stamped on the next sync.
+
+## 🧪 Tests — `:app:testDebugUnitTest`, **225 tests, 0 failures**, 24 classes
+
+Run under `JAVA_HOME=…/jdk-21.0.12.8-hotspot` (the machine default still points at the wrecked
+`jdk-21.0.11.10-hotspot` — `social-share-bugs` found this and it is still Ido's to fix).
+
+**+7 new cases**, `HealthProposalsTest` 15→**19**, `HealthSyncTest` 18→**21**:
+
+- *a pinned goal is still matched after the user edits its category* — **the regression test for #47**.
+- *a goal pinned to sleep is never taken by steps, whatever its category says* — the guard `C23`'s shrink
+  will depend on.
+- *a pinned goal wins over an unpinned one that matches the old way*.
+- *an unpinned goal is still found the first time* — proves the heuristic was preserved, not replaced.
+- *a goal the sync creates is pinned to its metric at birth*.
+- *a goal matched by the old heuristic is stamped, so it is matched by key next time*.
+- *an already-pinned goal is not stamped again*.
+
+Layers not exercised, stated rather than skipped silently: **instrumented** (`connectedDebugAndroidTest`) —
+nothing here touches UI, and the emulator is `social-share-bugs`'s; **`firestore-tests/`** — no rules
+change, the field is inside a document already covered by the owner-only match.
+
+`Observed:` the 225/0 run above. `Untested:` the live round-trip — no Firestore document has actually been
+stamped, because that needs the signed-in app on a device.
+
+## 🧭 Singletons
+
+**Gradle daemon taken as a lease, not a claim** (`Lock-Path.ps1`, granted 15:26Z, released 15:39Z) —
+`social-share-bugs` was mid device pass and its row does not name the daemon, so a claim would have blocked
+it for the unit while a lease blocked nobody. No emulator, no live project.
+
+## 📦 Files — unit 2
+
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt` — `healthSourceKey`.
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` —
+  `HealthMetric.goalSourceKey`, pinned-first `match()`.
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` — `pinMatchedGoals()`,
+  pinned at creation.
+- `app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Dtos.kt`, `.../Mappers.kt` — the field, both
+  directions.
+- `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt`, `.../HealthSyncTest.kt` — +7.
+- `SESSIONS.md` — reopened claim, then release.

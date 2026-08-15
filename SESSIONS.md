@@ -95,7 +95,29 @@ before your first write. Normative rule:
 > production. **`#4` and `#5` still stay open**: the brief's other condition, the signed-in device pass, needs
 > Ido's Google account.
 >
-> ✅ **`c23-goal-category` released 2026-08-15 — `d5a9d13` (claim) → this commit. [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)
+> ✅ **`c23-goal-category` (reopened, unit 2) released 2026-08-15 — [#47](https://github.com/idomarhaim/Android_Final_Project/issues/47)
+> is FIXED, tested and CLOSED. `:app:testDebugUnitTest` — 225 tests, 0 failures, +7 new.** Gradle daemon
+> **released** (leased 15:26Z → 15:39Z, never claimed, so `social-share-bugs`' device pass was never blocked).
+>
+> **`Goal.healthSourceKey` replaces the category as the sync's join key.** Pinned-first matching; the old
+> category-and-unit heuristic survives **for unpinned goals only** and now stamps whatever it matched, so it is a
+> one-time path rather than a standing exposure. A goal pinned to the *other* metric is excluded from it outright —
+> which is also what will keep steps and sleep apart once `C23`'s shrink deletes `GoalCategory.SLEEP`. Additive
+> schema, **zero migration**, no `firestore.rules` change. `Observed:` the 225/0 run. `Untested:` the live
+> round-trip — no document has actually been stamped; that needs the signed-in app on a device.
+>
+> **The third delegation of the day decided this unit, and it was not a product question.** Asked which session to
+> open next — four thin options, concrete actions, a consequence table above the picker — Ido replied with the same
+> words a third time. That instance has none of the causes the first two were pinned on, so **the standing diagnosis
+> is wrong**: the request is for a schematic explanation and a decision, not a menu. Derived answer, again outside
+> the option set: **no new session** — a brief, a `/kickoff` and a fresh agent re-deriving from the issue body is
+> ceremony a one-field fix does not earn (`rules/scale-adaptive-ceremony.md`). Recorded as the agent's.
+>
+> 📥 **Still nothing ingested.** `kb-candidates/2026-08-15-c23-goal-category.md` entry 3 rewritten with the third
+> instance; entry 2 (*a display attribute is not an identity*) now has a **shipped fix** behind it and is still
+> 🟢 eligible and undrained, waiting on one JARVIS visit alongside `product-v03-spec`'s.
+
+> ✅ **`c23-goal-category` released 2026-08-15 — `d5a9d13` (claim) → `82fb125`. [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)
 > is resolved and CLOSED.** No brief was written and none is owed: the ticket is answered, not handed on.
 >
 > **The decision is the agent's, not Ido's.** He was asked one question and handed it back — *"I couldn't fully

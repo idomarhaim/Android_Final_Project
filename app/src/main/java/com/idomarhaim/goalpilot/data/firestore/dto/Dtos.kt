@@ -16,6 +16,12 @@ data class GoalDto(
     var category: String = "OTHER",
     /** Id of the user's [com.idomarhaim.goalpilot.domain.model.LifeArea]; absent on older docs. */
     var lifeAreaId: String? = null,
+    /**
+     * Automatic data source this goal belongs to, e.g. `"hc:goal:steps"`; absent on
+     * older docs and on goals nobody syncs into. Additive — a document written
+     * before #47 simply reads back null and gets stamped on the next sync.
+     */
+    var healthSourceKey: String? = null,
     var targetValue: Double = 100.0,
     var currentValue: Double = 0.0,
     var unit: String = "%",

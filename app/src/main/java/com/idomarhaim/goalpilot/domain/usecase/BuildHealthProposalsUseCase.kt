@@ -39,7 +39,18 @@ enum class HealthMetric(
         defaultGoalTitle = "Weekly sleep",
         defaultGoalTarget = 56.0,
         minimumDelta = 0.1,
-    ),
+    );
+
+    /**
+     * The identity stamped on the goal this metric syncs into
+     * ([com.idomarhaim.goalpilot.domain.model.Goal.healthSourceKey]).
+     *
+     * Deliberately **not** [category]: the category is a chip the user can edit,
+     * and matching on it meant one edit orphaned the goal and the next sync created
+     * a duplicate (#47). Per-metric and not per-day — unlike
+     * [BuildHealthProposalsUseCase.sourceKey], which identifies one *reading*.
+     */
+    val goalSourceKey: String get() = "hc:goal:${name.lowercase()}"
 }
 
 /**
@@ -159,15 +170,34 @@ class BuildHealthProposalsUseCase @Inject constructor() {
     }
 
     /**
-     * Picks the goal a metric should be logged against: an active goal in the
-     * matching category, preferring one whose unit already agrees so steps do not
-     * get added to a "workouts" goal and inflate it by four thousand.
+     * Picks the goal a metric should be logged against.
+     *
+     * **Pinned first.** A goal carrying this metric's [HealthMetric.goalSourceKey]
+     * wins outright, whatever its category now says — that is the whole point of
+     * the key (#47): the category is a chip the user can edit, and matching on it
+     * meant one edit orphaned the goal and the next sync created a duplicate.
+     *
+     * **Then the old heuristic, for goals nobody has pinned yet** — an active goal
+     * in the matching category, preferring one whose unit already agrees so steps
+     * do not get added to a "workouts" goal and inflate it by four thousand. It
+     * stays because a goal the *user* made ("Move more") carries no key and must
+     * still be found the first time; [SyncHealthDataUseCase] pins whatever this
+     * returns, so each goal goes through the heuristic at most once.
+     *
+     * A goal pinned to the *other* metric is excluded from the heuristic outright.
+     * Without that, deleting a category (which `C23` #45 decides to do) or editing
+     * one could let steps match the goal sleep already owns.
      */
-    private fun List<Goal>.matchFor(metric: HealthMetric): Goal? {
-        val candidates = filter { !it.isArchived && it.category == metric.category }
+    fun match(goals: List<Goal>, metric: HealthMetric): Goal? {
+        val active = goals.filter { !it.isArchived }
+        active.firstOrNull { it.healthSourceKey == metric.goalSourceKey }?.let { return it }
+
+        val candidates = active.filter { it.healthSourceKey == null && it.category == metric.category }
         return candidates.firstOrNull { it.unit.equals(metric.unit, ignoreCase = true) }
             ?: candidates.firstOrNull()
     }
+
+    private fun List<Goal>.matchFor(metric: HealthMetric): Goal? = match(this, metric)
 
     private fun Double.roundToOneDecimal(): Double = Math.round(this * 10.0) / 10.0
 

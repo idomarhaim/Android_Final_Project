@@ -71,24 +71,34 @@ board row for two unrelated entries at once is one visit, not two. Next session 
 
 ---
 
-## 3. The comprehension complaint arrived a second time on a picker that had already been reduced
+## 3. The comprehension complaint fired three times in one day — and the third kills the standing diagnosis
 
-**Claim.** *"I couldn't understand the options — you choose"* fired **twice in one day on the same map**
-(`product-v03-spec` ~14:3x, `c23-goal-category` ~17:5x), in near-identical Hebrew wording. The second
-instance is evidence the first diagnosis was incomplete: that session concluded the reply above the
-picker had not carried the reasoning, and the second picker **did** carry it — full prose ground above
-the tool call, four thin options, a single question, framed as a situation with consequences — and drew
-the same answer.
+**Claim.** *"I couldn't understand the options — you choose, and improve it"* fired **three times on
+2026-08-15** in verbatim-identical Hebrew: `product-v03-spec` ~14:3x, `c23-goal-category` ~17:5x, and
+`c23-goal-category` again ~18:1x. **The third was not a product question.** It asked which session to
+open next, with four thin options naming concrete actions and a consequence table in the reply above it.
+Same answer.
 
-**Why it matters.** The check-order rule sorts this tell into ownership → premise → form → density. On
-the second instance, ownership was sorted (the artifact half was derived and shown, not asked), the
-premise was false and the picker inherited it (see entry 1), and the form was already a situation. So
-either the premise failure alone explains it — which entry 1 would then fully cover — or the true
-variable is that **the schematic explanation is wanted before any question is put at all**, and no
-amount of reducing a picker reaches that. Distinguishing the two needs a third instance, or Ido's word.
+**Why it matters.** The check-order rule sorts this tell into ownership → premise → form → density, and
+the first two instances were each explained by one of those cells — dense options, then a false premise
+(entry 1). The third has **none of them**: ownership was sorted, the options were actions rather than
+mechanisms, the premise was a live board state, and the set was already minimal. So the diagnosis those
+two produced is **wrong, or at least not the operative cause**. What survives all three instances is the
+request itself: *a schematic explanation and a decision, not a menu.*
 
-**Rejected:** concluding from one repeat that pickers do not work for this user. Two instances, both on
-the same map and both on genuinely load-bearing product questions, do not support that.
+`Observed:` three instances, timestamped, one of them non-product.
+`Inferred:` that the operative variable is the **format of being asked**, not any property of the
+particular question.
+`Untested:` whether Ido would say the same — nobody has asked him, and asking is the very act in question.
+
+**Rejected:** (a) *"pickers do not work for this user"* — too strong; he answered the first picker of the
+day fluently. (b) Reducing the picker further, which is what the density cell prescribes and what the
+second instance already disproved.
+
+**What it would change.** The remedy is not a better picker but a different default on this project:
+derive, explain schematically, decide, record the decision as the agent's, and say plainly it is his to
+overturn — reserving the picker for what genuinely turns on his life or values. Mirrored, for the
+harness's own recall, in `~/.claude/projects/c--Dev-Android-Final-Project/memory/delegation-instead-of-picker.md`.
 
 **Destination.** `C:\Dev\JARVIS\rules\question-axis-naming.md` — **`rules/`, always-ask**, and it is a
 protocol change, so the 🎬 walkthrough gate applies.

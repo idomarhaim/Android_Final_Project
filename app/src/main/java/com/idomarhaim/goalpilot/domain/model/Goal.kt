@@ -19,6 +19,21 @@ data class Goal(
      * is an honest answer and one the user can act on.
      */
     val lifeAreaId: String? = null,
+    /**
+     * The automatic data source this goal belongs to — `"hc:goal:steps"` for the
+     * Health Connect step goal — or null for a goal nobody syncs into.
+     *
+     * It exists because the sync has to answer *"does a goal for this metric
+     * already exist?"* on every foreground with no human watching, and it used to
+     * answer by matching [category]. The category is a **chip the user can edit**,
+     * so one edit silently orphaned the goal and the next sync created a duplicate
+     * (#47). An identity the user cannot reach is the only safe key for that
+     * question; a display attribute is not an identity.
+     *
+     * Set when the sync creates a goal, and stamped onto a goal it matched by the
+     * older heuristic, so the pinning is one-way and happens at most once.
+     */
+    val healthSourceKey: String? = null,
     val targetValue: Double = 100.0,
     val currentValue: Double = 0.0,
     val unit: String = "%",

@@ -223,6 +223,55 @@ class HealthSyncTest {
         coVerify(exactly = 2) { goals.upsertGoal(any()) }
     }
 
+    // ── #47: pinning, so a category edit cannot orphan a goal ─────────
+
+    @Test
+    fun `a goal the sync creates is pinned to its metric at birth`() = runTest {
+        ready(steps = 8_000, existingGoals = emptyList())
+        val created = slot<Goal>()
+        coEvery { goals.upsertGoal(capture(created)) } returns Resource.Success("g-new")
+
+        useCase(HealthSyncTrigger.MANUAL, now)
+
+        assertThat(created.captured.healthSourceKey).isEqualTo(HealthMetric.STEPS.goalSourceKey)
+    }
+
+    @Test
+    fun `a goal matched by the old heuristic is stamped, so it is matched by key next time`() =
+        runTest {
+            // g-fit is the user's own goal: right category, right unit, no key. The
+            // sync logs into it and pins it on the way past, which is what makes the
+            // heuristic a one-time path rather than a standing exposure.
+            ready(steps = 8_000)
+            val stamped = slot<Goal>()
+            coEvery { goals.upsertGoal(capture(stamped)) } returns Resource.Success("g-fit")
+
+            useCase(HealthSyncTrigger.MANUAL, now)
+
+            assertThat(stamped.captured.id).isEqualTo("g-fit")
+            assertThat(stamped.captured.healthSourceKey).isEqualTo(HealthMetric.STEPS.goalSourceKey)
+        }
+
+    @Test
+    fun `an already-pinned goal is not stamped again`() = runTest {
+        ready(
+            steps = 8_000,
+            existingGoals = listOf(
+                Goal(
+                    id = "g-fit",
+                    title = "Move more",
+                    category = GoalCategory.FITNESS,
+                    unit = "steps",
+                    healthSourceKey = HealthMetric.STEPS.goalSourceKey,
+                ),
+            ),
+        )
+
+        useCase(HealthSyncTrigger.MANUAL, now)
+
+        coVerify(exactly = 0) { goals.upsertGoal(any()) }
+    }
+
     @Test
     fun `manual entries the user typed are left out of the dedupe`() = runTest {
         // A hand-logged entry carries no source key, so it must not be mistaken for

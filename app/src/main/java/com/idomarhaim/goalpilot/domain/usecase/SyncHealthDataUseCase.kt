@@ -195,7 +195,32 @@ class SyncHealthDataUseCase @Inject constructor(
         val proposals = buildProposals(snapshot, goals, credited)
         if (proposals.isEmpty()) return HealthSyncOutcome.UpToDate
 
+        // Only once there is something to write: a stamp is a document write, and a
+        // sync that turns out to owe nothing should cost nothing.
+        pinMatchedGoals(goals)
+
         return write(proposals)
+    }
+
+    /**
+     * Stamps [Goal.healthSourceKey] on a goal that was matched by the old
+     * category-and-unit heuristic, so it can never be matched that way again.
+     *
+     * This is the repair half of #47. Matching on the category meant that editing a
+     * goal's category orphaned it from a sync that runs on every foreground with no
+     * human watching, and the next run created a second "Weekly steps" goal. Pinning
+     * moves the answer onto an identity the user cannot reach.
+     *
+     * Runs at most once per goal — a pinned goal is matched by its key and skipped
+     * here — and never blocks the sync: a failed stamp just means the heuristic is
+     * used again next time, which is exactly today's behaviour.
+     */
+    private suspend fun pinMatchedGoals(goals: List<Goal>) {
+        for (metric in HealthMetric.entries) {
+            val matched = buildProposals.match(goals, metric) ?: continue
+            if (matched.healthSourceKey != null) continue
+            goalRepository.upsertGoal(matched.copy(healthSourceKey = metric.goalSourceKey))
+        }
     }
 
     private suspend fun write(proposals: List<HealthLogProposal>): HealthSyncOutcome {
@@ -213,6 +238,9 @@ class SyncHealthDataUseCase @Inject constructor(
                             title = proposal.newGoalTitle.orEmpty()
                                 .ifBlank { proposal.metric.defaultGoalTitle },
                             category = proposal.metric.category,
+                            // Pinned at birth, so this goal is never matched by a
+                            // category the user is free to edit (#47).
+                            healthSourceKey = proposal.metric.goalSourceKey,
                             unit = proposal.metric.unit,
                             targetValue = proposal.metric.defaultGoalTarget,
                         ),

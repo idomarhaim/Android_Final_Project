@@ -46,7 +46,15 @@ class HealthProposalsTest {
         category: GoalCategory,
         unit: String = "%",
         archived: Boolean = false,
-    ) = Goal(id = id, title = title, category = category, unit = unit, isArchived = archived)
+        healthSourceKey: String? = null,
+    ) = Goal(
+        id = id,
+        title = title,
+        category = category,
+        unit = unit,
+        isArchived = archived,
+        healthSourceKey = healthSourceKey,
+    )
 
     @Test
     fun `steps go to a fitness goal and sleep to a sleep goal`() {
@@ -66,6 +74,80 @@ class HealthProposalsTest {
             .isEqualTo("g-fit")
         assertThat(proposals.single { it.metric == HealthMetric.SLEEP }.targetGoalId)
             .isEqualTo("g-sleep")
+    }
+
+    // ── #47: the category is a chip the user can edit ─────────────────
+
+    @Test
+    fun `a pinned goal is still matched after the user edits its category`() {
+        // The defect this key exists for. The goal the sync created for steps is
+        // re-categorised by hand — a two-tap edit in AddEditGoalScreen — and under
+        // the old category match it vanished from the sync, which then proposed a
+        // brand-new "Weekly steps" goal beside it with nobody watching.
+        val goals = listOf(
+            goal(
+                "g-steps",
+                "Weekly steps",
+                GoalCategory.LEARNING,
+                unit = "steps",
+                healthSourceKey = HealthMetric.STEPS.goalSourceKey,
+            ),
+        )
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        val proposal = build(snapshot, goals).single()
+
+        assertThat(proposal.targetGoalId).isEqualTo("g-steps")
+        assertThat(proposal.newGoalTitle).isNull()
+    }
+
+    @Test
+    fun `a goal pinned to sleep is never taken by steps, whatever its category says`() {
+        // Belt and braces for the shrink C23 #45 decides: once GoalCategory.SLEEP is
+        // gone, a sleep goal's category is no longer distinguishable from a fitness
+        // one, and only the key keeps the two readings apart.
+        val goals = listOf(
+            goal(
+                "g-sleep",
+                "Weekly sleep",
+                GoalCategory.FITNESS,
+                unit = "steps",
+                healthSourceKey = HealthMetric.SLEEP.goalSourceKey,
+            ),
+        )
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        val proposal = build(snapshot, goals).single()
+
+        assertThat(proposal.targetGoalId).isNull()
+        assertThat(proposal.newGoalTitle).isEqualTo(HealthMetric.STEPS.defaultGoalTitle)
+    }
+
+    @Test
+    fun `a pinned goal wins over an unpinned one that matches the old way`() {
+        val goals = listOf(
+            goal("g-heuristic", "Move more", GoalCategory.FITNESS, unit = "steps"),
+            goal(
+                "g-pinned",
+                "Weekly steps",
+                GoalCategory.OTHER,
+                unit = "steps",
+                healthSourceKey = HealthMetric.STEPS.goalSourceKey,
+            ),
+        )
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        assertThat(build(snapshot, goals).single().targetGoalId).isEqualTo("g-pinned")
+    }
+
+    @Test
+    fun `an unpinned goal is still found the first time, so a hand-made goal is not orphaned`() {
+        // The heuristic stays for exactly this case: a goal the user made themselves
+        // carries no key until the sync stamps it.
+        val goals = listOf(goal("g-mine", "Move more", GoalCategory.FITNESS, unit = "steps"))
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        assertThat(build(snapshot, goals).single().targetGoalId).isEqualTo("g-mine")
     }
 
     @Test
