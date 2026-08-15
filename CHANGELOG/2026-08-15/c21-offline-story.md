@@ -133,6 +133,27 @@ session must open them first — the width failure `c20-derived-state` recorded 
 Every surviving entry in them is ⛔ always-ask in both modes (`rules/`-destined, or superseding a
 standing KB claim), so `AUTO MODE` drains none of them.
 
+## ⛔ Committed, not pushed — precondition 5, and it is stated dated
+
+`d187649` is committed and **held**. `git log @{u}..HEAD` carries a **foreign** commit —
+`e416d61`, `product-v03-spec`, *Claim product-v03-spec: write docs/PRODUCT_v0.3.md…*, 14:02:42 —
+touching `SESSIONS.md` and `sessions/product-v03-spec.md`. Both paths sit under that session's
+**live row in Active claims**, and it is mid-unit: it has claimed `docs/PRODUCT_v0.3.md` and has not
+yet written it. Precondition 5 is unambiguous there — *a foreign commit whose paths sit under a live
+row → stop and ask* — and in `AUTO MODE` naming it in the reply is not a substitute, because a reply
+is a disclosure and un-publishing needs a force-push, which is always-ask.
+
+The other five preconditions pass: no tests apply and the changelog is written (1); the range holds
+**no deletions and no renames**, no secrets, no binaries, nothing outside scope (2); the push would
+be a plain fast-forward of one branch (3); `git fetch` shows the branch has not moved and
+`HEAD..@{u}` is empty (4); this is a solo repo with no PR workflow (6).
+
+**Dated, because the hold is not self-maintaining.** `git push` is branch-scoped, so
+`product-v03-spec` publishing its own work will carry `d187649` up on its schedule with no gate of
+mine involved. `Observed:` re-checked at **2026-08-15 14:10:12 +0300** — remote head is still
+`c199185`, so `d187649` and `e416d61` are **both still unpublished as of that check**. If it is
+already up by the time this is read, that is that mechanism, not a change of mind.
+
 ## 📋 What is left of `#12`
 
 - **0 open tickets** (`#43` closed) · **28 decisions** · **3 fog bullets**.
