@@ -16,6 +16,22 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
+| `c23-goal-category` | `/wayfinder 12` → resolve **[`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)** — does `GoalCategory` stay closed at ten, and where do its labels live once they translate. `grilling` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c23-goal-category.md`, `kb-candidates/2026-08-15-c23-goal-category.md`, `sessions/c23-*.md` (file-level only — see the overlap note below) | issue **`#45`** (assigned to `idomarhaim` = the wayfinder claim). **Does *not* hold the `#12` map body** — that singleton is `c22-measure-proposal`'s and this session will need it only at resolution, which a HITL ticket cannot reach without Ido | 2026-08-15 |
+
+> ⚠️ **Two `/wayfinder 12` sessions are live at once, and they are disjoint by ticket — but two overlaps are named
+> rather than assumed away.** `c22-measure-proposal` holds **`#44`**; `c23-goal-category` holds **`#45`**; **`#46`
+> is still unclaimed** and is the next frontier ticket for whoever comes third.
+>
+> **(a) The `#12` map body is a genuine singleton and `c22` holds it.** Both sessions must append to *Decisions so
+> far* to record a resolution, and neither can reach that step alone: both tickets are **HITL**, so they close only
+> through live exchange with Ido. `c23-goal-category` will **lease** the body at resolution time rather than claim
+> it now, and will not touch `#12` before then. `Observed:` `c22`'s transcript last wrote at **14:45Z**, one minute
+> before this row — that session is **live**, not stale, so `#44` was never takeable.
+>
+> **(b) `sessions/` is claimed folder-wide by `c22` for a brief it may hand off.** `c23-goal-category` claims
+> **file-level only** (`sessions/c23-*.md`), so the two do not collide; recorded because a directory claim beside a
+> file claim reads as a conflict to the next session, and because the pathspec-commit remedy cannot cover a file
+> both sessions write.
 
 > ✅ **`social-share-bugs` released 2026-08-15 — `b99c5da` (claim) → `b762520`, pushed. Brief moved to
 > `sessions/done/`. `#4` and `#5` are fixed and tested, and both are deliberately left OPEN.**
