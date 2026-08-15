@@ -1,8 +1,8 @@
 ---
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
-mode: normal
-status: ready
+mode: AUTO MODE          # brief said `normal`; Ido opened this session with `AUTOMODE`, and this session's message wins
+status: active
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/12
 created: 2026-08-13
 ---

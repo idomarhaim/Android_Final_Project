@@ -15,7 +15,32 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| *(none — see the release note below)* | | | | |
+| `c21-offline-story` | `/wayfinder 12` — frontier is empty, so graduate fog into a ticket and resolve it | `CHANGELOG/2026-08-15/c21-offline-story.md` · `kb-candidates/2026-08-15-c21-offline-story.md` · this row · GitHub `#12` body + its new child ticket | GitHub `#12` body (map commons) | 2026-08-15 |
+| `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row | **none — `#12`'s body is deliberately *not* claimed** (see note) | 2026-08-15 |
+
+> ⚠️ **`product-v03-spec` opened at 14:0x with `c21-offline-story` live — its row was 3 minutes old and
+> still uncommitted in the working tree.** Files are disjoint (this session writes one new doc plus its own
+> changelog and brief; `c21` writes its own changelog and candidates), so the two run side by side. **But the
+> brief's `Exit` is not disjoint, and half of it is blocked by this claim rather than deferred by choice:**
+> the brief ends *"`#12`'s body updated to say the destination is reached, and `#12` closed"*, and `#12`'s body
+> is `c21`'s singleton **and** `c21` is *graduating fog into a new child ticket* — so the map will have an open
+> child and "the map is done when the spec is whole and no ticket is open" cannot be satisfied by this session
+> at all. `#12` is therefore **read-only** here: the spec is written and the map close is left to Ido or to a
+> later session. Derived per the board's singleton rule (🧭 *shared singletons are exclusive*) rather than asked.
+>
+> ⚠️ **The brief's own premise has rotted while being read.** It was written 2026-08-13 on *"map `#12` has no
+> open tickets left … `#12`'s Decisions so far holds **26** lines"*. `c20-derived-state` has since taken it to
+> **27** decisions, and `c21` is adding a 28th plus a new open child. So the spec below is written against `#12`
+> **as read at 14:0x on 2026-08-15** and may be one decision short by the time `c21` releases; that is named
+> here rather than papered over, and the fix is an amendment, not a rewrite.
+>
+> ⚠️ **`c20-derived-state` committed at 13:55:07 — 70 seconds before this row was written — so it is *live*, not
+> released, despite the ✅ release note below.** Working sets are disjoint by content (it owns its own release note
+> and `CHANGELOG/2026-08-15/c20-derived-state.md`; this session owns the Active-claims table and its own changelog)
+> but **share the `SESSIONS.md` file**, which is the one hazard a pathspec commit cannot cover. This session will
+> `git diff -- SESSIONS.md` in its own tool call before every commit and **name any hunk of `c20`'s that rides
+> along** rather than trying to subtract it. It also does **not** touch `#12`'s *Decisions so far* rows that `c20`
+> wrote — only the fog section and one new decision line of its own.
 
 > 🚢 **`c11b-output-formats` visited 2026-08-15 for one commit — no Active row, per the ceremony
 > rule** (a claim created and cleared inside a single commit protects nothing). Two things landed.
