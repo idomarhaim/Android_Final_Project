@@ -105,3 +105,32 @@ concurrent sibling, which is the contention the declaration exists for.
 
 `Check-KbLinks.ps1` — **CLEAN**, 68 pages, run after the §1 rewrite and before the commit. Commit-hook
 parity **OK**. Markdown only in both repos; no source file touched, so no other layer applies.
+
+## Push — this repo yes, JARVIS no, and the two were decided separately
+
+**This repo: pushed** (`25b7bfd..0e5bf74`). All six preconditions checked, and the blocker recorded
+yesterday had **expired on its own** — `478769d` (`c11b-output-formats`) and this session's first three
+commits were already on the remote, so `@{u}..HEAD` held **two commits, both this session's, no
+foreign commit to adjudicate**. Board Active claims empty, tree clean, remote not ahead, plain
+`git push` (no `--all`, no refspec). The range's **only deletion** is
+`kb-candidates/2026-08-14-c20-derived-state.md`, drained in the same commit — precondition 2's
+`kb-candidates` carve-out exactly, not a deletion that needs asking. No renames, no binaries, no
+secrets, no source file.
+
+⛔ **`C:\Dev\JARVIS`: not pushed, and this is the "if it harms, don't" case.** `@{u}..HEAD` holds
+**eleven** commits, **nine of them foreign**, and two of those belong to sessions that are **live right
+now**:
+
+| Foreign commit | Session | Evidence it is live |
+|---|---|---|
+| `1c654e3` | `sibling-wait-banner` | **live row in Active claims**, and `rules/agent-topology-and-model-routing.md` is **dirty in the tree** — mid-write |
+| `8b2e166` | `c11b-output-formats` | claimed minutes ago; their `CHANGELOG/2026-08-15/…` and `user-rules/my-rules.instructions.md` are **staged, uncommitted** — mid-unit |
+
+Precondition 5 is explicit: a foreign commit whose paths sit under a live Active-claims row → **stop
+and ask**. Pushing would publish two sessions' in-flight work on this session's schedule, and
+un-publishing needs a force-push, which is always-ask in both modes. The four other foreign commits in
+the range were never read by this session either, which precondition 2 stops on independently.
+
+**This session's own JARVIS work (`392b565`, `3726297`) is therefore committed and unpublished**, and
+it cannot be pushed alone — `git push` is branch-scoped, not commit-scoped. It will go up with
+whoever pushes next once those two sessions release.
