@@ -131,6 +131,13 @@ so it is not re-derived from the code.
   screen must follow the device's own switch. If the material picker later offers a per-surface
   choice, the widget is the surface where three of the four cannot be honoured — say so in the
   picker rather than letting it silently do nothing.
+- [ ] **The widget picker shows the app icon five times.** `previewImage="@mipmap/ic_launcher"` on
+  all five `res/xml/widget_*_info.xml`, so the one place a user sees a tile *before* placing it
+  shows five indistinguishable blue targets. Found by the 2026-08-16 device pass; the adversarial
+  pass had rated it 🔵, which was too low — the picker is the whole first impression of a pack
+  whose point is visual. Fix is `previewLayout` per tile (API 31+), which needs five small static
+  layouts approximating each card. Deliberately not bundled into the defect fixes, because unlike
+  those four it is cosmetic and confined to the picker.
 - [ ] **Hebrew is written but not seen.** `values-he/widget_strings.xml` ships and the bidi
   isolation is in code
   ([`core/util/Bidi.kt`](../../app/src/main/java/com/idomarhaim/goalpilot/core/util/Bidi.kt)),

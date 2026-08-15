@@ -122,14 +122,19 @@ does change what a user gets from the pack today: a dashboard, not a prompt.
   *Skipped: `firestore-tests/` — this unit adds no rule, reads no new collection, and writes
   nothing to Firestore.*
   *Skipped: `functions/` — untouched, and §7.2 already records it has no test layer at all.*
-- **Results**: **311 passed · 0 failed · 0 skipped** (`:app:testDebugUnitTest`, 21:58:51), of which
-  **46 are this unit's**; the module total moved from 248 to 311 across four sessions today.
+- **Results**: **317 passed · 0 failed · 0 skipped** (`:app:testDebugUnitTest`, after the device-pass fixes), of which
+  **51 are this unit's**.
   `:app:assembleDebug` ✅ (22:00) — which is what proves the manifest's five receivers, the five
   `appwidget-provider` XMLs and both string tables actually resolve.
 - **New test files**:
   - `app/src/test/java/com/idomarhaim/goalpilot/widget/BuildWidgetTileUseCaseTest.kt` (26)
   - `app/src/test/java/com/idomarhaim/goalpilot/widget/BuildWidgetSnapshotUseCaseTest.kt` (10)
-  - `app/src/test/java/com/idomarhaim/goalpilot/widget/WidgetSizeTest.kt` (5)
+  - `app/src/test/java/com/idomarhaim/goalpilot/widget/WidgetSizeTest.kt` (7)
+  - `app/src/test/java/com/idomarhaim/goalpilot/widget/WidgetPaletteResourceTest.kt` (3) *(new — the
+    colour resources are a hand-written projection of `WidgetPalette`'s arithmetic, so this
+    recomputes all sixteen values and fails if the XML drifts. It is also why that arithmetic is
+    now pure Kotlin: `android.graphics.Color` is an unmocked stub on the JVM, so the version that
+    used it could not be checked without Robolectric)*
   - `app/src/test/java/com/idomarhaim/goalpilot/widget/BidiTest.kt` (5)
   - `app/src/test/java/com/idomarhaim/goalpilot/widget/FakeWidgetStrings.kt` *(fake, not a suite)*
 - **Failures**: none.
@@ -140,16 +145,47 @@ pass against a fake returning one constant at every size — which is exactly th
 that makes a rule look guarded while it rots. The second is the half that bites.
 
 **Verified after the adversarial pass, not before it.** The first green run was at 21:26; the five
-fixes below landed after it, and re-verification was blocked for 14 minutes by a fourth session's
-`GoalProgress.kt` holding the whole module red — zero of those errors named a widget-pack file. The
-numbers above are the **post-fix** run.
+fixes landed after it, and re-verification was blocked for 14 minutes by a fourth session's
+`GoalProgress.kt` holding the whole module red — zero of those errors named a widget-pack file.
 
-⚠️ **`unverified`: nothing here has been seen on a device or an emulator.** The tests prove the
-*decisions*; they prove nothing about *rendering*. Every layout dimension, the neo shadow pair's
-legibility at `2×2`, bitmap scaling, and whether the footer truncates at the smallest size are all
-unobserved. The emulator is a claimed singleton and two siblings were live. `Observed:` never.
-`Inferred:` from the Glance and `RemoteViews` contracts. `Untested:` a device pass, which is what
-would close it — and §0.8's *seen in Hebrew* with it.
+---
+
+## 📱 The device pass (2026-08-16) — and what it found
+
+Ido offered a device, which closed the `unverified` this entry originally carried. Emulator
+`Pixel_10_Pro_XL`, API 37, 1344×2992 @ 480 dpi, real signed-in account.
+
+**It found five defects, all mine, none of which any test could have caught.** That is the point
+worth keeping: the suite proves *which rows survive and which sentence the disclosure shrinks to*,
+and it is structurally incapable of proving that a `RemoteViews` inflated by another process looks
+like anything at all.
+
+| # | Defect | Root cause | Fix |
+|---|---|---|---|
+| 1 | **Dark mode ignored.** Device went dark, tiles stayed light — and stayed light through a forced `APPWIDGET_UPDATE` | A `RemoteViews` is inflated *later, by the launcher*, so a single colour resolved while building the tree is the wrong one by then. A widget cannot ask what the theme is | The palette is now a **colour resource** (`values/` + `values-night/widget_colors.xml`) read via `ColorProvider(resId)`; the launcher resolves it at inflate time. Chart bitmaps, which cannot carry two answers, are redrawn in theme-neutral `ChartInk` |
+| 2 | **A cold process left tiles blank** — Glance's loading placeholder, 30 s+ | The cache fallback ran *after* a 4 s network attempt, inside the same coroutine, so it protected everything except the case it existed for | The cache renders **first**, and the refresh runs inside the composition (`LaunchedEffect`) and replaces it when it arrives |
+| 3 | **The four-size ladder collapsed.** A nominal `2×2` is ~190 dp on this device, past the 180 dp threshold, so the smallest tile drew the **largest** layout | A fixed dp threshold guessed from Android's nominal `70n − 30` cell formula. §4.5 says outright that dp per cell varies by device and launcher, so no constant could be right | `SizeMode.Responsive` with the four **declared design sizes**. The launcher matches against what it really granted; `LocalSize` returns one of the four exactly |
+| 4 | **`trend` and `effort` arrived cramped** — declared `targetCellWidth="4"`, offered at `2×2` | `minWidth="110dp"` wins over `targetCellWidth` in the picker | `minWidth="250dp"` on those two, `minResizeWidth` left at 110 dp so they can still be shrunk. `Observed:` the picker now offers `Day by day` at **3×2** |
+| 5 | **All five picker previews are the app icon**, so they are indistinguishable | `previewImage="@mipmap/ic_launcher"` — rated 🔵 in the adversarial pass, which was too low | **Not fixed.** Cosmetic and confined to the picker; filed in `Presentation.TODO.optional.md` §3 |
+
+**Confirmed working after the fixes**, both brightnesses, no refresh in between: the tiles flip the
+instant the device switches. The `level` tile renders its ring, its real values (`1`,
+*30 to the next level*), the **short** form of its disclosure at `2×2`, and the as-of stamp in the
+device's own 12-hour clock. The `goals` header reads **Goal**, singular — the `2×2` layout, which
+is what proves the ladder is no longer collapsed.
+
+**One product finding, not a defect.** On the real account, **8 goals carry no measure** (all still
+on the `%` placeholder) and **0 tasks were completed this week**, so four of the five tiles
+correctly show an empty state. The pack is not broken; it is reporting that nothing is being
+measured — `C7` and §4.6 arriving on the home screen.
+
+**A pre-existing defect was spotted in passing and is not this unit's:** the dashboard reads
+**"Overall progress 16259%"**. §4.4 predicted exactly this — `DashboardViewModel.kt:103`, a plain
+mean of `progressFraction`, which breaks once overshoot is legal.
+
+⚠️ **Still `unverified`: Hebrew.** The app has no language picker until §5.1, so the RTL render —
+in particular the trend tile's bitmap columns, reversed in code rather than by the layout — has
+been read but not seen. §0.8 is satisfied in intent and not in fact.
 
 ---
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The dark half of the neo palette. See values/widget_colors.xml for why these
+  are resources and not runtime values, and for the arithmetic that produced
+  every hex.
+
+  Note what is NOT here: dark neo. 4.1 makes dark neo brightness-locked, meaning
+  it has no light scheme at all, and a home screen follows the device's own
+  switch with nobody to tell it otherwise. So the widget pack ships neo, whose
+  dark scheme is this file, rather than a material that would have to ignore the
+  switch this file exists to honour.
+
+  4.1 also requires a skin to owe a luminance contract rather than only a hue:
+  Blossom's dark hues are its light hues at roughly 20% less lightness, and the
+  mute() clamp below is what enforces that for both skins at once.
+-->
+<resources>
+
+    <color name="gp_widget_aurora_ground">#FF1C2736</color>
+    <color name="gp_widget_aurora_on_surface">#FFEAF0F6</color>
+    <color name="gp_widget_aurora_on_surface_variant">#9EEAF0F6</color>
+    <color name="gp_widget_aurora_accent">#FFA4B4DB</color>
+
+    <color name="gp_widget_blossom_ground">#FF242531</color>
+    <color name="gp_widget_blossom_on_surface">#FFEAF0F6</color>
+    <color name="gp_widget_blossom_on_surface_variant">#9EEAF0F6</color>
+    <color name="gp_widget_blossom_accent">#FFDBA6B5</color>
+
+</resources>

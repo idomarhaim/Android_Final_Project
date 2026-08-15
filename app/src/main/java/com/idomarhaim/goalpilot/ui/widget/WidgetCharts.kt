@@ -33,6 +33,15 @@ import kotlin.math.min
  * a chart drawn at 320 px and stretched to 360 is indistinguishable, and a
  * chart that never renders is not.
  *
+ * ## Why the ink is theme-neutral
+ *
+ * A `RemoteViews` can carry a day colour and a night colour for a text or a
+ * background and let the launcher choose; it cannot carry two bitmaps. Baking a
+ * scheme into these pixels therefore means being wrong half the time — which is
+ * exactly what happened on 2026-08-16 before [ChartInk] existed. So every chart
+ * is drawn on a **transparent** ground in translucent neutrals that read against
+ * both grounds, and only the categorical life-area hues are opaque.
+ *
  * ## What makes it neo
  *
  * Each shape is drawn three times — a **shadow** offset down-right, the fill
@@ -64,7 +73,7 @@ object WidgetCharts {
     fun donut(
         sizePx: Int,
         slices: List<WidgetArea>,
-        palette: WidgetPalette,
+        ink: ChartInk,
     ): Bitmap {
         val size = sizePx.coerceIn(48, MAX_PX)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -76,7 +85,7 @@ object WidgetCharts {
 
         // The groove first: an inset track the arcs sit in, so a donut that is
         // mostly one area still reads as a ring rather than as a floating comma.
-        val groove = paint(palette.groove).apply {
+        val groove = paint(ink.groove).apply {
             style = Paint.Style.STROKE
             strokeWidth = thickness
             strokeCap = Paint.Cap.BUTT
@@ -99,10 +108,10 @@ object WidgetCharts {
                 angle += (slice.minutes / total) * 360f
                 continue
             }
-            val color = palette.resolve(slice.colorHex)
+            val color = ink.resolve(slice.colorHex)
 
             canvas.withTranslation(shadowOffset, shadowOffset) {
-                drawArc(box, angle, sweep, false, arcPaint(palette.shadow, thickness))
+                drawArc(box, angle, sweep, false, arcPaint(ink.shadow, thickness))
             }
             canvas.drawArc(box, angle, sweep, false, arcPaint(color, thickness))
             // The lit edge: a thin bright arc along the top of the stroke rather
@@ -113,7 +122,7 @@ object WidgetCharts {
                 angle,
                 sweep,
                 false,
-                arcPaint(palette.highlight, thickness * 0.22f),
+                arcPaint(ink.highlight, thickness * 0.22f),
             )
             angle += sweep + gap
         }
@@ -121,7 +130,7 @@ object WidgetCharts {
         // --edge, last so it sits over every arc.
         canvas.drawOval(
             RectF(box).apply { inset(-thickness / 2f, -thickness / 2f) },
-            paint(palette.edge).apply {
+            paint(ink.edge).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = max(1f, size * 0.004f)
             },
@@ -143,7 +152,7 @@ object WidgetCharts {
         heightPx: Int,
         series: List<WidgetArea>,
         days: List<WidgetDay>,
-        palette: WidgetPalette,
+        ink: ChartInk,
     ): Bitmap {
         val w = widthPx.coerceIn(48, MAX_PX)
         val h = heightPx.coerceIn(24, MAX_PX)
@@ -164,14 +173,14 @@ object WidgetCharts {
             // Every column gets its groove, including an empty one — a missing
             // track reads as "no data was collected", a present empty one reads
             // as "that day, you did nothing", and only the second is true.
-            canvas.drawRoundRect(RectF(left, 0f, right, h.toFloat()), radius, radius, paint(palette.groove))
+            canvas.drawRoundRect(RectF(left, 0f, right, h.toFloat()), radius, radius, paint(ink.groove))
 
             var y = h.toFloat()
             day.minutes.forEachIndexed { areaIndex, minutes ->
                 if (minutes <= 0) return@forEachIndexed
                 val segment = (minutes.toFloat() / peak) * h
                 val top = (y - segment).coerceAtLeast(0f)
-                val color = series.getOrNull(areaIndex)?.let { palette.resolve(it.colorHex) } ?: palette.accent
+                val color = series.getOrNull(areaIndex)?.let { ink.resolve(it.colorHex) } ?: ink.accent
                 canvas.drawRect(RectF(left, top, right, y), paint(color))
                 y = top
             }
@@ -187,14 +196,14 @@ object WidgetCharts {
                         addRoundRect(RectF(left, top, right, h.toFloat()), radius, radius, Path.Direction.CW)
                     },
                 )
-                canvas.drawRect(RectF(left, top, right, h.toFloat()), paint(palette.highlight.alphaScaled(0.35f)))
+                canvas.drawRect(RectF(left, top, right, h.toFloat()), paint(ink.highlight.alphaScaled(0.35f)))
                 canvas.restore()
 
                 canvas.drawRoundRect(
                     RectF(left, top, right, h.toFloat()),
                     radius,
                     radius,
-                    paint(palette.edge).apply {
+                    paint(ink.edge).apply {
                         style = Paint.Style.STROKE
                         strokeWidth = max(1f, w * 0.004f)
                     },
@@ -212,7 +221,7 @@ object WidgetCharts {
         sizePx: Int,
         fraction: Float,
         colorInt: Int,
-        palette: WidgetPalette,
+        ink: ChartInk,
     ): Bitmap {
         val size = sizePx.coerceIn(32, MAX_PX)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -222,13 +231,13 @@ object WidgetCharts {
         val inset = thickness / 2f + size * 0.04f
         val box = RectF(inset, inset, size - inset, size - inset)
 
-        canvas.drawOval(box, arcPaint(palette.groove, thickness))
+        canvas.drawOval(box, arcPaint(ink.groove, thickness))
 
         val sweep = fraction.coerceIn(0f, 1f) * 360f
         if (sweep > 0.5f) {
             val offset = size * 0.014f
             canvas.withTranslation(offset, offset) {
-                drawArc(box, START_ANGLE, sweep, false, arcPaint(palette.shadow, thickness))
+                drawArc(box, START_ANGLE, sweep, false, arcPaint(ink.shadow, thickness))
             }
             canvas.drawArc(box, START_ANGLE, sweep, false, arcPaint(colorInt, thickness))
             canvas.drawArc(
@@ -236,13 +245,13 @@ object WidgetCharts {
                 START_ANGLE,
                 sweep,
                 false,
-                arcPaint(palette.highlight, thickness * 0.20f),
+                arcPaint(ink.highlight, thickness * 0.20f),
             )
         }
 
         canvas.drawOval(
             RectF(box).apply { inset(-thickness / 2f, -thickness / 2f) },
-            paint(palette.edge).apply {
+            paint(ink.edge).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = max(1f, size * 0.005f)
             },
@@ -262,7 +271,7 @@ object WidgetCharts {
         heightPx: Int,
         fraction: Float,
         colorInt: Int,
-        palette: WidgetPalette,
+        ink: ChartInk,
     ): Bitmap {
         val w = widthPx.coerceIn(16, MAX_PX)
         val h = heightPx.coerceIn(4, 64)
@@ -270,7 +279,7 @@ object WidgetCharts {
         val canvas = Canvas(bitmap)
         val radius = h / 2f
 
-        canvas.drawRoundRect(RectF(0f, 0f, w.toFloat(), h.toFloat()), radius, radius, paint(palette.groove))
+        canvas.drawRoundRect(RectF(0f, 0f, w.toFloat(), h.toFloat()), radius, radius, paint(ink.groove))
 
         val filled = (fraction.coerceIn(0f, 1f) * w).coerceAtLeast(h.toFloat())
         canvas.drawRoundRect(RectF(0f, 0f, filled, h.toFloat()), radius, radius, paint(colorInt))
@@ -278,13 +287,13 @@ object WidgetCharts {
             RectF(0f, 0f, filled, h * 0.5f),
             radius,
             radius,
-            paint(palette.highlight.alphaScaled(0.30f)),
+            paint(ink.highlight.alphaScaled(0.30f)),
         )
         canvas.drawRoundRect(
             RectF(0.5f, 0.5f, w - 0.5f, h - 0.5f),
             radius,
             radius,
-            paint(palette.edge).apply {
+            paint(ink.edge).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 1f
             },

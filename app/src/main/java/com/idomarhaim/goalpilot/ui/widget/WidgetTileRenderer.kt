@@ -175,11 +175,12 @@ private fun RingBody(
 ) {
     val context = LocalContext.current
     val diameter = ringDiameter(size, width, height)
+    val ink = palette.chartInk()
     val bitmap = WidgetCharts.ring(
         sizePx = context.px(diameter),
         fraction = body.fraction,
-        colorInt = palette.resolve(body.colorHex),
-        palette = palette,
+        colorInt = ink.resolve(body.colorHex),
+        ink = ink,
     )
 
     val ring: @Composable () -> Unit = {
@@ -271,11 +272,12 @@ private fun RingRowsBody(body: WidgetTileBody.RingRows, palette: WidgetPalette, 
 @Composable
 private fun RingRow(row: WidgetRingRow, palette: WidgetPalette, diameter: Dp) {
     val context = LocalContext.current
+    val ink = palette.chartInk()
     val bitmap = WidgetCharts.ring(
         sizePx = context.px(diameter),
         fraction = row.fraction,
-        colorInt = palette.resolve(row.colorHex),
-        palette = palette,
+        colorInt = ink.resolve(row.colorHex),
+        ink = ink,
     )
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(contentAlignment = Alignment.Center) {
@@ -330,7 +332,7 @@ private fun DonutBody(
 ) {
     val context = LocalContext.current
     val diameter = donutDiameter(size, width, height)
-    val bitmap = WidgetCharts.donut(context.px(diameter), body.slices, palette)
+    val bitmap = WidgetCharts.donut(context.px(diameter), body.slices, palette.chartInk())
 
     val donut: @Composable () -> Unit = {
         Box(contentAlignment = Alignment.Center) {
@@ -445,7 +447,7 @@ private fun ColumnsBody(body: WidgetTileBody.Columns, palette: WidgetPalette, wi
                     heightPx = context.px(chartHeight),
                     series = body.series,
                     days = columns,
-                    palette = palette,
+                    ink = palette.chartInk(),
                 ),
             ),
             contentDescription = null,
@@ -537,8 +539,8 @@ private fun EffortRow(row: WidgetEffortRow, palette: WidgetPalette, size: Widget
                     widthPx = context.px(width),
                     heightPx = context.px(6.dp),
                     fraction = row.effortFraction,
-                    colorInt = palette.resolve(row.colorHex),
-                    palette = palette,
+                    colorInt = palette.chartInk().resolve(row.colorHex),
+                    ink = palette.chartInk(),
                 ),
             ),
             contentDescription = null,

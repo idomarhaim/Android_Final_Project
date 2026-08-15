@@ -73,15 +73,21 @@ enum class WidgetSize(val cells: String) {
 
     companion object {
         /**
-         * The dp at which a widget stops being two cells and starts being four.
+         * The midpoint between the two candidate widths the pack declares.
          *
-         * A launcher cell is nominally 70 dp with 30 dp of total margin, so two
-         * cells land near 110 dp and four near 250 dp. 180 dp sits between them
-         * with room on both sides, which matters because a `3×3` — legal on
-         * every launcher and impossible to design for — has to resolve to
-         * *something*, and resolving it to the larger layout is the choice that
-         * cannot clip: a wide layout in a narrow cell truncates text, a narrow
-         * layout in a wide cell only wastes space.
+         * This is **not** a guess about real launcher cells, and the difference
+         * matters because the first version was exactly that guess and it was
+         * wrong. `Observed:` 2026-08-16, `Pixel_10_Pro_XL`, API 37 — a nominal
+         * `2×2` measured about **190 dp**, past the old 180 dp threshold, so the
+         * smallest tile drew the largest layout and the four-size ladder
+         * collapsed to one rung. §4.5 says plainly that dp per cell *varies by
+         * device and launcher*, so no fixed number could have been right.
+         *
+         * `GoalPilotWidget` now uses `SizeMode.Responsive` and declares its four
+         * design sizes (110 / 250 dp per axis). The launcher does the matching
+         * against whatever it really granted, and [LocalSize] hands back one of
+         * those four exactly — so this only has to separate 110 from 250, which
+         * a midpoint does with 70 dp of margin on either side.
          */
         const val WIDE_THRESHOLD_DP = 180
 

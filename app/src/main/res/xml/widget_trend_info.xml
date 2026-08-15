@@ -2,10 +2,13 @@
 <!--
   trend tile (spec §4.5).
 
-  minWidth/minHeight are the two-cell floor, and targetCellWidth/Height are the
-  Android 12+ way of saying the same thing in cells the launcher understands.
-  Both are declared because they are read by different platform versions, and a
-  widget that declares only one lands at a size somebody's launcher invented.
+  minWidth is 250dp here, not the 110dp floor the square tiles use, and that is
+  deliberate. targetCellWidth="4" alone did not produce a 4-wide default:
+  observed 2026-08-16 on Pixel_10_Pro_XL / API 37, the picker offered this tile
+  at 2x2 because minWidth won. This card is designed wide — a stacked week and a
+  ranked list both need the horizontal room — so arriving narrow means arriving
+  cramped. minResizeWidth stays at 110dp, so the user can still shrink it and get
+  the layout that was designed for that size.
 
   The resize range spans 2..4 in both directions on purpose: §4.5 ships every
   card at 2×2, 4×2, 2×4 and 4×4, and a user reaches those four by dragging a
@@ -19,7 +22,7 @@
   device dozes.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="110dp"
+    android:minWidth="250dp"
     android:minHeight="110dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"

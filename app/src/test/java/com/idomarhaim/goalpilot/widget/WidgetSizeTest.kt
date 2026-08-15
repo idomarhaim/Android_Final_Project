@@ -34,6 +34,27 @@ class WidgetSizeTest {
     }
 
     @Test
+    fun `each declared candidate size maps back to its own class`() {
+        // The pack declares four candidate sizes and SizeMode.Responsive makes
+        // the LAUNCHER pick the nearest, so LocalSize returns one of these four
+        // exactly. This is the contract that replaced a dp threshold guessed from
+        // the nominal cell formula — that guess put a 2x2 (~190 dp on a 480 dpi
+        // phone) into the LARGE layout and collapsed the whole ladder.
+        assertThat(WidgetSize.of(110, 110)).isEqualTo(WidgetSize.SMALL)
+        assertThat(WidgetSize.of(250, 110)).isEqualTo(WidgetSize.WIDE)
+        assertThat(WidgetSize.of(110, 250)).isEqualTo(WidgetSize.TALL)
+        assertThat(WidgetSize.of(250, 250)).isEqualTo(WidgetSize.LARGE)
+    }
+
+    @Test
+    fun `the threshold sits clear of both candidates`() {
+        // Not a tight bound: the whole failure was a threshold with no margin.
+        val t = WidgetSize.WIDE_THRESHOLD_DP
+        assertThat(t - 110).isAtLeast(40)
+        assertThat(250 - t).isAtLeast(40)
+    }
+
+    @Test
     fun `an odd cell count a launcher allows still resolves, and resolves upward`() {
         // A 3x3 is legal on every launcher and is impossible to design for. It has
         // to land somewhere, and it lands on the larger layout deliberately: a wide

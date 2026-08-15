@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The neo palette for the widget pack, as COLOUR RESOURCES rather than as
+  runtime values, and this file exists because of a bug rather than a preference.
+
+  Observed 2026-08-16, emulator Pixel_10_Pro_XL / API 37: the palette used to be
+  computed in Kotlin and resolved with a single-value ColorProvider. Switching
+  the device to dark mode left every tile light, and it stayed light through a
+  forced APPWIDGET_UPDATE. A RemoteViews is inflated LATER, by the launcher, so
+  whichever single colour was baked in while building the tree is simply the
+  wrong one by then, and the widget has no way to ask.
+
+  A colour RESOURCE has no such problem: the launcher resolves it against its own
+  configuration at inflate time, so values-night/widget_colors.xml below is
+  picked up the instant the device switches, with no refresh and no code.
+  Glance reaches it through ColorProvider(resId), which is stable public API.
+  (androidx.glance.color.DayNightColorProvider would express this directly and is
+  annotated RestrictTo, so it is not ours to use.)
+
+  ── These values are DERIVED, not designed ──
+  Every hex here is the output of WidgetPalette's own arithmetic, which is the
+  same colorSchemeFor() the app's theme uses, so 4.1's rule that a skin must
+  reach every material still holds. The formula, per skin and brightness:
+
+      primary = colorSchemeFor(skin, isDark).primary
+      ground  = neoGround.mix(primary, isDark ? 0.10 : 0.06)
+      onVar   = neoInk.alpha(isDark ? 0.62 : 0.60)
+      accent  = primary.mute(isDark)          // saturation down, lightness clamped
+
+  where neoGround is #EFF1F5 light / #0C1520 dark and neoInk is #16202B / #EAF0F6.
+  WidgetPaletteResourceTest recomputes all sixteen values and fails if this file
+  drifts from that arithmetic, so the derivation is enforced rather than trusted.
+
+  Adding a third skin means adding four names here and four in values-night.
+  4.1 already requires a skin to declare a luminance contract, not only a hue.
+-->
+<resources>
+
+    <!-- Aurora — the default skin. Ocean blue, muted into neo. -->
+    <color name="gp_widget_aurora_ground">#FFE1E8F2</color>
+    <color name="gp_widget_aurora_on_surface">#FF16202B</color>
+    <color name="gp_widget_aurora_on_surface_variant">#9916202B</color>
+    <color name="gp_widget_aurora_accent">#FF325E9E</color>
+
+    <!-- Blossom — sunset rose, the same transform applied. -->
+    <color name="gp_widget_blossom_ground">#FFECE5EC</color>
+    <color name="gp_widget_blossom_on_surface">#FF16202B</color>
+    <color name="gp_widget_blossom_on_surface_variant">#9916202B</color>
+    <color name="gp_widget_blossom_accent">#FF9E4164</color>
+
+</resources>

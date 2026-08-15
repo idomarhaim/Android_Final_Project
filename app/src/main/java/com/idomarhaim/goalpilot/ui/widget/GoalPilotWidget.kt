@@ -1,8 +1,13 @@
 package com.idomarhaim.goalpilot.ui.widget
 
 import android.content.Context
-import android.content.res.Configuration
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
@@ -12,7 +17,6 @@ import androidx.glance.appwidget.provideContent
 import com.idomarhaim.goalpilot.data.widget.WidgetSnapshotSource
 import com.idomarhaim.goalpilot.data.widget.WidgetSnapshotStore
 import com.idomarhaim.goalpilot.domain.model.WidgetSize
-import com.idomarhaim.goalpilot.domain.model.WidgetSnapshot
 import com.idomarhaim.goalpilot.domain.model.WidgetTile
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.withTimeoutOrNull
@@ -22,47 +26,79 @@ import kotlinx.coroutines.withTimeoutOrNull
  *
  * `GlanceAppWidget` is not a `ViewModel` and there is no lifecycle here: the
  * system asks for a tree, this builds one, and the process may be killed
- * immediately after. So the read is done **before** `provideContent`, with a
- * ceiling on how long it may take, and a cache underneath it — see [load].
+ * immediately after. Hilt is reached through a [WidgetEntryPoint] rather than an
+ * injected constructor, because the object is constructed by its receiver, which
+ * the *system* instantiates.
  *
- * Hilt reaches this through a [WidgetEntryPoint] rather than an injected
- * constructor, because the object is constructed by its receiver, which the
- * *system* instantiates.
- *
- * **Abstract, with one concrete subclass per tile** — and that is a Glance
- * constraint rather than taste. `GlanceAppWidgetManager` resolves placed widgets
- * by the *class* of the `GlanceAppWidget`, so `updateAll` walks every id whose
- * receiver declares that class. Five receivers sharing one class would therefore
- * make a refresh of any tile re-render **all** of them as that tile: place the
- * week donut and the level ring, refresh one, and both become the same card. The
- * subclasses in `WidgetReceivers.kt` exist to keep those identities apart.
+ * **Abstract, with one concrete subclass per tile** — a Glance constraint rather
+ * than taste. `GlanceAppWidgetManager` resolves placed widgets by the *class* of
+ * the `GlanceAppWidget`, so five receivers sharing one class would make a
+ * refresh of any tile re-render **all** of them as that tile.
  */
 abstract class GoalPilotWidget(private val tile: WidgetTile) : GlanceAppWidget() {
 
     /**
-     * `SizeMode.Exact` — the tile is rebuilt at the size it actually occupies.
+     * `SizeMode.Responsive`, with the four sizes §4.5 designs for.
      *
-     * §4.5: *the launcher decides the real dp a `2×2` or `4×4` occupies, and it
-     * varies by device and launcher.* `SizeMode.Responsive` would ask for a fixed
-     * set of candidate sizes and pick the nearest, which is the same guess this
-     * pack is trying not to make; `Exact` costs a rebuild on resize and buys a
-     * tile that is never laid out for a cell it is not in.
+     * This started as `SizeMode.Exact` plus a dp threshold, and that was wrong in
+     * a way only a device shows. `Observed:` 2026-08-16, `Pixel_10_Pro_XL`, API
+     * 37 — a nominal `2×2` is about **190 dp** there, comfortably past the 180 dp
+     * threshold, so the smallest tile rendered the **largest** layout and the
+     * whole four-size ladder collapsed to one rung.
+     *
+     * The bug is not the number, it is the *idea* of a number: dp per cell varies
+     * by device and launcher (§4.5 says exactly this), so no fixed threshold can
+     * be right everywhere. Responsive inverts it — the pack declares the four
+     * shapes it was designed at, the **launcher** picks the nearest, and
+     * [LocalSize] then returns one of these four exactly. [WidgetSize.of] maps
+     * them back by identity and never has to guess.
+     *
+     * The cost is that Glance builds all four trees per update instead of one.
+     * That is real and it is worth it: it is paid once per refresh, off-screen,
+     * to remove a class of error that is invisible until someone places the
+     * widget on a phone you do not own.
      */
-    override val sizeMode: SizeMode = SizeMode.Exact
+    override val sizeMode: SizeMode = SizeMode.Responsive(
+        setOf(SIZE_SMALL, SIZE_WIDE, SIZE_TALL, SIZE_LARGE),
+    )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val entry = EntryPointAccessors.fromApplication(
             context.applicationContext,
             WidgetEntryPoint::class.java,
         )
-        val snapshot = load(entry)
-        val skin = entry.preferences().skin.value
+        val store = entry.snapshotStore()
+        val source = entry.snapshotSource()
         val buildTile = entry.buildTile()
+        val skin = entry.preferences().skin.value
+
+        // The cache is read BEFORE anything can block, and it is a
+        // SharedPreferences hit, so it is effectively free.
+        val cached = store.read()
 
         provideContent {
+            var snapshot by remember { mutableStateOf(cached) }
+
+            // The refresh happens INSIDE the composition, not before it. That
+            // ordering is the whole fix. `Observed:` 2026-08-16 — with the fetch
+            // in front, a cold process left the tile stuck on Glance's blank
+            // loading layout for over thirty seconds, because nothing had been
+            // emitted yet and the repository read had not returned. The cache
+            // existed precisely to prevent that and could not, since it was only
+            // consulted after the timeout. Now the last known picture is on
+            // screen first and the fresh one replaces it when it arrives.
+            LaunchedEffect(id) {
+                val fresh = withTimeoutOrNull(FETCH_TIMEOUT_MS) {
+                    runCatching { source.load(System.currentTimeMillis()) }.getOrNull()
+                }
+                if (fresh != null) {
+                    store.write(fresh)
+                    snapshot = fresh
+                }
+            }
+
             val glanceContext = LocalContext.current
             val size: DpSize = LocalSize.current
-            val palette = WidgetPalette.of(skin, glanceContext.isNightMode())
             val content = buildTile(
                 snapshot = snapshot,
                 tile = tile,
@@ -73,51 +109,33 @@ abstract class GoalPilotWidget(private val tile: WidgetTile) : GlanceAppWidget()
                 // system language while the app is in the user's.
                 AndroidWidgetStrings(glanceContext),
             )
-            WidgetTile(content, palette)
+            // The palette carries BOTH brightnesses; the launcher chooses. See
+            // WidgetPalette's KDoc for why it cannot be resolved here.
+            WidgetTile(content, WidgetPalette.of(skin))
         }
     }
 
-    /**
-     * Fresh if it can be had quickly, the last known picture otherwise.
-     *
-     * The timeout is the whole point. A widget refresh runs inside a broadcast,
-     * and a repository read that hangs on a cold network would either be killed
-     * by the system or leave the tile blank — both of which look to the user like
-     * the widget is broken rather than like the network is slow. Falling back to
-     * the cache means a stale-but-true tile, and the tile says how stale it is.
-     */
-    private suspend fun load(entry: WidgetEntryPoint): WidgetSnapshot {
-        val store: WidgetSnapshotStore = entry.snapshotStore()
-        val source: WidgetSnapshotSource = entry.snapshotSource()
-        val fresh = withTimeoutOrNull(FETCH_TIMEOUT_MS) {
-            runCatching { source.load(System.currentTimeMillis()) }.getOrNull()
-        }
-        return if (fresh != null) {
-            store.write(fresh)
-            fresh
-        } else {
-            store.read()
-        }
-    }
-
-    private companion object {
+    companion object {
         /**
-         * Generous enough for a Firestore cache read plus a cold Hilt graph,
-         * short enough to stay well inside the ~10 s a broadcast receiver gets
-         * before the system considers it hung.
+         * The four shapes §4.5 designs for, in dp.
+         *
+         * These are the *nominal* dp of a 2- and 4-cell span under Android's own
+         * `70n - 30` guidance. They do not have to match any real launcher — they
+         * are candidates, and the launcher picks the nearest to what it actually
+         * granted. That is the point: the arithmetic that varies by device is
+         * done by the device.
          */
-        const val FETCH_TIMEOUT_MS = 4_000L
+        val SIZE_SMALL: DpSize = DpSize(110.dp, 110.dp)
+        val SIZE_WIDE: DpSize = DpSize(250.dp, 110.dp)
+        val SIZE_TALL: DpSize = DpSize(110.dp, 250.dp)
+        val SIZE_LARGE: DpSize = DpSize(250.dp, 250.dp)
+
+        /**
+         * Shorter than it was, because it no longer gates the first frame — the
+         * cache does. This is only how long a *refresh* may take before the tile
+         * keeps showing the last known picture, and a widget refresh runs inside
+         * a broadcast with about ten seconds to live.
+         */
+        const val FETCH_TIMEOUT_MS = 3_000L
     }
 }
-
-/**
- * The device's own dark mode, which is what a home screen follows.
- *
- * `AppSkin` is the palette (§4.1) and brightness is a separate axis; nothing in
- * the app overrides the system's here, and nothing should — the tile sits on the
- * user's wallpaper beside every other widget, and a tile that stayed light on a
- * dark home screen would be the one thing on it that ignored the setting.
- */
-internal fun Context.isNightMode(): Boolean =
-    (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES
