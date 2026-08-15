@@ -160,3 +160,49 @@ already up by the time this is read, that is that mechanism, not a change of min
 - The destination artifact **`docs/PRODUCT_v0.3.md` still does not exist**, and the brief for writing
   it is committed and ready at `sessions/product-v03-spec.md` (`status: ready`). `C21`'s four spec
   lines go into it; nothing about them needs re-deciding.
+
+---
+
+## 📥 Addendum 19:0x — the KB drain happened after all, and it was not this session's candidate
+
+Ido answered the question that had `kb-candidates/2026-08-12-c12-charts-presentation.md` parked for
+**three days**, and answered it with an option that was on the menu but not the recommendation:
+**both — a KB page *plus* a one-line `rules/` pointer**, rather than either alone.
+
+**What landed** (JARVIS `ed6a69e`, pushed): `kb/dev/look-at-your-own-output.md` (entries 1 + 4) and
+`kb/dev/faking-depth-in-2d.md` (entries 2 + 3), two index rows, one journal entry.
+`Check-KbLinks` **CLEAN at 73 pages**. JARVIS's board read `_none_ active`, was claimed before the
+first write there and released inside the same commit. Full account:
+`C:\Dev\JARVIS\CHANGELOG\2026-08-15\c21-offline-story.md`.
+
+**Why two pages rather than one or four.** Entries 1 and 4 are a rule and its own counter-example —
+*the agent must look* and *the thing it looks through can lie* — so splitting them would have shipped
+the rule on one page and its refutation on another. Entries 2 and 3 share a different shape
+(*the appearance of the solution without its mechanism*) and both resist parameter tuning for the
+same reason.
+
+**The bundle check no longer matched, for the third day running — and that is the reusable part.**
+The candidate's check was written 2026-08-12 and named overlap with pages that existed then. The two
+**nearest** pages — `describing-is-not-exhibiting.md` and `elevation-is-not-a-fill.md` — were created
+**twenty minutes before this ingest** by `c22-measure-proposal`. Both were read in full before
+writing, and both turned out genuinely adjacent rather than duplicative, so the outcome was two new
+pages **plus four cross-links that could not have been written yesterday**. That 18:56 journal entry
+had predicted the hole exactly: it recorded that
+`render and look|invisible in the source|acceptance criterion is visual` returned **nothing**.
+
+**Not written: the `rules/` clause.** It alters the interaction protocol, so the 🎬 walkthrough rule
+owns it. Offered, not shipped.
+
+**Candidate file deleted, without asking, and the rule that permits it:** every entry is now
+promoted (entry 5 on 2026-08-13, entries 1–4 today), which is `derivable-decision.md` §1's one
+carve-out to the always-ask-before-deleting rule. It rides its own commit here rather than the
+pages' commit in JARVIS — two repos, which is why the journal entry is the candidate↔page tie.
+
+**Seven candidate files remain in this repo**, including this session's own, which is still filed and
+still undrained.
+
+## 🧭 Concurrency (addendum)
+
+`c24-settings-surface` is live here on `#46`, with `docs/PRODUCT_v0.3.md`, its prototype folder and
+its own changelog and candidate file dirty in the tree. All disjoint from this addendum's paths, and
+none of them staged or committed by this session.

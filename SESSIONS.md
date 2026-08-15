@@ -448,6 +448,16 @@ before your first write. Normative rule:
 > write into a board it is actively editing. The candidate names its own bundle check **and its width limit**.
 > **The five pre-existing candidate files stay** — every surviving entry in them is ⛔ always-ask in both modes.
 >
+> ⏩ **Superseded 19:0x — a drain did happen, and it was a different file's.** Ido answered the one question
+> that had `kb-candidates/2026-08-12-c12-charts-presentation.md` parked for **three days** — *is "an agent must
+> render and look at its own output when the acceptance criterion is visual" a `rules/` change or a KB page?* —
+> with **both: a KB page plus a one-line `rules/` pointer**. The page half drained: JARVIS `ed6a69e`, two new
+> pages (`kb/dev/look-at-your-own-output.md`, `kb/dev/faking-depth-in-2d.md`), `Check-KbLinks` **CLEAN at 73**,
+> board there claimed and released inside that commit, **pushed**. That file is now **fully drained → deleted**.
+> **The `rules/` clause is NOT written** — it alters the interaction protocol, so the 🎬 walkthrough rule owns
+> it and it is offered, not shipped. The line above still holds for **this session's own** candidate: still
+> filed, still undrained. **Seven candidate files remain** in this repo.
+>
 > 📄 **Two briefs written after release, in one commit — no Active row, per the ceremony rule.**
 > [`sessions/social-share-bugs.md`](sessions/social-share-bugs.md) (`#4`+`#5`, **runnable now**, disjoint from
 > `product-v03-spec`: `feature/social/` + `firestore.rules` vs `docs/`) and
