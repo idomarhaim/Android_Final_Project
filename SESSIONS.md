@@ -15,7 +15,38 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row · **GitHub `#12` body** (taken 14:2x, see note) | **GitHub `#12` body (map commons)** — taken *after* `c21` released, not held from the start | 2026-08-15 |
+| *(none — see the release notes below)* | | | | |
+
+> ✅ **`product-v03-spec` released 2026-08-15 — `e416d61` (claim) → `daf46d2`. The map's destination artifact
+> exists: [`docs/PRODUCT_v0.3.md`](docs/PRODUCT_v0.3.md), 1,804 lines, all 28 decisions, every section traceable
+> to the ticket that decided it.** Brief moved to `sessions/done/`. The `#12` body singleton is **released**;
+> `#12` itself is **open with three children**, and closing it is Ido's.
+>
+> **What it found, which matters more than the file.** Writing the artifact that consumes every decision is the
+> only thing that could see a **hand-off lost between two of them** — no ticket, no review and not the map's own
+> closure test. `C7` handed a fifth AI output format to `C11b` **by ordinal**; `C11b` re-inventoried **from the
+> code** (the *more* rigorous move), reached *five* by a different route, and wrote four schemas none of which
+> was `C7`'s. Both closed, both internally correct, nothing could fire. `C2` → `C5` lost a second the same way,
+> and a third gap — the settings surface — had three tickets each assuming another owned it. **`#12`'s Destination
+> gained a clause** (added; nothing overwritten): *…and every hand-off named in a resolution resolves somewhere.*
+>
+> **Ido handed the disposition back** and the decision is recorded as **the agent's**: filed as
+> [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44),
+> [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45),
+> [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) — **children, not ordinary issues**,
+> per `#12`'s own taxonomy — and the map deliberately **not** closed. Two of the three corrected this session's
+> own earlier work. `Untested:` whether Ido agrees with any of it; all of it is his to overturn.
+>
+> 📥 **One KB candidate is still owed** — `kb-candidates/2026-08-15-product-v03-spec.md` entry 2 (*a hand-off
+> between two tickets can evaporate when each counts the set differently*) is 🟢 `AUTO MODE`-eligible for
+> `kb/dev/decision-map-charting.md` and **not drained**: it is a cross-repo `C:\Dev\JARVIS` visit owing a row on
+> that board. Entry 1 is ⛔ blocked by the existing `c12-charts-presentation` group gate. **Work left, not a
+> defect.**
+>
+> ⚠️ **Also flagged and not acted on:** two survivors in older `kb-candidates/` files look like they have since
+> shipped into the global rules, which would make those files drainable. `Observed:` the wording resembles
+> committed rule text. `Untested:` nobody has read `C:\Dev\JARVIS\user-rules\` against them. Draining is a
+> deletion, so it is not something to guess at.
 
 > 🧠 **Ido handed the gap-disposition decision back, so it is the agent's — and it did not come from the option
 > set offered.** His words (Hebrew, 14:3x): *"I couldn't fully understand you or the implications of each option

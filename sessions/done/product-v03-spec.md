@@ -2,10 +2,30 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: AUTO MODE          # brief said `normal`; Ido opened this session with `AUTOMODE`, and this session's message wins
-status: active
+status: done
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/12
 created: 2026-08-13
+closed: 2026-08-15 by `product-v03-spec` — e416d61, 612431a, d271355, 2b59e71, daf46d2
 ---
+
+> **Closed 2026-08-15. Four of the five `Exit` items are done; the fifth is Ido's and always was.**
+>
+> - ✅ `docs/PRODUCT_v0.3.md` written — 1,804 lines, all **28** of `#12`'s decisions, every section
+>   traceable to the ticket that decided it, §11 a one-row-per-decision completeness check.
+> - ✅ **No test layer applies** — said explicitly in the changelog rather than skipped, with the
+>   mechanical checks that *were* run (anchors, links, duplicate headers, row counts) reported instead.
+> - ✅ `CHANGELOG/2026-08-15/product-v03-spec.md` written, three units.
+> - ✅ `#12`'s body updated — *Destination reached*, plus a **second completeness clause** the map
+>   earned by failing its own test: *…and every hand-off named in a resolution resolves somewhere.*
+> - ⏸️ **`#12` closed — not done, and reserved to Ido by this brief's own words.** It also now has
+>   three open children, filed by this session on Ido's hand-back:
+>   [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44),
+>   [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45),
+>   [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46).
+>
+> **The brief's own premise had rotted and is left in place below rather than corrected**, because the
+> rot is the record: it was written on *"no open tickets left … 26 decisions"*, and by the time it was
+> read the map was at 27, went to 28 and briefly reopened under a live sibling. See the changelog.
 
 # Write `docs/PRODUCT_v0.3.md` — the map's destination, and the only thing left of it
 
