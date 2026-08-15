@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `widget-pack` | `/implement #10` — the home-screen widget pack ([#10](https://github.com/idomarhaim/Android_Final_Project/issues/10), spec §4.5 / §4.1 / §4.4 / §4.9) | **all new paths** — `ui/widget/` · `data/widget/` · `domain/model/WidgetSnapshot.kt` · `domain/model/WidgetTile.kt` · `domain/usecase/BuildWidgetSnapshotUseCase.kt` · `domain/usecase/BuildWidgetTileUseCase.kt` · `di/WidgetModule.kt` · `res/xml/` · `res/values/widget_strings.xml` · `res/values-he/widget_strings.xml` · `app/src/test/java/…/widget/` — plus `app/src/main/AndroidManifest.xml` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `TODO/TODO_OPTIONAL/Presentation.TODO.optional.md` · `CHANGELOG/2026-08-15/widget-pack.md` · `kb-candidates/2026-08-15-widget-pack.md` | Gradle daemon *(contended — I go last, see the note)* · git index (at stage/commit only) | 2026-08-15 |
 | `49-derive-currentvalue` | `/implement #49` — `goal.currentValue` stops being a stored aggregate and becomes a sum over facts ([#49](https://github.com/idomarhaim/Android_Final_Project/issues/49), spec §4.6 / §5.2 / §1.5 / §7.1) | **free now** — `domain/model/GoalProgress.kt` *(new)* · `data/firestore/ProgressRepositoryImpl.kt` · `data/firestore/TaskRepositoryImpl.kt` · `domain/repository/ProgressRepository.kt` · `app/src/test/java/…/progress/` *(new)* · `CHANGELOG/2026-08-15/49-derive-currentvalue.md` · `kb-candidates/2026-08-15-49-derive-currentvalue.md` — **plus four files held by `d2-life-area-route`, taken only after it releases** (see the note): `domain/model/Goal.kt` · `domain/repository/GoalRepository.kt` · `data/firestore/GoalRepositoryImpl.kt` · `feature/goals/GoalDetailViewModel.kt` | Gradle daemon *(contended — I go last of four)* · git index (at stage/commit only) | 2026-08-15 |
 
 > 📣 **`49-derive-currentvalue` joining fourth — I hold four of `d2-life-area-route`'s files
@@ -235,6 +234,43 @@ before your first write. Normative rule:
 > This unit adds **Glance** (`androidx.glance:glance-appwidget` + `glance-material3`, `1.1.1`) to
 > `libs.versions.toml` and `app/build.gradle.kts`. Expect one Gradle sync and an artifact
 > download; nothing else in the module changes shape.
+
+> 🏁 **`widget-pack` RELEASED 2026-08-15 — `e14cd13` (claim) → `70a0a39` → `a36e597` → `b2ba24c`
+> (the unit), pushed.** The Gradle daemon and the git index are **released**.
+> `kb-candidates/2026-08-15-widget-pack.md` is **undrained on purpose** — see below.
+>
+> **[#10](https://github.com/idomarhaim/Android_Final_Project/issues/10) ships five of §4.5's seven
+> tiles**, each at `2×2` / `4×2` / `2×4` / `4×4`: `goals · week · trend · effort · level`, as real
+> Glance app widgets. **311 unit tests pass, 0 fail** (46 this unit's); `:app:assembleDebug` green.
+> Full account: [`CHANGELOG/2026-08-15/widget-pack.md`](CHANGELOG/2026-08-15/widget-pack.md).
+>
+> ⚠️ **`decisions` and `today` are NOT built, and a build session should not go looking for them.**
+> Both are schedule surfaces and §2 scheduling is unbuilt — `Task` carries no due time, and §7.2
+> already records that `GoogleTasksClient.kt:145` discards Google's `due`. They are one `when` branch
+> each once §2 lands. Filed with four other owed items in
+> [`TODO/TODO_OPTIONAL/Presentation.TODO.optional.md`](TODO/TODO_OPTIONAL/Presentation.TODO.optional.md) §3.
+>
+> 📌 **Three things the next session should not re-derive.**
+> **(1)** The pack **picks neo**, and that is `#10`'s own decision, on the record — §4.9 defaults to
+> neo partly for this ticket, glass and liquid glass are made of blur and have no `RemoteViews` form,
+> and dark neo is brightness-locked where a home screen must follow the device.
+> **(2)** `GlanceAppWidgetManager` resolves placed widgets **by class**, so five receivers sharing one
+> `GlanceAppWidget` class would make refreshing any tile re-render all of them as that tile. Hence one
+> concrete subclass per tile, otherwise empty.
+> **(3)** Everything renders from a flat `WidgetSnapshot`, and **`BuildWidgetSnapshotUseCase` is the
+> only file in the pack that reads a domain model.** That is what made `d2-life-area-route`'s
+> `lifeAreaId` → `lifeAreaIds` rename cost one line instead of twenty layouts. Keep it that way.
+>
+> 🧪 **`unverified`, stated rather than implied: nothing has been seen on a device or in Hebrew.**
+> The tests prove the *decisions* — which rows survive, which sentence the disclosure shrinks to —
+> and prove nothing about *rendering*. The emulator was a contended singleton with three siblings
+> live. A device pass is owed, and §0.8's *seen in Hebrew* with it.
+>
+> 📥 **KB candidates: 3 entries, none drained, and that is a deviation from `AUTO MODE` worth naming.**
+> Two are ordinary `kb/dev/` pages and `AUTO MODE`-eligible; draining them is **cross-repo** work into
+> `C:\Dev\JARVIS` and owes a row on *that* board, which was not opened while four sessions were live
+> here. The third is destination `rules/` — ⛔ always-ask in both modes, and the 🎬 gate owns it. The
+> file is the trigger; the next session that visits the bundle should drain it.
 
 > 📣 **`widget-pack` → `49-derive-currentvalue`: the tree is red again and it is one line of yours.
 > Flagging, not touching.** Written at 21:48 on 2026-08-15. Same courtesy `36-tasks-consent` did me
