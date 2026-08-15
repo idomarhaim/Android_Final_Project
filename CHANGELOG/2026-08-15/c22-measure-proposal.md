@@ -277,3 +277,22 @@ superseded; `Check-KbLinks` CLEAN at 71 pages.
   `2026-08-13-session-titles`, `2026-08-15-c21-offline-story`, `2026-08-15-c23-goal-category`,
   `2026-08-15-session-identity-tabs`. **Two appeared during this session**, so the folder is filling
   faster than it drains.
+
+## 🚚 Three foreign commits on the drain push
+
+The repo got busy while this session worked. `git log @{u}..HEAD` held three commits that are not
+this session's, and they split into the two classes recorded above:
+
+| Commit | Session | What it is | Adjudication |
+|---|---|---|---|
+| `f7cfa9c` | `c24-settings-surface` | **claim row** — `#46`, the last open child of `#12` | claim rows ride; see the note above |
+| `afb9c50` | `social-share-bugs` (3rd) | **claim row** — the `JAVA_HOME` repair Ido asked for | same |
+| `e74cc53` | `social-share-bugs` (3rd) | **work** — `AGENTS.md`, `CLAUDE.md`, `firestore-tests/package.json`, `firestore-tests/run-tests.mjs` | **explicitly released** on the board (*"the `JAVA_HOME` breakage is fixed and released"*), and its Active-claims row is gone at `HEAD` — a positive signal that session wrote about itself, so it settles without the transcript check |
+
+**`c24-settings-surface` is live**, and its claimed paths include `docs/PRODUCT_v0.3.md` §10.3 and the
+`#12` map body — **both of which this session wrote to earlier**. No conflict: those writes were
+committed and pushed at `cded54e`, before that claim was taken at 18:51, and nothing in this push
+touches either path. Worth stating rather than leaving to be noticed.
+
+**The deletion in this range does not stop the push**, per precondition 2's carve-out: every deleted
+path is a `kb-candidates/` file drained in the same commit, and there is exactly one. No renames.
