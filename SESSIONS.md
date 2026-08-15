@@ -17,6 +17,35 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | *(none — see the release note below)* | | | | |
 
+> 🚢 **`c11b-output-formats` visited 2026-08-15 for one commit — no Active row, per the ceremony
+> rule** (a claim created and cleared inside a single commit protects nothing). Two things landed.
+>
+> **Ido `waive`d the 🎬 walkthrough owed on this session's parked candidate**, so the mechanical
+> half of the fallback ran alone. **Result: the amended wording fires on 1 of the 6 recorded
+> instances and is silent on the other 5 — correctly, since their content was staged and the existing
+> sentence already covered them.** The one that discriminates is `406874d`, this session's own. On the
+> missed-instance argument the amendment should be **dropped**; what saves it is different and
+> stronger — the rule lists *"stage as late as possible"* as a remedy, and under the corrected model
+> it shrinks almost nothing, because the window opened when the file was **written**. A named remedy
+> that does not do what it says is worse than none. So the change is **not a new clause** but a
+> one-sentence correction plus a remedy downgrade. **Drafted, not written:** it rewrites committed
+> text, which is a deletion and always-ask in both modes — a gate `waive` does not reach, because
+> `waive` refused the *rehearsal*, not the *change*. Half of it is blocked regardless:
+> `user-rules/my-rules.instructions.md` is owned by the live `governance-backlog-sweep` claim in
+> `C:\Dev\JARVIS`.
+>
+> 🚀 **Pushed, and it carries three of `c20-derived-state`'s commits** — `f08192d`, `5533bc1`,
+> `ac7fc63`. Held on 2026-08-14 under precondition 5 while `c20` was mid-unit; `c20` has since
+> released, Active claims is empty and the tree is quiet, so they are *released on the board and quiet
+> in the tree* and ride along legitimately. All six preconditions re-checked in their own tool call.
+>
+> ⚠️ **Second time in three days: two sessions each held a push waiting on the other.** `c20`'s own
+> `ac7fc63` records holding for the mirror-image reason. Neither could see the other was doing the
+> same, and it resolved only because one released — a real cost of *stop and ask* on a branch-scoped
+> operation, recorded rather than shrugged off. Full account:
+> [`CHANGELOG/2026-08-15/c11b-output-formats.md`](CHANGELOG/2026-08-15/c11b-output-formats.md).
+
+
 > ✅ **`c20-derived-state` released 2026-08-14 — `f08192d` (claim) → this commit.
 > [#42 · `C20`](https://github.com/idomarhaim/Android_Final_Project/issues/42) is resolved and closed, and
 > map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is back to **0 open children —
