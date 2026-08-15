@@ -16,8 +16,33 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
-| `social-share-bugs` **(reopened)** | The one Exit condition it could not meet: the **signed-in device re-verification** of [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5). Ido signed in on the emulator, so the accessibility-tree check the issues were reported with can finally be re-run against the running app. **Read-only on his data unless he says otherwise** — no post is deleted without asking. | `CHANGELOG/2026-08-15/social-share-bugs.md` (append the device pass), `sessions/done/social-share-bugs.md` | emulator **`Pixel_10_Pro_XL`** (free — `c22-measure-proposal` holds none), issues **`#4`** + **`#5`** | 2026-08-15 |
 
+> ✅ **`social-share-bugs` (reopened, then re-released) — THE DEVICE PASS RAN, and `#4` is fully re-verified.**
+> Emulator **`Pixel_10_Pro_XL` released**. Ido signed in, which lifted the one Exit condition this session could
+> not meet, so the reproduction was re-run **the way both issues were reported** — `uiautomator dump` against the
+> running app, on his own real posts.
+>
+> **The reproduction, inverted.** Both issues measured *"zero interactive nodes in the entire feed card"*, with the
+> last `clickable` node being the *Challenges* link **above** the feed. `Observed:` the feed card now contains
+> `CLICKABLE desc='Photo shared by עידו מר-חיים'` plus a `desc='Post options'` on **each** of his two posts. Both
+> of `#4`'s faults are visible in that one line — the photo is clickable **and** labelled, where it had neither.
+>
+> **Every affordance driven end to end:** tap the photo → full-screen viewer replaces the feed
+> (`[0,159][1344,2992]` + `desc='Close photo'`) · double-tap → **zooms to 2.5×**, confirmed by screenshot ·
+> close → feed returns with scroll intact · `Post options` → menu with exactly `Delete post` · `Delete post` →
+> *"…and the attached photo will be deleted too. This cannot be undone."*, the photo-carrying variant, correctly
+> chosen · **Cancel → 1 photo and 2 buttons still in the feed. Nothing of Ido's was destroyed.**
+>
+> ⚠️ **One instrument was inconclusive and is recorded as such rather than counted as a pass.** Node bounds after
+> the double-tap were unchanged, because `graphicsLayer` is a **draw-time** transform — uiautomator bounds cannot
+> tell *"the gesture did not register"* from *"it zoomed"*. The screenshot settles it; the bounds never could.
+>
+> 🛑 **`#5` is still not fully verified, and the gap now needs a destructive act.** `Untested:` the **live
+> round-trip** — that the *deployed* `storage.rules` lets the author's image delete through against
+> `goalpilot-56e30`. The emulator suite proves the ruleset and the deploy reported success, but observing the
+> deployed rule accept a real delete means **deleting one of Ido's real posts and its photo**, irreversibly. Not
+> done; his call. **Both issues therefore remain open** and closing them is his too.
+>
 > 📥 **`social-share-bugs` (post-release addendum) — the `kb-candidates/` backlog now has a measured verdict per
 > file, and one file is drained. Decision was the agent's**: Ido was asked whether the other candidate files
 > should drain and handed it back — *"do what you think is most right, considering the work of the other sessions

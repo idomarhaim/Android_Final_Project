@@ -85,7 +85,7 @@ error.`
 | Server unit / integration / endpoints | — | **No such layer** for this change. `functions/` is the GROQ proxy and is untouched. |
 | Client JVM unit | `.\gradlew :app:testDebugUnitTest` | **218 pass, 0 fail, 0 skipped** across 24 suites (+5 new in `SocialViewModelTest`) |
 | Client UI (instrumented, Compose) | `.\gradlew :app:connectedDebugAndroidTest` | **39 pass, 0 fail** on `Pixel_10_Pro_XL` (+10 new in `SocialFeedUiTest`) |
-| Full-app device reproduction | manual | **Blocked — see below** |
+| Full-app device reproduction | manual | **Was blocked; now PASSED** — Ido signed in later the same day. See the addendum at the end of this file, which supersedes the "does and does not" section below |
 
 ### The non-vacuity check, run and then thrown away
 
@@ -117,6 +117,13 @@ app installs and launches (`com.idomarhaim.goalpilot.debug/…MainActivity`, con
 `dumpsys window`) and stops at the Google sign-in screen. Reaching a feed post with an attached
 image needs Ido's own Google account, which is his to use. **`#4` and `#5` are therefore left open**,
 per the brief: *"close `#4` and `#5` only after the device re-verification."*
+
+> ⬆️ **Superseded the same day — see the addendum at the end of this file.** Ido signed in on the
+> emulator, the reproduction was re-run against the running app, and it **passes**. This paragraph is
+> left standing rather than rewritten because it is the honest record of what was true when the work
+> was committed; only its verdict has moved. What survives it: the live delete round-trip is *still*
+> unverified, for a different reason (it needs a destructive act on real data), and that is now the
+> only thing holding `#5`.
 
 ---
 
@@ -176,3 +183,56 @@ per the brief: *"close `#4` and `#5` only after the device re-verification."*
 - `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SocialFeedUiTest.kt`
 
 **Unchanged, and that is a finding** — `firestore.rules`.
+
+---
+
+# Addendum — the signed-in device pass (2026-08-15, ~15:1x)
+
+Ido signed in on `Pixel_10_Pro_XL`, which lifted the one blocked Exit condition. The reproduction
+was re-run **the way both issues were reported** — `uiautomator dump`, against the running app, on
+his own real feed posts. Emulator claimed on the board before the first device command; `#12`/`#44`
+were untouched.
+
+## The reproduction, inverted
+
+`#4` and `#5` both reported: *"the accessibility tree shows **zero interactive nodes in the entire
+feed card**"*, and *"the last `clickable="true"` node on the screen is the 'Challenges' link
+**above** the feed."*
+
+`Observed:` the Social tab's tree now contains, inside the feed card:
+
+```
+CLICKABLE | desc='Photo shared by עידו מר-חיים' | [96,2381][1248,2680]
+          | desc='Post options'                 | [1140,1599][1212,1671]   (Aug 8 post)
+          | desc='Post options'                 | [1140,2101][1212,2173]   (Aug 6 post)
+```
+
+Both of `#4`'s faults are visible in that one line: the photo is `clickable` **and** it carries a
+content description naming its author, where it previously had neither.
+
+## Every affordance driven, end to end
+
+| Step | Result |
+|---|---|
+| Tap the photo | Full-screen viewer opens — the tree replaces the whole feed with `desc='Photo shared by עידו מר-חיים' [0,159][1344,2992]` plus `desc='Close photo'`. The screen is emphatically **not** pixel-identical, which is what `#4` measured (PSNR ∞ / MSE 0.00) |
+| Double-tap | **Zooms to 2.5× and stays centred** — confirmed by screenshot, not by node bounds |
+| `Close photo` | Returns to the feed with scroll position intact |
+| Tap `Post options` | Menu opens with exactly one item, **`Delete post`** |
+| Tap `Delete post` | Confirmation: *"Delete this post? It will disappear from everyone's feed, **and the attached photo will be deleted too.** This cannot be undone."* — the photo-carrying variant, correctly chosen for a post that has one |
+| `Cancel` | Dialog dismissed; **1** photo and **2** `Post options` buttons still in the feed. Nothing destroyed |
+
+**One instrument was inconclusive and is recorded as such rather than reported as a pass.** Node
+bounds after the double-tap were unchanged at `[0,159][1344,2992]` — `graphicsLayer` is a draw-time
+transform, so uiautomator bounds cannot distinguish *"the gesture did not register"* from *"it
+zoomed"*. The screenshot settles it; the bounds never could.
+
+## What is still not verified, and it needs a destructive act
+
+`Untested:` the **live round-trip** — that the deployed `storage.rules` actually lets the author's
+image delete through against `goalpilot-56e30`. The emulator suite proves the ruleset is right and
+`firebase deploy --only storage` reported `released rules storage.rules to firebase.storage`, but
+the only way to observe the deployed rule accepting a real delete is to **delete one of Ido's real
+posts and its photo**, which is irreversible. Not done; his call.
+
+`#4` is fully re-verified. `#5`'s affordance and its refusal path are re-verified; its *effect* is
+not.
