@@ -1,13 +1,25 @@
 # KB candidates — `product-v03-spec`, 2026-08-15
 
 Session: `product-v03-spec` · repo `c:\Dev\Android_Final_Project` · branch `feat/goalpilot-implementation`
-Brief: `sessions/product-v03-spec.md` · Map: [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
+Brief: `sessions/done/product-v03-spec.md` · Map: [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 Mode: `AUTO MODE` · Commits: `e416d61`, `612431a`, `d271355`
 
 **Each entry stands alone.** No transcript is a source: everything needed to write the page is below,
 including what was rejected and why.
 
+> **Partially drained 2026-08-15 by session `c22-measure-proposal`.** Entry **2** (*a hand-off between
+> two tickets can evaporate when each counts the set differently*) was ingested into
+> `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` **§11** and is removed from this file; the journal
+> entry in `C:\Dev\JARVIS\kb\log\2026-08-15.md` is the cross-repo tie. Entry **1** survives below with
+> its **original number**, moved into *Standing — always-ask* so the next drain does not re-reason
+> about it.
+
 ---
+
+## Standing — always-ask
+
+Entries here are **not** drainable under `AUTO MODE` and are not to be re-adjudicated by the next
+session that opens this file. They need Ido.
 
 ## 1 · A generated cross-reference is a claim about a computation, and reading it cannot check it
 
@@ -59,64 +71,9 @@ including what was rejected and why.
   larger and slightly better posed: *is "re-run the consumer's computation on your own output" a change
   to how agents work, or an ordinary KB page?* **`AUTO MODE` does not reach it.**
 
----
-
-## 2 · A handoff between two tickets can evaporate when each counts the set differently, and nothing fires
-
-- **Claim.** On a decision map, a ticket that hands work to another ticket **by count** — *"this is the
-  fifth X for `#N` to handle"* — has no mechanism that notices when `#N` arrives at *five* by a
-  different route. **Both tickets close, both look complete, and the handoff is simply gone.** A
-  handoff must name **the thing**, never its ordinal, and a map's completeness check must be *every
-  named handoff resolves*, not *every ticket closed*.
-
-- **The instance.** [`C7` #14](https://github.com/idomarhaim/Android_Final_Project/issues/14) specced an
-  agent that proposes a measure for an unmeasured goal and handed it on verbatim: *"This is a **fifth AI
-  feature** for [`C11b` #30] to write an output format for."*
-  [`C11b` #30](https://github.com/idomarhaim/Android_Final_Project/issues/30) resolved under the headline
-  *"one wide call per feature, **five schemas not four**"* — and its five is a **different** five: its
-  §1 re-inventories the features, finds `classify` is *"an AI feature the map never named"*, and counts
-  **that** as the fifth, because `C2`'s task typing had folded into `estimate` as a field rather than
-  standing as its own schema. §3 then writes **four** schemas and none of them is `C7`'s.
-
-  **Both tickets are closed and both are internally correct.** `#30` never says the measure proposal was
-  considered and dropped; it never mentions it. The map's index line for `#30` reads *"five schemas not
-  four"* and is true on its own terms. **Nothing in the ticket graph could fire**, because the map's
-  completeness rule is *no ticket is open* — which was satisfied.
-
-- **Why this matters, and what it rejects.** Two remedies look right and are weaker than they seem.
-  **(a) "Link the tickets"** — they *were* linked; `#14` names `#30` by number and `#30`'s §1 table
-  cites `C1`, `C2`, `C8`, `C10`. Linkage was present and did nothing, because what was lost was not the
-  *reference* but the *obligation*. **(b) "The receiving ticket should re-read its senders"** — `#30`
-  did exactly that and still missed it: it re-inventoried from **the code** (*"read against the code,
-  the post-map inventory is…"*), which is the more rigorous move and is precisely what replaced `C7`'s
-  entry with `classify`'s. **Rigour at the receiving end is what erased it**, which is why the fix has
-  to sit at the sending end.
-
-  So the remedy is a property of **how a handoff is written**: *"`#30` owes a format for the measure
-  proposal"* survives a re-inventory; *"this is the fifth"* does not, because *fifth* is a fact about a
-  set the receiver is entitled to recount.
-
-- **The second half, which is the reusable one.** The gap was found by writing the **destination
-  artifact** — the spec — and not by any ticket, any review, or the map's own closure test. **The
-  artifact that consumes every decision is the only place a lost handoff between two of them becomes
-  visible**, which is an argument for writing it *before* the map closes rather than after, and for
-  treating *"every handoff named in a resolution resolves somewhere"* as the map's real completeness
-  check.
-
-- **Destination.** `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` — a new section. That page already
-  carries §9 and §10 from this repo's sibling sessions and is the right home; this is a **charting**
-  failure, not a GoalPilot product fact.
-
-- **Anchors.** `#14`'s resolution comment (the handoff sentence, one grep match) · `#30`'s resolution
-  §1 and §3 · `docs/PRODUCT_v0.3.md` §10.1 · `#12`'s body, *Destination reached* block ·
-  `CHANGELOG/2026-08-15/product-v03-spec.md`.
-
-- **Supersedes.** Nothing. Adjacent to `decision-map-charting.md`'s existing material on what a map's
-  index line may and may not assert.
-
-- **Status.** 🟢 **`AUTO MODE`-eligible** — a new section on an existing page, superseding no standing
-  claim, and this session's own finding. **Not drained by this session**, and the reason is scope
-  rather than a gate: ingesting it is a **cross-repo visit to `C:\Dev\JARVIS`**, which owes a row on
-  *that* board and its own read-claim-edit-journal-lint cycle, and this session is ending on a question
-  reserved to Ido (whether `#12` closes). **It is work left, not a blocked item** — the next session
-  that opens this folder should take it, and nothing here needs reconstructing to do so.
+  **Re-confirmed 2026-08-15** by `c22-measure-proposal` while draining entry 2: the gate is unchanged
+  and this entry was **not** re-adjudicated. One observation worth carrying to whoever asks Ido — the
+  two new pages written that day, `elevation-is-not-a-fill` and `describing-is-not-exhibiting`, are
+  both **visual-half** members of exactly this family and went in as ordinary KB pages without
+  difficulty. That is evidence the family is page-shaped rather than `rules/`-shaped, but it is
+  **evidence, not a decision**, and it does not lift the gate.

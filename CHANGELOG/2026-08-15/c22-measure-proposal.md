@@ -231,3 +231,49 @@ nobody**, so publishing it is the claim's own purpose.
 
 The distinction is worth keeping: **a foreign commit of *work* under a live row stops the push; a
 foreign commit of a *claim row* does not.** Both are named here either way.
+
+---
+
+# Unit 4 — the KB drain, which this session had twice deferred
+
+**Ido asked why the ingest had not happened, and whether something was waiting on another session.
+Nothing was.** The deferral reasoning — *a cross-repo drain owes a row on the JARVIS board* — is
+**true and is a step, not a blocker**; the row costs one commit. `AUTO MODE` already authorises the
+ingest, and neither entry was one of the two always-ask kinds. So the deferral was wrong, and it is
+recorded as a **pattern rather than a slip**: this is the **second session in one day** to leave the
+same debt for the same reason, because an in-repo drain is obviously cheap and a cross-repo one
+*feels* expensive for naming a second board.
+
+## 📥 Ingested — three entries into `C:\Dev\JARVIS\kb`
+
+- 📥 **A material that expresses surface as elevation has no fill, so every overlay built on it leaks**
+  → `kb/dev/elevation-is-not-a-fill.md` *(new)*
+- 📥 **A prototype frame that *explains* the behaviour cannot test it** → `kb/dev/describing-is-not-exhibiting.md` *(new)*
+- 📥 **A hand-off written as an *ordinal* evaporates, and no ticket closing can notice** →
+  `kb/dev/decision-map-charting.md` **§11** *(from `product-v03-spec`'s entry 2, owed since this
+  morning)*
+
+JARVIS commits: `43ef6c5` (claim) → `24c2c28` (ingest) → `ee2c2a5` (release). Board row claimed and
+released there, and the release note filed under that board's *Release notes* section — the first one
+written under `board-readability-fix`'s new layout.
+
+**The bundle check was *missing* on all three entries** — the *nobody-considered-it* signal, not
+`not checked` — so the concept grep ran from scratch, and it found that the parent visual-review rule
+(*when the acceptance criterion is visual, render and look between revisions*) **had never reached the
+central bundle at all**: it lives only in this repo's `docs/prototypes/tools/README.md`. Nothing was
+superseded; `Check-KbLinks` CLEAN at 71 pages.
+
+## Candidate files closed out
+
+- `kb-candidates/2026-08-15-c22-measure-proposal.md` — **fully drained → deleted.**
+- `kb-candidates/2026-08-15-product-v03-spec.md` — **partially drained → rewritten down to its
+  survivor.** Entry 1 keeps its original number and moves to `## Standing — always-ask`; it stays ⛔
+  blocked by an existing `rules/`-shaped group gate, **not re-adjudicated here**. One observation was
+  added for whoever eventually puts that question to Ido: both pages written today are **visual-half**
+  members of that same family and landed as ordinary KB pages without difficulty — *evidence* the
+  family is page-shaped rather than `rules/`-shaped, and explicitly **not** a decision.
+- **Seven candidate files remain undrained**, named rather than walked past:
+  `2026-08-12-c12-charts-presentation`, `2026-08-13-c15b-stored-ai-text`, `2026-08-13-c2-task-type`,
+  `2026-08-13-session-titles`, `2026-08-15-c21-offline-story`, `2026-08-15-c23-goal-category`,
+  `2026-08-15-session-identity-tabs`. **Two appeared during this session**, so the folder is filling
+  faster than it drains.
