@@ -38,36 +38,13 @@ gate owns it.
 
 ---
 
-## 2. A user-editable display attribute must never be a background writer's join key
+## 2. ~~A user-editable display attribute must never be a background writer's join key~~ — **DRAINED 2026-08-15**
 
-**Claim.** Where an automatic, unreviewed writer decides *"does this thing already exist?"*, the key it
-matches on must be an identity the user cannot edit. A presentation attribute — category, label,
-colour, title — offered to the user as a chip is a **join key that silently changes under the writer**,
-and the failure is a duplicate record nobody is watching for.
+**Ingested** into `C:\Dev\JARVIS\kb` as the new page `dev/display-attribute-is-not-an-identity.md`, by session `c21-offline-story` visiting that repo with a row on its board. Index row added; the journal entry in `kb/log/2026-08-15.md` is the cross-repo tie. `Check-KbLinks` **CLEAN at 75 pages**. Nothing superseded.
 
-**Why.** GoalPilot's Health Connect sync matches an existing goal by
-`it.category == metric.category` (`BuildHealthProposalsUseCase.kt:167`), and the same category is an
-editable chip in `AddEditGoalScreen`. Editing it orphans the goal from the sync, which then creates a
-second "Weekly steps" goal. The sync runs on every foreground with **no review sheet**, so the duplicate
-appears as a goal the user thinks they forgot making. Filed as
-[#47](https://github.com/idomarhaim/Android_Final_Project/issues/47). The general shape is the one
-`AGENTS.md` already states for this sync — *"no human is watching"* — applied to the **key** rather than
-to the lookups.
+**The destination this entry named held exactly** — new page, working title *a display attribute is not an identity*, and the page kept it. The entry's own reason for not draining itself (*opening a JARVIS board row for two unrelated entries at once is one visit, not two*) is what made this drain cheap: the visit was already open for four entries.
 
-**Rejected:** treating it as a Health-Connect bug. It is a schema-discipline bug that Health Connect
-merely made visible; the same defect would appear in any importer, sync or dedupe.
-
-**Destination.** `C:\Dev\JARVIS\kb\dev\` — new page (working title
-*a display attribute is not an identity*). Cross-repo: ingesting it owes a row on the JARVIS board.
-
-**Anchors.** `BuildHealthProposalsUseCase.kt:167`, `:30`, `:38` · `AddEditGoalScreen.kt:84` ·
-`AGENTS.md` pitfall *"the Health Connect sync is automatic and unreviewed"*.
-
-**Supersedes.** Nothing.
-
-**Status.** 🟢 **`AUTO MODE`-eligible, not drained** — deliberately: this session already carries a
-cross-repo debt it did not create (see `2026-08-15-product-v03-spec.md` entry 2), and opening a JARVIS
-board row for two unrelated entries at once is one visit, not two. Next session into JARVIS takes both.
+**Entries 1 and 3 remain below and keep their original numbers** — both are `rules/`-destined and ⛔ always-ask in both modes, so no `AUTO MODE` drain reaches them.
 
 ---
 

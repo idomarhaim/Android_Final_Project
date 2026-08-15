@@ -206,3 +206,34 @@ still undrained.
 `c24-settings-surface` is live here on `#46`, with `docs/PRODUCT_v0.3.md`, its prototype folder and
 its own changelog and candidate file dirty in the tree. All disjoint from this addendum's paths, and
 none of them staged or committed by this session.
+
+---
+
+## 📥 Addendum 2 — 19:3x, `ingest first`
+
+Ido answered the 🎬 offer with **`ingest first`** — the deferral. Four duties, all discharged; the
+full account is in `C:\Dev\JARVIS\CHANGELOG\2026-08-15\c21-offline-story.md` (2nd visit), JARVIS
+`9e52c2f`.
+
+**Four entries drained**, from four of this repo's candidate files:
+`2026-08-15-c21-offline-story.md` #1 → `kb/dev/stale-is-a-data-property.md` *(new)* ·
+`2026-08-15-product-v03-spec.md` #1 → `kb/dev/look-at-your-own-output.md` **§5** *(new section)* ·
+`2026-08-15-session-identity-tabs.md` #1 → `kb/dev/claude-code-surfaces.md` *(limit subsection)* ·
+`2026-08-15-c23-goal-category.md` #2 → `kb/dev/display-attribute-is-not-an-identity.md` *(new)*.
+`Check-KbLinks` **CLEAN at 75 pages**.
+
+**`product-v03-spec` entry 1's gate lifted mid-session, by this session's own earlier commit** — it
+was blocked on a page `ed6a69e` had created ninety minutes before. Its substance is that the parent
+claim was **scoped too narrowly**: the discriminator is not *rendering* but whether the artefact you
+produced is the artefact that will be **consumed**.
+
+**Candidate files here:** `2026-08-15-product-v03-spec.md` and `2026-08-15-session-identity-tabs.md`
+**fully drained → deleted**; `2026-08-15-c23-goal-category.md` **rewritten down to its two
+`rules/` survivors**; `2026-08-15-c21-offline-story.md` **rewritten down to a new parked entry 2** —
+the `rules/` half — with `Status: awaiting 🎬 — "ingest first" chosen 2026-08-15`. **Six files
+remain**, one belonging to the live `c24-settings-surface`.
+
+**⛔ JARVIS is committed but NOT pushed.** `git log @{u}..HEAD` there carries a foreign commit,
+`b62618a` from `session-title-equals-label`, whose paths sit under its **live** Active row — and that
+session is mid-unit, blocked on singletons this commit just released for it. Precondition 5 stops the
+push; `AUTO MODE` does not lift it, because un-publishing needs a force-push.
