@@ -134,3 +134,11 @@ the range were never read by this session either, which precondition 2 stops on 
 **This session's own JARVIS work (`392b565`, `3726297`) is therefore committed and unpublished**, and
 it cannot be pushed alone — `git push` is branch-scoped, not commit-scoped. It will go up with
 whoever pushes next once those two sessions release.
+
+**Closed out, same day:** `sibling-wait-banner` pushed `C:\Dev\JARVIS` at `5b11b54`, and this session's
+two commits (`3726297`, `392b565`) went up inside that push. That is the prediction above coming true
+rather than a change of decision — `git push` is branch-scoped, so **withholding a push withholds only
+your own act, never your commits**. The gate this session honoured was the right one and it protected
+the right thing: it did not publish two live sessions' work *on this session's schedule*. One of those
+sessions then chose to publish its own, and carried this session's along, which is the arrangement
+precondition 5 actually describes.
