@@ -59,7 +59,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 .\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B          # the second device (two-account demo)
 
 # JDK 21 is pinned in gradle.properties; set it if calling gradlew from a fresh shell
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
 
 .\gradlew :app:assembleDebug            # build the APK
 .\gradlew :app:testDebugUnitTest        # JVM unit tests
@@ -77,7 +77,7 @@ cd firestore-tests; npm install; npm test
 
 ## ⚠️ Pitfalls
 
-- **JDK:** the machine's `JAVA_HOME` is JDK 25, which AGP rejects. Gradle is pinned to JDK 21 via `org.gradle.java.home` in `gradle.properties`. Don't remove that line on this machine.
+- **JDK — two different tools, two different lookups, and that is the whole trap.** Gradle is pinned to JDK 21 via `org.gradle.java.home` in `gradle.properties` (don't remove that line on this machine); **`firebase-tools` ignores `JAVA_HOME` entirely and takes `java` from `PATH`.** So the two can disagree, and on this machine they did: `PATH` offers JDK **17** first (from the *machine* `PATH`, which needs admin to reorder), so `firestore-tests` died with *"firebase-tools no longer supports Java version before 21"* while a perfectly good JDK 21 sat in `JAVA_HOME`. `firestore-tests/run-tests.mjs` now prepends `JAVA_HOME/bin` for the emulator's child process, so `npm test` no longer depends on `PATH` ordering. Corrected 2026-08-15: this entry used to say the machine `JAVA_HOME` is JDK 25 — it was a **broken JDK 21** install (`jdk-21.0.11.10-hotspot`, an orphaned `lib/` with no `bin/java.exe`, left by an uninstall), which is why Gradle refused to start at all. Now repointed to `jdk-21.0.12.8-hotspot`. Two more Adoptium directories are wrecks in the same way (`jdk-21.0.6.7-hotspot`) or phantoms referenced by a stale user `PATH`.
 - **`google-services.json` is the real config** for Firebase project `goalpilot-56e30` (since `79ce624`) — it is committed, which is normal for Android since the key is restricted by package name + SHA-1. `local.properties` and `functions/.env` hold the machine-local half and are git-ignored; a fresh clone needs both before sign-in or the AI coach work. See [docs/SETUP.md](docs/SETUP.md) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
 - **Web client id** comes from `local.properties` → `GOOGLE_WEB_CLIENT_ID` → generated `R.string.gp_web_client_id`. Do **not** reference `R.string.default_web_client_id` (only exists with a real json and would clash).
 - **Firestore DTOs** must stay mutable (`var`) with defaults + `@DocumentId` for reflective (de)serialization. Keep the domain models immutable and separate.

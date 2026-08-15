@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "firebase emulators:exec --only firestore,storage --project demo-goalpilot --config ../firebase.json \"node --test\""
+    "test": "node run-tests.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",

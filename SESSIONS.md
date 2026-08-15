@@ -16,7 +16,38 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c24-settings-surface` | Resolve [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) — the settings surface (last open child of map [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12)) | `docs/prototypes/2026-08-15-c24-settings-surface/`, `docs/PRODUCT_v0.3.md` §10.3, `CHANGELOG/2026-08-15/c24-settings-surface.md`, `kb-candidates/2026-08-15-c24-settings-surface.md` | `#12` map body | 2026-08-15 18:51 |
-| `social-share-bugs` **(reopened, 3rd)** | **The JDK/`JAVA_HOME` breakage Ido asked to have fixed.** Machine half done (User `JAVA_HOME` repointed to the intact JDK 21); the other half — `java` on `PATH` is JDK **17** from the **Machine** `PATH`, which needs admin — is worked around **in the repo instead**, so `firestore-tests` stops depending on `PATH` ordering it cannot control. | `firestore-tests/run-tests.mjs` *(new)*, `firestore-tests/package.json`, `AGENTS.md` + `CLAUDE.md` (the JDK pitfall text, now factually wrong), `CHANGELOG/2026-08-15/social-share-bugs.md` | **Gradle daemon**, **git index** | 2026-08-15 |
+
+> 🔧 **`social-share-bugs` (3rd reopen) — the `JAVA_HOME` breakage is fixed and released.** Ido asked for it
+> directly. It was **three faults, not one**, and the one everyone had been told about was false.
+>
+> | | |
+> |---|---|
+> | User `JAVA_HOME` | `jdk-21.0.11.10-hotspot` — an orphaned `lib/`, **no `bin/java.exe`** → Gradle would not start |
+> | Machine `JAVA_HOME` | `jdk-17.0.20.8-hotspot` — intact, but JDK **17** |
+> | Machine `PATH` | offers JDK **17** before 21, so `java` resolves to 17 |
+> | User `PATH` | three JDK `bin` entries pointing at **directories that do not exist** |
+>
+> ✅ **Fixed:** User `JAVA_HOME` → `jdk-21.0.12.8-hotspot` (User scope overrides Machine, so no admin). `Observed:`
+> from a shell with only the persisted environment, `gradlew --version` reports `Launcher JVM: 21.0.12`.
+>
+> ⚠️ **The half that needed admin was answered in the repo instead, and the reason is a real distinction worth
+> keeping: Gradle reads `JAVA_HOME`, `firebase-tools` reads `PATH`.** So `firestore-tests` still refused to start
+> after `JAVA_HOME` was correct. New `firestore-tests/run-tests.mjs` prepends `JAVA_HOME/bin` for the emulator's
+> child process only. `Observed:` **30 pass, 0 fail** from a shell whose `java` is JDK 17. **Both fallback
+> branches were exercised**, not assumed — including the one that names *this machine's* exact fault
+> (*"JAVA_HOME is set to … but there is no java there"*), the diagnostic whose absence made the original failure
+> read as a firebase-tools problem.
+>
+> 🐛 **Two Windows/Node bugs surfaced while writing it**, both recorded in the changelog: `process.env` returns
+> `Path` not `PATH`, so writing `env.PATH` **adds a second key** the spawned `cmd.exe` ignores (symptom:
+> `'firebase' is not recognized`, because the winning key lacked npm's `node_modules/.bin`); and
+> `spawn(cmd, args, {shell:true})` concatenates **without quoting**, so `"node --test"` lost its quotes and
+> firebase parsed `--test` as its own flag.
+>
+> 📝 **`AGENTS.md` and `CLAUDE.md` both claimed *"the machine's `JAVA_HOME` is JDK 25"* — false, and copied into
+> two files.** Both now state the actual trap. **Left for Ido (needs admin):** reorder the Machine `PATH`, drop
+> the three phantom user entries. **Not attempted:** deleting the two wrecked Adoptium directories — a deletion,
+> and his.
 
 > 🎉 **`social-share-bugs` FULLY released 2026-08-15 — [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)
 > and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) are CLOSED, with the evidence on each

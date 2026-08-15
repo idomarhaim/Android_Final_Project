@@ -301,3 +301,76 @@ there — which is precisely the silent failure the whole ticket was about.
 | `#5` | **Fully verified** — affordance, refusal path, *and* the live round-trip including Storage |
 
 Both issues are closable. Nothing in this session is now `Untested:`.
+
+---
+
+# Addendum 3 — the `JAVA_HOME` breakage, fixed (2026-08-15, ~15:5x)
+
+Ido asked for the JDK fault to be handled. It turned out to be **three faults**, not one, and only
+the first is what he'd been told about.
+
+## What was actually wrong
+
+| | |
+|---|---|
+| **User `JAVA_HOME`** | `jdk-21.0.11.10-hotspot` — an orphaned `lib/`, **no `bin/java.exe`**. Gradle: *"JAVA_HOME is set to an invalid directory"* |
+| **Machine `JAVA_HOME`** | `jdk-17.0.20.8-hotspot` — intact, but JDK **17**, which AGP rejects |
+| **Machine `PATH`** | offers JDK **17** before JDK 21, so `java` resolves to 17 |
+| **User `PATH`** | three JDK `bin` entries pointing at directories that **do not exist** (`jdk-25.0.1.8`, `jdk-21.0.9.10`, `jdk-17.0.16.8`) |
+
+Adoptium inventory: `21.0.11.10` and `21.0.6.7` are **wrecks** (no `java.exe`); `17.0.20.8`,
+`21.0.12.8` and `25.0.4.7` are intact.
+
+## Fixed
+
+**User `JAVA_HOME` → `C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot`.** User scope
+overrides Machine scope, so no admin was needed. `Observed:` from a shell carrying only the
+persisted environment, `gradlew --version` now reports `Launcher JVM: 21.0.12`, where it previously
+refused to start.
+
+## Could not be fixed from here — and why the repo was fixed instead
+
+`java` on `PATH` is still JDK 17, and that ordering lives in the **Machine** `PATH`, which needs
+administrator rights. That matters because **`firebase-tools` ignores `JAVA_HOME` and reads `PATH`**
+— so `firestore-tests` still died with *"firebase-tools no longer supports Java version before 21"*
+even after `JAVA_HOME` was correct.
+
+Rather than leave that, the dependency was removed: **`firestore-tests/run-tests.mjs`** prepends
+`JAVA_HOME/bin` to `PATH` for the emulator's child process only. `npm test` now runs on a machine
+whose `PATH` prefers 17, needs no admin, and honours the convention `AGENTS.md` already states.
+
+`Observed:` **30 pass, 0 fail** from a shell where `java` on `PATH` is `jdk-17.0.20.8-hotspot`.
+
+**Both fallback branches were exercised rather than assumed** — the control-arm discipline this
+session already wrote up:
+
+- `JAVA_HOME` unset → *"JAVA_HOME is not set — using whatever `java` is on PATH"*, then firebase's own refusal.
+- `JAVA_HOME` naming a wreck (this machine's exact fault) → *"JAVA_HOME is set to … but there is no java there. Falling back to PATH; if the emulators refuse to start, that is why."*
+
+The second is the diagnostic that did not exist this morning, and its absence is what made the
+original failure read as a firebase-tools problem.
+
+## Two bugs found while writing the wrapper, both worth knowing
+
+- **Windows env vars are case-insensitive, and Node returns `Path`, not `PATH`.** Writing
+  `env.PATH` **adds a second key**; the spawned `cmd.exe` reads the untouched original. The visible
+  symptom was `'firebase' is not recognized` — because the key that won was the one npm had *not*
+  augmented with `node_modules/.bin`. The fix is to find the existing key case-insensitively.
+- **`spawn(cmd, argsArray, { shell: true })` concatenates without quoting**, so the script argument
+  `"node --test"` lost its quotes and firebase parsed `--test` as its own flag
+  (*"error: unknown option '--test'"*). Passing one command string fixes it and clears Node's
+  args-plus-shell deprecation warning.
+
+## Docs corrected
+
+`AGENTS.md` and `CLAUDE.md` both claimed *"the machine's `JAVA_HOME` is JDK 25"*. That was **false**
+— it was a broken JDK 21 — and the claim had been standing long enough to be copied into two files.
+Both now state the real trap: **Gradle reads `JAVA_HOME`, firebase-tools reads `PATH`, and they can
+disagree.**
+
+## Left for Ido — needs admin
+
+Reordering the Machine `PATH` so a JDK 21 precedes JDK 17, and removing the three phantom user
+`PATH` entries. Neither is required for this repo any more; both would make every *other* tool on
+the machine behave. **Not attempted:** deleting the two wrecked Adoptium directories — that is a
+deletion, and it is his.
