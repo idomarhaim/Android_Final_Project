@@ -163,6 +163,37 @@ moved to an **isolated build directory** in the session scratchpad via `--init-s
 racing `widget-pack`'s `app/build/generated/ksp` (the first attempt without it died exactly that
 way). The watcher went green at 00:31, saw the emulator freed at 00:46, and had results at 00:48.
 
+### What unblocking the layer immediately found — a real defect in `#2`
+
+With `androidTest` compiling for the first time all night, the **full** instrumented suite ran:
+**41 tests, 1 failure**, and the failure is not `#36`'s.
+
+```
+LifeAreaReorderUiTest.dragging_theFirstHandleOntoTheSecondCommitsThatMove
+  expected : [(0, 1)]     but was : []          (LifeAreaReorderUiTest.kt:131)
+```
+
+Drag-to-reorder a life area produces **no move at all**. `d2-life-area-route` made the whole card the
+click target (`GpCard(onClick = onOpen)`, `LifeAreaRows.kt:213`), and both its changelog and a code
+comment at `:211` assert *"the drag handle still works because `detectDragGesturesAfterLongPress`
+consumes its own events."* **That was reasoning, not a result** — the suite could not compile, so it
+could not have been run. The handle's `change.consume()` fires inside `onDrag`, i.e. *after* the long
+press is recognised, and does nothing to stop the parent `clickable` competing for the press itself.
+
+`Observed:` 2026-08-16 01:0x on `Pixel_10_Pro_XL (AVD) — 17`, one run, reproduced across two
+invocations of the suite. **Not caused by this session's `onOpen = {}` stub** — a no-op lambda
+changes no gesture handling, and the `clickable` is present either way. **Already on the remote**, in
+`#2`'s pushed `9c6741f`.
+
+Left **unfixed and unfiled** here: it belongs to another ticket, filing an issue is an outward action,
+and fixing another session's shipped feature is outside this unit — all three are Ido's call. The
+failing test is **correct** and is deliberately left failing; reverting it would restore exactly the
+blindness that hid this for a day.
+
+**This is the argument for the whole detour.** A test layer that cannot compile does not fail — it
+goes quiet, and three sessions in a row wrote *"instrumented not run"* without anyone attributing a
+cause. The first run after it was fixed found a shipped regression in the newest feature.
+
 **Layers that do not exist for this change, named rather than skipped silently:**
 
 - **Server unit / integration / endpoints** — `functions/` is untouched, and §7.2 records that it

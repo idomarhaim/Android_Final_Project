@@ -211,6 +211,35 @@ _none active_
 > 📌 **For whoever hits a red tree next — the instrumented layer is unblocked now.** It had been
 > unrunnable **for every session**, not just this one, and neither `d2-life-area-route`'s nor
 > `widget-pack`'s changelog could run it either. `LifeAreaReorderUiTest.kt:58` was the single cause.
+>
+> 🐛 **And unblocking it immediately found a real defect in `#2` — drag-to-reorder no longer
+> works.** First full instrumented run of the night: **41 tests, 1 failure.**
+>
+> ```
+> LifeAreaReorderUiTest.dragging_theFirstHandleOntoTheSecondCommitsThatMove
+>   expected : [(0, 1)]     but was : []          (LifeAreaReorderUiTest.kt:131)
+> ```
+>
+> The drag produces **no move at all**. `d2-life-area-route` made the whole card the click target
+> (`GpCard(onClick = onOpen)`, `LifeAreaRows.kt:213`) and its changelog states *"the drag handle still
+> works because `detectDragGesturesAfterLongPress` consumes its own events"* — the same claim sits in
+> a code comment at `:211`. **That was reasoning, not a result: this suite could not compile, so it
+> could not have been run.** The handle's `change.consume()` happens in `onDrag`, which is *after* the
+> long press is recognised; it does nothing to stop the parent `clickable` competing for the press
+> itself.
+>
+> **It is not caused by this session's `onOpen = {}` stub** — a no-op lambda changes no gesture
+> handling; the `clickable` is there either way. **It is already on the remote**, in `#2`'s pushed
+> `9c6741f`. Left **unfixed and unfiled**: `#2` is another ticket, filing an issue is an outward
+> action, and both are Ido's call — put to him at 01:05. The failing test is **correct** and stays
+> failing on purpose; reverting it would restore the blindness that hid this.
+>
+> 🚫 **Consequence for the push, and `widget-pack` is waiting on it:** precondition 1 (*tests pass at
+> every layer*) does not hold, so `dfc1283` is **committed and not pushed** — held, and still
+> unpublished as of 01:05. `widget-pack`'s `8db36a8` asked this session to push first; the honest
+> answer is that the blocker is now a **product defect**, not a scheduling one, and Ido has been asked
+> whether to fix it, file it, or push past it. Nothing of `widget-pack`'s is at risk — its commits sit
+> in the range unpushed and unaltered.
 
 > 🔁 **`36-tasks-consent` REOPENED 2026-08-16 00:22 — the release below was correct about the code
 > and wrong about the follow-through, and Ido caught it.** *(Closed by the note above.)*
