@@ -12,7 +12,10 @@ interface SocialRepository {
     /** Global/friends leaderboard ordered by points, with rank + current-user flag. */
     fun observeLeaderboard(friendsOnly: Boolean = false): Flow<List<LeaderboardEntry>>
 
-    /** The shared achievement feed (own + friends' posts), newest first. */
+    /**
+     * The shared achievement feed (own + friends' posts), newest first, each item
+     * stamped with [SharedItem.isMine] against the signed-in uid.
+     */
     fun observeFeed(): Flow<List<SharedItem>>
 
     fun observeFriendUids(): Flow<Set<String>>
@@ -30,4 +33,18 @@ interface SocialRepository {
 
     /** Publishes a computed [ProgressSummary] (optionally with an image URL) to the feed. */
     suspend fun shareSummary(summary: ProgressSummary, imageUrl: String?): Resource<String>
+
+    /**
+     * Deletes a post the signed-in user authored, **together with the image it
+     * carried** — the photo must not outlive the share that referenced it, and
+     * nothing else in the app would ever reach it again.
+     *
+     * Author-only, and enforced twice on purpose: `firestore.rules` is the half
+     * that actually holds (a client can be modified), and the check here is the
+     * half that can say *why* in a sentence instead of `PERMISSION_DENIED`.
+     *
+     * Deleting a post that is already gone succeeds — see [deleteShare]'s impl for
+     * why that is the honest answer rather than a swallowed failure.
+     */
+    suspend fun deleteShare(shareId: String, imageUrl: String? = null): Resource<Unit>
 }

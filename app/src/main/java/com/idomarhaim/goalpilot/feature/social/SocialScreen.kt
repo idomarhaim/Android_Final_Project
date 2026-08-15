@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.feature.social
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +19,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -70,6 +74,8 @@ fun SocialScreen(
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var showAddFriend by remember { mutableStateOf(false) }
+    var openedPhoto by remember { mutableStateOf<SharedItem?>(null) }
+    var pendingDelete by remember { mutableStateOf<SharedItem?>(null) }
 
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
@@ -146,7 +152,13 @@ fun SocialScreen(
                     )
                 }
             } else {
-                items(state.feed, key = { it.id }) { item -> FeedCard(item) }
+                items(state.feed, key = { it.id }) { item ->
+                    FeedCard(
+                        item = item,
+                        onOpenPhoto = { openedPhoto = item },
+                        onDelete = { pendingDelete = item },
+                    )
+                }
             }
         }
     }
@@ -155,6 +167,22 @@ fun SocialScreen(
         AddFriendDialog(
             onDismiss = { showAddFriend = false },
             onAdd = { code -> viewModel.addFriendByCode(code); showAddFriend = false },
+        )
+    }
+
+    openedPhoto?.let { item ->
+        FullScreenPhotoDialog(
+            imageUrl = item.imageUrl.orEmpty(),
+            contentDescription = photoDescription(item),
+            onDismiss = { openedPhoto = null },
+        )
+    }
+
+    pendingDelete?.let { item ->
+        DeletePostDialog(
+            item = item,
+            onConfirm = { viewModel.deleteShare(item); pendingDelete = null },
+            onDismiss = { pendingDelete = null },
         )
     }
 }
@@ -238,15 +266,35 @@ private fun LeaderboardRow(
     }
 }
 
+/**
+ * One post in the friends feed.
+ *
+ * Until issues `#4` and `#5` this card contained **no interactive node at all** —
+ * the accessibility tree's last `clickable` on the screen was the "Challenges"
+ * link above the feed. It now carries two, and they are separate fixes rather
+ * than one: the photo opens *and* is announced (making it tappable would not have
+ * given it a label), and a post you wrote offers to delete itself.
+ */
 @Composable
-private fun FeedCard(item: SharedItem) {
+internal fun FeedCard(
+    item: SharedItem,
+    onOpenPhoto: () -> Unit,
+    onDelete: () -> Unit,
+) {
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Avatar(photoUrl = item.authorPhotoUrl, name = item.authorName, size = 36.dp)
-                Column(modifier = Modifier.padding(start = 10.dp)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp),
+                ) {
                     Text(
-                        item.authorName.ifBlank { "GoalPilot user" },
+                        authorLabel(item),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     Text(
@@ -254,6 +302,27 @@ private fun FeedCard(item: SharedItem) {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                // Only on your own post. There is no moderation story here and no
+                // rule that would permit one — `firestore.rules` scopes delete to
+                // the author — so showing the menu on a friend's post would offer
+                // an action the backend is guaranteed to refuse.
+                if (item.isMine) {
+                    var menuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "Post options")
+                        }
+                        DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete post") },
+                                onClick = { menuOpen = false; onDelete() },
+                            )
+                        }
+                    }
                 }
             }
             Text(
@@ -269,12 +338,18 @@ private fun FeedCard(item: SharedItem) {
             if (!item.imageUrl.isNullOrBlank()) {
                 AsyncImage(
                     model = item.imageUrl,
-                    contentDescription = null,
+                    // Was `null`, which is the API's way of saying "decorative" —
+                    // so a screen reader announced the post with the picture
+                    // simply missing. It is content, not decoration.
+                    contentDescription = photoDescription(item),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        // clickable after clip, or the ripple spills past the
+                        // rounded corners.
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClickLabel = "Open photo full screen", onClick = onOpenPhoto),
                 )
             }
             Row(
@@ -294,6 +369,52 @@ private fun FeedCard(item: SharedItem) {
             }
         }
     }
+}
+
+/** The name to show for a post's author, for both sighted and screen readers. */
+internal fun authorLabel(item: SharedItem): String =
+    item.authorName.ifBlank { "GoalPilot user" }
+
+/**
+ * What a screen reader says about an attached photo.
+ *
+ * Deliberately not the headline or the message: those are their own text nodes
+ * on the card and would be read twice. What is missing without this is the fact
+ * that a picture is there at all, and whose it is.
+ */
+internal fun photoDescription(item: SharedItem): String =
+    "Photo shared by ${authorLabel(item)}"
+
+/**
+ * Confirms deleting your own post — and names the second consequence.
+ *
+ * Deleting a share also deletes the image it carried, which is not something the
+ * word "delete" on a text post implies. A user who would have kept the photo
+ * needs to hear that before the tap, not after.
+ */
+@Composable
+internal fun DeletePostDialog(
+    item: SharedItem,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete this post?") },
+        text = {
+            Text(
+                if (item.imageUrl.isNullOrBlank()) {
+                    "It will disappear from everyone's feed. This cannot be undone."
+                } else {
+                    "It will disappear from everyone's feed, and the attached photo " +
+                        "will be deleted too. This cannot be undone."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Delete") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

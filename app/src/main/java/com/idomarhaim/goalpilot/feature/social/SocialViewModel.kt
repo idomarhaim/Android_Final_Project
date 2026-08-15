@@ -66,6 +66,19 @@ class SocialViewModel @Inject constructor(
         viewModelScope.launch { report(socialRepository.removeFriend(uid), "Friend removed") }
     }
 
+    /**
+     * Deletes one of the signed-in user's own posts, and the photo it carried.
+     *
+     * Takes the whole [SharedItem] rather than an id: the image URL is the other
+     * half of what has to be deleted, and it is on the item the card is already
+     * holding — asking the caller to pass both invites passing only one.
+     */
+    fun deleteShare(item: SharedItem) {
+        viewModelScope.launch {
+            report(socialRepository.deleteShare(item.id, item.imageUrl), "Post deleted")
+        }
+    }
+
     /** Surfaces the repository's own error text — "no user with that code" is
      *  far more actionable than a generic failure message. */
     private fun report(result: Resource<Unit>, onSuccess: String) {

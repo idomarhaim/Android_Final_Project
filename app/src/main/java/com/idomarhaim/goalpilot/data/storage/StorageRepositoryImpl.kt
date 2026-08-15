@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.data.storage
 import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
@@ -32,4 +33,26 @@ class StorageRepositoryImpl @Inject constructor(
                 Resource.Error(e.message ?: "Image upload failed", e)
             }
         }
+
+    override suspend fun deleteImage(downloadUrl: String): Resource<Unit> = withContext(io) {
+        if (auth.currentUser == null) return@withContext Resource.Error("Not signed in")
+        if (downloadUrl.isBlank()) return@withContext Resource.Success(Unit)
+        try {
+            storage.getReferenceFromUrl(downloadUrl).delete().await()
+            Resource.Success(Unit)
+        } catch (e: StorageException) {
+            // "Already gone" is the outcome the caller asked for, so it is not an
+            // error: a share deleted twice, or one whose image was cleaned up by a
+            // half-finished earlier attempt, must not report a failure.
+            if (e.errorCode == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                Resource.Success(Unit)
+            } else {
+                Resource.Error(e.message ?: "Could not delete image", e)
+            }
+        } catch (e: Exception) {
+            // getReferenceFromUrl throws IllegalArgumentException on a URL that is
+            // not a Firebase Storage one — a post could carry any string here.
+            Resource.Error(e.message ?: "Could not delete image", e)
+        }
+    }
 }

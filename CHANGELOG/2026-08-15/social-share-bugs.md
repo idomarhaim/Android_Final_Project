@@ -1,0 +1,178 @@
+# 2026-08-15 — `social-share-bugs`
+
+`/kickoff social-share-bugs` — issues
+[`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) (a shared photo cannot be
+opened, and has no content description) and
+[`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) (a user cannot delete a share
+they made). One pass over the Social feed card, as the brief argued: they are two things you cannot
+do to a card that responds to nothing.
+
+Mode: **`AUTO MODE`** (the brief said `normal`; this session's opening message wins).
+
+---
+
+## What was wrong, and what is now true
+
+The reproduction for both bugs was the same sentence: **the feed card contained no interactive node
+at all**, and the screen was pixel-identical after every tap. It now contains two — the photo, and
+an overflow button on your own post — and `SocialFeedUiTest` asserts that count directly, on the
+device, because that count *is* the text of both reports.
+
+### `#4` — two faults, fixed as two things
+
+1. **The photo opens.** `AsyncImage` gained a click handler onto a new
+   [`FullScreenPhotoDialog`](app/src/main/java/com/idomarhaim/goalpilot/feature/social/PhotoViewer.kt) —
+   pinch-zoom to 5×, double-tap to 2.5×, pan clamped so a zoomed photo cannot be flung out of view,
+   and a labelled close button. A `Dialog` rather than a nav route on purpose: the only argument is
+   a download URL, and a URL in a route has to be encoded in and decoded out — two places for
+   Firebase's `?alt=media` token to be mangled, bought with a back-stack entry nobody wants for a
+   photo.
+2. **The photo is announced.** `contentDescription` was `null`, which is the API's way of saying
+   *decorative*, so a screen reader read the post with the picture simply missing. It now reads
+   "Photo shared by <author>" — deliberately not the headline or message, which are their own text
+   nodes and would be read twice.
+
+The second does not follow from the first, exactly as `#4` says: the viewer would have re-committed
+the same omission on its own image, so `FullScreenPhotoDialog` takes a **non-nullable**
+`contentDescription`.
+
+### `#5` — all five layers, and one of them turned out to be two
+
+| `#5`'s step | State |
+|---|---|
+| 1. repository method | **Added** — `SocialRepository.deleteShare(shareId, imageUrl)` + impl |
+| 2. `firestore.rules` author-only delete | **Already there**, unchanged since `1e56ee3` — see below |
+| 3. rules test in `firestore-tests/` | **Added** — 8 `shares` tests, and 6 more for Storage |
+| 4. UI affordance | **Added** — overflow menu on your own post, with a confirmation |
+| 5. delete the image alongside the post | **Added** — and it did not work, for a reason no Kotlin layer could see |
+
+**Step 2 needed no change.** `match /shares/{shareId}` has carried
+`allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid` since the
+challenges work. The brief and the issue both assumed this had to be written; it did not. What was
+missing was any test that it was there — which is why nobody knew.
+
+**Step 5 was broken at the rules layer, and the test is the only reason it is not still broken.**
+`storage.rules` had a single `allow write` clause guarding `request.resource.size` and
+`request.resource.contentType`. `write` also covers **delete**, and a delete sends no object — so
+`request.resource` is null, both guards raise, and the rule denies. *The owner could not delete their
+own image.* `SocialRepositoryImpl.deleteShare` would have run, reported success, and left the photo
+in Storage forever. Split into `allow create, update` (guards intact) and `allow delete` (owner, no
+conditions).
+
+`Observed:` the emulator names the line itself — `storage.rules line [12], column [12]. Null value
+error.`
+
+### Two design decisions worth the ink
+
+- **Delete order is post-then-photo, and the order is the argument.** What the user asked for is
+  that the post stop existing, so that is what must not be left undone. A failed image cleanup
+  leaves an orphan nobody can see; the other order can leave a *visible* post pointing at a photo
+  that is already gone.
+- **`SharedItem.isMine` is stamped by the repository from `uidFlow()`**, not derived in the UI from
+  the leaderboard. The leaderboard is a bounded top-100, so a user outside it would silently lose
+  the ability to delete their own posts. `uidFlow()` and not `auth.currentUser` for the reason
+  `AGENTS.md` already gives: the Flow is built once at ViewModel-creation time.
+
+---
+
+## 🧪 Tests
+
+**Every layer this touches ran. Counts are from the run, not from memory.**
+
+| Layer | Command | Result |
+|---|---|---|
+| Security rules (Firestore **and** Storage) | `cd firestore-tests; npm test` | **30 pass, 0 fail** (was 16 tests; +14) |
+| Server unit / integration / endpoints | — | **No such layer** for this change. `functions/` is the GROQ proxy and is untouched. |
+| Client JVM unit | `.\gradlew :app:testDebugUnitTest` | **218 pass, 0 fail, 0 skipped** across 24 suites (+5 new in `SocialViewModelTest`) |
+| Client UI (instrumented, Compose) | `.\gradlew :app:connectedDebugAndroidTest` | **39 pass, 0 fail** on `Pixel_10_Pro_XL` (+10 new in `SocialFeedUiTest`) |
+| Full-app device reproduction | manual | **Blocked — see below** |
+
+### The non-vacuity check, run and then thrown away
+
+`AGENTS.md`'s standing warning — *"run the new suite against the old rules too: pure negative tests
+pass vacuously when nothing matches at all"* — was paid, not asserted. A throwaway
+`vacuity-check.mjs` degraded both rulesets to their pre-`#5` state (`/shares` block stripped;
+`storage.rules` back to one `allow write`) and asserted the two *positive* tests now fail:
+
+```
+✔ OLD RULES: the author canNOT delete their own post (3341ms)
+!  com.google.firebase.rules.runtime.common.EvaluationException:
+   Error: storage.rules line [8], column [12]. Null value error.
+✔ OLD RULES: the uploader canNOT delete their own image (459ms)
+ℹ tests 2  ℹ pass 2  ℹ fail 0
+```
+
+Both pass, so both new `assertSucceeds` cases are load-bearing. The script was deleted; it is
+reproduced in full in this session's KB candidate rather than left in the repo as a suite that only
+ever tests history.
+
+### What "device-verified" does and does not mean here
+
+`Observed:` the ten new `SocialFeedUiTest` cases ran the **real `FeedCard` composable on the real
+`Pixel_10_Pro_XL`**, and `onAllNodes(hasClickAction())` returned **2** where both issues measured
+**0**. That is the same instrument on the same device against the same composable.
+
+`Untested:` the end-to-end path — sign in as Ido, open the Social tab, tap a real post's photo. The
+app installs and launches (`com.idomarhaim.goalpilot.debug/…MainActivity`, confirmed in
+`dumpsys window`) and stops at the Google sign-in screen. Reaching a feed post with an attached
+image needs Ido's own Google account, which is his to use. **`#4` and `#5` are therefore left open**,
+per the brief: *"close `#4` and `#5` only after the device re-verification."*
+
+---
+
+## ⚠️ Two things that are not this session's work but blocked it
+
+- **The pinned JDK 21 is a wreck on this machine.**
+  `C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot` holds an orphaned `lib/` and **no
+  `bin/java.exe`**. Both `gradle.properties`' `org.gradle.java.home` and the machine `JAVA_HOME`
+  point at it, so Gradle died before reading a build file (*"JAVA_HOME is set to an invalid
+  directory"*) and `firestore-tests` fell back to the JDK 17 on `PATH` and refused to start
+  (*"firebase-tools no longer supports Java version before 21"*). Repointed to the intact
+  `jdk-21.0.12.8-hotspot`; the pin's intent is unchanged. **`JAVA_HOME` itself is still wrong** —
+  that is a machine setting, not a repo one, and it is Ido's to fix. Note `AGENTS.md` and
+  `CLAUDE.md` both say the machine default is JDK **25**; it is now the broken 21.
+- **The `firestore-tests` suite now needs the Storage emulator**, so `package.json`'s test script
+  is `--only firestore,storage`. `firebase.json` already configured port 9199, so nothing else moved.
+
+---
+
+## ⛔ Not done, and why
+
+- **`storage.rules` is not deployed to live `goalpilot-56e30`.** A rules deploy is an outward action
+  and always-ask in both modes — the brief says so explicitly. **`#5` is not closable until it
+  happens**: without the deploy the post deletes and the photo silently survives, which is precisely
+  the bug `#5` step 5 names.
+  `Untested:` whether the *live* project's firestore rules already carry the author-delete clause.
+  The committed file has had it since `1e56ee3`, but nothing here reads what is actually deployed.
+- **A failed image cleanup is not retried and not surfaced.** `deleteShare` discards
+  `deleteImage`'s result by design (the post *is* gone; reporting failure would invite a retry that
+  can only fail again). The honest consequence: a Storage error at that moment leaves an orphan
+  object and nobody learns. Fixing it properly wants a cleanup job, not a bigger error message.
+- **`C21`'s two additions to this screen** — an *as-of* stamp on cross-boundary numbers and a
+  "Not loaded yet" empty state — are untouched, as the brief instructed. The header row now lays out
+  as `avatar | name+time (weight 1f) | overflow`, which leaves both of them room.
+
+---
+
+## Files
+
+**Changed**
+
+- `app/src/main/java/com/idomarhaim/goalpilot/feature/social/SocialScreen.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/feature/social/SocialViewModel.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Social.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/SocialRepository.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/StorageRepository.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/data/firestore/SocialRepositoryImpl.kt`
+- `app/src/main/java/com/idomarhaim/goalpilot/data/storage/StorageRepositoryImpl.kt`
+- `storage.rules`
+- `firestore-tests/rules.test.mjs`, `firestore-tests/package.json`
+- `gradle.properties`
+
+**New**
+
+- `app/src/main/java/com/idomarhaim/goalpilot/feature/social/PhotoViewer.kt`
+- `app/src/test/java/com/idomarhaim/goalpilot/feature/social/SocialViewModelTest.kt`
+- `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SocialFeedUiTest.kt`
+
+**Unchanged, and that is a finding** — `firestore.rules`.

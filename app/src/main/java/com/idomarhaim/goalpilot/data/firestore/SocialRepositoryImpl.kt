@@ -18,6 +18,7 @@ import com.idomarhaim.goalpilot.domain.model.ProgressSummary
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.model.rankedByPoints
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
+import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +37,10 @@ import javax.inject.Singleton
 class SocialRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
+    // A share and the photo it carries die together, so one repository owns both
+    // halves. Injecting the domain interface keeps this a data-to-domain edge and
+    // introduces no cycle — nothing in storage knows about the feed.
+    private val storage: StorageRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : SocialRepository {
 
@@ -97,12 +102,27 @@ class SocialRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * The feed, with each item stamped [SharedItem.isMine] against the signed-in
+     * uid — the flag the card needs to decide whether to offer a delete.
+     *
+     * Built on [uidFlow] rather than a one-shot `auth.currentUser`: this Flow is
+     * constructed once at ViewModel-creation time, so a one-shot read would pin
+     * whichever account happened to be signed in then and go on marking that
+     * account's posts as the current user's after a switch.
+     */
     override fun observeFeed(): Flow<List<SharedItem>> =
-        sharesCol
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .limit(FEED_LIMIT)
-            .snapshotsFlow()
-            .map { snap -> snap.toObjects(SharedItemDto::class.java).map { it.toDomain() } }
+        auth.uidFlow().flatMapLatest { uid ->
+            sharesCol
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(FEED_LIMIT)
+                .snapshotsFlow()
+                .map { snap ->
+                    snap.toObjects(SharedItemDto::class.java).map { dto ->
+                        dto.toDomain().copy(isMine = uid != null && dto.authorUid == uid)
+                    }
+                }
+        }
 
     override fun observeFriendUids(): Flow<Set<String>> =
         auth.uidFlow().flatMapLatest { uid ->
@@ -188,6 +208,34 @@ class SocialRepositoryImpl @Inject constructor(
             Resource.Error(e.message ?: "Could not share summary", e)
         }
     }
+
+    override suspend fun deleteShare(shareId: String, imageUrl: String?): Resource<Unit> =
+        withContext(io) {
+            val me = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            if (shareId.isBlank()) return@withContext Resource.Error("That post no longer exists")
+            try {
+                val snap = sharesCol.document(shareId).get().await()
+                // Already deleted — by the same user on another device, or by a
+                // half-finished earlier attempt. Reporting a failure here would
+                // invite a retry that can only fail again, over a post that is
+                // gone; the user's goal already holds.
+                if (!snap.exists()) return@withContext Resource.Success(Unit)
+                if (snap.getString("authorUid") != me) {
+                    return@withContext Resource.Error("You can only delete your own posts")
+                }
+                sharesCol.document(shareId).delete().await()
+
+                // Post first, photo second, and the order is the whole argument.
+                // What the user asked for is that the post stop existing, so that
+                // is what must not be left undone: a failed image cleanup leaves an
+                // orphan nobody can see, while the other order can leave a visible
+                // post pointing at a photo that has already been deleted.
+                if (!imageUrl.isNullOrBlank()) storage.deleteImage(imageUrl)
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not delete post", e)
+            }
+        }
 
     private companion object {
         const val LEADERBOARD_LIMIT = 100L
