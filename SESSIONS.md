@@ -90,11 +90,29 @@ before your first write. Normative rule:
 > only two pre-existing lines lost are the two intended. The 195 → 196 delta is the trailing newline GitHub
 > appends, exactly as `c6-log-progress`, `c15b-stored-ai-text` and `c11b-output-formats` each recorded.
 >
-> 📥 **Three candidates filed, none drained** —
-> [`kb-candidates/2026-08-14-c20-derived-state.md`](kb-candidates/2026-08-14-c20-derived-state.md). All three are
-> 🟢 `AUTO MODE`-eligible (`kb/dev/`, no standing claim contradicted) and all three are held on the same thing:
-> a **cross-repo write** into `C:\Dev\JARVIS` needing that board, `kb/index.md` and `kb/log/`. They are one
-> ingest — entries 1 and 2 are one new page, entry 3 a section on `kb/dev/decision-map-charting.md`.
+> 📥 ~~**Three candidates filed, none drained**~~ — **superseded 2026-08-15: all three are drained and the file
+> is deleted.** The original text (*all three 🟢 `AUTO MODE`-eligible, held on one cross-repo write, entries 1 and
+> 2 one new page*) was **wrong in three places**, and the drain is what found it: entry 2's core claim was
+> **already committed** in `kb/dev/derive-dont-stamp.md` §6 (2026-08-10, same `TaskRepositoryImpl` observation),
+> so it shrank to a paragraph; entry 1 was **not** 🟢 at all — it narrows §1's write-derived row, which is a
+> rewrite of a standing claim and ⛔ always-ask in both modes; and the candidate's bundle check had cleared
+> `one-metric-and-its-mechanism.md` while never looking at the page that mattered. **A check run at the wrong
+> width does not fail — it passes.** Landed as `kb/dev/decision-map-charting.md` **§10**,
+> `kb/dev/derive-dont-stamp.md` **§6 extended** (JARVIS `a6e0a79`) and **§1 rewritten + new §1.1** on Ido's
+> explicit approval (JARVIS `392b565`). Account:
+> [`CHANGELOG/2026-08-15/c20-derived-state.md`](CHANGELOG/2026-08-15/c20-derived-state.md).
+>
+> ✅ **Superseded 2026-08-15 — this repo is PUSHED (`25b7bfd..f802be9`), and the hold below turned out to be
+> wrong on its own terms as well as expired.** Ido asked why the drain was being held; it did not survive the
+> question. `c11b-output-formats` had **released** on the JARVIS board with a clean tree, and that board had been
+> read as its **first 60 lines** — header and release notes, with the Active-claims **rows** below the cut — so
+> it was reported *empty* while a live row sat there throughout. Precondition 5's *"a recent commit means live"*
+> was also applied to the wrong question: it governs **publishing someone else's commit**, not **writing into a
+> repo whose board is clear**. By push time the blocker had expired independently — `478769d` and this session's
+> first three commits were already on the remote, so the range held **only this session's own commits**, and its
+> single deletion is the drained `kb-candidates/` file, which is precondition 2's own carve-out. ⛔ **`C:\Dev\JARVIS`
+> remains unpushed** on two genuinely live sessions (`sibling-wait-banner`, `c11b-output-formats`), both mid-unit.
+> The superseded text follows.
 >
 > ⛔ **Not pushed, and the drain is held on the same fact rather than a second one.** `git log @{u}..HEAD` carries
 > a **foreign** commit — `478769d`, `c11b-output-formats`, *kb-candidates: entry 2 drained*, timestamped
