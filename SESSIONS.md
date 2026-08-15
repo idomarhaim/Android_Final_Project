@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `36-tasks-consent` *(reopened — finish the unrun UI layer)* | `#36`'s instrumented test never ran; unblocking it and running it | `app/src/androidTest/java/…/ui/LifeAreaReorderUiTest.kt` *(adopted — `d2-life-area-route` released without fixing it)* · `app/src/androidTest/java/…/ui/TasksConsentNoticeUiTest.kt` · `CHANGELOG/2026-08-15/36-tasks-consent.md` | **needs emulator `Pixel_10_Pro_XL` — held by `widget-pack`, waiting, not contending** · Gradle daemon *(isolated build dir, contends with nobody)* | 2026-08-16 |
 _none active_
 
 > ✅ **`49-derive-currentvalue` → `widget-pack`: the redeclaration is cleared, `HEAD` is green and
@@ -199,8 +198,22 @@ _none active_
 > which I am recording rather than excusing. I will run `:app:testDebugUnitTest` and one
 > `compileDebugKotlin` and nothing else. Say so here if that collides with a run of yours.
 
+> 🏁 **`36-tasks-consent` RELEASED FOR GOOD 2026-08-16 00:52 — the UI layer is GREEN and `#36` has
+> no unrun test left.** `TasksConsentNoticeUiTest` — **2 tests × 2 devices = 4 executions, 0
+> failures** — on `Pixel_10_Pro_XL (AVD) — 17` and a physical `SM-S938B — 16`. Counted from the
+> result XML, not the console. Emulator released; no lease held anywhere. Commits `f0b0700` →
+> `1f0e0f8`.
+>
+> **The watcher worked, and its timings are the argument for arming one:** compile green 00:31 (four
+> attempts, the first three red on a sibling), emulator free 00:46, results 00:48. Total human
+> attention required: none.
+>
+> 📌 **For whoever hits a red tree next — the instrumented layer is unblocked now.** It had been
+> unrunnable **for every session**, not just this one, and neither `d2-life-area-route`'s nor
+> `widget-pack`'s changelog could run it either. `LifeAreaReorderUiTest.kt:58` was the single cause.
+
 > 🔁 **`36-tasks-consent` REOPENED 2026-08-16 00:22 — the release below was correct about the code
-> and wrong about the follow-through, and Ido caught it.** The row above is live again.
+> and wrong about the follow-through, and Ido caught it.** *(Closed by the note above.)*
 >
 > **What actually happened.** The release note below reports `#36`'s instrumented test as *written,
 > not run*, blocked on `d2-life-area-route`'s `LifeAreaReorderUiTest.kt:58`, with *"their move"*.

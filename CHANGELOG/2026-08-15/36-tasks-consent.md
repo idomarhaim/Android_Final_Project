@@ -123,21 +123,45 @@ New: `app/src/test/.../feature/lifeareas/TasksConsentTest.kt` — **8 tests, 0 f
 | `backing out of the consent screen is recorded as a decline` | a refusal leaves a trace |
 | `an ordinary failure says nothing about consent` | a timeout is not a refusal |
 
-**UI / instrumented — WRITTEN, NOT RUN.** `app/src/androidTest/.../ui/TasksConsentNoticeUiTest.kt`
-(new, 2 tests) is the layer that asserts what `#36` actually ships — that the sentence renders, and
-that it still names the checkbox rather than drifting back to a generic grant prompt.
+**UI / instrumented — GREEN, on two devices** (run 2026-08-16 00:46–00:48, after the session was
+reopened; see *Why this took a second sitting* below).
+`app/src/androidTest/.../ui/TasksConsentNoticeUiTest.kt` — **2 tests × 2 devices = 4 executions, 0
+failures, 0 errors, 0 skipped**, counted from the result XML rather than the console:
 
-It **did not run**, and not for a reason of its own: `:app:compileDebugAndroidTestKotlin` fails on
-`ui/LifeAreaReorderUiTest.kt:58` — `No value passed for parameter 'onOpen'` — a consequence of
-`d2-life-area-route` making the life-area card clickable, in an instrumented test that session has
-not yet updated. `emulator-5554` was up and leased; the source set never compiled, so nothing
-reached it. **Not a pass, and not recorded as one.** Re-runnable in one command once that file is
-adapted:
+| Device | Result |
+|---|---|
+| `Pixel_10_Pro_XL (AVD) — 17` | `notice_saysTheScopeWasNotGranted` ✅ · `notice_namesTheCheckboxTheUserHasToTick` ✅ |
+| `SM-S938B — 16` (physical) | `notice_saysTheScopeWasNotGranted` ✅ · `notice_namesTheCheckboxTheUserHasToTick` ✅ |
 
-```
-./gradlew :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.idomarhaim.goalpilot.ui.TasksConsentNoticeUiTest
-```
+This is the layer that asserts what `#36` actually ships: the sentence renders, and it still **names
+the checkbox** rather than drifting back to a generic grant prompt. The second test is deliberately
+an assertion about the string resource itself — if it ever fails, the wording has regressed to the
+generic prompt that was the whole defect.
+
+A physical device was attached alongside the emulator and Gradle ran the suite on both. That was not
+planned and is recorded rather than presented as thoroughness — it does mean the sentence has now
+been seen on real hardware, which §0.8 asks for in Hebrew and this does not yet satisfy (the Hebrew
+strings are dormant until a language picker exists — `#48`/`#51`).
+
+### Why this took a second sitting
+
+The instrumented layer was reported on 2026-08-15 as *written, not run*, blocked on
+`d2-life-area-route`'s `LifeAreaReorderUiTest.kt:58`, and left as *"their move"*. **That session
+released and pushed (`768159a`) about three hours later without fixing it** — a released board row
+is not a cleared blocker, and nothing on the board says otherwise. This session, meanwhile, **had
+armed no watcher**, so no mechanism existed by which it could resume. Ido asked why it was still
+waiting; both failures are recorded on `SESSIONS.md` and neither is the other's excuse.
+
+The mechanism gap is worth stating because it is general: §5.2's auto-resume watches a **lease
+file**, a block on a **board claim** creates none, and the rule therefore says *"re-check on your
+next turn"* — which for a session whose only remaining work is blocked means **never**.
+
+Fixed here by three things: `LifeAreaReorderUiTest.kt` **adopted** (its owner had released) and its
+missing `onOpen` stubbed, which unblocked the instrumented layer **for every session**; a background
+watcher armed across both gates — compile-green, then emulator-free, then run; and every Gradle run
+moved to an **isolated build directory** in the session scratchpad via `--init-script`, so it stopped
+racing `widget-pack`'s `app/build/generated/ksp` (the first attempt without it died exactly that
+way). The watcher went green at 00:31, saw the emulator freed at 00:46, and had results at 00:48.
 
 **Layers that do not exist for this change, named rather than skipped silently:**
 
