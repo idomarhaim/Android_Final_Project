@@ -54,6 +54,9 @@ class LifeAreaReorderUiTest {
                 lifeAreaRows(
                     state = state,
                     onMove = { from, to -> moves += from to to },
+                    // #2 made the whole card a click target; this suite is about
+                    // reordering, so the route is stubbed rather than asserted.
+                    onOpen = {},
                     onEdit = {},
                     onDelete = {},
                 )
