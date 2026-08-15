@@ -16,6 +16,7 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c24-settings-surface` | Resolve [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) — the settings surface (last open child of map [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12)) | `docs/prototypes/2026-08-15-c24-settings-surface/`, `docs/PRODUCT_v0.3.md` §10.3, `CHANGELOG/2026-08-15/c24-settings-surface.md`, `kb-candidates/2026-08-15-c24-settings-surface.md` | `#12` map body | 2026-08-15 18:51 |
+| `social-share-bugs` **(reopened, 3rd)** | **The JDK/`JAVA_HOME` breakage Ido asked to have fixed.** Machine half done (User `JAVA_HOME` repointed to the intact JDK 21); the other half — `java` on `PATH` is JDK **17** from the **Machine** `PATH`, which needs admin — is worked around **in the repo instead**, so `firestore-tests` stops depending on `PATH` ordering it cannot control. | `firestore-tests/run-tests.mjs` *(new)*, `firestore-tests/package.json`, `AGENTS.md` + `CLAUDE.md` (the JDK pitfall text, now factually wrong), `CHANGELOG/2026-08-15/social-share-bugs.md` | **Gradle daemon**, **git index** | 2026-08-15 |
 
 > 🎉 **`social-share-bugs` FULLY released 2026-08-15 — [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)
 > and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) are CLOSED, with the evidence on each
