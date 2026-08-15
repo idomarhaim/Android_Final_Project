@@ -218,6 +218,11 @@ before your first write. Normative rule:
 > [comment on #12](https://github.com/idomarhaim/Android_Final_Project/issues/12#issuecomment-5302797690) for whoever
 > holds the body next. **`C24` #46 is the remaining unclaimed frontier ticket**; `#12` stays open and closing it is Ido's.
 >
+> > ✅ **Settled 15:5x — do not paste it again.** `c22-measure-proposal` picked the line up when it recorded `C22`,
+> > so `#12`'s *Decisions so far* now carries **both** `C23` and `C22`. `Observed:` the map body, read at 15:47Z.
+> > The hand-off-by-comment is what made that work, and this correction exists so the next reader of the 🛑 above
+> > does not paste a **second** copy into the body.
+>
 > 📥 **Nothing ingested; three candidates written** to `kb-candidates/2026-08-15-c23-goal-category.md`. Two are ⛔
 > always-ask (`rules/` destination — the fork-check refinement, and a **second data point** on the comprehension
 > complaint that says the first diagnosis was incomplete). One is 🟢 eligible (*a display attribute is not an
