@@ -283,3 +283,34 @@ walkthrough** — which is a materially different ask from four.
 This is why repeating `ingest first` cannot move the backlog further: what remains does not need
 ingesting, it needs **one decision**. Stated as a finding rather than acted on, because `rules/` is
 always-ask in both modes and grouping four parked candidates into one proposal is still a proposal.
+
+---
+
+## ✅ Addendum 4 — `waive`, and this session is finished
+
+Ido answered the re-made 🎬 offer with **`waive`**. The judgment half is his word; the **mechanical**
+half was run alone and is recorded in `C:\Dev\JARVIS\CHANGELOG\2026-08-15\c21-offline-story.md`
+(3rd visit), shipped as JARVIS **`7a5b3f9`** — *rules: verify by re-running whatever will consume
+your output*, one bullet under 🧪 *Testing discipline*, with `Sync-AgentAssets.ps1` run.
+
+**The pass was not a formality.** It found that the draft's *"an import path"* example had **no
+recorded instance behind it** — `grep -n "compiler\|typecheck\|Gradle"` across the two relevant KB
+pages returns nothing — and that it turned the bullet into a **tax on every code edit**, since the
+compiler already recomputes import paths. Deleted, and replaced with an explicit silence clause. All
+seven recorded instances still fire; the *stays-silent* half is the one that failed, which is the
+half the rule says cannot be faked.
+
+**What it could not test, because `waive` skipped the run:** the corpus is mine, written ninety
+minutes earlier, so it cannot attack *"a rule you recite from memory of the request"*. A
+fresh-context agent would close that gap; **not used** — it is a subagent, and `waive` does not grant
+the 🧩 gate.
+
+**`kb-candidates/2026-08-15-c21-offline-story.md` is deleted in this commit.** Entry 1 drained at
+19:2x, entry 2 — the parked `rules/` half — shipped as `7a5b3f9`, so **every entry is promoted** and
+`derivable-decision.md` §1's carve-out applies: deleted without asking.
+
+**Nothing of this session is now dirty, held, parked or unpushed in either repo.** Four candidate
+files remain here, none of them this session's:
+`2026-08-13-c15b-stored-ai-text.md`, `2026-08-13-c2-task-type.md`, `2026-08-15-c23-goal-category.md`
+(all ⛔ `rules/`, and **four of their entries converge on one file**, `rules/question-axis-naming.md`
+— one walkthrough, not four, per Addendum 3) and `2026-08-15-c24-settings-surface.md`.
