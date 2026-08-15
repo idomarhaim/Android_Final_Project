@@ -15,8 +15,47 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
 | `social-share-bugs` **(reopened, 2nd)** | The **live delete round-trip** — does the *deployed* `storage.rules` let the author's image delete through on `goalpilot-56e30`? Ido chose the non-destructive form: **create a throwaway post with a photo, then delete that one**. His two real posts are not touched. Then close [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) / [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) per the brief's own condition. | `CHANGELOG/2026-08-15/social-share-bugs.md` | emulator **`Pixel_10_Pro_XL`**, live project **`goalpilot-56e30`** (one write + one delete of throwaway data), issues **`#4`** + **`#5`** | 2026-08-15 |
+
+> ✅ **`c22-measure-proposal` released 2026-08-15 — `e15c1d7` (claim) → `cded54e`.
+> [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) is resolved and CLOSED.** The `#12`
+> map body singleton is **released**. `#12` itself stays **open with one child** —
+> [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46), the settings surface — and closing
+> the map is Ido's. No brief written and none owed: the ticket is answered, not handed on.
+>
+> **What it decided, and the decision is the agent's.** Ido was asked the one question that was his — which of
+> three placements carries the offer — and **handed it back**, in near-identical words to the delegations
+> `product-v03-spec` and `c23-goal-category` received the same day. No re-ask; comprehension paid once, as an
+> explanation, in the reply; decision derived. **The answer was not in the option set, and the reason is
+> nameable: every option was a placement of *one* object, and the object is two.** It is a **marker** — silent,
+> wherever the goal is listed — and an **offer**, only on the goal's own screen, because **opening the goal is
+> the consent** §0.7 requires for intrinsic structure. `C19` may put *Break it into steps* inline because steps
+> are **instrumental**; a measure says what counts as progress, which is **intrinsic**. The daily surface is
+> ruled out on `C10`'s already-allocated slots and because it is the one screen that arrives unasked.
+> Consequence: **there is a fifth AI call**, `measure`, and **the model returns no number** — `targetSource` is
+> an enum naming which arithmetic the app runs. `Untested:` whether Ido agrees with any of it; all of it is his
+> to overturn.
+>
+> **Written into `docs/PRODUCT_v0.3.md`** (a path outside this session's original claim, taken after
+> `c23-goal-category` had released and with its own diff read before committing): §1.3, §3.3 feature **E**,
+> §3.4, §4.1, §10.1, §10.2, §11. Prototype rev 2:
+> [`docs/prototypes/2026-08-15-measure-proposal`](docs/prototypes/2026-08-15-measure-proposal/README.md).
+>
+> **`C23`'s map line was written by this session, not by the one that resolved it.** `c23-goal-category` closed
+> `#45` and released **without** the `#12` singleton, so its *Decisions so far* line was owed and nobody held
+> the file. `#12`'s own discipline note sanctions exactly this — *a gist of a public resolution comment, not a
+> second opinion on it*. Its spec sections were deliberately **not** rewritten; that is `#45`'s own scope.
+>
+> 📥 **Two KB candidates still owed** — `kb-candidates/2026-08-15-c22-measure-proposal.md`, both 🟢 eligible and
+> both central-KB destined, so draining them is a cross-repo `C:\Dev\JARVIS` visit owing a row on **that** board.
+> **This is now the second session to leave that debt** (`product-v03-spec` entry 2 is still there), which makes
+> it a pattern rather than an accident: the drain is cheap in-repo and expensive cross-repo, and every wayfinder
+> session hits it. **Work left, not a defect.**
+>
+> 🔒 **Lease note, recorded because it is the first observed instance here.** This release was **BLOCKED by
+> `c23-goal-category` on `SESSIONS.md` for ~2.5 minutes after that session had already released its claim** — a
+> lease outliving its own claim. Per §5.2 this session did not ask: it reordered onto the spec and changelog,
+> armed a background wait, and took the lease when the file disappeared. Cost: ~2 turns, and Ido saw nothing.
 
 > ✅ **`social-share-bugs` (reopened, then re-released) — THE DEVICE PASS RAN, and `#4` is fully re-verified.**
 > Emulator **`Pixel_10_Pro_XL` released**. Ido signed in, which lifted the one Exit condition this session could
