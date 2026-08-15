@@ -49,6 +49,15 @@ one of three, and **record the decision as a comment on the issue itself**, not 
 - **Superseded** — close it, with a comment pointing at the decision that replaced it.
 - **Needs rewording** — edit the body so it describes what the spec says, and say what changed.
 
+**The success criterion for the whole session: after it, `/implement #N` is a sufficient first
+message for every surviving issue.** Each one must name the spec section it builds against, so a
+build session needs nothing but the ticket. **Write no briefs for these issues** — an issue is
+already a committed work order, and a `sessions/*.md` beside it would be an *uncommitted duplicate
+of a committed ticket*, which is the reason `product-v03-spec` declined to write briefs for `#44`–
+`#46`. `sessions/` is for work **no ticket carries** — this brief itself, because no issue does.
+`#4` and `#5` were the exception that proves it: they got a brief because they needed a device pass,
+a rules deploy and a *"do not build `C21`'s lines here"* boundary that neither issue stated.
+
 **A verified starting split** (grep of `#12`'s body for each issue link, 2026-08-15) — a lead, not a
 verdict, because *not cited* is not *unaffected*:
 
