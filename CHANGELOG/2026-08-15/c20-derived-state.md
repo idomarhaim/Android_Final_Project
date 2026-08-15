@@ -62,3 +62,46 @@ number under `## Standing — always-ask`; entries 2 and 3 are listed beneath as
 blocked once on a stale `CHANGELOG_README.md` generated region and was fixed by running
 `New-ChangelogIndex.ps1 -Staged`, exactly as its own message prescribes. No other layer applies —
 Markdown only, no source file touched in either repo.
+
+---
+
+# Second visit — entry 1 shipped, and this file is now fully drained and deleted
+
+**Ido's approval was the gate, and nothing else could have been.** Entry 1 rewrites a standing KB
+claim in place, which `rules/memory-promotion.md` treats as a deletion and makes always-ask **in both
+modes** — `AUTO MODE` did not cover it. He said *"do the corrections"*; that released it.
+
+📥 **Ingested:** `kb/dev/derive-dont-stamp.md` **§1 rewritten in place + new §1.1** —
+*a stored writer needs a **reader**, not an event.* JARVIS `3726297` (claim) → `392b565`.
+
+§1's write-derived row had read *"a server-side trigger legitimately can, and **often should**"* own
+it (2026-08-10). Two questions were collapsed into one: an event to hang a trigger on establishes the
+value **can** be owned, and the wording implied it **should** be. §1.1 now carries the second
+question's test — *a derived number gets a stored writer if and only if somebody who cannot read its
+inputs has to read it* — which is **checkable**, since the authorization boundary is already written
+down. `kb/index.md`'s row was corrected too; it repeated the superseded wording verbatim.
+
+🗑 **`kb-candidates/2026-08-14-c20-derived-state.md` deleted — the carve-out, not an unasked deletion.**
+Every entry is promoted, so `rules/derivable-decision.md` §1 deletes it without asking. Cross-repo
+means it cannot ride the promotion's commit, so it **names** it: `a6e0a79` (entries 2–3) and `392b565`
+(entry 1), with `C:\Dev\JARVIS\kb\log\2026-08-15.md` holding the tie that survives.
+
+## ⚠️ This session's JARVIS release note was swept into a sibling's commit
+
+`8b2e166` — `c11b-output-formats` claiming a new visit — took the working-tree `SESSIONS.md` while
+this session's release note was in it, before this session could commit it. **Nothing was lost and
+nothing was rewritten; the cost is provenance**, and it is the **sixth** instance of that pattern.
+Both sessions staged by explicit path, and explicit-path staging is a one-sided guard: it stops *you*
+sweeping a sibling in and does nothing about a sibling sweeping *you*. Recorded rather than un-picked,
+because un-picking it needs a force-push, which is always-ask in both modes.
+
+Also corrected there: this session's **first** JARVIS row claimed *"no singleton"* while holding
+`kb/index.md` and `kb/log/2026-08-15.md`, which that board's contended-resource table names
+explicitly. The bundle was free that hour; that is a fact about the day, not a property of the work.
+The second visit declared the `kb/` singleton properly — and then hit `index.lock` held by a
+concurrent sibling, which is the contention the declaration exists for.
+
+## 🧪 Tests
+
+`Check-KbLinks.ps1` — **CLEAN**, 68 pages, run after the §1 rewrite and before the commit. Commit-hook
+parity **OK**. Markdown only in both repos; no source file touched, so no other layer applies.
