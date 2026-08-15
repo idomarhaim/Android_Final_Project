@@ -15,7 +15,43 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c24-settings-surface` | Resolve [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) — the settings surface (last open child of map [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12)) | `docs/prototypes/2026-08-15-c24-settings-surface/`, `docs/PRODUCT_v0.3.md` §10.3, `CHANGELOG/2026-08-15/c24-settings-surface.md`, `kb-candidates/2026-08-15-c24-settings-surface.md` | `#12` map body | 2026-08-15 18:51 |
+
+> 🏁 **`c24-settings-surface` RELEASED 2026-08-15 — `f7cfa9c` (claim) → this commit.
+> [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) is resolved and CLOSED, and
+> [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12) now has ZERO open children** —
+> `total=31, closed=31, open=0`, counted rather than asserted. The `#12` map body singleton is **released**.
+> **Closing the map is Ido's**, and it is the only thing left on it.
+>
+> **The answer, in one line: Profile is the account, Settings is the device, and sign-out is the test.**
+> The split is **forced rather than chosen** — §5.1 stores Language per-device *because Auth has not
+> resolved yet*, so a control behind an **account** avatar is unreachable exactly when its own
+> justification says it is needed. `ProfileScreen.kt:114` has that defect today. The screen's one new
+> component is the **consequence line**: every control that feeds arithmetic elsewhere states that
+> arithmetic under itself, with live values. And **one of the three "missing settings" was not a
+> setting** — week start is derived from Region and read out.
+>
+> Prototype (six frames, four materials × two themes × two languages):
+> [`docs/prototypes/2026-08-15-c24-settings-surface`](docs/prototypes/2026-08-15-c24-settings-surface/README.md).
+> Spec: **new §4.9**, plus §2.5, §5.1, §7.1, §7.2, §10 and §11.
+>
+> ⚠️ **One deviation, and it is Ido's to reverse.** `#46` is `wayfinder:prototype`, therefore **HITL** —
+> *the agent never stands in for the human's side of it* — and it was **closed without a live exchange in
+> this session**, on the **standing** hand-back recorded in `PRODUCT_v0.3.md` §10, the same delegation
+> `C22` #44 and `C23` #45 were closed under earlier today. Consistent with its siblings, but a standing
+> delegation is weaker than the live one each of them actually received. One command reverses it:
+> `gh issue reopen 46`.
+>
+> 🧭 **Two live siblings were detected mid-session and neither collided** — noticed by
+> `kb-candidates/2026-08-15-c22-measure-proposal.md` vanishing between the session-start listing and the
+> read. `c22` (`7b7b394`, `f9d1742`) **settled the standing cross-repo KB debt** three sessions had been
+> carrying; `social-share-bugs` (3rd reopen, `afb9c50`, `e74cc53`) fixed `JAVA_HOME`. Both released, both
+> pushed — and **their push published this session's own claim commit `f7cfa9c`**, which is the
+> branch-scoped-push fact in the open rather than in a rule.
+>
+> 📥 **Two KB candidates owed** — `kb-candidates/2026-08-15-c24-settings-surface.md`, both 🟢 and both
+> central-KB destined, so the drain is a cross-repo `C:\Dev\JARVIS` visit owing a row on *that* board.
+> **Work left, not a defect** — and the debt is one session old again, not three, because `c22` cleared
+> the backlog today.
 
 > 🔧 **`social-share-bugs` (3rd reopen) — the `JAVA_HOME` breakage is fixed and released.** Ido asked for it
 > directly. It was **three faults, not one**, and the one everyone had been told about was false.

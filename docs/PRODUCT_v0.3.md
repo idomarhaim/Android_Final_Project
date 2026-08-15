@@ -557,8 +557,10 @@ here needs local scheduling and the nightly one rides it. This widens
 [#8](https://github.com/idomarhaim/Android_Final_Project/issues/8) to **scheduled**, not only
 immediate, notifications.
 
-⚠️ **GAP** — the app has **no daily-planning-hour setting and no waking-hours setting**, and §2.5
-needs both. See [§10.3](#103--three-settings-this-spec-requires-that-do-not-exist--now-c24-46).
+**Both settings now exist** — [§4.9](#49-the-settings-surface-c24-46), `C24` #46. **Awake between
+07:00 – 23:00** is the clamp: a reminder is never moved outside it, and the same span is `C9b`'s
+load-bar denominator, so the bar reddens at **12 h**. **Plan tomorrow at** defaults to **one hour
+before waking hours end**, and moves when they do.
 
 ### 2.6 Google Calendar — scope and consent *(`C9d` #17, `C9f` #33)*
 
@@ -1259,6 +1261,103 @@ once as a rule rather than four times as a note.
 **No Hebrew literal may survive into an English render.** Asserting that **absolutely** caught three
 instances beyond the one Ido spotted.
 
+### 4.9 The settings surface *(`C24` #46)*
+
+> **Profile is the account, Settings is the device, and sign-out is the test.**
+
+Three tickets each named a setting that did not exist — `C15`'s **week start**, `C9a` §6's **daily
+planning hour** and **waking hours** — and each assumed somebody else owned the surface. Nobody did.
+
+**The split is forced, not chosen.** [§5.1](#51-localization-c15-15-c15b-35) stores Language
+per-device for one stated reason: *it must be known before the first frame, and the account is not
+known until Auth resolves.* Profile is the **account** surface, so a Language control inside Profile
+is unreachable exactly when its own justification says it is needed. **Today the app has that
+defect** — `ProfileScreen.kt:114` hosts the skin picker beside the friend code and Sign out.
+
+`C9b` moved Profile to an avatar in Home's top-right. That avatar opens a sheet carrying **two
+siblings** — *Your profile* and *Settings* — and Settings is additionally reachable from the
+**sign-in screen**, with no account at all.
+
+**Sign-out is the test**, and it decides the cases nobody asked about:
+
+| Survives sign-out → **Settings** | Leaves with the account → **Profile** |
+|---|---|
+| skin · material · brightness | friend code |
+| language · region | level, points, streak |
+| waking hours · planning hour | Google Calendar consent (`C9d`, `C9f`) |
+| the encrypted API key (`C13`) | Sign out itself |
+
+The last row is why the screen opens with a **scope line**, not a title alone: an encrypted
+third-party secret that outlives sign-out is what [§0.4](#04-legal-but-never-silent-c7-refined-by-c13-5)
+forbids the app to be silent about.
+
+#### The consequence line — the screen's one new component
+
+[§0.3](#03-the-maps-most-repeated-finding--a-second-number-that-quietly-disagrees) is this map's
+most-repeated finding: **a second number that quietly disagrees.** A settings screen is where that
+defect is *manufactured* — a control here silently moves a number on a screen nobody is looking at,
+and two of `C24`'s three settings do exactly that.
+
+**So every control that feeds arithmetic elsewhere states that arithmetic under itself**, inside the
+same card, dimmer and smaller, **with live values, in the app's own words.** Never a tooltip and
+never a help link: both must be asked for, and nobody asks about a setting they believe they
+understand.
+
+| Control | Its consequence line states |
+|---|---|
+| Region | which day the week starts, and how a date reads |
+| Awake between | how many hours that is, and where `C9b`'s load bar reddens |
+| Plan tomorrow at | that it follows waking hours, so moving them moves it |
+| Material | that dark neo is brightness-locked (`C12` §3) |
+| Your own key | which provider answered last — `C13`'s permanent status line |
+| Your profile | that nothing on this screen belongs to the account |
+
+#### Week start is not a setting
+
+`C24` inherited it as one from `C15`. It is **derived from Region and read out**, never stored beside
+it — [§0.2](#02-the-derive-dont-store-rule-c5-generalised--kbdevenum-and-labelmd-5), and storing it
+would manufacture §0.3's defect inside the very screen built to prevent it. Region already owns week
+start *and* date order, and Ido's decoupling case is served: **Language English + Region Israel** is
+left-to-right with a Sunday week start, which is the whole of what he asked for.
+
+**The boundary, stated rather than assumed:** week start graduates to its own control the first time
+somebody needs it to disagree with date order. Nothing in v0.3 does.
+
+#### Contents, in order
+
+1. **Appearance** — material (4 tiles), colour (`AppSkin`), brightness.
+2. **Language & region** — language, region, and the derived week-start read-out.
+3. **Your day** — awake between, plan tomorrow at.
+4. **AI** — provider, your own key, and the permanent status line.
+5. **Account** — one row linking to Profile, stating the boundary.
+
+#### Defaults, so the screen can be ignored
+
+| Setting | Default | From |
+|---|---|---|
+| Language | device language | §5.1 |
+| Region | device country | §5.1 |
+| Week start | **derived, never stored** | Region |
+| Skin | `AURORA` | `AppSkin.DEFAULT`, unchanged |
+| Material | **neo** | the only material with **both** a light and a dark scheme **and** no blur under it. Glass and liquid glass are `Modifier.blur` / `RenderEffect` — **API 31+, with a fallback below that changes the look** — and §4.1 already states that **a widget has none of those primitives**, so neo's hand-drawn shadow pair is the only one a widget can approximate. Dark neo is brightness-locked, so it cannot be a default at all. `C6`'s `--edge` is what makes neo safe to default to: its known WCAG failure is *shadow-only affordances*, and that rule forbids them |
+| Brightness | follow the device | locked, and said so, under dark neo |
+| **Awake between** | **07:00 – 23:00** | a 16 h day, so `C9b`'s bar reddens at **12 h** — a threshold reachable in practice rather than never |
+| **Plan tomorrow at** | **one hour before waking hours end** (22:00) | derived, so it is sane untouched and moves when waking hours move |
+| Provider | GROQ, free | §3.6's ladder floor |
+
+#### Three design rules this screen adds
+
+- **The material picker is the one control that must not obey the material.** Each tile paints
+  itself; drawn against the contract, three of four options render as the fourth.
+- **A lock is a word, never a dimming.** `C12` §3 requires the picker to *say* dark neo is
+  brightness-locked. A 40%-opacity segment is a quiet no-op with extra steps, so the segment is
+  struck through **and** captioned, and the tile carries `dark only`.
+- **A mark that carries meaning is filled *and* outlined**, generalising `C6`'s `--edge` from
+  affordances: the 24 h track's awake band was fill-only and vanished in neo light.
+
+Design, in four materials × two themes × two languages:
+[`docs/prototypes/2026-08-15-c24-settings-surface`](prototypes/2026-08-15-c24-settings-surface/README.md).
+
 ---
 
 ## 5 · Cross-cutting behaviour
@@ -1276,6 +1375,11 @@ instances beyond the one Ido spotted.
 **Region is decoupled on Ido's call**, overturning a proposal to pin it to Sunday: **Israelis in
 hi-tech often work in English yet still start the week on Sunday.** So English-in-Israel is
 left-to-right with a Sunday week start.
+
+**Week start is therefore *derived* from Region and read out — never a setting beside it** (`C24`
+#46, and [§0.2](#02-the-derive-dont-store-rule-c5-generalised--kbdevenum-and-labelmd-5)). `C15` wrote
+*"a week-start setting does not exist"* as new scope; the surface that answered it found the setting
+was already there under another name. Both live on [§4.9](#49-the-settings-surface-c24-46).
 
 **AI text follows the picker**, at **one prompt line** — `C11a` priced it at 0/10 → 3/3. `C15`'s
 per-feature Hebrew veto is **declined and rebuilt as a per-response script-share check**, because
@@ -1545,7 +1649,8 @@ permitted to write**, and the Function applies it when every row agrees.
 | `publicProfiles/{uid}` | `level` | **deleted outright** | `resolvedLevel()` and `SERVER_FALLBACK` go with it |
 | | `updatedAt` | **new**, server-set — the *as-of* stamp (`C21` §3) | written by `C20`'s projection on the write that already sets `points` |
 | `challenges/{id}/participants/{uid}` | `updatedAt` | **new**, server-set (`C21` §3) | same write; `joinedAt` stays and is a **different** fact |
-| *(device, not Firestore)* | language, region, week start, skin, material, **the encrypted API key**, the quote cache, the daily-planning hour, waking hours | **per-device** | — |
+| *(device, not Firestore)* | language, region, skin, material, brightness, **the encrypted API key**, the quote cache, the daily-planning hour, waking hours | **per-device** (`C24` #46 — [§4.9](#49-the-settings-surface-c24-46)) | `AppPreferencesRepository` gains one key each; today it holds **only** `skin` |
+| | ~~week start~~ | **not stored** — derived from region and read out (`C24`, [§0.2](#02-the-derive-dont-store-rule-c5-generalised--kbdevenum-and-labelmd-5)) | — |
 
 **Migration posture, everywhere: additive with a readable half-way state.** Every new field is
 nullable or has a backfill that reads identically on day one. This is what **retires** the map's
@@ -1583,6 +1688,8 @@ Named by the decisions, so the build session does not re-find them:
 | `Mappers.kt:29` | quietly resolves `LifeArea` vs `GoalCategory` — the duplication `C2` found |
 | `Mappers.kt:176` `resolvedLevel()` | dead fallback that **can never fire** |
 | `firestore.rules:53` | its own comment already names this as the same defect |
+| `ProfileScreen.kt:114` `AppearanceCard` | the app's **only** per-device setting sits on the **account** screen — the defect `C24` #46 names, and it **moves** to §4.9's Settings rather than being extended in place |
+| `AppPreferencesRepository.kt` | holds **`skin` alone** today; §4.9 gives it language, region, material, brightness, waking hours, planning hour, provider. **`SharedPreferences` still fits** — its KDoc's reason (*read once, before the first frame, synchronously*) is `C15`'s reason for the whole set — but **the key is not one of them**: `C13` puts it in Keystore `EncryptedSharedPreferences`, a second store on purpose |
 | `functions/src/index.ts:52-55` | throws the provider's **raw error body** into Cloud Logging |
 | `ConnectivityMonitor.kt` + `GoalDetailViewModel.kt:168` | **deleted** — its whole premise was `setDone` being a server-only transaction, which `C20` removes; `C21` §5 does not resurrect it |
 | `GoalDetailViewModel.kt:238` `OFFLINE_MESSAGE` | a **hardcoded English literal in Kotlin**, not a resource (`grep -i offline strings.xml` → nothing). Deleted with the monitor — but **it is evidence the class exists**, so sweep `feature/` for user-facing literals outside `strings.xml` rather than trusting it was the only one |
@@ -1661,11 +1768,11 @@ un-sharp** and called it the next session's cheapest lead. It was right.)*
 
 ### The three gaps — each filed as a child of `#12`
 
-> **Status, 2026-08-15 — two of the three are resolved and closed.** §10.1 (`C22` #44, the measure
-> proposal) and §10.2 (`C23` #45, `GoalCategory`) are answered, and the spec sections above carry
-> their answers; **§10.3 (`C24` #46, the settings surface) is the one open child**, and after it only
-> `#12`'s own closure, which stays Ido's. **All three were decided by the agent on Ido's hand-back**,
-> so `Untested:` whether he agrees with any of it.
+> **Status, 2026-08-15 — all three are resolved and closed.** §10.1 (`C22` #44, the measure
+> proposal), §10.2 (`C23` #45, `GoalCategory`) and §10.3 (`C24` #46, the settings surface) are
+> answered, and the spec sections above carry their answers. **`#12` now has no open child**, and its
+> own closure stays Ido's. **All three were decided by the agent on Ido's hand-back**, so `Untested:`
+> whether he agrees with any of it.
 
 > **All three were filed on 2026-08-15 and the map is deliberately *not* closed.** Ido handed the
 > disposition back (*"choose the solution that gives the highest standard and quality of the app and
@@ -1767,9 +1874,25 @@ translated — the second being harder than it looks, because the enum lives in 
 hold no Android types**, and `strings.xml` is an Android type. `C23` is deliberately **narrow**: four
 of the five questions one might ask are answered above, and only those two survive.
 
-#### 10.3 · Three settings this spec requires that do not exist — now `C24` #46
+#### 10.3 · CLOSED — the settings surface, resolved as `C24` #46 on 2026-08-15
 
-Each was **named by the ticket that needed it** and none was filed:
+> **This gap is closed and the spec above carries the answer**:
+> [§4.9](#49-the-settings-surface-c24-46) is the screen — the Profile/Settings split, the
+> **consequence line**, the contents, the defaults and the three design rules it adds — and
+> [§2.5](#25-reminders-c9a-6) now names the two values it was missing. Design:
+> [`docs/prototypes/2026-08-15-c24-settings-surface`](prototypes/2026-08-15-c24-settings-surface/README.md).
+>
+> **In one line: Profile is the account, Settings is the device, and sign-out is the test.** The
+> split is **forced** rather than chosen — §5.1 stores Language per-device *because Auth has not
+> resolved*, so a control behind an account avatar contradicts its own reason for existing, and
+> `ProfileScreen.kt:114` has that defect today. **And one of the three "missing settings" turned out
+> not to be a setting**: week start is derived from Region and read out, never stored beside it.
+>
+> **Decided by the agent**, on the same standing hand-back the other two gaps were decided under.
+> `Untested:` whether Ido agrees with any of it.
+
+The original statement of the gap follows. Each was **named by the ticket that needed it** and none
+was filed:
 
 | Setting | Required by | Without it |
 |---|---|---|
@@ -1875,7 +1998,7 @@ returns **zero** children.
 | [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) | an *as-of* stamp, not an offline story | [5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) |
 | [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) | the measure proposal — marker vs offer, and the `measure` schema | [1.3](#13-the-measure--optional-two-fields-on-the-object-c7-14), [3.3](#33-the-features-and-their-schemas-c11b-1-3), [3.4](#34-the-failure-contract-c11b-4), [4.1](#41-the-material-contract-c12-31-12-standing-preferences), [10.1](#101--closed--the-measure-proposal-resolved-as-c22-44-on-2026-08-15) |
 | [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) | `GoalCategory` becomes machinery | [10.2](#102--closed--goalcategory-resolved-as-c23-45-on-2026-08-15) — its spec sections are the `#45` resolution's own scope |
-| [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) | the settings surface | **open** — [10.3](#103--three-settings-this-spec-requires-that-do-not-exist--now-c24-46) |
+| [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) | the settings surface — Profile is the account, Settings is the device, and every control states its arithmetic | [4.9](#49-the-settings-surface-c24-46), [2.5](#25-reminders-c9a-6), [5.1](#51-localization-c15-15-c15b-35), [10.3](#103--closed--the-settings-surface-resolved-as-c24-46-on-2026-08-15) |
 
 ### Sources
 
