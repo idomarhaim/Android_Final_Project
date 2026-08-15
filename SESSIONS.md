@@ -15,7 +15,33 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `backlog-triage` | Triage every open backlog issue against `docs/PRODUCT_v0.3.md`; comment, reword or close each, and file what the spec implies | `sessions/backlog-triage.md`, `CHANGELOG/2026-08-15/backlog-triage.md`, `kb-candidates/2026-08-15-backlog-triage.md`, the GitHub tracker (issues `#2`–`#11`, `#34`, `#36` and any new issue it files) | GitHub tracker (issue bodies/state) | 2026-08-15 |
+
+> 🏁 **`backlog-triage` RELEASED 2026-08-15 — `ed71060` (claim) → `373a8d5` (the triage) → this
+> commit; plus `e359f2a` in `C:\Dev\JARVIS` for the KB drain. Brief closed to
+> [`sessions/done/backlog-triage.md`](sessions/done/backlog-triage.md).** The GitHub-tracker
+> singleton is **released**.
+>
+> **The backlog is reconciled and the build order exists.** Nine open issues checked against
+> `docs/PRODUCT_v0.3.md` — **eight reworded, `#34` closed as superseded, four filed** (`#48` the
+> settings surface, `#49` `logProgress` non-atomicity, `#50` the `C21` offline unit, `#51` Hebrew and
+> RTL). **`/implement #N` is now a sufficient first message for all twelve survivors**; each names
+> the spec sections it builds against and the `§7.2` sites already located. Full account and the
+> recommended order: [`CHANGELOG/2026-08-15/backlog-triage.md`](CHANGELOG/2026-08-15/backlog-triage.md).
+>
+> **`#34` was the strongest supersede candidate and it held.** `C20` #42 adjudicated its proposal on
+> `#34`'s **own stated risk** and chose *project-from-facts*; its priced cost is not paid at all
+> (§5.3), and both its objections dissolved (§1.5 deletes four clamps, §5.2 deletes
+> `publicProfiles.level`). All three `#34` references in `#12`'s body were read before closing, as
+> the brief required — **all three cite it as precedent, none as a live instruction.**
+>
+> ⚠️ **Two things a build session should not re-derive.** `#6`'s requested settings row is
+> **deleted, not implemented** — §0.7 makes silent filing a rule, not a preference. And `#36` is
+> **narrowed**: relocating the Tasks scope off sign-in needs `AuthorizationClient`, which §8 puts
+> **out of scope for v0.3**, so only the legibility half ships.
+>
+> 📌 **Four undrained `kb-candidates/` files remain and are not this session's** —
+> `2026-08-13-c15b-stored-ai-text.md`, `2026-08-13-c2-task-type.md`, `2026-08-15-c23-goal-category.md`,
+> `2026-08-15-c24-settings-surface.md`.
 
 > 🏁 **THE MAP IS CLOSED. [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12) was
 > closed by Ido on 2026-08-15**, at his instruction and as its own last act — **31 children, all
