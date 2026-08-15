@@ -16,8 +16,43 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
-| `social-share-bugs` | `/kickoff social-share-bugs` → fix **[`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)** (shared photo cannot be opened, no `contentDescription`) and **[`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5)** (cannot delete your own share). One pass over the Social feed card, which today has **zero** interactive nodes. | `app/src/main/java/com/idomarhaim/goalpilot/feature/social/`, `.../domain/model/Social.kt`, `.../domain/repository/SocialRepository.kt`, `.../domain/repository/StorageRepository.kt`, `.../data/firestore/SocialRepositoryImpl.kt`, `.../data/storage/StorageRepositoryImpl.kt`, `app/src/test/java/com/idomarhaim/goalpilot/feature/social/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SocialFeedUiTest.kt`, `firestore.rules`, `storage.rules`, `firestore-tests/` (`rules.test.mjs` + its `package.json` test script), `gradle.properties`, `CHANGELOG/2026-08-15/social-share-bugs.md`, `kb-candidates/2026-08-15-social-share-bugs.md`, **`sessions/social-share-bugs.md` only** | **Gradle daemon**, **git index**, emulator **`Pixel_10_Pro_XL`** (device re-verification), issues **`#4`** + **`#5`** | 2026-08-15 |
 
+> ✅ **`social-share-bugs` released 2026-08-15 — `b99c5da` (claim) → `b762520`, pushed. Brief moved to
+> `sessions/done/`. `#4` and `#5` are fixed and tested, and both are deliberately left OPEN.**
+>
+> **The card that had zero interactive nodes now has two, and the test that says so counts them.** `#4` got both
+> its faults, as two things: the photo opens into a full-screen zoom/pan viewer, **and** it is announced —
+> `contentDescription` was `null`, the API's word for *decorative*. `#5` got all five of its layers. Emulator
+> `Pixel_10_Pro_XL` **released**.
+>
+> ⚠️ **The best finding is that one of `#5`'s five layers was already done and another was silently broken.**
+> Step 2 — the `firestore.rules` author-only delete — has been correct since `1e56ee3`; the issue and the brief
+> both assumed it needed writing. What was missing was any **test** that it was there. Step 5 was the opposite:
+> `storage.rules` had one `allow write` clause, `write` covers **delete**, a delete sends no `request.resource`,
+> so its size/contentType guard raised and **the owner was denied deletion of their own image**. `Observed:` the
+> emulator names it — *"storage.rules line [12], column [12]. Null value error."* Split into
+> `allow create, update` + `allow delete`. Nothing in the app could have surfaced this: the delete path treats
+> image cleanup as best-effort by design, so it would have shipped as *"shared photos accumulate forever"*.
+>
+> 🛑 **`#5` is not closable and `#4` is not verified, and both holds are Ido's to lift.** (a) `storage.rules` is
+> **not deployed** to live `goalpilot-56e30` — a rules deploy is an outward action, always-ask in both modes;
+> until it happens the post deletes and the photo survives. (b) The end-to-end device reproduction needs **Ido's
+> Google account**: the app installs and launches and stops at the sign-in screen. What *was* device-verified:
+> the ten new `SocialFeedUiTest` cases ran the real `FeedCard` on the real `Pixel_10_Pro_XL` and
+> `onAllNodes(hasClickAction())` returned **2** where both issues measured **0**.
+>
+> 📥 **Ingested** — `kb-candidates/2026-08-15-social-share-bugs.md` fully drained and deleted. New page
+> `kb/dev/guards-on-absent-input.md` and an extension to `kb/dev/mechanism-vs-compliance.md` §6, committed in
+> `C:\Dev\JARVIS` as `aac7502` under a visitor row there. **That commit is held from pushing** — a sibling holds
+> `rules/` and `user-rules/` dirty in that tree with no board row, which is §5's *an absent row is not proof the
+> session is finished*. `Observed:` still unpublished as of the 14:38Z upstream re-check.
+>
+> ⚠️ **Not a bug in this repo, but nothing here could build until it was fixed: the pinned JDK 21 is a wreck.**
+> `jdk-21.0.11.10-hotspot` holds an orphaned `lib/` and no `bin/java.exe`, and both `gradle.properties` and the
+> machine `JAVA_HOME` pointed at it. `gradle.properties` is repointed to `jdk-21.0.12.8-hotspot`; **`JAVA_HOME`
+> is still wrong and is Ido's to fix.** `AGENTS.md` and `CLAUDE.md` both say the machine default is JDK **25** —
+> it is now the broken 21.
+>
 > ➕ **`social-share-bugs` widened its own row at 14:1x, before writing the added paths.** `storage.rules` and
 > `gradle.properties` were not in the original claim because neither looked like part of this work, and both turned
 > out to be: the rules suite proved `storage.rules` **denies the author their own image delete** (`request.resource`

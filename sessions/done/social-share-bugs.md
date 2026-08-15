@@ -2,10 +2,24 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 issue: https://github.com/idomarhaim/Android_Final_Project/issues/4
 created: 2026-08-15 by c21-offline-story
+closed: 2026-08-15 — claim `b99c5da`, work `b762520` (pushed); KB ingest `aac7502` in `C:\Dev\JARVIS` (held)
 ---
+
+> **Closed with two of its Exit conditions unmet, and both are Ido's to lift, not the session's to waive.**
+> The `storage.rules` deploy to live `goalpilot-56e30` is an outward action and always-ask — the brief says so
+> itself — and the end-to-end device reproduction needs Ido's Google account. `#4` and `#5` are therefore left
+> **open**, exactly as the brief's last line instructs. Everything else landed: both bugs fixed, tests at every
+> layer that exists (rules 30/30, JVM 218/218, instrumented 39/39), the non-vacuity check paid against the old
+> rules and recorded, and `CHANGELOG/2026-08-15/social-share-bugs.md` written.
+>
+> **The brief's own premise was half wrong, in the useful direction.** It said `#5` needed a `firestore.rules`
+> clause written; that clause has existed since `1e56ee3`. What was actually broken was `storage.rules`, which
+> the brief never mentions — `allow write` covers `delete`, a delete sends no `request.resource`, and the
+> size/contentType guard therefore denied the owner their own image. Found only because step 3's test was
+> written before step 5 was believed.
 
 # Fix the two Social feed bugs — `#4` (photo cannot be opened, no label) and `#5` (cannot delete your own share)
 
