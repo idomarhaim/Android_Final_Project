@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C22 · The measure proposal — GoalPilot prototype</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     C22 · THE MEASURE PROPOSAL — prototype for #44 on map #12.
+
+     The question: a goal has no measure, and the agent proposes one. What
+     does that proposal look like — as a surface Ido reacts to, and as an
+     AI call?
+
+     Material blocks adapted from 2026-08-13-area-success-failure (which
+     adapted them from 2026-08-13-log-progress ← 2026-08-11-visual-styles,
+     C12 #31), because #12's Standing preferences require every screen to
+     be designed against the MATERIAL CONTRACT — surface · groove ·
+     elevation · accent — never against one look.
+
+     Carried forward, each earned by a defect rather than by taste:
+       --edge  no affordance is ever shadow-only (neo's WCAG failure).
+       .tag    a life area is NAMED in words beside its dot; dark neo
+               collapses categorical hue into one accent ramp.
+       <bdi>   every number, range and date is isolated — bidi reorders
+               "3 of 8" and "09:00–12:00" in Hebrew, and in Compose too.
+
+     One rule this screen adds:
+       AN OFFER IS NEVER AN OUTCOME. The proposal never borrows the
+       accent that means "kept" (C19) or the filled bar that means
+       progress. It is a DASHED, hollow affordance throughout, so it can
+       never be misread as the app having already done something to the
+       goal. Nothing on this screen is red, and nothing is a percentage.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+       background:#070A0F;color:#C9D6E4;padding:26px 20px 60px;-webkit-font-smoothing:antialiased}
+  h1{font-size:19px;font-weight:700;letter-spacing:-.02em;color:#EAF1F8}
+  .lede{font-size:13px;line-height:1.65;color:#8FA3B8;max-width:1060px;margin-top:8px}
+  .lede b{color:#C9D6E4;font-weight:640}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 8px;align-items:center}
+  .bar .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+            color:#5C7086;font-weight:700;margin-right:2px}
+  .bar button{background:#111823;color:#9FB3C8;border:1px solid #1E2A3A;border-radius:999px;
+    padding:7px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .bar button.on{background:#1C4C7A;border-color:#2F7FC4;color:#EAF6FF}
+  .bar .gap{width:14px}
+  .stage{display:flex;flex-wrap:wrap;gap:28px;margin-top:22px;align-items:flex-start}
+  .frame{display:flex;flex-direction:column;align-items:center}
+  .cap{font-size:11.5px;color:#7C90A6;text-align:center;margin-top:10px;max-width:392px;
+       line-height:1.55}
+  .cap b{color:#AEC2D6}
+  .cap code{color:#9FC7E8;font-size:11px}
+  .cap .vk{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+     border:1px solid #2A3A4E;border-radius:6px;padding:1px 6px;margin-bottom:5px;color:#8FB6D8}
+
+  /* ── device shell — identical in every material, so it is not a variable ── */
+  .ph{width:392px;height:812px;border-radius:46px;border:11px solid #04080c;position:relative;
+      overflow:hidden;display:flex;flex-direction:column;color:var(--fg);
+      box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 30px 70px rgba(0,0,0,.6)}
+  .ph::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:86px;height:25px;border-radius:999px;background:#04080c;z-index:60}
+  .sb{height:40px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:6px 26px 0;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;
+      color:var(--fg)}
+  .sc{flex:1;overflow:hidden;position:relative;z-index:2;display:flex;flex-direction:column;
+      gap:11px;padding:6px 15px 14px;color:var(--fg)}
+
+  /* ── screen chrome ── */
+  .top{display:flex;align-items:center;gap:10px}
+  .back{font-size:19px;opacity:.6;font-weight:700}
+  .h-scr{font-size:21px;font-weight:730;letter-spacing:-.02em;flex:1;line-height:1.2}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;flex:none;
+       display:inline-flex;align-items:center;gap:5px;letter-spacing:.01em}
+  .tag i{width:7px;height:7px;border-radius:50%;flex:none;display:block}
+
+  .card{padding:14px 15px 13px;display:flex;flex-direction:column;gap:11px}
+  .c-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .h3{font-size:15px;font-weight:710;letter-spacing:-.015em}
+  .h3 small{display:block;font-size:11px;font-weight:560;opacity:.66;margin-top:3px;
+            letter-spacing:0}
+
+  /* the effort card — C3: effort is a FACT Ido owns and it exists whether or
+     not the goal has a measure. Drawing it here is what makes the missing
+     bar read as "no outcome number" rather than "no data". */
+  .pair{display:flex;align-items:stretch;gap:10px}
+  .pair .n{flex:1;display:flex;flex-direction:column;gap:2px;padding:11px 13px}
+  .pair .nv{font-size:27px;font-weight:740;line-height:1;font-variant-numeric:tabular-nums;
+            letter-spacing:-.02em}
+  .pair .nl{font-size:11.5px;font-weight:640;opacity:.66}
+
+  /* ── the absence, stated ──────────────────────────────────────────────
+     C7: absence is the DEFAULT, and §0.4 makes it legal-but-never-silent.
+     So the screen says the absence is a choice BEFORE it offers anything —
+     an offer that arrives without that line reads as a correction. */
+  .noms{display:flex;gap:9px;align-items:flex-start;padding:12px 13px;border-radius:16px;
+        border:1.5px dashed var(--edge);font-size:12px;line-height:1.5;font-weight:580;
+        opacity:.9}
+  .noms .ic{font-size:14px;opacity:.7;flex:none;line-height:1.3}
+  .noms b{font-weight:720}
+
+  /* ── the offer ────────────────────────────────────────────────────────
+     Never filled, never accented as an outcome: a dashed frame with a
+     hollow lozenge. C19's pair (Break it into steps / Schedule the first
+     one) is the sibling this is modelled on, so "Give it a number" reads
+     as a third member of a set rather than a new kind of interruption. */
+  .offer{padding:13px;display:flex;flex-direction:column;gap:10px;
+         border-style:dashed !important;border-width:1.5px !important}
+  .offer .oh{display:flex;gap:9px;align-items:flex-start}
+  .offer .lz{width:26px;height:26px;border-radius:999px;flex:none;border:1.5px dashed var(--acc);
+     display:grid;place-items:center;font-size:13px;font-weight:800;line-height:1;opacity:.9}
+  .offer .ot{flex:1;font-size:13px;font-weight:680;line-height:1.4}
+  .offer .ot small{display:block;font-size:11.5px;font-weight:560;opacity:.78;margin-top:4px;
+                   line-height:1.5}
+  .offer .why{font-size:10.5px;font-weight:600;opacity:.62;line-height:1.45;padding:0 1px}
+  .acts{display:flex;gap:8px}
+  .acts .btn{flex:1;cursor:pointer}
+  .btn{padding:11px 12px;font-size:12.5px;font-weight:680;text-align:center;border-radius:999px}
+
+  /* ── the sheet ── */
+  .sheet{padding:15px 14px 14px;display:flex;flex-direction:column;gap:11px;
+         border-radius:26px 26px 0 0 !important;flex:none}
+  /* rev 1 floated the sheet on an empty screen, so nothing said what it had
+     been opened FROM — and a bottom sheet with no scrim is not a bottom sheet.
+     The goal screen stays visible and dimmed behind it. */
+  .scrimwrap{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;
+     justify-content:flex-end;background:rgba(2,6,14,.58)}
+  .grab{width:38px;height:4px;border-radius:999px;background:var(--fg);opacity:.28;
+        margin:0 auto 3px}
+  .opt{padding:12px 13px;display:flex;flex-direction:column;gap:8px;cursor:pointer}
+  .opt.sel{border-color:var(--acc) !important;border-width:1.5px !important}
+  .opt .oh2{display:flex;align-items:flex-start;gap:9px}
+  .opt .rd{width:17px;height:17px;border-radius:999px;flex:none;border:2px solid var(--edge);
+           margin-top:1px;position:relative}
+  .opt.sel .rd{border-color:var(--acc)}
+  .opt.sel .rd::after{content:'';position:absolute;inset:3px;border-radius:999px;
+           background:var(--acc)}
+  .opt .ol{flex:1;font-size:12.5px;font-weight:670;line-height:1.4}
+  .opt .ol small{display:block;font-size:11px;font-weight:560;opacity:.72;margin-top:3px;
+                 line-height:1.5}
+  /* the measure itself, drawn as its two fields so the SHAPE is visible:
+     a closed kind (chip, translated app logic) + a free word (user content). */
+  .meas{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11.5px}
+  .chip{padding:5px 10px;font-size:10.5px;font-weight:720;letter-spacing:.05em;
+        text-transform:uppercase;white-space:nowrap}
+  .word{font-weight:700;font-size:12.5px;border-bottom:1.5px dashed var(--edge);padding-bottom:1px}
+  /* display:block, not flex. As a flex row the three text nodes became three
+     narrow columns — "Nothing to | compute | from." — which is unreadable and
+     was only visible once rendered. */
+  .prov{font-size:10.5px;font-weight:620;opacity:.66;line-height:1.5;display:block}
+  .prov b{font-weight:740;opacity:.9}
+
+  /* ── the C19 area list, so variant B can be judged in its real home ── */
+  .glist{display:flex;flex-direction:column;gap:7px}
+  /* flex-direction:row is NOT redundant — .card above sets column, and .card is
+     the earlier rule with equal specificity, so `class="card g-row"` inherited
+     column and every row rendered with its marker stacked above its title,
+     centred. Invisible in the source; obvious in the first render. */
+  .g-row{display:flex;flex-direction:row;align-items:center;gap:10px;padding:10px 13px}
+  .g-row .gm{width:15px;height:15px;border-radius:50%;flex:none;border:2px solid var(--edge);
+             position:relative}
+  .g-row .gm.keep{background:var(--keep);border-color:transparent}
+  .g-row .gm.miss{background:transparent}
+  /* still owed — C9a: not a failure, so it is dashed and accented, never hollow */
+  .g-row .gm.late{background:transparent;border-color:var(--acc);border-style:dashed}
+  .g-row .gm.next,.g-row .gm.num{border-style:dashed;background:none;display:grid;
+             place-items:center;font-size:10px;font-weight:800;opacity:.8;line-height:1}
+  .g-row .gt{flex:1;font-size:13px;font-weight:650;line-height:1.35}
+  .g-row .gt small{display:block;font-size:11px;font-weight:560;opacity:.76;margin-top:2px}
+  .sub-acts{display:flex;gap:7px;padding:0 2px 2px}
+  .sub-acts .btn{flex:1;font-size:11.5px;padding:9px 8px}
+
+  /* ── the daily surface (C10), so variant C is judged against what it
+        would have to share a screen with ── */
+  .quote{font-size:13.5px;line-height:1.6;font-weight:600;font-style:italic;padding:13px}
+  .quote cite{display:block;font-style:normal;font-size:11px;opacity:.62;font-weight:640;
+              margin-top:7px}
+  .line{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;font-size:12.5px;
+        line-height:1.5;font-weight:560}
+  .line .ic{font-size:15px;flex:none;line-height:1.25}
+  .line b{font-weight:730}
+
+  /* ── fallback frame ── */
+  .mini{padding:12px 13px;display:flex;flex-direction:column;gap:9px}
+  .mini .mh{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .mini .mb{font-size:11.5px;font-weight:560;line-height:1.55;opacity:.82}
+  .steps{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .steps i{width:13px;height:13px;border-radius:4px;border:1.5px solid var(--edge);
+           display:block;flex:none}
+  .steps i.on{background:var(--keep);border-color:transparent}
+  .hush{font-size:11.5px;font-weight:600;opacity:.55;line-height:1.55;padding:11px 13px;
+        border-radius:16px;border:1.5px dotted var(--edge);text-align:center}
+  .sect{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:750;
+        opacity:.55;padding:2px 3px}
+
+  /* ════════════════════════ 1 · GLASSMORPHISM ════════════════════════ */
+  .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;--edge:rgba(255,255,255,.34);
+    --acc:#7FE8DC;--accfg:#06222B;--keep:#7FE8DC;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
+    --edge:rgba(20,36,66,.26);--acc:#0E7C8F;--accfg:#EAFBFF;--keep:#0E7C8F;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass .card,.st-glass .chip,.st-glass .btn,.st-glass .tag,.st-glass .line,
+  .st-glass .offer,.st-glass .sheet,.st-glass .opt,.st-glass .mini,.st-glass .quote,
+  .st-glass .pair .n{
+    background:rgba(255,255,255,.13);
+    backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+    border:1px solid var(--edge);
+    box-shadow:0 10px 30px rgba(6,12,28,.30), inset 0 1px 0 rgba(255,255,255,.42);}
+  .st-glass[data-theme="light"] .card,.st-glass[data-theme="light"] .chip,
+  .st-glass[data-theme="light"] .btn,.st-glass[data-theme="light"] .tag,
+  .st-glass[data-theme="light"] .line,.st-glass[data-theme="light"] .offer,
+  .st-glass[data-theme="light"] .sheet,.st-glass[data-theme="light"] .opt,
+  .st-glass[data-theme="light"] .mini,.st-glass[data-theme="light"] .quote,
+  .st-glass[data-theme="light"] .pair .n{
+    background:rgba(255,255,255,.62);
+    box-shadow:0 10px 26px rgba(40,60,110,.13), inset 0 1px 0 rgba(255,255,255,.9);}
+  .st-glass .card,.st-glass .offer,.st-glass .mini,.st-glass .quote{border-radius:var(--rad)}
+  .st-glass .chip,.st-glass .btn,.st-glass .tag{border-radius:999px}
+  .st-glass .line,.st-glass .pair .n,.st-glass .opt{border-radius:18px}
+
+  /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════ */
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;--edge:rgba(255,255,255,.42);
+    --acc:#9BEFE5;--accfg:#04262A;--keep:#9BEFE5;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
+    --edge:rgba(16,28,54,.28);--acc:#0C6C7E;--accfg:#F0FEFF;--keep:#0C6C7E;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid .card,.st-liquid .chip,.st-liquid .btn,.st-liquid .tag,.st-liquid .line,
+  .st-liquid .offer,.st-liquid .sheet,.st-liquid .opt,.st-liquid .mini,.st-liquid .quote,
+  .st-liquid .pair .n{
+    position:relative;overflow:hidden;border:1px solid var(--edge);
+    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
+               rgba(255,255,255,.14));
+    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    box-shadow:
+      inset 1.4px 1.4px 0 rgba(255,255,255,.72),
+      inset -1.4px -1.4px 0 rgba(255,255,255,.16),
+      0 18px 40px rgba(4,10,24,.42);}
+  .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .chip,
+  .st-liquid[data-theme="light"] .btn,.st-liquid[data-theme="light"] .tag,
+  .st-liquid[data-theme="light"] .line,.st-liquid[data-theme="light"] .offer,
+  .st-liquid[data-theme="light"] .sheet,.st-liquid[data-theme="light"] .opt,
+  .st-liquid[data-theme="light"] .mini,.st-liquid[data-theme="light"] .quote,
+  .st-liquid[data-theme="light"] .pair .n{
+    background:linear-gradient(150deg, rgba(255,255,255,.74), rgba(255,255,255,.4) 52%,
+               rgba(255,255,255,.58));
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
+               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
+               0 18px 36px rgba(40,60,110,.18);}
+  .st-liquid .card,.st-liquid .offer,.st-liquid .mini,.st-liquid .quote{border-radius:var(--rad)}
+  .st-liquid .chip,.st-liquid .btn,.st-liquid .tag{border-radius:999px}
+  .st-liquid .line,.st-liquid .pair .n,.st-liquid .opt{border-radius:22px}
+
+  /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════ */
+  .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
+    --lo:#FFFFFF;--sh:rgba(163,177,198,.62);--edge:rgba(42,51,64,.26);
+    --acc:#3B7DA8;--accfg:#F2FAFF;--keep:#3B7DA8;background:#E7ECF3;}
+  .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
+    --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);--edge:rgba(221,228,238,.26);
+    --acc:#6FB6E8;--accfg:#06202E;--keep:#6FB6E8;background:#252A32;}
+  .st-neo .card,.st-neo .chip,.st-neo .btn,.st-neo .tag,.st-neo .offer,.st-neo .sheet,
+  .st-neo .mini{
+    background:transparent;border:1px solid var(--edge);
+    box-shadow:6px 6px 14px var(--sh), -6px -6px 14px var(--lo);}
+  /* read, not pressed → neo inverts the groove. The .opt rows are choices,
+     so they stay raised; .line, .quote and .pair are recessed. */
+  .st-neo .line,.st-neo .pair .n,.st-neo .quote{background:transparent;
+    border:1px solid var(--edge);
+    box-shadow:inset 4px 4px 10px var(--sh), inset -4px -4px 10px var(--lo);}
+  .st-neo .opt{background:transparent;border:1px solid var(--edge);
+    box-shadow:4px 4px 10px var(--sh), -4px -4px 10px var(--lo);}
+  /* neo's whole surface IS the page colour plus shadows, so .sheet inherited
+     background:transparent — and over a scrim that means the dimmed screen
+     behind reads straight THROUGH the sheet: in light neo the goal's absence
+     line collided with the sheet's own title. A sheet is the one neo surface
+     that must be opaque, because it is the only one with something behind it. */
+  .st-neo{--sheet:#E7ECF3}
+  .st-neo[data-theme="dark"]{--sheet:#252A32}
+  .st-neo .sheet{background:var(--sheet)}
+  .st-neo .card,.st-neo .offer,.st-neo .mini,.st-neo .quote{border-radius:var(--rad)}
+  .st-neo .chip,.st-neo .btn,.st-neo .tag{border-radius:999px}
+  .st-neo .line,.st-neo .pair .n,.st-neo .opt{border-radius:18px}
+
+  /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════ */
+  .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
+    --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);--edge:rgba(237,242,248,.22);
+    --a1:#5FD8FF;--a2:#1170E4;--acc:#5FD8FF;--accfg:#04121F;--keep:#5FD8FF;background:#1B1F26;}
+  .st-darkneo[data-theme="light"]{background:#22262E;} /* it has no light scheme */
+  .st-darkneo .card,.st-darkneo .chip,.st-darkneo .tag,.st-darkneo .offer,.st-darkneo .sheet,
+  .st-darkneo .mini,.st-darkneo .opt{
+    background:linear-gradient(158deg,#232830,#1A1E25);border:1px solid var(--edge);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo),
+               inset 0 1px 0 rgba(255,255,255,.05);}
+  .st-darkneo .line,.st-darkneo .pair .n,.st-darkneo .quote{
+    background:linear-gradient(158deg,#1F242C,#191D24);
+    border:1px solid var(--edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  .st-darkneo .card,.st-darkneo .offer,.st-darkneo .mini,.st-darkneo .quote{
+    border-radius:var(--rad)}
+  .st-darkneo .chip,.st-darkneo .tag{border-radius:999px}
+  .st-darkneo .line,.st-darkneo .pair .n,.st-darkneo .opt{border-radius:22px}
+  .st-darkneo .btn{border-radius:999px;background:linear-gradient(110deg,var(--a2),var(--a1));
+    color:#06121C;border:1px solid rgba(255,255,255,.2);
+    box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
+  .st-darkneo .btn.ghost{background:linear-gradient(158deg,#232830,#1A1E25);color:var(--fg);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo)}
+
+  /* shared button skin for the three materials that do not override it.
+     .st .btn.primary, not .btn.primary — the light-theme overrides are
+     (class + attr + class) and would re-paint it with the surface gradient. */
+  .st .btn.primary{background:var(--acc);color:var(--accfg);border:1px solid var(--edge)}
+  .st-neo .btn.primary{box-shadow:5px 5px 12px var(--sh), -5px -5px 12px var(--lo)}
+  /* the DISMISS is never the loud one and never destructive-coloured: it is a
+     ghost of equal size. A dismiss drawn small is a dark pattern; drawn red it
+     says a choice was a mistake. C7 makes absence the default — the two
+     buttons are peers. */
+  .st .btn.ghost{background:transparent;border:1px solid var(--edge);color:var(--fg)}
+  .st-neo .btn.ghost{box-shadow:3px 3px 8px var(--sh), -3px -3px 8px var(--lo)}
+  .st .chip{background:transparent;border:1px solid var(--edge);box-shadow:none}
+
+  /* RTL: only the flow mirrors. Numbers and ranges are isolated with <bdi>. */
+  [dir="rtl"] .back{transform:scaleX(-1)}
+</style>
+</head>
+<body>
+
+<h1>C22 · What the agent offers a goal that has no number</h1>
+<p class="lede">
+  Prototype for <b>#44</b> on map <b>#12</b>, revision 1. Three <b>placements</b> for one offer,
+  side by side — they disagree about <b>when a person is receptive</b>, which is the axis, not about
+  what the offer says. Then the sheet the offer opens, and the case that decides the tone: <b>what
+  happens when there is no model</b>. Drawn against the <b>material contract</b>
+  (surface · groove · elevation · accent), so switching material changes the surface and nothing
+  else. Two rules are embodied rather than argued: <b>the absence is stated as legal before anything
+  is offered</b> (<code>C7</code> — absence is the default), and <b>an offer never borrows the
+  visual language of an outcome</b> — everything here is dashed and hollow, so it can never read as
+  the app having already changed the goal.
+</p>
+
+<div class="bar">
+  <span class="lbl">Material</span>
+  <button data-m="glass" class="on">Glassmorphism</button>
+  <button data-m="liquid">Liquid glass</button>
+  <button data-m="neo">Neo</button>
+  <button data-m="darkneo">Dark neo</button>
+  <span class="gap"></span>
+  <span class="lbl">Theme</span>
+  <button data-t="dark" class="on">Dark</button>
+  <button data-t="light">Light</button>
+  <span class="gap"></span>
+  <span class="lbl">Language</span>
+  <button data-l="en" class="on">English</button>
+  <button data-l="he">עברית</button>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+/* ── the five frames ─────────────────────────────────────────────────────────
+   A  the goal's own screen  · the offer stands where the bar is missing
+   B  the life-area screen   · a third sibling of C19's offer pair
+   C  the daily review       · one card, competing with C10's feed
+   4  the sheet              · what accepting opens — outcome vs leading indicator
+   5  no model               · the mechanical half, and the goal it says nothing about
+   ------------------------------------------------------------------------- */
+
+let M = 'glass', TH = 'dark', L = 'en';
+
+const HUE = {health:'#5FBF93', career:'#6FA5DC', learn:'#B98FD8'};
+
+const T = {
+  en: {
+    dir:'ltr', clock:'9:41',
+    areas:{health:'Health', career:'Career', learn:'Learning'},
+    goal:'Get fit',
+    effort:['<bdi>4h 20m</bdi>', 'logged this month'], sess:['<bdi>11</bdi>','sessions'],
+    /* the absence line comes FIRST and is not an apology */
+    noms:['No number on this one.','That is a choice, and it stays one — nothing here is incomplete.'],
+    offerT:'Count the runs you already schedule',
+    offerS:'<bdi>3</bdi> a week. It is the rhythm that produces the shape, and you have already agreed to it — so the number is yours, not a guess.',
+    why:'The app never applies this on its own. Dismiss once and this goal stops asking.',
+    use:'Use this', not:'Not for this goal', later:'Not now',
+    /* the schedule the target is computed FROM — on screen, so the offer's
+       provenance is visible rather than asserted in a caption */
+    week:'This week',
+    occ:[['done','Run · Tue','<bdi>32</bdi> min'],['done','Run · Thu','<bdi>28</bdi> min'],
+         ['owed','Run · Sun','not yet']],
+    /* B */
+    areaGoals:'Goals in this area',
+    bRows:[
+      ['keep','Drink 2 L a day','<bdi>6</bdi> weeks unbroken'],
+      ['num','Get fit','no number — <bdi>11</bdi> sessions logged'],
+      ['next','Sleep before midnight','no next step'],
+      ['keep','Meal prep on Sunday','<bdi>4</bdi> weeks unbroken'],
+    ],
+    bPair:['Give it a number','Not for this goal'],
+    bPair2:['Break it into steps','Schedule the first one'],
+    /* C */
+    daily:'Today', theme:'Momentum',
+    quote:['Small disciplines repeated with consistency lead to great achievements.','— the shipped corpus'],
+    practical:['Two runs are already on this week. The third is the one that makes it a rhythm.'],
+    cTitle:'One goal could carry a number',
+    dayT:'Today', dayList:[['done','Run · <bdi>30</bdi> min'],['open','Read <bdi>20</bdi> pages'],
+      ['open','Write the stand-up notes']],
+    /* sheet */
+    sheetH:'A number for <b>Get fit</b>',
+    optA:['Measure the outcome','a number that says how far along the goal itself is'],
+    optB:['Measure what produces it','a leading indicator — the recurring behaviour, not the result'],
+    optC:['Something else','you pick the kind and the word yourself'],
+    kindA:'COUNT', wordA:'kg lost', targA:'target — you set it',
+    kindB:'COUNT', wordB:'runs a week', targB:'<bdi>3</bdi> a week',
+    provA:['Nothing to compute from.','The app will not invent a target, and the model is not asked for one — free numbers swung <bdi>2×</bdi> run to run.'],
+    provB:['From your own schedule.','<bdi>3</bdi> runs a week are already set on this goal, so the target is arithmetic, not a judgement.'],
+    add:'Add it', none:'No number for this goal',
+    changeable:'You can change or remove it later. Changing the kind is never silent — logged history is either reset or adapted with your approval first.',
+    /* fallback — two REAL screens, not a card explaining a rule */
+    fb1g:'Read Clean Architecture', fb1e:['<bdi>3h 05m</bdi>','logged this month'],
+    fb1s:['<bdi>2</bdi>','of <bdi>8</bdi> steps'],
+    fb1T:'Count the steps you already listed',
+    fb1S:'<bdi>2</bdi> of <bdi>8</bdi> done. Nothing was generated here — the steps are yours and the count is arithmetic, so this offer stands with no model behind it.',
+    stepsT:'Steps',
+    stepList:[['done','Ch. 1–3 · the paradigms'],['done','Ch. 4–6 · design principles'],
+      ['open','Ch. 7–11 · component cohesion'],['open','Ch. 12–17 · boundaries']],
+    fb2g:'Advance my career', fb2e:['<bdi>2h 10m</bdi>','logged this month'],
+    fb2s:['<bdi>4</bdi>','sessions'],
+    emptyWeek:'Nothing scheduled',
+  },
+  he: {
+    dir:'rtl', clock:'9:41',
+    areas:{health:'בריאות', career:'קריירה', learn:'לימודים'},
+    goal:'להיכנס לכושר',
+    effort:['<bdi>4:20</bdi> שעות', 'נרשמו החודש'], sess:['<bdi>11</bdi>','אימונים'],
+    noms:['אין מספר ליעד הזה.','זו בחירה, והיא נשארת בחירה — שום דבר כאן אינו חסר.'],
+    offerT:'לספור את הריצות שכבר קבעת',
+    offerS:'<bdi>3</bdi> בשבוע. זה הקצב שמייצר את התוצאה, וכבר התחייבת אליו — אז המספר הוא שלך, לא ניחוש.',
+    why:'האפליקציה לעולם לא מחילה את זה לבד. דחייה אחת, והיעד הזה מפסיק לשאול.',
+    use:'להשתמש בזה', not:'לא ליעד הזה', later:'לא עכשיו',
+    week:'השבוע',
+    occ:[['done','ריצה · שלישי','<bdi>32</bdi> דק׳'],['done','ריצה · חמישי','<bdi>28</bdi> דק׳'],
+         ['owed','ריצה · ראשון','עוד לא']],
+    areaGoals:'יעדים בתחום הזה',
+    bRows:[
+      ['keep','לשתות <bdi>2</bdi> ליטר ביום','<bdi>6</bdi> שבועות ברצף'],
+      ['num','להיכנס לכושר','אין מספר — <bdi>11</bdi> אימונים נרשמו'],
+      ['next','לישון לפני חצות','אין צעד הבא'],
+      ['keep','הכנת אוכל בראשון','<bdi>4</bdi> שבועות ברצף'],
+    ],
+    bPair:['לתת לזה מספר','לא ליעד הזה'],
+    bPair2:['לפרק לצעדים','לקבוע את הראשון'],
+    daily:'היום', theme:'תנופה',
+    quote:['משמעת קטנה שחוזרת על עצמה בעקביות מובילה להישגים גדולים.','— מהמאגר המובנה'],
+    practical:['שתי ריצות כבר קבועות השבוע. השלישית היא זו שהופכת את זה לקצב.'],
+    cTitle:'ליעד אחד אפשר לתת מספר',
+    dayT:'היום', dayList:[['done','ריצה · <bdi>30</bdi> דק׳'],['open','לקרוא <bdi>20</bdi> עמודים'],
+      ['open','לכתוב את סיכום הסטנד-אפ']],
+    /* "מספר ל" + "להיכנס לכושר" produced "מספר ללהיכנס לכושר" — a double lamed
+       that is simply wrong Hebrew, and it only appeared once rendered. */
+    sheetH:'מספר ליעד: <b>להיכנס לכושר</b>',
+    optA:['למדוד את התוצאה','מספר שאומר כמה התקדמת ביעד עצמו'],
+    optB:['למדוד את מה שמייצר אותה','מדד מוביל — ההתנהגות החוזרת, לא התוצאה'],
+    optC:['משהו אחר','אתה בוחר את הסוג ואת המילה'],
+    kindA:'כמות', wordA:'ק״ג שירדו', targA:'יעד — אתה קובע',
+    kindB:'כמות', wordB:'ריצות בשבוע', targB:'<bdi>3</bdi> בשבוע',
+    provA:['אין ממה לחשב.','האפליקציה לא תמציא יעד, והמודל לא נשאל עליו — מספרים חופשיים זזו פי <bdi>2</bdi> בין הרצות.'],
+    provB:['מלוח הזמנים שלך.','<bdi>3</bdi> ריצות בשבוע כבר קבועות ביעד הזה, אז היעד הוא חשבון ולא שיפוט.'],
+    add:'להוסיף', none:'בלי מספר ליעד הזה',
+    changeable:'אפשר לשנות או להסיר בהמשך. שינוי הסוג לעולם אינו שקט — ההיסטוריה הרשומה מאופסת, או מותאמת באישורך מראש.',
+    fb1g:'לקרוא את Clean Architecture', fb1e:['<bdi>3:05</bdi> שעות','נרשמו החודש'],
+    fb1s:['<bdi>2</bdi>','מתוך <bdi>8</bdi> צעדים'],
+    fb1T:'לספור את הצעדים שכבר רשמת',
+    fb1S:'<bdi>2</bdi> מתוך <bdi>8</bdi> הושלמו. שום דבר כאן לא נוצר על ידי מודל — הצעדים שלך והספירה היא חשבון, ולכן ההצעה עומדת גם בלי מודל.',
+    stepsT:'צעדים',
+    stepList:[['done','פרקים <bdi>1–3</bdi> · הפרדיגמות'],['done','פרקים <bdi>4–6</bdi> · עקרונות עיצוב'],
+      ['open','פרקים <bdi>7–11</bdi> · לכידות רכיבים'],['open','פרקים <bdi>12–17</bdi> · גבולות']],
+    fb2g:'לקדם את הקריירה', fb2e:['<bdi>2:10</bdi> שעות','נרשמו החודש'],
+    fb2s:['<bdi>4</bdi>','מפגשים'],
+    emptyWeek:'לא נקבע דבר',
+  },
+};
+
+/* ── shared pieces ───────────────────────────────────────────────────────── */
+
+const sb  = t => `<div class="sb"><bdi>${t.clock}</bdi><span>▮▮ ▲ ▮</span></div>`;
+const tag = (t,k) => `<span class="tag"><i style="background:${HUE[k]}"></i>${t.areas[k]}</span>`;
+
+/* the offer. ONE component, three placements — that is the point of the
+   frames: if the offer had to be redrawn per placement it would be three
+   features, not one. */
+function offer(t, {title, sub, why, primary, secondary, dashed=true}) {
+  return `<div class="card offer">
+    <div class="oh">
+      <span class="lz">+</span>
+      <span class="ot">${title}<small>${sub}</small></span>
+    </div>
+    ${why ? `<div class="why">${why}</div>` : ''}
+    <div class="acts">
+      <span class="btn primary">${primary}</span>
+      <span class="btn ghost">${secondary}</span>
+    </div>
+  </div>`;
+}
+
+/* ── A · the goal's own screen ───────────────────────────────────────────── */
+/* the week is drawn BELOW the offer on purpose: it is where "3 a week" comes
+   from, so the provenance is on the screen instead of in a caption. Rev 1 left
+   the bottom 40% of this frame empty, which is exactly the vacuum the prototype
+   skill warns hides design problems. */
+function goalScreen(t) {
+  return `<div class="top"><span class="back">‹</span>
+      <span class="h-scr">${t.goal}</span>${tag(t,'health')}</div>
+
+    <div class="pair">
+      <div class="n"><span class="nv">${t.effort[0]}</span><span class="nl">${t.effort[1]}</span></div>
+      <div class="n"><span class="nv">${t.sess[0]}</span><span class="nl">${t.sess[1]}</span></div>
+    </div>
+
+    ${/* the absence FIRST. An offer that arrives without this line reads as a
+         correction of a decision Ido made on purpose. */''}
+    <div class="noms"><span class="ic">◇</span>
+      <span><b>${t.noms[0]}</b> ${t.noms[1]}</span></div>`;
+}
+function weekBlock(t) {
+  return `<div class="sect">${t.week}</div>
+    <div class="glist">
+      ${t.occ.map(o=>`<div class="card g-row"><span class="gm ${
+        o[0]==='done'?'keep':'late'}"></span>
+        <span class="gt">${o[1]}<small>${o[2]}</small></span></div>`).join('')}
+    </div>`;
+}
+function frameA(t) {
+  return `${sb(t)}<div class="sc">
+    ${goalScreen(t)}
+    ${offer(t,{title:t.offerT, sub:t.offerS, why:t.why,
+               primary:t.use, secondary:t.not})}
+    ${weekBlock(t)}
+  </div>`;
+}
+
+/* ── B · the life-area screen, C19's real component ──────────────────────── */
+function frameB(t) {
+  const mark = k => k==='keep' ? '<span class="gm keep"></span>'
+              : k==='num'  ? '<span class="gm num">#</span>'
+              : '<span class="gm next">+</span>';
+  return `${sb(t)}<div class="sc">
+    <div class="top"><span class="back">‹</span>
+      <span class="h-scr">${t.areas.health}</span></div>
+
+    ${/* the pairs are NESTED IN THE ROW they act on. Rev 1 floated both pairs
+         under the list, where nothing said which goal either belonged to — and
+         with three rows above them, "Give it a number" could plausibly have
+         meant any of the three. C19 already ships "Break it into steps /
+         Schedule the first one" as a COMMAND rather than an inference; "Give it
+         a number" is a third member of that set, so it must attach the same
+         way. */''}
+    <div class="sect">${t.areaGoals}</div>
+    <div class="glist">
+      ${t.bRows.map((r,i)=>`<div class="card" style="gap:9px;padding:10px 13px">
+        <div class="g-row" style="padding:0">${mark(r[0])}
+          <span class="gt">${r[1]}<small>${r[2]}</small></span></div>
+        ${i===1 ? `<div class="sub-acts" style="padding:0">
+             <span class="btn primary">${t.bPair[0]}</span>
+             <span class="btn ghost">${t.bPair[1]}</span></div>` : ''}
+        ${i===2 ? `<div class="sub-acts" style="padding:0">
+             <span class="btn ghost">${t.bPair2[0]}</span>
+             <span class="btn ghost">${t.bPair2[1]}</span></div>` : ''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── C · the daily review, against C10's own feed ────────────────────────── */
+function frameC(t) {
+  return `${sb(t)}<div class="sc">
+    <div class="top"><span class="h-scr">${t.daily}</span>
+      <span class="tag"><i style="background:${HUE.health}"></i>${t.theme}</span></div>
+
+    <div class="quote">${t.quote[0]}<cite>${t.quote[1]}</cite></div>
+    <div class="line"><span class="ic">◆</span><span>${t.practical[0]}</span></div>
+
+    <div class="sect">${t.cTitle}</div>
+    ${offer(t,{title:t.offerT, sub:t.offerS, why:t.why,
+               primary:t.use, secondary:t.later})}
+
+    ${/* the day's own list, so the offer is judged at real density rather than
+         on an empty route — and so the cost of this placement is visible: it
+         pushes the actual work of the day down the screen. */''}
+    <div class="sect">${t.dayT}</div>
+    <div class="glist">
+      ${t.dayList.map(d=>`<div class="card g-row"><span class="gm ${
+        d[0]==='done'?'keep':'miss'}"></span>
+        <span class="gt">${d[1]}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── 4 · the sheet ───────────────────────────────────────────────────────── */
+function frameSheet(t) {
+  const opt = (sel,l,s,extra) => `<div class="opt${sel?' sel':''}">
+      <div class="oh2"><span class="rd"></span>
+        <span class="ol">${l[0]}<small>${l[1]}</small></span></div>
+      ${extra||''}
+    </div>`;
+  const meas = (kind,word,targ) =>
+    `<div class="meas"><span class="chip">${kind}</span>
+       <span class="word">${word}</span><span style="opacity:.6">·</span>
+       <span style="font-weight:640">${targ}</span></div>`;
+  return `${sb(t)}<div class="sc">
+    ${goalScreen(t)}
+    <div class="scrimwrap"><div class="sheet card">
+      <div class="grab"></div>
+      <div class="h3">${t.sheetH}</div>
+
+      ${opt(false, t.optA, null, meas(t.kindA,t.wordA,t.targA) +
+        `<div class="prov"><b>${t.provA[0]}</b> ${t.provA[1]}</div>`)}
+      ${opt(true, t.optB, null, meas(t.kindB,t.wordB,t.targB) +
+        `<div class="prov"><b>${t.provB[0]}</b> ${t.provB[1]}</div>`)}
+      ${opt(false, t.optC)}
+
+      <div class="why">${t.changeable}</div>
+      <div class="acts">
+        <span class="btn primary">${t.add}</span>
+        <span class="btn ghost">${t.none}</span>
+      </div>
+    </div></div>
+  </div>`;
+}
+
+/* ── 5 & 6 · no model, as two REAL screens ───────────────────────────────────
+   Rev 1 drew these as two cards on a page titled "When there is no model" —
+   which is a slide about a rule, not a screen, and the silent case in
+   particular cannot be judged as a card that says "nothing is shown here".
+   The only way to see whether an empty answer reads as deliberate or broken is
+   to look at the actual goal screen with nothing on it. */
+function fallbackFrame(t, arithmetic) {
+  const head = (g, area, e, s) => `<div class="top"><span class="back">‹</span>
+      <span class="h-scr">${g}</span>${tag(t,area)}</div>
+    <div class="pair">
+      <div class="n"><span class="nv">${e[0]}</span><span class="nl">${e[1]}</span></div>
+      <div class="n"><span class="nv">${s[0]}</span><span class="nl">${s[1]}</span></div>
+    </div>
+    <div class="noms"><span class="ic">◇</span>
+      <span><b>${t.noms[0]}</b> ${t.noms[1]}</span></div>`;
+
+  if (arithmetic) return `${sb(t)}<div class="sc">
+    ${head(t.fb1g,'learn',t.fb1e,t.fb1s)}
+    ${/* the same component, the same two buttons, no model behind it */''}
+    ${offer(t,{title:t.fb1T, sub:t.fb1S, why:t.why, primary:t.use, secondary:t.not})}
+    <div class="sect">${t.stepsT}</div>
+    <div class="glist">
+      ${t.stepList.map(s=>`<div class="card g-row"><span class="gm ${
+        s[0]==='done'?'keep':'miss'}"></span>
+        <span class="gt">${s[1]}</span></div>`).join('')}
+    </div>
+  </div>`;
+
+  return `${sb(t)}<div class="sc">
+    ${head(t.fb2g,'career',t.fb2e,t.fb2s)}
+    ${/* a section header with nothing under it reads as a loading failure, which
+         is the one thing this screen must not do. The quiet dotted row is a
+         statement. */''}
+    ${/* and then nothing. No card, no greyed placeholder, no "we could not
+         reach the model". The absence line above is already there on every
+         unmeasured goal, which is what makes this screen read as deliberate
+         rather than broken. */''}
+    <div class="hush">${t.emptyWeek}</div>
+  </div>`;
+}
+
+/* ── stage ───────────────────────────────────────────────────────────────── */
+
+const CAPS = {
+  en:[
+    '<span class="vk">PLACEMENT A</span><b>The goal\'s own screen — where the bar is missing.</b> Receptive because he is already looking at this goal. Nothing interrupts, and the absence is stated as legal <i>before</i> anything is offered.',
+    '<span class="vk">PLACEMENT B</span><b>The life-area screen — a third sibling of <code>C19</code>\'s pair.</b> Receptive because he is reviewing the area. The <b>#</b> marker is a new row state, and the offer is one of three commands rather than a new kind of thing.',
+    '<span class="vk">PLACEMENT C</span><b>The daily review — one card, at most one a day.</b> Receptive because he set time aside to plan. But it shares a screen with <code>C10</code>\'s quote and practical line, and it is the only placement that arrives <i>unasked</i>.',
+    '<b>What accepting opens.</b> Outcome <i>or</i> leading indicator, and the leading one is preselected because it is the only one with a real target: <b>the app computed <bdi>3</bdi> a week from the schedule</b>. The model is never asked for a number.',
+    '<span class="vk">NO MODEL · 1</span><b>The offer survives on arithmetic.</b> Same component, same two buttons — but the words are the app\'s and the number is a count of steps Ido wrote himself. The free-model rule is satisfied by a <b>mechanical half</b>, not by a degraded one.',
+    '<span class="vk">NO MODEL · 2</span><b>And here the app says nothing.</b> No schedule, no steps, nothing to count. There is no card, no greyed placeholder and no <i>we couldn\'t reach the model</i>. The absence line is on every unmeasured goal anyway, which is what makes this read as deliberate rather than broken.',
+  ],
+  he:[
+    '<span class="vk">מיקום A</span><b>המסך של היעד עצמו — במקום שבו הפס חסר.</b> קשוב כי הוא ממילא מסתכל על היעד הזה. שום דבר לא קוטע, וההיעדר מוצהר כלגיטימי <i>לפני</i> שמוצע משהו.',
+    '<span class="vk">מיקום B</span><b>מסך תחום החיים — אח שלישי לזוג של <code>C19</code>.</b> קשוב כי הוא סוקר את התחום. הסימן <b>#</b> הוא מצב שורה חדש, וההצעה היא אחת משלוש פקודות ולא סוג חדש של דבר.',
+    '<span class="vk">מיקום C</span><b>הסקירה היומית — כרטיס אחד, לכל היותר פעם ביום.</b> קשוב כי הוא הקצה זמן לתכנן. אבל הוא חולק מסך עם הציטוט והשורה המעשית של <code>C10</code>, והוא המיקום היחיד שמגיע <i>בלי שנשאל</i>.',
+    '<b>מה שנפתח בקבלה.</b> תוצאה <i>או</i> מדד מוביל, והמוביל מסומן מראש כי רק לו יש יעד אמיתי: <b>האפליקציה חישבה <bdi>3</bdi> בשבוע מלוח הזמנים</b>. המודל לעולם לא נשאל על מספר.',
+    '<span class="vk">בלי מודל · 1</span><b>ההצעה שורדת על חשבון בלבד.</b> אותו רכיב, אותם שני כפתורים — אבל המילים של האפליקציה והמספר הוא ספירת צעדים שאידו כתב בעצמו. כלל המודל החינמי מסופק על ידי <b>חצי מכני</b>, לא על ידי גרסה מנוונת.',
+    '<span class="vk">בלי מודל · 2</span><b>וכאן האפליקציה שותקת.</b> אין לוח זמנים, אין צעדים, אין מה לספור. אין כרטיס, אין מציין מקום מעומעם ואין <i>לא הצלחנו להגיע למודל</i>. שורת ההיעדר מופיעה ממילא בכל יעד בלי מספר, וזה מה שגורם למסך להיקרא ככוונה ולא כתקלה.',
+  ],
+};
+
+function render() {
+  const t = T[L];
+  const frames = [frameA(t), frameB(t), frameC(t), frameSheet(t),
+                  fallbackFrame(t,true), fallbackFrame(t,false)];
+  document.getElementById('stage').innerHTML = frames.map((html,i)=>`
+    <div class="frame">
+      <div class="ph st st-${M}" data-theme="${TH}" dir="${t.dir}">${html}</div>
+      <div class="cap">${CAPS[L][i]}</div>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.bar button').forEach(b=>{
+  b.onclick = () => {
+    const g = b.dataset.m ? 'm' : b.dataset.t ? 't' : 'l';
+    document.querySelectorAll(`.bar button[data-${g}]`).forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if (g==='m') M = b.dataset.m; else if (g==='t') TH = b.dataset.t; else L = b.dataset.l;
+    render();
+  };
+});
+
+/* query string, so shoot.ps1 can render any state: ?m=neo&t=light&l=he */
+const q = new URLSearchParams(location.search);
+if (q.get('m')) M = q.get('m');
+if (q.get('t')) TH = q.get('t');
+if (q.get('l')) L = q.get('l');
+document.querySelectorAll('.bar button').forEach(b=>{
+  if (b.dataset.m) b.classList.toggle('on', b.dataset.m===M);
+  if (b.dataset.t) b.classList.toggle('on', b.dataset.t===TH);
+  if (b.dataset.l) b.classList.toggle('on', b.dataset.l===L);
+});
+render();
+</script>
+</body>
+</html>
