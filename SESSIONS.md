@@ -91,6 +91,14 @@ before your first write. Normative rule:
 > write into a board it is actively editing. The candidate names its own bundle check **and its width limit**.
 > **The five pre-existing candidate files stay** — every surviving entry in them is ⛔ always-ask in both modes.
 >
+> 📄 **Two briefs written after release, in one commit — no Active row, per the ceremony rule.**
+> [`sessions/social-share-bugs.md`](sessions/social-share-bugs.md) (`#4`+`#5`, **runnable now**, disjoint from
+> `product-v03-spec`: `feature/social/` + `firestore.rules` vs `docs/`) and
+> [`sessions/backlog-triage.md`](sessions/backlog-triage.md) (**after** the spec, **before** any build session —
+> `#34` is a supersede candidate `C20` already adjudicated, and a build session opening it today would implement
+> a rejected design). Both are new files no sibling touches. **Not written:** briefs for `#2`, `#6`–`#11` — they
+> depend on `docs/PRODUCT_v0.3.md`, which does not exist yet, so a brief for them now would rot before it is read.
+>
 > Account: [`CHANGELOG/2026-08-15/c21-offline-story.md`](CHANGELOG/2026-08-15/c21-offline-story.md).
 
 > 🚢 **`c11b-output-formats` visited 2026-08-15 for one commit — no Active row, per the ceremony
