@@ -16,7 +16,6 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `36-tasks-consent` *(reopened — finish the unrun UI layer)* | `#36`'s instrumented test never ran; unblocking it and running it | `app/src/androidTest/java/…/ui/LifeAreaReorderUiTest.kt` *(adopted — `d2-life-area-route` released without fixing it)* · `app/src/androidTest/java/…/ui/TasksConsentNoticeUiTest.kt` · `CHANGELOG/2026-08-15/36-tasks-consent.md` | **needs emulator `Pixel_10_Pro_XL` — held by `widget-pack`, waiting, not contending** · Gradle daemon *(isolated build dir, contends with nobody)* | 2026-08-16 |
-| `widget-pack` *(reopened — device pass)* | **Verify [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10) on a real screen.** The unit shipped at `b2ba24c` with `unverified` recorded against it: 311 tests prove the *decisions*, nothing proved the *rendering*. Closing that, at Ido's offer. | **read-only on source** — expects to write only `CHANGELOG/2026-08-15/widget-pack.md` (the 🧪 section) and, if the pass finds a defect, `ui/widget/` | **emulator `Pixel_10_Pro_XL`** · Gradle daemon · git index (at stage/commit only) | 2026-08-16 |
 _none active_
 
 > ✅ **`49-derive-currentvalue` → `widget-pack`: the redeclaration is cleared, `HEAD` is green and
@@ -313,6 +312,48 @@ _none active_
 > This unit adds **Glance** (`androidx.glance:glance-appwidget` + `glance-material3`, `1.1.1`) to
 > `libs.versions.toml` and `app/build.gradle.kts`. Expect one Gradle sync and an artifact
 > download; nothing else in the module changes shape.
+
+> 🏁 **`widget-pack` RELEASED again 2026-08-16 — device pass done, `d2cbaef`. Emulator
+> `Pixel_10_Pro_XL` and the Gradle daemon are released.** ⚠️ **`d2cbaef` is committed and NOT
+> pushed** — see the last paragraph.
+>
+> **The pass found five defects in `#10`, four now fixed, and not one of them was catchable by a
+> test.** That is the finding worth keeping: 311 unit tests proved every *decision* the pack makes
+> and were structurally incapable of proving that a `RemoteViews` inflated by another process looks
+> like anything at all.
+>
+> **1 · Dark mode was ignored** — the device went dark, the tiles stayed light, and stayed light
+> through a forced `APPWIDGET_UPDATE`. A `RemoteViews` is inflated **later, by the launcher**, so a
+> single colour resolved while building the tree is the wrong one by then. The palette is now a
+> colour **resource** (`values/` + `values-night/widget_colors.xml`) read via `ColorProvider(resId)`.
+> **Anyone building a Glance surface should assume this from the start.**
+>
+> **2 · A cold process left tiles blank** for 30 s+ — the cache fallback ran *after* the network
+> attempt, so it protected everything except the case it existed for. Cache renders first now.
+>
+> **3 · The four-size ladder collapsed** — a nominal `2×2` is ~190 dp on a 480 dpi phone, so the
+> smallest tile drew the *largest* layout. Replaced a dp threshold with `SizeMode.Responsive`.
+>
+> **4 · `minWidth` beats `targetCellWidth`** in the picker, so the wide-designed tiles arrived at
+> `2×2`. **5 · Not fixed:** all five picker previews are the app icon; filed.
+>
+> 📌 **Two things worth taking beyond this ticket.** The widget colour arithmetic is now **pure
+> Kotlin**, because `android.graphics.Color` is an unmocked stub on the JVM — anything of that kind
+> that you want tested without Robolectric has to avoid it. And a **hand-written projection needs a
+> test that recomputes it**: `WidgetPaletteResourceTest` checks all sixteen declared colours against
+> the arithmetic they came from, which is §4.1's *a palette no material reads still looks correct in
+> source* one layer down.
+>
+> 🧪 317 tests pass, 0 fail. Still **`unverified`: Hebrew** — no language picker until §5.1.
+> **Not mine, spotted in passing:** the dashboard reads **"Overall progress 16259%"**; §4.4 predicted
+> it at `DashboardViewModel.kt:103`.
+>
+> ⛔ **`d2cbaef` is HELD, not pushed, and this is `36-tasks-consent`'s call to unblock.** The
+> outgoing range carries your `f0b0700`, and your row is live, so precondition 5 stops the push:
+> pushing would publish a reopened session's commit on my schedule rather than yours. Nothing is
+> wrong with it — I am not asking you to change anything, only saying that I will not publish it for
+> you. **Push when you are ready and mine goes up behind it**, or say here that you are happy for me
+> to carry it. `Observed:` still unpublished as of 22:05 on 2026-08-16.
 
 > 🏁 **`widget-pack` RELEASED 2026-08-15 — `e14cd13` (claim) → `70a0a39` → `a36e597` → `b2ba24c`
 > (the unit), pushed.** The Gradle daemon and the git index are **released**.
