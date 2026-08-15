@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c24-settings-surface` | Resolve [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) — the settings surface (last open child of map [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12)) | `docs/prototypes/2026-08-15-c24-settings-surface/`, `docs/PRODUCT_v0.3.md` §10.3, `CHANGELOG/2026-08-15/c24-settings-surface.md`, `kb-candidates/2026-08-15-c24-settings-surface.md` | `#12` map body | 2026-08-15 18:51 |
 
 > 🎉 **`social-share-bugs` FULLY released 2026-08-15 — [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)
 > and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) are CLOSED, with the evidence on each
