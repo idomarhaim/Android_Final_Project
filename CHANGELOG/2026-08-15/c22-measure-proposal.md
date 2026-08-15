@@ -135,3 +135,82 @@ An explicit release is a positive signal a session writes about itself, so it se
 without the transcript check. Paths are disjoint from this session's throughout.
 
 `#46` (`C24`, the settings surface) remains the only unclaimed frontier ticket on `#12`.
+
+---
+
+# Unit 3 — `#44` resolved and closed
+
+Ido was asked the one question that was his — **which placement** — and **handed the decision back**,
+in near-identical words to the two delegations this map received earlier the same day: *"I couldn't
+fully understand you or the implications of each option — explain simply and schematically… choose
+the solution that gives the highest standard and quality of the app (and its purpose), UX/UI and the
+software. And if you can improve it, improve it. Should it be in several places?"*
+
+`rules/question-axis-naming.md` forbids re-asking a delegated question, requires **deriving** the
+answer, and warns it is often **not in the option set**. It was not.
+
+## The decision — the agent's, and Ido's to overturn
+
+> **It is two things, not one placement: a *marker*, silent, wherever the goal is listed, and an
+> *offer*, only on the goal's own screen — because opening the goal is the consent.**
+
+**The fork was false in a specific way, and naming the way is the point:** every option was a
+*placement of one object*, and the object is **two**. No member of the set distinguished *stating a
+fact* from *making an offer*, so none of them could be right — which is exactly the shape the rule
+predicts for a question that gets handed back.
+
+**§0.7 decides it and was already closed** — *intrinsic structure needs consent; instrumental
+structure does not.* Breaking a goal into steps is instrumental, which is why `C19` may put its pair
+inline in a list; a **measure defines what counts as progress on the goal**, which is intrinsic, and
+`C7` already required consent for it (*never auto-applies, dismissible per goal*). So the offer may
+not be pushed into a list being scanned for something else; the marker may, because stating a fact
+asserts nothing.
+
+**The daily review is ruled out on a second closed decision** — `C10` allocated that screen's three
+slots, and it is the one surface that arrives **unasked**. Consequence: **there is a fifth AI call**
+(`measure`); under the daily-review placement it would have ridden `daily`'s envelope, which is why
+the placement had to be settled before the schema.
+
+**Direct answer to his question — yes for the marker, no for the offer.**
+
+## Rev 2, and the defect the rewrite exposed
+
+Frame C deleted (not greyed out), frame B's offer removed so the row carries only the marker, and the
+two rows now differ **on purpose** with `C19`'s pair still on the one below. Then a fifth render
+round found the seventh defect: **the `#` marker was a dashed circle**, indistinguishable at a glance
+from `C19`'s dashed circle carrying `+`. Every circle in this language is an occurrence or an
+outcome, so the number slot is now a **square** — distinguished by **form**, never hue, verified in a
+dark-neo Hebrew close-up.
+
+## Written out of this session
+
+- **`#44`** — resolution comment, **closed**.
+- **`#12`** (the map body singleton this session held) — *Decisions so far* gains **two** lines and
+  *What is left* drops to one open child. **The `C23` line is written here too**: the
+  `c23-goal-category` session resolved `#45` and released **without** the `#12` singleton, so its
+  index line was owed and the map's own discipline note sanctions a third party writing the gist
+  (*"a gist of a public resolution comment, not a second opinion on it"*).
+- **`docs/PRODUCT_v0.3.md`** — §1.3 gap marker cleared and the two-surface rule stated; §3.3 gains
+  feature **E** with its schema and why it is a fifth call; §3.4 gains the mechanical-fallback row;
+  §4.1 gains **an overlay component declares its own opacity**; §10.1 marked ✅ CLOSED with the
+  original account kept verbatim, because *how* the hand-off was lost is the finding; §10.2 given a
+  factual closed-pointer for `C23` **without** rewriting its spec sections, which are the `#45`
+  resolution's own scope; §11 traceability gains `C22`, `C23`, `C24`.
+
+## 🧪 Tests
+
+Five render rounds total, **seven defects, six invisible in the source**. Full list in the prototype
+README. No code layer touched.
+
+## 📥 KB candidates
+
+Both entries in `kb-candidates/2026-08-15-c22-measure-proposal.md` **strengthened by this unit rather
+than superseded** — entry 1 (a material with no opaque layer) is now also a committed spec line, and
+entry 2 (a frame that explains an empty state cannot test it) held again. Still **not drained**:
+central-KB destination, cross-repo `C:\Dev\JARVIS` visit owing a row on that board.
+
+## 🔒 Lease note
+
+`SESSIONS.md` came back **BLOCKED by `c23-goal-category`** at release time, ~10 minutes after that
+session had already released its *claim*. Per `§5.2` this session did **not** ask — it reordered onto
+the changelog and spec work, which need no such path, and took the lease afterwards.

@@ -245,8 +245,18 @@ conversions this app never performs.
 - proposes a **concrete** measure for that specific goal — never *"consider adding a metric"*;
 - may propose a **leading indicator** (measure the recurring behaviour that produces the outcome)
   rather than fake an outcome number;
-- **never auto-applies**, and the offer is **dismissible per goal**;
-- has a **non-AI fallback**. ⚠️ **GAP** — see [§10.1](#101--the-measure-proposal-has-no-schema--now-c22-44).
+- **never auto-applies**, and the offer is **dismissible per goal** — dismissal is **permanent**, not
+  snoozed, because a default that re-asks is not a default;
+- has a **non-AI fallback** — the **mechanical proposal**, [§3.3 E](#33-the-features-and-their-schemas-c11b-1-3).
+
+**It is two surfaces, not one** (`C22` #44). A **marker** — a dashed **square**, no words, no
+buttons — wherever the goal is listed; and the **offer** itself **only on the goal's own screen**,
+because **opening the goal is the consent** [§0.7](#07-intrinsic-structure-needs-consent-instrumental-structure-does-not-c4-9)
+requires for intrinsic structure. It is **never** in the daily surface: `C10` allocated those slots,
+and it is the one screen that arrives unasked. The **absence is stated as legal before anything is
+offered**, or the offer reads as a correction of a deliberate choice; and the offer is drawn dashed
+and hollow throughout, so it can never borrow the visual language of an outcome. Design:
+[`docs/prototypes/2026-08-15-measure-proposal`](prototypes/2026-08-15-measure-proposal/README.md).
 
 **Changing a kind is never silent.** Either **reset**, or a **proposed adaptation of logged history
 shown before it applies** — with **arithmetic first and the model only where arithmetic cannot
@@ -451,7 +461,7 @@ extra requests**.
 answers to one question already on the goal**, quietly resolved by `Mappers.kt:29`. Replacement was
 never available: `C15` puts user content outside what the app may rewrite, and after `C17` a task
 reaches an area only **through its goals**. ⚠️ **GAP** —
-see [§10.2](#102--goalcategorys-fate-was-routed-to-c5-and-c5-did-not-decide-it--now-c23-45).
+see [§10.2](#102--closed--goalcategory-resolved-as-c23-45-on-2026-08-15).
 
 ---
 
@@ -686,9 +696,19 @@ made **explicit absence** its modelled value.)
 | **B** | **`plan`** — a proposed draft, and *Adjust Plan* | `C8` §10 | *(none)* | **new** |
 | **C** | **`daily`** — theme + practical line per intrinsic edge | `C10` | `getRecommendations` | **absorbed** — the four coach cards go |
 | **D** | **`classify`** — which goal, which life area, or a new goal | `R3` / [#6](https://github.com/idomarhaim/Android_Final_Project/issues/6) — **no `C` ticket** | `classifyTask` | **survives, minus `estimatedPoints`** |
+| **E** | **`measure`** — a concrete measure for an unmeasured goal | `C7` §, `C22` [#44](https://github.com/idomarhaim/Android_Final_Project/issues/44) | *(none)* | **new** — the fifth format `C7` handed on and `C11b` never received |
 
 `classify` is the feature the map never named, and it is **the highest-volume one** (one call per
 Google-Tasks row on import, one per quick-add) **and the one where the only measured failure lives**.
+
+**`measure` is the lowest-volume one, by construction.** It fires **once per goal**, when the goal
+first becomes eligible (gains a schedule, or a second step), wide over every newly-eligible goal; the
+proposal is stored on the goal, and dismissal is permanent — so **a goal is proposed at most once,
+ever**, and the feature adds no recurring load against the 30-RPM ceiling the wide call exists to
+protect. It is a **fifth call rather than a field group** by `C11b`'s own surviving test — differing
+fallback behaviour — and because `estimate` is task-scoped, `classify` fires per quick-add row and
+`plan` is user-invoked. *(Had `C22` put the offer in the daily surface it would have ridden `daily`
+instead; it does not, so it does not.)*
 
 #### A · `estimate`
 
@@ -777,6 +797,33 @@ rather than a prompt instruction**.
 the moment it appeared among his goals*, so it is never translated and is exempt from the script
 check. `rationale` and `confidence` are **speech** and are kept.
 
+#### E · `measure`
+
+```jsonc
+// request: { language, goals: [ { id, title, lifeAreaName?,
+//                                occurrencesPerWeek?: int,   // what the schedule says (C9a)
+//                                openStepCount?:     int } ] // what the sub-tree says (C18)
+{ "proposals": [ {
+    "goalId":       "<MUST be a member of goals[].id — else the whole element is dropped>",
+    "measureKind":  "COUNT"|"DURATION"|"DISTANCE"|"VOLUME"|"MASS"|"MONEY"|"PERCENT",
+    "word":         "<content — ≤ 24 chars, authored once in `language`>",
+    "basis":        "OUTCOME" | "LEADING",
+    "targetSource": "SCHEDULE" | "STEPS" | "USER"
+} ] }
+```
+
+**There is no number in the response, and that is the whole design.** `targetSource` is a
+prompt-declared enum naming **which arithmetic the app runs** — `SCHEDULE` → the occurrences already
+on the goal, `STEPS` → the count of its open sub-tasks, `USER` → ask him. This is
+[§0.5](#05--the-ai-judges-the-app-computes-c7-reused-by-c1-c3-c10-c2-c8) at full strength and it is
+**forced rather than chosen**: `C11a` measured free numbers swinging **2× run-to-run** and **1.8×
+between languages**, and the target is the one field the feature would be judged on.
+
+`word` is the only free field and it is **content**, so `classify`'s rule above governs it unchanged:
+proposed once, his the moment he accepts it, never re-rendered (`C15b`). A proposal missing
+`measureKind`, `word` or `targetSource` **is not a proposal**, so the element is dropped whole —
+there is no partial measure.
+
 ### 3.4 The failure contract *(`C11b` §4)*
 
 | Class | What it is | Observed in 248 calls | Contract |
@@ -801,6 +848,13 @@ ride the fallback silently.
 | `daily` | `message` | the quote alone, from the corpus in the APK |
 | `classify` | `suggestedLifeAreaId` | on import the Google Tasks list wins anyway; on quick-add, unfiled |
 | `classify` | `suggestedGoalId` | **the new-goal branch — and this one speaks** |
+| `measure` | any | the **mechanical proposal** — `openStepCount ≥ 2` → *count the steps you already listed*; else `occurrencesPerWeek ≥ 1` → *count the occurrences you already schedule*; else **no proposal at all**, silent |
+
+**`measure` is the one feature whose fallback is not a degraded version of itself.** Where the goal
+already carries structure the proposal is **pure arithmetic** and the surface is unchanged — same
+component, same two buttons, only the wording is the app's rather than the model's. That is what
+satisfies [§0.1](#01-the-free-model-rule-12-notes-scope-fixed-by-ido-2026-08-0708) here, and it is
+cheaper than `plan`'s *no proposal at all* because `C18` and `C9a` already hold the counts.
 
 **Every row is silent except the last**, per [§0.4](#04-legal-but-never-silent-c7-refined-by-c13-5).
 An absent `suggestedGoalId` does not *degrade* the outcome, it **changes** it — so it **tells and
@@ -1000,6 +1054,13 @@ Two consequences that would otherwise be found late:
   shadow-only (neo's known WCAG failure).
 - **`.tag`** — a category is **written in words** beside its dot, because dark neo collapses the six
   categorical hues into one ramp and **colour stops carrying identity**.
+- **An overlay component declares its own opacity** — a bottom sheet, a dialog, a menu: anything with
+  a scrim behind it. Neo's surface **is** the page colour plus a shadow pair, so a component that
+  inherits the material's surface rule inherits **transparency**, and the dimmed screen reads straight
+  **through** the overlay. `Observed:` 2026-08-15 in light neo, where a sheet's own title collided
+  with the goal screen behind it; **invisible in glass, liquid glass and dark neo**, which blur or
+  fill, so a review of any of those three passes it. Found by `C22` #44 and stated here rather than
+  on that ticket, because it binds every screen with an overlay, not one.
 
 **The cost, stated:** `backdrop-filter`, SVG filters and CSS shadow pairs are **web** primitives. In
 Compose the equivalents are `Modifier.blur`, `RenderEffect` (API 31+, with a fallback below), and
@@ -1598,7 +1659,13 @@ un-sharp** and called it the next session's cheapest lead. It was right.)*
 
 ## 10 · Gaps, defects and open work
 
-### The three gaps — each now an open child of `#12`
+### The three gaps — each filed as a child of `#12`
+
+> **Status, 2026-08-15 — two of the three are resolved and closed.** §10.1 (`C22` #44, the measure
+> proposal) and §10.2 (`C23` #45, `GoalCategory`) are answered, and the spec sections above carry
+> their answers; **§10.3 (`C24` #46, the settings surface) is the one open child**, and after it only
+> `#12`'s own closure, which stays Ido's. **All three were decided by the agent on Ido's hand-back**,
+> so `Untested:` whether he agrees with any of it.
 
 > **All three were filed on 2026-08-15 and the map is deliberately *not* closed.** Ido handed the
 > disposition back (*"choose the solution that gives the highest standard and quality of the app and
@@ -1622,7 +1689,22 @@ un-sharp** and called it the next session's cheapest lead. It was right.)*
 > build session is blocked on any of the three** — it is told precisely where a decision is owed, and
 > `#12`'s own completeness rule gained a second clause so a hand-off cannot be lost this way again.
 
-#### 10.1 · The measure proposal has no schema — now `C22` #44
+#### 10.1 · CLOSED — the measure proposal, resolved as `C22` #44 on 2026-08-15
+
+> **This gap is closed and the spec above carries the answer**: [§1.3](#13-the-measure--optional-two-fields-on-the-object-c7-14)
+> (the two surfaces and the permanent dismissal), [§3.3 E](#33-the-features-and-their-schemas-c11b-1-3)
+> (the schema, and why it is a fifth call), [§3.4](#34-the-failure-contract-c11b-4) (the mechanical
+> fallback), [§4.1](#41-the-material-contract-c12-31-12-standing-preferences) (the overlay-opacity
+> rule it found on the way). Design:
+> [`docs/prototypes/2026-08-15-measure-proposal`](prototypes/2026-08-15-measure-proposal/README.md).
+>
+> **The answer was not a schema, and it was not one of the placements the prototype offered.** It is
+> **two surfaces** — a silent marker wherever the goal is listed, and the offer only on the goal's own
+> screen, because **opening the goal is the consent** [§0.7](#07-intrinsic-structure-needs-consent-instrumental-structure-does-not-c4-9)
+> requires. **Decided by the agent on Ido's hand-back**, and `Untested:` whether he agrees — all of it
+> is his to overturn.
+>
+> The account below is kept **as written**, because how the hand-off was lost is the finding.
 
 `C7` specced an agent that **proposes a concrete measure** for an unmeasured goal, and handed it on in
 so many words: *"This is a **fifth AI feature** for [`C11b` #30] to write an output format for."*
@@ -1653,7 +1735,18 @@ easily-resented surface on this map;
 [§0.4](#04-legal-but-never-silent-c7-refined-by-c13-5) makes it legal, **tone** is what makes it
 wanted, and no ticket has designed that. The schema is a *part* of `C22`, not the whole of it.
 
-#### 10.2 · `GoalCategory`'s fate was routed to `C5`, and `C5` did not decide it — now `C23` #45
+#### 10.2 · CLOSED — `GoalCategory`, resolved as `C23` #45 on 2026-08-15
+
+> **Resolved and closed by the `c23-goal-category` session; the answer lives on
+> [#45](https://github.com/idomarhaim/Android_Final_Project/issues/45) and is gisted on `#12`.** In
+> one line: **the enum survives as *machinery* and stops being a taxonomy the user sees** — never
+> rendered beside a life area, ten → seven, `Goal.category` nullable with a zero-write migration,
+> `GoalCategory.label` **deleted** rather than moved, and the classifier handed **Ido's own areas**
+> when he has any. Filed [#47](https://github.com/idomarhaim/Android_Final_Project/issues/47).
+>
+> **This pointer is written by `c22-measure-proposal`, which held the `#12` body singleton — it is a
+> gist of a public resolution comment, not a second opinion on it.** The spec sections that section
+> §10.2 bears on are **not** rewritten here; that is the `#45` resolution's own scope.
 
 `C2` ruled `GoalCategory`'s fate **out of scope for itself** and **posted it to
 [`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21)** as a goal-model question,
@@ -1780,6 +1873,9 @@ returns **zero** children.
 | [`C19` #41](https://github.com/idomarhaim/Android_Final_Project/issues/41) | per-area success and failure | [4.7](#47-per-life-area-success-and-failure-c19-41-e4) |
 | [`C20` #42](https://github.com/idomarhaim/Android_Final_Project/issues/42) | who owns derived state | [5.2](#52-who-owns-a-derived-number-c20-42), [5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) |
 | [`C21` #43](https://github.com/idomarhaim/Android_Final_Project/issues/43) | an *as-of* stamp, not an offline story | [5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) |
+| [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) | the measure proposal — marker vs offer, and the `measure` schema | [1.3](#13-the-measure--optional-two-fields-on-the-object-c7-14), [3.3](#33-the-features-and-their-schemas-c11b-1-3), [3.4](#34-the-failure-contract-c11b-4), [4.1](#41-the-material-contract-c12-31-12-standing-preferences), [10.1](#101--closed--the-measure-proposal-resolved-as-c22-44-on-2026-08-15) |
+| [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) | `GoalCategory` becomes machinery | [10.2](#102--closed--goalcategory-resolved-as-c23-45-on-2026-08-15) — its spec sections are the `#45` resolution's own scope |
+| [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) | the settings surface | **open** — [10.3](#103--three-settings-this-spec-requires-that-do-not-exist--now-c24-46) |
 
 ### Sources
 

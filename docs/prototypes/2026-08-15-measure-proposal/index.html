@@ -165,6 +165,13 @@
   .g-row .gm.late{background:transparent;border-color:var(--acc);border-style:dashed}
   .g-row .gm.next,.g-row .gm.num{border-style:dashed;background:none;display:grid;
              place-items:center;font-size:10px;font-weight:800;opacity:.8;line-height:1}
+  /* rev 2: the no-number marker was a dashed CIRCLE carrying "#", and beside
+     C19's dashed circle carrying "+" the two invitations read as the same
+     thing at a glance — one chip carrying two axes, in C19's own words. Every
+     circle in this language is an occurrence or an outcome, so the number slot
+     becomes a SQUARE: distinct by form, with no hue involved, which is what
+     keeps it readable in dark neo and in greyscale. */
+  .g-row .gm.num{border-radius:5px;opacity:1;font-size:11px}
   .g-row .gt{flex:1;font-size:13px;font-weight:650;line-height:1.35}
   .g-row .gt small{display:block;font-size:11px;font-weight:560;opacity:.76;margin-top:2px}
   .sub-acts{display:flex;gap:7px;padding:0 2px 2px}
@@ -345,15 +352,18 @@
 
 <h1>C22 · What the agent offers a goal that has no number</h1>
 <p class="lede">
-  Prototype for <b>#44</b> on map <b>#12</b>, revision 1. Three <b>placements</b> for one offer,
-  side by side — they disagree about <b>when a person is receptive</b>, which is the axis, not about
-  what the offer says. Then the sheet the offer opens, and the case that decides the tone: <b>what
-  happens when there is no model</b>. Drawn against the <b>material contract</b>
+  Prototype for <b>#44</b> on map <b>#12</b>, <b>revision 2 — resolved</b>. Rev 1 asked which of
+  three placements should carry the offer; Ido handed the decision back, and deriving it collapsed
+  the question: <b>it is two things, not one, and they have different answers.</b> A
+  <b>marker</b> — silent, everywhere the goal is listed — and an <b>offer</b>, only on the goal's own
+  screen, because <b>opening the goal is the consent</b> that <code>§0.7</code> requires for
+  intrinsic structure. The daily review is <b>ruled out</b>: <code>C10</code> owns those slots, and it
+  is the one surface that arrives unasked. Drawn against the <b>material contract</b>
   (surface · groove · elevation · accent), so switching material changes the surface and nothing
-  else. Two rules are embodied rather than argued: <b>the absence is stated as legal before anything
-  is offered</b> (<code>C7</code> — absence is the default), and <b>an offer never borrows the
-  visual language of an outcome</b> — everything here is dashed and hollow, so it can never read as
-  the app having already changed the goal.
+  else. Two further rules are embodied rather than argued: <b>the absence is stated as legal before
+  anything is offered</b> (<code>C7</code> — absence is the default), and <b>an offer never borrows
+  the visual language of an outcome</b> — everything here is dashed and hollow, so it can never read
+  as the app having already changed the goal.
 </p>
 
 <div class="bar">
@@ -412,8 +422,8 @@ const T = {
       ['next','Sleep before midnight','no next step'],
       ['keep','Meal prep on Sunday','<bdi>4</bdi> weeks unbroken'],
     ],
-    bPair:['Give it a number','Not for this goal'],
     bPair2:['Break it into steps','Schedule the first one'],
+    markerNote:'<b>#</b> — no number yet. Nothing is owed and nothing is offered here; open the goal to see what the app would suggest.',
     /* C */
     daily:'Today', theme:'Momentum',
     quote:['Small disciplines repeated with consistency lead to great achievements.','— the shipped corpus'],
@@ -464,8 +474,8 @@ const T = {
       ['next','לישון לפני חצות','אין צעד הבא'],
       ['keep','הכנת אוכל בראשון','<bdi>4</bdi> שבועות ברצף'],
     ],
-    bPair:['לתת לזה מספר','לא ליעד הזה'],
     bPair2:['לפרק לצעדים','לקבוע את הראשון'],
+    markerNote:'<b>#</b> — עוד אין מספר. שום דבר לא נדרש ושום דבר לא מוצע כאן; פתח את היעד כדי לראות מה האפליקציה הייתה מציעה.',
     daily:'היום', theme:'תנופה',
     quote:['משמעת קטנה שחוזרת על עצמה בעקביות מובילה להישגים גדולים.','— מהמאגר המובנה'],
     practical:['שתי ריצות כבר קבועות השבוע. השלישית היא זו שהופכת את זה לקצב.'],
@@ -564,53 +574,41 @@ function frameB(t) {
     <div class="top"><span class="back">‹</span>
       <span class="h-scr">${t.areas.health}</span></div>
 
-    ${/* the pairs are NESTED IN THE ROW they act on. Rev 1 floated both pairs
-         under the list, where nothing said which goal either belonged to — and
-         with three rows above them, "Give it a number" could plausibly have
-         meant any of the three. C19 already ships "Break it into steps /
-         Schedule the first one" as a COMMAND rather than an inference; "Give it
-         a number" is a third member of that set, so it must attach the same
-         way. */''}
+    ${/* REV 2 — the row carries the MARKER and no offer, and that is the
+         decision, not a simplification.
+
+         Rev 1 put "Give it a number" inline here, mirroring C19's pair on the
+         row below it. §0.7 discriminates the two, and it is a closed decision:
+         INTRINSIC structure needs consent, INSTRUMENTAL structure does not.
+         Breaking a goal into steps is instrumental — the app may offer it
+         wherever it likes. A MEASURE says what counts as progress on the goal,
+         which is intrinsic, and C7 already requires consent for it (never
+         auto-applies, dismissible per goal). So the offer may not be pushed
+         into a list he is scanning for something else; the marker may, because
+         stating a fact asserts nothing.
+
+         C19's pair stays exactly where it was. The two rows now look different
+         on purpose. */''}
     <div class="sect">${t.areaGoals}</div>
     <div class="glist">
       ${t.bRows.map((r,i)=>`<div class="card" style="gap:9px;padding:10px 13px">
         <div class="g-row" style="padding:0">${mark(r[0])}
           <span class="gt">${r[1]}<small>${r[2]}</small></span></div>
-        ${i===1 ? `<div class="sub-acts" style="padding:0">
-             <span class="btn primary">${t.bPair[0]}</span>
-             <span class="btn ghost">${t.bPair[1]}</span></div>` : ''}
         ${i===2 ? `<div class="sub-acts" style="padding:0">
              <span class="btn ghost">${t.bPair2[0]}</span>
              <span class="btn ghost">${t.bPair2[1]}</span></div>` : ''}
       </div>`).join('')}
     </div>
+    <div class="why" style="padding:2px 4px">${t.markerNote}</div>
   </div>`;
 }
 
-/* ── C · the daily review, against C10's own feed ────────────────────────── */
-function frameC(t) {
-  return `${sb(t)}<div class="sc">
-    <div class="top"><span class="h-scr">${t.daily}</span>
-      <span class="tag"><i style="background:${HUE.health}"></i>${t.theme}</span></div>
-
-    <div class="quote">${t.quote[0]}<cite>${t.quote[1]}</cite></div>
-    <div class="line"><span class="ic">◆</span><span>${t.practical[0]}</span></div>
-
-    <div class="sect">${t.cTitle}</div>
-    ${offer(t,{title:t.offerT, sub:t.offerS, why:t.why,
-               primary:t.use, secondary:t.later})}
-
-    ${/* the day's own list, so the offer is judged at real density rather than
-         on an empty route — and so the cost of this placement is visible: it
-         pushes the actual work of the day down the screen. */''}
-    <div class="sect">${t.dayT}</div>
-    <div class="glist">
-      ${t.dayList.map(d=>`<div class="card g-row"><span class="gm ${
-        d[0]==='done'?'keep':'miss'}"></span>
-        <span class="gt">${d[1]}</span></div>`).join('')}
-    </div>
-  </div>`;
-}
+/* ── the daily review was frame C in rev 1, and is deleted in rev 2 ──────────
+   Not demoted, not greyed out: removed. C10 #29 already allocated that
+   screen's three slots, so adding a fourth thing re-opens a closed ticket —
+   and it is the one surface in the app that arrives UNASKED, which is exactly
+   what an offer requiring consent (§0.7) may not do. The rendered rev-1 frame
+   is in git history if the argument ever needs re-litigating. */
 
 /* ── 4 · the sheet ───────────────────────────────────────────────────────── */
 function frameSheet(t) {
@@ -689,17 +687,15 @@ function fallbackFrame(t, arithmetic) {
 
 const CAPS = {
   en:[
-    '<span class="vk">PLACEMENT A</span><b>The goal\'s own screen — where the bar is missing.</b> Receptive because he is already looking at this goal. Nothing interrupts, and the absence is stated as legal <i>before</i> anything is offered.',
-    '<span class="vk">PLACEMENT B</span><b>The life-area screen — a third sibling of <code>C19</code>\'s pair.</b> Receptive because he is reviewing the area. The <b>#</b> marker is a new row state, and the offer is one of three commands rather than a new kind of thing.',
-    '<span class="vk">PLACEMENT C</span><b>The daily review — one card, at most one a day.</b> Receptive because he set time aside to plan. But it shares a screen with <code>C10</code>\'s quote and practical line, and it is the only placement that arrives <i>unasked</i>.',
+    '<span class="vk">1 · THE MARKER</span><b>Everywhere the goal is listed — and it never offers.</b> <b>#</b> is a fact, not a suggestion: no words, no buttons, nothing owed. Note the row below it still carries <code>C19</code>\'s pair — <b>steps are instrumental, a measure is intrinsic</b> (§0.7), so only one of them may be pushed at you.',
+    '<span class="vk">2 · THE OFFER</span><b>Only on the goal\'s own screen — opening the goal is the consent.</b> It stands where the missing bar would be, above the week it computed its target from. The absence is stated as legal <i>before</i> anything is offered, so this reads as an answer rather than a correction.',
     '<b>What accepting opens.</b> Outcome <i>or</i> leading indicator, and the leading one is preselected because it is the only one with a real target: <b>the app computed <bdi>3</bdi> a week from the schedule</b>. The model is never asked for a number.',
     '<span class="vk">NO MODEL · 1</span><b>The offer survives on arithmetic.</b> Same component, same two buttons — but the words are the app\'s and the number is a count of steps Ido wrote himself. The free-model rule is satisfied by a <b>mechanical half</b>, not by a degraded one.',
     '<span class="vk">NO MODEL · 2</span><b>And here the app says nothing.</b> No schedule, no steps, nothing to count. There is no card, no greyed placeholder and no <i>we couldn\'t reach the model</i>. The absence line is on every unmeasured goal anyway, which is what makes this read as deliberate rather than broken.',
   ],
   he:[
-    '<span class="vk">מיקום A</span><b>המסך של היעד עצמו — במקום שבו הפס חסר.</b> קשוב כי הוא ממילא מסתכל על היעד הזה. שום דבר לא קוטע, וההיעדר מוצהר כלגיטימי <i>לפני</i> שמוצע משהו.',
-    '<span class="vk">מיקום B</span><b>מסך תחום החיים — אח שלישי לזוג של <code>C19</code>.</b> קשוב כי הוא סוקר את התחום. הסימן <b>#</b> הוא מצב שורה חדש, וההצעה היא אחת משלוש פקודות ולא סוג חדש של דבר.',
-    '<span class="vk">מיקום C</span><b>הסקירה היומית — כרטיס אחד, לכל היותר פעם ביום.</b> קשוב כי הוא הקצה זמן לתכנן. אבל הוא חולק מסך עם הציטוט והשורה המעשית של <code>C10</code>, והוא המיקום היחיד שמגיע <i>בלי שנשאל</i>.',
+    '<span class="vk">1 · הסימן</span><b>בכל מקום שבו היעד מופיע — ולעולם לא מציע.</b> <b>#</b> הוא עובדה, לא הצעה: בלי מילים, בלי כפתורים, בלי שנדרש דבר. שים לב שהשורה מתחתיו עדיין נושאת את הזוג של <code>C19</code> — <b>צעדים הם אמצעי, מדידה היא מהות</b> (§0.7), ולכן רק אחד מהם מותר לדחוף אליך.',
+    '<span class="vk">2 · ההצעה</span><b>רק במסך של היעד עצמו — פתיחת היעד היא ההסכמה.</b> היא עומדת במקום שבו הפס חסר, מעל השבוע שממנו חושב היעד. ההיעדר מוצהר כלגיטימי <i>לפני</i> שמוצע משהו, ולכן זה נקרא כתשובה ולא כתיקון.',
     '<b>מה שנפתח בקבלה.</b> תוצאה <i>או</i> מדד מוביל, והמוביל מסומן מראש כי רק לו יש יעד אמיתי: <b>האפליקציה חישבה <bdi>3</bdi> בשבוע מלוח הזמנים</b>. המודל לעולם לא נשאל על מספר.',
     '<span class="vk">בלי מודל · 1</span><b>ההצעה שורדת על חשבון בלבד.</b> אותו רכיב, אותם שני כפתורים — אבל המילים של האפליקציה והמספר הוא ספירת צעדים שאידו כתב בעצמו. כלל המודל החינמי מסופק על ידי <b>חצי מכני</b>, לא על ידי גרסה מנוונת.',
     '<span class="vk">בלי מודל · 2</span><b>וכאן האפליקציה שותקת.</b> אין לוח זמנים, אין צעדים, אין מה לספור. אין כרטיס, אין מציין מקום מעומעם ואין <i>לא הצלחנו להגיע למודל</i>. שורת ההיעדר מופיעה ממילא בכל יעד בלי מספר, וזה מה שגורם למסך להיקרא ככוונה ולא כתקלה.',
@@ -708,7 +704,12 @@ const CAPS = {
 
 function render() {
   const t = T[L];
-  const frames = [frameA(t), frameB(t), frameC(t), frameSheet(t),
+  /* rev 2: frameC (the daily review) is GONE, not demoted. C10 #29 already
+     allocated that screen's slots, so putting a fourth thing on it re-opens a
+     closed ticket — and it is the one surface that arrives unasked, which is
+     precisely what a consent-requiring offer may not do. Recorded in the README
+     and on #44 as a scope decision rather than deleted quietly. */
+  const frames = [frameB(t), frameA(t), frameSheet(t),
                   fallbackFrame(t,true), fallbackFrame(t,false)];
   document.getElementById('stage').innerHTML = frames.map((html,i)=>`
     <div class="frame">
