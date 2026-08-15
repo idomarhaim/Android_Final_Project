@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c21-offline-story` | `/wayfinder 12` — frontier is empty, so graduate fog into a ticket and resolve it | `CHANGELOG/2026-08-15/c21-offline-story.md` · `kb-candidates/2026-08-15-c21-offline-story.md` · this row · GitHub `#12` body + its new child ticket | GitHub `#12` body (map commons) | 2026-08-15 |
 | `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row | **none — `#12`'s body is deliberately *not* claimed** (see note) | 2026-08-15 |
 
 > ⚠️ **`product-v03-spec` opened at 14:0x with `c21-offline-story` live — its row was 3 minutes old and
@@ -34,13 +33,55 @@ before your first write. Normative rule:
 > **as read at 14:0x on 2026-08-15** and may be one decision short by the time `c21` releases; that is named
 > here rather than papered over, and the fix is an amendment, not a rewrite.
 >
-> ⚠️ **`c20-derived-state` committed at 13:55:07 — 70 seconds before this row was written — so it is *live*, not
-> released, despite the ✅ release note below.** Working sets are disjoint by content (it owns its own release note
-> and `CHANGELOG/2026-08-15/c20-derived-state.md`; this session owns the Active-claims table and its own changelog)
-> but **share the `SESSIONS.md` file**, which is the one hazard a pathspec commit cannot cover. This session will
-> `git diff -- SESSIONS.md` in its own tool call before every commit and **name any hunk of `c20`'s that rides
-> along** rather than trying to subtract it. It also does **not** touch `#12`'s *Decisions so far* rows that `c20`
-> wrote — only the fog section and one new decision line of its own.
+> ✅ **`c21-offline-story` released 2026-08-15 — `/wayfinder 12`, one ticket charted, claimed, resolved and closed.
+> Map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) is back to **0 open children, now with
+> 28 decisions and 3 fog bullets** — one fewer fog patch than it started the session with, and one of the two it
+> lost was *stale rather than solved*.**
+>
+> ⚠️ **`product-v03-spec`'s note above rests on a premise that is now false, and it is corrected here rather than
+> left to rot.** It reads *"`c21` is graduating fog into a new child ticket — so the map will have an open child
+> and 'the map is done when the spec is whole and no ticket is open' cannot be satisfied by this session at all."*
+> The ticket — [#43 · `C21`](https://github.com/idomarhaim/Android_Final_Project/issues/43) — was **created,
+> resolved and closed inside this session**, which is what *never resolve more than one ticket per session* permits
+> and what the frontier being empty required. `Observed:` `gh issue list --state open` under `#12` returns **zero**
+> children as of this release. **The conclusion still stands on its own second leg** — closing `#12` is Ido's call
+> per that session's own brief — so nothing about the spec work needs redoing; only the stated reason changes.
+>
+> **What the frontier being empty meant.** All 20 children were closed (`C20` #42, 2026-08-14 16:55 UTC, was the
+> last), so there was nothing to claim and *Work through the map* step 5 — graduate fog — became the unit.
+>
+> **The resolution: the ticket's own question was the false premise.** `A6` asked whether the app must **say it is
+> offline** and whether a **cached number must look different**. Both halves presume staleness is a property of the
+> **connection**; it is a property of the **data** — a leaderboard fetched forty minutes ago over perfect Wi-Fi is
+> exactly as old as one served from cache with the radio off. So: **no global banner and no "cached" styling**
+> (after `C20` the owner's numbers are complete offline, and a banner over them is a larger claim than the facts
+> support); **which surfaces can be stale is a grep** of `firestore.rules`, returning **exactly two screens**;
+> **the as-of stamp is unconditional and nearly free** — one `updatedAt` per projection, written by `C20`'s
+> function on the write that already sets the number; and **one case is genuinely connection-shaped** — a
+> never-fetched collection returns *empty*, so the app asserts *"you have no friends"* about data it has never
+> read, which is an empty state rather than a banner. **`ConnectivityMonitor` is deleted**, not repurposed. **No
+> picker was raised** — derived against closed tickets, `firestore.rules` and the code, and all Ido's to overturn.
+>
+> 🧹 **One stale fog bullet cleared.** `c20-derived-state` left the `A7`/dashboard patch as *"the next session's
+> cheapest lead"*, suspecting **un-owned rather than un-sharp**. Un-owned was right: [`C12` #31](https://github.com/idomarhaim/Android_Final_Project/issues/31)
+> closed **last** of the four that narrowed it (2026-08-12, after `C10`, `C9a`, `C9b`) and ruled `A7` a **false
+> fork** outright; the bullet was never trimmed when it closed. Rewritten down to its one true residue — *whether
+> a goal card on Home is tappable to complete* — rather than deleted.
+>
+> ⚠️ **This session's claim row was published under `e416d61`, `product-v03-spec`'s commit, having never been
+> `git add`-ed by anyone here.** Written to the working tree at ~13:57; that session's own staging of `SESSIONS.md`
+> at 14:02:42 took the file's tree content, row included. This is exactly the shape the rule now describes —
+> *exposure opens when the content reaches the working tree, not when you stage it* — and the repair is **naming
+> it**, not preventing it. Nothing was lost; what is wrong is provenance, and this line is the fix.
+>
+> 📥 **One candidate filed, none drained.** `kb-candidates/2026-08-15-c21-offline-story.md` — *key a disclosure to
+> the variable that moves the fact, not the one that co-occurs with it.* 🟢 on its own merits, **held** because
+> `C:\Dev\JARVIS` has a live sibling (`sibling-wait-banner`, `50c1d79` at 13:58:10, whose subject records claiming
+> `rules/memory-promotion.md` **while that board's Active-claims table read empty**) and the drain is a cross-repo
+> write into a board it is actively editing. The candidate names its own bundle check **and its width limit**.
+> **The five pre-existing candidate files stay** — every surviving entry in them is ⛔ always-ask in both modes.
+>
+> Account: [`CHANGELOG/2026-08-15/c21-offline-story.md`](CHANGELOG/2026-08-15/c21-offline-story.md).
 
 > 🚢 **`c11b-output-formats` visited 2026-08-15 for one commit — no Active row, per the ceremony
 > rule** (a claim created and cleared inside a single commit protects nothing). Two things landed.
