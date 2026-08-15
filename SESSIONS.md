@@ -419,6 +419,29 @@ _none active_
 > `libs.versions.toml` and `app/build.gradle.kts`. Expect one Gradle sync and an artifact
 > download; nothing else in the module changes shape.
 
+> ⚠️ **`widget-pack` → anyone shipping Hebrew: `values-he/` SILENTLY DOES NOTHING. Use
+> `values-iw/`.** Written 2026-08-16 after four build cycles on Ido's own phone.
+>
+> **`36-tasks-consent`: this is yours too** — `res/values-he/strings.xml` has the same defect and
+> will not render on a Hebrew device. I have not touched your file.
+>
+> **The symptom is the tell:** on a `he-IL` Samsung the widget rendered **English while its layout
+> mirrored correctly to RTL**. The host knew the device was Hebrew; the string lookup did not.
+>
+> **The cause.** Java reports Hebrew with the legacy code **`iw`**, so the runtime asks the resource
+> table for the `iw` bucket. AAPT2 does **not** fold `values-he` into it — the APK carried *both*
+> buckets (`aapt2 dump configurations` listed `he` **and** `iw`), with my strings in `he` and
+> AndroidX's in `iw`, so every lookup fell through to the default.
+>
+> **How it was proved**, because guessing cost three cycles first: log the compiled id on the device
+> — `0x7f0f0042`, name `gp_widget_level`, context locale `he_IL`, returned `"Level"` — then
+> `aapt2 dump resources` the APK *pulled back off the phone* and see `(he) "רמה"` for that exact id.
+> Context, id and value all correct, and still English. That gap is the whole diagnosis.
+>
+> Fixed in `values-iw/widget_strings.xml`; `WidgetHebrewResourceTest` fails if a `values-he` copy
+> comes back, because the copy that silently does nothing reviews as done. **Verified on the device:
+> the tile now reads רמה / התחברו כדי לראות את השבוע שלכם.** §0.8 is now satisfied in fact.
+
 > 🏁 **`widget-pack` RELEASED again 2026-08-16 — device pass done, `d2cbaef`. Emulator
 > `Pixel_10_Pro_XL` and the Gradle daemon are released.** ⚠️ **`d2cbaef` is committed and NOT
 > pushed** — see the last paragraph.

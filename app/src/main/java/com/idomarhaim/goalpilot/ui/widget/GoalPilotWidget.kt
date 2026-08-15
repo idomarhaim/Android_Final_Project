@@ -107,6 +107,12 @@ abstract class GoalPilotWidget(private val tile: WidgetTile) : GlanceAppWidget()
                 // per-app language override lives on the context, so reading
                 // strings off the application context renders the widget in the
                 // system language while the app is in the user's.
+                //
+                // Note that a correct context is necessary and NOT sufficient.
+                // `Observed:` 2026-08-16 — this context reported he_IL on a Hebrew
+                // phone and still returned English, because the strings had been
+                // filed under values-he while the runtime looks up Hebrew by its
+                // legacy code, iw. See values-iw/widget_strings.xml.
                 AndroidWidgetStrings(glanceContext),
             )
             // The palette carries BOTH brightnesses; the launcher chooses. See
