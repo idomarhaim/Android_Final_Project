@@ -16,7 +16,16 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
+| `social-share-bugs` | `/kickoff social-share-bugs` → fix **[`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4)** (shared photo cannot be opened, no `contentDescription`) and **[`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5)** (cannot delete your own share). One pass over the Social feed card, which today has **zero** interactive nodes. | `app/src/main/java/com/idomarhaim/goalpilot/feature/social/`, `.../domain/model/Social.kt`, `.../domain/repository/SocialRepository.kt`, `.../domain/repository/StorageRepository.kt`, `.../data/firestore/SocialRepositoryImpl.kt`, `.../data/storage/StorageRepositoryImpl.kt`, `app/src/test/java/com/idomarhaim/goalpilot/feature/social/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SocialFeedUiTest.kt`, `firestore.rules`, `firestore-tests/rules.test.mjs`, `CHANGELOG/2026-08-15/social-share-bugs.md`, `kb-candidates/2026-08-15-social-share-bugs.md`, **`sessions/social-share-bugs.md` only** | **Gradle daemon**, **git index**, emulator **`Pixel_10_Pro_XL`** (device re-verification), issues **`#4`** + **`#5`** | 2026-08-15 |
 
+> ⚠️ **One declared overlap, named rather than assumed away: `sessions/`.** `c22-measure-proposal` claims the
+> folder (for a brief it may hand off); `social-share-bugs` claims **one file in it**,
+> `sessions/social-share-bugs.md`, which it must flip to `status: active` now and move to `sessions/done/` on
+> completion — that file is its own brief and `/kickoff` §3 and §5 prescribe both writes. Distinct files, so the
+> two do not collide; recorded here because a directory-level claim and a file-level one look like a conflict to
+> the next reader, and because the pathspec-commit remedy cannot cover a file **both** sessions write.
+> Everything else is disjoint: `feature/social/` + `firestore*` vs prototype assets and the `#12` body.
+>
 > ✅ **`product-v03-spec` released 2026-08-15 — `e416d61` (claim) → `daf46d2`. The map's destination artifact
 > exists: [`docs/PRODUCT_v0.3.md`](docs/PRODUCT_v0.3.md), 1,804 lines, all 28 decisions, every section traceable
 > to the ticket that decided it.** Brief moved to `sessions/done/`. The `#12` body singleton is **released**;
