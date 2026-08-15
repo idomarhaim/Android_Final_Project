@@ -1,4 +1,20 @@
 <resources>
     <string name="app_name">GoalPilot</string>
     <string name="app_tagline">Pilot your life goals</string>
+
+    <!--
+      Google Tasks consent (issue #36, spec §2.6 / §0.4).
+
+      A declined scope has to read as *declined*. The generic "grant permission"
+      prompt made a first-ever run and a deliberately unticked box identical, and
+      §0.4 says to speak about a failure the user can act on — leaving a checkbox
+      unticked is exactly that.
+
+      The wording names the box rather than asserting the user unticked it: an
+      account that predates the scope was never shown it, and the remedy is the
+      same either way.
+    -->
+    <string name="tasks_consent_missing_title">Google Tasks access was not granted</string>
+    <string name="tasks_consent_missing_body">Google shows &#8220;View your tasks&#8221; unticked on its consent screen, so signing in can succeed while granting nothing. Grant it below and GoalPilot can read your tasks.</string>
+    <string name="tasks_consent_grant_action">Grant Google Tasks access</string>
 </resources>

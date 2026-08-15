@@ -5,7 +5,9 @@ import android.content.Intent
 import com.google.android.gms.auth.GoogleAuthUtil
 import com.google.android.gms.auth.UserRecoverableAuthException
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.Scope
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.usecase.GoogleTaskList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -77,6 +79,36 @@ class GoogleTasksClient @Inject constructor(
     /** True when a Google account is signed in and could be asked for a token. */
     fun isConnected(): Boolean =
         GoogleSignIn.getLastSignedInAccount(context)?.account != null
+
+    /**
+     * Answers *"was the Tasks scope actually granted?"* from the cached sign-in,
+     * with no network call and without waiting for an import to fail (#36).
+     *
+     * `suspend` + [io] for the same reason as everything else in this class:
+     * `getLastSignedInAccount` reads Play Services' own storage, and the caller
+     * is a screen-entry effect running on the main thread.
+     *
+     * This is the cheap up-front probe only. The authoritative answers are the
+     * calls themselves — a token minted means [TasksConsent.GRANTED], a
+     * [TasksImportResult.NeedsConsent] means [TasksConsent.MISSING].
+     * `Inferred:` the cached
+     * [com.google.android.gms.auth.api.signin.GoogleSignInAccount] is written by
+     * the sign-in flow, so a scope granted afterwards through
+     * [UserRecoverableAuthException]'s own consent screen need not appear in it —
+     * not observed on a device, and the reason callers correct this reading from
+     * whatever the next call returns rather than trusting it alone. `Untested:`
+     * a device run that grants through the recovery screen and re-reads this
+     * would settle it.
+     */
+    suspend fun consentState(): TasksConsent = withContext(io) {
+        val account = GoogleSignIn.getLastSignedInAccount(context)
+            ?: return@withContext TasksConsent.NOT_SIGNED_IN
+        if (GoogleSignIn.hasPermissions(account, Scope(GoogleTasksScopes.TASKS_READONLY))) {
+            TasksConsent.GRANTED
+        } else {
+            TasksConsent.MISSING
+        }
+    }
 
     /**
      * Fetches the user's task lists — the names shown down the side of Google

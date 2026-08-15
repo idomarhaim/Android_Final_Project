@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,9 +63,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
+import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
@@ -73,6 +76,7 @@ import com.idomarhaim.goalpilot.ui.components.IconChip
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,12 +94,16 @@ fun DashboardScreen(
     val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
     val healthSync by viewModel.healthSync.collectAsStateWithLifecycle()
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
+    val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.ensureRecommendations()
         viewModel.ensureHealthAvailability()
+        // Re-read on every entry, not once: the life-areas screen grants the same
+        // scope, and this ViewModel outlives a trip there and back (#36).
+        viewModel.refreshTasksConsent()
     }
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
@@ -105,15 +113,17 @@ fun DashboardScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri -> if (uri != null) viewModel.shareWeeklySummary(uri) }
 
-    // Accounts that signed in before the Tasks scope existed must grant it once.
-    // Google hands us its own consent screen; on success we retry the import.
+    // Google's own consent screen — reached either because the account predates
+    // the Tasks scope, or (the normal case, spec §2.6) because "View your tasks"
+    // arrived unticked at sign-in. Backing out of it is recorded as a decline so
+    // the card can say so, rather than looking like a first-ever run (#36).
     val consentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             viewModel.onConsentGranted()
         } else {
-            viewModel.consumeConsentIntent()
+            viewModel.onConsentDeclined()
         }
     }
     LaunchedEffect(consentIntent) {
@@ -181,6 +191,7 @@ fun DashboardScreen(
             item {
                 GoogleTasksImportCard(
                     isLoading = tasksImport.isLoading,
+                    consent = tasksConsent,
                     onImport = viewModel::importGoogleTasks,
                 )
             }
@@ -334,9 +345,22 @@ private fun HealthConnectCard(state: HealthSyncState, onSync: () -> Unit) {
  * Entry point for the Google Tasks import (spec §6 nice-to-have). Pulls open
  * tasks from the signed-in account's Google Tasks lists and files them against
  * goals using the same classifier as [SmartAddCard].
+ *
+ * When [consent] is [TasksConsent.MISSING] the card says so *before* anything is
+ * pressed (#36). Until this existed, a declined scope and a first-ever run were
+ * pixel-identical: both landed on the same generic grant prompt after an import
+ * had already failed.
  */
 @Composable
-private fun GoogleTasksImportCard(isLoading: Boolean, onImport: () -> Unit) {
+private fun GoogleTasksImportCard(
+    isLoading: Boolean,
+    consent: TasksConsent?,
+    onImport: () -> Unit,
+) {
+    // Only a positively observed refusal changes the card. Null is "not checked
+    // yet" and NOT_SIGNED_IN is "never asked" — neither is a decline, and §0.4
+    // only licenses speech about a failure the user can act on.
+    val declined = consent == TasksConsent.MISSING
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -345,24 +369,32 @@ private fun GoogleTasksImportCard(isLoading: Boolean, onImport: () -> Unit) {
                 Text("Import from Google Tasks", style = MaterialTheme.typography.titleMedium)
             }
             Spacer(Modifier.height(10.dp))
-            Text(
-                "Pull your open Google Tasks in and let GoalPilot file each one " +
-                    "under the right goal. You review everything before it is saved.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (declined) {
+                TasksConsentNotice()
+            } else {
+                Text(
+                    "Pull your open Google Tasks in and let GoalPilot file each one " +
+                        "under the right goal. You review everything before it is saved.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Spacer(Modifier.height(14.dp))
             OutlinedButton(
                 onClick = onImport,
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Importing…")
-                } else {
-                    Text("Import tasks")
+                when {
+                    isLoading -> {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Importing…")
+                    }
+
+                    declined -> Text(stringResource(R.string.tasks_consent_grant_action))
+
+                    else -> Text("Import tasks")
                 }
             }
         }

@@ -1,0 +1,22 @@
+<resources>
+    <!--
+      PARTIAL, ON PURPOSE — this file holds issue #36's strings only.
+
+      The Hebrew resource *set* is issue #51: the rest of the app's speech, the
+      direction-follows-Language wiring (§5.1), bidi isolation on every time,
+      date, number and range string (§4.8), the `feature/` literal sweep (§7.2)
+      and the terminology (`Goal` is יעד, not מטרה). None of that is here, and
+      this file existing is not evidence any of it has been done.
+
+      #36 owes Hebrew for the three strings it introduces, so they land
+      translated rather than waiting to be missed by #51's sweep.
+
+      Wording note (§4.8): a Hebrew prefix attached to a Latin run lays out on
+      the far side of it — `ל‑Google Tasks` renders as `Google Tasks‑ל`. These
+      strings therefore use standalone words (`אל`, `ואז`) in front of every
+      Latin run instead of an attached prefix.
+    -->
+    <string name="tasks_consent_missing_title">לא אושרה גישה אל Google Tasks</string>
+    <string name="tasks_consent_missing_body">במסך ההרשאות של Google, התיבה של הרשאת המשימות מגיעה לא מסומנת — ולכן ההתחברות יכולה להצליח בלי להעניק דבר. אשרו כאן, ואז GoalPilot יוכל לקרוא את המשימות שלכם.</string>
+    <string name="tasks_consent_grant_action">אישור גישה אל Google Tasks</string>
+</resources>
