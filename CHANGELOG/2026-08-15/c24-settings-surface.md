@@ -183,3 +183,69 @@ one each sibling actually received in its own session.
 ## 📥 KB candidates
 
 `kb-candidates/2026-08-15-c24-settings-surface.md` — two entries, both central-KB destined.
+
+---
+
+# Unit 2 — rev 3, on Ido's review
+
+He opened the prototype and returned two things. The first is a **defect in the asset**, and it is
+the more valuable of the two.
+
+## 1 · The skin picker changed nothing
+
+*"I didn't see what it looks like with the Blossom colour."*
+
+`AppSkin` was a swatch. **No material read it**, so Aurora and Blossom rendered **identically in all
+four materials** — the picker was a control that did nothing, and it looked correct in source.
+
+`C12` §4.1 names this exact failure, for one material: *"Dark neo's accent must derive from the
+selected skin, or picking Blossom under dark neo silently renders Aurora and the skin picker stops
+working for a quarter of the set."* The prototype had it for **four quarters**.
+
+**Fixed**: the skin is now the token source, and each material applies the palette transform §4.1
+already assigned it — **identity** (glass, liquid), **mute** (neo: desaturated accent, warmed
+ground), **single-accent ramp** (dark neo). The material tiles follow it too, since a preview that
+ignores the skin is the same bug one axis over. The **swatches** keep their own hues at every skin,
+which is the same documented exception the material picker takes.
+
+Two further defects fell out of the first Blossom render, both invisible under Aurora:
+
+- **A translucent panel that only adds white is illegible over a bright ground.** Liquid glass's
+  dark-theme surface was white gradients alone, so it could only *lighten* the backdrop — and where
+  a Blossom radial peaks, its own white type failed. It now carries a **tint floor**. Its contrast
+  had been a property of the wallpaper rather than of the component.
+- **A skin owes a luminance contract, not only a hue.** Blossom's first pass used its light-scheme
+  hues in the dark scheme. Same hues, **~20% less lightness**.
+
+Both are stated in `docs/PRODUCT_v0.3.md` **§4.1**, beside `C22`'s overlay-opacity rule and for the
+same reason: they bind every screen, not this one.
+
+## 2 · Liquid glass, rebuilt against reference images
+
+Ido supplied four reference images — glossy saturated lozenges, a gradient card with a light streak,
+a toggle with a specular knob — and asked for liquid glass to go further that way.
+
+**What the references have that rev 2 did not:** a bright band along the **top edge**, a soft
+**specular bloom** upper-left, a **dim counter-rim** underneath, and a **coloured glow cast on the
+ground**. That is the *refraction* reading §4.1 actually specifies for this material — *"translucent
+body, bright inner rim, dim outer counter-rim, one specular streak"* — where rev 2 had drifted into
+a second glassmorphism. The primary action, the selected segment and the avatar are now drawn as one
+**lozenge** component.
+
+All of it is background and box-shadow layers, **not a pseudo-element**: an `::after` with
+`inset: 0` paints over a card's static children, which is how a gloss overlay eats its own label.
+
+## 🧪 Tests
+
+Still no code, so still no test layer. **Five more headless renders**: liquid·blossom·dark ×3
+(the luminance fix and the tint floor each needed their own look), liquid·aurora·dark·he,
+glass·blossom·light. Three defects found, three fixed, all re-rendered.
+
+## ⚠️ The deviation from unit 1 is CLOSED — `#46` is reopened
+
+Ido's message *"you didn't show me any prototype to approve — if there is one I want to see it and
+I'll decide"* is the HITL half arriving. `#46` is **reopened**, with a comment saying why, and the
+prototype was published as an interactive artifact so he can switch material · skin · theme ·
+language himself rather than review PNGs.
+
+**The verdict is his and is still outstanding.**

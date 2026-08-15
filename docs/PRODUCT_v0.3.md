@@ -1063,6 +1063,22 @@ Two consequences that would otherwise be found late:
   with the goal screen behind it; **invisible in glass, liquid glass and dark neo**, which blur or
   fill, so a review of any of those three passes it. Found by `C22` #44 and stated here rather than
   on that ticket, because it binds every screen with an overlay, not one.
+- **A translucent surface must tint *toward* the theme, not only add highlight.** A dark-theme glass
+  panel built from white layers alone can only **lighten** what is behind it, so wherever a
+  background hue peaks, the panel's own white type goes illegible — its contrast is a property of
+  the **wallpaper**, not of the component. The fix is a low-alpha tint floor under the gloss.
+  `Observed:` 2026-08-15 in liquid glass under **Blossom**; **invisible under Aurora**, whose hues
+  are already dark, which is why a single-skin review passes it. Found by `C24` #46.
+- **A skin owes a luminance contract, not only a hue.** `AppSkin` is a palette, and a palette whose
+  members disagree about *lightness* breaks the type sitting on them. Blossom's dark-scheme hues are
+  the same hues as its light-scheme ones at **~20% less lightness** — stated as a rule so a third
+  skin cannot be added as three pretty colours. Found by `C24` #46, on the first Blossom render.
+
+**And the skin axis has one enforcement note, because it was broken in a prototype before it was
+ever built:** `AppSkin` must reach **every** material's accent, ground and ramp. §4.1 already names
+the dark-neo case; the general form is that a skin picker which no material reads is a control that
+does nothing, and it looks correct in source. `Observed:` 2026-08-15 — `C24`'s prototype had it in
+**all four** materials until Ido asked to see Blossom.
 
 **The cost, stated:** `backdrop-filter`, SVG filters and CSS shadow pairs are **web** primitives. In
 Compose the equivalents are `Modifier.blur`, `RenderEffect` (API 31+, with a fallback below), and

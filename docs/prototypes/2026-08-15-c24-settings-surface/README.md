@@ -125,9 +125,40 @@ what `shoot.ps1` exists for (`C12`).
    surface is the page colour plus a shadow pair — transparent — and the dimmed Home screen reads
    straight through it. It is the one neo surface that must be opaque.
 
-`Observed:` all five in headless Edge renders on 2026-08-15, in glass · neo light · dark neo, in
-English and Hebrew. `Untested:` in Compose — every material cost `C12` already priced (`Modifier.blur`,
-`RenderEffect` API 31+, hand-drawn `Canvas` shadows) applies here unchanged, and this asset is HTML.
+**Then Ido asked to see Blossom, and rev 3 found three more — the first of which was the worst
+defect in the asset.**
+
+6. **The skin picker changed nothing.** `AppSkin` was a swatch and no material read it, so Aurora and
+   Blossom rendered **identically in all four materials**. `C12` §4.1 names this exact failure for
+   dark neo — *"picking Blossom under dark neo silently renders Aurora and the skin picker stops
+   working for a quarter of the set"* — and the prototype had it for **four quarters**. The skin is
+   now the token source and each material applies its declared transform: **identity** (glass,
+   liquid), **mute** (neo — desaturated accent, warmed ground), **single-accent ramp** (dark neo).
+   The material tiles follow it too, since a preview that ignores the skin is the same bug one axis
+   over.
+7. **A translucent panel that only adds white is illegible over a bright ground.** Liquid glass's
+   dark-theme surface was white gradients alone, so it could only *lighten* the backdrop — and under
+   Blossom, where a radial peaks, its own white type failed. It now carries a **tint floor**. Invisible
+   under Aurora, whose hues are already dark.
+8. **A skin owes a luminance contract, not just a hue.** Blossom's first pass used its light-scheme
+   hues in the dark scheme; the fix is the same hues at **~20% less lightness**.
+
+`Observed:` all eight in headless Edge renders on 2026-08-15, across glass · liquid · neo light ·
+dark neo, both skins, English and Hebrew. `Untested:` in Compose — every material cost `C12` already
+priced (`Modifier.blur`, `RenderEffect` API 31+, hand-drawn `Canvas` shadows) applies here unchanged,
+and this asset is HTML.
+
+## Liquid glass, rev 3
+
+Rebuilt against reference images Ido supplied — glossy saturated lozenges rather than frosted panes.
+What the references have that rev 2 did not: a **bright band along the top edge**, a soft **specular
+bloom** in the upper-left, a **dim counter-rim** underneath, and a **coloured glow cast on the
+ground**. That is the *refraction* reading `§4.1` actually specifies for this material
+(*"refraction at the edge · translucent body, bright inner rim, dim outer counter-rim, one specular
+streak"*), where rev 2 had drifted into a second glassmorphism.
+
+All four are background and box-shadow layers, **not a pseudo-element**: an `::after` with `inset: 0`
+paints over a card's static children, which is how a gloss overlay eats its own label.
 
 ## Bidi
 

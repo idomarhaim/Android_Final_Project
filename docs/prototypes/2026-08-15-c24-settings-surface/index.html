@@ -124,12 +124,20 @@
       font-size:11px;font-weight:700;letter-spacing:-.01em}
   .mt.sel{outline:2px solid var(--acc);outline-offset:2px}
   .mt .mn{position:relative;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.45)}
-  .mt.p-glass{background:linear-gradient(150deg,#4E6BFF,#00C8B4 60%,#A65CF5);color:#F2F7FF}
-  .mt.p-liquid{background:linear-gradient(150deg,#7A5CFF,#16D8C6 45%,#FF6FB0);color:#fff}
-  .mt.p-neo{background:#E7ECF3;color:#2A3340;
+  /* the tiles show the material AS THE CURRENT SKIN PAINTS IT, which is the
+     only honest preview once the skin is a real axis. */
+  .mt.p-glass{background:linear-gradient(150deg,var(--h1),var(--h2) 60%,var(--h3));color:#F2F7FF}
+  .mt.p-liquid{background:
+      linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 44%),
+      linear-gradient(150deg,var(--h3),var(--h2) 45%,var(--h1));color:#fff;
+     box-shadow:inset 0 1.6px 0 rgba(255,255,255,.9), inset 0 -1.4px 0 rgba(255,255,255,.25)}
+  .mt.p-neo{background:var(--neoBg);color:#2A3340;
      box-shadow:inset 5px 5px 11px rgba(163,177,198,.6), inset -5px -5px 11px #fff}
-  .mt.p-darkneo{background:linear-gradient(158deg,#232830,#1A1E25);color:#EDF2F8;
+  .mt.p-darkneo{background:linear-gradient(158deg,var(--dnCard1),var(--dnCard2));color:#EDF2F8;
      box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 6px 6px 14px rgba(0,0,0,.6)}
+  /* the ramp is the thing that changes under dark neo, so the tile shows it */
+  .mt.p-darkneo::after{content:'';position:absolute;left:9px;bottom:26px;width:44px;height:5px;
+     border-radius:999px;background:linear-gradient(110deg,var(--r2),var(--r1));z-index:2}
   /* the lock is written in a WORD on the tile, not signalled by a hue or a
      dimming — C12 §3's ragged-product disclosure, and §0.8's form-and-words rule. */
   .mt .mlock{position:absolute;inset-inline-end:7px;top:7px;z-index:2;font-size:9px;
@@ -144,6 +152,9 @@
   .swi.sel{outline:2px solid var(--acc);outline-offset:2px}
   .swi.aurora{background:linear-gradient(120deg,#12406B,#0E8E86 62%,#1E6F4A)}
   .swi.blossom{background:linear-gradient(120deg,#C0396F,#F0714E 60%,#F0A93C)}
+  /* the swatch keeps its own hues at every skin: it is the one control that
+     must show what it WOULD do, not what is currently selected. Same exception
+     the material picker takes, one axis over. */
 
   /* ── segmented control ── */
   .seg{display:flex;gap:0;margin:2px 14px 10px;border-radius:999px;overflow:hidden;
@@ -240,21 +251,78 @@
   .footnote{font-size:11px;font-weight:600;opacity:.55;line-height:1.5;padding:6px 4px 0;
             text-align:center}
 
+
+  /* ══════════════ 0 · APPSKIN — the palette axis, above the material ═══════
+     C12 §4.1: "the material is a SECOND axis, not the AppSkin the app already
+     has. AppSkin is a PALETTE; the material is a SURFACE." And the consequence
+     it names: "Dark neo's accent must derive from the selected skin, or picking
+     Blossom under dark neo silently renders Aurora and the skin picker stops
+     working for a quarter of the set."
+
+     Rev 2 of this prototype had exactly that defect, across ALL FOUR materials
+     rather than one — the skin swatch was a swatch and nothing downstream read
+     it. Ido caught it by asking to see Blossom. So the skin is now the token
+     source and each material applies its declared PALETTE TRANSFORM:
+
+       glass, liquid   identity          — the skin's hues, at full strength
+       neo             mute              — one desaturated accent, warmed ground
+       dark neo        single-accent ramp — a two-stop ramp built from the skin
+  */
+  [data-skin="aurora"]{
+    --h1:#4E6BFF; --h2:#00C8B4; --h3:#7A5CFF; --h4:#2FD3A8;
+    --hl1:#8FB0FF; --hl2:#7FE8DC; --hl3:#BDB0FF; --hl4:#A8EFD6;
+    --accG:#7FE8DC;  --accfgG:#06222B;  --accGL:#0E7C8F; --accfgGL:#EAFBFF;
+    --accQ:#9BEFE5;  --accfgQ:#04262A;  --accQL:#0C6C7E; --accfgQL:#F0FEFF;
+    --accN:#3B7DA8;  --accfgN:#F2FAFF;  --accND:#6FB6E8; --accfgND:#06202E;
+    --r1:#5FD8FF;    --r2:#1170E4;      --accfgR:#04121F;
+    --bloom:rgba(23,130,228,.34);
+    --neoBg:#E7ECF3; --neoBgD:#252A32;  --dnBg:#1B1F26;  --dnCard1:#232830; --dnCard2:#1A1E25;
+  }
+  /* The dark-scheme hues are the SAME hues at ~20% less lightness, and that is
+     not taste. Rev 3a used the light values (#FF7A45 / #FFC062) in the dark
+     scheme too, and the page's own white type failed against them wherever a
+     radial peaked — "Language / English" on amber was the worst of it. Aurora
+     never showed this because ocean blue is already dark. A palette axis has to
+     carry a LUMINANCE contract, not only a hue, or half its members break the
+     text sitting on them. Found on the first Blossom render. */
+  [data-skin="blossom"]{
+    --h1:#D8562A; --h2:#D08A2A; --h3:#C43C70; --h4:#CE6E34;
+    --hl1:#FFC0A0; --hl2:#FFE0B0; --hl3:#FFB7D0; --hl4:#FFD0A8;
+    --accG:#FFC08A;  --accfgG:#331706;  --accGL:#B4531E; --accfgGL:#FFF3EA;
+    --accQ:#FFD2A6;  --accfgQ:#35190A;  --accQL:#A8481A; --accfgQL:#FFF6F0;
+    --accN:#B4602F;  --accfgN:#FFF6F0;  --accND:#E8A374; --accfgND:#2E1608;
+    --r1:#FFB35F;    --r2:#E4553C;      --accfgR:#2A1206;
+    --bloom:rgba(228,110,60,.36);
+    --neoBg:#F2ECE6; --neoBgD:#2E2926;  --dnBg:#241E1C;  --dnCard1:#2E2724; --dnCard2:#221C1A;
+  }
+
   /* ══════════════════════════ 1 · GLASSMORPHISM ══════════════════════════ */
   .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;--edge:rgba(255,255,255,.34);
-    --acc:#7FE8DC;--accfg:#06222B;
+    --acc:var(--accG);--accfg:var(--accfgG);
     background:
-      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
-      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
-      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      radial-gradient(700px 460px at 8% -6%, var(--h1) 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, var(--h2) 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, var(--h3) 0%, transparent 62%),
       linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-skin="blossom"]{background:
+      radial-gradient(700px 460px at 8% -6%, var(--h1) 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, var(--h2) 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, var(--h3) 0%, transparent 62%),
+      linear-gradient(170deg,#2E1710,#170C08);}
   .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
-    --edge:rgba(20,36,66,.26);--acc:#0E7C8F;--accfg:#EAFBFF;
+    --edge:rgba(20,36,66,.26);--acc:var(--accGL);--accfg:var(--accfgGL);
     background:
-      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
-      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
-      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      radial-gradient(700px 460px at 8% -6%, var(--hl1) 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, var(--hl2) 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, var(--hl3) 0%, transparent 62%),
       linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass[data-theme="light"][data-skin="blossom"]{--fg:#2A140A;--fg2:rgba(42,20,10,.66);
+    --edge:rgba(90,45,20,.28);
+    background:
+      radial-gradient(700px 460px at 8% -6%, var(--hl1) 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, var(--hl2) 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, var(--hl3) 0%, transparent 62%),
+      linear-gradient(170deg,#FFF1E6,#FBE4D6);}
   .st-glass .card,.st-glass .btn,.st-glass .menu,.st-glass .hcard,.st-glass .stat,
   .st-glass .track,.st-glass .seg{
     background:rgba(255,255,255,.13);
@@ -271,52 +339,114 @@
   .st-glass .btn{border-radius:999px}
 
   /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════ */
-  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;--edge:rgba(255,255,255,.42);
-    --acc:#9BEFE5;--accfg:#04262A;
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;--edge:rgba(255,255,255,.46);
+    --acc:var(--accQ);--accfg:var(--accfgQ);
     background:
-      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
-      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
-      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
-      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      radial-gradient(600px 420px at 12% 0%, var(--h3) 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, var(--h2) 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, var(--h1) 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, var(--h4) 0%, transparent 58%),
       linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-skin="blossom"]{background:
+      radial-gradient(600px 420px at 12% 0%, var(--h3) 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, var(--h2) 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, var(--h1) 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, var(--h4) 0%, transparent 58%),
+      linear-gradient(160deg,#2B1710,#160B07);}
   .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
-    --edge:rgba(16,28,54,.28);--acc:#0C6C7E;--accfg:#F0FEFF;
+    --edge:rgba(16,28,54,.30);--acc:var(--accQL);--accfg:var(--accfgQL);
     background:
-      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
-      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
-      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
-      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      radial-gradient(600px 420px at 12% 0%, var(--hl3) 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, var(--hl2) 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, var(--hl1) 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, var(--hl4) 0%, transparent 58%),
       linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid[data-theme="light"][data-skin="blossom"]{--fg:#2A140A;--fg2:rgba(42,20,10,.66);
+    --edge:rgba(90,45,20,.30);
+    background:
+      radial-gradient(600px 420px at 12% 0%, var(--hl3) 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, var(--hl2) 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, var(--hl1) 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, var(--hl4) 0%, transparent 58%),
+      linear-gradient(160deg,#FFF4EC,#FCE7DA);}
+  /* Rev 3, against Ido's reference lozenges. What the references actually
+     have that rev 2 did not: a BRIGHT BAND along the top edge, a soft
+     SPECULAR bloom in the upper-left, a dim counter-rim underneath, and a
+     COLOURED glow cast on the ground — the refraction reading, rather than
+     rev 2's frosted-pane reading. All four are background/​shadow layers, not
+     a pseudo-element: an ::after with inset:0 paints over the card's own
+     static children, which is how a gloss overlay eats its label. */
   .st-liquid .card,.st-liquid .btn,.st-liquid .menu,.st-liquid .hcard,.st-liquid .stat,
   .st-liquid .track,.st-liquid .seg{
     position:relative;overflow:hidden;border:1px solid var(--edge);
-    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
-               rgba(255,255,255,.14));
-    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
-    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.36) 0%, rgba(255,255,255,.05) 26%,
+                     rgba(255,255,255,0) 46%),
+      radial-gradient(150% 95% at 14% -34%, rgba(255,255,255,.30), transparent 56%),
+      linear-gradient(150deg, rgba(255,255,255,.21), rgba(255,255,255,.05) 54%,
+                     rgba(255,255,255,.15)),
+      /* THE TINT FLOOR, and it is a rule rather than a nudge. Rev 3 built the
+         dark-theme panel out of white layers only, so it could only ever
+         LIGHTEN what was behind it — and where a radial peaked, the panel's own
+         white type went illegible. A translucent surface in a dark theme must
+         tint TOWARD the theme as well as adding highlight, or its contrast is a
+         property of the wallpaper rather than of the component. Invisible under
+         Aurora, whose hues are already dark; obvious the first time Blossom was
+         rendered, which is why the skin axis is worth having at all. */
+      linear-gradient(0deg, rgba(8,10,20,.26), rgba(8,10,20,.26));
+    backdrop-filter:blur(18px) saturate(2.2) brightness(1.02);
+    -webkit-backdrop-filter:blur(18px) saturate(2.2) brightness(1.02);
     box-shadow:
-      inset 1.4px 1.4px 0 rgba(255,255,255,.72),
-      inset -1.4px -1.4px 0 rgba(255,255,255,.16),
-      0 18px 40px rgba(4,10,24,.42);}
+      inset 0 1.6px 0 rgba(255,255,255,.92),
+      inset 1.2px 0 0 rgba(255,255,255,.44),
+      inset -1.2px 0 0 rgba(255,255,255,.20),
+      inset 0 -1.6px 0 rgba(255,255,255,.26),
+      0 16px 36px rgba(4,10,24,.44),
+      0 4px 22px var(--bloom);}
   .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .btn,
   .st-liquid[data-theme="light"] .menu,.st-liquid[data-theme="light"] .hcard,
   .st-liquid[data-theme="light"] .stat,.st-liquid[data-theme="light"] .track,
   .st-liquid[data-theme="light"] .seg{
-    background:linear-gradient(150deg, rgba(255,255,255,.74), rgba(255,255,255,.4) 52%,
-               rgba(255,255,255,.58));
-    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
-               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
-               0 18px 36px rgba(40,60,110,.18);}
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.58) 30%,
+                     rgba(255,255,255,.36) 52%),
+      radial-gradient(150% 95% at 14% -34%, rgba(255,255,255,.85), transparent 58%),
+      linear-gradient(150deg, rgba(255,255,255,.72), rgba(255,255,255,.42) 54%,
+                     rgba(255,255,255,.62));
+    box-shadow:inset 0 1.8px 0 rgba(255,255,255,1),
+               inset 1.2px 0 0 rgba(255,255,255,.8),
+               inset 0 -1.6px 0 rgba(255,255,255,.6),
+               0 16px 32px rgba(40,60,110,.16),
+               0 4px 20px var(--bloom);}
   .st-liquid .card,.st-liquid .menu,.st-liquid .hcard{border-radius:var(--rad)}
   .st-liquid .btn{border-radius:999px}
+  /* the lozenge: saturated body, one bright specular streak across the top
+     third, a rim that is brightest at the top and dimmest underneath. This is
+     the shape the reference kit is built out of, so the primary action and the
+     selected segment are drawn as one. */
+  .st-liquid .btn.primary,.st-liquid .seg .sg.on,.st-liquid .menu .av,.st-liquid .h-hd .hav{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.62) 0%, rgba(255,255,255,.10) 30%,
+                     rgba(255,255,255,0) 52%),
+      linear-gradient(158deg, color-mix(in srgb, var(--acc) 72%, #fff),
+                     var(--acc) 58%,
+                     color-mix(in srgb, var(--acc) 82%, #000));
+    color:var(--accfg);
+    border:1px solid rgba(255,255,255,.62);
+    box-shadow:
+      inset 0 1.8px 0 rgba(255,255,255,.95),
+      inset 0 -2px 3px rgba(0,0,0,.14),
+      0 8px 22px var(--bloom),
+      0 2px 8px rgba(0,0,0,.20);}
+  .st-liquid .seg{overflow:hidden}
 
   /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════ */
   .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
     --lo:#FFFFFF;--sh:rgba(163,177,198,.62);--edge:rgba(42,51,64,.26);
-    --acc:#3B7DA8;--accfg:#F2FAFF;background:#E7ECF3;}
+    --acc:var(--accN);--accfg:var(--accfgN);background:var(--neoBg);}
   .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
     --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);--edge:rgba(221,228,238,.26);
-    --acc:#6FB6E8;--accfg:#06202E;background:#252A32;}
+    --acc:var(--accND);--accfg:var(--accfgND);background:var(--neoBgD);}
   .st-neo .card,.st-neo .btn,.st-neo .hcard{
     background:transparent;border:1px solid var(--edge);
     box-shadow:6px 6px 14px var(--sh), -6px -6px 14px var(--lo);}
@@ -330,8 +460,8 @@
   /* C22's overlay rule: neo's surface IS the page colour plus a shadow pair,
      so a menu that inherits it is TRANSPARENT and the dimmed screen reads
      straight through. The one neo surface that must be opaque. */
-  .st-neo{--sheet:#E7ECF3}
-  .st-neo[data-theme="dark"]{--sheet:#252A32}
+  .st-neo{--sheet:var(--neoBg)}
+  .st-neo[data-theme="dark"]{--sheet:var(--neoBgD)}
   .st-neo .menu{background:var(--sheet);border:1px solid var(--edge);
     box-shadow:10px 10px 26px rgba(0,0,0,.28), -6px -6px 16px var(--lo)}
   .st-neo .card,.st-neo .menu,.st-neo .hcard{border-radius:var(--rad)}
@@ -340,20 +470,21 @@
   /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════ */
   .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
     --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);--edge:rgba(237,242,248,.22);
-    --a1:#5FD8FF;--a2:#1170E4;--acc:#5FD8FF;--accfg:#04121F;background:#1B1F26;}
-  .st-darkneo[data-theme="light"]{background:#22262E;} /* it has no light scheme */
+    --a1:var(--r1);--a2:var(--r2);--acc:var(--r1);--accfg:var(--accfgR);
+    background:var(--dnBg);}
+  .st-darkneo[data-theme="light"]{background:var(--dnBg);} /* it has no light scheme */
   .st-darkneo .card,.st-darkneo .menu,.st-darkneo .hcard,.st-darkneo .seg{
-    background:linear-gradient(158deg,#232830,#1A1E25);border:1px solid var(--edge);
+    background:linear-gradient(158deg,var(--dnCard1),var(--dnCard2));border:1px solid var(--edge);
     box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo),
                inset 0 1px 0 rgba(255,255,255,.05);}
   .st-darkneo .stat,.st-darkneo .track{
-    background:linear-gradient(158deg,#1F242C,#191D24);
+    background:linear-gradient(158deg,var(--dnCard2),var(--dnCard2));
     border:1px solid var(--edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
   .st-darkneo .card,.st-darkneo .menu,.st-darkneo .hcard{border-radius:var(--rad)}
   .st-darkneo .btn{border-radius:999px;background:linear-gradient(110deg,var(--a2),var(--a1));
     color:#06121C;border:1px solid rgba(255,255,255,.2);
     box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
-  .st-darkneo .btn.ghost{background:linear-gradient(158deg,#232830,#1A1E25);color:var(--fg);
+  .st-darkneo .btn.ghost{background:linear-gradient(158deg,var(--dnCard1),var(--dnCard2));color:var(--fg);
     box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo)}
 
   /* shared button skin for the three materials that do not override it. */
@@ -397,6 +528,10 @@
   <span class="lbl">Language</span>
   <button data-l="en" class="on">English</button>
   <button data-l="he">עברית</button>
+  <span class="gap"></span>
+  <span class="lbl">Skin</span>
+  <button data-s="aurora" class="on">Aurora</button>
+  <button data-s="blossom">Blossom</button>
 </div>
 
 <div class="stage" id="stage"></div>
@@ -411,7 +546,7 @@
    6  the key           · one permanent status component, three states (C13)
    ------------------------------------------------------------------------- */
 
-let M = 'glass', TH = 'dark', L = 'en';
+let M = 'glass', TH = 'dark', L = 'en', SK = 'aurora';
 
 const T = {
   en: {
@@ -538,7 +673,7 @@ const esc = s => s;
 
 function phone(inner, extra){
   const t = T[L];
-  return `<div class="ph st st-${M}" data-theme="${TH}" dir="${t.dir}">
+  return `<div class="ph st st-${M}" data-theme="${TH}" data-skin="${SK}" dir="${t.dir}">
     <div class="sb"><span><bdi>${t.clock}</bdi></span><span>▮▮ ▮</span></div>
     ${extra||''}
     <div class="sc">${inner}</div>
@@ -628,7 +763,7 @@ function f1(){                                   // Settings, upper
       ${matGrid(M)}
       <div class="div"></div>
       ${row(t.lColour, '', false)}
-      ${skinRow('aurora')}
+      ${skinRow(SK)}
       <div class="div"></div>
       ${row(t.lBright, '', false)}
       ${seg(t.brightness, locked ? 2 : (TH === 'light' ? 1 : 2), locked ? 1 : -1)}
@@ -709,7 +844,7 @@ function f4(){                                   // sign-in, before any account
 
 function f5(){                                   // the brightness lock, forced
   const t = T[L];
-  return `<div class="ph st st-darkneo" data-theme="dark" dir="${t.dir}">
+  return `<div class="ph st st-darkneo" data-theme="dark" data-skin="${SK}" dir="${t.dir}">
     <div class="sb"><span><bdi>${t.clock}</bdi></span><span>▮▮ ▮</span></div>
     <div class="sc">
       <div class="top"><span class="back">${t.back}</span><span class="h-scr">${t.title}</span></div>
@@ -719,7 +854,7 @@ function f5(){                                   // the brightness lock, forced
         ${matGrid('darkneo')}
         <div class="div"></div>
         ${row(t.lColour, '', false)}
-        ${skinRow('blossom')}
+        ${skinRow(SK === 'aurora' ? 'blossom' : 'aurora')}
         <div class="div"></div>
         ${row(t.lBright, '', false)}
         ${seg(t.brightness, 2, 1)}
@@ -767,16 +902,18 @@ const q = new URLSearchParams(location.search);
 if (q.get('m')) M = q.get('m');
 if (q.get('t')) TH = q.get('t');
 if (q.get('l')) L = q.get('l');
+if (q.get('s')) SK = q.get('s');
 
 document.querySelectorAll('.bar button').forEach(b => b.onclick = () => {
-  const grp = b.dataset.m ? 'm' : b.dataset.t ? 't' : 'l';
-  if (grp==='m') M = b.dataset.m; else if (grp==='t') TH = b.dataset.t; else L = b.dataset.l;
+  const grp = b.dataset.m ? 'm' : b.dataset.t ? 't' : b.dataset.l ? 'l' : 's';
+  if (grp==='m') M = b.dataset.m; else if (grp==='t') TH = b.dataset.t;
+  else if (grp==='l') L = b.dataset.l; else SK = b.dataset.s;
   document.querySelectorAll(`.bar button[data-${grp}]`).forEach(x => x.classList.remove('on'));
   b.classList.add('on');
   render();
 });
 document.querySelectorAll('.bar button').forEach(b => {
-  const on = b.dataset.m===M || b.dataset.t===TH || b.dataset.l===L;
+  const on = b.dataset.m===M || b.dataset.t===TH || b.dataset.l===L || b.dataset.s===SK;
   b.classList.toggle('on', !!on);
 });
 render();
