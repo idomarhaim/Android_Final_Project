@@ -15,6 +15,17 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`49b-overall-progress` RELEASED 2026-08-16 — the `Overall progress 16259%` `widget-pack` saw on the device (`d2cbaef`) is fixed.** Account: [`CHANGELOG/2026-08-16/49b-overall-progress.md`](CHANGELOG/2026-08-16/49b-overall-progress.md). Gradle daemon released. **323 unit tests pass, 0 fail** (6 this unit's); `:app:assembleDebug` green.
+>
+> **It was two defects, and the routing note named the smaller one.** A cross-goal mean of unbounded `progressFraction` existed at **two** sites, not one: `DashboardViewModel.kt:103`, and `ProgressSummary.averageProgress` — which `SocialRepositoryImpl:189` rounds into the text of a **shared post**. The second never appears on the user's own screen and is the worse of the two.
+>
+> 📌 **Why three sessions looked at that card and nobody saw it.** `DashboardScreen:710` feeds the same value to a `ProgressRing`, which clamps at the draw call — so the **ring looked normal and only the text lied**. A glance at the card passes it. The defect was visible solely in the one element that *states* a number rather than drawing one, which is a useful thing to know before the next device pass: check the labels, not the shapes.
+>
+> **The fix is not a fifth clamp.** §1.5's four were on the goal's own number, where they made a beaten goal unreadable. This one is at an **aggregation site**, exactly as `GpProgress` and `ProgressRing` already clamp at the **draw** site. A goal at 300% still reads 300% wherever it speaks for itself, and a test fails if anyone re-adds the model clamp to "fix" this.
+>
+> ⚠️ **The number underneath is still wrong, and is recorded rather than repaired** — `TODO/TODO_OPTIONAL/ProductReview.TODO.optional.md`. *"Weekly steps"* has a **weekly** target of 70 000 and the sync writes **one entry per day**, so since `#49` its fraction grows about one target per week — pinned by a witness test at **1028%** for 90 days. `#49` did not create that: the old clamped counter sat at a permanent and equally wrong **100%**. The real fix is §2 recurrence, which is unbuilt, because a weekly target needs a window to sum over and a goal has no period.
+>
+> `Untested:` the fix has **not** been seen on the device that produced the 16259%. Bounded by construction and pinned by tests; the screenshot is owed. `36-tasks-consent`'s `LifeAreaReorderUiTest` failure (`3e4a8ab`, a `#2` defect) is untouched by this unit and still open.
 _none active_
 
 > ✅ **`49-derive-currentvalue` → `widget-pack`: the redeclaration is cleared, `HEAD` is green and

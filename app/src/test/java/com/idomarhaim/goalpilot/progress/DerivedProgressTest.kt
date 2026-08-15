@@ -180,4 +180,70 @@ class DerivedProgressTest {
         val derived = goal.withDerivedProgress(listOf(entry("g1", 3.0)), emptyList())
         assertThat(derived).isEqualTo(goal.copy(currentValue = 3.0))
     }
+
+    // ── The aggregation site, and the 16259% it produced ──────────────────────
+
+    @Test
+    fun `overall completion is bounded above however far one goal has run past its target`() {
+        // The device pass read "Overall progress 16259%". A plain mean of
+        // progressFraction can say that; this cannot say more than 100%.
+        val beaten = Goal(id = "steps", targetValue = 70_000.0, currentValue = 34_000_000.0)
+        val untouched = Goal(id = "b", targetValue = 100.0)
+        assertThat(DerivedProgress.overallCompletionOf(listOf(beaten, untouched)))
+            .isWithin(1e-6f).of(0.5f)
+    }
+
+    @Test
+    fun `overall completion is bounded below by a goal whose progress has gone negative`() {
+        val negative = Goal(id = "a", targetValue = 100.0, currentValue = -500.0)
+        val half = Goal(id = "b", targetValue = 100.0, currentValue = 50.0)
+        assertThat(DerivedProgress.overallCompletionOf(listOf(negative, half)))
+            .isWithin(1e-6f).of(0.25f)
+    }
+
+    @Test
+    fun `an ordinary set of goals averages exactly as it always did`() {
+        // The clamp must be invisible where nothing overshoots — otherwise this is
+        // a behaviour change dressed as a bug fix.
+        val goals = listOf(
+            Goal(id = "a", targetValue = 100.0, currentValue = 20.0),
+            Goal(id = "b", targetValue = 100.0, currentValue = 40.0),
+            Goal(id = "c", targetValue = 100.0, currentValue = 90.0),
+        )
+        assertThat(DerivedProgress.overallCompletionOf(goals)).isWithin(1e-6f).of(0.5f)
+    }
+
+    @Test
+    fun `no goals is zero rather than a division by zero`() {
+        assertThat(DerivedProgress.overallCompletionOf(emptyList())).isEqualTo(0f)
+        assertThat(DerivedProgress.overallCompletion(emptyList())).isEqualTo(0f)
+    }
+
+    @Test
+    fun `clamping the aggregate does not clamp the goal`() {
+        // §1.5's whole point: the overshoot stays readable where the goal speaks
+        // for itself. This is the test that fails if someone "fixes" 16259% by
+        // putting the clamp back on progressFraction.
+        val beaten = Goal(id = "steps", targetValue = 70_000.0, currentValue = 210_000.0)
+        assertThat(beaten.progressFraction).isWithin(1e-6f).of(3f)
+        assertThat(beaten.progressPercent).isEqualTo(300)
+        assertThat(DerivedProgress.overallCompletionOf(listOf(beaten))).isEqualTo(1f)
+    }
+
+    @Test
+    fun `a periodic target fed by a daily sync is what produced the number`() {
+        // Not a fix, a witness. The Health Connect sync writes one entry per day
+        // against a WEEKLY target (70_000 steps), and DerivedProgress sums every
+        // entry there has ever been — so the fraction grows without bound at about
+        // one target per week. The old stored counter hid this by clamping at the
+        // target, which is why it surfaced only when #49 removed the clamp.
+        val ninetyDays = (1..90).map { day -> entry("steps", 8_000.0, id = "hc:steps:$day") }
+        val goal = Goal(id = "steps", targetValue = 70_000.0)
+            .withDerivedProgress(ninetyDays, emptyList())
+
+        assertThat(goal.currentValue).isWithin(1e-6).of(720_000.0)
+        assertThat(goal.progressPercent).isEqualTo(1028)
+        // …and the headline stays sane regardless.
+        assertThat(DerivedProgress.overallCompletionOf(listOf(goal))).isEqualTo(1f)
+    }
 }

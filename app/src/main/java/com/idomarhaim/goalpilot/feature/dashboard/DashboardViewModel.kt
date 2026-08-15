@@ -10,6 +10,7 @@ import com.idomarhaim.goalpilot.core.util.StoragePaths
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
 import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
+import com.idomarhaim.goalpilot.domain.model.DerivedProgress
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
@@ -100,8 +101,12 @@ class DashboardViewModel @Inject constructor(
             levelProgress = user?.levelProgress ?: 0f,
             pointsToNextLevel = user?.pointsToNextLevel ?: 0L,
             goals = goals,
-            averageProgress = if (goals.isEmpty()) 0f
-            else goals.map { it.progressFraction }.average().toFloat(),
+            // Not a plain mean of `progressFraction` (§4.4's ⚠️, and observed on a
+            // device as "Overall progress 16259%"): that averages unbounded
+            // fractions, so one goal past a periodic target sets a headline about
+            // everything. Clamped per goal at the aggregation site — the goal's own
+            // screens still show the overshoot.
+            averageProgress = DerivedProgress.overallCompletionOf(goals),
             completedTasksLast7d = completedLast7d,
             doneTasks = tasks.count { it.isDone },
             totalTasks = tasks.size,

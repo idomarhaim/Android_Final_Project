@@ -362,3 +362,41 @@ issue, because they are one defect with two faces.
 > immediately and sign-in then worked first time. **This is the emulator, not
 > GoalPilot** — recorded so the next session that clears app data does not spend
 > twenty minutes diagnosing the app.
+
+---
+
+## A periodic target measured against a lifetime sum *(found 2026-08-16)*
+
+- [ ] **A Health Connect goal's target is *weekly*; the number it is compared against
+      is *everything ever logged*.** `HealthMetric.STEPS` creates *"Weekly steps"* with
+      `defaultGoalTarget = 70_000`, and the sync writes **one progress entry per day**
+      (plus top-ups). Since [#49](https://github.com/idomarhaim/Android_Final_Project/issues/49)
+      made `currentValue` a sum over entries, that goal's fraction now grows without
+      bound at roughly **one target per week** — `DerivedProgressTest` pins it: 90 days
+      at 8 000 steps reads **1028%**.
+
+  **This is not #49's bug, and #49 is why you can see it.** The old stored counter was
+  clamped to the target by `GoalRepositoryImpl.addProgress`, so the same goal sat at a
+  permanent, equally wrong **100%** and looked fine. Removing the clamp (spec §1.5)
+  swapped a silent wrong answer for a loud one. The loud one is better, and it is still
+  wrong.
+
+  **What it is *not* fixable by:** putting the clamp back — that restores the silence
+  §1.5 deleted — or clamping the aggregate, which is already done at
+  `DerivedProgress.overallCompletion` and only stops the dashboard headline lying.
+  The goal's own screens still read 1028%, correctly reporting an incorrect quantity.
+
+  **The actual fix is §2 recurrence, which is unbuilt.** A weekly target needs a
+  *window* to sum over, and the model has no period on a goal — §1.6 makes goal kinds
+  views and §2.1 makes a schedule a set of occurrences, neither of which exists yet.
+  Two interim options if that is too far off, neither taken here because both are
+  product decisions rather than repairs:
+  1. give the two Health Connect goals a **lifetime** target instead of a weekly one
+     (rename to *"Steps"*, target ∞ or a large milestone) — honest, and loses the
+     weekly framing;
+  2. sum only entries whose `sourceKey` date falls in the current week — infers a
+     period from a string format, and works for **no** other goal.
+
+  *Observed:* the dashboard read **"Overall progress 16259%"** on
+  `Pixel_10_Pro_XL` with a real account, during `widget-pack`'s device pass
+  (`d2cbaef`, 2026-08-16). The headline is fixed; this item is the number underneath it.

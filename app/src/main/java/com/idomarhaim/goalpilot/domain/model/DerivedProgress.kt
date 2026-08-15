@@ -98,6 +98,47 @@ object DerivedProgress {
         if (goalId.isBlank()) return 0.0
         return currentValues(entries, tasks)[goalId] ?: 0.0
     }
+
+    /**
+     * *"Overall progress"* across [goals] — the mean of how **complete** each one
+     * is, where a goal is at most complete, `0f..1f`.
+     *
+     * ### Why this clamps when [Goal.progressFraction] deliberately does not
+     *
+     * §1.5 makes overshoot legal *and shown*, and #49 deleted four clamps to get
+     * there. This is not a fifth. The clamp that died was on **the goal's own
+     * number**, which made a beaten goal unreadable on the one screen a human
+     * writes to; this one is at an **aggregation site**, and the two are different
+     * things — the same distinction as `GpLinearProgress` clamping at the draw
+     * call. A goal that is at 300% still says 300% everywhere it speaks for itself.
+     *
+     * Unclamped, this was a **mean of incomparable quantities**. §4.4 already
+     * refuses that shape one chart over: *"a percentage is a fraction of its own
+     * target, so ranking by movement partly ranks how modest the goals are"* —
+     * which is why the effort/outcome chart orders only minutes. An average of
+     * per-goal percentages has the same flaw, plus one the ranking does not: it is
+     * **unbounded**, so a single goal accumulating past a periodic target drags a
+     * headline that claims to describe everything.
+     *
+     * *Observed:* on a device, 2026-08-16 — the dashboard read
+     * **"Overall progress 16259%"** (`widget-pack`'s device pass, `d2cbaef`). The
+     * ring beside that text looked perfectly normal, because `ProgressRing` clamps
+     * at the draw call; only the number lied, and the same number is put into a
+     * **shared post** by `SocialRepositoryImpl:189`.
+     */
+    fun overallCompletion(fractions: Iterable<Float>): Float {
+        var sum = 0f
+        var count = 0
+        for (f in fractions) {
+            sum += f.coerceIn(0f, 1f)
+            count++
+        }
+        return if (count == 0) 0f else sum / count
+    }
+
+    /** [overallCompletion] over goals. */
+    fun overallCompletionOf(goals: List<Goal>): Float =
+        overallCompletion(goals.map { it.progressFraction })
 }
 
 /**

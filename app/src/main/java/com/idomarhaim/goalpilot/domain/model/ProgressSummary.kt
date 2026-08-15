@@ -15,16 +15,20 @@ data class ProgressSummary(
     val generatedAtEpochMillis: Long = 0L,
 ) {
     /**
-     * Average completion across the included goals. **No longer bounded to
-     * `0f..1f`** — since #49 removed `progressFraction`'s clamp a beaten goal
-     * contributes more than `1f`, which a plain mean then spreads over the rest.
-     * §7.2 names that as a defect of the mean itself (`DashboardViewModel.kt:103`
-     * has the same one) and assigns it to the session that reworks §4.4's charts;
-     * the doc is corrected here rather than left asserting a bound that no longer
-     * holds.
+     * Average completion across the included goals, `0f..1f`.
+     *
+     * Bounded again, and by construction rather than by a clamp on the goals: see
+     * [DerivedProgress.overallCompletion]. It was briefly a plain mean of unbounded
+     * fractions, between #49 deleting `progressFraction`'s clamp and the device
+     * pass finding what that produced.
+     *
+     * **This one is the more urgent of the two sites**, because it does not stay on
+     * the user's own screen: `SocialRepositoryImpl:189` rounds it into the text of a
+     * **shared post**, so an absurd number here is published to other people rather
+     * than merely displayed.
      */
     val averageProgress: Float
-        get() = if (goals.isEmpty()) 0f else goals.map { it.fraction }.average().toFloat()
+        get() = DerivedProgress.overallCompletion(goals.map { it.fraction })
 }
 
 /** Per-goal slice used by summaries and the "percentage of time per goal" chart. */
