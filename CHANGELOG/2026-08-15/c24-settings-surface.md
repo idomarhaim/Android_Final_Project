@@ -249,3 +249,36 @@ prototype was published as an interactive artifact so he can switch material · 
 language himself rather than review PNGs.
 
 **The verdict is his and is still outstanding.**
+
+---
+
+# Unit 3 — approved, and the session closes
+
+**Ido reviewed the prototype and approved all four decisions.** `#46` closed with the approval on the
+issue; `#12` has zero open children and is **fully answered**. Closing the map is his and is the only
+act left on it.
+
+**The deviation is closed, and the record is worth keeping in one sentence:** the HITL requirement was
+not ceremony. `#46` was closed once on a standing hand-back, without showing him the prototype; when
+he asked to see it, **his first look found the asset's worst defect** — a skin picker that changed
+nothing, in all four materials, invisible in the source. A HITL ticket resolved without the human is
+a ticket resolved without its best reviewer.
+
+## What the next session is, and why nothing runs beside it
+
+[`sessions/backlog-triage.md`](../../sessions/backlog-triage.md) — its precondition (*wait for `C22`,
+`C23` and `C24` to close*) is now **met**, and the brief is amended to say so and to hand it two
+things `C24` added:
+
+1. **`§4.9` describes a screen no issue carries** — the one piece of build work the map produced with
+   no ticket behind it, and a **precondition of `#9` and `#36`** rather than a peer of them.
+2. **`§4.1` gained three material-contract rules**, which bind `#10`'s widget pack and anything else
+   that draws a surface.
+
+It runs **alone**: it edits the very tickets a build session would read, and its success criterion is
+that afterwards `/implement #N` is a sufficient first message for every surviving issue. Build
+sessions parallelise **after** it, on the working sets it confirms.
+
+**No new briefs written and none owed.** `sessions/` is for work no ticket carries; every build unit
+after triage is carried by an issue, and a brief beside one would be an uncommitted duplicate of a
+committed work order — the rule `backlog-triage.md` itself states and `product-v03-spec` followed.

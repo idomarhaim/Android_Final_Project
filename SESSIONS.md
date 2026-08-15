@@ -16,7 +16,19 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 
-> 🏁 **`c24-settings-surface` RELEASED 2026-08-15 — `f7cfa9c` (claim) → this commit.
+> ✅ **`C24` #46 APPROVED BY IDO and closed for good, 2026-08-15 — all four decisions signed off after
+> he reviewed the prototype.** With it, **`#12` is fully answered**; closing the map is the one act
+> left and it is his. **The next session is [`sessions/backlog-triage.md`](sessions/backlog-triage.md)**,
+> whose precondition (`C22`, `C23`, `C24` all closed) is now **met** — it runs **alone**, before any
+> build session, and produces the build order for `/implement #N`.
+>
+> ⚠️ **The rev-2 close was premature and he caught it.** `#46` is `wayfinder:prototype`, therefore
+> **HITL**, and the first release closed it on a *standing* hand-back without ever showing him the
+> prototype. He asked to see it; it was reopened, published as an interactive artifact, and **his
+> review immediately found the asset's worst defect** — the skin picker changed nothing, in all four
+> materials. **The live exchange was not ceremony; it was the thing that found the bug.**
+
+> 🏁 **`c24-settings-surface` RELEASED 2026-08-15 — `f7cfa9c` (claim) → `5268c0a` → `7f9d032`.
 > [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) is resolved and CLOSED, and
 > [`#12`](https://github.com/idomarhaim/Android_Final_Project/issues/12) now has ZERO open children** —
 > `total=31, closed=31, open=0`, counted rather than asserted. The `#12` map body singleton is **released**.

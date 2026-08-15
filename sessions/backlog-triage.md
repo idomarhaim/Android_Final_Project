@@ -20,6 +20,22 @@ certainly superseded outright, and **nothing has reconciled them.** A build sess
 point of its position: it is cheap, and it is the only thing standing between a finished spec and
 someone building from a ticket the spec contradicts.
 
+> ✅ **PRECONDITION MET, 2026-08-15 — all three are closed and this brief is runnable.** `C22` #44
+> (`cded54e`), `C23` #45, and `C24` #46 (`7f9d032`, **approved by Ido**). `#12` has **zero** open
+> children. **Two things `C24` adds to this session's input**, both of which change what the triage
+> compares against:
+>
+> 1. **`§4.9` is a new spec section describing a screen that does not exist and that no issue
+>    carries.** Under this brief's own *"any new issue the spec implies is filed"* clause, the
+>    settings surface almost certainly wants an issue of its own — it is the one piece of build work
+>    the map produced with no ticket behind it, and it is a **precondition of `#9` and `#36`** rather
+>    than a peer of them, since both need settings that live on it.
+> 2. **`§4.1` gained three material-contract rules** (a translucent surface tints toward the theme;
+>    a skin owes a luminance contract; `AppSkin` must reach every material's accent, ground and
+>    ramp). These bind `#10`'s widget pack and anything else that draws a surface.
+>
+> The original precondition text follows, kept because it records why this brief waited.
+
 > ⚠️ **Precondition added 2026-08-15, after this brief was written.** `docs/PRODUCT_v0.3.md` now
 > **exists** (`d271355`), but writing it **found three gaps and filed them as new map tickets** —
 > [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) (the measure proposal
