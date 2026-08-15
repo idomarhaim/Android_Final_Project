@@ -14,7 +14,15 @@ data class ProgressSummary(
     val goals: List<GoalProgress> = emptyList(),
     val generatedAtEpochMillis: Long = 0L,
 ) {
-    /** Average completion across the included goals, 0f..1f. */
+    /**
+     * Average completion across the included goals. **No longer bounded to
+     * `0f..1f`** — since #49 removed `progressFraction`'s clamp a beaten goal
+     * contributes more than `1f`, which a plain mean then spreads over the rest.
+     * §7.2 names that as a defect of the mean itself (`DashboardViewModel.kt:103`
+     * has the same one) and assigns it to the session that reworks §4.4's charts;
+     * the doc is corrected here rather than left asserting a bound that no longer
+     * holds.
+     */
     val averageProgress: Float
         get() = if (goals.isEmpty()) 0f else goals.map { it.fraction }.average().toFloat()
 }

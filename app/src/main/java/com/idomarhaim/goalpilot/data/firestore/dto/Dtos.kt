@@ -35,7 +35,14 @@ data class GoalDto(
      */
     var healthSourceKey: String? = null,
     var targetValue: Double = 100.0,
-    var currentValue: Double = 0.0,
+    // No `currentValue`. It stopped being a stored aggregate in #49 (§7.1: "stops
+    // being stored — a sum over entries"), and the field is absent rather than
+    // retained-and-ignored on purpose: `upsertGoal` writes with `set()`, so a
+    // retained field would be re-persisted on every save and a *kept* stale number
+    // is exactly the second number that quietly disagrees. Firestore ignores
+    // document fields a DTO has no property for, so documents written before this
+    // still deserialize; their orphaned `currentValue` is dropped the next time the
+    // goal is saved and read by nobody in the meantime.
     var unit: String = "%",
     var colorHex: String = "",
     var deadline: Long? = null,

@@ -25,10 +25,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Tasks live under users/{uid}/tasks. Completing a task is transactional:
- * it flips `done`, awards/rescinds points on the user + public leaderboard
- * projection, recomputes the level, and advances/retracts the linked goal's
- * progress — all atomically (spec §6 Core: point scoring, progress from tasks).
+ * Tasks live under users/{uid}/tasks. Completing a task is transactional: it flips
+ * `done`, awards/rescinds points on the user + public leaderboard projection, and
+ * recomputes the level — all atomically (spec §6 Core: point scoring).
+ *
+ * It no longer advances the linked goal. That was the second of the two client
+ * writers of `goal.currentValue` (#49, spec §5.2); the goal now sums
+ * `progressContribution` over its completed tasks, so the tick alone carries the
+ * progress and there is no derived number stored anywhere to fall out of step.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -43,9 +47,6 @@ class TaskRepositoryImpl @Inject constructor(
 
     private fun tasksCol(uid: String): CollectionReference =
         userDoc(uid).collection(FirestorePaths.TASKS)
-
-    private fun goalsCol(uid: String): CollectionReference =
-        userDoc(uid).collection(FirestorePaths.GOALS)
 
     private fun publicDoc(uid: String) =
         firestore.collection(FirestorePaths.PUBLIC_PROFILES).document(uid)
@@ -104,9 +105,6 @@ class TaskRepositoryImpl @Inject constructor(
                     if (task.done == done) return@runTransaction // idempotent no-op
 
                     val userSnap = txn.get(userRef)
-                    val goalRef = task.goalId?.takeIf { it.isNotBlank() }
-                        ?.let { goalsCol(uid).document(it) }
-                    val goalSnap = goalRef?.let { txn.get(it) }
 
                     // ── Writes ──
                     val sign = if (done) 1 else -1
@@ -132,13 +130,14 @@ class TaskRepositoryImpl @Inject constructor(
                         com.google.firebase.firestore.SetOptions.merge(),
                     )
 
-                    if (goalRef != null && goalSnap != null) {
-                        val target = goalSnap.getDouble("targetValue") ?: 100.0
-                        val current = goalSnap.getDouble("currentValue") ?: 0.0
-                        val next = (current + sign * task.progressContribution)
-                            .coerceIn(0.0, target)
-                        txn.update(goalRef, mapOf("currentValue" to next, "updatedAt" to now))
-                    }
+                    // The linked goal is deliberately not touched (#49). `done` is
+                    // already the durable fact, and `DerivedProgress` sums
+                    // `progressContribution` over the completed tasks, so crediting
+                    // the goal here would be a second writer of a number derived from
+                    // a record this very transaction is writing. Deleting it also
+                    // takes the goal document out of the read set — §7.2's unbounded
+                    // multi-document transaction — and takes the second of the four
+                    // clamps §1.5 deletes with it.
                 }.await()
                 Resource.Success(Unit)
             } catch (e: Exception) {

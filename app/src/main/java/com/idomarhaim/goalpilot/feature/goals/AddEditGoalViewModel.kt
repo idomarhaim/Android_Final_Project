@@ -50,7 +50,6 @@ class AddEditGoalViewModel @Inject constructor(
                             lifeAreaIds = g.lifeAreaIds,
                             target = g.targetValue.toTrimmedString(),
                             unit = g.unit,
-                            currentValue = g.currentValue,
                             createdAt = g.createdAtEpochMillis,
                         )
                     }
@@ -103,7 +102,11 @@ class AddEditGoalViewModel @Inject constructor(
                 category = current.category,
                 lifeAreaIds = current.lifeAreaIds,
                 targetValue = target,
-                currentValue = current.currentValue.coerceIn(0.0, target),
+                // `currentValue` is not carried through the form any more (#49). It
+                // is derived from the goal's entries and completed tasks, so the
+                // edit screen has nothing to preserve and no target to clamp it to
+                // — editing a goal's title cannot move its progress, which is what
+                // the round-trip through this form could previously do.
                 unit = current.unit.ifBlank { "%" },
                 colorHex = current.category.defaultColorHex,
                 createdAtEpochMillis = current.createdAt,
@@ -126,7 +129,6 @@ data class GoalForm(
     val lifeAreaIds: List<String> = emptyList(),
     val target: String = "100",
     val unit: String = "%",
-    val currentValue: Double = 0.0,
     val createdAt: Long = 0L,
     val isEdit: Boolean = false,
     val isSaving: Boolean = false,

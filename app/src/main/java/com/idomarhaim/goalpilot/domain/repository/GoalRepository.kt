@@ -4,18 +4,32 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import kotlinx.coroutines.flow.Flow
 
-/** CRUD + observation for the current user's goals (spec §6 Core: define goals). */
+/**
+ * CRUD + observation for the current user's goals (spec §6 Core: define goals).
+ *
+ * There is no `addProgress`, and its absence is the design (#49, spec §5.2). A
+ * goal's `currentValue` is a sum over its progress entries and its completed
+ * tasks, computed on the way out of [observeGoals] / [observeGoal]; nothing in
+ * this interface advances it, because a derived number whose reader can reach its
+ * own inputs is owed no stored writer. Logging progress means writing a
+ * `ProgressEntry`; completing a task means setting `done`. Both are facts, and the
+ * number follows them.
+ */
 interface GoalRepository {
 
+    /** Goals with `currentValue` already derived from the facts. */
     fun observeGoals(includeArchived: Boolean = false): Flow<List<Goal>>
 
+    /** One goal with `currentValue` already derived, or null while it is absent. */
     fun observeGoal(goalId: String): Flow<Goal?>
 
-    /** Creates or updates a goal; returns the goal id. */
+    /**
+     * Creates or updates a goal; returns the goal id.
+     *
+     * `currentValue` is not persisted — whatever the passed [Goal] carries in that
+     * field is ignored, since the document no longer has one.
+     */
     suspend fun upsertGoal(goal: Goal): Resource<String>
-
-    /** Adds [delta] to the goal's current value (clamped at the target), for progress logging. */
-    suspend fun addProgress(goalId: String, delta: Double): Resource<Unit>
 
     /**
      * Files a goal under [lifeAreaIds], or unfiles it with the empty list.

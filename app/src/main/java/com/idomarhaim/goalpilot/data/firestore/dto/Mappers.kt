@@ -40,7 +40,9 @@ fun GoalDto.toDomain(): Goal = Goal(
     lifeAreaIds = resolvedLifeAreaIds(),
     healthSourceKey = healthSourceKey?.takeIf { it.isNotBlank() },
     targetValue = targetValue,
-    currentValue = currentValue,
+    // `currentValue` is left at its `0.0` default and filled in by
+    // `withDerivedProgress` at the repository boundary (#49). A goal that never
+    // reaches that seam honestly reads zero rather than carrying a stale number.
     unit = unit,
     colorHex = colorHex.ifBlank { GoalCategory.fromName(category).defaultColorHex },
     deadlineEpochMillis = deadline,
@@ -61,7 +63,7 @@ fun Goal.toDto(): GoalDto = GoalDto(
     lifeAreaIds = lifeAreaIds,
     healthSourceKey = healthSourceKey,
     targetValue = targetValue,
-    currentValue = currentValue,
+    // `currentValue` is not written: the facts are the record (#49, §7.1).
     unit = unit,
     colorHex = colorHex,
     deadline = deadlineEpochMillis,

@@ -48,8 +48,9 @@ class GoalDetailViewModel @Inject constructor(
      *
      * This exists because [TaskRepository.setDone] is a **server-only**
      * `runTransaction` (see `TaskRepositoryImpl`), and that is deliberate — it is
-     * what keeps `task.done`, the user's points, the level derived from them and
-     * the clamped goal progress in agreement. The price is that, unlike an
+     * what keeps `task.done`, the user's points and the level derived from them in
+     * agreement. (Goal progress is no longer in that list: since #49 it is summed
+     * from `done` rather than written beside it.) The price is that, unlike an
      * ordinary `set()`/`update()`, a transaction never touches the offline cache,
      * so there is **no local write for the snapshot listener to render**. Without
      * this overlay the screen sits perfectly still for the whole server round trip
@@ -262,9 +263,16 @@ private fun List<Task>.withOptimisticDone(inFlight: Map<String, Boolean>): List<
  * Moves the goal's progress by what the in-flight completions are worth, so the
  * ring and the "3 / 100 %" caption travel with the checkbox instead of lagging it.
  *
- * The arithmetic deliberately mirrors `TaskRepositoryImpl.setDone`'s transaction —
- * same contribution, same clamp to `0..targetValue` — because anything else would
- * show the user a number the server is not about to agree with.
+ * The arithmetic mirrors what the goal is about to read once the write lands —
+ * `DerivedProgress` sums `progressContribution` over completed tasks, so an in-flight
+ * tick is worth exactly that — because anything else shows the user a number the
+ * repository is not about to agree with.
+ *
+ * **No clamp**, and that is the third of the four §1.5 deletes. It used to pin the
+ * preview to `0..targetValue` to match a write-site clamp that no longer exists;
+ * keeping it would have made the optimistic number disagree with the settled one
+ * on precisely the goals that are past their target — the case the clamp was
+ * hiding in the first place.
  */
 private fun Goal.withOptimisticProgress(tasks: List<Task>, inFlight: Map<String, Boolean>): Goal {
     if (inFlight.isEmpty()) return this
@@ -275,7 +283,7 @@ private fun Goal.withOptimisticProgress(tasks: List<Task>, inFlight: Map<String,
         else if (done) task.progressContribution else -task.progressContribution
     }
     if (delta == 0.0) return this
-    return copy(currentValue = (currentValue + delta).coerceIn(0.0, targetValue))
+    return copy(currentValue = currentValue + delta)
 }
 
 data class GoalDetailUiState(

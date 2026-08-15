@@ -13,7 +13,6 @@ import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.ProgressDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
-import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,7 +32,6 @@ class ProgressRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val storageRepository: StorageRepository,
-    private val goalRepository: GoalRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : ProgressRepository {
 
@@ -82,10 +80,13 @@ class ProgressRepositoryImpl @Inject constructor(
                 )
                 ref.set(dto).await()
 
-                // 3) Advance the goal's current value by the logged amount.
-                if (entry.value != 0.0) {
-                    goalRepository.addProgress(entry.goalId, entry.value)
-                }
+                // There is no step 3. The entry *is* the progress (#49): the goal's
+                // current value is a sum over this collection, so the one write above
+                // either happened or did not, and either way the two numbers agree.
+                // The counter this used to advance had to be written second, which is
+                // what made a crash in between corrupt the goal permanently — and made
+                // a failure *after* the entry landed report a loss that had not
+                // occurred, inviting the user to log it twice.
                 Resource.Success(ref.id)
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Could not log progress", e)

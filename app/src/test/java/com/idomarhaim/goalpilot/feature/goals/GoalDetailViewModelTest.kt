@@ -114,8 +114,9 @@ class GoalDetailViewModelTest {
 
         vm.toggleTask(task())
 
-        // 2.0 + progressContribution(1.0) — the same arithmetic setDone's
-        // transaction performs, so the ring shows what the server is about to agree to.
+        // 2.0 + progressContribution(1.0) — the same arithmetic `GoalProgress`
+        // performs once the tick lands, so the ring shows the number the repository
+        // is about to derive.
         assertThat(vm.uiState.value.goal!!.currentValue).isEqualTo(3.0)
     }
 
@@ -134,7 +135,7 @@ class GoalDetailViewModelTest {
     }
 
     @Test
-    fun `optimistic progress is clamped at the target, exactly as the transaction clamps it`() =
+    fun `optimistic progress overshoots the target, exactly as the derived number will`() =
         runTest {
             observedGoal.value = Goal(id = goalId, targetValue = 2.0, currentValue = 2.0)
             val neverReturns = CompletableDeferred<Resource<Unit>>()
@@ -143,9 +144,12 @@ class GoalDetailViewModelTest {
 
             vm.toggleTask(task())
 
-            // Not 3.0. Showing a number past the target would be a number the
-            // server is never going to confirm.
-            assertThat(vm.uiState.value.goal!!.currentValue).isEqualTo(2.0)
+            // 3.0, not 2.0. This assertion is inverted from what it was, and the
+            // inversion is the point of #49: the preview used to clamp because the
+            // write clamped, and both clamps hid a goal the user had beaten. The
+            // sum over facts does not clamp, so neither may the preview — the two
+            // have to agree, and now they agree on the true number.
+            assertThat(vm.uiState.value.goal!!.currentValue).isEqualTo(3.0)
         }
 
     // ── The honesty half: a failure must undo the tick and say so ─────────

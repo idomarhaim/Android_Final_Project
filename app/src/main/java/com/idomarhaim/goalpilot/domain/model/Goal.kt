@@ -41,6 +41,24 @@ data class Goal(
      */
     val healthSourceKey: String? = null,
     val targetValue: Double = 100.0,
+    /**
+     * How far the goal has come — **derived, never stored** (spec §5.2, #49).
+     *
+     * It is the sum of the goal's progress entries and the `progressContribution`
+     * of its completed tasks, computed by
+     * [DerivedProgress][com.idomarhaim.goalpilot.domain.model.DerivedProgress] and put
+     * here by `withDerivedProgress` at the repository boundary. The field survives
+     * as a **view** so every screen can keep reading it; what changed is that
+     * nothing writes it to Firestore.
+     *
+     * It used to be a stored counter advanced by two client writers, one of which
+     * did it in a second, non-atomic step after writing the entry it was crediting
+     * — so a crash in between left the goal reading low forever. There is no
+     * counter to fall out of step with the facts any more.
+     *
+     * A `Goal` built by hand (a test, a form in progress) carries `0.0` and that is
+     * honest: nothing has been logged against it.
+     */
     val currentValue: Double = 0.0,
     val unit: String = "%",
     val colorHex: String = category.defaultColorHex,
@@ -49,10 +67,21 @@ data class Goal(
     val createdAtEpochMillis: Long = 0L,
     val updatedAtEpochMillis: Long = 0L,
 ) {
-    /** Progress in the range 0f..1f. */
+    /**
+     * Progress as a fraction of the target. `0f` when there is no target to
+     * measure against, because a fraction of nothing means nothing.
+     *
+     * **Not clamped, and that is the point** (spec §1.5, #49). It was pinned to
+     * `0f..1f`, which made two real states unsayable: a goal you have *beaten*
+     * read as merely finished, and a goal whose progress had legitimately fallen —
+     * a correcting entry, an unticked task — read as untouched. Past the target the
+     * app stops speaking in percent and says how far you beat it by; below zero it
+     * says so. Callers that draw a bar clamp at the drawing, where the constraint
+     * actually is, and callers that state a number state the real one.
+     */
     val progressFraction: Float
         get() = if (targetValue <= 0.0) 0f
-        else (currentValue / targetValue).coerceIn(0.0, 1.0).toFloat()
+        else (currentValue / targetValue).toFloat()
 
     val isComplete: Boolean get() = progressFraction >= 1f
 
