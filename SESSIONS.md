@@ -17,6 +17,57 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `c22-measure-proposal` | `/wayfinder 12` → resolve **[`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)** — the measure proposal: what the agent offers an unmeasured goal, and in what format. `prototype` type, **HITL** — it resolves only through live exchange with Ido. | `CHANGELOG/2026-08-15/c22-measure-proposal.md`, `kb-candidates/2026-08-15-c22-measure-proposal.md`, `sessions/` (brief for whatever this hands off), any prototype asset it writes | **`#12` map body** (to append the resolution to *Decisions so far*), issue **`#44`** (assigned to `idomarhaim` = the wayfinder claim) | 2026-08-15 |
 
+> 📥 **`social-share-bugs` (post-release addendum) — the `kb-candidates/` backlog now has a measured verdict per
+> file, and one file is drained. Decision was the agent's**: Ido was asked whether the other candidate files
+> should drain and handed it back — *"do what you think is most right, considering the work of the other sessions
+> that ran in parallel."* No second picker was raised.
+>
+> **The answer was not in the option set offered.** All three options were about *when to drain*; the real
+> question was whether the blocked files are still blocked at all — and
+> [`product-v03-spec`'s own release note](SESSIONS.md) had already flagged it and left it `Untested:`
+> (*"two survivors … look like they have since shipped into the global rules … nobody has read
+> `C:\Dev\JARVIS\user-rules\` against them"*). That read is cheap, touches nothing anyone owns, and is the only
+> thing that turns the next decision from a guess into a fact. It was run.
+>
+> | File | Entry | Verdict |
+> |---|---|---|
+> | `2026-08-13-c11b-output-formats.md` | 1 — exposure opens at the **write**, not the `git add` | ✅ **Shipped** — `C:\Dev\JARVIS` `7aa378d`, committed **and pushed** |
+> | `2026-08-13-c2-task-type.md` | 2 — widen the fork check at the artifact's **premise**, not its terms | ❌ **Not shipped** — still owed |
+> | `2026-08-13-c15b-stored-ai-text.md` | 2 — a **repeated** hand-back means the premise is false, not the form | ❌ **Not shipped** — still owed |
+>
+> ⚠️ **`product-v03-spec`'s guess said *two* had shipped. Measured: one.** Its note is left standing rather than
+> rewritten — it is that session's record, and it hedged itself correctly (`Observed:` the wording *resembles*
+> committed rule text; `Untested:`). **The reason the heuristic misfired is the reusable part:** both misses look
+> shipped because *adjacent clauses on the same target file* did ship. `question-axis-naming.md` gained
+> `c3-points-currency`'s derivation-closure widening and `c9e`'s documentary-premise clause — neither is
+> `c2-task-type`'s claim. Resemblance cannot separate a claim from its neighbours.
+>
+> 🛡️ **Verified against `HEAD`, not the working tree, and that distinction nearly mattered.** The first check read
+> `user-rules/my-rules.instructions.md` from a tree where `sibling-wait-banner` holds it **dirty and uncommitted**
+> — so "it shipped" could have meant "a live session is drafting it". Re-run as `git show HEAD:…`, it holds:
+> `7aa378d`. The two ❌ verdicts need no such re-run *a fortiori* — a dirty tree is a superset of `HEAD`, and the
+> text was absent from the tree.
+>
+> **Drained: `kb-candidates/2026-08-13-c11b-output-formats.md` is deleted.** One survivor, now promoted; entry 2
+> was ingested 2026-08-14. Every entry promoted ⇒ `rules/derivable-decision.md` §1 permits the deletion **without
+> asking**, and its own clause is why this was checked at all: *the trigger is the condition, never the skill that
+> met it* — a `rules/`-destined entry is drained by a **drafting** session and never by `/kb-ingest`, and one file
+> already sat fully drained for seven days on the older wording. Deleting completes `c11b-output-formats`'s work;
+> it does not discard it.
+>
+> **Left alone, deliberately.** `c2-task-type` + `c15b-stored-ai-text` — correctly still owed, and `rules/`-destined,
+> so the 🎬 gate is Ido's. `c12-charts-presentation` — its session **deliberately grouped** entries 2–4 with the
+> blocked entry 1; splitting that in its author's absence is the one thing *"considering the other sessions' work"*
+> most clearly rules out. `c21-offline-story`, `product-v03-spec` entry 2, `session-titles` — genuinely drainable,
+> but ingest work of a different theme, and `sessions/` is under `c22-measure-proposal`'s live claim so the brief
+> for it is not written here. **Two new files have appeared since** — `c22-measure-proposal` and
+> `c23-goal-category` — and are untouched and unread by this session.
+>
+> ✅ **And `storage.rules` IS now deployed** — `firebase deploy --only storage` to `goalpilot-56e30` on Ido's
+> explicit authorisation, `released rules storage.rules to firebase.storage`. So `#5`'s photo cleanup works in
+> production. **`#4` and `#5` still stay open**: the brief's other condition, the signed-in device pass, needs
+> Ido's Google account.
+>
 > ✅ **`c23-goal-category` released 2026-08-15 — `d5a9d13` (claim) → this commit. [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45)
 > is resolved and CLOSED.** No brief was written and none is owed: the ticket is answered, not handed on.
 >
