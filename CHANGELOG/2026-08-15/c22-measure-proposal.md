@@ -118,3 +118,20 @@ defect.**
 - `docs/prototypes/2026-08-15-measure-proposal/README.md` *(new)* — schema, derivations, rounds.
 - `kb-candidates/2026-08-15-c22-measure-proposal.md` *(new)*.
 - GitHub: `#44` assignee set; progress comment posted.
+
+## 🚚 This push carries a foreign commit
+
+`git log @{u}..HEAD` at push time held **two** commits, and one is not this session's:
+
+- `82fb125` — **`c23-goal-category`**, *"#45 resolved and closed — the category is machinery, not a
+  taxonomy the user sees"* (`CHANGELOG/2026-08-15/c23-goal-category.md`,
+  `kb-candidates/2026-08-15-c23-goal-category.md`, `SESSIONS.md`).
+
+`git push` is branch-scoped, not commit-scoped, so it goes up with mine whether or not this session
+wants it. Adjudicated per auto-push precondition 5 rather than waved through: that session wrote an
+**explicit release note** on `SESSIONS.md` (`d5a9d13` → `82fb125`), its Active-claims row is gone at
+`HEAD`, and [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) is **closed**.
+An explicit release is a positive signal a session writes about itself, so it settles the question
+without the transcript check. Paths are disjoint from this session's throughout.
+
+`#46` (`C24`, the settings surface) remains the only unclaimed frontier ticket on `#12`.
