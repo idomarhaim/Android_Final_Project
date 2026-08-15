@@ -247,3 +247,114 @@ did — one session released. By 14:2x `c21` was **released with an explicit rel
 signal it wrote about itself, so precondition 5's transcript escalation does not apply) and the tree
 was quiet, so the two commits are *released on the board and quiet in the tree* and **ride along
 legitimately**. They are named here, per the duty to say it where it is still findable in a month.
+
+---
+
+# Unit 3 — Ido handed the decision back, so the disposition below is the agent's
+
+**Same session, 14:3x.** The picker asked where the two gaps should be tracked. Ido answered, in
+Hebrew: *"I couldn't fully understand you or what the implications of each option are — explain simply
+and schematically. And choose the solution that gives the highest standard and quality of the app (and
+its purpose), UX/UI and the software. And if you think there's a way to improve the solution you chose,
+improve it."*
+
+That is a **delegation**, arriving together with *"I couldn't understand"*. Per
+`rules/question-axis-naming.md`'s hand-back clause the two halves are paid differently: the *judgment*
+half is removed and **must not be re-asked** — not smaller, not as a situation, not as a narrower
+picker — while the *"I couldn't understand"* half is paid **once, in the reply, as an explanation**,
+never as the preamble to another question. **No second picker was raised.**
+
+**So the decision is recorded as the agent's**, here, on `#12` and in the spec. Recording it as Ido's
+answer would overstate what he endorsed.
+
+## The derivation — and the answer was not in the option set
+
+The picker offered four dispositions and ranked *file as ordinary issues, then close `#12`* first.
+**That recommendation was wrong, and the map's own text says so.** `#12`'s Notes record the source
+brief being split by ceremony tier:
+
+> *"the reproduced defects and single-session UX work became ordinary issues **#2–#11**, and the
+> **undecided product-model questions** became `C1`–`C14`."*
+
+Both gaps are undecided product-model questions. Filing them as ordinary issues **misfiles them**: a
+build session meets them in the backlog and must take a product decision on the spot — the exact thing
+the map exists to prevent, and the exact thing this spec's own opening promise (*implement v0.3 without
+reopening a decision*) forbids.
+
+**And closing `#12` today buys the app nothing.** It is a bookkeeping event, and Ido's stated criterion
+was the **app's** quality. Closing a map whose completeness test has *just been demonstrated* to pass
+while two of its decisions are missing would **repeat the defect this session found.**
+
+**Derived: file all three as children of `#12`, and do not close the map.**
+
+## Three improvements on that, each derived rather than preferred
+
+1. **`C22` is a `prototype` ticket, not a format ticket — which corrects §10.1's own first
+   recommendation.** That text read *"a format question, which is `C11b`'s subject"*, and **that is
+   precisely the reading that lost it**: treating a **surface** as `#30`'s bookkeeping. `C7` specifies
+   an interaction nobody has drawn — a *concrete* proposal, optionally a leading indicator, never
+   auto-applied, dismissible per goal. An offer appearing on a goal Ido **deliberately left
+   unmeasured** is the most easily-resented surface on the map. *Legal but never silent* makes it
+   legal; **tone** makes it wanted. The schema is a *part* of `C22`, not the whole of it.
+2. **§10.3 was under-filed by this very session and `C24` corrects it.** It called the three missing
+   settings *"build work with an obvious shape, not product decisions"*. Re-read under Ido's criterion,
+   that is false: **`waking hours`** is the clamp on `C9a` §6's backwards-computed reminder *and* the
+   denominator of `C9b`'s load bar (red past 75%), and **`week start`** is `C15`'s deliberately
+   decoupled, user-overridable Region setting — Ido's own call. Two of three change **arithmetic
+   already specced elsewhere**. They are also three fields on **a screen nobody has designed**, and
+   `#12`'s Standing preferences make any ticket producing a screen owe a concrete design.
+3. **`C23` is deliberately narrow.** Four of the five questions one might ask about `GoalCategory` are
+   already answered (second axis not replacement; labels are app *speech* so they translate; colours
+   replaced by `C12` with a dark tone owed per `C9b`; `OTHER` is the tell). Only *does it stay at ten*
+   and *where do the labels live* survive — the latter harder than it looks, because the enum is in
+   `domain/`, **which may hold no Android types**, and `strings.xml` is one.
+
+## The map's completeness rule was amended, and that is the highest-leverage change
+
+`#12`'s Destination said *"the map is done when the spec is whole and no ticket is open."* This session
+demonstrated that test **passing while the spec was not whole**. A clause was **added** (the original
+sentence kept verbatim — nothing overwritten):
+
+> **…and every hand-off named in a resolution resolves somewhere.**
+
+**A hand-off must name the thing, never its ordinal.** `C7` said *"this is the fifth AI feature for
+`#30`"*; `#30` re-inventoried **from the code** — the *more* rigorous move — arrived at *five* by a
+different route, and the obligation evaporated with no reference broken. Rigour at the receiving end is
+what erased it, which is why the fix has to sit at the sending end.
+
+## Tickets filed
+
+| Ticket | Label | What it settles |
+|---|---|---|
+| [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) | `wayfinder:prototype` | the measure proposal — the surface *and* the schema |
+| [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) | `wayfinder:grilling` | `GoalCategory` — closed at ten? where do translated labels live? |
+| [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) | `wayfinder:prototype` | the settings surface v0.3 requires and does not have |
+
+## 🧪 Tests
+
+**Still no test layer** — three GitHub issue bodies, a spec edit and a map-body edit. Mechanical checks
+re-run after the edits:
+
+| Check | Result |
+|---|---|
+| Internal anchors | **50/50 resolve** — 3 broke when the §10.x headers gained their ticket ids, repaired by moving the link out of the heading (the same fix §4.5 already needed) |
+| Duplicated headers | **0** |
+| Traceability rows | **28** |
+| `#12` body written vs read back | **120,099 → 120,100** — the +1 is GitHub's newline |
+| `#12` structure after the write | `Decisions so far` **28**, `Not yet specified`, `Out of scope`, `Notes` all intact |
+| Open children of `#12` | **3** — `#44`, `#45`, `#46` |
+
+**A near-miss worth recording, and the verify step is what caught it.** The first `#12` patch script
+sliced from *"What is left"* to *"Not yet specified"* to replace one paragraph — and **the whole
+`## Decisions so far` section sits between them**. The built patch was **10,519 bytes instead of
+117,522, with 0 of 28 decisions.** It was **never written**: the local structure check ran before the
+`PATCH`, saw `decisions: 0`, and the patch was rebuilt with an exact-string replace instead. This is
+`kb/dev/runtime-verification.md`'s claim exercised in the cheap direction — **verify the artefact you
+built, not the edit you believe you made** — and it is the second instance today of the same family as
+this session's own KB candidate 1.
+
+## What is still not done
+
+- **`#12` is not closed.** Three children are open, and closure is Ido's regardless.
+- **KB candidate 2 is still undrained** — a cross-repo `C:\Dev\JARVIS` visit owing a row on that board.
+  Unchanged from unit 2.

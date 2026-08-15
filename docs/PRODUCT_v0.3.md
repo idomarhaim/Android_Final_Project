@@ -28,8 +28,15 @@ v0.3 *is*; sequencing is the build session's.
 > [§5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) is `C21`, written from its
 > resolution rather than from its title.
 >
-> **What remains is `#12`'s own closure**, which the brief that commissioned this file reserves to Ido:
-> *"closing the map is the last act, and it is Ido's call to confirm."*
+> **What remains is three tickets and then `#12`'s own closure.** Writing this file surfaced three
+> decisions the map believed it had taken and had not, and they were **filed as children** rather than
+> waved through — [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44),
+> [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45),
+> [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46). See
+> [§10](#10--gaps-defects-and-open-work) for what each owes and why filing them beat the alternatives.
+> **The spec is whole regardless**: every section states what *is* decided, so no build session is
+> blocked on any of the three. Closing `#12` stays Ido's: *"closing the map is the last act, and it is
+> Ido's call to confirm."*
 
 ---
 
@@ -239,7 +246,7 @@ conversions this app never performs.
 - may propose a **leading indicator** (measure the recurring behaviour that produces the outcome)
   rather than fake an outcome number;
 - **never auto-applies**, and the offer is **dismissible per goal**;
-- has a **non-AI fallback**. ⚠️ **GAP** — see [§10.1](#101--the-measure-proposal-has-no-schema).
+- has a **non-AI fallback**. ⚠️ **GAP** — see [§10.1](#101--the-measure-proposal-has-no-schema--now-c22-44).
 
 **Changing a kind is never silent.** Either **reset**, or a **proposed adaptation of logged history
 shown before it applies** — with **arithmetic first and the model only where arithmetic cannot
@@ -444,7 +451,7 @@ extra requests**.
 answers to one question already on the goal**, quietly resolved by `Mappers.kt:29`. Replacement was
 never available: `C15` puts user content outside what the app may rewrite, and after `C17` a task
 reaches an area only **through its goals**. ⚠️ **GAP** —
-see [§10.2](#102--goalcategorys-fate-was-routed-to-c5-and-c5-did-not-decide-it).
+see [§10.2](#102--goalcategorys-fate-was-routed-to-c5-and-c5-did-not-decide-it--now-c23-45).
 
 ---
 
@@ -541,7 +548,7 @@ here needs local scheduling and the nightly one rides it. This widens
 immediate, notifications.
 
 ⚠️ **GAP** — the app has **no daily-planning-hour setting and no waking-hours setting**, and §2.5
-needs both. See [§10.3](#103--three-settings-this-spec-requires-that-do-not-exist).
+needs both. See [§10.3](#103--three-settings-this-spec-requires-that-do-not-exist--now-c24-46).
 
 ### 2.6 Google Calendar — scope and consent *(`C9d` #17, `C9f` #33)*
 
@@ -1591,9 +1598,31 @@ un-sharp** and called it the next session's cheapest lead. It was right.)*
 
 ## 10 · Gaps, defects and open work
 
-### The two genuine gaps in this spec
+### The three gaps — each now an open child of `#12`
 
-#### 10.1 · The measure proposal has no schema
+> **All three were filed on 2026-08-15 and the map is deliberately *not* closed.** Ido handed the
+> disposition back (*"choose the solution that gives the highest standard and quality of the app and
+> its purpose, UX/UI and the software, and improve it if you can"*), so **the decision below is the
+> agent's and is his to overturn.**
+>
+> **It was derived rather than picked from the options offered**, and the derivation is `#12`'s own
+> taxonomy: the map's Notes split the source brief by ceremony tier — *"the reproduced defects and
+> single-session UX work became ordinary issues **#2–#11**, and the **undecided product-model
+> questions** became `C1`–`C14`."* These are undecided product-model questions, so filing them as
+> ordinary issues would **misfile them**: a build session would meet them in the backlog and take a
+> product decision on the spot, which is exactly what this document's opening promise forbids.
+>
+> | Gap | Ticket | Label |
+> |---|---|---|
+> | §10.1 the measure proposal | [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44) | `wayfinder:prototype` |
+> | §10.2 `GoalCategory` | [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) | `wayfinder:grilling` |
+> | §10.3 the settings surface | [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) | `wayfinder:prototype` |
+>
+> **The spec stays whole.** Each section below already lists everything that *is* decided, so **no
+> build session is blocked on any of the three** — it is told precisely where a decision is owed, and
+> `#12`'s own completeness rule gained a second clause so a hand-off cannot be lost this way again.
+
+#### 10.1 · The measure proposal has no schema — now `C22` #44
 
 `C7` specced an agent that **proposes a concrete measure** for an unmeasured goal, and handed it on in
 so many words: *"This is a **fifth AI feature** for [`C11b` #30] to write an output format for."*
@@ -1614,13 +1643,17 @@ So the measure proposal is a specced **feature** with **no wire format and no st
 `C7` requires it to have one under
 [§0.1](#01-the-free-model-rule-12-notes-scope-fixed-by-ido-2026-08-0708).
 
-**This is not a decision to take here.** Per `#12`'s *no reopening closed decisions*, it is either a
-**new ticket on `#12`** or Ido's call. **Recommendation:** a new child ticket — it is a format
-question, which is `C11b`'s subject, and the shape is heavily constrained already (a prompt-declared
-`measureKind` enum + a free word + a leading-indicator flag, with the non-AI fallback being *no
-proposal at all*, exactly as `plan`'s is).
+**Filed as [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44), and as a
+`prototype` ticket rather than a format one — which corrects this section's own first recommendation.**
+That recommendation read *"it is a format question, which is `C11b`'s subject"*, and **that is the very
+reading that lost it**: treating a **surface** as `#30`'s bookkeeping. `C7` specifies an interaction
+nobody has drawn — a *concrete* proposal, optionally a leading indicator, never auto-applied,
+dismissible per goal. An offer appearing on a goal Ido **deliberately left unmeasured** is the most
+easily-resented surface on this map;
+[§0.4](#04-legal-but-never-silent-c7-refined-by-c13-5) makes it legal, **tone** is what makes it
+wanted, and no ticket has designed that. The schema is a *part* of `C22`, not the whole of it.
 
-#### 10.2 · `GoalCategory`'s fate was routed to `C5`, and `C5` did not decide it
+#### 10.2 · `GoalCategory`'s fate was routed to `C5`, and `C5` did not decide it — now `C23` #45
 
 `C2` ruled `GoalCategory`'s fate **out of scope for itself** and **posted it to
 [`C5` #21](https://github.com/idomarhaim/Android_Final_Project/issues/21)** as a goal-model question,
@@ -1637,9 +1670,11 @@ What *is* decided and can be relied on:
 - `OTHER` is named as the tell that an escape hatch turns an enum into a smaller enum (`C2`).
 
 What is **not** decided: whether the enum stays closed at ten, and where its labels live once they are
-translated. **Same disposition as 10.1** — a note to Ido or a new ticket, not a quiet decision here.
+translated — the second being harder than it looks, because the enum lives in `domain/`, **which may
+hold no Android types**, and `strings.xml` is an Android type. `C23` is deliberately **narrow**: four
+of the five questions one might ask are answered above, and only those two survive.
 
-#### 10.3 · Three settings this spec requires that do not exist
+#### 10.3 · Three settings this spec requires that do not exist — now `C24` #46
 
 Each was **named by the ticket that needed it** and none was filed:
 
@@ -1649,9 +1684,21 @@ Each was **named by the ticket that needed it** and none was filed:
 | **daily planning hour** | `C9a` §6 | the nightly *plan-tomorrow* notification has no time |
 | **waking hours** | `C9a` §6 | the backwards-computed deadline reminder cannot be clamped, and `C9b`'s load bar has no denominator for its 75% threshold |
 
-These are **build work with an obvious shape**, not product decisions — but they are three fields on a
-per-device settings store that does not exist yet, so they are named here rather than discovered
-mid-build.
+**This section originally called them *"build work with an obvious shape, not product decisions"*, and
+that was wrong — `C24` exists because the re-reading found it so.** Two of the three change
+**arithmetic already specced elsewhere**: `waking hours` is the clamp on `C9a` §6's backwards-computed
+reminder *and* the denominator of `C9b`'s load bar (which turns red past **75% of waking hours**), and
+`week start` is `C15`'s **user-overridable, deliberately decoupled** Region setting — Ido's own call,
+overturning a proposal to pin it to Sunday. Neither is a field a build session should be inventing
+under time pressure.
+
+**And they are three fields on a screen nobody has designed.** Three separate tickets each named a
+missing setting and each assumed somebody else owned the surface; today's per-device settings — skin,
+material, language, region, and `C13`'s encrypted key with its **permanent status line** — are
+scattered with no screen named in any decision. `#12`'s Standing preferences make any ticket that
+produces a screen owe **a concrete design**, not a list of contents, and `C12` §3's brightness-locked
+disclosure (*the picker must say so rather than letting the light switch quietly do nothing*) is a
+settings-screen requirement stated on another ticket entirely.
 
 ### Defects filed as spec lines, never fixed *(the map ships no code)*
 

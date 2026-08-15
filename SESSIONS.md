@@ -17,6 +17,32 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `product-v03-spec` | `/kickoff product-v03-spec` — write `docs/PRODUCT_v0.3.md`, the map's destination artifact | `docs/PRODUCT_v0.3.md` · `CHANGELOG/2026-08-15/product-v03-spec.md` · `sessions/product-v03-spec.md` · `kb-candidates/2026-08-15-product-v03-spec.md` · this row · **GitHub `#12` body** (taken 14:2x, see note) | **GitHub `#12` body (map commons)** — taken *after* `c21` released, not held from the start | 2026-08-15 |
 
+> 🧠 **Ido handed the gap-disposition decision back, so it is the agent's — and it did not come from the option
+> set offered.** His words (Hebrew, 14:3x): *"I couldn't fully understand you or the implications of each option
+> — explain simply and schematically. And choose the solution that gives the highest standard and quality of the
+> app (and its purpose), UX/UI and the software. And if you can improve it, improve it."* That is a **delegation
+> plus a comprehension complaint**: the judgment half is removed and **must not be re-asked** — no second picker
+> was raised — while the comprehension half is paid **once, in the reply, as an explanation**.
+>
+> **Derived: all three gaps filed as children of `#12`, and the map is NOT closed.** The picker's own top-ranked
+> option (*ordinary issues, then close `#12`*) was **wrong by the map's own taxonomy** — `#12`'s Notes route
+> *undecided product-model questions* to `C`-tickets and *defects and single-session UX work* to `#2`–`#11`, so
+> filing these as ordinary issues would make a build session take a product decision in the backlog, which is
+> exactly what the spec's opening promise forbids. Filed: [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44)
+> (`prototype`), [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45) (`grilling`),
+> [`C24` #46](https://github.com/idomarhaim/Android_Final_Project/issues/46) (`prototype`).
+>
+> **Two of the three corrected this session's own earlier work**: `C22` is a *prototype* ticket, not the format
+> ticket §10.1 first recommended (that reading is what lost the hand-off); and §10.3's *"build work with an
+> obvious shape"* was false — two of its three settings change arithmetic specced elsewhere. **And `#12`'s
+> completeness rule gained a clause** (added, nothing overwritten): *…and every hand-off named in a resolution
+> resolves somewhere.* `#12`'s body written and read back, **120,099 → 120,100** — GitHub's newline, as ever.
+>
+> ⚠️ **A near-miss, recorded because the verify step is the only reason it is not damage.** The first `#12` patch
+> script sliced from *"What is left"* to *"Not yet specified"* — and `## Decisions so far` sits **between them**.
+> The built patch was **10,519 bytes with 0 of 28 decisions**. It was **never written**: the local structure check
+> ran *before* the `PATCH`, and the patch was rebuilt with an exact-string replace.
+>
 > ✅ **The blocked half of this session's `Exit` unblocked itself at 14:09, and the singleton is now taken.**
 > `c21-offline-story` **released** — [#43 · `C21`](https://github.com/idomarhaim/Android_Final_Project/issues/43)
 > was created, resolved and closed inside its own session — so `Observed:` at 14:2x `gh issue list --state open`
