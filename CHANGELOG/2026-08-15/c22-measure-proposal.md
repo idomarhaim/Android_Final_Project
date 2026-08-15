@@ -214,3 +214,20 @@ central-KB destination, cross-repo `C:\Dev\JARVIS` visit owing a row on that boa
 `SESSIONS.md` came back **BLOCKED by `c23-goal-category`** at release time, ~10 minutes after that
 session had already released its *claim*. Per `§5.2` this session did **not** ask — it reordered onto
 the changelog and spec work, which need no such path, and took the lease afterwards.
+
+## 🚚 A second foreign commit, on the resolution push
+
+- `6d2397a` — **`social-share-bugs` (reopened, 2nd)**, *"claim the emulator and `goalpilot-56e30` for
+  the live round-trip"*. **One line, `SESSIONS.md` only.**
+
+**Adjudicated, not waved through, and it lands differently from `82fb125`.** That session is **live
+and mid-unit**, which is normally precondition 5's stop-and-ask trigger — but the trigger keys on *a
+foreign commit whose **paths** sit under a live row*, and this commit's only path is the **board
+itself**, which is a **commons** (leased, never claimed) and appears in no session's `Owns (paths)`.
+What is being published is that session's **claim**, not its work: its Kotlin edits are uncommitted,
+outside my pathspec and outside the range. Precondition 4 is met — the commit is fully accounted for,
+and its message records that Ido authorised the underlying action. **A claim nobody can see protects
+nobody**, so publishing it is the claim's own purpose.
+
+The distinction is worth keeping: **a foreign commit of *work* under a live row stops the push; a
+foreign commit of a *claim row* does not.** Both are named here either way.
