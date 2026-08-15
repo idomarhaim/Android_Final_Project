@@ -23,9 +23,9 @@ class TimeAllocationUseCaseTest {
     )
 
     private val goals = listOf(
-        Goal(id = "g-run", title = "Run", lifeAreaId = "health"),
-        Goal(id = "g-sleep", title = "Sleep", lifeAreaId = "health"),
-        Goal(id = "g-thesis", title = "Thesis", lifeAreaId = "study"),
+        Goal(id = "g-run", title = "Run", lifeAreaIds = listOf("health")),
+        Goal(id = "g-sleep", title = "Sleep", lifeAreaIds = listOf("health")),
+        Goal(id = "g-thesis", title = "Thesis", lifeAreaIds = listOf("study")),
         Goal(id = "g-loose", title = "Unfiled goal"),
     )
 
@@ -93,7 +93,7 @@ class TimeAllocationUseCaseTest {
             done("real", "g-run", at = 2_000L, minutes = 60),
         )
         // A goal whose life area was deleted must not vanish from the chart.
-        val goalsWithDanglingArea = goals + Goal(id = "g-ghost", lifeAreaId = "deleted-area")
+        val goalsWithDanglingArea = goals + Goal(id = "g-ghost", lifeAreaIds = listOf("deleted-area"))
 
         val result = useCase(window, areas, goalsWithDanglingArea, tasks)
 
@@ -142,10 +142,69 @@ class TimeAllocationUseCaseTest {
         assertThat(result.slices).isEmpty()
     }
 
+    // ── Plural life areas (spec §1.2 / §4.7) ──────────────────────────
+
+    @Test
+    fun `a goal serving two areas divides its minutes and counts in both`() {
+        // §4.7's asymmetry, and the reason both numbers sit on one screen: the
+        // completion counts in full in every area, the minutes are shared out.
+        val shared = goals + Goal(id = "g-both", lifeAreaIds = listOf("health", "study"))
+        val tasks = listOf(done("t", "g-both", at = 2_000L, minutes = 60))
+
+        val result = useCase(window, areas, shared, tasks)
+
+        assertThat(result.totalMinutes).isEqualTo(60)
+        assertThat(result.completedTasks).isEqualTo(1)
+        assertThat(result.slices.map { it.minutes }).containsExactly(30, 30)
+        assertThat(result.slices.map { it.taskCount }).containsExactly(1, 1)
+    }
+
+    @Test
+    fun `an odd split loses no minute`() {
+        // Integer division would drop the remainder and the fractions would then
+        // add to less than one, which the donut renders as a gap.
+        val shared = goals + Goal(id = "g-three", lifeAreaIds = listOf("health", "study", "money"))
+        val withMoney = areas + LifeArea(id = "money", name = "Money")
+        val tasks = listOf(done("t", "g-three", at = 2_000L, minutes = 100))
+
+        val result = useCase(window, withMoney, shared, tasks)
+
+        assertThat(result.totalMinutes).isEqualTo(100)
+        assertThat(result.slices.sumOf { it.minutes }).isEqualTo(100)
+        assertThat(result.slices.map { it.minutes }.sorted()).containsExactly(33, 33, 34).inOrder()
+        assertThat(result.slices.map { it.fraction }.sum()).isWithin(0.0001f).of(1f)
+    }
+
+    @Test
+    fun `a plural goal only divides between the areas that still exist`() {
+        val shared = goals + Goal(id = "g-half", lifeAreaIds = listOf("health", "deleted-area"))
+        val tasks = listOf(done("t", "g-half", at = 2_000L, minutes = 60))
+
+        val result = useCase(window, areas, shared, tasks)
+
+        // All 60 to Health: a dangling id is not a claim on the time, so this is
+        // not "30 to Health and 30 to Unassigned".
+        assertThat(result.slices).hasSize(1)
+        assertThat(result.slices.single().areaId).isEqualTo("health")
+        assertThat(result.slices.single().minutes).isEqualTo(60)
+    }
+
+    @Test
+    fun `the trend divides a plural goal the same way the pie does`() {
+        val shared = goals + Goal(id = "g-both", lifeAreaIds = listOf("health", "study"))
+        val tasks = listOf(done("t", "g-both", at = 1_500L, minutes = 60))
+        val allocation = useCase(window, areas, shared, tasks)
+
+        val trend = useCase.trend(buckets, allocation, shared, tasks)
+
+        assertThat(trend.totalMinutes).isEqualTo(allocation.totalMinutes)
+        assertThat(trend.buckets.first().minutes).containsExactly(30, 30)
+    }
+
     @Test
     fun `time spent under an archived area keeps its own slice`() {
         val archived = areas + LifeArea(id = "old", name = "Old area", isArchived = true)
-        val goalsWithArchived = goals + Goal(id = "g-old", lifeAreaId = "old")
+        val goalsWithArchived = goals + Goal(id = "g-old", lifeAreaIds = listOf("old"))
         val tasks = listOf(
             done("x", "g-old", at = 2_000L, minutes = 40),
             done("y", "g-run", at = 2_000L, minutes = 60),
@@ -202,7 +261,7 @@ class TimeAllocationUseCaseTest {
 
     @Test
     fun `an area that lost its slice folds into Unassigned here too`() {
-        val goalsWithDanglingArea = goals + Goal(id = "g-ghost", lifeAreaId = "deleted-area")
+        val goalsWithDanglingArea = goals + Goal(id = "g-ghost", lifeAreaIds = listOf("deleted-area"))
         val tasks = listOf(
             done("real", "g-run", at = 1_500L, minutes = 60),
             done("dangling", "g-ghost", at = 3_500L, minutes = 40),

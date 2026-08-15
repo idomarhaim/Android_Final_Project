@@ -19,6 +19,7 @@ import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
+import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
@@ -177,9 +178,12 @@ class DashboardViewModel @Inject constructor(
             // can actually resolve, otherwise fall through to the new-goal branch.
             val matched = goals.firstOrNull { it.id == classification.suggestedGoalId }
             // A new goal is filed under the area the model picked; an existing goal
-            // keeps whatever area the user already gave it.
+            // keeps whatever areas the user already gave it. The sheet names one
+            // area, so a goal serving several shows its first — the goal itself is
+            // not re-filed from here, and this row is a "where will this land?"
+            // label rather than a write.
             val area = areas.firstOrNull {
-                it.id == (matched?.lifeAreaId ?: classification.suggestedLifeAreaId)
+                it.id == (matched?.lifeAreaIds?.firstOrNull() ?: classification.suggestedLifeAreaId)
             }
             _smartAdd.value = SmartAddState(
                 isVisible = true,
@@ -212,7 +216,10 @@ class DashboardViewModel @Inject constructor(
                 val newGoal = Goal(
                     title = state.newGoalTitle.orEmpty().ifBlank { state.taskTitle },
                     category = state.newGoalCategory,
-                    lifeAreaId = state.lifeAreaId,
+                    // One area, or none — §1.2's empty collection. The sheet
+                    // proposes a single area, and inventing a second here would
+                    // be the app asserting a filing the user never saw.
+                    lifeAreaIds = listOfNotNull(state.lifeAreaId),
                 )
                 when (val r = goalRepository.upsertGoal(newGoal)) {
                     is Resource.Success -> r.data
@@ -257,6 +264,30 @@ class DashboardViewModel @Inject constructor(
     val consentIntent = _consentIntent.asStateFlow()
 
     /**
+     * Whether the Tasks scope is actually held. Null until the first check comes
+     * back, so the card renders its ordinary self rather than accusing the user
+     * of declining something nobody has looked at yet.
+     */
+    private val _tasksConsent = MutableStateFlow<TasksConsent?>(null)
+    val tasksConsent = _tasksConsent.asStateFlow()
+
+    /**
+     * Re-reads the consent state on **every** screen entry (#36). Google's
+     * granular consent screen arrives with *"View your tasks"* unticked, so
+     * sign-in can succeed while granting nothing — and before this, the only way
+     * to discover that was to press Import and watch it fail.
+     *
+     * Deliberately *not* guarded the way [ensureRecommendations] is: that guard
+     * stops an expensive network call re-firing on back-navigation, and this is a
+     * local read. Guarding it would leave this card accusing a user who granted
+     * the scope on the life-areas screen and navigated back — this ViewModel
+     * survives in the back stack even though the composable is recreated.
+     */
+    fun refreshTasksConsent() {
+        viewModelScope.launch { _tasksConsent.value = googleTasksClient.consentState() }
+    }
+
+    /**
      * Pulls open tasks from Google Tasks, runs each through the same
      * `classifyTask` function the "Smart add" card uses, and opens a review sheet.
      * Nothing is written until the user confirms — identical policy to smart add.
@@ -264,9 +295,20 @@ class DashboardViewModel @Inject constructor(
     fun importGoogleTasks() {
         if (_tasksImport.value.isLoading) return
         viewModelScope.launch {
-            _tasksImport.value = TasksImportState(isVisible = true, isLoading = true)
+            // A known-missing scope is about to bounce off Google's consent
+            // screen, so the review sheet would flash open and shut on the way
+            // there — incoherent under a button now labelled "Grant access". The
+            // card's own spinner covers it; every terminal branch below re-opens
+            // the sheet when there is actually something to review.
+            _tasksImport.value = TasksImportState(
+                isVisible = _tasksConsent.value != TasksConsent.MISSING,
+                isLoading = true,
+            )
             when (val result = googleTasksClient.fetchOpenTasks()) {
                 is TasksImportResult.NeedsConsent -> {
+                    // Authoritative, unlike the cached-account probe: Google
+                    // refused to mint a token for this scope.
+                    _tasksConsent.value = TasksConsent.MISSING
                     _tasksImport.value = TasksImportState()
                     _consentIntent.value = result.intent
                 }
@@ -276,6 +318,10 @@ class DashboardViewModel @Inject constructor(
                         TasksImportState(isVisible = true, error = result.message)
 
                 is TasksImportResult.Success -> {
+                    // A token was minted, so the scope is held however the cached
+                    // sign-in account reads — a grant made through Google's own
+                    // recovery screen need not write itself back there.
+                    _tasksConsent.value = TasksConsent.GRANTED
                     // Re-running the import must not duplicate what is already here.
                     // Tasks carry no external id in Firestore, so title is the only
                     // handle we have — see the TODO note about a proper externalId.
@@ -428,7 +474,7 @@ class DashboardViewModel @Inject constructor(
                             Goal(
                                 title = proposal.newGoalTitle.orEmpty().ifBlank { proposal.title },
                                 category = proposal.newGoalCategory,
-                                lifeAreaId = areaId,
+                                lifeAreaIds = listOfNotNull(areaId),
                             ),
                         )
                         (created as? Resource.Success)?.data?.also { createdGoals[key] = it }
@@ -459,9 +505,21 @@ class DashboardViewModel @Inject constructor(
 
     fun dismissImport() { _tasksImport.value = TasksImportState() }
 
-    fun consumeConsentIntent() { _consentIntent.value = null }
+    /**
+     * The user backed out of Google's consent screen. That is a *decision*, not a
+     * dropped intent, so the card says so instead of silently reverting to the
+     * generic prompt it showed before (#36).
+     */
+    fun onConsentDeclined() {
+        _consentIntent.value = null
+        _tasksConsent.value = TasksConsent.MISSING
+    }
 
-    /** Called after the user completes Google's consent screen. */
+    /**
+     * Called after the user completes Google's consent screen. The retried import
+     * is what settles [tasksConsent] — completing the screen is not the same as
+     * having ticked the box on it.
+     */
     fun onConsentGranted() {
         _consentIntent.value = null
         importGoogleTasks()

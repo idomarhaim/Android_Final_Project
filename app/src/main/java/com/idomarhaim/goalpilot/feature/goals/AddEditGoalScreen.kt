@@ -97,11 +97,16 @@ fun AddEditGoalScreen(
                 }
             }
 
-            // Which part of the user's life this goal belongs to. Separate from the
-            // category above: the category is a fixed taxonomy the AI classifies
-            // against, the life area is the user's own division of their life and
-            // the unit the time-allocation chart reports on.
-            Text("Life area", style = MaterialTheme.typography.labelLarge)
+            // Which parts of the user's life this goal belongs to. Separate from
+            // the category above: the category is a fixed taxonomy the AI
+            // classifies against, the life area is the user's own division of
+            // their life and the unit the time-allocation chart reports on.
+            //
+            // Plural since spec §1.2 — a goal reaches many areas — so these are
+            // toggles, not a single choice. What that costs is stated below
+            // rather than left to be discovered from the analytics: a completion
+            // counts in full in every area, but its minutes divide (§4.7).
+            Text("Life areas", style = MaterialTheme.typography.labelLarge)
             if (lifeAreas.isEmpty()) {
                 Text(
                     "No life areas yet — add them under Profile → Life areas, or sync " +
@@ -110,18 +115,29 @@ fun AddEditGoalScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
+                Text(
+                    if (form.lifeAreaIds.size > 1) {
+                        "This goal serves ${form.lifeAreaIds.size} areas. Finishing its work " +
+                            "counts in every one of them; the time it takes is split between them."
+                    } else {
+                        "Pick as many as the goal really serves — or none, to leave it unfiled."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         FilterChip(
-                            selected = form.lifeAreaId == null,
-                            onClick = { viewModel.onLifeAreaChange(null) },
+                            selected = form.lifeAreaIds.isEmpty(),
+                            onClick = { viewModel.onClearLifeAreas() },
                             label = { Text("None") },
                         )
                     }
                     items(lifeAreas) { area ->
                         FilterChip(
-                            selected = form.lifeAreaId == area.id,
-                            onClick = { viewModel.onLifeAreaChange(area.id) },
+                            selected = area.id in form.lifeAreaIds,
+                            onClick = { viewModel.onLifeAreaToggle(area.id) },
                             label = { Text(area.name) },
                             leadingIcon = {
                                 Icon(

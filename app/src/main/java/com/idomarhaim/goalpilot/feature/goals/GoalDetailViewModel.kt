@@ -85,7 +85,11 @@ class GoalDetailViewModel @Inject constructor(
             goal = goal?.withOptimisticProgress(tasks, inFlight),
             tasks = tasks.withOptimisticDone(inFlight),
             entries = entries,
-            lifeArea = areas.firstOrNull { it.id == goal?.lifeAreaId },
+            // Resolved in the goal's own order, not the area list's: the order the
+            // user filed them in is the order they read back.
+            lifeAreas = goal?.lifeAreaIds
+                ?.mapNotNull { id -> areas.firstOrNull { it.id == id } }
+                .orEmpty(),
         )
     }.catch { emit(GoalDetailUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -279,8 +283,12 @@ data class GoalDetailUiState(
     val goal: Goal? = null,
     val tasks: List<Task> = emptyList(),
     val entries: List<ProgressEntry> = emptyList(),
-    /** Resolved area the goal is filed under; null when unfiled or the area is gone. */
-    val lifeArea: LifeArea? = null,
+    /**
+     * The areas the goal is filed under, resolved. Empty when unfiled *or* when
+     * every id it carries points at an area that is gone — the two are the same
+     * thing to a reader, and §1.2 makes the empty collection the honest answer.
+     */
+    val lifeAreas: List<LifeArea> = emptyList(),
     val error: String? = null,
 )
 

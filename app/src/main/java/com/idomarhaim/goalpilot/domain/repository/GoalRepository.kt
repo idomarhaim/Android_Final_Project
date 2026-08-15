@@ -18,12 +18,15 @@ interface GoalRepository {
     suspend fun addProgress(goalId: String, delta: Double): Resource<Unit>
 
     /**
-     * Files a goal under a life area, or unfiles it with null. Separate from
-     * [upsertGoal] so the life-areas screen can re-file a stack of goals without
-     * loading and re-writing each one whole — a read-modify-write of a goal the
-     * user is editing on another screen would clobber their edit.
+     * Files a goal under [lifeAreaIds], or unfiles it with the empty list.
+     * Separate from [upsertGoal] so the life-areas screens can re-file a stack of
+     * goals without loading and re-writing each one whole — a read-modify-write of
+     * a goal the user is editing on another screen would clobber their edit.
+     *
+     * The list replaces whatever the goal carried; it is not a union, so a caller
+     * adding one area sends the areas the goal already had alongside it.
      */
-    suspend fun setLifeArea(goalId: String, lifeAreaId: String?): Resource<Unit>
+    suspend fun setLifeAreas(goalId: String, lifeAreaIds: List<String>): Resource<Unit>
 
     suspend fun setArchived(goalId: String, archived: Boolean): Resource<Unit>
 

@@ -13,12 +13,18 @@ data class Goal(
     val description: String = "",
     val category: GoalCategory = GoalCategory.OTHER,
     /**
-     * The user-defined [LifeArea] this goal belongs to, or null while it is
-     * unfiled. Nullable rather than defaulted because a made-up default would put
-     * real time into the wrong slice of the time-allocation chart; "Unassigned"
-     * is an honest answer and one the user can act on.
+     * The user-defined [LifeArea]s this goal serves. **Unfiled is the empty
+     * collection** — never a made-up default, because that would put real time
+     * into the wrong slice of the time-allocation chart; "Unassigned" is an
+     * honest answer and one the user can act on.
+     *
+     * Plural since `PRODUCT_v0.3` §1.2: *"a goal reaches many areas"*, so one
+     * goal legitimately appears under several. The empty list is a direct
+     * translation of the old nullable `lifeAreaId`, which preserves the rule that
+     * deleting an area must not silently rewrite the past — see
+     * `GoalDto.lifeAreaId` for the read-side backfill.
      */
-    val lifeAreaId: String? = null,
+    val lifeAreaIds: List<String> = emptyList(),
     /**
      * The automatic data source this goal belongs to — `"hc:goal:steps"` for the
      * Health Connect step goal — or null for a goal nobody syncs into.

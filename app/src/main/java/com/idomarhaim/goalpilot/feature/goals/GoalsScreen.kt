@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GoalCard
@@ -87,7 +88,16 @@ fun GoalsScreen(
                             LifeAreaGroupHeader(area = group.area, goalCount = group.goals.size)
                         }
                     }
-                    items(group.goals, key = { it.id }) { goal ->
+                    // Keyed by band **and** goal, not by goal alone. Since spec
+                    // §1.2 a goal serves many areas, so the same goal legitimately
+                    // appears in two bands of this one list — and a `LazyColumn`
+                    // throws outright on a repeated key, which would crash the
+                    // Goals tab the first time anyone ticks a second area in the
+                    // goal editor.
+                    items(
+                        group.goals,
+                        key = { "${group.area?.id ?: "unfiled"}-${it.id}" },
+                    ) { goal ->
                         GoalCard(goal = goal, onClick = { onOpenGoal(goal.id) })
                     }
                 }
@@ -130,7 +140,9 @@ private fun LifeAreaGroupHeader(area: LifeArea?, goalCount: Int) {
                 .padding(start = 8.dp),
         )
         Text(
-            text = "$goalCount goal${if (goalCount == 1) "" else "s"}",
+            // Direction-isolated (§4.8): a Latin digit run in an RTL paragraph is
+            // reordered by the bidi algorithm.
+            text = "${"$goalCount".bidiIsolated()} goal${if (goalCount == 1) "" else "s"}",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

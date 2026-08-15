@@ -47,7 +47,7 @@ class AddEditGoalViewModel @Inject constructor(
                             title = g.title,
                             description = g.description,
                             category = g.category,
-                            lifeAreaId = g.lifeAreaId,
+                            lifeAreaIds = g.lifeAreaIds,
                             target = g.targetValue.toTrimmedString(),
                             unit = g.unit,
                             currentValue = g.currentValue,
@@ -62,7 +62,23 @@ class AddEditGoalViewModel @Inject constructor(
     fun onTitleChange(value: String) = _form.update { it.copy(title = value, error = null) }
     fun onDescriptionChange(value: String) = _form.update { it.copy(description = value) }
     fun onCategoryChange(value: GoalCategory) = _form.update { it.copy(category = value) }
-    fun onLifeAreaChange(value: String?) = _form.update { it.copy(lifeAreaId = value) }
+    /**
+     * Toggles one life area on or off. Plural since §1.2 — a goal reaches many
+     * areas — so this is a set membership flip rather than a single-choice
+     * assignment; *unfiled* is what is left when the last one is turned off.
+     */
+    fun onLifeAreaToggle(areaId: String) = _form.update {
+        it.copy(
+            lifeAreaIds = if (areaId in it.lifeAreaIds) {
+                it.lifeAreaIds - areaId
+            } else {
+                it.lifeAreaIds + areaId
+            },
+        )
+    }
+
+    /** The "None" chip: unfile the goal outright. */
+    fun onClearLifeAreas() = _form.update { it.copy(lifeAreaIds = emptyList()) }
     fun onTargetChange(value: String) =
         _form.update { it.copy(target = value.filter { c -> c.isDigit() || c == '.' }, error = null) }
     fun onUnitChange(value: String) = _form.update { it.copy(unit = value) }
@@ -85,7 +101,7 @@ class AddEditGoalViewModel @Inject constructor(
                 title = current.title.trim(),
                 description = current.description.trim(),
                 category = current.category,
-                lifeAreaId = current.lifeAreaId,
+                lifeAreaIds = current.lifeAreaIds,
                 targetValue = target,
                 currentValue = current.currentValue.coerceIn(0.0, target),
                 unit = current.unit.ifBlank { "%" },
@@ -106,8 +122,8 @@ data class GoalForm(
     val title: String = "",
     val description: String = "",
     val category: GoalCategory = GoalCategory.HEALTH,
-    /** Which life area the goal is filed under; null = unfiled. */
-    val lifeAreaId: String? = null,
+    /** Which life areas the goal serves; the empty list = unfiled (§1.2). */
+    val lifeAreaIds: List<String> = emptyList(),
     val target: String = "100",
     val unit: String = "%",
     val currentValue: Double = 0.0,

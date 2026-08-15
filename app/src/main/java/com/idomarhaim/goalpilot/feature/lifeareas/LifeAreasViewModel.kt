@@ -9,6 +9,7 @@ import com.idomarhaim.goalpilot.data.tasks.TaskListsResult
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
+import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.usecase.BuildLifeAreaProposalsUseCase
@@ -50,16 +51,18 @@ class LifeAreasViewModel @Inject constructor(
         goalRepository.observeGoals(),
     ) { areas, goals ->
         lastAreas = areas
-        val byArea = goals.groupBy { it.lifeAreaId }
         LifeAreasUiState(
             isLoading = false,
+            // A goal serving two areas is counted by both — §4.7's "counts in full
+            // in every area", and the reason this is a per-area filter rather than
+            // one `groupBy`.
             rows = areas.map { area ->
-                LifeAreaRow(area = area, goalCount = byArea[area.id]?.size ?: 0)
+                LifeAreaRow(area = area, goalCount = goals.count { area.id in it.lifeAreaIds })
             },
-            // A goal whose area was deleted elsewhere counts as unfiled too, which
-            // is why this is "no id that resolves" rather than "id == null".
+            // A goal whose areas were all deleted elsewhere counts as unfiled too,
+            // which is why this is "no id that resolves" rather than "empty".
             unfiledGoals = goals.filter { goal ->
-                goal.lifeAreaId == null || areas.none { it.id == goal.lifeAreaId }
+                goal.lifeAreaIds.none { id -> areas.any { it.id == id } }
             },
         )
     }.catch { emit(LifeAreasUiState(isLoading = false, error = it.message)) }
@@ -78,8 +81,32 @@ class LifeAreasViewModel @Inject constructor(
     private val _consentIntent = MutableStateFlow<Intent?>(null)
     val consentIntent = _consentIntent.asStateFlow()
 
+    /**
+     * Whether the Tasks scope is actually held. Null until the first check comes
+     * back. This screen reads the *same* scope as the dashboard import, so it
+     * carries the same defect (#36) and the same fix: sign-in can succeed with
+     * *"View your tasks"* left unticked, and the sync card must say so rather
+     * than re-offering a generic grant prompt.
+     */
+    private val _tasksConsent = MutableStateFlow<TasksConsent?>(null)
+    val tasksConsent = _tasksConsent.asStateFlow()
+
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
+
+    /**
+     * Re-reads the consent state on **every** screen entry (#36).
+     *
+     * Deliberately *not* guarded by a once-per-ViewModel flag the way
+     * `ensureRecommendations` is: that guard exists to stop an expensive network
+     * call re-firing on back-navigation, and this is a local read. Guarding it
+     * would leave the card accusing a user who granted the scope on the other
+     * surface and navigated back — the ViewModel survives in the back stack even
+     * though the composable is recreated.
+     */
+    fun refreshTasksConsent() {
+        viewModelScope.launch { _tasksConsent.value = googleTasksClient.consentState() }
+    }
 
     // ── Editor ────────────────────────────────────────────────────────
 
@@ -189,10 +216,18 @@ class LifeAreasViewModel @Inject constructor(
         }
     }
 
-    /** Files a goal under an area, or unfiles it when [areaId] is null. */
+    /**
+     * Files a goal under an area, or unfiles it when [areaId] is null.
+     *
+     * This caller only ever reaches goals in `unfiledGoals`, which by definition
+     * hold no area that resolves, so replacing the list with the single chosen
+     * area loses nothing — a dangling id it may still carry is exactly what should
+     * not survive the write.
+     */
     fun assignGoal(goalId: String, areaId: String?) {
         viewModelScope.launch {
-            if (goalRepository.setLifeArea(goalId, areaId) !is Resource.Success) {
+            val areas = listOfNotNull(areaId)
+            if (goalRepository.setLifeAreas(goalId, areas) !is Resource.Success) {
                 _message.value = "Could not move that goal"
             }
         }
@@ -207,9 +242,18 @@ class LifeAreasViewModel @Inject constructor(
     fun syncFromGoogleTasks() {
         if (_sync.value.isLoading) return
         viewModelScope.launch {
-            _sync.value = LifeAreaSyncState(isVisible = true, isLoading = true)
+            // A known-missing scope is about to bounce off Google's consent
+            // screen, so the review sheet would flash open and shut on the way
+            // there. The card's own spinner covers that case; every terminal
+            // branch below re-opens the sheet when there is something to review.
+            _sync.value = LifeAreaSyncState(
+                isVisible = _tasksConsent.value != TasksConsent.MISSING,
+                isLoading = true,
+            )
             when (val result = googleTasksClient.fetchTaskLists()) {
                 is TaskListsResult.NeedsConsent -> {
+                    // Authoritative, unlike the cached-account probe.
+                    _tasksConsent.value = TasksConsent.MISSING
                     _sync.value = LifeAreaSyncState()
                     _consentIntent.value = result.intent
                 }
@@ -218,6 +262,7 @@ class LifeAreasViewModel @Inject constructor(
                     _sync.value = LifeAreaSyncState(isVisible = true, error = result.message)
 
                 is TaskListsResult.Success -> {
+                    _tasksConsent.value = TasksConsent.GRANTED
                     val proposals = buildProposals(result.lists, lastAreas)
                     _sync.value = LifeAreaSyncState(
                         isVisible = true,
@@ -296,7 +341,14 @@ class LifeAreasViewModel @Inject constructor(
 
     fun dismissSync() { _sync.value = LifeAreaSyncState() }
 
-    fun consumeConsentIntent() { _consentIntent.value = null }
+    /**
+     * The user backed out of Google's consent screen — a decision, not a dropped
+     * intent, so the card says so rather than reverting to the generic prompt (#36).
+     */
+    fun onConsentDeclined() {
+        _consentIntent.value = null
+        _tasksConsent.value = TasksConsent.MISSING
+    }
 
     /** Called after the user completes Google's consent screen. */
     fun onConsentGranted() {

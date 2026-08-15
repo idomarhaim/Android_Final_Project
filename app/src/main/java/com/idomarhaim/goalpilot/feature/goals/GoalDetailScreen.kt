@@ -154,7 +154,7 @@ fun GoalDetailScreen(
                             fraction = goal.progressFraction,
                             accentHex = goal.colorHex,
                             categoryLabel = goal.category.label,
-                            lifeAreaName = state.lifeArea?.name,
+                            lifeAreaNames = state.lifeAreas.map { it.name },
                             current = goal.currentValue.trimNumber(),
                             target = goal.targetValue.trimNumber(),
                             unit = goal.unit,
@@ -245,7 +245,7 @@ private fun GoalHeaderCard(
     fraction: Float,
     accentHex: String,
     categoryLabel: String,
-    lifeAreaName: String?,
+    lifeAreaNames: List<String>,
     current: String,
     target: String,
     unit: String,
@@ -275,12 +275,16 @@ private fun GoalHeaderCard(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 12.dp),
             )
-            // Which part of the user's life this goal counts towards. Absent when
-            // the goal is unfiled — and then it says so, because unfiled time shows
-            // up as "Unassigned" in the analytics pie and that should not be a
-            // mystery.
+            // Which parts of the user's life this goal counts towards — plural
+            // since §1.2. Absent when the goal is unfiled, and then it says so,
+            // because unfiled time shows up as "Unassigned" in the analytics pie
+            // and that should not be a mystery.
             Text(
-                text = lifeAreaName?.let { "Life area: $it" } ?: "No life area yet",
+                text = when (lifeAreaNames.size) {
+                    0 -> "No life area yet"
+                    1 -> "Life area: ${lifeAreaNames.single()}"
+                    else -> "Life areas: ${lifeAreaNames.joinToString(", ")}"
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

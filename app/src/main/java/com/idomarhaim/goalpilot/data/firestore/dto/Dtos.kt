@@ -14,8 +14,20 @@ data class GoalDto(
     var title: String = "",
     var description: String = "",
     var category: String = "OTHER",
-    /** Id of the user's [com.idomarhaim.goalpilot.domain.model.LifeArea]; absent on older docs. */
+    /**
+     * **Legacy, read-only.** The single life-area id goals carried before
+     * `PRODUCT_v0.3` §1.2 made the edge plural. Kept on the DTO purely so an
+     * un-migrated document still resolves to `[current]` on read; every write
+     * emits null here and the id in [lifeAreaIds] instead, so a document is
+     * migrated the first time it is saved and the two can never disagree.
+     */
     var lifeAreaId: String? = null,
+    /**
+     * Ids of the user's [com.idomarhaim.goalpilot.domain.model.LifeArea]s this
+     * goal serves; absent on documents written before §1.2, where [lifeAreaId]
+     * backfills it. Empty means unfiled.
+     */
+    var lifeAreaIds: List<String>? = null,
     /**
      * Automatic data source this goal belongs to, e.g. `"hc:goal:steps"`; absent on
      * older docs and on goals nobody syncs into. Additive — a document written

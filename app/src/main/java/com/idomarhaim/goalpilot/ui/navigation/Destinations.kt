@@ -26,6 +26,17 @@ object Routes {
     const val GOAL_DETAIL = "goal_detail"
     const val ADD_EDIT_GOAL = "add_edit_goal"
 
+    /**
+     * One life area's own screen: the goals filed under it (spec §4.7). The id
+     * travels in the path rather than as a query argument because the screen is
+     * meaningless without it — a nullable argument would compile a
+     * "life area with no area" state into every caller.
+     */
+    const val ARG_LIFE_AREA_ID = "lifeAreaId"
+    const val LIFE_AREA_DETAIL = "life_area_detail"
+
+    fun lifeAreaDetail(lifeAreaId: String) = "$LIFE_AREA_DETAIL/$lifeAreaId"
+
     fun goalDetail(goalId: String) = "$GOAL_DETAIL/$goalId"
     fun addEditGoal(goalId: String? = null) =
         if (goalId.isNullOrBlank()) ADD_EDIT_GOAL else "$ADD_EDIT_GOAL?$ARG_GOAL_ID=$goalId"

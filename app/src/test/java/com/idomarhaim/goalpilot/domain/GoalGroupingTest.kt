@@ -18,8 +18,8 @@ class GoalGroupingTest {
     private val health = LifeArea(id = "health", name = "בריאות", sortOrder = 0)
     private val study = LifeArea(id = "study", name = "לימודים", sortOrder = 1)
 
-    private fun goal(id: String, areaId: String? = null) =
-        Goal(id = id, title = id, lifeAreaId = areaId)
+    private fun goal(id: String, vararg areaIds: String) =
+        Goal(id = id, title = id, lifeAreaIds = areaIds.toList())
 
     @Test
     fun `goals are banded in the order the areas arrive in`() {
@@ -82,5 +82,41 @@ class GoalGroupingTest {
     @Test
     fun `no goals means no bands at all`() {
         assertThat(group(emptyList(), listOf(health, study))).isEmpty()
+    }
+
+    // ── Plural life areas (spec §1.2) ─────────────────────────────────
+
+    @Test
+    fun `a goal serving two areas is banded under both`() {
+        // Not a duplicate to de-dupe: §4.7 says a goal counts in full in every
+        // area it serves, and the bands are what makes that visible.
+        val goals = listOf(goal("g1", "health", "study"), goal("g2", "health"))
+
+        val groups = group(goals, listOf(health, study))
+
+        assertThat(groups.map { it.area?.id }).containsExactly("health", "study").inOrder()
+        assertThat(groups.first().goals.map { it.id }).containsExactly("g1", "g2").inOrder()
+        assertThat(groups.last().goals.map { it.id }).containsExactly("g1")
+    }
+
+    @Test
+    fun `a goal serving two areas is not also unfiled`() {
+        val groups = group(listOf(goal("g1", "health", "study")), listOf(health, study))
+
+        assertThat(groups.map { it.area?.id }).doesNotContain(null)
+    }
+
+    @Test
+    fun `a goal is unfiled only when every one of its areas has gone`() {
+        // One id resolves, one dangles: still filed, and only once.
+        val survives = goal("g1", "health", "gone")
+        // Every id dangles: unfiled rather than dropped off the list.
+        val orphan = goal("g2", "gone", "also-gone")
+
+        val groups = group(listOf(survives, orphan), listOf(health))
+
+        assertThat(groups.map { it.area?.id }).containsExactly("health", null).inOrder()
+        assertThat(groups.first().goals.map { it.id }).containsExactly("g1")
+        assertThat(groups.last().goals.map { it.id }).containsExactly("g2")
     }
 }

@@ -25,9 +25,13 @@ data class GoalGroup(val area: LifeArea?, val goals: List<Goal>)
  * - **Empty areas get no band.** An area with no goals belongs on the life-areas
  *   screen, not as a header with nothing under it.
  * - **Unfiled goes last**, and only when it is non-empty.
- * - **A dangling `lifeAreaId` counts as unfiled** — same rule as the life-areas
- *   screen. An area deleted on another device must not take its goals off the
- *   list with it.
+ * - **A dangling id counts as nothing** — same rule as the life-areas screen. An
+ *   area deleted on another device must not take its goals off the list with it,
+ *   so a goal whose every id dangles is unfiled rather than missing.
+ *
+ * Since `PRODUCT_v0.3` §1.2 the edge is plural, so **a goal appears under every
+ * area it serves** — that is the point of the plural edge, not a bug to
+ * de-duplicate away. *Unfiled* is the empty collection.
  *
  * Bands come out in the order [areas] arrives in, which is the repository's
  * `(sortOrder, name)` — so the drag order the user chose is the order their goals
@@ -40,11 +44,12 @@ class GroupGoalsByLifeAreaUseCase @Inject constructor() {
         if (areas.isEmpty()) return listOf(GoalGroup(area = null, goals = goals))
 
         val known = areas.associateBy { it.id }
-        val byAreaId = goals.groupBy { goal -> goal.lifeAreaId?.let { known[it]?.id } }
         val filed = areas.mapNotNull { area ->
-            byAreaId[area.id]?.let { GoalGroup(area = area, goals = it) }
+            goals.filter { area.id in it.lifeAreaIds }
+                .takeIf { it.isNotEmpty() }
+                ?.let { GoalGroup(area = area, goals = it) }
         }
-        val unfiled = byAreaId[null].orEmpty()
+        val unfiled = goals.filter { goal -> goal.lifeAreaIds.none { it in known } }
 
         return if (unfiled.isEmpty()) filed else filed + GoalGroup(area = null, goals = unfiled)
     }

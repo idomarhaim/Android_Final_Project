@@ -73,7 +73,7 @@ class RecommendationRepositoryImpl @Inject constructor(
                         "id" to it.id,
                         "title" to it.title,
                         "category" to it.category.name,
-                        "lifeAreaId" to it.lifeAreaId,
+                        "lifeAreaIds" to it.lifeAreaIds,
                     )
                 },
                 "lifeAreas" to lifeAreas.map { mapOf("id" to it.id, "name" to it.name) },
@@ -199,8 +199,10 @@ class RecommendationRepositoryImpl @Inject constructor(
                 suggestedGoalId = match.id,
                 suggestedCategory = match.category,
                 // The goal already knows where it belongs; inheriting its area
-                // keeps an offline classification out of "Unassigned".
-                suggestedLifeAreaId = match.lifeAreaId,
+                // keeps an offline classification out of "Unassigned". The first
+                // of several, because the classification carries one suggestion
+                // and a task the user then files is filed by hand anyway.
+                suggestedLifeAreaId = match.lifeAreaIds.firstOrNull(),
                 estimatedPoints = 10,
                 estimatedMinutes = TaskDuration.fallbackMinutes(10),
                 confidence = 0.4f,

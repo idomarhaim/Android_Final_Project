@@ -30,6 +30,7 @@ import com.idomarhaim.goalpilot.feature.dashboard.DashboardScreen
 import com.idomarhaim.goalpilot.feature.goals.AddEditGoalScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalDetailScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalsScreen
+import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreaDetailScreen
 import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreasScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
@@ -171,7 +172,21 @@ private fun MainScaffold() {
                 )
             }
             composable(Routes.LIFE_AREAS) {
-                LifeAreasScreen(onBack = { navController.popBackStack() })
+                LifeAreasScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenArea = { navController.navigate(Routes.lifeAreaDetail(it)) },
+                )
+            }
+            composable(
+                route = "${Routes.LIFE_AREA_DETAIL}/{${Routes.ARG_LIFE_AREA_ID}}",
+                arguments = listOf(
+                    navArgument(Routes.ARG_LIFE_AREA_ID) { type = NavType.StringType },
+                ),
+            ) {
+                LifeAreaDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenGoal = { navController.navigate(Routes.goalDetail(it)) },
+                )
             }
         }
     }

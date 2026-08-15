@@ -166,6 +166,7 @@ fun rememberLifeAreaReorderState(
 fun LazyListScope.lifeAreaRows(
     state: LifeAreaReorderState,
     onMove: (from: Int, to: Int) -> Unit,
+    onOpen: (LifeArea) -> Unit,
     onEdit: (LifeArea) -> Unit,
     onDelete: (LifeArea) -> Unit,
 ) {
@@ -174,6 +175,7 @@ fun LazyListScope.lifeAreaRows(
         LifeAreaCard(
             area = row.area,
             goalCount = row.goalCount,
+            onOpen = { onOpen(row.area) },
             // One area cannot be reordered, and a handle that does nothing is
             // worse than no handle.
             reorderable = rows.size > 1,
@@ -195,6 +197,7 @@ fun LazyListScope.lifeAreaRows(
 private fun LifeAreaCard(
     area: LifeArea,
     goalCount: Int,
+    onOpen: () -> Unit,
     reorderable: Boolean,
     isDragging: Boolean,
     dragOffsetY: () -> Float,
@@ -209,6 +212,9 @@ private fun LifeAreaCard(
 ) {
     val accent = area.colorHex.toGoalAccent()
     GpCard(
+        // The whole card opens the area (#2). The drag handle below consumes its
+        // own pointer events, so long-pressing it to reorder never lands here.
+        onClick = onOpen,
         modifier = Modifier
             .fillMaxWidth()
             // Above its neighbours while it is in the air, or the cards it passes
@@ -289,8 +295,10 @@ private fun LifeAreaCard(
                 )
                 Text(
                     buildString {
-                        append("$goalCount goal")
-                        if (goalCount != 1) append("s")
+                        // The count is direction-isolated (§4.8): a Latin digit run
+                        // inside a Hebrew paragraph is reordered by the bidi
+                        // algorithm, and this one sits in a sentence.
+                        append(goalCountLabel(goalCount))
                         if (area.isLinkedToGoogleTasks) append(" · synced from Google Tasks")
                     },
                     style = MaterialTheme.typography.labelMedium,

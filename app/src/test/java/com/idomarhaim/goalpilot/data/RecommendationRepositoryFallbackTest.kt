@@ -61,9 +61,13 @@ class RecommendationRepositoryFallbackTest {
     fun `classifyTask offline inherits the matched goal's life area`() = runTest {
         every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
 
-        val filed = goals.map { if (it.id == "g2") it.copy(lifeAreaId = "study") else it }
+        val filed = goals.map {
+            if (it.id == "g2") it.copy(lifeAreaIds = listOf("study", "health")) else it
+        }
         val result = repo.classifyTask("Read a book tonight", filed, areas)
 
+        // The classification carries one suggestion, so a goal serving several
+        // areas offers its first — never a silent pick from the middle.
         assertThat((result as Resource.Success).data.suggestedLifeAreaId).isEqualTo("study")
     }
 

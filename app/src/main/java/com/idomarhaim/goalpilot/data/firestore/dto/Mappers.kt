@@ -17,12 +17,27 @@ import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.model.User
 
 // ── Goal ───────────────────────────────────────────────────────────
+
+/**
+ * The plural life-area edge, backfilled from the pre-§1.2 singular field.
+ *
+ * `lifeAreaIds` wins whenever the document has one, so a migrated document never
+ * consults the legacy field again; absent it, `[lifeAreaId]` / `[]` is the
+ * translation §7.1 prescribes. Blanks and duplicates are dropped here rather than
+ * anywhere downstream — a blank id resolves to no area, and a repeated id would
+ * count one goal twice in the same band.
+ */
+private fun GoalDto.resolvedLifeAreaIds(): List<String> =
+    (lifeAreaIds ?: listOfNotNull(lifeAreaId))
+        .mapNotNull { it.takeIf(String::isNotBlank) }
+        .distinct()
+
 fun GoalDto.toDomain(): Goal = Goal(
     id = id,
     title = title,
     description = description,
     category = GoalCategory.fromName(category),
-    lifeAreaId = lifeAreaId?.takeIf { it.isNotBlank() },
+    lifeAreaIds = resolvedLifeAreaIds(),
     healthSourceKey = healthSourceKey?.takeIf { it.isNotBlank() },
     targetValue = targetValue,
     currentValue = currentValue,
@@ -39,7 +54,11 @@ fun Goal.toDto(): GoalDto = GoalDto(
     title = title,
     description = description,
     category = category.name,
-    lifeAreaId = lifeAreaId,
+    // Null, always: a write migrates the document, and leaving the old field
+    // populated would be exactly the "second number that quietly disagrees" the
+    // map names three times over.
+    lifeAreaId = null,
+    lifeAreaIds = lifeAreaIds,
     healthSourceKey = healthSourceKey,
     targetValue = targetValue,
     currentValue = currentValue,

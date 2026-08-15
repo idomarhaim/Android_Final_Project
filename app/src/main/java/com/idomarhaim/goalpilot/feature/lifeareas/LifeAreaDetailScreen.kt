@@ -1,0 +1,336 @@
+package com.idomarhaim.goalpilot.feature.lifeareas
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
+import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.ui.components.EmptyState
+import com.idomarhaim.goalpilot.ui.components.GpCard
+import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
+import com.idomarhaim.goalpilot.ui.components.LoadingBox
+import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.iconForKey
+import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import com.idomarhaim.goalpilot.ui.components.trimNumber
+
+/**
+ * One life area, and the goals filed under it (`PRODUCT_v0.3` §4.7).
+ *
+ * This screen is the destination issue #2 was missing: from the life-areas list,
+ * *"3 goals"* now goes somewhere. Before it, the only route into a goal was the
+ * Goals tab, and the count read as a link while being a label.
+ *
+ * **No `GoalCategory` is rendered here** (`C23`, #45) — the area screen shows
+ * areas, not categories — which is why the rows are drawn locally rather than with
+ * the shared `GoalCard`, whose icon and meta line are both the goal's *category*.
+ * Every accent on this screen is the **area's** colour, so the one thing the
+ * screen is about is the one thing that is coloured.
+ *
+ * ⚠️ **The success/failure run belongs above the list and is not built here.**
+ * §4.7 puts `C19`'s component (`kept · missed · still-owed · nothing-due ·
+ * no next step`, with the `30 days · 8 weeks · 6 months` window filter) between
+ * the header and the goal list, and #2 scopes itself to *"the route and the screen
+ * that hosts it"*. It is left out rather than mocked up: the run counts **missed
+ * windows**, and windows are `occurrences`, a collection §7.1 marks **new**. A
+ * placeholder drawn from what exists today would be the map's most-repeated
+ * finding — a second number that quietly disagrees.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LifeAreaDetailScreen(
+    onBack: () -> Unit,
+    onOpenGoal: (String) -> Unit,
+    viewModel: LifeAreaDetailViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    val snackbarHost = remember { SnackbarHostState() }
+
+    LaunchedEffect(message) {
+        message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
+    }
+
+    val accent = state.area?.colorHex?.toGoalAccent() ?: MaterialTheme.colorScheme.primary
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHost) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = state.area?.name ?: "Life area",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+    ) { inner ->
+        if (state.isLoading) {
+            LoadingBox(Modifier.padding(inner))
+            return@Scaffold
+        }
+
+        if (!state.areaExists) {
+            EmptyState(
+                title = "That life area is gone",
+                subtitle = "It was deleted — on this device or another one. Its goals were " +
+                    "kept and are now unfiled; you can file them again from Life areas.",
+                icon = Icons.Outlined.Category,
+                modifier = Modifier.padding(inner),
+            )
+            return@Scaffold
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item { AreaHeaderCard(state = state, accent = accent) }
+
+            if (state.goals.isEmpty()) {
+                item {
+                    EmptyState(
+                        title = "Nothing filed here yet",
+                        subtitle = "Goals you file under this area show up here. File one from " +
+                            "the list below, or pick this area while editing a goal.",
+                        icon = Icons.Outlined.Flag,
+                        modifier = Modifier.heightIn(min = 220.dp),
+                    )
+                }
+            } else {
+                item { SectionHeader("Goals in this area") }
+                items(state.goals, key = { it.id }) { goal ->
+                    AreaGoalCard(
+                        goal = goal,
+                        accent = accent,
+                        onClick = { onOpenGoal(goal.id) },
+                        onRemove = { viewModel.removeGoalFromArea(goal) },
+                    )
+                }
+            }
+
+            if (state.unfiledGoals.isNotEmpty()) {
+                item { SectionHeader("Goals with no area") }
+                item {
+                    Text(
+                        "A goal can serve more than one area, so filing it here does not " +
+                            "take it away from anywhere else.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                items(state.unfiledGoals, key = { "unfiled-${it.id}" }) { goal ->
+                    UnfiledGoalRow(goal = goal, onFile = { viewModel.fileGoalHere(goal) })
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The area's own identity, and its count.
+ *
+ * The count is direction-isolated (§4.8): `"2 goals"` inside a Hebrew paragraph
+ * reorders under the bidi algorithm, and this is a number embedded in a sentence,
+ * which is exactly the shape the rule names.
+ */
+@Composable
+private fun AreaHeaderCard(state: LifeAreaDetailUiState, accent: Color) {
+    val area = state.area ?: return
+    GpCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = iconForKey(area.iconKey),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
+            Column(modifier = Modifier.padding(start = 14.dp)) {
+                Text(
+                    text = area.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = goalCountLabel(state.goals.size) +
+                        if (area.isLinkedToGoogleTasks) " · synced from Google Tasks" else "",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A goal row for the area screen. Carries no category: the accent, and therefore
+ * the only colour on the row, is the **area's** (`C23`).
+ */
+@Composable
+private fun AreaGoalCard(
+    goal: Goal,
+    accent: Color,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    GpCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = goal.title.ifBlank { "Untitled goal" },
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        // A percentage inside a bidi paragraph is the §4.8 shape.
+                        text = "${goal.progressPercent}%".bidiIsolated(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = accent,
+                    )
+                }
+                GpLinearProgress(
+                    progress = goal.progressFraction,
+                    color = accent,
+                    height = 8.dp,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    text = "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()} " +
+                        goal.unit,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                if (goal.lifeAreaIds.size > 1) {
+                    Text(
+                        // Plural areas are legal (§1.2), so removing a goal from
+                        // here is not the same as unfiling it — say which it is
+                        // before the menu is opened, not after the write.
+                        text = "Also in ${"${goal.lifeAreaIds.size - 1}".bidiIsolated()} other " +
+                            if (goal.lifeAreaIds.size == 2) "area" else "areas",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "More for “${goal.title}”")
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Remove from this area") },
+                        onClick = { menuOpen = false; onRemove() },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UnfiledGoalRow(goal: Goal, onFile: () -> Unit) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 6.dp, bottom = 6.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = goal.title.ifBlank { "Untitled goal" },
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onFile) { Text("File here") }
+        }
+    }
+}
+
+/**
+ * `"3 goals"`, with the number isolated so it cannot be reordered out of the
+ * phrase in an RTL paragraph (§4.8).
+ */
+internal fun goalCountLabel(count: Int): String =
+    "${"$count".bidiIsolated()} goal" + if (count == 1) "" else "s"

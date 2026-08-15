@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.data.firestore
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
@@ -89,12 +90,29 @@ class LifeAreaRepositoryImpl @Inject constructor(
             // Unfile the goals first. If this half fails the area survives, which
             // is recoverable; doing it the other way round would leave goals
             // pointing at an area the user can no longer see or repair.
-            val affected = goalsCol(uid).whereEqualTo("lifeAreaId", areaId).get().await()
-            if (!affected.isEmpty) {
+            //
+            // Two queries, because a goal written before §1.2 made the edge plural
+            // still carries the singular `lifeAreaId` and matches neither
+            // `arrayContains` nor the other way round. A document is deduplicated
+            // by path, so one that somehow matched both is still updated once.
+            val plural = goalsCol(uid).whereArrayContains("lifeAreaIds", areaId).get().await()
+            val legacy = goalsCol(uid).whereEqualTo("lifeAreaId", areaId).get().await()
+            val affected = (plural.documents + legacy.documents).distinctBy { it.reference.path }
+            if (affected.isNotEmpty()) {
                 val batch = firestore.batch()
                 val now = System.currentTimeMillis()
-                affected.documents.forEach { doc ->
-                    batch.update(doc.reference, mapOf("lifeAreaId" to null, "updatedAt" to now))
+                affected.forEach { doc ->
+                    // `arrayRemove` on a document that has no `lifeAreaIds` yet
+                    // writes the empty array, which is exactly the `[]` §7.1 asks
+                    // an unfiled goal to be backfilled to.
+                    batch.update(
+                        doc.reference,
+                        mapOf(
+                            "lifeAreaIds" to FieldValue.arrayRemove(areaId),
+                            "lifeAreaId" to null,
+                            "updatedAt" to now,
+                        ),
+                    )
                 }
                 batch.commit().await()
             }

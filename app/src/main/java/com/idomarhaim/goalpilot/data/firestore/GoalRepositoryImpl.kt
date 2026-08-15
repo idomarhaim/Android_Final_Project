@@ -100,16 +100,26 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun setLifeArea(goalId: String, lifeAreaId: String?): Resource<Unit> =
+    override suspend fun setLifeAreas(goalId: String, lifeAreaIds: List<String>): Resource<Unit> =
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
             try {
+                // The legacy singular field is cleared in the same update, not left
+                // behind: a document that carried both would read back one answer
+                // through the mapper and a different one through any query still
+                // written against `lifeAreaId`.
                 goalsCol(uid).document(goalId)
-                    .update("lifeAreaId", lifeAreaId, "updatedAt", System.currentTimeMillis())
+                    .update(
+                        mapOf(
+                            "lifeAreaIds" to lifeAreaIds.filter { it.isNotBlank() }.distinct(),
+                            "lifeAreaId" to null,
+                            "updatedAt" to System.currentTimeMillis(),
+                        ),
+                    )
                     .await()
                 Resource.Success(Unit)
             } catch (e: Exception) {
-                Resource.Error(e.message ?: "Could not change the goal's life area", e)
+                Resource.Error(e.message ?: "Could not change the goal's life areas", e)
             }
         }
 

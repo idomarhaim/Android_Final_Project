@@ -58,20 +58,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
+import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaProposal
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaSyncAction
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toComposeColor
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
@@ -84,17 +88,22 @@ import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 @Composable
 fun LifeAreasScreen(
     onBack: () -> Unit,
+    onOpenArea: (String) -> Unit,
     viewModel: LifeAreasViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val editor by viewModel.editor.collectAsStateWithLifecycle()
     val sync by viewModel.sync.collectAsStateWithLifecycle()
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
+    val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var pendingDelete by remember { mutableStateOf<LifeArea?>(null) }
     val reorder = rememberLifeAreaReorderState()
 
+    // Re-read on every entry, not once: the dashboard grants the same scope, and
+    // this ViewModel outlives a trip there and back (#36).
+    LaunchedEffect(Unit) { viewModel.refreshTasksConsent() }
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
     }
@@ -104,15 +113,17 @@ fun LifeAreasScreen(
     // this then would snap the card back for the frame before Firestore echoes.
     LaunchedEffect(state.rows) { reorder.sync(state.rows) }
 
-    // The Tasks scope is granted once per account; an account that signed in
-    // before this feature existed is sent through Google's own consent screen.
+    // The Tasks scope is granted once per account, and sign-in offers it with the
+    // box unticked (spec §2.6), so a missing scope is the normal case rather than
+    // a legacy account. Backing out of Google's screen is recorded as a decline
+    // so the card can say so instead of re-offering a generic prompt (#36).
     val consentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             viewModel.onConsentGranted()
         } else {
-            viewModel.consumeConsentIntent()
+            viewModel.onConsentDeclined()
         }
     }
     LaunchedEffect(consentIntent) {
@@ -152,7 +163,13 @@ fun LifeAreasScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { GoogleSyncCard(isLoading = sync.isLoading, onSync = viewModel::syncFromGoogleTasks) }
+            item {
+                GoogleSyncCard(
+                    isLoading = sync.isLoading,
+                    consent = tasksConsent,
+                    onSync = viewModel::syncFromGoogleTasks,
+                )
+            }
 
             if (state.rows.isEmpty()) {
                 item {
@@ -179,6 +196,7 @@ fun LifeAreasScreen(
                 lifeAreaRows(
                     state = reorder,
                     onMove = viewModel::moveArea,
+                    onOpen = { onOpenArea(it.id) },
                     onEdit = { viewModel.openEditor(it) },
                     onDelete = { pendingDelete = it },
                 )
@@ -249,26 +267,46 @@ fun LifeAreasScreen(
 
 // ── Cards ────────────────────────────────────────────────────────────
 
+/**
+ * This card reads the *same* `tasks.readonly` scope as the dashboard import, so
+ * it carries the same defect and the same fix (#36): when [consent] is
+ * [TasksConsent.MISSING] it says the scope was not granted, rather than looking
+ * identical to a first-ever run.
+ */
 @Composable
-private fun GoogleSyncCard(isLoading: Boolean, onSync: () -> Unit) {
+private fun GoogleSyncCard(isLoading: Boolean, consent: TasksConsent?, onSync: () -> Unit) {
+    // Only a positively observed refusal speaks. Null is "not checked yet" and
+    // NOT_SIGNED_IN is "never asked" — neither is a decline.
+    val declined = consent == TasksConsent.MISSING
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Sync from Google Tasks", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Your Google Tasks lists are already the areas of your life. Pull " +
-                    "their names in as life areas — empty lists included — and review " +
-                    "what gets added before anything is saved.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
-            )
+            if (declined) {
+                TasksConsentNotice(modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
+            } else {
+                Text(
+                    "Your Google Tasks lists are already the areas of your life. Pull " +
+                        "their names in as life areas — empty lists included — and review " +
+                        "what gets added before anything is saved.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+                )
+            }
             FilledTonalButton(onClick = onSync, enabled = !isLoading) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
                     Icon(Icons.Filled.Link, contentDescription = null)
                 }
-                Text("Sync my lists", modifier = Modifier.padding(start = 8.dp))
+                Text(
+                    if (declined) {
+                        stringResource(R.string.tasks_consent_grant_action)
+                    } else {
+                        "Sync my lists"
+                    },
+                    modifier = Modifier.padding(start = 8.dp),
+                )
             }
         }
     }

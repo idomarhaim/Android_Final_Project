@@ -104,9 +104,14 @@ data class TimeTrend(
  * Splits the time a user spent in a window across their life areas
  * (spec §6 Bonus: rich analytics).
  *
- * The chain is `completed task → its goal → that goal's life area`, weighted by
+ * The chain is `completed task → its goal → that goal's life areas`, weighted by
  * the task's LLM-estimated duration. Pure — no Android, no I/O, no clock — so
  * `TimeAllocationUseCaseTest` can exercise every branch on the JVM.
+ *
+ * Since `PRODUCT_v0.3` §1.2 a goal reaches many areas, and §4.7 fixes the
+ * asymmetry that follows: **a completion counts in full in every area it serves,
+ * while its minutes divide between them.** A goal with one area — which is every
+ * goal the pre-§1.2 backfill produced — reads exactly as it did before.
  */
 class TimeAllocationUseCase @Inject constructor() {
 
@@ -125,29 +130,33 @@ class TimeAllocationUseCase @Inject constructor() {
         val goalsById = goals.associateBy { it.id }
         val areasById = lifeAreas.associateBy { it.id }
 
-        // Group by area id, with null standing for the unassigned bucket. An
-        // archived area still gets its own slice: the time was really spent there,
-        // and folding it into "Unassigned" would silently rewrite the user's past.
-        val byArea: Map<String?, List<Task>> = completed.groupBy { task ->
-            val goal = task.goalId?.let(goalsById::get)
-            goal?.lifeAreaId?.takeIf { areasById.containsKey(it) }
+        // Minutes and completions per area id, with null standing for the
+        // unassigned bucket. An archived area still gets its own slice: the time
+        // was really spent there, and folding it into "Unassigned" would silently
+        // rewrite the user's past.
+        val minutesByArea = mutableMapOf<String?, Int>()
+        val tasksByArea = mutableMapOf<String?, Int>()
+        for (task in completed) {
+            val minutes = TaskDuration.minutesOf(task)
+            for ((areaId, share) in task.splitAcrossAreas(minutes, goalsById, areasById)) {
+                minutesByArea[areaId] = (minutesByArea[areaId] ?: 0) + share
+                tasksByArea[areaId] = (tasksByArea[areaId] ?: 0) + 1
+            }
         }
 
-        val minutesByArea = byArea.mapValues { (_, list) -> list.sumOf { TaskDuration.minutesOf(it) } }
         val total = minutesByArea.values.sum()
         if (total <= 0) return TimeAllocation()
 
         val slices = minutesByArea
             .map { (areaId, minutes) ->
                 val area = areaId?.let(areasById::get)
-                val list = byArea.getValue(areaId)
                 TimeSlice(
                     areaId = areaId,
                     name = area?.name?.takeIf { it.isNotBlank() } ?: UNASSIGNED_NAME,
                     colorHex = area?.colorHex ?: LifeAreaPalette.DEFAULT_HEX,
                     iconKey = area?.iconKey ?: "flag",
                     minutes = minutes,
-                    taskCount = list.size,
+                    taskCount = tasksByArea[areaId] ?: 0,
                     fraction = minutes.toFloat() / total,
                 )
             }
@@ -193,20 +202,57 @@ class TimeAllocationUseCase @Inject constructor() {
         val goalsById = goals.associateBy { it.id }
         val completed = tasks.filter { it.isDone && it.completedAtEpochMillis != null }
 
+        // The slices already decided which areas exist here, so the split runs
+        // against *them* rather than the life-area list: an area the pie folded
+        // into "Unassigned" must not reappear as a column of its own.
+        val sliceAreas = allocation.slices.mapNotNull { it.areaId }.associateWith { it }
+
         val rows = buckets.map { bucket ->
             val minutes = IntArray(series.size)
             for (task in completed) {
                 if (!bucket.window.contains(task.completedAtEpochMillis!!)) continue
-                val areaId = task.goalId?.let(goalsById::get)?.lifeAreaId
-                // An area with no slice cannot have a segment; it falls to the
-                // unassigned row, which the pie must already have created for it.
-                val index = indexByArea[areaId] ?: indexByArea[null] ?: continue
-                minutes[index] += TaskDuration.minutesOf(task)
+                val shares =
+                    task.splitAcrossAreas(TaskDuration.minutesOf(task), goalsById, sliceAreas)
+                for ((areaId, share) in shares) {
+                    // An area with no slice cannot have a segment; it falls to the
+                    // unassigned row, which the pie must already have created for it.
+                    val index = indexByArea[areaId] ?: indexByArea[null] ?: continue
+                    minutes[index] += share
+                }
             }
             TrendBucket(label = bucket.label, minutes = minutes.toList())
         }
 
         return TimeTrend(series = series, buckets = rows)
+    }
+
+    /**
+     * This task's [minutes] shared out over the life areas its goal serves, as
+     * `areaId to share`. A null key is the unassigned bucket, which is where a
+     * task with no goal, a goal with no areas, and a goal whose every area has
+     * been deleted all land.
+     *
+     * The shares are integers that **sum back to [minutes] exactly** — the
+     * remainder goes to the first areas rather than being dropped — because the
+     * donut's fractions are taken over this total and a lost minute would make
+     * them add to less than one.
+     */
+    private fun <T> Task.splitAcrossAreas(
+        minutes: Int,
+        goalsById: Map<String, Goal>,
+        knownAreas: Map<String, T>,
+    ): List<Pair<String?, Int>> {
+        val areaIds = goalId?.let(goalsById::get)
+            ?.lifeAreaIds
+            ?.filter(knownAreas::containsKey)
+            .orEmpty()
+        if (areaIds.isEmpty()) return listOf(null to minutes)
+
+        val base = minutes / areaIds.size
+        val remainder = minutes % areaIds.size
+        return areaIds.mapIndexed { index, id ->
+            id to base + if (index < remainder) 1 else 0
+        }
     }
 
     companion object {
