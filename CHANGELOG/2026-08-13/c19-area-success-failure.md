@@ -235,3 +235,36 @@ source.** Renders inspected: glass/dark/en, neo/light/he, darkneo/dark/he, liqui
 and a darkneo/he close-up of frame 4 to confirm both *different* action pairs and the footer fit.
 One factual claim in the resolution was verified in the code before posting:
 `RecommendationRepositoryImpl.kt:175` does filter on `progressFraction < 0.34f`.
+
+---
+
+## 2026-08-15 — the candidate drained, and the decision was again the agent's
+
+Two days later, on the same hand-back wording as the ticket itself: *"explain it simply and
+schematically, choose the solution that gives the highest standard and quality, improve it if you
+can."* So per `rules/question-axis-naming.md`: **not re-asked**, the couldn't-understand half paid
+once in the reply as an explanation, and the answer **derived**.
+
+**Ingested** into `C:\Dev\JARVIS\kb\dev\runtime-verification.md` §6 at `a936274` (+ `1e326a6` for the
+changelog entry the first commit omitted, caught by that repo's pre-commit hook). Visitor row claimed
+**and** released on the JARVIS board in the ingest commit; `governance-backlog-sweep` was live there
+throughout but `kb/` is not in its claimed paths, its two modified `scripts/` files were not staged,
+and `SESSIONS.md` — in both claims — had its own diff read in its own call first (27 insertions, none
+theirs). `Check-KbLinks.ps1 -BundlePath .\kb`: **CLEAN, 68 pages**.
+
+**The answer was none of the three options offered** (amend the sentence · append beside it · drop
+it). *Append* was unavailable: the bundle lints for contradictions and §6 would then have carried two
+opposed statements. And the *amend* as drafted was still wrong in the same way as the text it
+replaced — it graded staleness by **cost**. The defect was the **axis**: the discriminator is **what
+the read is for**. A *lookup* asks about one record, so the aggregate is a hint you can confirm; a
+*derivation* asks about the **set**, and there completeness *is* the answer — no per-record pass can
+test it, because the records it would check are the ones the aggregate never handed you. Duty 2 gained
+the set-vs-record clause; `kb/index.md` was corrected too, since it repeated the old claim.
+
+**This closes a set of three**, all from this map: `c2-task-type` (a write is a hypothesis until read
+back), `c15b-stored-ai-text` (a read through an aggregate is one too), and this one — **a confirmation
+is one as well.**
+
+`kb-candidates/2026-08-13-c19-area-success-failure.md` is **deleted** in this commit: every entry was
+promoted, which `rules/derivable-decision.md` §1 permits without asking. `kb-candidates/` still holds
+five files, none of them this session's.

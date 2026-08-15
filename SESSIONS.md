@@ -267,6 +267,21 @@ before your first write. Normative rule:
 >
 > Recorded by `c19-area-success-failure` on release.
 
+> 📥 **`c19-area-success-failure` — post-release note, 2026-08-15: the held candidate is
+> drained, and the answer was none of the three options Ido was offered.** He handed the decision back
+> in the same words as the ticket itself, so per `rules/question-axis-naming.md` it was **not
+> re-asked** and the answer was **derived**: ingested into
+> `C:\Dev\JARVIS\kb\devuntime-verification.md` §6 at `a936274` (+ `1e326a6`, the changelog entry
+> the first commit omitted — caught by that repo's pre-commit hook, not by me). *Append beside it* was
+> unavailable, since a bundle that lints for contradictions cannot hold both statements; and the
+> *amend* as drafted was wrong the same way as the text it replaced — it graded staleness by **cost**,
+> when the real discriminator is **what the read is for** (a lookup confirms a record; a derivation
+> needs the **set**, where completeness *is* the answer). `Check-KbLinks`: **CLEAN, 68 pages.**
+> `kb-candidates/2026-08-13-c19-area-success-failure.md` **deleted** — fully promoted, which
+> `rules/derivable-decision.md` §1 permits without asking. **The set of three is closed:** a write, a
+> read through an aggregate, and now a **confirmation** — each a hypothesis until something outside it
+> checks. Nothing else of this session's is outstanding.
+
 > ✅ **`liveness-from-transcript` (visitor from `C:\Dev\JARVIS`) claimed and released 2026-08-13
 > — in and out in one unit, this commit.** Owned `kb-candidates/2026-08-13-session-titles.md`
 > (entry 4's `Status` only) and this note. **No singleton:** no build, no device, no Gradle, no
