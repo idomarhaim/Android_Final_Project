@@ -193,3 +193,45 @@ without it**:
 (`lifeAreaId` → `lifeAreaIds.firstOrNull()`, forced by the rename) and is excluded by the
 same filter, so **that one line is compiled but not test-covered here** — it is its owner's
 to verify. `Untested:` also the two instrumented layers, below.
+
+---
+
+## ⚠️ Correction, appended 2026-08-16 — one review finding above is false
+
+**The *Attacked and did not break* list is wrong about the drag handle, and this entry was the
+thing that propagated it.** It reads:
+
+> …and the drag handle versus the now-clickable card (`detectDragGesturesAfterLongPress` consumes
+> its own events, and `Card.onClick` is a tap).
+
+That is **reasoning presented as a result**, and it is untrue. `change.consume()` runs inside
+`onDrag`, which is *after* the long press has been recognised, and does nothing to stop the
+enclosing `clickable` claiming the press first. Making the whole card the click target put a
+`clickable` **around** the drag handle; the card won, and **drag-to-reorder stopped working
+entirely**. The same claim was written into a code comment at `LifeAreaRows.kt:211`, so it
+existed in two places, neither of them observed.
+
+**Found by `36-tasks-consent`** on the first full instrumented run of the night —
+`LifeAreaReorderUiTest.dragging_theFirstHandleOntoTheSecondCommitsThatMove`, *expected `[(0, 1)]`
+but was `[]`* — and repaired in `c8831f4` by moving the click **inward**, off the handle, so the
+race is structurally impossible rather than arbitrated.
+
+**Why it survived a review that was otherwise looking straight at it.** The 🧪 section above
+correctly records *"Instrumented/UI E2E — not run"* and lists it as an open `unverified` issue.
+Both statements are in this one document, and **only one of them can be true**: a gesture
+interaction cannot be *attacked and found sound* by a review whose only evidence layer was
+declared un-run four paragraphs earlier. The failure was not missing the defect — it was
+**writing an unhedged verdict in the one place the document had already said it could not
+verify**. `claim-provenance.md`'s remedy applies exactly: that line should have read
+`Inferred: from the gesture API's contract · Untested: no instrumented run`.
+
+**The layer went quiet rather than red**, which is what made the claim unfalsifiable at the time:
+`androidTest` could not compile, so the suite that would have failed did not run at all. That is
+now recorded on `kb/dev/agent-topology-and-routing.md` as the compilability finding.
+
+**Verified since, on HEAD `41b7391`**, by this session, against a pristine `git archive` export
+isolated from a live sibling's tree: **JVM unit 323/0/0/0 (32 classes)** and **instrumented 43
+tests, 0 failures, 0 skipped** on `Pixel_10_Pro_XL`. So the 🧪 section's *not run* is discharged
+here rather than left standing.
+
+Resolution comment and closure: [#2](https://github.com/idomarhaim/Android_Final_Project/issues/2#issuecomment-5304676204).
