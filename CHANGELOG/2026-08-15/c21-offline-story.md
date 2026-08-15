@@ -237,3 +237,49 @@ remain**, one belonging to the live `c24-settings-surface`.
 `b62618a` from `session-title-equals-label`, whose paths sit under its **live** Active row — and that
 session is mid-unit, blocked on singletons this commit just released for it. Precondition 5 stops the
 push; `AUTO MODE` does not lift it, because un-publishing needs a force-push.
+
+---
+
+## 📥 Addendum 3 — 19:3x, the second `ingest first`: **nothing left to drain, and why that is the finding**
+
+Ido answered the re-made 🎬 offer with `ingest first` a second time. Duty 1 was run again and
+**returned empty**, which is a result rather than a non-answer. Every entry now in this session's
+reach is ⛔:
+
+| File | State |
+|---|---|
+| `2026-08-13-c15b-stored-ai-text.md` #2 | ⛔ `rules/` |
+| `2026-08-13-c2-task-type.md` #2 | ⛔ `rules/` |
+| `2026-08-15-c23-goal-category.md` #1, #3 | ⛔ `rules/` |
+| `2026-08-15-c21-offline-story.md` #2 | ⛔ `awaiting 🎬` — this session's own, parked by design |
+| `2026-08-15-c24-settings-surface.md` | 🟢 ×2, but **claimed by a live session** — not this session's to take |
+| `2026-08-13-session-titles.md` | ✅ **fully drained → deleted in this commit** |
+
+**One file retired.** `2026-08-13-session-titles.md` held one surviving entry (#4), and its `Status`
+already read *drained 2026-08-13 by `liveness-from-transcript`*. It had been sitting fully drained
+for **two days** because the session that drained it worked in the other repo and never came back to
+delete the file here — the exact failure the *trigger is the condition, not the skill* clause exists
+for. Deleted without asking, per `derivable-decision.md` §1.
+
+## 🔭 The finding: four parked entries are **one** walkthrough, not four
+
+Reading the remaining `rules/` entries' **destinations** rather than their statuses shows they
+converge on a single file — `C:\Dev\JARVIS\rules\question-axis-naming.md`:
+
+- `c15b` #2 — *a hand-back repeated on the same subject means the **premise** is false, not the
+  **form*** → a clause on the **tell table**.
+- `c2-task-type` #2 — *the fork check must run against the **code**, not the ticket's own statement
+  of the fork* → a clause on **The widening**.
+- `c23` #1 — *a false fork is found in the duplicated **derivation**, not the duplicated field* →
+  extends the fork-check.
+- `c23` #3 — *the comprehension complaint fired three times in one day, and the third kills the
+  standing diagnosis* → same file.
+
+Each was filed independently as *"⛔ always-ask, `rules/`"* and parked on its own, the earliest on
+**2026-08-13**. Nothing was wrong with any of those decisions; what nobody did was read the four
+`Destination` lines side by side. They are **one amendment to one rule**, and therefore **one
+walkthrough** — which is a materially different ask from four.
+
+This is why repeating `ingest first` cannot move the backlog further: what remains does not need
+ingesting, it needs **one decision**. Stated as a finding rather than acted on, because `rules/` is
+always-ask in both modes and grouping four parked candidates into one proposal is still a proposal.
