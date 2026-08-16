@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: AUTO MODE
-status: active
+status: done
 issue: 51
 created: 2026-08-16
+landed: c477557 (GoalPilot) · b23eba4 (JARVIS, the KB half)
 ---
 
 # `resource-guard-inputs` — the localization guards can silently not run

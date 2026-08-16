@@ -15,7 +15,41 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `resource-guard-inputs` | `/kickoff resource-guard-inputs` — declare `res/` + `src/` as inputs to the JVM test task so the file-scanning localization guards actually run after a resource-only edit (brief: [`sessions/resource-guard-inputs.md`](sessions/resource-guard-inputs.md), filed on #51) | `app/build.gradle.kts`, `CHANGELOG/2026-08-16/resource-guard-inputs.md`, `sessions/resource-guard-inputs.md` | Gradle daemon | 2026-08-16 16:04 |
+> 🏁 **`resource-guard-inputs` RELEASED 2026-08-16 — `c477557`. The Gradle daemon is released.**
+> Account: [`CHANGELOG/2026-08-16/resource-guard-inputs.md`](CHANGELOG/2026-08-16/resource-guard-inputs.md).
+> Brief closed to [`sessions/done/resource-guard-inputs.md`](sessions/done/resource-guard-inputs.md).
+>
+> **JVM unit 351 / 0 · `assembleDebug` green — and green *without* `--rerun-tasks`, which was the
+> whole point.** Instrumented and `firestore-tests/` not run: build-configuration unit, no app code
+> changed, emulator never claimed.
+>
+> 🔴 **`51c`'s trap (1) IS FIXED, AND IT WAS WORSE THAN REPORTED — the guards were blind to a
+> resource *value* edit, which is the only kind a sweep makes.** `res/` and `src/` are now declared
+> inputs to every `Test` task in `app/build.gradle.kts`. **You no longer need `--rerun-tasks` after a
+> resource edit.** Delete that step from your habits; it was the workaround and nobody would have
+> remembered it.
+>
+> ⚠️ **The mechanism, because it defeats the obvious objection.** *"Resources reach the unit-test
+> classpath through `R.jar`, so surely a resource change invalidates the task"* — **`R.jar` is keyed
+> on resource _names_, not values.** `Observed:` `md5sum` over three `:app:processDebugResources`
+> runs: a value edit left it **byte-identical**, a new key changed it, reverting restored it. So the
+> blindness was **selective and flattering** — off on exactly the commit shape the guards exist for,
+> on for the shapes they do not care about. `51`, `51b` and `51c` all swept under it.
+>
+> 📌 **THE PART WORTH TAKING TO ANY GUARD, NOT JUST THIS ONE — proving an invalidation fix needs
+> FOUR states, not two.** break/no-fix (green — the fault) · break/fix (fails) · revert (green) ·
+> **break re-applied from that green state (fails)**. The middle two both start from a task that had
+> just *failed*, and **a failed task re-runs whatever its inputs say** — so on their own they are
+> entirely consistent with the fix doing nothing. Only the fourth proves it. All four were run.
+>
+> ⚠️ **`connectedDebugAndroidTest` is NOT covered** — it is a `DeviceProviderInstrumentTestTask`, so
+> `tasks.withType<Test>()` does not reach it. Harmless today (nothing under `app/src/androidTest/`
+> scans files) and not harmless the day an instrumented guard reads a file.
+>
+> ⚠️ **`CHANGELOG/CHANGELOG_README.md` in this repo stopped being an index on 2026-08-10** — roughly
+> 20 session entries since then have no row, including all five of today's. Pre-existing, not this
+> session's, and **not silently half-fixed**: adding one row would make a stale index look current.
+> JARVIS has `New-ChangelogIndex.ps1` for exactly this; this repo has no equivalent.
 
 > 🏁 **`51c-analytics-render` RELEASED 2026-08-16 — the analytics screen has now been SEEN in
 > Hebrew. Gradle daemon and emulator `Pixel_10_Pro_XL` released.** Account:
