@@ -68,10 +68,16 @@ says better, take the better wording and say why:
 
 ## Exit
 
-- `:app:testDebugUnitTest` green — **and run it with `--rerun-tasks`**. `51c` found that Gradle
-  does not treat `res/` as an input to that task, so a **resource-only change leaves it
-  `UP-TO-DATE` and the guards silently do not run.** That is filed separately; until it is fixed,
-  this is how you avoid a false green.
+- `:app:testDebugUnitTest` green. **No `--rerun-tasks` needed** — `resource-guard-inputs` fixed
+  that on 2026-08-16 (`ced0561`): `res/` and `src/` are now declared inputs to every `Test` task.
+  *(This brief said the opposite when it was written; corrected once the fix landed.)*
+
+  **Read `C:\Dev\JARVIS\kb\dev\scanned-files-are-not-task-inputs.md` before you trust a green run
+  anyway.** The mechanism was nastier than "Gradle doesn't watch `res/`": `R.jar` is keyed on
+  resource **names**, not values, so **adding** a key invalidated the test task while **changing
+  what a key says** did not. The blindness was selective and flattering, and it was off on exactly
+  the commit shape this unit produces — a resource-only value edit. Your unit is the first that
+  gets an honest green.
 - A Hebrew render of the widgets on a device is **owed but may not be reachable** — see below.
 - Your own `CHANGELOG/2026-08-16/widget-hebrew-terminology.md`.
 - Commit on the unit; push under `AUTO MODE` once the six preconditions hold.
