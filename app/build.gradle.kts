@@ -2,6 +2,7 @@
 // block inside a buildType. Without it the block still resolves, but through a
 // deprecated path that warns on every configuration.
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import org.gradle.api.tasks.testing.Test
 import java.util.Properties
 
 plugins {
@@ -210,6 +211,50 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
+}
+
+/**
+ * The localization guards read files off disk, and Gradle cannot see that.
+ *
+ * `HebrewLocaleResourceTest`, `AnalyticsLiteralSweepTest`,
+ * `WidgetHebrewResourceTest` and `WidgetPaletteResourceTest` do not exercise
+ * code — they open `src/main/res` and `src/main/java` with `java.io.File` and
+ * assert on the text. Nothing in that is
+ * visible to Gradle's up-to-date check, whose declared inputs for a unit-test
+ * task are the test classes and the runtime classpath. **Editing the *value* of
+ * an existing string changes neither**: `R.jar` is keyed on the resource *names*,
+ * so a translated-to-English `values-iw/` string leaves every declared input
+ * byte-identical, `:app:testDebugUnitTest` reports UP-TO-DATE, and the guard that
+ * exists to catch exactly that edit never executes a single assertion.
+ *
+ * It fails in the flattering direction, and it fails precisely when it matters:
+ * a resource-only change is what a localization sweep *is*, so the guard is off
+ * on the one commit shape it was written for. `Observed:` 2026-08-16 by session
+ * `51c-analytics-render` and reproduced here before this block was added —
+ * `gp_widget_level` set to `"Level"` in `values-iw/` still built green.
+ *
+ * Declaring the two trees as inputs is the fix rather than `outputs.upToDateWhen
+ * { false }`, which would also work and would cost the whole suite on every
+ * unrelated build. `--rerun-tasks` is the manual version of the same thing and
+ * depends on someone remembering, which is what made this a defect.
+ *
+ * `withPathSensitivity(RELATIVE)` is there for the build cache, which is on in
+ * this repo: `Test` is `@CacheableTask`, and an `inputs.dir` normalizes on
+ * ABSOLUTE paths unless told otherwise, which would key every cache entry to
+ * this checkout directory. `Observed:` 2026-08-16 — deleting these two lines and
+ * re-running under `--warning-mode=all` produces **no warning of any kind**, so
+ * nothing in the build will tell you if they are dropped, which is why the
+ * reason is written here rather than left to be rediscovered. `Inferred:` the
+ * cache-reuse consequence itself, from Gradle's documented default
+ * normalization; not measured here.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/res"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("fileScanningGuardResources")
+    inputs.dir(layout.projectDirectory.dir("src/main/java"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("fileScanningGuardSources")
 }
 
 /**
