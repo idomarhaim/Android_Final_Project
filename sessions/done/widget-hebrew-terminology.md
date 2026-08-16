@@ -2,10 +2,30 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: AUTO MODE
-status: active
+status: done
 issue: 51
 created: 2026-08-16
+closed: 2026-08-16 by `widget-hebrew-terminology` — `cd49bda`
 ---
+
+> **Closed `cd49bda`.** Account:
+> [`CHANGELOG/2026-08-16/widget-hebrew-terminology.md`](../CHANGELOG/2026-08-16/widget-hebrew-terminology.md).
+>
+> Two corrections to this brief, both found by reading the strings against the
+> code that fills them:
+>
+> 1. **The proposed `נכון לתאריך %1$s` was factually wrong.** The argument is
+>    `AndroidWidgetStrings.asOfShort` = `DateFormat.getTimeFormat`, a **clock
+>    reading and never a date**. Shipped as `נכון לשעה %1$s`.
+> 2. **The nine defective strings were ten.** `gp_widget_effort_lead`
+>    (`ו־%1$s נמצאת ב־%2$s.`) carries §4.8's defect **twice** — `%1$s` is a
+>    user-authored goal title that may be Latin, `%2$s` is a percentage — and was
+>    not in the list. Fixed as part of the brief's own stated defect class.
+>
+> The blocking question was answered **negatively and deliberately**: Hebrew has
+> no second noun for a measure's numeric target once יעד names the entity, so the
+> file names the **measure** instead and never the target. `היעד המספרי` was
+> rejected. Research and sources are in the changelog and in the file's header.
 
 # `widget-hebrew-terminology` — fix the widget pack's Hebrew, and research the wording first
 
