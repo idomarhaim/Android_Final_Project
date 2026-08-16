@@ -21,11 +21,66 @@
   picker until §5.1 ships (`36-tasks-consent` is adding values-he/strings.xml as
   this lands), so this has been read but not seen. §0.8 is therefore satisfied in
   intent and not in fact, and that is recorded rather than claimed.
+
+  ── Two wording rules, added 2026-08-16 by `widget-hebrew-terminology` (#51),
+     each of which this file was violating. Same two rules as
+     values-iw/analytics_strings.xml; read that file's header too.
+
+     EIGHT of this file's resources were wrong: six on rule 1, three on rule 2,
+     one on both. ──
+
+  1 · TERMINOLOGY (§5.1 / `E1`, ratified by Ido 2026-08-16): the `Goal` entity is
+      יעד, NEVER מטרה. Six resources here said מטרה, and
+      gp_widget_goals_ring_meaning used both words in one sentence with the
+      meanings swapped. יעד is masculine where מטרה is feminine, so the verbs
+      moved with the noun (יכולה → יכול, נמצאת → עומד) — the agreement was
+      wrong for as long as the noun was.
+
+      THE HARD PART, and why this took a session: once יעד names the entity,
+      Hebrew has NO second noun left for a measure's numeric target. That is not
+      a gap in this app's vocabulary, it is a gap in the language as consumer
+      software uses it. `Observed:` Google Fit's Hebrew help says
+      "מדידה אוטומטית של ההתקרבות ליעדים" — יעד for the thing you approach, with
+      no separate word for the number; and Microsoft's Hebrew Dynamics 365 uses
+      both מדדי יעד and מדדי מטרה for one concept on one page
+      (learn.microsoft.com/he-il/dynamics365/sales/create-edit-goal-metric),
+      which is the collision showing up in a professionally localized product.
+      There is nothing to borrow.
+
+      So this file does not name the target at all: it says the ring is measured
+      לפי המדד שהגדרתם לו — by the measure you set for it — which is exactly true
+      (`BuildWidgetSnapshotUseCase.hasMeasure`: a measure IS the unit plus a
+      positive targetValue) and is how Hebrew actually says it. Rejected:
+      היעד המספרי, which reintroduces the collision this file exists to remove,
+      one adjective weaker.
+
+  2 · NO HEBREW PREFIX ATTACHED TO A LATIN OR DIGIT RUN (§4.8). `ל־%1$d` and
+      `ב־%2$s` render on the FAR side of the run — the prefix lands against the
+      run's last word instead of its first, the same defect as `מ‑Health Connect`
+      → `Health Connect‑מ`. The remedy is a Hebrew noun or a space-separated
+      preposition for the prefix to attach to, never the maqaf: `נכון לשעה %1$s`,
+      `עבור %1$d מהיעדים`, `עומד על %2$s`. Three resources violated it across
+      five lines: the two the brief named (as_of, goals_without_measure) and one
+      it did not (effort_lead, which carries the defect twice in one string).
+
+      THIS IS NOT THE DEFECT THE PARAGRAPH AT THE TOP OF THIS FILE DESCRIBES,
+      and the two read as contradictory until you separate them. Up there, the
+      run is a *value* the tile computes (`3.2 / 4 ק״מ`) and code fixes it, by
+      isolating the run — a translation genuinely cannot. Here, the prefix is in
+      the *template*, and `Inferred:` from what an isolate is (core/util/Bidi.kt)
+      it must sit outside the isolate, so no amount of isolating the argument can
+      reach it. The template is the only place this one is fixable, which is why
+      it is a rule about the words and not about the code.
+
+      grep for the class before adding a string here:
+          grep -nE '[א-ת]־?%[0-9]\$' app/src/main/res/values-iw/*.xml
+      HebrewTerminologyTest is the same check as a test, and covers every
+      values-iw/ file rather than this one.
 -->
 <resources>
 
-    <string name="gp_widget_goal">מטרה</string>
-    <string name="gp_widget_goals">המטרות שלך</string>
+    <string name="gp_widget_goal">יעד</string>
+    <string name="gp_widget_goals">היעדים שלכם</string>
     <string name="gp_widget_week">השבוע</string>
     <string name="gp_widget_week_large">לאן הלך השבוע</string>
     <string name="gp_widget_trend">יום אחר יום</string>
@@ -34,23 +89,30 @@
     <string name="gp_widget_level">רמה</string>
     <string name="gp_widget_level_large">רמה ונקודות</string>
 
-    <string name="gp_widget_as_of">נכון ל־%1$s</string>
+    <!-- §4.8: `לשעה`, not `ל־`, and `שעה` and not `תאריך` — the argument is
+         `asOfShort`, which is DateFormat.getTimeFormat, i.e. a clock reading
+         (`14:32`) and never a date. -->
+    <string name="gp_widget_as_of">נכון לשעה %1$s</string>
 
     <string name="gp_widget_never_opened">פתחו את GoalPilot פעם אחת וזה יתמלא</string>
     <string name="gp_widget_signed_out">התחברו כדי לראות את השבוע שלכם</string>
     <string name="gp_widget_nothing_tracked">עדיין לא נמדד דבר השבוע</string>
-    <string name="gp_widget_no_goals">אין עדיין מטרות — הקישו כדי להוסיף</string>
+    <string name="gp_widget_no_goals">אין עדיין יעדים — הקישו כדי להוסיף</string>
 
     <string name="gp_widget_duration_hm">%1$d ש׳ %2$d ד׳</string>
     <string name="gp_widget_duration_m">%1$d ד׳</string>
     <string name="gp_widget_percent">%1$d%%</string>
     <string name="gp_widget_points">%1$s נקודות</string>
 
-    <string name="gp_widget_goals_ring_meaning">כל טבעת היא התקדמות אל היעד של אותה מטרה.</string>
+    <!-- Rule 1's hard case. The English distinguishes the goal from its target;
+         Hebrew has one word for both, so this names the measure instead. -->
+    <string name="gp_widget_goals_ring_meaning">כל טבעת מראה את ההתקדמות ליעד אחד, לפי המדד שהגדרתם לו.</string>
+    <!-- `עבור %1$d`, not `ל־%1$d` (§4.8). Same construction as
+         analytics_estimates_all, which already had to solve this. -->
     <plurals name="gp_widget_goals_without_measure">
-        <item quantity="one">רק מטרה עם מדד יכולה להציג טבעת — ל־%1$d מהמטרות שלכם אין.</item>
-        <item quantity="two">רק מטרה עם מדד יכולה להציג טבעת — ל־%1$d מהמטרות שלכם אין.</item>
-        <item quantity="other">רק מטרה עם מדד יכולה להציג טבעת — ל־%1$d מהמטרות שלכם אין.</item>
+        <item quantity="one">רק יעד עם מדד יכול להציג טבעת — עבור %1$d מהיעדים שלכם אין מדד.</item>
+        <item quantity="two">רק יעד עם מדד יכול להציג טבעת — עבור %1$d מהיעדים שלכם אין מדד.</item>
+        <item quantity="other">רק יעד עם מדד יכול להציג טבעת — עבור %1$d מהיעדים שלכם אין מדד.</item>
     </plurals>
 
     <string name="gp_widget_divided_small">זמן משותף מחולק</string>
@@ -64,7 +126,14 @@
 
     <string name="gp_widget_effort_headline">%1$s לקחו את רוב השבוע</string>
     <string name="gp_widget_effort_no_measure">ואין להם מדד, אז שום דבר כאן לא יכול לומר אם הם התקדמו.</string>
-    <string name="gp_widget_effort_lead">ו־%1$s נמצאת ב־%2$s.</string>
+    <!-- NOT in the brief's list of nine, and the same §4.8 defect twice over:
+         `%1$s` is a user-authored goal title that may well be Latin, and `%2$s`
+         is `strings.percent(...)`, i.e. digits. `ו־` and `ב־` both landed on the
+         far side. The `ו` now attaches to `היעד`, and `עומד על` is a
+         space-separated preposition, so neither run carries a prefix. `עומד`
+         and not `נמצאת` because it agrees with `היעד` (m.), which is also the
+         only word here whose gender is knowable — the title's is not. -->
+    <string name="gp_widget_effort_lead">והיעד %1$s עומד על %2$s.</string>
     <string name="gp_widget_effort_small">מדורג לפי דקות</string>
     <string name="gp_widget_effort_large">מדורג לפי דקות — הכמות היחידה שהאפליקציה רשאית לדרג.</string>
 
@@ -73,7 +142,7 @@
     <string name="gp_widget_points_large">נקודות הן הדקות שלכם, מנוקדות — לא ניקוד נפרד.</string>
     <string name="gp_widget_tracked_this_week">%1$s נמדדו השבוע</string>
 
-    <string name="gp_widget_pick_goals_desc">טבעות למטרות שאתם מודדים</string>
+    <string name="gp_widget_pick_goals_desc">טבעות ליעדים שאתם מודדים</string>
     <string name="gp_widget_pick_week_desc">לאן הלך הזמן השבוע, לפי תחומי חיים</string>
     <string name="gp_widget_pick_trend_desc">אותו שבוע, יום אחר יום</string>
     <string name="gp_widget_pick_effort_desc">איזה תחום לקח את השבוע, ואיפה כל דבר עומד</string>
