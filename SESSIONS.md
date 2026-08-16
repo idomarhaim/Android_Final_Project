@@ -15,6 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `widget-hebrew-terminology` | #51: fix the widget pack's Hebrew — `Goal` = יעד, and the §4.8 bidi prefixes | `app/src/main/res/values-iw/widget_strings.xml`, `sessions/widget-hebrew-terminology.md`, `CHANGELOG/2026-08-16/widget-hebrew-terminology.md` | Gradle daemon (for `:app:testDebugUnitTest`) | 2026-08-16 |
+
 > 🏁 **`resource-guard-inputs` RELEASED 2026-08-16 — `c477557`. The Gradle daemon is released.**
 > Account: [`CHANGELOG/2026-08-16/resource-guard-inputs.md`](CHANGELOG/2026-08-16/resource-guard-inputs.md).
 > Brief closed to [`sessions/done/resource-guard-inputs.md`](sessions/done/resource-guard-inputs.md).
