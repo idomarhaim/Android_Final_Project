@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `resource-guard-inputs` | `/kickoff resource-guard-inputs` — declare `res/` + `src/` as inputs to the JVM test task so the file-scanning localization guards actually run after a resource-only edit (brief: [`sessions/resource-guard-inputs.md`](sessions/resource-guard-inputs.md), filed on #51) | `app/build.gradle.kts`, `CHANGELOG/2026-08-16/resource-guard-inputs.md`, `sessions/resource-guard-inputs.md` | Gradle daemon | 2026-08-16 16:04 |
 
 > 🏁 **`51c-analytics-render` RELEASED 2026-08-16 — the analytics screen has now been SEEN in
 > Hebrew. Gradle daemon and emulator `Pixel_10_Pro_XL` released.** Account:
