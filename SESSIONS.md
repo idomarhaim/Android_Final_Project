@@ -16,6 +16,51 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 
+> 🏁 **`51c-analytics-render` RELEASED 2026-08-16 — the analytics screen has now been SEEN in
+> Hebrew. Gradle daemon and emulator `Pixel_10_Pro_XL` released.** Account:
+> [`CHANGELOG/2026-08-16/51c-analytics-render.md`](CHANGELOG/2026-08-16/51c-analytics-render.md).
+>
+> **JVM unit 351 / 0 · instrumented 55 / 0 · `assembleDebug` green.**
+>
+> 🔴 **A COMPOSE `Dialog` DOES NOT INHERIT `AppLocale`'s `LocalContext`. Every dialog, bottom
+> sheet and popup in this app renders in the DEVICE language, not the app's.** Fixed in
+> `feature/analytics/` only; filed on #51 for the rest.
+>
+> ⚠️ **And it laid out right-to-left correctly while speaking English** — checkbox on the right, RTL
+> button order. `LocalLayoutDirection` is inherited; the context is not. **That is the same signature
+> as the `values-he` defect, one layer up, so take the rule rather than the instance: correct RTL
+> mirroring is NOT evidence that the strings are localized.** `AppLocaleDialogTest` pins the platform
+> behaviour, the remedy, and the remedy's own failure mode (capturing `LocalContext.current` *inside*
+> a slot compiles, reads sensibly, and does nothing).
+>
+> ✅ **#51 item 3 DOES NOT REPRODUCE.** The donut's centre caption does not overrun its hole and the
+> slice percentage does not reorder. `padding(horizontal = 28.dp)` + `maxLines = 2` + ellipsis
+> already prevent the first; the second cannot happen because percent and name are two stacked
+> `Text`s, never one string. **Not yet tried: a long Hebrew life-area name**, which is the one input
+> that could still produce it.
+>
+> 📌 **The stray full stop is NOT tagline-specific, and the sweep is the fix.** Every English
+> sentence ending in a neutral character renders it at the wrong end under RTL (`.right goal`,
+> `.stay motivated with friends`); the Hebrew sentence beside it is correct. So the remaining
+> packages inherit **neither a per-string fix nor a shared wrapper** — translating removes it.
+>
+> ⚠️ **aapt STRIPS whitespace at the edges of an unquoted resource value.** `, ` became `,` and
+> TalkBack read the life-area list with no pause. Invisible in the XML, invisible on screen (spoken
+> only). Wrap the value in double quotes; both layers are now guarded.
+>
+> ⚠️ **TWO OPERATIONAL TRAPS FOR THE NEXT SESSION.** **(1)** The file-scanning guards
+> (`HebrewLocaleResourceTest`, `AnalyticsLiteralSweepTest`) read `res/`+`src/` off disk, so Gradle
+> does not treat them as task inputs — a **resource-only** change leaves `testDebugUnitTest`
+> `UP-TO-DATE` and **the guard does not run**. Use `--rerun-tasks` after a resources-only edit.
+> **(2)** `connectedDebugAndroidTest` **uninstalls the app**, taking any signed-in session with it —
+> the suite and a signed-in device are mutually exclusive, and #51's remaining render checks need an
+> account.
+>
+> 📣 **Ido: your sign-in on `emulator-5554` is gone** — the instrumented suite uninstalled the
+> app. It is reinstalled and set back to Hebrew, but signing in again is yours. **Also: driving the
+> re-estimate dialog ran the AI backfill and updated one task's estimated duration** (`4 מתוך 5` →
+> `כל 5 המשימות`) — the feature's own action, reached by my taps.
+
 > 🏁 **`51b-sweep-analytics` RELEASED 2026-08-16 — `#51`'s literal sweep, **one package**:
 > `feature/analytics/`. Gradle daemon and emulator `Pixel_10_Pro_XL` released.** Account:
 > [`CHANGELOG/2026-08-16/51b-sweep-analytics.md`](CHANGELOG/2026-08-16/51b-sweep-analytics.md).

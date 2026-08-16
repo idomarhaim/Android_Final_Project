@@ -151,7 +151,14 @@
     <string name="analytics_a11y_trend">Tracked time per %1$s across %2$s periods</string>
     <string name="analytics_a11y_busiest">busiest %1$s at %2$s</string>
     <string name="analytics_a11y_bucket">%1$s %2$s</string>
-    <string name="analytics_a11y_separator">, </string>
+    <!--
+      Quoted, and the quotes are load-bearing. aapt strips leading and trailing
+      whitespace from an unquoted resource, so `, ` became `,` and TalkBack read
+      "לימודים 67%,בריאות" with no pause between areas. `Observed:` on the device
+      2026-08-16 — invisible in the XML, invisible on screen (this string is only
+      ever spoken), and caught only by dumping the rendered content-description.
+    -->
+    <string name="analytics_a11y_separator">", "</string>
 
     <!-- ── Messages (resolved on the screen, never held in the ViewModel) ── -->
     <string name="analytics_error_all_estimated">Every task already has an AI duration estimate.</string>

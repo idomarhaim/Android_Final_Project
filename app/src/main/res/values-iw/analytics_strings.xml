@@ -145,7 +145,8 @@
     <string name="analytics_a11y_trend">זמן שנמדד לכל %1$s לאורך %2$s תקופות</string>
     <string name="analytics_a11y_busiest">העמוס ביותר %1$s עם %2$s</string>
     <string name="analytics_a11y_bucket">%1$s %2$s</string>
-    <string name="analytics_a11y_separator">, </string>
+    <!-- Quoted so aapt keeps the trailing space — see the English file. -->
+    <string name="analytics_a11y_separator">", "</string>
 
     <!-- ── Messages ────────────────────────────────────────────── -->
     <string name="analytics_error_all_estimated">לכל המשימות כבר יש הערכת משך זמן מהבינה המלאכותית.</string>

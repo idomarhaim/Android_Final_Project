@@ -122,6 +122,28 @@ class AppLocaleInstrumentedTest {
     }
 
     @Test
+    fun aQuotedResourceKeepsTheWhitespaceAtItsEdges() {
+        // aapt strips leading/trailing whitespace from an UNQUOTED value.
+        // `Observed:` 2026-08-16 — analytics_a11y_separator was authored as `, `
+        // and resolved as `,`, so TalkBack read the life-area list as
+        // "לימודים 67%,בריאות" with no pause. Invisible in the XML, invisible on
+        // screen (this string is only ever spoken), and caught only by dumping
+        // the rendered content-description off the device.
+        //
+        // Asserted at the runtime rather than on the file, because the file is
+        // what already looked correct: `HebrewLocaleResourceTest` guards the
+        // authoring, and this guards what aapt actually produced from it.
+        listOf(AppLanguage.ENGLISH, AppLanguage.HEBREW).forEach { language ->
+            val separator = context.localizedFor(language)
+                .getString(R.string.analytics_a11y_separator)
+            assertWithMessage(
+                "The separator lost its trailing space in $language — wrap the resource " +
+                    "value in double quotes.",
+            ).that(separator).isEqualTo(", ")
+        }
+    }
+
+    @Test
     fun hebrewLaysOutRightToLeftAndEnglishDoesNot() {
         assertThat(context.localizedConfiguration(AppLanguage.HEBREW).layoutDirection)
             .isEqualTo(android.view.View.LAYOUT_DIRECTION_RTL)

@@ -121,12 +121,48 @@ class HebrewLocaleResourceTest {
 
     @Test
     fun `no hebrew literal appears in the default resources`() {
+        // §4.8 asks for this "absolutely", and asserting it absolutely is what
+        // caught three instances beyond the one Ido spotted. The one narrowing:
+        // XML **comments** are stripped first, because a comment provably cannot
+        // reach a render, and the absolute form produced a false positive the
+        // first time somebody documented a Hebrew defect in the English file —
+        // `Observed:` 2026-08-16, on the comment explaining why
+        // analytics_a11y_separator is quoted, which quotes the broken TalkBack
+        // output. Forbidding that makes the English file unable to explain its
+        // own Hebrew-driven decisions, which is worse than the risk it removes.
         val offenders = stringFiles(default)
-            .filter { HEBREW.containsMatchIn(it.readText()) }
+            .filter { HEBREW.containsMatchIn(stripXmlComments(it.readText())) }
             .map { it.name }
         assertWithMessage(
             "§4.8: no Hebrew literal may survive into an English render.",
         ).that(offenders).isEmpty()
+    }
+
+    @Test
+    fun `no resource silently loses leading or trailing whitespace`() {
+        // aapt strips leading/trailing whitespace from an UNQUOTED resource
+        // value. `Observed:` on the device 2026-08-16 — analytics_a11y_separator
+        // was authored as `, ` and resolved as `,`, so TalkBack read
+        // "לימודים 67%,בריאות" with no pause between life areas.
+        //
+        // The reason this needs a test rather than care: it is invisible in the
+        // XML (the space is there), invisible on screen (that string is only
+        // ever spoken), and it survived a full render-and-look pass. It was
+        // caught only by dumping the rendered content-description off the device.
+        val offenders = mutableListOf<String>()
+        (stringFiles(default) + stringFiles(hebrew)).forEach { file ->
+            VALUE.findAll(file.readText()).forEach { match ->
+                val value = match.groupValues[3]
+                val isQuoted = value.startsWith("\"") && value.endsWith("\"")
+                if (value.isNotEmpty() && value != value.trim() && !isQuoted) {
+                    offenders += "${file.parentFile.name}/${file.name}:${match.groupValues[2]}"
+                }
+            }
+        }
+        assertWithMessage(
+            "aapt will strip the whitespace at the edge of these values. Wrap the value " +
+                "in double quotes to keep it — <string name=\"x\">\", \"</string>.",
+        ).that(offenders.sorted()).isEmpty()
     }
 
     @Test
@@ -157,6 +193,10 @@ class HebrewLocaleResourceTest {
         LETTER.containsMatchIn(SPECIFIER.replace(value, ""))
 
     // ------------------------------------------------------------------ helpers
+
+    /** `<!-- … -->`, which aapt discards and no render can reach. */
+    private fun stripXmlComments(xml: String): String =
+        xml.replace(Regex("""<!--.*?-->""", RegexOption.DOT_MATCHES_ALL), "")
 
     private fun stringFiles(dir: File): List<File> =
         dir.listFiles().orEmpty()
@@ -197,6 +237,18 @@ class HebrewLocaleResourceTest {
 
         val STRING_WITH_BODY =
             Regex("""<string\b[^>]*?name="([^"]+)"[^>]*>(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
+
+        /**
+         * Any declared value with its owning tag and name — `<string>` bodies and
+         * `<plurals>` `<item>`s alike, since aapt trims both.
+         *
+         * Group 1 tag, 2 name, 3 value. `<item>` carries `quantity`, not `name`,
+         * so its group 2 is that quantity — enough to locate it in review.
+         */
+        val VALUE = Regex(
+            """<(string|item)\b[^>]*?(?:name|quantity)="([^"]+)"[^>]*>(.*?)</\1>""",
+            RegexOption.DOT_MATCHES_ALL,
+        )
 
         val HEBREW = Regex("""\p{IsHebrew}""")
 
