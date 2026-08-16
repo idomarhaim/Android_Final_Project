@@ -15,6 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `kb-drain-widget-hebrew` | Close out `widget-hebrew-terminology`'s candidates — all four ingested into `C:\Dev\JARVIS\kb` (`dd2d96c`), so the file is drained here; plus a correction on `#51` | `kb-candidates/2026-08-16-widget-hebrew-terminology.md`, `CHANGELOG/2026-08-16/kb-drain-widget-hebrew.md` | none | 2026-08-16 |
+
 > 🏁 **`resource-guard-inputs` RELEASED 2026-08-16 — `c477557`. The Gradle daemon is released.**
 > Account: [`CHANGELOG/2026-08-16/resource-guard-inputs.md`](CHANGELOG/2026-08-16/resource-guard-inputs.md).
 > Brief closed to [`sessions/done/resource-guard-inputs.md`](sessions/done/resource-guard-inputs.md).
