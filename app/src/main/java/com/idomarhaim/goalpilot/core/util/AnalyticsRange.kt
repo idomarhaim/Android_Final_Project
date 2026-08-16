@@ -42,12 +42,24 @@ data class TimeBucket(val label: String, val window: TimeWindow)
  * Everything is computed from an injected [LocalDate] and [ZoneId] so the whole
  * thing is testable on the JVM without touching the system clock.
  */
-enum class AnalyticsRange(val label: String, val bucketNoun: String) {
-    DAY("Day", "4 hours"),
-    WEEK("Week", "day"),
-    MONTH("Month", "week"),
-    QUARTER("Quarter", "week"),
-    YEAR("Year", "month");
+/**
+ * ### No `label` or `bucketNoun` here — they are resources now (issue #51)
+ *
+ * This enum used to carry `label = "Day"` and `bucketNoun = "4 hours"`. Those are
+ * **speech**, and speech follows the user's Language setting (§5.1), so an
+ * English string frozen into a `core/util` enum is unreachable by a switch — the
+ * same defect as the process-scoped date formatters, one layer up.
+ *
+ * The constants stay the identity; `feature/analytics/AnalyticsStrings.kt` maps
+ * each to its resource, the way `iconForKey` maps a `GoalCategory` to its icon
+ * and for the same reason: it keeps presentation out of `core/`.
+ */
+enum class AnalyticsRange {
+    DAY,
+    WEEK,
+    MONTH,
+    QUARTER,
+    YEAR;
 
     /** First day of the calendar period [today] falls in. */
     fun startDate(today: LocalDate, firstDayOfWeek: DayOfWeek = defaultFirstDayOfWeek()): LocalDate =

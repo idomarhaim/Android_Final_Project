@@ -91,17 +91,34 @@ class AppLocaleInstrumentedTest {
     fun everyHebrewStringDiffersFromItsEnglishOriginalOnDevice() {
         // The parity unit test compares authored XML; this compares what the
         // runtime actually hands back, which is the only thing a user sees.
+        //
+        // Enumerated by reflection over R.string rather than from a hand-kept
+        // list, so a package swept next week is covered the day it lands and
+        // nobody has to remember to extend this. `#51`'s sweep is incremental by
+        // design, which makes a hand-kept list wrong by default.
         val hebrew = context.localizedFor(AppLanguage.HEBREW)
         val english = context.localizedFor(AppLanguage.ENGLISH)
 
-        val untranslated = TRANSLATED_KEYS.filter { id ->
-            hebrew.getString(id) == english.getString(id)
-        }
+        val untranslated = R.string::class.java.fields
+            .mapNotNull { field ->
+                val id = runCatching { field.getInt(null) }.getOrNull() ?: return@mapNotNull null
+                field.name to id
+            }
+            .filter { (name, _) -> OWNED_PREFIXES.any { name.startsWith(it) } }
+            .filterNot { (name, _) -> name in LANGUAGE_INDEPENDENT }
+            .filter { (_, id) ->
+                val he = runCatching { hebrew.getString(id) }.getOrNull() ?: return@filter false
+                val en = runCatching { english.getString(id) }.getOrNull() ?: return@filter false
+                he == en
+            }
+            .map { it.first }
 
         assertWithMessage(
-            "These resolved to identical text on-device, so the Hebrew bucket was not " +
-                "reached for them.",
-        ).that(untranslated.map { context.resources.getResourceEntryName(it) }).isEmpty()
+            "These resolved to IDENTICAL text in Hebrew and English on-device, so either " +
+                "the Hebrew bucket was not reached for them or they were never translated. " +
+                "If a key is genuinely language-independent, add it to LANGUAGE_INDEPENDENT " +
+                "with a reason.",
+        ).that(untranslated.sorted()).isEmpty()
     }
 
     @Test
@@ -127,17 +144,38 @@ class AppLocaleInstrumentedTest {
         createConfigurationContext(localizedConfiguration(language)).resources
 
     private companion object {
-        /** Every key #51 has translated so far. Grows with the literal sweep. */
-        val TRANSLATED_KEYS = listOf(
-            R.string.app_tagline,
-            R.string.tasks_consent_missing_title,
-            R.string.tasks_consent_missing_body,
-            R.string.tasks_consent_grant_action,
-            R.string.settings_appearance_title,
-            R.string.settings_appearance_description,
-            R.string.settings_language_title,
-            R.string.settings_language_description,
-            R.string.settings_language_system,
+        /**
+         * Keys whose Hebrew is legitimately identical to their English, by name.
+         *
+         * Each needs a reason, and "we haven't translated it yet" is not one —
+         * that is what this test exists to catch.
+         */
+        val LANGUAGE_INDEPENDENT = setOf(
+            // The brand. Also `translatable="false"`, which is why the authoring
+            // parity check skips it; the runtime cannot see that attribute.
+            "app_name",
+            // Pure format patterns and separators — no words to translate.
+            // `%1$d%%` is the same string in every language by construction; the
+            // authoring-side rule in HebrewLocaleResourceTest reaches the same
+            // conclusion by stripping specifiers and finding no letters left.
+            "analytics_percent",
+            "gp_widget_percent",
+            "analytics_a11y_slice",
+            "analytics_a11y_bucket",
+            "analytics_a11y_separator",
         )
+
+        /**
+         * Prefixes of resources this app actually owns.
+         *
+         * `R.string` also carries Compose, Material3 and AndroidX resources —
+         * many untranslated for Hebrew upstream, none of them this app's to fix.
+         * An allowlist of *ours* is the honest filter: a library adding a string
+         * cannot make this test fail, and **a new key of ours cannot escape it**,
+         * because every file in `res/values/` uses one of these prefixes.
+         *
+         * A new package's sweep adds its prefix here in the same commit.
+         */
+        val OWNED_PREFIXES = listOf("app_", "analytics_", "settings_", "tasks_consent_", "gp_widget_")
     }
 }

@@ -16,6 +16,50 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 
+> 🏁 **`51b-sweep-analytics` RELEASED 2026-08-16 — `#51`'s literal sweep, **one package**:
+> `feature/analytics/`. Gradle daemon and emulator `Pixel_10_Pro_XL` released.** Account:
+> [`CHANGELOG/2026-08-16/51b-sweep-analytics.md`](CHANGELOG/2026-08-16/51b-sweep-analytics.md).
+>
+> **JVM unit 350 / 0 · instrumented 51 / 0 · `assembleDebug` green · installed, set to Hebrew and
+> launched: no crash, RTL active.** 68 keys, English and Hebrew.
+>
+> 📌 **THE PATTERN FOR THE REMAINING EIGHT PACKAGES — read this before sweeping one.**
+> A sibling resource file per package (`values/<pkg>_strings.xml` + `values-iw/`), because the parity
+> test pairs files **by name** and that is what lets two sessions sweep two packages without
+> contending on one file. Then extend **two lists in the same commit**:
+> `AnalyticsLiteralSweepTest.SWEPT_PACKAGES` and `AppLocaleInstrumentedTest.OWNED_PREFIXES`.
+> A package absent from the first is *unswept*, not exempt.
+>
+> ⚠️ **Four idioms are untranslatable and all four look like good Kotlin.** Undoing them is
+> most of the work, not moving the strings: fragment concatenation (`buildString { append(…) }` —
+> word order is a property of the language) · plural rules written in Kotlin (`if (n == 1) "" else
+> "s"`; Hebrew has one/two/many/other) · `.lowercase()` on translated text (case is a property of
+> *English*) · **speech stored on a domain/core type** (`enum AnalyticsRange(val label = "Day")` — a
+> language switch cannot reach a constructor argument). A ViewModel holding English is the fifth.
+> None of these can be caught by the parity check: they all produce correct English and complete
+> resources.
+>
+> ⚠️ **`widget-pack`: two defects in your Hebrew, filed on #51, NOT fixed by me** (different
+> package, and Ido's instruction was one). **(1)** `values-iw/widget_strings.xml` uses **מטרה** for
+> `Goal` in six strings, where §5.1/`E1` says **יעד** — and `gp_widget_goals_ring_meaning` uses מטרה
+> and יעד in one sentence with the meanings swapped. **(2)** `ל־%1$d` attaches a Hebrew prefix
+> directly to a digit run, which is §4.8's prefix defect — it renders on the far side. Your KDoc in
+> `WidgetHebrewResourceTest` **has** been corrected, because it still carried the falsified
+> "Java reports Hebrew as iw" story and Ido asked for that wherever it appears.
+>
+> 🔎 **Two Hebrew wording rules that are code concerns, not translator preferences:** never
+> attach a Hebrew prefix to a Latin or digit run (`ה‑AI` renders `AI‑ה`; use `הבינה המלאכותית`), and
+> **directional glyphs flip** (`→` becomes `←`). Both are grammatical, so proofreading misses them;
+> only a Hebrew render catches them.
+>
+> ✅ **The parity guard was checked before the sweep, in both directions** — an English-only key
+> and a removed Hebrew key each fail it, naming the key. The new `AnalyticsLiteralSweepTest` was
+> checked the same way. Neither is a test that cannot fail.
+>
+> 📌 **`ui/components/` is unswept and is shared by every screen** — `EmptyState`,
+> `LoadingBox` and the chart components. Worth doing **before** the per-package sweeps: a literal
+> there shows on eight screens and will otherwise be "fixed" eight times.
+
 > 🏁 **`51-hebrew-rtl` RELEASED 2026-08-16 — `aff217b`. Gradle daemon and emulator
 > `Pixel_10_Pro_XL` released. ⛔ COMMITTED AND NOT PUSHED — waiting on Ido, see the last paragraph.**
 > Account: [`CHANGELOG/2026-08-16/51-hebrew-rtl.md`](CHANGELOG/2026-08-16/51-hebrew-rtl.md).

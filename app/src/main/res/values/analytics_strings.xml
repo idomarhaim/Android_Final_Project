@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy for the analytics screen (issue #51's literal sweep, first package).
+
+  A sibling file to strings.xml rather than a section inside it, following
+  widget_strings.xml: they merge into one R.string namespace at build time, and
+  keeping a package's speech in its own file is what lets two sessions sweep two
+  packages without contending on one file. Every key is prefixed analytics_.
+
+  HebrewLocaleResourceTest pairs files by NAME, so this owes a values-iw/
+  counterpart with exactly these keys — which is the point: a sweep that adds
+  English without Hebrew fails the build rather than shipping a half-translation.
+
+  Three things this file is deliberate about:
+
+  1 · WHOLE SENTENCES, NEVER FRAGMENTS. The code this replaced assembled prose
+      with buildString { append("...") }. Fragment concatenation is untranslatable
+      — word order is a property of the language, and Hebrew does not put the
+      pieces in English's order. Each branch is therefore one complete string.
+
+  2 · PLURALS ARE <plurals>, NOT `if (n == 1) "" else "s"`. Hebrew has one/two/
+      many/other, so an English -s test cannot express it.
+
+  3 · NUMBERS ARE PASSED IN PRE-ISOLATED (%1$s, not %1$d) wherever the value is a
+      count, percentage, duration or range that lands inside prose. §4.8: a
+      Latin-digit run inside an RTL paragraph is re-ordered by the bidi algorithm.
+      The caller wraps it with core/util/Bidi.kt and hands over a String.
+-->
+<resources>
+
+    <!-- ── Screen chrome ───────────────────────────────────────── -->
+    <string name="analytics_title">Analytics</string>
+    <string name="analytics_back">Back</string>
+    <string name="analytics_empty_title">Nothing to chart yet</string>
+    <string name="analytics_empty_subtitle">Add goals and complete tasks to see your analytics.</string>
+    <string name="analytics_untitled_goal">Untitled</string>
+
+    <!-- ── Range picker ────────────────────────────────────────────
+         Two forms per range, and the second is not redundant. `_inline` is the
+         mid-sentence form: English needs it lowercased, and calling
+         .lowercase() on a translated resource is an i18n bug waiting for a
+         locale where case is not a per-character property. Hebrew has no case,
+         so both forms are the same word — which is exactly why it must be a
+         separate resource and not a transformation. -->
+    <string name="analytics_range_day">Day</string>
+    <string name="analytics_range_week">Week</string>
+    <string name="analytics_range_month">Month</string>
+    <string name="analytics_range_quarter">Quarter</string>
+    <string name="analytics_range_year">Year</string>
+
+    <string name="analytics_range_day_inline">day</string>
+    <string name="analytics_range_week_inline">week</string>
+    <string name="analytics_range_month_inline">month</string>
+    <string name="analytics_range_quarter_inline">quarter</string>
+    <string name="analytics_range_year_inline">year</string>
+
+    <!-- The unit one column of the trend chart covers, for that range. -->
+    <string name="analytics_bucket_day">4 hours</string>
+    <string name="analytics_bucket_week">day</string>
+    <string name="analytics_bucket_month">week</string>
+    <string name="analytics_bucket_quarter">week</string>
+    <string name="analytics_bucket_year">month</string>
+
+    <!-- ── Time allocation card ────────────────────────────────── -->
+    <string name="analytics_allocation_title">Where your time goes</string>
+    <!-- %1$s is the window label, already direction-isolated by AnalyticsRange.windowLabel. -->
+    <string name="analytics_allocation_subtitle">%1$s · share of your tracked time per life area</string>
+    <string name="analytics_allocation_empty">Nothing completed in this %1$s yet. Tick a task off and its time lands here.</string>
+    <string name="analytics_tap_slice">Tap a slice for the detail</string>
+    <plurals name="analytics_slice_selected">
+        <item quantity="one">%1$s task · tap again to clear</item>
+        <item quantity="other">%1$s tasks · tap again to clear</item>
+    </plurals>
+    <string name="analytics_donut_tracked">tracked</string>
+
+    <string name="analytics_no_life_areas">Life areas are the slices of this chart — health, studies, career, whatever your life is actually made of. Define them once (or pull them straight from your Google Tasks lists) and every goal you file under one starts reporting here.</string>
+    <string name="analytics_set_up_life_areas">Set up life areas</string>
+
+    <string name="analytics_unfiled">%1$s of this time isn\'t filed under a life area.</string>
+    <string name="analytics_unfiled_fix">Fix</string>
+
+    <!-- ── The estimate footnote ───────────────────────────────────
+         Three complete sentences rather than one assembled from parts: the
+         "all / none / some" split changes the whole shape of the claim. -->
+    <plurals name="analytics_estimates_all">
+        <item quantity="one">Durations estimated by AI for all %1$s task</item>
+        <item quantity="other">Durations estimated by AI for all %1$s tasks</item>
+    </plurals>
+    <plurals name="analytics_estimates_none">
+        <item quantity="one">Durations inferred from task difficulty (%1$s task)</item>
+        <item quantity="other">Durations inferred from task difficulty (%1$s tasks)</item>
+    </plurals>
+    <string name="analytics_estimates_mixed">%1$s of %2$s durations estimated by AI; the rest inferred from task difficulty</string>
+
+    <plurals name="analytics_reestimate">
+        <item quantity="one">Re-estimate %1$s duration</item>
+        <item quantity="other">Re-estimate %1$s durations</item>
+    </plurals>
+    <string name="analytics_asking_ai">Asking the AI…</string>
+
+    <!-- ── Trend card ──────────────────────────────────────────── -->
+    <string name="analytics_trend_title">How it moves</string>
+    <string name="analytics_trend_subtitle">Tracked time per %1$s, stacked by life area.</string>
+    <string name="analytics_trend_empty">Nothing tracked in this %1$s yet — the trend fills in as you tick tasks off.</string>
+    <!-- %2$s is a duration; isolated by the caller. -->
+    <string name="analytics_trend_busiest">Busiest: %1$s · %2$s</string>
+    <string name="analytics_trend_busiest_all_areas">Busiest: %1$s · %2$s (all areas)</string>
+
+    <!-- ── Re-estimation review sheet ──────────────────────────── -->
+    <string name="analytics_backfill_title">Re-estimate durations</string>
+    <string name="analytics_backfill_loading">Asking the AI how long these take…</string>
+    <!-- One sentence per state, replacing a buildString of six appends. -->
+    <plurals name="analytics_backfill_intro">
+        <item quantity="one">%1$s task. Tap a row to include or exclude it.</item>
+        <item quantity="other">%1$s tasks. Tap a row to include or exclude it.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_partial">
+        <item quantity="one">%1$s task of %2$s without an AI estimate — run it again for the rest. Tap a row to include or exclude it.</item>
+        <item quantity="other">%1$s tasks of %2$s without an AI estimate — run it again for the rest. Tap a row to include or exclude it.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_unanswered">
+        <item quantity="one">%1$s task. The AI did not answer for %2$s of them, so those start unticked.</item>
+        <item quantity="other">%1$s tasks. The AI did not answer for %2$s of them, so those start unticked.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_partial_unanswered">
+        <item quantity="one">%1$s task of %2$s without an AI estimate — run it again for the rest. The AI did not answer for %3$s of them, so those start unticked.</item>
+        <item quantity="other">%1$s tasks of %2$s without an AI estimate — run it again for the rest. The AI did not answer for %3$s of them, so those start unticked.</item>
+    </plurals>
+
+    <string name="analytics_backfill_fallback">The AI did not answer — this is a fallback value</string>
+    <!-- A duration RANGE: §4.8's defect exactly. Both sides isolated by the caller. -->
+    <string name="analytics_backfill_change">%1$s → %2$s</string>
+    <string name="analytics_backfill_confirms">%1$s · confirms the current guess</string>
+    <string name="analytics_backfill_update">Update %1$s</string>
+    <string name="analytics_backfill_updating">Updating…</string>
+    <string name="analytics_backfill_close">Close</string>
+    <string name="analytics_backfill_cancel">Cancel</string>
+
+    <!-- ── The two goal-level charts ───────────────────────────── -->
+    <string name="analytics_progress_title">Progress by goal</string>
+    <string name="analytics_progress_subtitle">How far along each goal is.</string>
+    <string name="analytics_focus_title">Task focus</string>
+    <string name="analytics_focus_subtitle">Share of completed tasks per goal (where your effort goes).</string>
+    <string name="analytics_focus_empty">Complete some tasks to see your focus split.</string>
+
+    <!-- ── TalkBack ────────────────────────────────────────────────
+         A screen reader cannot follow a column height, so the chart is given its
+         shape in words. -->
+    <string name="analytics_a11y_allocation">Time split across %1$s life areas, %2$s</string>
+    <string name="analytics_a11y_slice">%1$s %2$s</string>
+    <string name="analytics_a11y_trend">Tracked time per %1$s across %2$s periods</string>
+    <string name="analytics_a11y_busiest">busiest %1$s at %2$s</string>
+    <string name="analytics_a11y_bucket">%1$s %2$s</string>
+    <string name="analytics_a11y_separator">, </string>
+
+    <!-- ── Messages (resolved on the screen, never held in the ViewModel) ── -->
+    <string name="analytics_error_all_estimated">Every task already has an AI duration estimate.</string>
+    <string name="analytics_update_failed">Could not update those durations</string>
+    <plurals name="analytics_updated">
+        <item quantity="one">Updated %1$s task duration</item>
+        <item quantity="other">Updated %1$s task durations</item>
+    </plurals>
+
+    <!-- Percentage, as its own string so the sign's placement is the
+         translator's call. Letters-free, so the untranslated-copy rule in
+         HebrewLocaleResourceTest exempts it by construction. -->
+    <string name="analytics_percent">%1$d%%</string>
+</resources>

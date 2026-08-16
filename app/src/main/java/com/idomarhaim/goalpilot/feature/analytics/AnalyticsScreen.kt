@@ -48,18 +48,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.AnalyticsRange
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
@@ -78,6 +82,7 @@ import com.idomarhaim.goalpilot.ui.components.StackedSegment
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.rememberChartProgress
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import java.util.Locale
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +97,11 @@ fun AnalyticsScreen(
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(message) {
-        message?.let {
+    // Resolved here rather than inside the effect: stringResource is a composable
+    // read, and LaunchedEffect's body is not a composition.
+    val messageText = message?.resolve()
+    LaunchedEffect(messageText) {
+        messageText?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.consumeMessage()
         }
@@ -111,10 +119,13 @@ fun AnalyticsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Analytics") },
+                title = { Text(stringResource(R.string.analytics_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.analytics_back),
+                        )
                     }
                 },
             )
@@ -124,8 +135,8 @@ fun AnalyticsScreen(
         when {
             state.isLoading -> LoadingBox(Modifier.padding(inner))
             state.goals.isEmpty() -> EmptyState(
-                title = "Nothing to chart yet",
-                subtitle = "Add goals and complete tasks to see your analytics.",
+                title = stringResource(R.string.analytics_empty_title),
+                subtitle = stringResource(R.string.analytics_empty_subtitle),
                 icon = Icons.Outlined.BarChart,
                 modifier = Modifier.padding(inner),
             )
@@ -166,6 +177,20 @@ fun AnalyticsScreen(
     }
 }
 
+/** Turns a [AnalyticsMessage] into words, with its count direction-isolated. */
+@Composable
+@ReadOnlyComposable
+private fun AnalyticsMessage.resolve(): String = when (this) {
+    AnalyticsMessage.AllTasksAlreadyEstimated ->
+        stringResource(R.string.analytics_error_all_estimated)
+
+    AnalyticsMessage.UpdateFailed ->
+        stringResource(R.string.analytics_update_failed)
+
+    is AnalyticsMessage.Updated ->
+        pluralStringResource(R.plurals.analytics_updated, count, count.isolated())
+}
+
 // ── Range picker ─────────────────────────────────────────────────────
 
 /**
@@ -187,7 +212,7 @@ private fun RangePicker(selected: AnalyticsRange, onSelect: (AnalyticsRange) -> 
             FilterChip(
                 selected = range == selected,
                 onClick = { onSelect(range) },
-                label = { Text(range.label) },
+                label = { Text(range.label()) },
             )
         }
     }
@@ -209,15 +234,16 @@ private fun TimeAllocationCard(
     onReEstimate: () -> Unit,
 ) {
     ChartCard(
-        title = "Where your time goes",
-        subtitle = "$rangeLabel · share of your tracked time per life area",
+        title = stringResource(R.string.analytics_allocation_title),
+        // rangeLabel arrives already isolated from AnalyticsRange.windowLabel —
+        // it is a date range, and `Aug 3 – Aug 9` reverses without it (§4.8).
+        subtitle = stringResource(R.string.analytics_allocation_subtitle, rangeLabel),
     ) {
         when {
             !hasLifeAreas -> NoLifeAreasHint(onOpenLifeAreas)
 
             allocation.isEmpty -> Text(
-                "Nothing completed in this ${range.label.lowercase()} yet. " +
-                    "Tick a task off and its time lands here.",
+                stringResource(R.string.analytics_allocation_empty, range.labelInline()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -250,10 +276,13 @@ private fun TimeAllocationCard(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = if (selected == null) {
-                            "Tap a slice for the detail"
+                            stringResource(R.string.analytics_tap_slice)
                         } else {
-                            "${selected.taskCount} task${if (selected.taskCount == 1) "" else "s"} " +
-                                "· tap again to clear"
+                            pluralStringResource(
+                                R.plurals.analytics_slice_selected,
+                                selected.taskCount,
+                                selected.taskCount.isolated(),
+                            )
                         },
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -311,11 +340,15 @@ private fun ReEstimateButton(inferredTaskCount: Int, isRunning: Boolean, onClick
         if (isRunning) {
             CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
-            Text("Asking the AI…")
+            Text(stringResource(R.string.analytics_asking_ai))
         } else {
             Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
-                "Re-estimate $inferredTaskCount duration${if (inferredTaskCount == 1) "" else "s"}",
+                pluralStringResource(
+                    R.plurals.analytics_reestimate,
+                    inferredTaskCount,
+                    inferredTaskCount.isolated(),
+                ),
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
@@ -333,13 +366,12 @@ private fun ReEstimateButton(inferredTaskCount: Int, isRunning: Boolean, onClick
 @Composable
 private fun TimeTrendCard(trend: TimeTrend, range: AnalyticsRange, selectedSliceId: String?) {
     ChartCard(
-        title = "How it moves",
-        subtitle = "Tracked time per ${range.bucketNoun}, stacked by life area.",
+        title = stringResource(R.string.analytics_trend_title),
+        subtitle = stringResource(R.string.analytics_trend_subtitle, range.bucketNoun()),
     ) {
         if (trend.isEmpty) {
             Text(
-                "Nothing tracked in this ${range.label.lowercase()} yet — " +
-                    "the trend fills in as you tick tasks off.",
+                stringResource(R.string.analytics_trend_empty, range.labelInline()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -367,9 +399,19 @@ private fun TimeTrendCard(trend: TimeTrend, range: AnalyticsRange, selectedSlice
                 contentDescription = trend.describe(range),
             )
             trend.busiest?.let { busiest ->
+                // Two whole strings rather than one plus an appended "(all areas)":
+                // a trailing parenthetical is not a suffix in every language.
+                val duration = formatMinutes(busiest.totalMinutes).isolated()
                 Text(
-                    text = "Busiest: ${busiest.label} · ${formatMinutes(busiest.totalMinutes)}" +
-                        if (selectedSliceId != null) " (all areas)" else "",
+                    text = if (selectedSliceId != null) {
+                        stringResource(
+                            R.string.analytics_trend_busiest_all_areas,
+                            busiest.label,
+                            duration,
+                        )
+                    } else {
+                        stringResource(R.string.analytics_trend_busiest, busiest.label, duration)
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 10.dp),
@@ -400,35 +442,20 @@ private fun DurationBackfillDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
-        title = { Text("Re-estimate durations") },
+        title = { Text(stringResource(R.string.analytics_backfill_title)) },
         text = {
             when {
                 state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(12.dp))
-                    Text("Asking the AI how long these take…")
+                    Text(stringResource(R.string.analytics_backfill_loading))
                 }
 
-                state.error != null -> Text(state.error)
+                state.error != null -> Text(state.error.resolve())
 
                 else -> Column {
                     Text(
-                        buildString {
-                            append("${state.proposals.size} task")
-                            append(if (state.proposals.size == 1) "" else "s")
-                            if (state.totalCandidates > state.proposals.size) {
-                                append(" of ${state.totalCandidates} without an AI estimate")
-                                append(" — run it again for the rest")
-                            }
-                            append(". ")
-                            val unanswered = state.proposals.size - state.answeredCount
-                            if (unanswered > 0) {
-                                append("The AI did not answer for $unanswered of them, ")
-                                append("so those start unticked.")
-                            } else {
-                                append("Tap a row to include or exclude it.")
-                            }
-                        },
+                        backfillIntro(state),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -461,14 +488,21 @@ private fun DurationBackfillDialog(
                                     )
                                     Text(
                                         text = when {
-                                            proposal.isFallback ->
-                                                "The AI did not answer — this is a fallback value"
-                                            proposal.changesTheChart ->
-                                                "${formatMinutes(proposal.inferredMinutes)} → " +
-                                                    formatMinutes(proposal.proposedMinutes)
-                                            else ->
-                                                "${formatMinutes(proposal.proposedMinutes)}" +
-                                                    " · confirms the current guess"
+                                            proposal.isFallback -> stringResource(
+                                                R.string.analytics_backfill_fallback,
+                                            )
+                                            // A duration RANGE — §4.8's named
+                                            // defect. Both ends isolated so the
+                                            // arrow cannot swap them in Hebrew.
+                                            proposal.changesTheChart -> stringResource(
+                                                R.string.analytics_backfill_change,
+                                                formatMinutes(proposal.inferredMinutes).isolated(),
+                                                formatMinutes(proposal.proposedMinutes).isolated(),
+                                            )
+                                            else -> stringResource(
+                                                R.string.analytics_backfill_confirms,
+                                                formatMinutes(proposal.proposedMinutes).isolated(),
+                                            )
                                         },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -488,16 +522,73 @@ private fun DurationBackfillDialog(
                     onClick = onConfirm,
                     enabled = !state.isSaving && state.selectedCount > 0,
                 ) {
-                    Text(if (state.isSaving) "Updating…" else "Update ${state.selectedCount}")
+                    Text(
+                        if (state.isSaving) {
+                            stringResource(R.string.analytics_backfill_updating)
+                        } else {
+                            stringResource(
+                                R.string.analytics_backfill_update,
+                                state.selectedCount.isolated(),
+                            )
+                        },
+                    )
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !state.isSaving) {
-                Text(if (state.error != null) "Close" else "Cancel")
+                Text(
+                    if (state.error != null) {
+                        stringResource(R.string.analytics_backfill_close)
+                    } else {
+                        stringResource(R.string.analytics_backfill_cancel)
+                    },
+                )
             }
         },
     )
+}
+
+/**
+ * The sheet's opening sentence, as **one** resource per situation.
+ *
+ * This replaced a `buildString { append(…) }` of six fragments. Fragment
+ * concatenation cannot be translated: the order of "N tasks", "of M", "run it
+ * again" and "those start unticked" is a property of the language, and Hebrew
+ * does not use English's. Four situations, four complete sentences.
+ */
+@Composable
+@ReadOnlyComposable
+private fun backfillIntro(state: BackfillState): String {
+    val shown = state.proposals.size
+    val isPartial = state.totalCandidates > shown
+    val unanswered = shown - state.answeredCount
+
+    return when {
+        isPartial && unanswered > 0 -> pluralStringResource(
+            R.plurals.analytics_backfill_intro_partial_unanswered,
+            shown,
+            shown.isolated(),
+            state.totalCandidates.isolated(),
+            unanswered.isolated(),
+        )
+
+        isPartial -> pluralStringResource(
+            R.plurals.analytics_backfill_intro_partial,
+            shown,
+            shown.isolated(),
+            state.totalCandidates.isolated(),
+        )
+
+        unanswered > 0 -> pluralStringResource(
+            R.plurals.analytics_backfill_intro_unanswered,
+            shown,
+            shown.isolated(),
+            unanswered.isolated(),
+        )
+
+        else -> pluralStringResource(R.plurals.analytics_backfill_intro, shown, shown.isolated())
+    }
 }
 
 /**
@@ -514,18 +605,18 @@ private fun DonutCenter(allocation: TimeAllocation, selected: TimeSlice?) {
     ) {
         if (selected == null) {
             Text(
-                text = formatMinutes((allocation.totalMinutes * progress).roundToInt()),
+                text = formatMinutes((allocation.totalMinutes * progress).roundToInt()).isolated(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "tracked",
+                text = stringResource(R.string.analytics_donut_tracked),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Text(
-                text = "${selected.percent}%",
+                text = percentText(selected.percent),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = selected.colorHex.toGoalAccent(),
@@ -538,7 +629,7 @@ private fun DonutCenter(allocation: TimeAllocation, selected: TimeSlice?) {
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = formatMinutes(selected.minutes),
+                text = formatMinutes(selected.minutes).isolated(),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -590,12 +681,12 @@ private fun LegendRow(
                 .padding(start = 10.dp),
         )
         Text(
-            text = formatMinutes(slice.minutes),
+            text = formatMinutes(slice.minutes).isolated(),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "${slice.percent}%",
+            text = percentText(slice.percent),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = accent,
@@ -608,10 +699,7 @@ private fun LegendRow(
 private fun NoLifeAreasHint(onOpenLifeAreas: () -> Unit) {
     Column {
         Text(
-            "Life areas are the slices of this chart — health, studies, career, " +
-                "whatever your life is actually made of. Define them once (or pull " +
-                "them straight from your Google Tasks lists) and every goal you " +
-                "file under one starts reporting here.",
+            stringResource(R.string.analytics_no_life_areas),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -620,7 +708,10 @@ private fun NoLifeAreasHint(onOpenLifeAreas: () -> Unit) {
             modifier = Modifier.padding(top = 12.dp),
         ) {
             Icon(Icons.Outlined.Category, contentDescription = null)
-            Text("Set up life areas", modifier = Modifier.padding(start = 8.dp))
+            Text(
+                stringResource(R.string.analytics_set_up_life_areas),
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
     }
 }
@@ -634,12 +725,14 @@ private fun UnfiledHint(percent: Int, onOpenLifeAreas: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "$percent% of this time isn't filed under a life area.",
+            stringResource(R.string.analytics_unfiled, percentText(percent)),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onOpenLifeAreas) { Text("Fix") }
+        TextButton(onClick = onOpenLifeAreas) {
+            Text(stringResource(R.string.analytics_unfiled_fix))
+        }
     }
 }
 
@@ -655,12 +748,21 @@ private fun EstimateFootnote(allocation: TimeAllocation) {
     Text(
         text = when {
             total == 0 -> ""
-            estimated == total -> "Durations estimated by AI for all $total task" +
-                if (total == 1) "" else "s"
-            estimated == 0 -> "Durations inferred from task difficulty ($total task" +
-                (if (total == 1) ")" else "s)")
-            else -> "$estimated of $total durations estimated by AI; the rest " +
-                "inferred from task difficulty"
+            estimated == total -> pluralStringResource(
+                R.plurals.analytics_estimates_all,
+                total,
+                total.isolated(),
+            )
+            estimated == 0 -> pluralStringResource(
+                R.plurals.analytics_estimates_none,
+                total,
+                total.isolated(),
+            )
+            else -> stringResource(
+                R.string.analytics_estimates_mixed,
+                estimated.isolated(),
+                total.isolated(),
+            )
         },
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -672,23 +774,30 @@ private fun EstimateFootnote(allocation: TimeAllocation) {
 
 @Composable
 private fun ProgressByGoalCard(state: AnalyticsUiState) {
+    val untitled = stringResource(R.string.analytics_untitled_goal)
+    val percentFormat = stringResource(R.string.analytics_percent)
     val bars = state.goals.map { g ->
         BarItem(
-            label = g.title.ifBlank { "Untitled" },
+            label = g.title.ifBlank { untitled },
             fraction = g.progressFraction,
             color = g.colorHex.toGoalAccent(),
-            trailing = "${g.progressPercent}%",
+            trailing = percentFormat.formatPercent(g.progressPercent),
             countUpTo = g.progressPercent,
             countSuffix = "%",
         )
     }
-    ChartCard("Progress by goal", "How far along each goal is.") {
+    ChartCard(
+        stringResource(R.string.analytics_progress_title),
+        stringResource(R.string.analytics_progress_subtitle),
+    ) {
         HorizontalBarChart(items = bars)
     }
 }
 
 @Composable
 private fun TaskFocusCard(state: AnalyticsUiState) {
+    val untitled = stringResource(R.string.analytics_untitled_goal)
+    val percentFormat = stringResource(R.string.analytics_percent)
     val doneByGoal = state.tasks
         .filter { it.isDone && it.goalId != null }
         .groupingBy { it.goalId!! }
@@ -697,20 +806,21 @@ private fun TaskFocusCard(state: AnalyticsUiState) {
     val bars = state.goals
         .map { g ->
             val share = (doneByGoal[g.id] ?: 0).toFloat() / totalDone
+            val percent = (share * 100).roundToInt()
             BarItem(
-                label = g.title.ifBlank { "Untitled" },
+                label = g.title.ifBlank { untitled },
                 fraction = share,
                 color = g.colorHex.toGoalAccent(MaterialTheme.colorScheme.tertiary),
-                trailing = "${(share * 100).roundToInt()}%",
-                countUpTo = (share * 100).roundToInt(),
+                trailing = percentFormat.formatPercent(percent),
+                countUpTo = percent,
                 countSuffix = "%",
             )
         }
         .filter { it.fraction > 0f }
 
     ChartCard(
-        title = "Task focus",
-        subtitle = "Share of completed tasks per goal (where your effort goes).",
+        title = stringResource(R.string.analytics_focus_title),
+        subtitle = stringResource(R.string.analytics_focus_subtitle),
     ) {
         AnimatedVisibility(
             visible = bars.isNotEmpty(),
@@ -721,7 +831,7 @@ private fun TaskFocusCard(state: AnalyticsUiState) {
         }
         if (bars.isEmpty()) {
             Text(
-                "Complete some tasks to see your focus split.",
+                stringResource(R.string.analytics_focus_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -747,21 +857,63 @@ private fun ChartCard(title: String, subtitle: String, content: @Composable () -
 
 // ── Formatting ───────────────────────────────────────────────────────
 
+/**
+ * Applies an already-resolved `%1$d%%` pattern and isolates the result.
+ *
+ * A plain function rather than [percentText] wherever the value is produced
+ * inside a `map` — the lambda is not a composition, so the pattern is read once
+ * outside it and applied here.
+ */
+private fun String.formatPercent(percent: Int): String =
+    String.format(Locale.getDefault(), this, percent).isolated()
+
 /** One-line summary of the whole chart, for TalkBack. */
-private fun TimeAllocation.describe(): String =
-    "Time split across ${slices.size} life areas, " +
-        slices.joinToString(", ") { "${it.name} ${it.percent}%" }
+@Composable
+@ReadOnlyComposable
+private fun TimeAllocation.describe(): String {
+    val separator = stringResource(R.string.analytics_a11y_separator)
+    val sliceFormat = stringResource(R.string.analytics_a11y_slice)
+    val percentFormat = stringResource(R.string.analytics_percent)
+    val sliceList = slices.joinToString(separator) { slice ->
+        String.format(
+            Locale.getDefault(),
+            sliceFormat,
+            slice.name,
+            percentFormat.formatPercent(slice.percent),
+        )
+    }
+    return stringResource(R.string.analytics_a11y_allocation, slices.size.isolated(), sliceList)
+}
 
 /**
  * TalkBack's version of the trend. A screen reader cannot follow a column height,
  * so it is given the shape in words: the unit, the busiest bucket, and the totals
  * that make "up" or "down" a claim rather than a picture.
  */
+@Composable
+@ReadOnlyComposable
 private fun TimeTrend.describe(range: AnalyticsRange): String {
-    val busiestLabel = busiest?.let { "busiest ${it.label} at ${formatMinutes(it.totalMinutes)}" }
-    return listOfNotNull(
-        "Tracked time per ${range.bucketNoun} across ${buckets.size} periods",
-        busiestLabel,
-        buckets.joinToString(", ") { "${it.label} ${formatMinutes(it.totalMinutes)}" },
-    ).joinToString(". ")
+    val separator = stringResource(R.string.analytics_a11y_separator)
+    val bucketFormat = stringResource(R.string.analytics_a11y_bucket)
+    val head = stringResource(
+        R.string.analytics_a11y_trend,
+        range.bucketNoun(),
+        buckets.size.isolated(),
+    )
+    val busiestLabel = busiest?.let {
+        stringResource(
+            R.string.analytics_a11y_busiest,
+            it.label,
+            formatMinutes(it.totalMinutes).isolated(),
+        )
+    }
+    val bucketList = buckets.joinToString(separator) { bucket ->
+        String.format(
+            Locale.getDefault(),
+            bucketFormat,
+            bucket.label,
+            formatMinutes(bucket.totalMinutes).isolated(),
+        )
+    }
+    return listOfNotNull(head, busiestLabel, bucketList).joinToString(". ")
 }

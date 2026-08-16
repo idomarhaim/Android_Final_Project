@@ -120,7 +120,7 @@ class AnalyticsViewModel @Inject constructor(
     private val _backfill = MutableStateFlow(BackfillState())
     val backfill = _backfill.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
+    private val _message = MutableStateFlow<AnalyticsMessage?>(null)
     val message = _message.asStateFlow()
 
     /**
@@ -144,7 +144,7 @@ class AnalyticsViewModel @Inject constructor(
             if (candidates.isEmpty()) {
                 _backfill.value = BackfillState(
                     isVisible = true,
-                    error = "Every task already has an AI duration estimate.",
+                    error = AnalyticsMessage.AllTasksAlreadyEstimated,
                 )
                 return@launch
             }
@@ -207,10 +207,10 @@ class AnalyticsViewModel @Inject constructor(
                 if (result is Resource.Success) saved++
             }
             _backfill.value = BackfillState()
-            _message.value = when (saved) {
-                0 -> "Could not update those durations"
-                1 -> "Updated 1 task duration"
-                else -> "Updated $saved task durations"
+            _message.value = if (saved == 0) {
+                AnalyticsMessage.UpdateFailed
+            } else {
+                AnalyticsMessage.Updated(saved)
             }
         }
     }
@@ -237,7 +237,7 @@ data class BackfillState(
     val isSaving: Boolean = false,
     val proposals: List<DurationProposal> = emptyList(),
     val totalCandidates: Int = 0,
-    val error: String? = null,
+    val error: AnalyticsMessage? = null,
 ) {
     /** Rows a model actually answered for; the rest came back as a fallback. */
     val answeredCount: Int get() = proposals.count { !it.isFallback }
@@ -270,4 +270,28 @@ data class AnalyticsUiState(
      */
     val inferredTaskCount: Int
         get() = (allocation.completedTasks - allocation.estimatedTaskCount).coerceAtLeast(0)
+}
+
+/**
+ * Something the analytics screen needs to say, **before** it is words.
+ *
+ * The ViewModel used to hold the English directly (`"Updated 3 task durations"`).
+ * That is unreachable by a language switch and untranslatable besides — the
+ * `when (saved) { 1 -> …; else -> … }` it replaced is an English plural rule
+ * baked into Kotlin, and Hebrew has one/two/many/other.
+ *
+ * So the ViewModel names the *situation* and `AnalyticsScreen` resolves it
+ * against `res/`, where the plural rules live per language and the count can be
+ * direction-isolated on the way in (§4.8).
+ */
+sealed interface AnalyticsMessage {
+
+    /** Nothing to re-estimate: every task already carries a model estimate. */
+    data object AllTasksAlreadyEstimated : AnalyticsMessage
+
+    /** The write failed for every chosen row. */
+    data object UpdateFailed : AnalyticsMessage
+
+    /** [count] task durations were written. Never zero — that is [UpdateFailed]. */
+    data class Updated(val count: Int) : AnalyticsMessage
 }

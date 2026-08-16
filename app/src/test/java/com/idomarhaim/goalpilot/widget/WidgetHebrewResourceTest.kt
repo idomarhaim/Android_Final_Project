@@ -13,13 +13,22 @@ import java.io.File
  * correctly to RTL. That split is the tell: the host knew the device was Hebrew,
  * and the string lookup did not.
  *
- * Java reports Hebrew with the legacy code **`iw`**, so the runtime asks the
- * resource table for the `iw` bucket. AAPT2 does **not** fold `values-he` into
- * it — the built APK carried *both* buckets, with these strings in `he` and
- * AndroidX's in `iw`, so every lookup fell through to the default. Proved on the
- * device by logging the compiled id: `0x7f0f0042`, name `gp_widget_level`,
- * context locale `he_IL`, value `"Level"` — while `aapt2 dump` of that same
- * on-device APK showed `(he) "רמה"` for that exact id.
+ * **AAPT2 stores Hebrew under the legacy qualifier `iw` and does not fold
+ * `values-he` into it** — the built APK carried *both* buckets, with these
+ * strings in `he` and AndroidX's in `iw`, so every lookup fell through to the
+ * default. Proved on the device by logging the compiled id: `0x7f0f0042`, name
+ * `gp_widget_level`, context locale `he_IL`, value `"Level"` — while
+ * `aapt2 dump` of that same on-device APK showed `(he) "רמה"` for that exact id.
+ *
+ * ⚠️ **Corrected 2026-08-16 (`51-hebrew-rtl`): this used to say "Java reports
+ * Hebrew with the legacy code `iw`, so the runtime asks for the `iw` bucket".
+ * That is false, and false in a dangerous direction.** Measured:
+ * `Locale.forLanguageTag("he").language` returns **`"he"`** on JDK 21 *and* on
+ * Android 17 / API 37, while `values-iw/` still resolves correctly on that same
+ * device (`AppLocaleInstrumentedTest`). The bucket is a fact about the resource
+ * system alone. The old story matters because it names a checkable fact that has
+ * since flipped — so checking it now returns `"he"` and reads as permission to
+ * rename the directory back, which is precisely the outage this test guards.
  *
  * A `values-he` copy is worse than no copy: it looks like the translation is
  * done, reviews as done, and does nothing. So this fails if one comes back —
