@@ -110,12 +110,28 @@ enum class AnalyticsRange(val label: String, val bucketNoun: String) {
             MONTH -> dateBuckets(weekStarts(start, end, firstDayOfWeek), zone) {
                 it.dayOfMonth.toString()
             }
-            QUARTER -> dateBuckets(weekStarts(start, end, firstDayOfWeek), zone, dayAndMonth::format)
+            // `d/M` is §4.8's defect in miniature: two digit runs either side of
+            // a neutral slash, so 3/8 renders as 8/3 in an RTL paragraph — a
+            // wrong date that looks like a valid one.
+            QUARTER -> dateBuckets(weekStarts(start, end, firstDayOfWeek), zone) {
+                dayAndMonth.format(it).bidiIsolated()
+            }
             YEAR -> dateBuckets(datesEvery(start, end) { it.plusMonths(1) }, zone, shortMonth::format)
         }
     }
 
-    /** Human label for the window itself, e.g. "Aug 3, 2026", "Q3 2026", "2026". */
+    /**
+     * Human label for the window itself, e.g. "Aug 3, 2026", "Q3 2026", "2026".
+     *
+     * **Direction-isolated, per spec §4.8**, and the `WEEK` branch is the exact
+     * defect §4.8 names: `Aug 3 – Aug 9` is a Latin-digit *range* dropped into
+     * whatever paragraph renders it, and the Unicode bidi algorithm resolves a
+     * neutral run's direction from that paragraph — so in Hebrew it renders as
+     * `Aug 9 – Aug 3`, silently reporting the wrong week. Every other branch is
+     * a date or number in the same position, so the isolate is applied to the
+     * whole result rather than to the one branch that happens to have been
+     * noticed; `Bidi.isolate` is idempotent, so this cannot double-wrap.
+     */
     fun windowLabel(
         today: LocalDate = LocalDate.now(),
         firstDayOfWeek: DayOfWeek = defaultFirstDayOfWeek(),
@@ -130,7 +146,7 @@ enum class AnalyticsRange(val label: String, val bucketNoun: String) {
             MONTH -> monthYear.format(start)
             QUARTER -> "Q${quarterOf(start.monthValue)} ${start.year}"
             YEAR -> start.year.toString()
-        }
+        }.bidiIsolated()
     }
 
     companion object {
@@ -241,12 +257,15 @@ enum class AnalyticsRange(val label: String, val bucketNoun: String) {
             }
         }
 
-        private val fullDay = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
-        private val shortDay = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
-        private val monthYear = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-        private val dayName = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
-        private val shortMonth = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
-        private val dayAndMonth = DateTimeFormatter.ofPattern("d/M", Locale.getDefault())
-        private val blockHour = DateTimeFormatter.ofPattern("HH", Locale.getDefault())
+        // `get()`, never `val` — see AppDateFormatters. A `val` here resolves
+        // Locale.getDefault() once at class-init and is precisely §5.1's
+        // "process-scoped vals no switch can move".
+        private val fullDay get() = AppDateFormatters.of("MMM d, yyyy")
+        private val shortDay get() = AppDateFormatters.of("MMM d")
+        private val monthYear get() = AppDateFormatters.of("MMMM yyyy")
+        private val dayName get() = AppDateFormatters.of("EEE")
+        private val shortMonth get() = AppDateFormatters.of("MMM")
+        private val dayAndMonth get() = AppDateFormatters.of("d/M")
+        private val blockHour get() = AppDateFormatters.of("HH")
     }
 }

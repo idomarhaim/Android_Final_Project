@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.feature.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.data.auth.GoogleAuthClient
+import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
@@ -28,6 +29,11 @@ class ProfileViewModel @Inject constructor(
     val skin: StateFlow<AppSkin> = appPreferences.skin
 
     fun setSkin(skin: AppSkin) = appPreferences.setSkin(skin)
+
+    /** Same mirroring as [skin]; see [AppPreferencesRepository.language] (spec §5.1). */
+    val language: StateFlow<AppLanguage> = appPreferences.language
+
+    fun setLanguage(language: AppLanguage) = appPreferences.setLanguage(language)
 
     fun signOut() {
         viewModelScope.launch {

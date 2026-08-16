@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.core
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.AnalyticsRange
+import com.idomarhaim.goalpilot.core.util.Bidi
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -83,11 +84,36 @@ class AnalyticsRangeTest {
 
     @Test
     fun `quarter labels are Q1 to Q4`() {
-        assertThat(AnalyticsRange.QUARTER.windowLabel(LocalDate.of(2026, 2, 9)))
+        // Stripped, because windowLabel is direction-isolated (§4.8). The marks
+        // themselves are asserted by `window labels are direction-isolated`
+        // below — stripping here would otherwise quietly permit their removal.
+        assertThat(Bidi.strip(AnalyticsRange.QUARTER.windowLabel(LocalDate.of(2026, 2, 9))))
             .isEqualTo("Q1 2026")
-        assertThat(AnalyticsRange.QUARTER.windowLabel(LocalDate.of(2026, 8, 3)))
+        assertThat(Bidi.strip(AnalyticsRange.QUARTER.windowLabel(LocalDate.of(2026, 8, 3))))
             .isEqualTo("Q3 2026")
-        assertThat(AnalyticsRange.YEAR.windowLabel(LocalDate.of(2026, 8, 3))).isEqualTo("2026")
+        assertThat(Bidi.strip(AnalyticsRange.YEAR.windowLabel(LocalDate.of(2026, 8, 3))))
+            .isEqualTo("2026")
+    }
+
+    @Test
+    fun `window labels are direction-isolated`() {
+        // §4.8: `Aug 3 – Aug 9` reorders to `Aug 9 – Aug 3` in a Hebrew
+        // paragraph — a wrong week that looks like a right one. Every range is
+        // checked, not just WEEK, because each one renders in the same slot.
+        AnalyticsRange.entries.forEach { range ->
+            val label = range.windowLabel(LocalDate.of(2026, 8, 3), DayOfWeek.SUNDAY)
+            assertThat(label.first()).isEqualTo(Bidi.FSI)
+            assertThat(label.last()).isEqualTo(Bidi.PDI)
+        }
+    }
+
+    @Test
+    fun `a slash-separated bucket label is direction-isolated`() {
+        // `d/M`: two digit runs either side of a neutral slash, so 1/7 renders
+        // as 7/1 in RTL — the same defect one scale down.
+        val label = AnalyticsRange.QUARTER.buckets(monday, utc, DayOfWeek.SUNDAY).first().label
+        assertThat(label.first()).isEqualTo(Bidi.FSI)
+        assertThat(label.last()).isEqualTo(Bidi.PDI)
     }
 
     @Test
@@ -183,7 +209,7 @@ class AnalyticsRangeTest {
         // Q3 is 13 weeks; a quarter not starting on the first day of a week opens
         // with a partial column, so 13 or 14 are both correct — 12 or 15 are not.
         assertThat(buckets.size).isIn(13..14)
-        assertThat(buckets.first().label).isEqualTo("1/7")
+        assertThat(Bidi.strip(buckets.first().label)).isEqualTo("1/7")
     }
 
     @Test

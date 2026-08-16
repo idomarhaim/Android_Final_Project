@@ -1,5 +1,11 @@
 <resources>
-    <string name="app_name">GoalPilot</string>
+    <!--
+      The brand, not a word: "GoalPilot" is what the product is called in every
+      language, and translating it would make the launcher icon disagree with
+      everything Ido calls it. `translatable="false"` is aapt's own way to say
+      so, and it is what excuses this key from #51's Hebrew parity check.
+    -->
+    <string name="app_name" translatable="false">GoalPilot</string>
     <string name="app_tagline">Pilot your life goals</string>
 
     <!--
@@ -17,4 +23,20 @@
     <string name="tasks_consent_missing_title">Google Tasks access was not granted</string>
     <string name="tasks_consent_missing_body">Google shows &#8220;View your tasks&#8221; unticked on its consent screen, so signing in can succeed while granting nothing. Grant it below and GoalPilot can read your tasks.</string>
     <string name="tasks_consent_grant_action">Grant Google Tasks access</string>
+
+    <!--
+      Device settings (spec §4.9 / §5.1). These live on Profile until #48 builds
+      the Settings surface that §4.9 specifies; #48 relocates the whole group.
+    -->
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_description">Pick the colour theme for the whole app. Light and dark mode still follow your system setting.</string>
+
+    <string name="settings_language_title">Language</string>
+    <!--
+      Names the content boundary on the screen rather than in a doc: §5.1's
+      discriminator is speech vs content, and a user who expects a switch to
+      rewrite their own goals into Hebrew has been misled by our silence.
+    -->
+    <string name="settings_language_description">Choose the language GoalPilot speaks. Your own goals, tasks and life areas stay exactly as you wrote them.</string>
+    <string name="settings_language_system">System default</string>
 </resources>

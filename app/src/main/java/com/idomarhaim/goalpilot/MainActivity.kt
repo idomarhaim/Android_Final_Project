@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.core.update.AppUpdateChecker
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
+import com.idomarhaim.goalpilot.ui.locale.AppLocale
 import com.idomarhaim.goalpilot.ui.root.GoalPilotRoot
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,12 +40,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val skin by appPreferences.skin.collectAsStateWithLifecycle()
-            GoalPilotTheme(skin = skin) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    GoalPilotRoot()
+            val language by appPreferences.language.collectAsStateWithLifecycle()
+
+            // Outside the theme, because it redirects every `stringResource`
+            // below it and sets the layout direction the theme's own surfaces
+            // are measured in (spec §5.1).
+            AppLocale(language = language) {
+                GoalPilotTheme(skin = skin) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        GoalPilotRoot()
+                    }
                 }
             }
         }

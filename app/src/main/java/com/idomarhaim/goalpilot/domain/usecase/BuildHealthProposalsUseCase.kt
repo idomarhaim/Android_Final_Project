@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.domain.usecase
 
+import com.idomarhaim.goalpilot.core.util.AppDateFormatters
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
@@ -218,8 +219,11 @@ class BuildHealthProposalsUseCase @Inject constructor() {
     }
 }
 
-private val healthDayFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault())
+// `get()`, never `val` — see AppDateFormatters. A `val` here resolves
+// Locale.getDefault() once at class-init and is precisely §5.1's
+// "process-scoped vals no switch can move".
+private val healthDayFormatter: DateTimeFormatter
+    get() = AppDateFormatters.of("EEE, MMM d")
 
 /** e.g. "Sat, Aug 1" — the day the reading belongs to, not the day it was synced. */
 fun HealthLogProposal.dayLabel(): String =

@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +38,15 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _skin.value = skin
     }
 
+    private val _language = MutableStateFlow(AppLanguage.fromId(prefs.getString(KEY_LANGUAGE, null)))
+    override val language: StateFlow<AppLanguage> = _language.asStateFlow()
+
+    override fun setLanguage(language: AppLanguage) {
+        if (_language.value == language) return
+        prefs.edit { putString(KEY_LANGUAGE, language.id) }
+        _language.value = language
+    }
+
     override fun healthLastSyncAt(uid: String): Long = prefs.getLong(healthSyncKey(uid), 0L)
 
     override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
@@ -46,6 +56,7 @@ class AppPreferencesRepositoryImpl @Inject constructor(
     private companion object {
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
+        const val KEY_LANGUAGE = "app_language"
 
         /** One key per account, so switching users does not inherit a sync clock. */
         fun healthSyncKey(uid: String) = "health_last_sync_$uid"

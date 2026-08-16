@@ -5,6 +5,7 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DailySteps
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
@@ -362,6 +363,8 @@ class HealthSyncTest {
         private val stamps = mutableMapOf<String, Long>()
         override val skin = MutableStateFlow(AppSkin.AURORA)
         override fun setSkin(skin: AppSkin) { this.skin.value = skin }
+        override val language = MutableStateFlow(AppLanguage.DEFAULT)
+        override fun setLanguage(language: AppLanguage) { this.language.value = language }
         override fun healthLastSyncAt(uid: String): Long = stamps[uid] ?: 0L
         override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
             stamps[uid] = epochMillis

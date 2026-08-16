@@ -10,7 +10,10 @@ import java.util.Locale
 /** Small date/time helpers used across the UI and summary calculations. */
 object DateTimeUtils {
 
-    private val dayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    // `get()`, never `val` — see AppDateFormatters. A `val` here resolves
+    // Locale.getDefault() once at class-init and is precisely §5.1's
+    // "process-scoped vals no switch can move".
+    private val dayFormatter get() = AppDateFormatters.of("MMM d, yyyy")
 
     fun formatDay(epochMillis: Long): String =
         dayFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))

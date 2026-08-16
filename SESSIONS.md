@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `51-hebrew-rtl` | `/implement #51` — **the Hebrew *foundation*, not the whole ticket.** Locale bucket correction, the Language setting + direction wiring, locale-aware date formatters, the §4.8 range isolates. **The `feature/` literal sweep is NOT in this unit** — see the release note for what is left and why. | `app/src/main/res/values/strings.xml`, `app/src/main/res/values-iw/**`, `core/util/AppDateFormatters.kt` (new), `core/util/AnalyticsRange.kt`, `core/util/DateTimeUtils.kt`, `domain/model/AppLanguage.kt` (new), `domain/repository/AppPreferencesRepository.kt`, `data/prefs/AppPreferencesRepositoryImpl.kt`, `domain/usecase/BuildHealthProposalsUseCase.kt` (formatter only), `ui/locale/AppLocale.kt` (new), `ui/components/LanguagePicker.kt` (new), `feature/profile/**`, `MainActivity.kt`, `app/src/test/**` + `app/src/androidTest/**` for the above | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-16 09:5x |
 
 > 🏁 **`36-tasks-consent` RELEASED FOR GOOD 2026-08-16 02:0x — `#2`'s drag defect is REPAIRED and the
 > entire outgoing range is green.** `c8831f4`. Emulator, Gradle daemon and board row all released;
