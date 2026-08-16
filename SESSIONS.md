@@ -15,7 +15,56 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `51-hebrew-rtl` | `/implement #51` — **the Hebrew *foundation*, not the whole ticket.** Locale bucket correction, the Language setting + direction wiring, locale-aware date formatters, the §4.8 range isolates. **The `feature/` literal sweep is NOT in this unit** — see the release note for what is left and why. | `app/src/main/res/values/strings.xml`, `app/src/main/res/values-iw/**`, `core/util/AppDateFormatters.kt` (new), `core/util/AnalyticsRange.kt`, `core/util/DateTimeUtils.kt`, `domain/model/AppLanguage.kt` (new), `domain/repository/AppPreferencesRepository.kt`, `data/prefs/AppPreferencesRepositoryImpl.kt`, `domain/usecase/BuildHealthProposalsUseCase.kt` (formatter only), `ui/locale/AppLocale.kt` (new), `ui/components/LanguagePicker.kt` (new), `feature/profile/**`, `MainActivity.kt`, `app/src/test/**` + `app/src/androidTest/**` for the above | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-16 09:5x |
+
+> 🏁 **`51-hebrew-rtl` RELEASED 2026-08-16 — `aff217b`. Gradle daemon and emulator
+> `Pixel_10_Pro_XL` released. ⛔ COMMITTED AND NOT PUSHED — waiting on Ido, see the last paragraph.**
+> Account: [`CHANGELOG/2026-08-16/51-hebrew-rtl.md`](CHANGELOG/2026-08-16/51-hebrew-rtl.md).
+>
+> **JVM unit 348 / 0 · instrumented 51 / 0 · `assembleDebug` green · the app installs, launches and
+> stays up.** Was 326 and 43. 30 new tests.
+>
+> ✅ **`widget-pack`: both of your loose ends are closed.** Your staged deletion of
+> `values-he/widget_strings.xml` was never committed, so **`HEAD` was failing your own
+> `WidgetHebrewResourceTest`** while the working tree passed — a fresh clone was red. It is committed
+> now. And `36-tasks-consent`'s `values-he/strings.xml`, which your note correctly called out as
+> having the same defect, has moved to `values-iw/`. Your session was established **gone** first
+> (explicit release note, last commit 02:08, transcript quiet since 02:08:57), not assumed.
+>
+> ⚠️ **AND YOUR EXPLANATION FOR IT IS WRONG — this is the one thing to take from this row.** Not
+> *"Java/Android reports Hebrew with the legacy code `iw`"*. **Measured:** JDK 21 returns `"he"`, and
+> **Android 17 / API 37 returns `"he"` too** — while `values-iw/` still resolves correctly on that
+> same device (`AppLocaleInstrumentedTest` pulls real Hebrew strings out of it). The bucket is a fact
+> about **AAPT2**, and `Locale` has nothing to do with it.
+>
+> **Why that matters more than a pedantic correction:** the folk explanation names a checkable fact,
+> that fact has now flipped, and checking it returns `"he"` — which reads as *"the legacy wart is
+> gone, rename this to `values-he`"*. The measurement that looks like permission to rename is the one
+> that causes the outage. Every KDoc carrying the old story is corrected;
+> `HebrewLocaleResourceTest` fails if a `he` bucket reappears.
+>
+> 🔴 **A crash that 348 unit + 47 instrumented tests all passed.** `AppLocale` provided
+> `createConfigurationContext()` into `LocalContext` — a bare `ContextImpl` — and `hiltViewModel()`
+> walks that for an `Activity`, so the app died on the **first frame of every screen**. Nothing in
+> either suite composes through `MainActivity`, which is the only place the override is installed, so
+> the whole suite agreed the change was fine while the app would not start. Caught by **installing
+> and launching it**. Fixed with a `ContextWrapper`; the new guard asserts *an Activity is still
+> reachable* rather than naming Hilt, and was verified to **fail** against the broken version.
+> **If you override `LocalContext`, a grep of `app/src` is not enough — the consumer that broke was
+> `androidx.hilt`, and a library is not in `app/src`.**
+>
+> 📌 **`#51` IS NOT DONE, AND THE APP IS NOT YET IN HEBREW.** This is the foundation only.
+> `res/values/strings.xml` holds **9** strings; `feature/` has ~578 candidate literals over 27 files.
+> Switching the picker today changes direction, mirroring, the tagline, #36's consent strings and the
+> two settings cards — every screen's own words stay English. The `feature/` sweep, the
+> יעד terminology, the AI output-language prompt line (needs a `firebase deploy`) and the donut's
+> Hebrew caption overrun are all still owed; the changelog's *what is left* has the reasoning.
+> **The parity test now makes the sweep safe to do one feature package at a time.**
+>
+> ⛔ **The push is held on precondition 2, not on anything technical.** The outgoing range carries
+> **two deletions** — `values-he/strings.xml` and `values-he/widget_strings.xml` — and deletions are
+> always-ask in both modes. No content is lost (both files' content lives at `values-iw/`), no
+> foreign commits are in the range, and `git fetch` shows no divergence. `Observed:` still unpublished
+> as of 2026-08-16 ~10:5x. One word from Ido and it goes up.
 
 > 🏁 **`36-tasks-consent` RELEASED FOR GOOD 2026-08-16 02:0x — `#2`'s drag defect is REPAIRED and the
 > entire outgoing range is green.** `c8831f4`. Emulator, Gradle daemon and board row all released;
@@ -1358,7 +1407,8 @@ _none active_
 > drained, and the answer was none of the three options Ido was offered.** He handed the decision back
 > in the same words as the ticket itself, so per `rules/question-axis-naming.md` it was **not
 > re-asked** and the answer was **derived**: ingested into
-> `C:\Dev\JARVIS\kb\devuntime-verification.md` §6 at `a936274` (+ `1e326a6`, the changelog entry
+> `C:\Dev\JARVIS\kb\dev
+untime-verification.md` §6 at `a936274` (+ `1e326a6`, the changelog entry
 > the first commit omitted — caught by that repo's pre-commit hook, not by me). *Append beside it* was
 > unavailable, since a bundle that lints for contradictions cannot hold both statements; and the
 > *amend* as drafted was wrong the same way as the text it replaced — it graded staleness by **cost**,
