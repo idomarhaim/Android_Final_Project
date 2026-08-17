@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `hebrew-defer-freeze` | **Wave 1, runs alone.** Freeze #51 behind a switch and unblock every feature ticket: withhold Hebrew at the picker, clamp the `SYSTEM` branch to English, suspend §0.8 in writing. Brief: [`sessions/hebrew-defer-freeze.md`](sessions/hebrew-defer-freeze.md). | `AGENTS.md`, `docs/PRODUCT_v0.3.md`, `domain/model/AppLanguage.kt`, `data/prefs/AppPreferencesRepositoryImpl.kt`, `ui/components/LanguagePicker.kt`, `ui/locale/AppLocale.kt`, `app/src/test/.../domain/model/AppLanguageTest.kt`, `app/src/test/.../resources/AnalyticsLiteralSweepTest.kt`, `CHANGELOG/2026-08-17/hebrew-defer-freeze.md`, `CHANGELOG/CHANGELOG_README.md` (generated), `sessions/hebrew-defer-freeze.md` · **also folds in `CHANGELOG/2026-08-17/51e-sweep-components.md`**, left dirty by a released session (see the release note below) | **Gradle daemon**, emulator **`Pixel_10_Pro_XL`** | 2026-08-17 |
 
 > 🏁 **`completion-roadmap` RELEASED 2026-08-17.** No singletons held (no build, no device,
 > no `app/src/` change). Account:
