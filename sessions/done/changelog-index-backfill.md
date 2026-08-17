@@ -2,9 +2,22 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: AUTO MODE
-status: active
+status: done
 created: 2026-08-16
+completed: 2026-08-17 by `changelog-index-backfill` — `a1aa041`
 ---
+
+> **Outcome.** Option 3, adopted as *derived* rather than chosen: this repo's own
+> `general.instructions.md` (lines 58–59) already forbids prose in the index and
+> prefers a generator, so option 1 was never available. The index is now generated
+> between `CHANGELOG-INDEX` markers, all 36 hand-written rows are preserved verbatim
+> below it, and a `pre-commit` hook refuses a commit the index does not list.
+>
+> **Two of this brief's claims were wrong and are corrected in the account:**
+> "~20 sessions with no row" was **46**, "21 day folders" was **15 folders + 7 flat
+> files**, and the generator's design does *not* avoid two structures in one file —
+> its header prescribes exactly that for legacy flat days. The trap warning was right
+> and load-bearing; the reasoning attached to it was not.
 
 # `changelog-index-backfill` — the changelog index died on 2026-08-10
 

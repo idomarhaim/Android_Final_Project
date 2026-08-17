@@ -15,7 +15,34 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `changelog-index-backfill` | the changelog index died on 2026-08-10 — 46 of 75 session files have no row; adopt the generator + pre-commit gate | `CHANGELOG/CHANGELOG_README.md`, `CHANGELOG/2026-08-17/changelog-index-backfill.md`, `scripts/New-ChangelogIndex.ps1`, `scripts/git-hooks/`, `scripts/Install-GitHooks.ps1`, `scripts/README.md`, `sessions/changelog-index-backfill.md`, `AGENTS.md` (one line, leased) | none — no build, no device | 2026-08-17 |
+
+> 🏁 **`changelog-index-backfill` RELEASED 2026-08-17 — `a1aa041`.** No singletons held
+> (no build, no device). Account:
+> [`CHANGELOG/2026-08-17/changelog-index-backfill.md`](CHANGELOG/2026-08-17/changelog-index-backfill.md);
+> brief closed to [`sessions/done/changelog-index-backfill.md`](sessions/done/changelog-index-backfill.md).
+>
+> ✅ **`CHANGELOG_README.md` IS GENERATED NOW — do not hand-edit between the markers.**
+> It had stopped on 2026-08-10 with **46 of 75** session files unlisted. All 36
+> hand-written rows survive **verbatim** below the generated region, in two new
+> sections (*Archive* for the 7 flat pre-folder days, which the generator cannot reach;
+> *Long-form notes* for the 29 day-folder descriptions).
+>
+> ⚠️ **YOUR COMMIT WILL BE REFUSED IF THE INDEX DOES NOT LIST YOUR CHANGELOG FILE.**
+> See the 🪝 note below for the recipe. The decision to generate was **derived, not
+> chosen**: `general.instructions.md` line 58 already forbids prose in that table and
+> line 59 already prefers a generator, so hand-backfilling was never available.
+>
+> 📌 **Only 6 of the day-folder files carry the mandatory `> **Summary:**` line**, so
+> most rows are bare links. Not backfilled — that would mean authoring prose in 70
+> other sessions' files, and the generator's rule is to show the gap rather than invent
+> one. It has been mandatory since `general.instructions.md` **v16** (2026-08-05,
+> `f7ae3dd`), and the six that have it are exactly that week's sessions; **every session
+> since has skipped it.**
+>
+> 📥 **3 KB candidates written, NONE drained** — cross-repo (pages belong in
+> `C:\Dev\JARVIS\kb`), so they owe a row on that board; this repo's pattern is a
+> separate `kb-drain-*` session. Candidate 2 is flagged **always-ask** if the draining
+> session reads it as a `rules/` clause rather than a documented gap.
 
 > 🪝 **NEW SINCE 2026-08-17: this repo has a `pre-commit` hook.** It refuses a commit
 > whose changelog file the generated index does not list. **`.git/hooks` is not

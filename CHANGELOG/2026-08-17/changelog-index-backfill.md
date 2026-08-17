@@ -137,6 +137,40 @@ is honest, the files are all reachable, and for 29 of them the long-form note si
 in the same page. Going forward the convention already binds — the hook does not
 enforce it, so a session that skips it gets a visibly bare row.
 
+## 6 · What this push carries that is not mine
+
+Precondition 5 says name them here, not only in the reply, because in a month this
+file is where it is still findable. `git log @{u}..HEAD` at push time held **three
+foreign commits**, both owning sessions carrying an **explicit release note** on the
+board — which settles liveness on its own and needs no further check:
+
+| Commit | Session | Adjudication |
+|---|---|---|
+| `bc5ef69` | `51e-sweep-components` | released, with a full account in *Recently released* |
+| `55bd5f4` | `51e-sweep-components` | its claim commit |
+| `dad8f12` | `kb-drain-51d` | released; drain-only, its pages landed in JARVIS at `74b00c2` |
+
+**The one deletion in the range is `dad8f12`'s**, of
+`kb-candidates/2026-08-17-51d-dialog-locale.md`. Deletions are always-ask, and this is
+the one carve-out: a `kb-candidates/` file whose every entry was promoted, deleted in
+the same commit as the drain. **Checked rather than taken on trust** — `74b00c2` exists
+in `C:\Dev\JARVIS` and carries the three pages its message claims.
+
+**`51e-sweep-components` has work left unpublished, and it is not mine to finish.**
+That session's own `CHANGELOG/2026-08-17/51e-sweep-components.md` sits **modified in the
+working tree** (+135 lines) after its release note was written — it adds the `Summary:`
+line it had been missing, and a section recording that its `#51` issue comment is
+**owed**, blocked by a GitHub 503 rather than skipped. Nothing of theirs was staged,
+committed or pushed by this session; explicit pathspecs throughout.
+
+**Their edit and this one interlock, in the direction that proves the design.** Their
+new `Summary:` line means the row this session generated for them — currently a bare
+link — becomes stale the moment they commit, and the hook will make them regenerate it.
+That is the mechanism working, not a conflict. Their file also records that
+`51e-sweep-components.issue-comment.md` was folded back into the changelog **because
+this session's hook objected to it**: a hook installed mid-flight changed a live
+sibling's behaviour, with no artifact in the repo to warn them. Filed as KB candidate 2.
+
 ## 🧪 Tests
 
 **No app code changed, so no Kotlin/Firestore layer applies** — JVM unit,
