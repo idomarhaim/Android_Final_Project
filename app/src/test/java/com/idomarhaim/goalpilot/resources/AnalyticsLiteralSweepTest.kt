@@ -5,8 +5,14 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Guards issue #51's literal sweep for `feature/analytics/` — the first package
- * swept, and the template for the rest.
+ * Guards issue #51's literal sweep for **every package swept so far** — see
+ * [SWEPT_PACKAGES].
+ *
+ * The name is historical: it was written for `feature/analytics/`, the first
+ * package swept, and now covers `ui/components/` too. Kept rather than renamed
+ * because the file is referenced by name from the changelog, the issue and
+ * `AnalyticsStrings.kt`, and a rename buys a tidier name for a fistful of stale
+ * pointers.
  *
  * ### Why a test and not a review note
  *
@@ -63,19 +69,65 @@ class AnalyticsLiteralSweepTest {
     }
 
     @Test
-    fun `the swept package resolves its words through resources`() {
+    fun `every swept package resolves its words through resources`() {
         // The complement of the test above: absence of literals could also mean
         // the screen renders nothing. This checks the words actually went to
         // res/ rather than being deleted.
-        val dir = File(sourceRoot, "feature/analytics")
-        val usages = dir.walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .sumOf { file ->
-                Regex("""\b(stringResource|pluralStringResource)\(""")
-                    .findAll(file.readText()).count()
-            }
-        assertWithMessage("feature/analytics should read its copy from res/")
-            .that(usages).isAtLeast(30)
+        //
+        // Loops over SWEPT_PACKAGES rather than naming one package, which it did
+        // until `ui/components` was swept. That shape is worth noting: adding a
+        // package to the list above extended the offender scan automatically but
+        // left this half silently covering only analytics — a guard that grows on
+        // one side and not the other reports green for a package it never read.
+        SWEPT_PACKAGES.forEach { pkg ->
+            val floor = RESOURCE_FLOOR.getValue(pkg)
+            val usages = File(sourceRoot, pkg).walkTopDown()
+                .filter { it.isFile && it.extension == "kt" }
+                .sumOf { file ->
+                    Regex("""\b(stringResource|pluralStringResource)\(""")
+                        .findAll(file.readText()).count()
+                }
+            assertWithMessage("$pkg should read its copy from res/")
+                .that(usages).isAtLeast(floor)
+        }
+    }
+
+    @Test
+    fun `the prose rule fires on copy and stays silent on code`() {
+        // The instrument, checked on the hardest inputs it exists for. Loosening
+        // isProse to ignore interpolations is exactly the kind of change that
+        // silently stops the guard firing, and every other input keeps saying it
+        // works — so the silent half is asserted as hard as the loud half.
+        val copy = listOf(
+            "Goal complete",
+            "Untitled goal",
+            "Completed \${n} of \${m} tasks",   // words survive the strip
+            "Nothing to chart yet",
+            "\$count tasks remaining",
+        )
+        val notCopy = listOf(
+            "\${goal.currentValue.trimNumber()}/\${goal.targetValue.trimNumber()}",
+            "\${Math.round(it * progress)}\${item.countSuffix}",
+            "\${goal.progressPercent}%",
+            "\${a.veryLongIdentifierName} \${b.anotherLongOne}",
+            "%1\$s %2\$s",
+            ", ",
+            "__unassigned__",
+            "favorite",                          // one word: a key, not a sentence
+        )
+
+        assertWithMessage("these carry user-facing words and must be caught")
+            .that(copy.filterNot { it.isProse() }).isEmpty()
+        assertWithMessage("these are code or punctuation and must not be flagged")
+            .that(notCopy.filter { it.isProse() }).isEmpty()
+    }
+
+    @Test
+    fun `every swept package declares a resource floor`() {
+        // Otherwise the getValue above throws a bare NoSuchElementException and
+        // the next sweeper has to read this file to find out why.
+        assertWithMessage("add the package to RESOURCE_FLOOR when you add it to SWEPT_PACKAGES")
+            .that(RESOURCE_FLOOR.keys).containsAtLeastElementsIn(SWEPT_PACKAGES)
     }
 
     // ------------------------------------------------------------------ helpers
@@ -97,16 +149,79 @@ class AnalyticsLiteralSweepTest {
             .toList()
     }
 
-    /** Two or more alphabetic words of at least two letters each. */
+    /**
+     * Two or more alphabetic words of at least two letters each, counted over
+     * the literal's **copy** — its interpolations removed first.
+     *
+     * The contents of a `${…}` are code, not speech: `"${a.currentValue}/${b}"`
+     * has no words in it, but `currentValue` and `trimNumber` are alphabetic
+     * runs, so counting them made the guard report a pure-punctuation template
+     * as user-facing prose. `Observed:` 2026-08-17 on two literals in
+     * `ui/components` that the sweep had already fixed — a **false positive
+     * that fires precisely on the remedy**, which is the shape that gets a guard
+     * routed around rather than obeyed.
+     *
+     * It does not weaken the check. Copy *between* the interpolations survives
+     * the strip, so `"Completed ${n} of ${m} tasks"` still counts three words
+     * and still fails; what disappears is only the identifiers. The one thing it
+     * cannot see is prose nested inside an interpolation
+     * (`"${if (x) "all done" else "…"}"`), and [stringLiterals]' regex already
+     * terminates at that inner quote, so it was never visible here anyway.
+     */
     private fun String.isProse(): Boolean =
-        Regex("""\p{L}{2,}""").findAll(this).count() >= 2
+        Regex("""\p{L}{2,}""").findAll(withoutInterpolations()).count() >= 2
+
+    /**
+     * Drops `${…}` (brace-matched, so a lambda inside one does not end it early)
+     * and bare `$identifier`.
+     */
+    private fun String.withoutInterpolations(): String {
+        val out = StringBuilder()
+        var i = 0
+        while (i < length) {
+            val ch = this[i]
+            if (ch == '$' && i + 1 < length && this[i + 1] == '{') {
+                var depth = 0
+                var j = i + 1
+                while (j < length) {
+                    if (this[j] == '{') depth++
+                    if (this[j] == '}' && --depth == 0) break
+                    j++
+                }
+                i = if (j < length) j + 1 else length
+            } else if (ch == '$' && i + 1 < length && (this[i + 1].isLetter() || this[i + 1] == '_')) {
+                var j = i + 1
+                while (j < length && (this[j].isLetterOrDigit() || this[j] == '_')) j++
+                i = j
+            } else {
+                out.append(ch)
+                i++
+            }
+        }
+        return out.toString()
+    }
 
     private companion object {
         /**
          * Packages whose literal sweep has landed. Absent = unswept, not exempt.
          *
          * - `feature/analytics` — 2026-08-16, session `51b-sweep-analytics`.
+         * - `ui/components` — 2026-08-17, session `51e-sweep-components`.
          */
-        val SWEPT_PACKAGES = listOf("feature/analytics")
+        val SWEPT_PACKAGES = listOf("feature/analytics", "ui/components")
+
+        /**
+         * Fewest `stringResource` call sites a swept package must still have.
+         *
+         * A floor rather than a count: it exists to catch copy being *deleted*
+         * instead of moved, and an exact number would fail on every ordinary
+         * edit afterwards. `ui/components`'s is low because most of this package
+         * takes its words as **parameters** from the screen rendering it — that
+         * is the honest number, not a weaker standard.
+         */
+        val RESOURCE_FLOOR = mapOf(
+            "feature/analytics" to 30,
+            "ui/components" to 8,
+        )
     }
 }

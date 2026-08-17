@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import org.junit.Test
 
@@ -40,10 +41,27 @@ class AppSkinTest {
     }
 
     @Test
-    fun `every skin has picker copy`() {
-        AppSkin.entries.forEach { skin ->
-            assertThat(skin.label).isNotEmpty()
-            assertThat(skin.tagline).isNotEmpty()
-        }
+    fun `the enum carries identity only, never display copy`() {
+        // Replaces `every skin has picker copy`, which asserted the opposite and
+        // was green the whole time the picker was untranslatable (issue #51).
+        //
+        // `label` and `tagline` were constructor arguments here, and a language
+        // switch cannot reach a constructor argument — so the words are now in
+        // res/ and resolved by ui/components/ComponentStrings.kt. This asserts
+        // the SHAPE rather than the two old names, because the failure mode is
+        // somebody adding a third string field, not restoring those two.
+        //
+        // Java reflection rather than kotlin-reflect: the enum constants and
+        // $VALUES are static fields, so the instance fields are exactly the
+        // declared constructor properties.
+        val instanceFields = AppSkin::class.java.declaredFields
+            .filterNot { java.lang.reflect.Modifier.isStatic(it.modifiers) }
+            .map { it.name }
+
+        assertWithMessage(
+            "AppSkin must carry only its persisted id. A String field here is " +
+                "display copy a language switch cannot reach — put it in " +
+                "res/values/components_strings.xml and map it in ComponentStrings.kt.",
+        ).that(instanceFields).containsExactly("id")
     }
 }

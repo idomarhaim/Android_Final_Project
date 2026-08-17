@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
 
 /**
  * One row of [HorizontalBarChart].
@@ -77,9 +78,16 @@ fun HorizontalBarChart(
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
+                        // Both branches isolated, and isolating HERE rather than
+                        // at each caller is the point of doing it in a shared
+                        // component: `trailing` arrives already formatted ("72 %",
+                        // "3.2 / 4 km") from eight screens, and a mixed
+                        // digit-and-symbol run re-orders inside an RTL paragraph.
+                        // Bidi.isolate is idempotent, so a caller that has
+                        // already isolated its own string is not double-wrapped.
                         text = item.countUpTo
-                            ?.let { "${Math.round(it * progress)}${item.countSuffix}" }
-                            ?: item.trailing,
+                            ?.let { "${Math.round(it * progress)}${item.countSuffix}".bidiIsolated() }
+                            ?: item.trailing.bidiIsolated(),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = item.color,

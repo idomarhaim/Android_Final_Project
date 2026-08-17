@@ -21,9 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
 import com.idomarhaim.goalpilot.domain.model.Goal
 
 /** Compact card summarising one goal's progress; tapping opens the detail. */
@@ -54,7 +57,7 @@ fun GoalCard(
             ) {
                 Icon(
                     imageVector = goal.category.icon(),
-                    contentDescription = goal.category.label,
+                    contentDescription = goal.category.localizedLabel(),
                     tint = accent,
                     modifier = Modifier.size(24.dp),
                 )
@@ -70,7 +73,9 @@ fun GoalCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = goal.title.ifBlank { "Untitled goal" },
+                        text = goal.title.ifBlank {
+                            stringResource(R.string.components_goal_untitled)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -80,13 +85,13 @@ fun GoalCard(
                     if (goal.isComplete) {
                         Icon(
                             imageVector = Icons.Filled.Check,
-                            contentDescription = "Goal complete",
+                            contentDescription = stringResource(R.string.components_goal_complete),
                             tint = accent,
                             modifier = Modifier.size(18.dp),
                         )
                     }
                     Text(
-                        text = "${goal.progressPercent}%",
+                        text = percentText(goal.progressPercent),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = accent,
@@ -99,8 +104,19 @@ fun GoalCard(
                     modifier = Modifier.padding(top = 10.dp),
                 )
                 Text(
-                    text = "${goal.category.label} • ${goal.currentValue.trimNumber()}/" +
-                        "${goal.targetValue.trimNumber()} ${goal.unit}",
+                    // One resource with three arguments, not a four-part
+                    // concatenation: word order is a property of the language
+                    // and no resource file can reorder a Kotlin `+`. The ratio
+                    // is isolated as ONE run — `5/10` reverses to `10/5` in an
+                    // RTL paragraph otherwise — and `unit` is isolated because
+                    // it is user-authored (§8) and its script is unknown here.
+                    text = stringResource(
+                        R.string.components_goal_meta,
+                        goal.category.localizedLabel(),
+                        "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()}"
+                            .bidiIsolated(),
+                        goal.unit.bidiIsolated(),
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),

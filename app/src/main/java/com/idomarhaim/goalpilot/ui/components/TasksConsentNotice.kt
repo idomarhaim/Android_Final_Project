@@ -21,8 +21,10 @@ import com.idomarhaim.goalpilot.R
  * be reworded on one of them.
  *
  * Both strings are resources, not Kotlin literals: this is app speech, so §5.1
- * and §4.8 make Hebrew part of it. `values-he/` carries these three and only
- * these three; the rest of the resource set is issue #51.
+ * and §4.8 make Hebrew part of it. `values-iw/` carries them — **`iw`, not
+ * `he`**, which is a fact about AAPT2 rather than about `Locale`; a `values-he`
+ * bucket compiles, reviews as done and resolves to nothing, and
+ * `HebrewLocaleResourceTest` fails the build if one appears.
  *
  * Callers render this **instead of** their ordinary pitch paragraph, and pair it
  * with [R.string.tasks_consent_grant_action] on their own button — the action

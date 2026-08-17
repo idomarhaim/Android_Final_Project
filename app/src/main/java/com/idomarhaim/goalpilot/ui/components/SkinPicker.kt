@@ -127,9 +127,9 @@ private fun SkinTile(
                 }
             }
             Spacer(Modifier.height(10.dp))
-            Text(skin.label, style = MaterialTheme.typography.titleMedium)
+            Text(skin.label(), style = MaterialTheme.typography.titleMedium)
             Text(
-                text = skin.tagline,
+                text = skin.tagline(),
                 style = MaterialTheme.typography.bodySmall,
                 color = content.copy(alpha = 0.7f),
             )

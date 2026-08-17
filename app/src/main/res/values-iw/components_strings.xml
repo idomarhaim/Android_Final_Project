@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hebrew for ui/components/ (issue #51's literal sweep, the shared package).
+
+  ⚠️ THE BUCKET IS `values-iw`, NOT `values-he` — see values-iw/strings.xml for
+  the measurement, and note that the usual explanation for it ("Java reports
+  Hebrew as iw") is FALSE on current Android. HebrewLocaleResourceTest fails the
+  build if a `values-he` directory appears.
+
+  The wording rules this file follows, each bought by a defect elsewhere in the
+  app (kb/dev/untranslatable-idioms.md §3–§5):
+
+  1 · TERMINOLOGY (§5.1 / E1): the `Goal` entity is יעד, NEVER מטרה.
+      components_goal_untitled is יעד ללא שם and components_goal_complete is
+      היעד הושלם.
+
+      Note what is NOT here as a result. Hebrew has one word where English has
+      two — `Goal` the entity and `target` the number are both יעד — so once the
+      entity takes it there is nothing left for the number. components_goal_meta
+      needs no such noun: it states the ratio and the unit and never names the
+      target, which is the remedy §4 of that page prescribes (restructure so the
+      missing noun is never needed) rather than coining היעד המספרי.
+
+  2 · NO HEBREW PREFIX ATTACHED TO A LATIN OR DIGIT RUN (§4.8). `ב%1$s` renders
+      as the prefix on the FAR side of the run whenever %1$s holds digits. No
+      string here attaches a prefix to an argument; components_goal_meta is
+      format-only, and every other string is pure Hebrew with no argument at all.
+
+  3 · NO DIRECTIONAL GLYPHS. Nothing in this package carries a before/after
+      arrow, so the ← / → flip that analytics_backfill_change needed does not
+      arise here.
+
+  components_goal_meta and components_percent are byte-identical to their
+  English originals, and legitimately so: strip their format specifiers and no
+  letters remain, so there is nothing in either to translate.
+  HebrewLocaleResourceTest exempts them by that rule rather than by an
+  allowlist.
+-->
+<resources>
+
+    <!-- ── GoalCard ────────────────────────────────────────────────
+         %1$s category label · %2$s the ratio, pre-isolated by the caller ·
+         %3$s the unit, user-authored and never translated (§8). Same order as
+         the English: Hebrew also says the number before its unit. -->
+    <string name="components_goal_meta">%1$s • %2$s %3$s</string>
+    <string name="components_goal_untitled">יעד ללא שם</string>
+    <string name="components_goal_complete">היעד הושלם</string>
+
+    <string name="components_percent">%1$d%%</string>
+
+    <!-- ── GoalCategory ──────────────────────────────────────────── -->
+    <string name="components_category_health">בריאות</string>
+    <string name="components_category_fitness">כושר</string>
+    <string name="components_category_sleep">שינה</string>
+    <string name="components_category_nutrition">תזונה</string>
+    <string name="components_category_relationships">מערכות יחסים</string>
+    <string name="components_category_career">קריירה</string>
+    <string name="components_category_projects">פרויקטים</string>
+    <string name="components_category_learning">לימודים</string>
+    <string name="components_category_finance">כספים</string>
+    <string name="components_category_other">אחר</string>
+
+    <!-- ── AppSkin ─────────────────────────────────────────────────
+         Translated rather than transliterated. זוהר (radiance — the word Hebrew
+         uses for the aurora, in זוהר הצפון) and פריחה (blossom) are the ordinary
+         words, where אורורה / בלוסום would be a calque that parses and that
+         nobody says. The persisted ids stay "aurora" and "blossom". -->
+    <string name="components_skin_aurora">זוהר</string>
+    <string name="components_skin_aurora_tagline">כחול אוקיינוס וירוק־עד</string>
+    <string name="components_skin_blossom">פריחה</string>
+    <string name="components_skin_blossom_tagline">ורוד שקיעה וכתום</string>
+
+</resources>

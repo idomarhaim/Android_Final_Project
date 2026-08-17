@@ -107,6 +107,21 @@ data class Goal(
  * it is edited.
  */
 enum class GoalCategory(
+    /**
+     * ⚠️ **Superseded for display — use `GoalCategory.localizedLabel()` in
+     * `ui/components/ComponentStrings.kt` instead** (issue #51).
+     *
+     * This is a constructor argument, and *a language switch cannot reach a
+     * constructor argument* (`kb/dev/untranslatable-idioms.md` §1), so anything
+     * rendering it stays English on a Hebrew device. The Hebrew for all ten
+     * categories is authored once in `res/values-iw/components_strings.xml`.
+     *
+     * Still declared because three call sites in `feature/dashboard` and
+     * `feature/goals` read it and **those packages are unswept** — deleting it
+     * would drag them into #51's `ui/components/` unit half-done. Each switches
+     * to `localizedLabel()` when its own sweep lands, and this property goes
+     * with the last of them.
+     */
     val label: String,
     val iconKey: String,
     val defaultColorHex: String,
