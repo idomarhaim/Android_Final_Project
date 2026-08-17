@@ -66,6 +66,28 @@ before your first write. Normative rule:
 > ⚠️ **`adb` and `gh` writes may be denied by the harness classifier**, as they were for
 > `hebrew-defer-freeze`. That is an outward-action gate: report the command as owed on your 🚥
 > line and let Ido decide. Never report an attempted-and-denied step as done.
+>
+> 🔀 **EVERY BRIEF IN `sessions/` NOW CARRIES `mode: auto` — Ido's standing instruction,
+> 2026-08-17.** *"All the sessions in AUTO MODE as long as they verify they are not harming other
+> sessions' work."* The `Mode` line is the only sanctioned way the mode crosses a session
+> boundary, and it crosses as **his stated intent** — so if your brief says `mode: auto`, you are
+> in auto mode from turn one. **Commit, push and drain KB candidates without asking, and say in
+> the reply whenever the mode acted.**
+>
+> ⚠️ **AUTO MODE IS THE DEV HALF ONLY — it is repo-bounded, and none of this moves.** Deletions
+> stay always-ask (`#50`'s `ConnectivityMonitor` is authorised by its *ticket*, not by the mode).
+> Outward actions stay draft-then-ask — **`51-freeze-verify`'s three `gh` writes were granted for
+> that task and the grant does not widen**. Destructive git (`--force`, `--delete`, moving a
+> published tag, rebasing published commits) stays always-ask. So do opening or merging a PR,
+> creating or deleting a remote branch or tag, releases, and repo settings. A `rules/`-destined
+> KB candidate, or one superseding a standing claim, stays **parked and named**.
+>
+> ✅ **Ido's condition is a checklist, and it lives in
+> [`TODO/TODO_MUST/Completion-Roadmap.TODO.must.md`](TODO/TODO_MUST/Completion-Roadmap.TODO.must.md) §🔀**
+> — seven items, run before the commit and again before the push. Its **honest limit** is stated
+> there too: the window on a sibling's file opens when *you write it*, not when you stage it, so
+> nothing you do stops a sibling publishing your work under their message. The remedy is naming
+> what rode along, and auto mode neither worsens nor fixes that.
 
 > 🏁 **`changelog-index-backfill` RELEASED 2026-08-17 — `a1aa041`.** No singletons held
 > (no build, no device). Account:

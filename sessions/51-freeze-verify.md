@@ -1,7 +1,7 @@
 ---
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
-mode: normal
+mode: auto
 status: ready
 issue: 51
 created: 2026-08-17
@@ -91,7 +91,8 @@ about to send against what is there.
 - JVM unit re-run only if you changed code. `assembleDebug` green if you did.
 - `CHANGELOG/<today>/51-freeze-verify.md` written, index regenerated.
 - Board row released; brief closed to `sessions/done/` with `status: done` in the same commit.
-  Commit on Ido's approval.
+  **Commit and push under AUTO MODE** — run the sibling checklist in the roadmap's §🔀 first,
+  and say in your reply that the mode acted.
 
 ## 🚥 Hand-off line — mandatory, the last thing in your final reply
 
@@ -99,9 +100,11 @@ End your final reply with **exactly one** of these headings, below the three fil
 Full definition — the **seven** `GO` conditions, and which reply carries the heading:
 [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 §🚥. Ido must never have to work out for himself whether the next kickoff is safe.
-**In normal mode your commit needs his approval first, so the honest heading is usually
-`STOP` naming that approval *and* the slug that follows it** (condition 1). Name the slug
-either way.
+**This brief runs in AUTO MODE** (`mode: auto`, Ido's standing instruction of 2026-08-17), so
+condition 1 is met by **you having committed**, not by his approval. ⚠️ **Auto mode does NOT
+cover the three `gh` writes** — those are outward-facing, and Ido granted them for *this task*
+on 2026-08-17. If a harness prompt appears, that is the grant being exercised, not a rule being
+bypassed; if it is denied, the write stays owed and named. Name the slug either way.
 
 - **On success:** name whichever wave-2 slug is still unrun —
   `## 🚥 GO — NEXT: /kickoff 50-offline-stamps` **or** `/kickoff 48-settings-surface`, plus a

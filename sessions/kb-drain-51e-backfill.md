@@ -1,7 +1,7 @@
 ---
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
-mode: normal
+mode: auto
 status: ready
 created: 2026-08-17
 ---
@@ -72,7 +72,8 @@ the central bundle *is* cross-repo by construction.
 - `/kb-lint` clean on the bundle you wrote into.
 - `CHANGELOG/<today>/kb-drain-51e-backfill.md` written, index regenerated.
 - **Both** board rows released. Brief closed to `sessions/done/` with `status: done` in the
-  same commit. Commit on Ido's approval.
+  same commit. **Commit and push under AUTO MODE** — run the sibling checklist in the roadmap's
+  §🔀 first, in **both** repos, and say in your reply that the mode acted.
 
 ## 🚥 Hand-off line — mandatory, the last thing in your final reply
 
@@ -80,9 +81,11 @@ End your final reply with **exactly one** of these headings, below the three fil
 Full definition — the **seven** `GO` conditions, and which reply carries the heading:
 [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 §🚥. Ido must never have to work out for himself whether the next kickoff is safe.
-**In normal mode your commit needs his approval first, so the honest heading is usually
-`STOP` naming that approval *and* the slug that follows it** (condition 1). Name the slug
-either way.
+**This brief runs in AUTO MODE** (`mode: auto`, Ido's standing instruction of 2026-08-17), so
+condition 1 is met by **you having committed**, not by his approval — `GO` is the ordinary case
+here. **But auto mode changes nothing about this session's two always-ask candidates**: a
+`rules/`-destined entry, and anything superseding a standing KB claim, both stay parked and
+named. Auto mode drains the *ordinary* ones without asking; it does not promote those two.
 
 - **On success:** `## 🚥 GO — NEXT: /kickoff docs-hygiene-backfill`, and name whichever
   build lane (`50-offline-stamps` / `48-settings-surface`) is still unrun.

@@ -158,6 +158,73 @@ the same either way**, so it is never left for Ido to look up.
 | `kb-drain-51e-backfill` | `/kickoff docs-hygiene-backfill`, and whatever build lane is free |
 | `51-freeze-verify` | whichever wave-2 slug is still unrun; if wave 2 is finished, `STOP` — the wave-3 briefs are owed |
 
+---
+
+## 🔀 Every brief in this plan runs in AUTO MODE — Ido's standing instruction, 2026-08-17
+
+> *"I want all the sessions to be in AUTO MODE as long as they verify they are not harming
+> other sessions' work."*
+
+Each brief's front matter carries `mode: auto`. That is the **only** sanctioned way the mode
+crosses a session boundary, and it crosses as **Ido's stated intent**, not as a leftover — so a
+session reading `mode: auto` in its brief is in auto mode from its first turn and does not need
+to be told again.
+
+### What it grants
+
+**Commit** when a unit is done, **push** when it is finished, and **drain KB candidates** at the
+commit trigger — all three without asking. Say in the reply whenever the mode acted; silent
+autonomy is how a stale marker goes unnoticed.
+
+### What it never grants — read this before assuming it covers you
+
+Auto mode is the **dev** half of autonomy. It is repo-bounded, and none of the following moves:
+
+- **Deletions stay always-ask.** The one carve-out is a `kb-candidates/` file whose *every*
+  entry was promoted, deleted in the same commit as the promotion. **`#50`'s deletion of
+  `ConnectivityMonitor` is authorised by its own ticket**, not by this mode — name it in the
+  reply and do not extend it by one file.
+- **Outward-facing actions stay draft-then-ask** — email, calendar, publishing, sharing, third
+  party. **`51-freeze-verify`'s three `gh` writes are outward**: Ido granted them for *that
+  task* on 2026-08-17, and that grant does not widen to any other session or any other write.
+- **Destructive git stays always-ask** in both modes: `--force`, `--force-with-lease`,
+  `--delete`, moving a published tag, pushing a rebase of published commits, `git reset --hard`.
+- **Not pushes, and still always-ask:** opening or merging a PR, creating or deleting a remote
+  branch or tag, publishing a release, changing repo visibility or settings.
+- **A `rules/`-destined KB candidate**, and anything that supersedes or contradicts a standing
+  KB claim. Both stay parked and named, never dropped.
+- **Rewriting anything that predates JARVIS** (2026-07).
+
+### The condition Ido attached — verify you are not harming a sibling
+
+Before the commit, and again before the push:
+
+1. **Read the whole Active-claims section** of `SESSIONS.md` to its next `## ` heading — never
+   the first N lines. Count rows mechanically:
+   `awk '/^## 🔒 Active claims/{f=1;next} /^## /{f=0} f' SESSIONS.md | grep -c '^| '`.
+2. **Claim your paths before your first write**, in **every** repo you write into — a
+   `/kb-ingest` into `C:\Dev\JARVIS\kb` owes a row on that board too.
+3. **Never blanket-stage.** No `git add -A`, `git add .`, `git commit -a`. Explicit paths only,
+   on the days you are alone as well.
+4. **Commit explicit paths too** — `git commit -F <msg> -- <path> …`. A bare `git commit`
+   commits the *index*, so it publishes whatever a sibling has staged.
+5. **Read a shared file's own diff in its own tool call** before committing it —
+   `git diff -- SESSIONS.md`. A pathspec commit cannot subtract a sibling's hunk from a file you
+   both write, so if one is there, **name it in the commit message**. Never `--amend` a shared
+   file.
+6. **Before pushing:** `git fetch`, then `git log @{u}..HEAD` and `git diff --stat @{u}..HEAD`.
+   A foreign commit whose paths sit under a **live** board row → **stop and ask**. An absent row
+   is not proof a session finished; a recent commit of theirs, or their paths dirty in the tree,
+   means live.
+7. **A check that decides whether an action is safe gets its own tool call.** A gate chained
+   into the same shell command as the thing it gates reports after the fact and is not a gate.
+
+**Its honest limit, so nobody trusts it further than it goes.** The window on a sibling's file
+opens when *you write it*, not when you stage it — their `git add <path>` reads the **working
+tree** and never your index. So none of the above stops a sibling publishing your work under
+their commit message. The remedy is **naming what rode along**, not preventing it. Auto mode
+does not change this either way; it just means nobody is asked first.
+
 ### Two environment facts every session below should stop working around
 
 - **GitHub's API is healthy again, 2026-08-17.** A several-hour partial outage 503'd every

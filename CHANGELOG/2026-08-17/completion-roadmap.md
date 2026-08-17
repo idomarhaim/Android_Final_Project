@@ -170,6 +170,48 @@ must grant and neither gates wave 2. It flags the one thing that expires: if
 place the pre-freeze state can be observed, so door 3 should be checked **before** anything
 wipes it.
 
+## Addendum 3 — every brief moved to AUTO MODE, and what that deliberately does not cover
+
+Ido, 2026-08-17: *"I want all the sessions to be in AUTO MODE as long as they verify they are not
+harming other sessions' work."*
+
+**Implemented through the mechanism that already exists, not a new one.** `memory-promotion.md`
+and the mode-signal rule both state that the brief's `Mode` line is the *only* way auto mode
+crosses a session boundary, and that it crosses as Ido's stated intent rather than as a leftover
+marker. He stated the intent, so all five live briefs now carry `mode: auto`. No new rule was
+written and no protocol was altered — a value was set in the field designed to hold it. The 🎬
+offer was made anyway, because the *effect* is a change to when sessions stop and ask.
+
+**The instruction has two halves and the second is the load-bearing one.** *All sessions in auto
+mode* is one line to apply. *As long as they verify they are not harming other sessions' work* is
+seven checks, and they were already scattered across the parallel-sessions and push-precondition
+rules — read the whole Active-claims section (count rows mechanically), claim before first write
+in every repo, never blanket-stage, commit explicit paths because `git commit` commits the index,
+read a shared file's own diff in its own tool call, fetch and read `@{u}..HEAD` before pushing,
+and give a safety check its own tool call. Collected into the roadmap's §🔀 so a session reads
+them as one list rather than deriving them from five places.
+
+**And its honest limit is stated rather than implied**, because a checklist that looks total is
+worse than one that admits its edge: the window on a sibling's file opens when *you write it*,
+not when you stage it — their `git add <path>` reads the working tree, never your index. So none
+of the seven prevents a sibling publishing your work under their commit message. The remedy is
+**naming what rode along**. Auto mode neither worsens nor fixes this; it only means nobody is
+asked first.
+
+**What auto mode explicitly does not grant**, written into both the board note and §🔀 because
+this is where a standing autonomy marker over-reaches: deletions (`#50`'s `ConnectivityMonitor`
+is authorised by its **ticket**, not by the mode) · outward actions (`51-freeze-verify`'s three
+`gh` writes were granted for **that task** and do not widen) · destructive git · PR open/merge,
+remote branch or tag creation and deletion, releases, repo settings · a `rules/`-destined KB
+candidate or one superseding a standing claim.
+
+**One consequence worth noting:** the 🚥 hand-off line's ordinary case inverts. Under normal mode
+condition 1 made `STOP`-on-commit-approval the common outcome; under auto mode a session commits
+itself, so `GO` becomes ordinary and condition 2 — *say it if you held the push* — is now the one
+doing the work. All five briefs were updated to say so; the wording that taught the old default
+would otherwise have survived as a stale instruction, which is the same failure the fallback
+check caught in addendum 1.
+
 ## 🧪 Tests (addendum 2)
 
 **No test layer applies** — briefs, roadmap and board only; no `app/src/` change, no build, no

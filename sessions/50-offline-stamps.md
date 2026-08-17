@@ -1,7 +1,7 @@
 ---
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
-mode: normal
+mode: auto
 status: ready
 issue: 50
 created: 2026-08-17
@@ -78,7 +78,8 @@ and one deletion, with the *why* already argued so nothing needs re-deciding:
   behaviour hedged in the changelog exactly as the ticket hedges it, not asserted.
 - `CHANGELOG/<today>/50-offline-stamps.md` written, index regenerated.
 - Board row released; brief closed to `sessions/done/` with `status: done` in the same
-  commit. Commit on Ido's approval.
+  commit. **Commit and push under AUTO MODE** — run the sibling checklist in the roadmap's §🔀
+  first, and say in your reply that the mode acted.
 
 ## 🚥 Hand-off line — mandatory, the last thing in your final reply
 
@@ -86,9 +87,10 @@ End your final reply with **exactly one** of these headings, below the three fil
 Full definition — the **seven** `GO` conditions, and which reply carries the heading:
 [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 §🚥. Ido must never have to work out for himself whether the next kickoff is safe.
-**In normal mode your commit needs his approval first, so the honest heading is usually
-`STOP` naming that approval *and* the slug that follows it** (condition 1). Name the slug
-either way.
+**This brief runs in AUTO MODE** (`mode: auto`, Ido's standing instruction of 2026-08-17), so
+condition 1 is met by **you having committed**, not by his approval — `GO` is the ordinary case
+here, not the exception. Condition 2 still bites: if you deliberately held the push, say so on
+the line, dated. Name the slug either way.
 
 - **If `48-settings-surface` has not run yet:**
   `## 🚥 GO — NEXT: /kickoff 48-settings-surface`, plus a Lane C session alongside.
