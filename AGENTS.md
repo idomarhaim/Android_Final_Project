@@ -15,7 +15,7 @@ Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/cop
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layered design, data model, data flow.
 - [docs/SETUP.md](docs/SETUP.md) — Firebase / GROQ / OAuth credentials + debug SHA-1.
 - [TODO/TODO.md](TODO/TODO.md) — backlog index (MUST → OPTIONAL → FUTURE).
-- [CHANGELOG/CHANGELOG_README.md](CHANGELOG/CHANGELOG_README.md) — index of days. Entries live at `CHANGELOG/YYYY-MM-DD/<session-label>.md`: **one folder per day, one file per session**, so parallel sessions never write the same file. `SUMMARY.md` in a day folder is written by the first session of a later day.
+- [CHANGELOG/CHANGELOG_README.md](CHANGELOG/CHANGELOG_README.md) — index of days. Entries live at `CHANGELOG/YYYY-MM-DD/<session-label>.md`: **one folder per day, one file per session**, so parallel sessions never write the same file. `SUMMARY.md` in a day folder is written by the first session of a later day. **The day table is generated (2026-08-17) — never hand-edit between the `CHANGELOG-INDEX` markers.** Your row is built from the mandatory `> **Summary:**` line in your *own* file; stage that file, run `scripts\New-ChangelogIndex.ps1 -Staged`, then stage the index. A pre-commit hook refuses a commit the index does not list — a fresh clone installs it with `scripts\Install-GitHooks.ps1`. See [scripts/README.md](scripts/README.md#repo-hygiene-the-changelog-index).
 - [.github/authoring-instructions.md](.github/authoring-instructions.md) — how to write instruction files.
 - [.github/instruction-file-catalog.md](.github/instruction-file-catalog.md) — which instruction file lives where.
 

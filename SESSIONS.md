@@ -17,6 +17,15 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `changelog-index-backfill` | the changelog index died on 2026-08-10 — 46 of 75 session files have no row; adopt the generator + pre-commit gate | `CHANGELOG/CHANGELOG_README.md`, `CHANGELOG/2026-08-17/changelog-index-backfill.md`, `scripts/New-ChangelogIndex.ps1`, `scripts/git-hooks/`, `scripts/Install-GitHooks.ps1`, `scripts/README.md`, `sessions/changelog-index-backfill.md`, `AGENTS.md` (one line, leased) | none — no build, no device | 2026-08-17 |
 
+> 🪝 **NEW SINCE 2026-08-17: this repo has a `pre-commit` hook.** It refuses a commit
+> whose changelog file the generated index does not list. **`.git/hooks` is not
+> version-controlled, so it cannot be claimed here and it is not installed for you** —
+> run `powershell -File scripts\Install-GitHooks.ps1` once per clone. Stage your
+> changelog file **before** regenerating (`New-ChangelogIndex.ps1 -Staged` reads the git
+> index, not the working tree), and give it a `> **Summary:**` line on line 4 — that one
+> line is your row. Recipe in [scripts/README.md](scripts/README.md#repo-hygiene-the-changelog-index);
+> the hook prints it on failure too.
+
 > 🏁 **`51d-dialog-locale` RELEASED 2026-08-17 — `871b7d2`, pushed. Gradle daemon and emulator
 > `Pixel_10_Pro_XL` released.** Account:
 > [`CHANGELOG/2026-08-17/51d-dialog-locale.md`](CHANGELOG/2026-08-17/51d-dialog-locale.md).

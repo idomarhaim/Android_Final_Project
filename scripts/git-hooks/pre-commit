@@ -1,0 +1,35 @@
+#!/bin/sh
+# GoalPilot pre-commit (enforcement layer - fires no matter which agent, or no agent,
+# made the change). Thin caller only: the logic lives in scripts/.
+# Installed into .git/hooks/ by scripts/Install-GitHooks.ps1 (.git/hooks is not
+# version-controlled, so a fresh clone must run that installer once).
+#
+# WHY THIS EXISTS: CHANGELOG/CHANGELOG_README.md was hand-maintained and stopped on
+# 2026-08-10. By 2026-08-17, 46 of 75 session files had no row - including every
+# session from 08-15 and 08-16, the repo's two busiest days. Nobody noticed, because
+# a missing row looks exactly like a quiet day. The index is generated now, and this
+# hook is the half that keeps it that way: a generator nobody is forced to run rots
+# on the same schedule as the hand-written list it replaced.
+#
+# -Staged, not the working tree: a pre-commit gate answers "is THIS COMMIT sound",
+# never "is the working tree tidy". This repo routinely runs parallel sessions
+# (SESSIONS.md), so a sibling's untracked or half-written changelog file must be
+# invisible here - otherwise one session's work in progress freezes everyone else's
+# commit stream. See the -Staged notes in scripts/New-ChangelogIndex.ps1.
+#
+# GoalPilot runs only the changelog check. JARVIS's copy of this hook also calls
+# Sync-AgentAssets.ps1 and Check-KbLinks.ps1; neither script exists in this repo, and
+# a hook that calls a missing script fails open in the confusing direction.
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/New-ChangelogIndex.ps1 -Check -Staged
+if [ $? -ne 0 ]; then
+  echo "pre-commit BLOCKED: CHANGELOG index is stale (a day folder or session file THIS COMMIT does not list)."
+  echo "  fix: git add CHANGELOG/<day>/<session>.md   <-- stage yours FIRST, the generator reads the index"
+  echo "       powershell -File scripts\\New-ChangelogIndex.ps1 -Staged"
+  echo "       git add CHANGELOG/CHANGELOG_README.md"
+  echo "  note: a sibling's untracked or unstaged changelog file is invisible here, by design."
+  echo "        Whole-tree answer: powershell -File scripts\\New-ChangelogIndex.ps1 -Check"
+  exit 1
+fi
+
+exit 0

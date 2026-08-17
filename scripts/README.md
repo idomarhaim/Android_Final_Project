@@ -4,6 +4,10 @@ One-click launchers so you can develop entirely in VS Code and never open the
 project in Android Studio. Everything here uses only the standalone Android SDK
 command-line tools (`emulator.exe`, `adb.exe`) plus the Gradle wrapper.
 
+Two scripts here are **not** launchers — they keep the changelog index honest. See
+[Repo hygiene](#repo-hygiene-the-changelog-index) at the bottom. **On a fresh clone,
+run `powershell -File scripts\Install-GitHooks.ps1` once.**
+
 ## Double-click launchers
 
 | File | What it does |
@@ -251,3 +255,38 @@ system ever runs.
 If you do want Android Studio's Device Manager GUI, open it **without a project**:
 Welcome screen → *More Actions* → *Virtual Device Manager*. No project open means
 no Gradle sync, and therefore no daemon.
+
+## Repo hygiene: the changelog index
+
+Added 2026-08-17. Nothing to do with devices or builds.
+
+| File | What it does |
+|------|--------------|
+| `New-ChangelogIndex.ps1` | Rebuilds the day table in `CHANGELOG/CHANGELOG_README.md` between the `CHANGELOG-INDEX:BEGIN`/`END` markers, from the day folders themselves. |
+| `Install-GitHooks.ps1` | Copies `scripts\git-hooks\*` into `.git\hooks\`. Git does not version `.git\hooks`, so **every clone runs this once.** |
+| `git-hooks\pre-commit` | Refuses a commit whose changelog file the index does not list. |
+
+Both `.ps1` files are **byte-for-byte copies** of `C:\Dev\JARVIS\scripts\`. Keep them
+that way — `Get-FileHash` against the JARVIS copy is the drift check, and editing a
+header comment here would destroy it. If the generator needs a change, change it in
+JARVIS and re-copy. `git-hooks\pre-commit` is **not** a copy: JARVIS's version also
+calls `Sync-AgentAssets.ps1` and `Check-KbLinks.ps1`, which do not exist in this repo.
+
+**Writing a changelog entry — stage your own file first,** because the hook checks the
+git *index*, not the working tree (so a sibling session's untracked changelog file is
+invisible to your commit, by design):
+
+```powershell
+git add CHANGELOG\<day>\<session>.md; `
+powershell -File scripts\New-ChangelogIndex.ps1 -Staged; `
+git add CHANGELOG\CHANGELOG_README.md
+```
+
+Your row's text comes from the mandatory `> **Summary:**` line inside **your own**
+changelog file — one line, no `|`. Skip it and you get a bare link, which is
+deliberate: the generator never invents prose.
+
+**Why this exists:** the index was hand-appended, stopped on 2026-08-10, and by
+2026-08-17 was missing 46 of 75 session files. An index that every session must
+remember to update is a shared singleton, and forgetting it is silent. Full account:
+[`CHANGELOG/2026-08-17/changelog-index-backfill.md`](../CHANGELOG/2026-08-17/changelog-index-backfill.md).
