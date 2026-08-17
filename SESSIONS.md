@@ -15,7 +15,45 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `51d-dialog-locale` | #51 — the shared `LocalContext`-into-`Dialog` wrapper, and every call site converted to it | `app/src/main/java/com/idomarhaim/goalpilot/ui/locale/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/{challenges,dashboard,goals,lifeareas,social}/` *(dialog plumbing only — no string sweep)*, `app/src/test/java/com/idomarhaim/goalpilot/locale/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/locale/`, `CHANGELOG/2026-08-17/51d-dialog-locale.md`, `kb-candidates/2026-08-17-51d-dialog-locale.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-17 |
+> 🏁 **`51d-dialog-locale` RELEASED 2026-08-17 — `871b7d2`, pushed. Gradle daemon and emulator
+> `Pixel_10_Pro_XL` released.** Account:
+> [`CHANGELOG/2026-08-17/51d-dialog-locale.md`](CHANGELOG/2026-08-17/51d-dialog-locale.md).
+>
+> **JVM unit 356 / 0 · instrumented 63 / 0 · `assembleDebug` green.**
+>
+> ✅ **`51c`'s app-wide dialog defect IS FIXED — all 22 window sites, not just analytics.**
+> `ui/locale/LocaleAwareWindows.kt` holds `InheritAppLocale` plus five façades
+> (`AppAlertDialog`, `AppDialog`, `AppDropdownMenu`, `AppModalBottomSheet`,
+> `AppDatePickerDialog`). `feature/analytics/`'s private `InheritLocale` is deleted.
+>
+> ⚠️ **YOU CAN NO LONGER CALL A RAW `AlertDialog`/`Dialog`/`DropdownMenu`/`ModalBottomSheet`
+> OUTSIDE `ui/locale/`** — `DialogLocaleGuardTest` fails the build. Use the `App*` wrapper.
+> This matters most to the **eight packages still owed #51's literal sweep**: turning
+> `Text("Cancel")` into `Text(stringResource(…))` inside an unwrapped dialog reintroduces the
+> defect and looks perfect in an English render.
+>
+> 📌 **THE RULE, WHICH IS WORTH MORE THAN THE FIX — correct RTL mirroring is NOT evidence that
+> the strings are localized.** Direction and language ride different rails: direction crosses a
+> window boundary, language does not. So a broken dialog mirrors *flawlessly* while speaking
+> English, and looks more finished than a half-done screen. `Observed:` now twice, two layers
+> apart, with **two different causes** — `values-he` (resource bucket) and this (composition).
+> Pinned as an executable assertion, not a comment:
+> `AppLocaleDialogTest.aBrokenDialogMirrorsCorrectlyWhileSpeakingTheWrongLanguage` reads
+> direction `Rtl` and English strings off one dialog in one frame.
+>
+> ⚠️ **A guard proven only by a break that does NOT compile has proven nothing.** Reintroducing a
+> raw `AlertDialog(` after its import was gone went red at `compileDebugKotlin` — the guard never
+> ran. Restoring the import (as an IDE would) made the defect compile, and only then did the
+> guard fail and name the line. Both states were run; so were revert and re-break.
+>
+> ⚠️ **Almost nothing looks different today, deliberately.** Outside `feature/analytics/` every
+> dialog is still hardcoded English literals, so there is nothing yet for the wrapper to
+> redirect. The change is prophylactic; its value lands with each package's sweep.
+>
+> 📥 **3 KB candidates written, NONE drained** — `kb-candidates/2026-08-17-51d-dialog-locale.md`.
+> Entry 1 is **always-ask**: it narrows a standing claim in
+> `kb/dev/jvm-vs-android-locale-codes.md` §2, which currently says the split signal *"points at
+> the resource bucket"* — now known to be right only half the time it has been used.
 
 > 🏁 **`resource-guard-inputs` RELEASED 2026-08-16 — `c477557`. The Gradle daemon is released.**
 > Account: [`CHANGELOG/2026-08-16/resource-guard-inputs.md`](CHANGELOG/2026-08-16/resource-guard-inputs.md).
