@@ -16,6 +16,7 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `51e-sweep-components` | #51's literal sweep for `ui/components/` — the shared package, ahead of any remaining feature package | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/main/res/values/components_strings.xml`, `app/src/main/res/values-iw/components_strings.xml`, `app/src/test/java/com/idomarhaim/goalpilot/resources/AnalyticsLiteralSweepTest.kt`, `app/src/androidTest/.../ComponentsLocale*`, `CHANGELOG/2026-08-17/51e-sweep-components.md`, `kb-candidates/2026-08-17-51e-sweep-components.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-17 |
+| `changelog-index-backfill` | the changelog index died on 2026-08-10 — 46 of 75 session files have no row; adopt the generator + pre-commit gate | `CHANGELOG/CHANGELOG_README.md`, `CHANGELOG/2026-08-17/changelog-index-backfill.md`, `scripts/New-ChangelogIndex.ps1`, `scripts/git-hooks/`, `scripts/Install-GitHooks.ps1`, `scripts/README.md`, `sessions/changelog-index-backfill.md`, `AGENTS.md` (one line, leased) | none — no build, no device | 2026-08-17 |
 
 > 🏁 **`51d-dialog-locale` RELEASED 2026-08-17 — `871b7d2`, pushed. Gradle daemon and emulator
 > `Pixel_10_Pro_XL` released.** Account:
