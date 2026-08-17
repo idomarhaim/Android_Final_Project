@@ -15,6 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `51d-dialog-locale` | #51 — the shared `LocalContext`-into-`Dialog` wrapper, and every call site converted to it | `app/src/main/java/com/idomarhaim/goalpilot/ui/locale/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/{challenges,dashboard,goals,lifeareas,social}/` *(dialog plumbing only — no string sweep)*, `app/src/test/java/com/idomarhaim/goalpilot/locale/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/locale/`, `CHANGELOG/2026-08-17/51d-dialog-locale.md`, `kb-candidates/2026-08-17-51d-dialog-locale.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-17 |
+
 > 🏁 **`resource-guard-inputs` RELEASED 2026-08-16 — `c477557`. The Gradle daemon is released.**
 > Account: [`CHANGELOG/2026-08-16/resource-guard-inputs.md`](CHANGELOG/2026-08-16/resource-guard-inputs.md).
 > Brief closed to [`sessions/done/resource-guard-inputs.md`](sessions/done/resource-guard-inputs.md).
