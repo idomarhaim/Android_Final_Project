@@ -16,6 +16,37 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 
+> 🏁 **`completion-roadmap` RELEASED 2026-08-17.** No singletons held (no build, no device,
+> no `app/src/` change). Account:
+> [`CHANGELOG/2026-08-17/completion-roadmap.md`](CHANGELOG/2026-08-17/completion-roadmap.md).
+>
+> 🛑 **#51 (Hebrew/RTL) IS DEFERRED BY IDO'S DECISION, 2026-08-17 — functionality first.**
+> It stays **OPEN** and **nothing is reverted**: `values-iw/`, `Bidi.kt`,
+> `LocaleAwareWindows.kt`, every locale test and both swept packages stay exactly as they
+> are. What stops is the per-package literal sweep. `SWEPT_PACKAGES` is frozen at
+> `feature/analytics` + `ui/components`; the other eight are **deferred, not forgotten**.
+>
+> ✅ **YOU MAY WRITE PLAIN ENGLISH LITERALS IN ANY UNSWEPT PACKAGE.** The sweep guard is
+> opt-in — absent from `SWEPT_PACKAGES` means *unswept, not failing*. Do **not** add your
+> package to that list as a favour; that opts you into work that is deliberately parked.
+>
+> ⚠️ **`DialogLocaleGuardTest` STAYS ARMED.** It is app-wide and unaffected by the
+> deferral: a raw `AlertDialog(` / `Dialog(` / `DropdownMenu(` / `ModalBottomSheet(`
+> outside `ui/locale/` still fails the build. Use the `App*` façades. It costs one habit
+> and it is what stops the rework when #51 resumes.
+>
+> 📋 **The order to work in is [`TODO/TODO_MUST/Completion-Roadmap.TODO.must.md`](TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)**,
+> and the briefs are in `sessions/`. **`hebrew-defer-freeze` runs first and alone** — until
+> its suspension block is in `AGENTS.md`, §0.8 (*a design is not finished until it has been
+> seen in Hebrew*) still reads as a precondition of every screen ticket and will re-block you.
+>
+> ⚠️ **Hebrew is still reachable in the app until that session runs.** `LanguagePicker` is
+> live in `ProfileScreen` and `AppLanguage.DEFAULT = SYSTEM`, so a Hebrew-locale device gets
+> the half-Hebrew UI **without touching the picker**. That is the defect wave 1 closes.
+>
+> 📱 **`Pixel_10_Pro_XL` is signed out** — 51e's instrumented run uninstalled the app.
+> Reserve `Pixel_10_Pro_XL_B` for instrumented runs so they stop wiping account A.
+
 > 🏁 **`changelog-index-backfill` RELEASED 2026-08-17 — `a1aa041`.** No singletons held
 > (no build, no device). Account:
 > [`CHANGELOG/2026-08-17/changelog-index-backfill.md`](CHANGELOG/2026-08-17/changelog-index-backfill.md);
