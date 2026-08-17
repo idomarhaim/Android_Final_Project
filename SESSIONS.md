@@ -15,6 +15,9 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `kb-drain-51d` (working in `C:\Dev\JARVIS`) | Draining `51d-dialog-locale`'s KB candidates into the central bundle; this repo is touched **only** to close out the candidate file | `kb-candidates/2026-08-17-51d-dialog-locale.md` | none | 2026-08-17 |
+| `51e-sweep-components` | #51's literal sweep for `ui/components/` — the shared package, ahead of any remaining feature package | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/main/res/values/components_strings.xml`, `app/src/main/res/values-iw/components_strings.xml`, `app/src/test/java/com/idomarhaim/goalpilot/resources/AnalyticsLiteralSweepTest.kt`, `app/src/androidTest/.../ComponentsLocale*`, `CHANGELOG/2026-08-17/51e-sweep-components.md`, `kb-candidates/2026-08-17-51e-sweep-components.md` | Gradle daemon, emulator `Pixel_10_Pro_XL` | 2026-08-17 |
+
 > 🏁 **`51d-dialog-locale` RELEASED 2026-08-17 — `871b7d2`, pushed. Gradle daemon and emulator
 > `Pixel_10_Pro_XL` released.** Account:
 > [`CHANGELOG/2026-08-17/51d-dialog-locale.md`](CHANGELOG/2026-08-17/51d-dialog-locale.md).
