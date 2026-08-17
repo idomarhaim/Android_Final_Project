@@ -16,6 +16,7 @@ But it is **cross-repo**, so it owes a row on **two** boards.
 1. [AGENTS.md](../AGENTS.md)
 2. [kb-candidates/2026-08-17-51e-sweep-components.md](../kb-candidates/2026-08-17-51e-sweep-components.md) — 4 candidates
 3. [kb-candidates/2026-08-17-changelog-index-backfill.md](../kb-candidates/2026-08-17-changelog-index-backfill.md) — 3 candidates
+4. [kb-candidates/2026-08-17-completion-roadmap.md](../kb-candidates/2026-08-17-completion-roadmap.md) — 2 candidates, added after this brief was written. Its own deviation note explains why AUTO MODE's commit-trigger drain routed here instead: both are cross-repo, which is a session and not a step.
 4. `C:\Dev\JARVIS\SESSIONS.md` — read the **whole** Active-claims section before your first write there
 5. [CHANGELOG/2026-08-17/51d-dialog-locale.md](../CHANGELOG/2026-08-17/51d-dialog-locale.md) — the precedent drain (`dad8f12` → JARVIS `74b00c2`)
 

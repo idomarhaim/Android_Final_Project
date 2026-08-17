@@ -12,7 +12,10 @@ created: 2026-08-17
 ## Read first
 
 1. [AGENTS.md](../AGENTS.md)
-2. `gh api repos/:owner/:repo/issues/48 --jq '.body'` — the full ticket (GraphQL is 503'ing; REST works)
+2. `gh issue view 48` — the full ticket. **GitHub's API is healthy again** as of 2026-08-17 (a
+   several-hour partial outage 503'd every GraphQL call while this brief was written); the
+   `gh api repos/:owner/:repo/issues/48 --jq '.body'` REST form also works and needs no
+   workaround either way.
 3. [sessions/done/hebrew-defer-freeze.md](done/hebrew-defer-freeze.md) — supplies `AppLanguage.OFFERED`, which this screen's Language control must use
 4. [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 

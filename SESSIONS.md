@@ -52,6 +52,20 @@ before your first write. Normative rule:
 >
 > 📱 **`Pixel_10_Pro_XL` is signed out** — 51e's instrumented run uninstalled the app.
 > Reserve `Pixel_10_Pro_XL_B` for instrumented runs so they stop wiping account A.
+>
+> ✅ **GITHUB'S API IS HEALTHY AGAIN — 2026-08-17. Stop working around it.** A several-hour
+> partial outage 503'd every **GraphQL** call (`gh issue view`, `gh pr view`, Projects) while
+> REST stayed up, so briefs written that afternoon told sessions to use
+> `gh api repos/:owner/:repo/…` instead. Both halves work now; the two live briefs have been
+> corrected, and `sessions/done/` keeps the old wording because it is an archived record.
+> ⚠️ **This does NOT unblock the three owed `#51` writes.** Those were denied by the **harness
+> classifier**, not by GitHub — a different blocker that looked identical from the outside.
+> They need Ido's permission and they live in
+> [`sessions/51-freeze-verify.md`](sessions/51-freeze-verify.md) with the exact commands.
+>
+> ⚠️ **`adb` and `gh` writes may be denied by the harness classifier**, as they were for
+> `hebrew-defer-freeze`. That is an outward-action gate: report the command as owed on your 🚥
+> line and let Ido decide. Never report an attempted-and-denied step as done.
 
 > 🏁 **`changelog-index-backfill` RELEASED 2026-08-17 — `a1aa041`.** No singletons held
 > (no build, no device). Account:

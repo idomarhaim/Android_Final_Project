@@ -12,7 +12,10 @@ created: 2026-08-17
 ## Read first
 
 1. [AGENTS.md](../AGENTS.md)
-2. `gh api repos/:owner/:repo/issues/50 --jq '.body'` — the full ticket (GraphQL is 503'ing; REST works)
+2. `gh issue view 50` — the full ticket. **GitHub's API is healthy again** as of 2026-08-17 (a
+   several-hour partial outage 503'd every GraphQL call while this brief was written); the
+   `gh api repos/:owner/:repo/issues/50 --jq '.body'` REST form also works and needs no
+   workaround either way.
 3. [CHANGELOG/2026-08-15/c20-derived-state.md](../CHANGELOG/2026-08-15/c20-derived-state.md) — the projection function this rides
 4. [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 

@@ -127,3 +127,51 @@ exhibits. A fresh-context agent reading only the briefs is the right instrument 
 deliberately not used: that is a subagent, `waive` does not grant the 🧩 gate, and Ido was
 not asked. `Untested:` no session has run under this requirement; first real evidence
 arrives with wave 1.
+
+---
+
+## Addendum 2 — wave 1's evidence, the GitHub correction, and a session for its residue
+
+Appended after `da20225`, once `hebrew-defer-freeze` released (`7baf120`, board clear, tree
+clean).
+
+**The 🚥 requirement earned its keep on its first run, and in the shape it was hardest to
+predict.** Wave 1 ended `STOP`, correctly, for a reason neither addendum above anticipated:
+the harness classifier denied `adb` and `gh` writes, so two of six steps could not run. A
+session that reported *"all done"* on the four it managed would have handed Ido an unverified
+freeze; the heading made the incompleteness the last thing he read. `Observed:` first real
+evidence, and it argues the two-shape design was enough — no third heading was wanted.
+
+**Wave 1 found a third door the brief did not name, which is worth recording as a pattern.**
+The brief named two ways into a half-Hebrew app (the picker, and `SYSTEM` resolving the device
+locale) and there were three: **persistence**. `AppPreferencesRepositoryImpl` read
+`AppLanguage.fromId(stored)`, and `fromId` is faithful — it returns `HEBREW` for a stored
+`"he"` however the picker is filtered. So the freeze would have held on every device **except
+the ones that had actually used the feature**, which is precisely Ido's, and precisely where
+the render pass was going to happen. The pattern: enumerating *entry points to a state* and
+missing the one that is **already-stored state** rather than a live input.
+
+**The GitHub correction Ido asked for.** The API recovered on 2026-08-17. The two live briefs
+(`50-offline-stamps`, `48-settings-surface`) now say so and point at plain `gh issue view`;
+`sessions/done/hebrew-defer-freeze.md` keeps the old wording deliberately, because a closed
+brief is an archived record of what a session was given, not a live instruction.
+
+**The correction that matters more than the fix:** *GitHub is healthy* and *the three #51
+writes can now be posted* are **different claims**, and only the first is true. Those writes
+were denied by the **harness classifier** — an outward-action gate — not by the outage. The two
+blockers were indistinguishable from the outside for several hours, and recording them as one
+thing would have left a session believing a permission problem had cured itself. Stated
+explicitly on the board and in the roadmap for that reason.
+
+**New brief: `sessions/51-freeze-verify.md`** carries wave 1's residue — the Hebrew-device
+render pass and the three writes — as its own short session, because both need permissions Ido
+must grant and neither gates wave 2. It flags the one thing that expires: if
+`Pixel_10_Pro_XL` still holds a stored `"he"` from 51e's Hebrew render, that device is the only
+place the pre-freeze state can be observed, so door 3 should be checked **before** anything
+wipes it.
+
+## 🧪 Tests (addendum 2)
+
+**No test layer applies** — briefs, roadmap and board only; no `app/src/` change, no build, no
+device. Wave 1's own numbers (JVM unit 364/0, `assembleDebug` green) are recorded in
+`CHANGELOG/2026-08-17/hebrew-defer-freeze.md`, not claimed here.

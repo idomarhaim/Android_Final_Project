@@ -25,11 +25,22 @@ which is exactly the part that can wait.
 
 ## The order
 
-### Wave 1 — runs **alone**, nothing else may run beside it
+### Wave 1 — ✅ **DONE 2026-08-17, `7baf120`** (ran alone, as required)
 
-| | Brief | Why it must be first |
+| | Brief | Status |
 |---|---|---|
-| 1 | `/kickoff hebrew-defer-freeze` | It withholds Hebrew at the picker and **suspends §0.8 in writing**. Until that block is in AGENTS.md, every feature session reads *"a design is not finished until it has been seen in Hebrew"* and re-blocks itself. It also touches `AGENTS.md`, `docs/`, `domain/model/`, `ui/locale/` and `ui/components/` — too wide to share. |
+| 1 | `/kickoff hebrew-defer-freeze` | **Steps 1–4 shipped.** `AppLanguage.OFFERED` is the single switch and it closed **three** doors, not the two the brief named — the third was **persistence**, where `AppPreferencesRepositoryImpl` read `AppLanguage.fromId(stored)` and `fromId` faithfully returns `HEBREW` for a stored `"he"` whatever the picker offers. So the freeze would have held everywhere except devices that had actually used Hebrew — including Ido's. Closed by `offeredFromId` on the preferences read path only; `fromId` stays whole because #51 needs the full id round-trip. §0.8's suspension block is in `AGENTS.md` at HEAD. JVM unit **364/0** (+6). |
+| 2 | `/kickoff 51-freeze-verify` | **Owed — steps 5 and 6 never ran**, both because the harness classifier denied `adb` and `gh` writes. The render pass proving *"the app is uniformly English"* has not happened, and three #51 writes are unposted. **Ido granted both permissions on 2026-08-17**, so it is runnable. Short session. |
+
+**Run `51-freeze-verify` BEFORE `48-settings-surface`** — revised 2026-08-17 once the
+permissions were granted. It does not *gate* wave 2 logically (nothing in wave 2 reads the
+Hebrew path, and the freeze is proven by six JVM tests), but **the evidence it needs expires**:
+if `Pixel_10_Pro_XL` still holds a stored `"he"` from 51e's Hebrew render, that device is the
+only place the pre-freeze state can be observed — and `48-settings-surface` is the session that
+would boot and reinstall over it. Ordering costs nothing; losing the observation is permanent.
+
+`50-offline-stamps` needs no device, so it may run **alongside** `51-freeze-verify` — the two
+contend only on the Gradle daemon, which the board's singleton column already serialises.
 
 ### Wave 2 — three lanes, genuinely disjoint
 
@@ -39,8 +50,9 @@ which is exactly the part that can wait.
 | B | `/kickoff 48-settings-surface` | `feature/profile/`, new settings screen, `ui/` | yes + device |
 | C | `/kickoff docs-hygiene-backfill` **or** `/kickoff kb-drain-51e-backfill` | `scripts/`, `CHANGELOG/`, `kb-candidates/`, `C:\Dev\JARVIS\kb\` | **no** |
 
-**Do A and B in either order or together; do C alongside whichever.** Lane C is the
-free one — it compiles nothing, so it never contends.
+**Order: `51-freeze-verify` → A → B, with C alongside any of them.** A and B are disjoint and
+could run together, but B must not precede `51-freeze-verify` (see the expiring-evidence note
+above). Lane C is the free one — it compiles nothing, so it never contends with anything.
 
 ### Wave 3 — the add-flow cluster, **strictly sequential**
 
@@ -144,6 +156,20 @@ the same either way**, so it is never left for Ido to look up.
 | `48-settings-surface` | `/kickoff 50-offline-stamps` if it has not run; if it has, `STOP` — the wave-3 briefs are owed |
 | `docs-hygiene-backfill` | `/kickoff kb-drain-51e-backfill`, and whatever build lane is free |
 | `kb-drain-51e-backfill` | `/kickoff docs-hygiene-backfill`, and whatever build lane is free |
+| `51-freeze-verify` | whichever wave-2 slug is still unrun; if wave 2 is finished, `STOP` — the wave-3 briefs are owed |
+
+### Two environment facts every session below should stop working around
+
+- **GitHub's API is healthy again, 2026-08-17.** A several-hour partial outage 503'd every
+  **GraphQL** call — `gh issue view`, `gh pr view`, Projects — while REST kept working, which is
+  why briefs written that afternoon told sessions to use `gh api repos/:owner/:repo/...`. Both
+  halves work now; use plain `gh issue view` and stop reaching for the REST form as a
+  workaround. **This does NOT unblock the three owed #51 writes** — those were denied by the
+  **harness classifier**, not by GitHub, and they need Ido's permission. Two different blockers
+  that happened to look alike.
+- **`adb` and `gh` writes may be denied by the harness classifier.** Wave 1 hit both. That is an
+  outward-action gate and **not** something to route around: report the exact command as owed,
+  on the 🚥 line, and let Ido decide. A step attempted and denied is never reported as done.
 
 ### How this wording was checked — Ido waived the walkthrough, so the mechanical half ran
 
