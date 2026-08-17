@@ -69,10 +69,17 @@ the end of Wave 2, against HEAD.
 ## 🚥 Every session ends by telling Ido whether he may proceed — this is mandatory
 
 **Ido's instruction, 2026-08-17.** He should never have to work out for himself whether
-the next `/kickoff` is safe. So **the last thing in every session's final reply** — below
-the three file lists, below `## ❓ Questions ready`, below any `## ⏳ WAITING` banner — is
-**exactly one** of these two headings. Not a sentence in the body, not an inference from
-the status block. A heading.
+the next `/kickoff` is safe. So **the last thing in the reply that reports the unit
+finished or abandoned** — below the three file lists, below `## ❓ Questions ready`, below
+any `## ⏳ WAITING` banner — is **exactly one** of these two headings. Not a sentence in
+the body, not an inference from the status block. A heading.
+
+**Which reply, exactly — because "final reply" was too loose.** It goes on the reply that
+**closes the unit of work**, and on no other. **Not** on a mid-session progress turn, and
+**not** on a turn that only answered a question or ran a read-only check. A session that
+did no work has nothing to hand over, and a 🚥 heading on such a turn is noise that
+teaches Ido to skim past the one place it matters. If you are unsure whether your turn
+closes the unit, it does not.
 
 ```
 ## 🚥 GO — NEXT: /kickoff <slug>
@@ -81,20 +88,31 @@ the status block. A heading.
 ## 🚥 STOP — DO NOT KICKOFF YET — <what must happen first, and whose move it is>
 ```
 
-**`GO` requires all six. Any one missing makes it `STOP`.**
+**`GO` requires all seven. Any one missing makes it `STOP`.**
 
 1. **Your commit landed** — not "ready to commit", not "awaiting approval". Held on Ido's
-   approval is a `STOP`, and the next line says so: *needs your OK to commit first*.
-2. **Your board row is released** on `SESSIONS.md`, and your brief is closed to
+   approval is a `STOP`, and the next line says so: *needs your OK to commit first, then
+   GO to `<slug>`*. **In normal mode this is the ordinary case, not the exception**, so
+   most sessions will end on a `STOP` naming the commit approval — and the same line
+   already names the slug that follows, so Ido's *"yes, commit"* is the whole hand-off.
+2. **Your commit is *pushed*, or you say plainly that it is not.** Added 2026-08-17 by the
+   fallback check below, which found this missing against a real session: `51e-sweep-components`
+   had a landed commit, a released row, released singletons and a green suite — it would
+   have scored `GO` on the original six conditions **while its push was held on Ido's
+   decision.** The next session would then build on unpublished work. An unpushed commit
+   is not automatically a `STOP` — a held push is often correct — but it must be **stated
+   on the 🚥 line**, dated, with what is holding it: `GO — NEXT: /kickoff <slug>; note: 1
+   commit unpushed, held on <reason>, still unpublished as of <check>`.
+3. **Your board row is released** on `SESSIONS.md`, and your brief is closed to
    `sessions/done/` with `status: done` in the same commit.
-3. **Your singletons are released** — Gradle daemon, and the emulator by name. A session
+4. **Your singletons are released** — Gradle daemon, and the emulator by name. A session
    that still holds the daemon cannot hand over.
-4. **Nothing you did is knowingly broken** — tests green at every layer the project has,
+5. **Nothing you did is knowingly broken** — tests green at every layer the project has,
    or explicitly stated as not applicable.
-5. **The next brief's preconditions are actually met** — read them, don't assume. If your
+6. **The next brief's preconditions are actually met** — read them, don't assume. If your
    work was supposed to supply something (`hebrew-defer-freeze` supplies
    `AppLanguage.OFFERED`; the AGENTS.md suspension block), confirm it exists at HEAD.
-6. **No `## ⏳ WAITING` or `## 📣 UNPUBLISHED` banner is open** in your own reply. If you
+7. **No `## ⏳ WAITING` or `## 📣 UNPUBLISHED` banner is open** in your own reply. If you
    are waiting on a sibling, that is a `STOP` even though the wait clears itself — Ido
    starting the next session on top of a contended file is the thing this prevents.
 
@@ -115,13 +133,50 @@ ends with:
 
 ### The per-session answers, so no session has to derive them
 
-| Session | On success, `GO` to |
+**The slug each session names.** Whether the heading is `GO` or `STOP` depends on the seven
+conditions — in normal mode it is usually `STOP` on the commit approval — but **the slug is
+the same either way**, so it is never left for Ido to look up.
+
+| Session | Names this slug |
 |---|---|
 | `hebrew-defer-freeze` | `/kickoff 50-offline-stamps` **or** `/kickoff 48-settings-surface`; plus one Lane C alongside |
 | `50-offline-stamps` | `/kickoff 48-settings-surface` if it has not run; if it has, `STOP` — the wave-3 briefs are owed |
 | `48-settings-surface` | `/kickoff 50-offline-stamps` if it has not run; if it has, `STOP` — the wave-3 briefs are owed |
 | `docs-hygiene-backfill` | `/kickoff kb-drain-51e-backfill`, and whatever build lane is free |
 | `kb-drain-51e-backfill` | `/kickoff docs-hygiene-backfill`, and whatever build lane is free |
+
+### How this wording was checked — Ido waived the walkthrough, so the mechanical half ran
+
+Ido answered the 🎬 offer with **`waive`** on 2026-08-17: the gate was considered and
+refused, which closes the *judgment* question (is this the behaviour he wants — yes, he
+asked for it) and leaves the *mechanical* half owed. Run against the two recorded instances
+of the failure it addresses, which are the only two sessions on the board that ended with a
+hand-off decision in play:
+
+| Instance | Should it fire? | Did it? |
+|---|---|---|
+| `changelog-index-backfill`, 2026-08-17 — all done, committed **and pushed**, row released, one out-of-scope defect left open | `GO` | **Yes, correctly.** The one open defect is another subsystem's and blocks no kickoff. |
+| `51e-sweep-components`, 2026-08-17 — commit landed, row released, singletons released, 358/0 and 70/0 green, **but push held** and the #51 comment owed | `GO` **with the held push stated** | **No — it scored a bare `GO`.** The original six conditions never mentioned publication, so a session would have handed over while its work sat unpushed. **This is what condition 2 was added for.** |
+
+**And the half that cannot be faked — where it must stay silent.** The original wording said
+*"every session's final reply"*, which fires on a mid-session progress turn and on a turn
+that only answered a question. Three replies in the very conversation that produced this
+document were pure question-answering with no work done; a 🚥 heading on each would have
+been noise, and noise is what teaches Ido to skim past the heading on the one turn it
+matters. Hence the *reply that closes the unit of work* narrowing above.
+
+**Necessity, since a waived gate still owes it:** Ido asked for this directly, and the
+transcript shows him deriving the answer by hand — *"is development stuck"*, *"can #51 run
+in parallel"*, *"which order and what can I run at once"*. The requirement removes a
+derivation he was already performing, so it is not speculative ceremony.
+
+**What this check could NOT test, stated rather than glossed:** the corpus is two instances,
+both from the same day, and **both the wording and the corpus were authored by the same
+session** — so it cannot detect a failure mode neither instance exhibits. A fresh-context
+agent reading only the briefs would be the right instrument, and it is deliberately not
+used: that is a subagent, `waive` does not grant the 🧩 gate, and Ido has not been asked.
+`Untested:` no session has yet run under this requirement; the first real evidence arrives
+with wave 1.
 
 ---
 

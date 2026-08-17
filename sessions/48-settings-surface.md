@@ -89,9 +89,12 @@ decisions below are already taken and are not to be re-argued.
 ## 🚥 Hand-off line — mandatory, the last thing in your final reply
 
 End your final reply with **exactly one** of these headings, below the three file lists.
-Full definition and the six `GO` conditions:
+Full definition — the **seven** `GO` conditions, and which reply carries the heading:
 [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md)
 §🚥. Ido must never have to work out for himself whether the next kickoff is safe.
+**In normal mode your commit needs his approval first, so the honest heading is usually
+`STOP` naming that approval *and* the slug that follows it** (condition 1). Name the slug
+either way.
 
 - **If `50-offline-stamps` has not run yet:**
   `## 🚥 GO — NEXT: /kickoff 50-offline-stamps`, plus a Lane C session alongside.

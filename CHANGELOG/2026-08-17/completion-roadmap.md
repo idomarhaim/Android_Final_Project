@@ -88,3 +88,42 @@ skipped.
 
 New: five briefs under `sessions/`, `TODO/TODO_MUST/Completion-Roadmap.TODO.must.md`,
 this file. Modified: `SESSIONS.md` (own claim row).
+
+---
+
+## Addendum — the waived walkthrough's fallback found two real defects in the 🚥 wording
+
+Appended after `9c19b69`. Ido answered the 🎬 offer with **`waive`**, which closes the
+judgment half and leaves the mechanical half owed: run the drafted wording against every
+recorded instance of the failure it addresses, then check necessity. Two instances existed —
+the only two sessions on the board that ended with a hand-off decision in play — and the
+run was not a formality.
+
+**Defect 1 — publication was missing from the conditions, and a real session proves it.**
+`51e-sweep-components` had a **landed commit, a released row, released singletons and a
+green suite (358/0, 70/0)**, so it scored a bare `GO` on the original six conditions —
+**while its push was held on Ido's decision.** The next session would have started on
+unpublished work. Fixed as condition 2: an unpushed commit is not automatically a `STOP`,
+but it must be stated on the line, dated, with what holds it. `changelog-index-backfill`,
+which *was* pushed, correctly scored `GO` — so the check discriminates rather than merely
+firing.
+
+**Defect 2 — the silence half, which is the one that cannot be faked.** The wording said
+*"every session's final reply"*, which fires on a mid-session progress turn and on a turn
+that only answered a question. **Three replies in the very conversation that produced this
+document** were pure question-answering with no work done. A 🚥 heading on each is noise,
+and noise is what teaches Ido to skim past the heading on the turn it matters. Narrowed to
+*the reply that closes the unit of work*, with an explicit *if unsure, it does not*.
+
+**A third, smaller one, found by re-reading rather than by the corpus:** every brief said
+*"On success: `GO`"*, but in normal mode the commit needs Ido's approval, so **`STOP` is the
+ordinary case, not the exception** — and five briefs plus a table header were quietly
+teaching the wrong default. All six sites now say the slug is named either way; only the
+heading changes.
+
+**What the fallback could not test.** The corpus is two instances from one day, and the
+wording and the corpus share an author, so it cannot see a failure mode neither instance
+exhibits. A fresh-context agent reading only the briefs is the right instrument and was
+deliberately not used: that is a subagent, `waive` does not grant the 🧩 gate, and Ido was
+not asked. `Untested:` no session has run under this requirement; first real evidence
+arrives with wave 1.
