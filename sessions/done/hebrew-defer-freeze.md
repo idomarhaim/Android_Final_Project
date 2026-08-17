@@ -2,10 +2,18 @@
 repo: c:\Dev\Android_Final_Project
 branch: feat/goalpilot-implementation
 mode: normal
-status: active
+status: done
 issue: 51
 created: 2026-08-17
 ---
+
+> **DONE 2026-08-17.** Account: [`CHANGELOG/2026-08-17/hebrew-defer-freeze.md`](../CHANGELOG/2026-08-17/hebrew-defer-freeze.md).
+> Ran under `AUTO MODE` (Ido's message opened with it; this session's message beats the
+> `mode: normal` above). Steps 1–4 done, plus a **third door** the brief did not name —
+> `"he"` persisted in SharedPreferences before the freeze, closed by `AppLanguage.offeredFromId`.
+> **Steps 5 and 6 could NOT run:** `gh` writes and `adb` were both denied by the harness
+> classifier, so all three `#51` GitHub writes are still owed and the Hebrew-device render
+> pass never happened. See the changelog §5 and §6, and `SESSIONS.md`'s release row.
 
 # Freeze #51 behind a switch, and unblock every feature ticket
 

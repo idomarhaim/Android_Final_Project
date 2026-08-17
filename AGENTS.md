@@ -4,6 +4,51 @@
 
 Cross-agent entry point. Read this first. GitHub Copilot also loads `.github/copilot-instructions.md` (a thin pointer to this file).
 
+## 🛑 §0.8 is suspended — Hebrew is deferred, and you are not blocked on it
+
+**Ido's decision, 2026-08-17.** Time constraints: **all functionality must work before
+Hebrew.** [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) is parked
+**OPEN** and **nothing is reverted**.
+
+**If you are here because `docs/PRODUCT_v0.3.md` §0.8 says *"a design is not finished until
+it has been seen in Hebrew"* — that sub-rule does not apply to your ticket.** It is the one
+sentence that made every screen ticket wait on `#51`, and this block is what suspends it.
+A design is finished, for now, when it has been seen in **English**. §0.8's other two
+sub-rules (one chip may not carry two axes; form and words before iconography) are
+untouched and still bind — neither was ever about language.
+
+### What this permits
+
+- ✅ **Write plain English literals in any unswept package.** `AnalyticsLiteralSweepTest`
+  is **opt-in**: it reads only `SWEPT_PACKAGES`, frozen at `feature/analytics` +
+  `ui/components`, and a package absent from that list is *unswept*, not failing.
+- ✅ **Ship a screen without a Hebrew render pass.** Verify it in English and move on.
+- ❌ **Do not add your package to `SWEPT_PACKAGES` as a favour.** That opts it into work
+  that is deliberately parked, and the build then fails on the literals this block just
+  told you to write.
+
+### What it does NOT relax
+
+- ⚠️ **`DialogLocaleGuardTest` stays armed.** It is app-wide and unaffected: a raw
+  `AlertDialog(` / `Dialog(` / `DropdownMenu(` / `ModalBottomSheet(` outside `ui/locale/`
+  still fails the build. Use the `App*` façades. It costs one habit, and it is what stops
+  a rework when `#51` resumes — the defect it guards is invisible in an English render.
+- ⚠️ **Delete nothing.** `values-iw/`, `Bidi.kt`, `LocaleAwareWindows.kt`, every `*_strings.xml`,
+  the `locale/` suites, `AppLanguage.HEBREW` and `GoalCategory.label` all stay. Five sessions
+  of infrastructure is parked ready to resume, not abandoned; deletions are always-ask anyway.
+
+### How Hebrew is actually withheld
+
+`AppLanguage.OFFERED` (`domain/model/AppLanguage.kt`) is the single switch, and it closes
+three doors — the picker iterates it, `AppLocale`'s `SYSTEM` branch clamps an unoffered
+**device** locale to English through `clampToOffered`, and the preferences read path clamps
+a `"he"` stored before the freeze through `offeredFromId`. **Resuming `#51` is putting
+`HEBREW` back in that one list.**
+
+**Order of work:** [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](TODO/TODO_MUST/Completion-Roadmap.TODO.must.md),
+with per-session briefs in `sessions/`. Account of the freeze itself:
+[CHANGELOG/2026-08-17/hebrew-defer-freeze.md](CHANGELOG/2026-08-17/hebrew-defer-freeze.md).
+
 ## 📚 Authoritative docs (link, don't restate)
 
 - **[docs/OPERATIONS.md](docs/OPERATIONS.md) — start here if you are a new session.**

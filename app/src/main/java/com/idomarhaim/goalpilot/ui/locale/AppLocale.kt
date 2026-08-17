@@ -81,8 +81,20 @@ fun AppLocale(
      * — and if the user changes the device language while this process is alive,
      * the Activity is recreated but the process is not, so "System" would go on
      * restoring a language the device stopped using until the next cold start.
+     *
+     * ⚠️ **Clamped to [AppLanguage.OFFERED], and this is the half of the `#51`
+     * freeze that a picker fix does not reach.** [AppLanguage.DEFAULT] is
+     * `SYSTEM`, so this is the branch nearly every user is on and *nobody
+     * chooses*: with Hebrew merely withheld from the picker, a Hebrew-locale
+     * phone would still open a half-translated app (two packages swept of ten)
+     * without anyone having touched a setting.
+     *
+     * Deliberately **not** solved by moving [AppLanguage.DEFAULT] to `ENGLISH` —
+     * that leaves `SYSTEM` selectable and still resolving Hebrew, and throws away
+     * the follow-the-device semantics `#51` wants back intact.
      */
-    val target = language.locale ?: context.resources.configuration.locales[0]
+    val target = language.locale
+        ?: AppLanguage.clampToOffered(context.resources.configuration.locales[0])
 
     // Not a LaunchedEffect: this must land before the frame that reads it, and
     // it is idempotent, so re-running it on recomposition costs nothing.

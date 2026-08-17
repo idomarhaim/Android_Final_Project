@@ -38,7 +38,13 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _skin.value = skin
     }
 
-    private val _language = MutableStateFlow(AppLanguage.fromId(prefs.getString(KEY_LANGUAGE, null)))
+    // offeredFromId, not fromId: a device that selected עברית before #51 was
+    // deferred still has "he" stored, and a faithful read would hold the freeze
+    // everywhere except the phones that had already used the feature. The stored
+    // value is left alone rather than rewritten -- #51 resumes by widening
+    // AppLanguage.OFFERED, and the preference is then honoured again untouched.
+    private val _language =
+        MutableStateFlow(AppLanguage.offeredFromId(prefs.getString(KEY_LANGUAGE, null)))
     override val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
     override fun setLanguage(language: AppLanguage) {

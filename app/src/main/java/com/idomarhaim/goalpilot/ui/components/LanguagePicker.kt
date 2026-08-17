@@ -22,14 +22,20 @@ import com.idomarhaim.goalpilot.domain.model.AppLanguage
  *
  * Applies instantly, like [SkinPicker] beside it: the surrounding screen becomes
  * the preview, which matters far more here than for a colour — the one question
- * a language switch raises is *"did it actually change the words?"*, and §0.8's
- * *a design is not finished until it has been seen in Hebrew* is only checkable
- * if seeing it costs one tap.
+ * a language switch raises is *"did it actually change the words?"*.
+ *
+ * ⚠️ **Iterates [AppLanguage.OFFERED], not `entries`, and that is the `#51`
+ * deferral.** Hebrew is withheld while `#51` is parked (Ido's decision,
+ * 2026-08-17 — see AGENTS.md § *§0.8 is suspended*); the `HEBREW` entry itself
+ * stays, because everything that implements Hebrew is written against it.
+ * Iterating `entries` here is what made עברית tappable into a two-of-ten-swept
+ * UI, so an `entries` loop is the regression, not a simplification.
  *
  * A vertical list rather than [SkinPicker]'s side-by-side tiles, because these
- * options are words of very different widths in two scripts, and a
- * three-across row would either clip "System" or waste the row on "עברית".
- * Modelled as a radio group so TalkBack announces "selected, 2 of 3".
+ * options are words of very different widths — and, when `#51` resumes, of two
+ * scripts — so a three-across row would either clip "System" or waste the row on
+ * "עברית". Modelled as a radio group, so TalkBack announces "selected, 1 of 2"
+ * — a count that comes from [AppLanguage.OFFERED] and moves with it.
  */
 @Composable
 fun LanguagePicker(
@@ -42,7 +48,7 @@ fun LanguagePicker(
             .fillMaxWidth()
             .selectableGroup(),
     ) {
-        AppLanguage.entries.forEach { language ->
+        AppLanguage.OFFERED.forEach { language ->
             val isSelected = language == selected
             ListItem(
                 modifier = Modifier.selectable(
@@ -68,12 +74,16 @@ fun LanguagePicker(
 /**
  * The label for one option.
  *
- * **Only `SYSTEM` is translated.** The other two are *endonyms* — a language's
- * name in itself — and translating them defeats the point: someone who has
- * landed in a script they cannot read needs to recognise their own language's
- * name to get out, and "אנגלית" is no help to a reader of English. `SYSTEM` is
- * not a language name but ordinary chrome, so it follows the picker like every
- * other word in the app.
+ * **Only `SYSTEM` is translated.** Every other option is an *endonym* — a
+ * language's name in itself — and translating them defeats the point: someone
+ * who has landed in a script they cannot read needs to recognise their own
+ * language's name to get out, and "אנגלית" is no help to a reader of English.
+ * `SYSTEM` is not a language name but ordinary chrome, so it follows the picker
+ * like every other word in the app.
+ *
+ * The `else` branch is reachable for exactly one entry today
+ * ([AppLanguage.ENGLISH]) and stays a `when` because [AppLanguage.OFFERED] grows
+ * back when `#51` resumes.
  */
 @Composable
 private fun languageLabel(language: AppLanguage): String = when (language) {

@@ -98,4 +98,65 @@ class AppLanguageTest {
         assertThat(AppLanguage.HEBREW.endonym).isEqualTo("עברית")
         assertThat(AppLanguage.ENGLISH.endonym).isEqualTo("English")
     }
+
+    // ---- The #51 deferral (Ido, 2026-08-17). See AGENTS.md § "§0.8 is suspended". ----
+
+    @Test
+    fun `hebrew is withheld from the picker but still exists`() {
+        // Both halves matter and they pull opposite ways. Absent from OFFERED is
+        // the freeze; present in entries is what keeps values-iw/, isRtl, locale
+        // and the whole locale/ suite compiling and meaningful, so #51 resumes by
+        // widening one list rather than re-implementing Hebrew.
+        assertThat(AppLanguage.OFFERED).doesNotContain(AppLanguage.HEBREW)
+        assertThat(AppLanguage.entries).contains(AppLanguage.HEBREW)
+    }
+
+    @Test
+    fun `what the picker offers is exactly system and english`() {
+        assertThat(AppLanguage.OFFERED)
+            .containsExactly(AppLanguage.SYSTEM, AppLanguage.ENGLISH)
+            .inOrder()
+    }
+
+    @Test
+    fun `system clamps a device language the app does not offer to english`() {
+        // The door a picker fix does not reach: DEFAULT is SYSTEM, so a Hebrew
+        // phone would open a two-of-ten-swept UI without anyone touching a
+        // setting. Spelled both ways on purpose — "he" and "iw" are the same
+        // language to Locale, and a clamp that only knew one spelling would let
+        // the other straight through on whichever runtime reports it.
+        assertThat(AppLanguage.clampToOffered(Locale.forLanguageTag("he")).language)
+            .isEqualTo("en")
+        assertThat(AppLanguage.clampToOffered(Locale("iw")).language).isEqualTo("en")
+        assertThat(AppLanguage.clampToOffered(Locale.forLanguageTag("fr-FR")).language)
+            .isEqualTo("en")
+    }
+
+    @Test
+    fun `system leaves an offered device locale alone, region and all`() {
+        // §5.1 decouples Region from Language: en-GB must not be flattened to
+        // bare "en", or a British device silently loses its date order and week
+        // start to the clamp.
+        val british = Locale.forLanguageTag("en-GB")
+        assertThat(AppLanguage.clampToOffered(british)).isEqualTo(british)
+        assertThat(AppLanguage.clampToOffered(british).country).isEqualTo("GB")
+    }
+
+    @Test
+    fun `a hebrew preference stored before the freeze reads back as the default`() {
+        // The third door: "he" is already in SharedPreferences on any device that
+        // used the picker while Hebrew was offered, and fromId hands it back
+        // faithfully. Only the persistence read path is clamped.
+        assertThat(AppLanguage.offeredFromId("he")).isEqualTo(AppLanguage.DEFAULT)
+        assertThat(AppLanguage.fromId("he")).isEqualTo(AppLanguage.HEBREW)
+    }
+
+    @Test
+    fun `an offered preference still reads back unchanged`() {
+        // The clamp must be invisible to everyone it does not apply to.
+        assertThat(AppLanguage.offeredFromId("en")).isEqualTo(AppLanguage.ENGLISH)
+        assertThat(AppLanguage.offeredFromId("system")).isEqualTo(AppLanguage.SYSTEM)
+        assertThat(AppLanguage.offeredFromId(null)).isEqualTo(AppLanguage.DEFAULT)
+        assertThat(AppLanguage.offeredFromId("klingon")).isEqualTo(AppLanguage.DEFAULT)
+    }
 }

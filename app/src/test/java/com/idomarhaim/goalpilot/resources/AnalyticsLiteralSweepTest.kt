@@ -207,6 +207,27 @@ class AnalyticsLiteralSweepTest {
          *
          * - `feature/analytics` — 2026-08-16, session `51b-sweep-analytics`.
          * - `ui/components` — 2026-08-17, session `51e-sweep-components`.
+         *
+         * ### 🛑 Frozen at two of ten — **deferred by decision, not forgotten**
+         *
+         * Ido deferred `#51` on **2026-08-17**: all functionality must work before
+         * Hebrew. The eight packages still owed — `auth`, `challenges`,
+         * `dashboard`, `goals`, `health`, `lifeareas`, `profile`, `social` — are
+         * listed with the order to take them in
+         * `TODO/TODO_MUST/Completion-Roadmap.TODO.must.md`, and `#51` stays
+         * **OPEN**.
+         *
+         * **This freeze is documentation, not a behaviour change, and the reason
+         * is that this guard is opt-in.** It reads only what is in this list, so
+         * an absent package is *unswept*, not failing: nothing here had to be
+         * relaxed, disabled or `@Ignore`d to park the sweep, and the two packages
+         * that are listed stay guarded exactly as strictly as before.
+         *
+         * So **do not add your package here as a favour** while writing a feature.
+         * Adding a name opts that package into work that is deliberately parked,
+         * and the build will then fail on plain English literals AGENTS.md
+         * currently tells you to write. A name goes in when its sweep lands —
+         * which is what resuming `#51` means.
          */
         val SWEPT_PACKAGES = listOf("feature/analytics", "ui/components")
 

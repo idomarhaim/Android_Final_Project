@@ -132,6 +132,22 @@ So: the agent may file, schedule, link and break down freely. It may **never** i
 
 ### 0.8 Every screen is designed, and is not finished until seen in Hebrew *(`#12` Standing preferences)*
 
+> 🛑 **Sub-rule 3 is SUSPENDED — Ido's decision, 2026-08-17.** Time constraints: all
+> functionality must work before Hebrew. `#51` is parked **OPEN**, Hebrew is withheld
+> at the picker (`AppLanguage.OFFERED`), and **a design is finished, for now, when it
+> has been seen in English.** Sub-rules 1 and 2 are untouched and still bind — they are
+> about decomposition and iconography, and neither was ever about language.
+>
+> **Nothing is reverted**: `values-iw/`, `Bidi.kt`, `LocaleAwareWindows.kt`, both swept
+> packages and every locale test stay exactly as they are, so resuming costs no
+> re-learning. What stops is the per-package literal sweep, frozen at two of ten.
+> Feature packages may use plain English literals.
+>
+> Normative statement of the suspension, and what it does **not** relax
+> (`DialogLocaleGuardTest` stays armed): [AGENTS.md](../AGENTS.md) § *§0.8 is suspended*.
+> Order of work: [TODO/TODO_MUST/Completion-Roadmap.TODO.must.md](../TODO/TODO_MUST/Completion-Roadmap.TODO.must.md).
+> This is a suspension, not a deletion — the rule below is what `#51` restores.
+
 Three sub-rules, each bought by a defect Ido caught:
 
 1. **One chip may not carry two axes.** `C9b`'s unreadable rung glyphs were a *decomposition*
