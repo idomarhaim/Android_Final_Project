@@ -22,9 +22,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -63,6 +61,8 @@ import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.gpCardColors
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -313,7 +313,7 @@ internal fun FeedCard(
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "Post options")
                         }
-                        DropdownMenu(
+                        AppDropdownMenu(
                             expanded = menuOpen,
                             onDismissRequest = { menuOpen = false },
                         ) {
@@ -398,7 +398,7 @@ internal fun DeletePostDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Delete this post?") },
         text = {
@@ -420,7 +420,7 @@ internal fun DeletePostDialog(
 @Composable
 private fun AddFriendDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
     var code by remember { mutableStateOf("") }
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add a friend") },
         text = {

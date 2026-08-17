@@ -24,11 +24,9 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -63,6 +61,8 @@ import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 /**
  * Shared & competitive challenges (spec §6 nice-to-have, §7): the ones you are
@@ -202,7 +202,7 @@ fun ChallengesScreen(
     }
 
     pendingLeave?.let { card ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { pendingLeave = null },
             title = { Text("Leave “${card.challenge.title}”?") },
             text = {
@@ -224,7 +224,7 @@ fun ChallengesScreen(
     }
 
     pendingDelete?.let { card ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete “${card.challenge.title}”?") },
             text = {
@@ -284,7 +284,7 @@ internal fun MyChallengeCard(
                             contentDescription = "More for “${card.challenge.title}”",
                         )
                     }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    AppDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
                             text = { Text("Leave") },
                             onClick = { menuOpen = false; onLeave() },

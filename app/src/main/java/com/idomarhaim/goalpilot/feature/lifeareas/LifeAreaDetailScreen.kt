@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Flag
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,6 +57,7 @@ import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.trimNumber
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 /**
  * One life area, and the goals filed under it (`PRODUCT_v0.3` §4.7).
@@ -296,7 +296,7 @@ private fun AreaGoalCard(
                 IconButton(onClick = { menuOpen = true }) {
                     Icon(Icons.Filled.MoreVert, contentDescription = "More for “${goal.title}”")
                 }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                AppDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
                         text = { Text("Remove from this area") },
                         onClick = { menuOpen = false; onRemove() },

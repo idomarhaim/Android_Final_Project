@@ -26,10 +26,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -74,6 +72,8 @@ import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.icon
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.trimNumber
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +112,7 @@ fun GoalDetailScreen(
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "More")
                         }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        AppDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
                                 onClick = { menuOpen = false; onEdit(state.goal!!.id) },
@@ -222,7 +222,7 @@ fun GoalDetailScreen(
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete goal?") },
             text = { Text("This permanently removes the goal. This cannot be undone.") },
@@ -507,7 +507,7 @@ private fun LogProgressDialog(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri -> imageUri = uri }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Log progress") },
         text = {

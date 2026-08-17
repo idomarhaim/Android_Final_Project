@@ -14,14 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -45,6 +42,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.ui.components.Avatar
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDatePickerDialog
+import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
 
 // ── Create ───────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ internal fun ChallengeEditorDialog(
 ) {
     var picking by remember { mutableStateOf<DateField?>(null) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("New challenge") },
         text = {
@@ -166,7 +166,7 @@ internal fun ChallengeEditorDialog(
 
     picking?.let { field ->
         val pickerState = rememberDatePickerState()
-        DatePickerDialog(
+        AppDatePickerDialog(
             onDismissRequest = { picking = null },
             confirmButton = {
                 TextButton(
@@ -226,7 +226,7 @@ internal fun ScoreEntryDialog(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Report your score") },
         text = {
@@ -279,7 +279,7 @@ internal fun ScoreEntryDialog(
 @Composable
 internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    AppModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
             Text(card.challenge.title, style = MaterialTheme.typography.titleLarge)
             if (card.challenge.description.isNotBlank()) {

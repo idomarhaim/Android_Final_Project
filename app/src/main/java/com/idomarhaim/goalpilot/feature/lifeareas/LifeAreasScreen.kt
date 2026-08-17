@@ -30,10 +30,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -79,6 +77,8 @@ import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toComposeColor
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 /**
  * Define the areas your life is divided into, pull them from your Google Tasks
@@ -243,7 +243,7 @@ fun LifeAreasScreen(
     }
 
     pendingDelete?.let { area ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete “${area.name}”?") },
             text = {
@@ -334,7 +334,7 @@ private fun UnfiledGoalCard(goal: Goal, areas: List<LifeArea>, onAssign: (String
                 IconButton(onClick = { menuOpen = true }) {
                     Icon(Icons.Filled.MoreVert, contentDescription = "File “${goal.title}”")
                 }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                AppDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     areas.forEach { area ->
                         DropdownMenuItem(
                             text = { Text(area.name) },
@@ -368,7 +368,7 @@ private fun LifeAreaEditorDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (state.isEdit) "Edit life area" else "New life area") },
         text = {
@@ -482,7 +482,7 @@ private fun GoogleListSyncDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Sync life areas") },
         text = {

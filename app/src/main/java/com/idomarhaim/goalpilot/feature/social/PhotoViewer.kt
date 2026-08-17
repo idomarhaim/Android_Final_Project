@@ -27,9 +27,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.idomarhaim.goalpilot.ui.locale.AppDialog
 
 /**
  * The full-screen destination a shared photo opens into (issue `#4`).
@@ -52,7 +52,7 @@ internal fun FullScreenPhotoDialog(
     contentDescription: String,
     onDismiss: () -> Unit,
 ) {
-    Dialog(
+    AppDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {

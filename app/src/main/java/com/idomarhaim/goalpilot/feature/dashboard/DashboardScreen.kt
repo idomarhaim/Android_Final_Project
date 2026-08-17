@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -78,6 +77,7 @@ import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -413,7 +413,7 @@ private fun GoogleTasksImportDialog(
     onDismiss: () -> Unit,
 ) {
     val selectedCount = state.proposals.count { it.selected }
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
         title = { Text("Import from Google Tasks") },
         text = {
@@ -563,7 +563,7 @@ private fun SmartAddDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    androidx.compose.material3.AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (state.isClassifying) "Analysing…" else "Add this task?") },
         text = {

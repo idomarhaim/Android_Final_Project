@@ -30,7 +30,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
@@ -56,8 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,6 +79,7 @@ import com.idomarhaim.goalpilot.ui.components.StackedColumn
 import com.idomarhaim.goalpilot.ui.components.StackedColumnChart
 import com.idomarhaim.goalpilot.ui.components.StackedSegment
 import com.idomarhaim.goalpilot.ui.components.iconForKey
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 import com.idomarhaim.goalpilot.ui.components.rememberChartProgress
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import java.util.Locale
@@ -443,20 +440,15 @@ private fun DurationBackfillDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Captured HERE, in the screen's composition, where AppLocale's override is
-    // still in force. See [InheritLocale] — inside the dialog's own slots it is
-    // already gone.
-    val localizedContext = LocalContext.current
-
-    AlertDialog(
+    // The dialog would otherwise render in the DEVICE language while mirroring
+    // right-to-left perfectly — see ui/locale/LocaleAwareWindows.kt, which is
+    // also the only place that opens a window in this app.
+    AppAlertDialog(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
         title = {
-            InheritLocale(localizedContext) {
-                Text(stringResource(R.string.analytics_backfill_title))
-            }
+            Text(stringResource(R.string.analytics_backfill_title))
         },
         text = {
-            InheritLocale(localizedContext) {
             when {
                 state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -528,81 +520,37 @@ private fun DurationBackfillDialog(
                     }
                 }
             }
-            }
         },
         confirmButton = {
-            InheritLocale(localizedContext) {
-                if (state.error == null && !state.isLoading) {
-                    TextButton(
-                        onClick = onConfirm,
-                        enabled = !state.isSaving && state.selectedCount > 0,
-                    ) {
-                        Text(
-                            if (state.isSaving) {
-                                stringResource(R.string.analytics_backfill_updating)
-                            } else {
-                                stringResource(
-                                    R.string.analytics_backfill_update,
-                                    state.selectedCount.isolated(),
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-        },
-        dismissButton = {
-            InheritLocale(localizedContext) {
-                TextButton(onClick = onDismiss, enabled = !state.isSaving) {
+            if (state.error == null && !state.isLoading) {
+                TextButton(
+                    onClick = onConfirm,
+                    enabled = !state.isSaving && state.selectedCount > 0,
+                ) {
                     Text(
-                        if (state.error != null) {
-                            stringResource(R.string.analytics_backfill_close)
+                        if (state.isSaving) {
+                            stringResource(R.string.analytics_backfill_updating)
                         } else {
-                            stringResource(R.string.analytics_backfill_cancel)
+                            stringResource(
+                                R.string.analytics_backfill_update,
+                                state.selectedCount.isolated(),
+                            )
                         },
                     )
                 }
             }
         },
-    )
-}
-
-/**
- * Re-applies the app's chosen locale inside a Compose `Dialog`.
- *
- * ### Why a dialog needs this and the screen behind it does not
- *
- * `ui/locale/AppLocale.kt` overrides `LocalContext` for the whole screen, and
- * `stringResource` resolves through it. A Compose `Dialog` hosts its content in
- * its **own** `AbstractComposeView`, attached to its own window, and that view's
- * composition re-provides `LocalContext` from the *dialog's* context — which was
- * built from the Activity, not from our wrapper. So the override is silently
- * dropped at the dialog boundary.
- *
- * `Observed:` 2026-08-16 on the device, app language Hebrew. The signature is
- * exactly the one that made `values-he` so hard to see: **the dialog laid out
- * right-to-left correctly — checkbox on the right, RTL button order — while
- * every word in it was English.** `LocalLayoutDirection` is inherited; the
- * context is not. Layout mirroring is therefore *not* evidence that the strings
- * are localized, in a dialog any more than in a widget.
- *
- * [localizedContext] must be captured in the **caller's** composition, where the
- * override is still in force; reading `LocalContext.current` inside a slot
- * returns the already-reverted one and this becomes a no-op that looks correct.
- *
- * Scoped to this package deliberately: every other `Dialog`, `AlertDialog`,
- * `ModalBottomSheet` and `Popup` in the app has the same defect, and that is
- * filed on #51 rather than fixed here.
- */
-@Composable
-private fun InheritLocale(
-    localizedContext: android.content.Context,
-    content: @Composable () -> Unit,
-) {
-    CompositionLocalProvider(
-        LocalContext provides localizedContext,
-        LocalConfiguration provides localizedContext.resources.configuration,
-        content = content,
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving) {
+                Text(
+                    if (state.error != null) {
+                        stringResource(R.string.analytics_backfill_close)
+                    } else {
+                        stringResource(R.string.analytics_backfill_cancel)
+                    },
+                )
+            }
+        },
     )
 }
 
