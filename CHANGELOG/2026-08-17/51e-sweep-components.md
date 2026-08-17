@@ -1,5 +1,8 @@
 # `51e-sweep-components` — 2026-08-17
 
+> **Branch:** `feat/goalpilot-implementation`
+> **Summary:** `#51`'s literal sweep for `ui/components/` — 18 keys, 7 defects — plus two holes found in the sweep guard itself: a false positive that fired precisely on the remedy, and a complement test hardcoded to one package that reported green for a package it never read.
+
 `/implement` [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) — the literal
 sweep, **one package: `ui/components/`** · branch `feat/goalpilot-implementation` · mode `AUTO MODE`
 
@@ -55,7 +58,9 @@ failure mode is a *third* string field, not a restored pair.
 **18 keys**, `res/values/components_strings.xml` + `res/values-iw/components_strings.xml`. Sibling
 file per package, following `analytics_strings.xml`; the parity test pairs **by name**.
 
-Six defects fixed, by class:
+**Seven** defects fixed, by class — counted off the table below, not from prose. (The first draft of
+this sentence said *six* above a seven-row table, which is `untranslatable-idioms.md` §3's own
+finding landing on the changelog that cites it.)
 
 | # | Site | Class |
 |---|---|---|
@@ -198,6 +203,26 @@ which is a claim about the platform's bidi implementation and was `Inferred:` un
 The capture harness was a throwaway and is **not** committed; it was created, run and deleted in this
 session.
 
+## 6a · ⚠️ The `#51` comment is OWED — GitHub outage, not a skip
+
+**`gh issue comment 51` failed with HTTP 503 twice** (2026-08-17, after the commit). By then
+`gh issue view 51` was failing too, though it had **succeeded at the start of this session** — so the
+outage widened from writes to reads while the unit was being worked.
+
+**Nobody should assume this was posted.** The full comment body is preserved verbatim in the
+**appendix at the foot of this file**; posting it is a paste of everything below the horizontal rule,
+not a rewrite. The next session in this repo that finds GitHub healthy should post it and replace
+this section with the comment link.
+
+*(It was briefly a sibling file, `51e-sweep-components.issue-comment.md`. `changelog-index-backfill`'s
+new pre-commit hook rejected it — `CHANGELOG/<day>/` is one file per session and the generated index
+owes each one a row, so a sidecar has no row and fails the gate. The hook was right and the file is
+now an appendix. Recorded because the gate landed **between** this session's two commits: the first
+predates the hook's installation.)*
+
+Not retried further, per Ido's instruction for this outage: record it rather than looping or skipping
+silently.
+
 ## 7 · What #51 still owes
 
 `#51` stays **OPEN**. Unswept: `feature/dashboard`, `feature/goals`, `feature/lifeareas`,
@@ -211,3 +236,112 @@ Two things the next sweeper inherits from this unit:
 2. **`51d`'s dialog constraint still binds.** Turning a `Text("Cancel")` into
    `Text(stringResource(…))` inside an unwrapped `AlertDialog` reintroduces the composition defect
    and looks perfect in an English render. Use the `App*` wrappers.
+
+---
+
+## Appendix · the unposted `#51` comment, verbatim
+
+Kept inline rather than as a sibling file: `CHANGELOG/<day>/` is one file per session and the
+generated index owes each one a row, so a sidecar breaks `changelog-index-backfill`'s convention
+and its pre-commit hook (which is how this was found). Posting it is a paste of everything below
+this line.
+
+## `ui/components/` swept — `51e-sweep-components`, 2026-08-17
+
+The shared package, taken before any remaining feature package. **18 keys**,
+`res/values/components_strings.xml` + `values-iw/`. Commit `bc5ef69`.
+Account: `CHANGELOG/2026-08-17/51e-sweep-components.md`.
+
+**JVM unit 358 / 0 · instrumented 70 / 0 · `assembleDebug` green.**
+
+### The sequencing rationale was half wrong, and it matters for the next package
+
+The argument for doing this package first was that its components are used by eight
+screens, so a literal here would otherwise be fixed eight times. **`EmptyState`,
+`LoadingBox`, `DonutChart`, `StackedColumnChart` and `SimpleBarChart` hold no
+user-facing literals at all** — they take their copy as *parameters*, so every word
+belongs to the eight callers and is each caller's own sweep. Sweeping this package did
+**not** translate the eight screens' empty states.
+
+A well-factored presentational component is *defined* by taking its copy from outside,
+so "shared UI package" and "shared copy" pull in opposite directions. The saving lives
+where a value is **constructed** or where a **transformation** is applied — never where
+a string passes through as a parameter.
+
+What was genuinely shared, and what this unit turned out to be about:
+
+| Source | Strings | Rendered by |
+|---|---|---|
+| `GoalCategory.label` | 10 | `ui/components/GoalCard.kt` **+ 3 unswept feature call sites** |
+| `AppSkin.label` / `.tagline` | 4 | `ui/components/SkinPicker.kt` only |
+
+Plus direction-isolation of caller-supplied strings: `SimpleBarChart` isolating
+`trailing` fixes eight callers at once.
+
+### The two enums got different answers, and the idiom is not the discriminator
+
+Both are §1's fourth idiom (*speech on a domain type*). What differs is **who else reads
+the property**:
+
+- **`AppSkin`** — one production consumer, so the copy is **gone from the enum**; only the
+  persisted `id` remains.
+- **`GoalCategory`** — three more, in `feature/dashboard` and `feature/goals`, **unswept**.
+  `label` stays behind a KDoc pointer; `localizedLabel()` is the replacement. Deleting it
+  would drag two feature packages in half-swept.
+
+**The Hebrew is authored once either way** — only the English call sites migrate later.
+
+### For whoever takes the next package
+
+1. **`GoalCategory.localizedLabel()` already exists and all ten Hebrew labels are
+   authored.** Switch call sites to it; do not re-translate. `GoalCategory.label` is
+   deleted by whichever sweep removes its last reader.
+2. **`SimpleBarChart` now isolates `trailing`,** so bar labels render with isolate marks.
+   An instrumented expectation must be spelled `"75%".bidiIsolated()` — one spelled
+   without the marks passes on the *unfixed* output, which is how this gets reverted by
+   someone making a red test green.
+3. **`51d`'s dialog constraint still binds.** `Text(stringResource(…))` inside an
+   unwrapped `AlertDialog` reintroduces the composition defect and looks perfect in
+   English. Use the `App*` wrappers.
+
+### Terminology
+
+**יעד, never מטרה.** And note what is *absent* as a consequence — Hebrew has one word for
+both the entity and its number, so `components_goal_meta` never names the target at all.
+That is §4's remedy (restructure so the missing noun is never needed) rather than coining
+`היעד המספרי`.
+
+Skin names are **translated, not transliterated**: `זוהר` / `פריחה`. Leaving them Latin
+would put a bare Latin run inside an otherwise Hebrew list. Persisted ids unchanged.
+
+### Two holes found in the sweep guard itself
+
+1. **A false positive that fires precisely on the remedy.** `isProse` counted alphabetic
+   runs over the raw literal, so identifiers inside `${…}` read as prose — it flagged two
+   literals the sweep had *just fixed*. That shape is what gets a guard routed around
+   rather than obeyed. Fixed by stripping interpolations; copy *between* them survives.
+   The loosened predicate is asserted **in both directions** on the inputs that motivated
+   it, because the silent half cannot be faked.
+2. **A guard that grew on one side only.** The complement test was hardcoded to
+   `feature/analytics`, so adding a package extended the offender scan automatically and
+   left this half reporting green for a package it never read. Now loops `SWEPT_PACKAGES`
+   against a `RESOURCE_FLOOR` map.
+
+Guard proven by a break that **compiles** (`51d`'s lesson): a valid
+`private val REINTRODUCED_DEFECT = "Try again later"` went red naming the exact file.
+
+### Rendered and looked at (§0.8)
+
+`Observed:` 2026-08-17, `Pixel_10_Pro_XL` API 37, both languages captured to PNG. Hebrew
+renders **`5/10` not `10/5`**, `50%` not `%50`, skin tiles with the selected tile
+correctly on the right. English byte-identical to before — the isolates are zero-width.
+User-authored Hebrew goal titles render as typed in the **English** UI, confirming §8's
+*content never moves* rather than assuming it.
+
+`Inferred:`, not observed — that the *unisolated* form renders `%75`. Seeing it would mean
+removing the isolate and re-rendering, which this session did not do.
+
+### Still owed
+
+Unswept: `dashboard`, `goals`, `lifeareas`, `challenges`, `social`, `health`, `profile`,
+`auth`.
