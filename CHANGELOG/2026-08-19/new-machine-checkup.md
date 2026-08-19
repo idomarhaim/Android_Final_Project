@@ -477,3 +477,67 @@ blind. Passwords are the user's to type, which is what saved this one.
 |---|---|
 | Device / manual | ✅ B boots on the GPU path, APK installs, app launches, Google sign-in reaches the password screen. ⏳ Password is Ido's. |
 | Everything else | Unchanged from round 3. |
+
+## Round 5 — Hebrew input, done properly, and it verified `#51`'s freeze for free
+
+### 15 · The right mechanism was the **system language list**, not the Gboard subtype
+
+Ido delegated the choice (*"add what you think is most right; I need to use both languages
+together"*), so the decision is recorded as **mine**: add Hebrew as a **secondary system
+language**, English primary.
+
+```
+adb root
+adb shell settings put system system_locales "en-US,iw-IL"
+adb shell setprop persist.sys.locale en-US     # English stays PRIMARY
+adb reboot
+```
+
+**Why this and not the two alternatives:**
+
+- **vs. `settings put secure enabled_input_methods` (rounds 2 and 4, failed twice):** that
+  setting is reconciled by `InputMethodManagerService` against Gboard's own
+  enabled-languages preference, so a subtype Gboard does not list is pruned — which is why it
+  vanished *within the same boot*, and why blaming the snapshot in §7(b) was wrong. The
+  system language list is upstream of that reconciliation, so nothing prunes it.
+- **vs. tapping through Gboard's settings UI:** authoritative but driven by blind coordinate
+  taps, and §14 had just demonstrated what blind tap sequences do.
+
+`Observed:` `system_locales` reads `en-US,iw-IL` **after a reboot**, and the keyboard now
+carries a **globe key** with the spacebar reading **English** → tap → a full Hebrew layout
+with the spacebar reading **עברית**. Both live at once, one key apart — which is what
+*"both languages together"* asked for. The Google account survived the reboot.
+
+⚠️ **Owed:** `Pixel_10_Pro_XL_B` has **not** had this applied — it was shut down to free RAM
+before the change. One command on its next boot, same three lines.
+
+### 16 · This is `#51`'s missing render pass, and the freeze holds
+
+`hebrew-defer-freeze` (2026-08-17) closed three doors to a half-Hebrew app and recorded its
+own verification as **`Unverified:` — proven as logic by six JVM tests, never seen on a
+device**, because `adb` was blocked for that session. Its `AppLocale` `SYSTEM` branch clamps
+an unoffered **device** locale through `clampToOffered`.
+
+**This round put `iw-IL` into the device locale list on a real device.** `Observed:` GoalPilot
+renders **entirely in English** with Hebrew active on the keyboard — *Overall progress*,
+*Averaged across all your goals*, *Goals*, *Tasks done*, *This week*, *View analytics*,
+*Smart add a task*. Screenshots in this session's scratchpad; the state is reproducible from
+the three commands above.
+
+That is the **first real-device evidence** for the clamp. Scope honestly:
+
+- It exercises the **`SYSTEM`-branch clamp with Hebrew as a secondary locale**. It does **not**
+  exercise Hebrew as the **primary** device locale, nor the **persistence** door
+  (`offeredFromId` reading a pre-freeze stored `"he"`), which were the other two.
+- The two swept packages (`feature/analytics`, `ui/components`) are where a leak would show,
+  and Home + the analytics card are in that set — but Analytics itself was not opened.
+
+📌 So `#51`'s render pass is **partly** discharged, not closed. Worth carrying into
+`sessions/51-freeze-verify.md`.
+
+## 🧪 Tests — round 5
+
+| Layer | Result |
+|---|---|
+| Device / manual | ✅ Hebrew + English keyboards live together on `Pixel_10_Pro_XL`, verified by looking. ✅ App stays English with `iw-IL` in the device locale list. |
+| `#51` freeze | ✅ `SYSTEM`-branch clamp confirmed on a real device for the first time — partly, see §16. |
