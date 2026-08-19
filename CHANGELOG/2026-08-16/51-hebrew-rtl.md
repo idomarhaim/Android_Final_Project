@@ -1,5 +1,7 @@
 # `51-hebrew-rtl` — 2026-08-16
 
+> **Summary:** **This ships the foundation, not the whole ticket.** The `feature/` literal sweep — #51's item 4 and by far its largest part — is **not** in this unit.
+
 `/implement` [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) — *Hebrew locale
 and RTL* · branch `feat/goalpilot-implementation` · mode `AUTO MODE`
 

@@ -1,5 +1,7 @@
 # `c18-subtask-depth` — sub-tasks at arbitrary depth: what does every roll-up sum over?
 
+> **Summary:** sub-tasks at arbitrary depth: what does every roll-up sum over?
+
 **Session:** `c18-subtask-depth` · **Invocation:** `/wayfinder 12` *(bare — no ticket
 named)* · **Branch:** `feat/goalpilot-implementation` · **Mode:** `AUTO MODE` ·
 2026-08-10.

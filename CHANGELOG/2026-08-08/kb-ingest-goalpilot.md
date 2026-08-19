@@ -1,5 +1,7 @@
 # 2026-08-08 — `kb-ingest-goalpilot` (GoalPilot side)
 
+> **Summary:** A cross-repo `/kb-ingest`.
+
 A cross-repo `/kb-ingest`. **The pages landed in the central JARVIS bundle**, so the
 substance of this entry is in
 `C:\Dev\JARVIS\CHANGELOG\2026-08-08\kb-ingest-goalpilot.md` and the journal entry

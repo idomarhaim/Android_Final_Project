@@ -3,6 +3,7 @@
 > **Branch:** `feat/goalpilot-implementation` · **Mode:** AUTO MODE
 > Sibling file for the same day: [`../2026-08-03.md`](../2026-08-03.md) — the
 > `scaffold` session's template-library pass, written before day folders existed.
+> **Summary:** Four things were asked for, and they are one feature: **goals belong to areas of your life, and the app can tell you what share of your life each one is getting.**
 
 Four things were asked for, and they are one feature: **goals belong to areas of
 your life, and the app can tell you what share of your life each one is getting.**

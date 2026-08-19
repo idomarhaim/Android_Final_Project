@@ -1,5 +1,7 @@
 # `c10-quote-feed` — R21 turns out to be two sentences, and the seam is attribution
 
+> **Summary:** R21 turns out to be two sentences, and the seam is attribution
+
 **Session:** `c10-quote-feed` · **Date:** 2026-08-10 · **Mode:** normal
 **Invocation:** `/wayfinder 12 29`, resolving [#29](https://github.com/idomarhaim/Android_Final_Project/issues/29) (`C10`) on the [v0.3 product-model map](https://github.com/idomarhaim/Android_Final_Project/issues/12) · **Planning only; no code.**
 

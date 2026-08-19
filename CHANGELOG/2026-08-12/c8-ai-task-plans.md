@@ -1,5 +1,7 @@
 # c8-ai-task-plans — claimed #24, and the re-derivation corrected a released session's own summary
 
+> **Summary:** claimed #24, and the re-derivation corrected a released session's own summary
+
 **Session:** `c8-ai-task-plans` · **Date:** 2026-08-12 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#24 · `C8`](https://github.com/idomarhaim/Android_Final_Project/issues/24) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 

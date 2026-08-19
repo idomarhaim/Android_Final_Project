@@ -1,5 +1,7 @@
 # 51d-dialog-locale — the `LocalContext`-into-`Dialog` defect, fixed once for the whole app
 
+> **Summary:** the `LocalContext`-into-`Dialog` defect, fixed once for the whole app
+
 **Issue:** [#51](https://github.com/idomarhaim/Android_Final_Project/issues/51) (left **open** — this is item 3 of nine).
 **Branch:** `feat/goalpilot-implementation`.
 **Scope:** the dialog **plumbing** only. No literal sweep, no `formatMinutes`, no `"Unassigned"`.

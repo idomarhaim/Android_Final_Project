@@ -1,5 +1,7 @@
 # `c7-what-is-a-unit` — the question was "which units", the answer was "a measure is optional"
 
+> **Summary:** the question was "which units", the answer was "a measure is optional"
+
 **Session:** `c7-what-is-a-unit` · **Invocation:** `/wayfinder 12 14` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL throughout) ·
 2026-08-10.

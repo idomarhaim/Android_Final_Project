@@ -1,5 +1,7 @@
 # c1-points-and-time — claimed #19, the ticket every blocked ticket waits behind
 
+> **Summary:** claimed #19, the ticket every blocked ticket waits behind
+
 **Session:** `c1-points-and-time` · **Date:** 2026-08-10 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#19 · `C1`](https://github.com/idomarhaim/Android_Final_Project/issues/19) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 

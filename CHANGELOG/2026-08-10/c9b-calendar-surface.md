@@ -1,5 +1,7 @@
 # c9b-calendar-surface — 2026-08-10
 
+> **Summary:** The frontier was **re-derived out of GitHub**, not read off the board — `SESSIONS.md` says in as many words that every session which tried to predict it has been wrong at least once.
+
 `/wayfinder 12`, no ticket named → **work through the map**, and choosing the ticket
 is the session's job, not Ido's (wayfinder skill, *Work through the map* step 2).
 

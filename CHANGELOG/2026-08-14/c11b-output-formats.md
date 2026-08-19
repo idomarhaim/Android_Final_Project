@@ -1,5 +1,7 @@
 # c11b-output-formats — the drain that was correctly deferred on 2026-08-13, run
 
+> **Summary:** the drain that was correctly deferred on 2026-08-13, run
+
 **Session:** `c11b-output-formats` · **Date:** 2026-08-14 · **Mode:** `AUTO MODE`
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#30 · `C11b`](https://github.com/idomarhaim/Android_Final_Project/issues/30) *(closed 2026-08-13)*
 

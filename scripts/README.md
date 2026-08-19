@@ -50,7 +50,9 @@ What it handles for you:
 - Reads `sdk.dir` from `local.properties` (falls back to `ANDROID_HOME` /
   `%LOCALAPPDATA%\Android\Sdk`), so no PATH setup is required.
 - Sets `JAVA_HOME` from `org.gradle.java.home` in `gradle.properties` — the
-  machine default is JDK 25, which AGP rejects (see [AGENTS.md](../AGENTS.md)).
+  toolchain runs on **JDK 21**, and `gradlew.bat` itself boots on `JAVA_HOME`
+  rather than on the pin, so the ambient value has to be right too (see the JDK
+  pitfall in [AGENTS.md](../AGENTS.md)).
 - Reuses an already-running emulator instead of booting a second one — unless you
   named a different one with `-Avd`, which is a demand rather than a hint. See
   [Two emulators](#two-emulators-pixel_10_pro_xl-and-_b).

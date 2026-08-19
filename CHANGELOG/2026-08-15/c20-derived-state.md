@@ -1,5 +1,7 @@
 # c20-derived-state — the drain ran, and the hold this session recorded was wrong
 
+> **Summary:** the drain ran, and the hold this session recorded was wrong
+
 **Session:** `c20-derived-state` · **Date:** 2026-08-15 · **Mode:** `AUTO MODE`
 **Branch:** `feat/goalpilot-implementation` · Continues [`CHANGELOG/2026-08-14/c20-derived-state.md`](../2026-08-14/c20-derived-state.md)
 

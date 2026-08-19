@@ -130,9 +130,15 @@ because of it.
 
 ### Toolchain
 
-- `JAVA_HOME` is set at **User** level to `jdk-21.0.11.10-hotspot`. The Machine-level
-  value points at JDK 25, which AGP rejects; User scope overrides it. If a build
-  dies with "JAVA_HOME is set to an invalid directory", that override is missing.
+- **The toolchain runs on JDK 21.** `gradle.properties` pins `org.gradle.java.home`
+  to `C:/Program Files/Eclipse Adoptium/jdk-21.0.12.8-hotspot`, and that pin
+  **overrides** `JAVA_HOME` — a build follows the pin whatever the environment says.
+  *Observed 2026-08-19:* that is the only Adoptium JDK on this machine. If a build
+  dies with "JAVA_HOME is set to an invalid directory", the pinned directory is
+  missing — reinstall it (`winget install EclipseAdoptium.Temurin.21.JDK`) rather
+  than repointing the pin (`0e52a66`). Tools that read `PATH` instead of `JAVA_HOME`
+  — `firebase-tools` is one — can still disagree; see the JDK pitfall in
+  [AGENTS.md](../AGENTS.md).
 - `gcloud` and `firebase` CLIs are installed and authenticated as `name.iddo@gmail.com`.
 - Emulator AVD `Pixel_10_Pro_XL` (API 37 / Android 17), a Google-APIs image — Play
   Services present, which Google Sign-In requires.

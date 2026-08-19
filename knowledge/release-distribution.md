@@ -67,8 +67,8 @@ signal that a version number was actually decided**; a push is not.
 Two CI traps in `.github/workflows/release.yml`:
 
 - **`org.gradle.java.home` must be stripped on the runner.** `gradle.properties`
-  pins it to a Windows JDK 21 path because this machine's `JAVA_HOME` is JDK 25,
-  which AGP rejects. Correct locally, fatal on `ubuntu-latest` — so the line is
+  pins it to a Windows Temurin **JDK 21** path, which is the JDK this toolchain
+  needs. Correct locally, fatal on `ubuntu-latest` — so the line is
   deleted in CI rather than removed from the repo, where it earns its keep daily.
 - **Verify the APK signature with `apksigner` after assembling.** An unsigned or
   debug-signed APK assembles perfectly happily; catching it in CI beats catching it

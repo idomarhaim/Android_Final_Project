@@ -1,5 +1,7 @@
 # session-titles — making a board label findable from the VS Code session picker
 
+> **Summary:** making a board label findable from the VS Code session picker
+
 **Session:** `session-titles` · **Date:** 2026-08-13 · **Mode:** normal
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** none — Ido's question, no map ticket
 

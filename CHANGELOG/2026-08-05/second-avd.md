@@ -1,6 +1,7 @@
 # Changes — 05/08/2026 · session `second-avd`
 
 > **Branch:** `feat/goalpilot-implementation`
+> **Summary:** A second emulator, `Pixel_10_Pro_XL_B`, so the spec §7 sharing demo can have both accounts signed in at the same time.
 
 A second emulator, `Pixel_10_Pro_XL_B`, so the spec §7 sharing demo can have both
 accounts signed in at the same time. Started as a question — *can two sessions

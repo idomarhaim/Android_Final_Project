@@ -1,5 +1,7 @@
 # product-v03-spec — the map's destination artifact, written while the map reopened under it
 
+> **Summary:** the map's destination artifact, written while the map reopened under it
+
 **Session:** `product-v03-spec` · **Date:** 2026-08-15 · **Mode:** `AUTO MODE`
 **Branch:** `feat/goalpilot-implementation` · **Brief:** [`sessions/product-v03-spec.md`](../../sessions/product-v03-spec.md) · **Map:** [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 **Claim:** `e416d61` · **Board row:** `product-v03-spec`, Active claims

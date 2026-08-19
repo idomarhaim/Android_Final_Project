@@ -1,5 +1,7 @@
 # `kb-ingest-map-method` — the map-charting method leaves this repo for the central KB
 
+> **Summary:** the map-charting method leaves this repo for the central KB
+
 **Session:** `kb-ingest-map-method` · **Trigger:** bare `/kb-ingest` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL) ·
 **Date:** 2026-08-08.

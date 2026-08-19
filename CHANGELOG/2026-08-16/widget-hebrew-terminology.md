@@ -1,5 +1,7 @@
 # `widget-hebrew-terminology` — the widget pack said מטרה where the entity is יעד
 
+> **Summary:** the widget pack said מטרה where the entity is יעד
+
 **Session:** `widget-hebrew-terminology` · **Issue:** [#51](https://github.com/idomarhaim/Android_Final_Project/issues/51)
 · **Brief:** [`sessions/done/widget-hebrew-terminology.md`](../../sessions/done/widget-hebrew-terminology.md)
 · **Mode:** `AUTO MODE`

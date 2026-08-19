@@ -1,5 +1,7 @@
 # `resource-guard-inputs` — 2026-08-16
 
+> **Summary:** Filed by `51c-analytics-render`, which found it and correctly left it: it lives in `app/build.gradle.kts`, outside that unit's package.
+
 `/kickoff resource-guard-inputs` — **the localization guards can silently not run** ·
 [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) · branch
 `feat/goalpilot-implementation` · mode `AUTO MODE`

@@ -204,8 +204,8 @@ directly, the workflow also attaches the APK to its run (**Actions** → the run
   `ApiException: 10` in release builds only — debug keeps working, which makes it
   look like a release-build code problem (§2.2).
 - **`org.gradle.java.home` in `gradle.properties` is a Windows path.** It is
-  correct locally (this machine's `JAVA_HOME` is JDK 25, which AGP rejects) and
-  fatal on a Linux runner. The workflow strips the line rather than the repo
+  correct locally (it pins Gradle to the Temurin **JDK 21** this toolchain needs)
+  and fatal on a Linux runner. The workflow strips the line rather than the repo
   dropping it — see the *Un-pin* step.
 - **The `testers` group alias must exist in the console**, or the upload fails
   with a 404 that reads like an authentication error.

@@ -1,5 +1,7 @@
 # `product-model-map` — the 13 undecided product questions become a navigable map
 
+> **Summary:** the 13 undecided product questions become a navigable map
+
 **Session:** `product-model-map` · **Brief:** `sessions/product-model-map.md` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL throughout) ·
 **Started** 2026-08-06, **landed** 2026-08-08.

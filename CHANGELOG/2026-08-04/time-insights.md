@@ -1,6 +1,7 @@
 # Changes — 04/08/2026 · session `time-insights`
 
 > **Branch:** `feat/goalpilot-implementation`
+> **Summary:** The last two follow-ups under "Life areas + time-allocation analytics": making the pie's durations **measured rather than inferred**, and adding the chart that answers the question a pie structurally cannot.
 
 The last two follow-ups under "Life areas + time-allocation analytics": making the
 pie's durations **measured rather than inferred**, and adding the chart that

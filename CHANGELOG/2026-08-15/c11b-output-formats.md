@@ -1,5 +1,7 @@
 # c11b-output-formats — the waived walkthrough's mechanical fallback, and a push carrying a sibling
 
+> **Summary:** the waived walkthrough's mechanical fallback, and a push carrying a sibling
+
 **Session:** `c11b-output-formats` · **Date:** 2026-08-15 · **Mode:** `AUTO MODE`
 **Branch:** `feat/goalpilot-implementation` · **Prior units:** [2026-08-13](../2026-08-13/c11b-output-formats.md) (resolved `#30`), [2026-08-14](../2026-08-14/c11b-output-formats.md) (drained entry 2)
 

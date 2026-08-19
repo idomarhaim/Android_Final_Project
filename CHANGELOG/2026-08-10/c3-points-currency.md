@@ -1,5 +1,7 @@
 # `c3-points-currency` — are task points and goal progress one currency or two?
 
+> **Summary:** are task points and goal progress one currency or two?
+
 **Session:** `c3-points-currency` · **Invocation:** `/wayfinder 12` *(bare — no ticket
 named)* · **Branch:** `feat/goalpilot-implementation` · **Mode:** `AUTO MODE` ·
 2026-08-10.

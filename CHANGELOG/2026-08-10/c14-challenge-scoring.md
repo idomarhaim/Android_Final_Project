@@ -1,5 +1,7 @@
 # c14-challenge-scoring — a challenge scores from nothing of its own
 
+> **Summary:** a challenge scores from nothing of its own
+
 **Session:** `c14-challenge-scoring` · **Date:** 2026-08-10 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#23 · `C14`](https://github.com/idomarhaim/Android_Final_Project/issues/23) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 

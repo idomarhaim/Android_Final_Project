@@ -1,5 +1,7 @@
 # `entity-model-intake` — the entity definitions arrive mid-map, and they answer C4 with a word no ticket used
 
+> **Summary:** the entity definitions arrive mid-map, and they answer C4 with a word no ticket used
+
 **Session:** `entity-model-intake` · **Date:** 2026-08-09
 **Invocation:** direct request from Ido — transcribe the new entity-definition
 `.docx` the way `product-review` transcribed the 08-06 brief, and record the new

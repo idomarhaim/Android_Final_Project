@@ -1,5 +1,7 @@
 # ux-backlog-triage — #6–#11 are not parallelisable, and two of them were lying about why
 
+> **Summary:** #6–#11 are not parallelisable, and two of them were lying about why
+
 **Session:** `ux-backlog-triage` · **Date:** 2026-08-13 · **Mode:** normal (interactive)
 **Branch:** `feat/goalpilot-implementation` · **Tickets:** [#10](https://github.com/idomarhaim/Android_Final_Project/issues/10), [#11](https://github.com/idomarhaim/Android_Final_Project/issues/11) — titles only, neither resolved
 

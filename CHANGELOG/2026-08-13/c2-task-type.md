@@ -1,5 +1,7 @@
 # c2-task-type — resolved #20: the duplication the ticket existed to prevent had already shipped
 
+> **Summary:** resolved #20: the duplication the ticket existed to prevent had already shipped
+
 > **Outcome first.** `#20` is **resolved and closed**. The map now has **no blocked tickets at
 > all** — three open, all unblocked, all unassigned (`#21 · C5`, `#30 · C11b`, `#35 · C15b`).
 > **Decision: a task carries `granularity ∈ DEEP · FRAGMENTED`** — two values, closed, no

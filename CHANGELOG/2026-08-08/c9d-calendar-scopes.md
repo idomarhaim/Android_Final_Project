@@ -1,5 +1,7 @@
 # `c9d-calendar-scopes` — one scope buys the whole calendar, and the consent behind it has never been read
 
+> **Summary:** one scope buys the whole calendar, and the consent behind it has never been read
+
 **Session:** `c9d-calendar-scopes` · **Invoked as:** `/wayfinder 12 17` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal ·
 **Ran and landed** 2026-08-08.

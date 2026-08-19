@@ -1,6 +1,7 @@
 # Changes — 05/08/2026 · session `challenges-ui`
 
 > **Branch:** `feat/goalpilot-implementation`
+> **Summary:** Competitive challenges become a real screen.
 
 Competitive challenges become a real screen. The `challenges` session built the
 domain, data and DI layers and left the rules written but undeployed

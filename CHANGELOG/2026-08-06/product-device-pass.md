@@ -1,5 +1,7 @@
 # 2026-08-06 — `product-device-pass`
 
+> **Summary:** Opened with `/kickoff product-device-pass` from the brief `product-review` wrote the same day.
+
 Opened with `/kickoff product-device-pass` from the brief `product-review` wrote
 the same day. **Read-only against the codebase**: this session established what is
 real and filed it. Not one line of `app/`, `functions/`, `firestore.rules` or

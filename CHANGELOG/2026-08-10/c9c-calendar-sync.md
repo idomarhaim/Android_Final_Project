@@ -1,5 +1,7 @@
 # `c9c-calendar-sync` — Google holds the *when*, GoalPilot holds *what happened*
 
+> **Summary:** Google holds the *when*, GoalPilot holds *what happened*
+
 **Session:** `c9c-calendar-sync` · **Invocation:** `/wayfinder 12` *(bare — no ticket
 named)* · **Branch:** `feat/goalpilot-implementation` · **Mode:** normal at start,
 **`AUTO MODE`** from Ido's second message · 2026-08-10.

@@ -1,6 +1,7 @@
 # Changes — 04/08/2026 · session `challenges`
 
 > **Branch:** `feat/goalpilot-implementation`
+> **Summary:** Groundwork for competitive challenges (spec §6 nice-to-have, §7).
 
 Groundwork for competitive challenges (spec §6 nice-to-have, §7). No UI yet:
 this is the security-rules change that makes joining possible at all, plus the

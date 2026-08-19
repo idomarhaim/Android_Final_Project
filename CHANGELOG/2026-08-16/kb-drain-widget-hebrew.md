@@ -1,5 +1,7 @@
 # `kb-drain-widget-hebrew` — 2026-08-16
 
+> **Summary:** Close-out half of a cross-repo unit.
+
 Close-out half of a cross-repo unit. The knowledge landed in the central JARVIS KB
 (`C:\Dev\JARVIS`, `dd2d96c`); what belongs to **this** repo is the drained candidate file and the
 correction on `#51`.

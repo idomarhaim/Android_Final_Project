@@ -1,5 +1,7 @@
 # `c4-goal-task-ontology` — the discriminator turns out to be an edge, not a property
 
+> **Summary:** the discriminator turns out to be an edge, not a property
+
 **Session:** `c4-goal-task-ontology` · **Invocation:** `/wayfinder 12 13` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL throughout) ·
 2026-08-10.

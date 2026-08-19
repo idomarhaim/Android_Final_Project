@@ -1,5 +1,7 @@
 # 2026-08-06 — `product-review`: the pre-sleep product/UX brief becomes a backlog
 
+> **Summary:** the pre-sleep product/UX brief becomes a backlog
+
 Ido did a quick manual pass over the running app wearing a product/UX hat and
 wrote down everything that looked missing or wrong, freehand, in Hebrew, into a
 `.docx`. This session turns that document into something the repo — and the next

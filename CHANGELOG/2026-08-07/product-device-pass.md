@@ -1,5 +1,7 @@
 # 2026-08-07 — `product-device-pass` (second sitting)
 
+> **Summary:** A short follow-up to [2026-08-06](../2026-08-06/product-device-pass.md), re-claimed to close the one item that sitting had to leave `unverified`: the **first-run empty states**.
+
 A short follow-up to [2026-08-06](../2026-08-06/product-device-pass.md), re-claimed
 to close the one item that sitting had to leave `unverified`: the **first-run
 empty states**. Ido approved `pm clear` on the emulator. Markdown only — no

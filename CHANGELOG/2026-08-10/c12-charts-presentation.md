@@ -1,5 +1,7 @@
 # c12-charts-presentation — claimed #31, the first screen ticket under the new design standard
 
+> **Summary:** claimed #31, the first screen ticket under the new design standard
+
 **Session:** `c12-charts-presentation` · **Date:** 2026-08-10 · **Mode:** `AUTO MODE` (from Ido's first message)
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) on map [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)
 

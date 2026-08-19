@@ -1,5 +1,7 @@
 # `kb-ingest-c10` — this repo's half of a cross-repo ingest
 
+> **Summary:** this repo's half of a cross-repo ingest
+
 **Session:** `kb-ingest-c10` · **Date:** 2026-08-10 · **Mode:** normal
 **Invocation:** bare `/kb-ingest` · **Ingest only, Markdown only. No code.**
 

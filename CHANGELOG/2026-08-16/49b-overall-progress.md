@@ -1,5 +1,7 @@
 # `49b-overall-progress` — 2026-08-16
 
+> **Summary:** `widget-pack`'s note pointed at `DashboardViewModel.kt:103` and §4.4's ⚠️.
+
 Routed defect · *"the dashboard reads **Overall progress 16259%**"* — spotted by `widget-pack` on a
 device (`d2cbaef`) and routed to [`#49`](https://github.com/idomarhaim/Android_Final_Project/issues/49)
 · branch `feat/goalpilot-implementation` · mode `AUTO MODE`

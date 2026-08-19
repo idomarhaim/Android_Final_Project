@@ -1,5 +1,7 @@
 # `36-tasks-consent` — a declined Google Tasks scope now reads as *declined*
 
+> **Summary:** a declined Google Tasks scope now reads as *declined*
+
 **Session:** `36-tasks-consent`, started from `/implement #36`.
 **Branch:** `feat/goalpilot-implementation`. **Mode:** `AUTO MODE` (Ido's mid-session message).
 **Issue:** [`#36`](https://github.com/idomarhaim/Android_Final_Project/issues/36) — builds against

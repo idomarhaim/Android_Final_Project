@@ -1,5 +1,7 @@
 # c5-endless-goals — #21 (`C5`): how are endless and maintenance goals modelled?
 
+> **Summary:** #21 (`C5`): how are endless and maintenance goals modelled?
+
 > **Status: resolved and closed.** Two halves, written as the session ran: the **claim** below
 > (frontier derivation, why `#21` and not the other two), then **[the resolution](#resolved--21-closed-the-ticket-had-no-schema-change-in-it-at-all)**
 > after Ido handed the decision back. `/wayfinder 12` was invoked with the **map**, not a ticket, so

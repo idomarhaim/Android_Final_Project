@@ -1,5 +1,7 @@
 # `backlog-triage` — the pre-map backlog reconciled against `docs/PRODUCT_v0.3.md`
 
+> **Summary:** the pre-map backlog reconciled against `docs/PRODUCT_v0.3.md`
+
 **Session:** `backlog-triage`, from brief [`sessions/backlog-triage.md`](../../sessions/backlog-triage.md).
 **Branch:** `feat/goalpilot-implementation`. **Mode:** `AUTO MODE` (Ido's session message; the brief
 said `mode: normal` and this session's message wins — that unlocked the brief's own carve-out,

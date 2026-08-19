@@ -46,7 +46,7 @@ jobs:
 
       - name: Un-pin the machine-local JDK path
         # gradle.properties hard-codes org.gradle.java.home to a Windows path so
-        # that local builds skip this machine's JDK 25 (AGP rejects it). That
+        # that local builds run on the Temurin JDK 21 this toolchain needs. That
         # line is meaningless on the runner and fails the build outright, so it
         # is stripped here rather than removed from the repo, where it earns its
         # keep on every developer build.

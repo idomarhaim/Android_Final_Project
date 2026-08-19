@@ -1,5 +1,7 @@
 # `c13-byo-api-key` — the key buys a credential, not a pipeline
 
+> **Summary:** the key buys a credential, not a pipeline
+
 **Session:** `c13-byo-api-key` · **Date:** 2026-08-10 · **Mode:** `AUTO MODE`
 **Invocation:** `/kickoff c13-byo-api-key`, resolving [#32](https://github.com/idomarhaim/Android_Final_Project/issues/32) (`C13`) on the [v0.3 product-model map](https://github.com/idomarhaim/Android_Final_Project/issues/12) · **Planning only; no code.**
 

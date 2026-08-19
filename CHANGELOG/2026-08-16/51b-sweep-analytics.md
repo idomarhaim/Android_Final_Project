@@ -1,5 +1,7 @@
 # `51b-sweep-analytics` — 2026-08-16
 
+> **Summary:** Ido's constraint: not `dashboard/` or `goals/`.
+
 `/implement` [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) — the literal
 sweep, **one package: `feature/analytics/`** · branch `feat/goalpilot-implementation` · mode
 `AUTO MODE`

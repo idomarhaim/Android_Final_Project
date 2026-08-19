@@ -1,5 +1,7 @@
 # `c17-many-to-many` — a goal in several life areas, a task under several goals
 
+> **Summary:** a goal in several life areas, a task under several goals
+
 **Session:** `c17-many-to-many` · **Invocation:** `/wayfinder 12` *(bare — no ticket
 named)* · **Branch:** `feat/goalpilot-implementation` · **Mode:** `AUTO MODE` ·
 2026-08-10.

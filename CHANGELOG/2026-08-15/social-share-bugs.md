@@ -1,5 +1,7 @@
 # 2026-08-15 — `social-share-bugs`
 
+> **Summary:** `/kickoff social-share-bugs` — issues [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) (a shared photo cannot be opened, and has no content description) and [`#5`](https://github.com/idomarhaim/Android_Final_Project/issues/5) (a user cannot delete a share they made).
+
 `/kickoff social-share-bugs` — issues
 [`#4`](https://github.com/idomarhaim/Android_Final_Project/issues/4) (a shared photo cannot be
 opened, and has no content description) and

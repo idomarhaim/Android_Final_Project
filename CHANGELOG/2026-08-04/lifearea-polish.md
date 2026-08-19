@@ -1,6 +1,7 @@
 # Changes — 04/08/2026 · session `lifearea-polish`
 
 > **Branch:** `feat/goalpilot-implementation`
+> **Summary:** The first two follow-ups under "Life areas + time-allocation analytics": giving the user's own ordering a way to be *set*, and making the filing visible where they actually look at their goals.
 
 The first two follow-ups under "Life areas + time-allocation analytics": giving the
 user's own ordering a way to be *set*, and making the filing visible where they

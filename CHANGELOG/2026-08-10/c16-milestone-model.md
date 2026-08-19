@@ -1,5 +1,7 @@
 # `c16-milestone-model` — a milestone is a goal nobody wants for itself
 
+> **Summary:** a milestone is a goal nobody wants for itself
+
 **Session:** `c16-milestone-model` · **Invocation:** `/wayfinder 12` *(bare — no ticket
 named)* · **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL
 throughout) · 2026-08-10.

@@ -149,7 +149,7 @@ if (-not (Test-Path -LiteralPath $Adb)) {
 
 # ── Locate a JDK 21 for the Gradle launcher ───────────────────────────────────
 # gradle.properties pins the Gradle *daemon* to JDK 21 (org.gradle.java.home), but
-# gradlew.bat itself boots on JAVA_HOME, and this machine's default is JDK 25.
+# gradlew.bat itself boots on JAVA_HOME, which need not be the pinned JDK 21.
 function Resolve-Jdk21 {
     $pinned = $null
     $gradleProps = Join-Path $RepoRoot 'gradle.properties'
@@ -180,7 +180,7 @@ if ($Jdk) {
     Write-Note "JAVA_HOME -> $Jdk"
 }
 else {
-    Write-Warn 'No JDK 21 found; falling back to the ambient JAVA_HOME. AGP rejects JDK 25.'
+    Write-Warn 'No JDK 21 found; falling back to the ambient JAVA_HOME. This toolchain needs JDK 21.'
 }
 
 # ── Warn if Android Studio is holding the build directory ─────────────────────

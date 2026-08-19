@@ -1,5 +1,7 @@
 # session-identity-tabs — 2026-08-15
 
+> **Summary:** Derived per 🧭 *shared singletons are exclusive* and *"if two claims would overlap, it is one session's work"*, rather than asked.
+
 `/wayfinder 12` in `AUTO MODE`. **No ticket claimed, and that was the right outcome** — plus one
 KB candidate filed for an error this session made and corrected.
 

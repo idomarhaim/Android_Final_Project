@@ -1,5 +1,7 @@
 # 2026-08-15 — `widget-pack`
 
+> **Summary:** `/implement #10` — the home-screen widget pack.
+
 `/implement #10` — the home-screen widget pack. Spec §4.5 (widgets), §4.1 (the material
 contract), §4.4 (charts and the dashboard), §4.9 (why neo), §4.8 / §0.8 (bidi and Hebrew).
 

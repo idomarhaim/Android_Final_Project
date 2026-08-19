@@ -1,5 +1,7 @@
 # `kb-ingest-backlog-drain` — 2026-08-10
 
+> **Summary:** **Ingest only, Markdown only.** No Kotlin, Gradle, Firestore-rules or Functions file created or modified; no issue written, no ticket resolved, no singleton taken, live `goalpilot-56e30` never contacted.
+
 **Ingest only, Markdown only.** No Kotlin, Gradle, Firestore-rules or Functions
 file created or modified; no issue written, no ticket resolved, no singleton taken,
 live `goalpilot-56e30` never contacted.

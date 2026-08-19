@@ -1,5 +1,7 @@
 # `36-tasks-consent` — repairing the `#2` drag defect the unblocked test layer found
 
+> **Summary:** repairing the `#2` drag defect the unblocked test layer found
+
 **Session:** `36-tasks-consent` (third sitting), continuing from
 [`CHANGELOG/2026-08-15/36-tasks-consent.md`](../2026-08-15/36-tasks-consent.md).
 **Branch:** `feat/goalpilot-implementation`. **Mode:** `AUTO MODE`.

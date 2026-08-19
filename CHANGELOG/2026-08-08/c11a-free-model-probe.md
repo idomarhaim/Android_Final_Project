@@ -1,5 +1,7 @@
 # `c11a-free-model-probe` — the free model gets measured instead of assumed
 
+> **Summary:** the free model gets measured instead of assumed
+
 **Session:** `c11a-free-model-probe` · **Invoked as:** `/wayfinder 12 16` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal · **2026-08-08.**
 

@@ -1,5 +1,7 @@
 # `c15-language-switching` — the language picker turns out to be three settings
 
+> **Summary:** the language picker turns out to be three settings
+
 **Session:** `c15-language-switching` · **Invocation:** `/wayfinder 12 15` ·
 **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL throughout) ·
 2026-08-08.

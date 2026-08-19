@@ -1,5 +1,7 @@
 # c20-derived-state — the map had no ticket left, so the fog patch `C1` discharged became one
 
+> **Summary:** the map had no ticket left, so the fog patch `C1` discharged became one
+
 **Session:** `c20-derived-state` · **Date:** 2026-08-14 · **Mode:** `AUTO MODE`
 **Branch:** `feat/goalpilot-implementation` · **Ticket:** [#42 · `C20`](https://github.com/idomarhaim/Android_Final_Project/issues/42) *(filed by this session)*
 **Invoked as:** `/wayfinder 12` — the **map**, no ticket named, so the pick was the agent's.

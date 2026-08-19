@@ -1,5 +1,7 @@
 # `c9a-schedule-a-task` — a schedule is not a field on a task, it is a set of occurrences
 
+> **Summary:** a schedule is not a field on a task, it is a set of occurrences
+
 **Session:** `c9a-schedule-a-task` · **Invocation:** `/wayfinder 12` (bare — no ticket
 named) · **Branch:** `feat/goalpilot-implementation` · **Mode:** normal (HITL
 throughout) · 2026-08-10.
