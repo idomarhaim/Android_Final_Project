@@ -1,0 +1,224 @@
+# Run the Android emulator on GitHub's hardware instead of on a developer laptop.
+#
+# WHY THIS EXISTS: this repo's 15 instrumented tests (app/src/androidTest/) need a
+# real Android device, and an AVD costs 2-4 GB of RAM on top of the Gradle daemon's
+# 2.5 GB. On a 16 GB machine that is the difference between "I can work" and "I can
+# run a test". A GitHub-hosted ubuntu runner has KVM and 16 GB of its own, this repo
+# is public so the minutes are free, and nothing here touches the laptop.
+#
+# HOW TO USE IT — the whole point is that no local device is needed:
+#   Actions tab -> "Instrumented tests (cloud emulator)" -> Run workflow.
+# Results land as downloadable artifacts on the run: an HTML test report, and PNG
+# screenshots of the app actually running. See docs/CLOUD-DEVICE.md.
+#
+# DELIBERATELY MANUAL. There is no `push:` trigger yet: these tests have never run
+# on a cloud emulator, and a workflow that turns main red on its first commit is a
+# workflow people switch off. Enable the commented-out block below once a green run
+# is on the record.
+name: Instrumented tests (cloud emulator)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api-level:
+        description: 'Android API level to emulate'
+        required: false
+        default: '34'
+        type: choice
+        options: ['30', '33', '34', '35']
+      capture-screenshots:
+        description: 'Also boot the app and photograph it'
+        required: false
+        default: true
+        type: boolean
+  # Uncomment once a dispatch run has passed, to gate every change to the app:
+  # push:
+  #   branches: [main]
+  #   paths: ['app/**', 'gradle/**', 'build.gradle.kts', 'settings.gradle.kts']
+
+# An emulator run takes 15-25 minutes. Two of them on the same branch is 50 minutes
+# of runner time to learn one thing, so the newer one wins.
+concurrency:
+  group: emulator-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The emulator lives inside the job, so a Gradle daemon buys nothing and its
+  # memory competes with the AVD on the same runner.
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  instrumented:
+    name: androidTest on API ${{ inputs.api-level || '34' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM
+        # Without this the emulator falls back to software emulation: a boot that
+        # takes ~2 minutes takes ~20, and then the job times out. The runner image
+        # ships /dev/kvm but not permission to use it.
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Un-pin the machine-local JDK path
+        # gradle.properties hard-codes org.gradle.java.home to a Windows path that
+        # earns its keep on a developer machine and is a hard build failure here.
+        # Same treatment as release.yml — stripped on CI, never removed from the repo.
+        run: sed -i '/^org\.gradle\.java\.home=/d' gradle.properties
+
+      - name: Make the Gradle wrapper executable
+        # gradlew was committed from Windows, which carries no POSIX exec bit, and
+        # gradlew* is frozen in AGENTS.md — so the fix stays on the CI side.
+        run: chmod +x ./gradlew
+
+      - name: Write local.properties
+        # GOOGLE_WEB_CLIENT_ID is read at build time into R.string.gp_web_client_id.
+        # No instrumented test signs in, so the placeholder is enough for them; the
+        # real value is used when the secret is present.
+        env:
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          {
+            echo "GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-REPLACE_WITH_WEB_CLIENT_ID}"
+            echo "FUNCTIONS_REGION=us-central1"
+          } > local.properties
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the app and test APKs
+        # Done before the emulator boots, so a compile error costs 5 minutes instead
+        # of 25 and the emulator is not sitting idle through KSP and Hilt.
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Cache the AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ inputs.api-level || '34' }}
+
+      - name: Create the AVD and snapshot a cold boot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api-level || '34' }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot-load
+          disable-animations: false
+          script: echo "AVD created and snapshotted"
+
+      - name: Run the instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api-level || '34' }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot-save
+          # Compose's waitForIdle and Espresso both flake or hang when system
+          # animations are on. This is the commonest cause of a test that passes
+          # locally and times out on CI.
+          disable-animations: true
+          script: ./gradlew :app:connectedDebugAndroidTest
+
+      - name: Upload the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: androidTest-report-api${{ inputs.api-level || '34' }}
+          path: |
+            app/build/reports/androidTests/connected/**
+            app/build/outputs/androidTest-results/connected/**
+          retention-days: 30
+          if-no-files-found: warn
+
+  screenshots:
+    name: Photograph the running app
+    # Runs in parallel with the tests, on its own emulator, for a reason:
+    # connectedDebugAndroidTest UNINSTALLS the app when it finishes, so a screenshot
+    # taken after it would be of an empty launcher. Same trap as the local one
+    # recorded on the SESSIONS.md board.
+    # Manual dispatch only. If the `push:` trigger above is ever enabled, `inputs`
+    # is empty there and a `!= false` test would silently evaluate true — doubling
+    # the runner time of every commit to buy screenshots nobody asked for.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.capture-screenshots }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Un-pin the machine-local JDK path
+        run: sed -i '/^org\.gradle\.java\.home=/d' gradle.properties
+
+      - name: Make the Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Write local.properties
+        env:
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          {
+            echo "GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-REPLACE_WITH_WEB_CLIENT_ID}"
+            echo "FUNCTIONS_REGION=us-central1"
+          } > local.properties
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Boot the app and screenshot it
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api-level || '34' }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: bash .github/scripts/capture-screens.sh
+
+      - name: Upload the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-screenshots-api${{ inputs.api-level || '34' }}
+          path: screenshots/**
+          retention-days: 30
+          if-no-files-found: error

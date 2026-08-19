@@ -59,6 +59,7 @@ with per-session briefs in `sessions/`. Account of the freeze itself:
 - [README.md](README.md) — features, quick-start.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layered design, data model, data flow.
 - [docs/SETUP.md](docs/SETUP.md) — Firebase / GROQ / OAuth credentials + debug SHA-1.
+- [docs/CLOUD-DEVICE.md](docs/CLOUD-DEVICE.md) — **no RAM for a local emulator?** Where else a device can live. The GitHub Actions emulator is already built and free (`.github/workflows/instrumented-tests.yml`, run it from the Actions tab); streamed real phones and browser emulators are the interactive options.
 - [TODO/TODO.md](TODO/TODO.md) — backlog index (MUST → OPTIONAL → FUTURE).
 - [CHANGELOG/CHANGELOG_README.md](CHANGELOG/CHANGELOG_README.md) — index of days. Entries live at `CHANGELOG/YYYY-MM-DD/<session-label>.md`: **one folder per day, one file per session**, so parallel sessions never write the same file. `SUMMARY.md` in a day folder is written by the first session of a later day. **The day table is generated (2026-08-17) — never hand-edit between the `CHANGELOG-INDEX` markers.** Your row is built from the mandatory `> **Summary:**` line in your *own* file; stage that file, run `scripts\New-ChangelogIndex.ps1 -Staged`, then stage the index. A pre-commit hook refuses a commit the index does not list — a fresh clone installs it with `scripts\Install-GitHooks.ps1`. See [scripts/README.md](scripts/README.md#repo-hygiene-the-changelog-index).
 - [.github/authoring-instructions.md](.github/authoring-instructions.md) — how to write instruction files.
