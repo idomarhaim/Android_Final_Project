@@ -426,3 +426,54 @@ through:
 - Its **uncommitted** work (`.github/scripts/`, the workflow file) does **not** ride along:
   every commit in this session named explicit paths, and `SESSIONS.md` is not among them
   this round.
+
+## Round 4 — the second AVD
+
+### 13 · `Pixel_10_Pro_XL_B` is up, on the GPU path, with the APK installed
+
+`Pixel_10_Pro_XL` was shut down **cleanly** first (`adb emu kill`, not a process kill) —
+16 GB will not carry two of these side by side now that the GPU path costs 3 GB resident.
+Account A survives in that AVD's userdata; only one AVD runs at a time on this machine.
+
+B booted in 50 s, `dumpsys SurfaceFlinger` confirms the same `Intel(R) UHD Graphics` path,
+`dumpsys account` empty as expected, debug APK installed, window placed at **313×700
+centred** by hand.
+
+Left at Google's **password** screen for `rachil751@gmail.com`, field empty, soft keyboard
+up. **The password is Ido's to type — this session does not enter it.**
+
+### 14 · `adb shell input text` is not safe to drive a login with, and both failure modes bit
+
+Both are worth writing down because neither is visible in the command's exit code.
+
+1. **It duplicated the leading characters.** `input text "rachil751@gmail.com"` produced
+   **`rarachil751@gmail.com`** on screen. One `input text` call, two extra characters, exit
+   code 0.
+2. **Chunking it made things worse, in a way that could have been serious.** Splitting into
+   `rachil` / `751` / `@gmail.com` with pauses meant that when the page **advanced to the
+   password field** mid-sequence, the remaining chunks were typed **into the password box**.
+   Caught on the next screenshot and cleared with 40 `KEYCODE_DEL` events before anything was
+   submitted, but the general shape — *an automated typist keeps typing after the form has
+   moved on* — puts text into whatever field happens to be focused.
+
+**Rule taken from this: do not drive a credential form with `input text`.** Type identifiers
+only, one call, and **screenshot before every subsequent action** rather than sequencing
+blind. Passwords are the user's to type, which is what saved this one.
+
+> ⚠️ **Correction to §7(b).** That entry blamed the quickboot snapshot for the Hebrew
+> subtype disappearing. **It is not the snapshot:** the subtype was already gone from
+> `enabled_input_methods` *while the same boot was still running*, read immediately **before**
+> this round's clean shutdown. `Inferred:` `InputMethodManagerService` reconciles that setting
+> against Gboard's **own** enabled-languages preference and prunes a subtype Gboard does not
+> list, so `settings put` is writing to a cache, not the source of truth. **Not yet proven**,
+> and the honest consequence is that the Hebrew keyboard **is not installed** — B's keyboard
+> in the screenshots is English-only. The supported route is Gboard's own settings
+> (Settings → System → Languages & input → Gboard → Languages → Add keyboard → Hebrew), or
+> adding Hebrew as a secondary **system language**. Left undone rather than reported as done.
+
+## 🧪 Tests — round 4
+
+| Layer | Result |
+|---|---|
+| Device / manual | ✅ B boots on the GPU path, APK installs, app launches, Google sign-in reaches the password screen. ⏳ Password is Ido's. |
+| Everything else | Unchanged from round 3. |
