@@ -250,3 +250,50 @@ disconnect — losing the in-flight sign-in. `Untested:` the cause. It is not `u
 restarts `adbd` and not the VM; RAM was 3.4 GB free afterwards, so pressure is a candidate
 but not a demonstrated one. It rebooted cleanly in 36 s. If it recurs, that is a real defect
 worth a session; one occurrence is a note.
+
+### 8 · `ApiException: 10` at sign-in — the new machine minted a new debug keystore
+
+Sign-in fails with **`10`** (`DEVELOPER_ERROR`). Diagnosed rather than guessed, and it is
+**not** the `GOOGLE_WEB_CLIENT_ID` fixed in §1 — that value is correct and baked in.
+
+| Fact | Value |
+|---|---|
+| SHA-1 Firebase has for `com.idomarhaim.goalpilot.debug` | `f1d0964d5441d599867dae830f771623bb64db3f` (SHA Id `b4818880e4ba8bfc`) |
+| SHA-1 of `~/.android/debug.keystore` **on this machine** | `448d0d9424fa876a6ce8980c0c5b740d11a7b3ec` |
+| That keystore's creation date | **2026-08-19 20:47:04 IDT** |
+
+**20:47 is this session's first `assembleDebug`.** The old machine's
+`~/.android/debug.keystore` went with the old machine; the Android toolchain silently
+generates a fresh one on first use, with a new key and therefore a new SHA-1. Google
+rejects the sign-in server-side because that fingerprint is not on the project — which is
+exactly what `DEVELOPER_ERROR` means and exactly what it does not say.
+
+**Why this was not predictable from the brief.** The migration session's checklist covered
+everything that lives in **git** or in a **config file** — and this one lives in neither. It
+is a per-machine secret outside the repo, regenerated *by the very first build*, so it
+cannot fail until after the build succeeds, and it fails on a screen three steps later.
+`docs/RELEASING.md` already documents `ApiException: 10` for **release** builds and says
+*"debug keeps working"* — true on a machine whose debug key is registered, which is what
+made the note read as not applying here.
+
+**The fix is one command, and it is an outward action — `AUTO MODE` does not authorise it**
+(`rules/outward-action-governance.md`; the mode is the dev half only). Held for Ido:
+
+```
+firebase apps:android:sha:create \
+  1:297750736036:android:f428d22e3d58bdf5058a31 \
+  448d0d9424fa876a6ce8980c0c5b740d11a7b3ec
+```
+
+- No rebuild and no reinstall afterwards — the fingerprint is checked **server-side**, so
+  the already-installed APK starts working within a minute or two.
+- **Nothing is deleted.** The old `f1d0964d…` stays; removing it is a deletion and a
+  separate always-ask. It is also the fingerprint registered on the **release** app, where
+  it sits beside `e7d5534c…`.
+- **Optional follow-up, not required:** re-download `google-services.json` so its
+  `certificate_hash` for the debug package lists the new SHA too. That file is **committed**,
+  so it is a real diff and it changes no behaviour — sign-in does not read it for this check.
+
+⚠️ **This recurs on every new machine, and it will recur on the release app too** the first
+time a release APK is built here (the release keystore is a different, also-machine-local
+file — see `scripts/new-release-keystore.ps1`).
