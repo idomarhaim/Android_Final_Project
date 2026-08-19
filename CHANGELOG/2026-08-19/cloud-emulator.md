@@ -98,6 +98,11 @@ explicitly rather than skipped. What *was* run, against the actual consumers:
 | Shell syntax (`bash -n .github/scripts/capture-screens.sh`) | **PASS** |
 | JVM unit / instrumented / Firestore rules | **not run — not touched.** No `app/`, `functions/` or `firestore-tests/` file changed. |
 
+> ✅ **CLOSED the same day — see *Third unit* below.** Run #1 went green in 12m 02s on `19ff290`,
+> so this `unverified` is spent. The paragraph stays as written because it is the record of what
+> was true at the commit, and because both risks it named turned out not to fire — which is only
+> legible if the guess is still visible beside the result.
+
 ⚠️ **`unverified`, and this is the honest limit of the session: the workflow has never executed.**
 A GitHub Actions workflow's real consumer is GitHub, and it cannot be reached from a working tree
 — the file has to be on the remote before the Actions tab will list it, and `gh` is not installed
@@ -156,3 +161,63 @@ The candidate file is deleted in the same commit as this note, per the drained-c
 carve-out. **Two candidate files in this repo remain undrained and were deliberately untouched**
 — `2026-08-19-docs-hygiene-backfill.md` and `2026-08-19-new-machine-checkup.md`, each belonging
 to a session of its own, and `new-machine-checkup` is live on the board and owns its by name.
+
+---
+
+## Third unit — run #1 is green, so the `unverified` closes and the gate opens
+
+**Observed 2026-08-19**, Ido dispatched the workflow by hand on `19ff290`:
+**run #1 succeeded, 12m 02s total**, both jobs green in parallel —
+`androidTest on API 34` **11m 56s** (`:app:assembleDebug`, `:app:assembleDebugAndroidTest`,
+`:app:connectedDebugAndroidTest`, all green on Gradle 8.10.2) and
+`Photograph the running app` **8m 08s**. Two artifacts. **4 warnings, 0 errors.**
+
+That answers every guess this session hedged, and all of them the optimistic way: KVM was
+permitted, the emulator booted, the AVD cache worked cold, and neither of the two named
+first-run risks — the 15 tests against an API-34 cloud device, and `assembleDebugAndroidTest`
+build time on a cold runner cache — materialised.
+
+### `push:` is on
+
+The condition the workflow shipped waiting on is met, so the commented `push:` block is
+uncommented: `main`, paths `app/**`, `gradle/**`, and the two root build files. Docs and
+changelog commits, which are most of this repo's traffic, trigger nothing, and
+`cancel-in-progress` means two pushes in a row cost one run rather than two.
+
+### The green that was not yet worth trusting, and the guard that fixes it
+
+**`connectedDebugAndroidTest` goes green when *zero* tests are discovered.** That is exactly
+`android-device-verification.md` §1 in the JARVIS KB — *"`Process crashed` with 0 tests is a
+harness message"* — and this repo's own §7, added by this session hours earlier, ships beside
+it. Run #1 said **Success** and nothing on the run page distinguished *15 tests passed* from
+*nothing ran*; answering it meant downloading an artifact.
+
+So a step now parses the JUnit XML, writes
+`**Instrumented:** N tests, N failures, N errors, N skipped` into the run summary, and
+**exits 1 when N is 0**. From here on, green means a number.
+
+> **Verified in both directions before shipping**, per the positive-control rule in
+> `look-at-your-own-output.md` §5.2 — the guard is itself untested code, and its dangerous
+> failure is the silent one. Extracted verbatim out of the committed YAML (not retyped) and
+> run against a synthesised results tree covering **both** AGP layouts —
+> `androidTest-results/connected/TEST-*.xml` and `.../connected/debug/TEST-*.xml`:
+> 12 + 3 tests summed to **15**, 1 failure and 2 skipped carried through, exit **0**; then the
+> same script over an empty tree printed **0 tests**, emitted the `::error::` and exited **1**.
+> The YAML was re-parsed with `yaml.safe_load` and the heredoc terminator confirmed at column 0.
+
+### Left alone deliberately
+
+**The 4 deprecation warnings.** Two are `setup-java@v4 is deprecated`, two are
+`Node.js 20 … forced to run on Node.js 24` for `actions/checkout` and `actions/cache`. None
+of them failed anything. Bumping action majors on a workflow that has been green exactly once
+trades a working thing for a tidy one, so the versions stay frozen at the set that produced
+run #1. `release.yml` carries the same warnings and is not this session's file.
+
+**`SESSIONS.md` was not touched, and the release note is therefore stale on one point** — it
+still says *"IT HAS NEVER RUN"*. Two sibling sessions (`50-offline-stamps` and
+`kb-drain-51e-backfill` round 2) had their claim rows written into the working tree and **not
+yet committed** when this unit ran. A pathspec commit takes the *working tree*, so committing
+`SESSIONS.md` here would have published both of their rows under this message. The board rule
+exists to protect siblings' work; obeying it literally would have damaged it. The note errs
+toward caution — it warns a reader off something that is in fact proven — so the stale
+direction is the safe one, and it is corrected in the next commit that finds the file free.

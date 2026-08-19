@@ -54,13 +54,29 @@ app. **Your machine does nothing** — you click a button in a browser.
    - `androidTest-report-api34` — open `index.html` inside it: the test report
    - `app-screenshots-api34` — PNGs of the app running, plus `logcat.txt`
 
-### Why it is manual, and how to make it automatic
+### It runs on every app change too, since 2026-08-19
 
-There is no `push:` trigger yet. These tests have never run on a cloud emulator,
-and a workflow that turns `main` red on its first commit is a workflow people
-switch off. **Once one dispatch run is green**, uncomment the `push:` block at
-the top of the workflow file and every change to `app/**` gets a device run for
-free.
+**Run #1 was green** — manually dispatched on `19ff290`, **12m 02s** total
+(`androidTest on API 34` 11m 56s, `Photograph the running app` 8m 08s, in
+parallel). That was the condition this workflow shipped waiting on, so the
+`push:` trigger is now on: any commit to `main` touching `app/**`, `gradle/**`
+or the root build files gets a device run automatically. **Docs and changelog
+commits — most of them here — trigger nothing**, and two pushes in a row cancel
+the older run rather than queueing it.
+
+Dispatching by hand still works and is the only way to get screenshots.
+
+### "Success" is now a number, not a word
+
+`connectedDebugAndroidTest` goes green when **zero** tests are discovered — that
+is how a device job reports a harness failure as a pass, and it is §1 of the
+`android-device-verification` page in the JARVIS KB. Run #1 said *Success* and
+nothing on the page said whether 15 tests had run or none.
+
+So the job now counts the JUnit XML itself, prints
+`Instrumented: N tests, N failures, …` in the run summary, and **fails outright
+if N is 0**. You never have to download an artifact to find out whether anything
+ran.
 
 ### What it cannot do
 

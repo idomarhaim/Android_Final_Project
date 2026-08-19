@@ -31,10 +31,12 @@ on:
         required: false
         default: true
         type: boolean
-  # Uncomment once a dispatch run has passed, to gate every change to the app:
-  # push:
-  #   branches: [main]
-  #   paths: ['app/**', 'gradle/**', 'build.gradle.kts', 'settings.gradle.kts']
+  # Enabled 2026-08-19 after run #1 (commit `19ff290`) came back green in 12m 02s.
+  # Only paths that can change what runs on a device — a docs or changelog commit,
+  # which is most of them here, triggers nothing.
+  push:
+    branches: [main]
+    paths: ['app/**', 'gradle/**', 'build.gradle.kts', 'settings.gradle.kts']
 
 # An emulator run takes 15-25 minutes. Two of them on the same branch is 50 minutes
 # of runner time to learn one thing, so the newer one wins.
@@ -140,6 +142,37 @@ jobs:
           # locally and times out on CI.
           disable-animations: true
           script: ./gradlew :app:connectedDebugAndroidTest
+
+      - name: Count what actually ran, and fail if nothing did
+        if: always()
+        # A green `connectedDebugAndroidTest` does NOT mean the tests passed — the
+        # task also goes green when **zero** tests were discovered, which is how a
+        # device job reports a harness failure as a success. Run #1 was green and
+        # nothing on the run page said whether 15 tests had run or none; answering
+        # that needed downloading an artifact. This step turns "Success" into a
+        # number, prints it on the run page, and fails the job outright on a run
+        # that tested nothing.
+        run: |
+          python3 - <<'PY'
+          import glob, os, sys, xml.etree.ElementTree as ET
+          files = sorted(glob.glob("app/build/outputs/androidTest-results/**/TEST-*.xml", recursive=True))
+          tests = failures = errors = skipped = 0
+          for f in files:
+              r = ET.parse(f).getroot()
+              tests    += int(r.get("tests") or 0)
+              failures += int(r.get("failures") or 0)
+              errors   += int(r.get("errors") or 0)
+              skipped  += int(r.get("skipped") or 0)
+          line = (f"**Instrumented:** {tests} tests, {failures} failures, {errors} errors, "
+                  f"{skipped} skipped - from {len(files)} result file(s)")
+          print(line)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write(line + "\n")
+          if tests == 0:
+              print("::error::Zero instrumented tests ran. A green task that tested "
+                    "nothing is a harness failure, not a pass.")
+              sys.exit(1)
+          PY
 
       - name: Upload the test report
         if: always()
