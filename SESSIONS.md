@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `50b-transaction-guard` | **#50 item 5 is authorised on a premise that is false at `HEAD`** — `TaskRepositoryImpl.setDone` is still `firestore.runTransaction`, so the offline pre-check is still load-bearing and deleting `ConnectivityMonitor` re-opens closed **#3** (a measured 7.9 s optimistic tick, then taken back). Prose already says so in three committed artifacts and gets skimmed; this session ships the half that cannot be skimmed — **one JVM source-reading unit test**, verified in **three directions** (green as-is, **red** when the guard is removed, **skipped not passed** when the premise flips, checked in the results XML). **Deletes nothing.** | `app/src/test/java/com/idomarhaim/goalpilot/guards/` *(new)*, `CHANGELOG/2026-08-20/50b-transaction-guard.md`, `sessions/50b-transaction-guard.md` → `sessions/done/` | `#gradle-daemon` (JVM unit only) — **no device** | 2026-08-20 |
 > 🏁 **`cloud-emulator` RELEASED 2026-08-19 — `83f648d` (claim) → `0fee40c` (the work) → this
 > note.** No singletons held: **no local Gradle build and no local device**, which is what kept it
 > disjoint from `new-machine-checkup` while that row held both. Account:
