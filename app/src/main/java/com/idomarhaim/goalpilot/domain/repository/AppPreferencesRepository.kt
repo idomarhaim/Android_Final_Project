@@ -1,7 +1,11 @@
 package com.idomarhaim.goalpilot.domain.repository
 
+import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
+import com.idomarhaim.goalpilot.domain.model.DaySchedule
+import com.idomarhaim.goalpilot.domain.model.WakingHours
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -33,6 +37,50 @@ interface AppPreferencesRepository {
     val language: StateFlow<AppLanguage>
 
     fun setLanguage(language: AppLanguage)
+
+    /**
+     * Light or dark, per spec §4.9's Appearance section.
+     *
+     * A [StateFlow] for the same reason [skin] is, and more sharply: brightness
+     * is applied *outside* the theme in `MainActivity`, so a cold flow would
+     * render the first frame at the system's brightness and then repaint the
+     * whole window.
+     */
+    val brightness: StateFlow<AppBrightness>
+
+    fun setBrightness(brightness: AppBrightness)
+
+    /**
+     * Where the user is, for week start and date order — spec §5.1's **Region**,
+     * decoupled from [language] on Ido's call (see [AppRegion]).
+     *
+     * **Stored and read out, not yet wired.** The app's date formatters are
+     * `#51`'s and `#51` is deferred; §4.9's Settings screen states what this
+     * choice means using [AppRegion]'s own arithmetic rather than asserting a
+     * change nothing has made.
+     */
+    val region: StateFlow<AppRegion>
+
+    fun setRegion(region: AppRegion)
+
+    /**
+     * Waking hours and the nightly planning time — spec §4.9's **Your day**.
+     *
+     * One value rather than three keys, because *Plan tomorrow at* is a
+     * function of *Awake between* until somebody overrides it; see [DaySchedule].
+     * The two setters below are the only two edits the screen can make, which is
+     * what keeps "unset" a reachable state rather than a value that has to be
+     * maintained.
+     *
+     * Neither consumer is built: `#8`'s scheduled half owns the reminder clamp
+     * and `C9b`'s load bar. §4.9 builds the controls; wiring is theirs.
+     */
+    val daySchedule: StateFlow<DaySchedule>
+
+    fun setWakingHours(wakingHours: WakingHours)
+
+    /** `null` restores the derived time — one hour before waking hours end. */
+    fun setPlanningOverrideMinutes(minutes: Int?)
 
     /**
      * When Health Connect was last read for [uid], in epoch millis, or 0 if never.

@@ -2,7 +2,19 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
+completed: 2026-08-20 by `48-settings-surface`
+commit: this commit
+result: |
+  §4.9's Settings screen built with four of its five sections (Appearance,
+  Language & region, Your day, Account), reachable from Home's new avatar sheet
+  and from the sign-in screen with no account. Profile's device controls moved
+  out. Material (4 tiles) and the whole AI section HELD -- C12 §4.1 and C13 are
+  unbuilt subsystems with no open issue between them. JVM unit 419/0,
+  assembleDebug green, instrumented 82/0 via `am instrument` (not
+  connectedDebugAndroidTest -- both AVDs are signed in, and the brief's claim
+  that Pixel_10_Pro_XL is signed out is stale). OWED: the sign-in screen's
+  Settings button has not been seen on a device; that needs a signed-out app.
 issue: 48
 created: 2026-08-17
 ---

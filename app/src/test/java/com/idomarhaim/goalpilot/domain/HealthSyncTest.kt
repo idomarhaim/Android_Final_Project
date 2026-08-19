@@ -8,7 +8,11 @@ import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
+import com.idomarhaim.goalpilot.domain.model.AppBrightness
+import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
+import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SleepNight
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
@@ -365,6 +369,19 @@ class HealthSyncTest {
         override fun setSkin(skin: AppSkin) { this.skin.value = skin }
         override val language = MutableStateFlow(AppLanguage.DEFAULT)
         override fun setLanguage(language: AppLanguage) { this.language.value = language }
+        override val brightness = MutableStateFlow(AppBrightness.DEFAULT)
+        override fun setBrightness(brightness: AppBrightness) {
+            this.brightness.value = brightness
+        }
+        override val region = MutableStateFlow(AppRegion.DEFAULT)
+        override fun setRegion(region: AppRegion) { this.region.value = region }
+        override val daySchedule = MutableStateFlow(DaySchedule.DEFAULT)
+        override fun setWakingHours(wakingHours: WakingHours) {
+            daySchedule.value = daySchedule.value.copy(waking = wakingHours)
+        }
+        override fun setPlanningOverrideMinutes(minutes: Int?) {
+            daySchedule.value = daySchedule.value.copy(planningOverrideMinutes = minutes)
+        }
         override fun healthLastSyncAt(uid: String): Long = stamps[uid] ?: 0L
         override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
             stamps[uid] = epochMillis

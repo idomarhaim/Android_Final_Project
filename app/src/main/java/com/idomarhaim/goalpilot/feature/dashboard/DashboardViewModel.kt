@@ -96,6 +96,8 @@ class DashboardViewModel @Inject constructor(
         DashboardUiState(
             isLoading = false,
             userName = user?.displayName?.substringBefore(' ').orEmpty(),
+            userFullName = user?.displayName.orEmpty(),
+            userPhotoUrl = user?.photoUrl,
             points = user?.points ?: 0L,
             level = user?.level ?: 1,
             levelProgress = user?.levelProgress ?: 0f,
@@ -685,6 +687,14 @@ class DashboardViewModel @Inject constructor(
 data class DashboardUiState(
     val isLoading: Boolean = true,
     val userName: String = "",
+    /**
+     * The name and photo behind Home's avatar (spec §4.2). Separate from
+     * [userName], which is the *first* name the greeting card uses: an avatar
+     * falls back to initials, and one initial from a truncated name is a worse
+     * fallback than two from the whole one.
+     */
+    val userFullName: String = "",
+    val userPhotoUrl: String? = null,
     val points: Long = 0L,
     val level: Int = 1,
     val levelProgress: Float = 0f,

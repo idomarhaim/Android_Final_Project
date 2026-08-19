@@ -24,14 +24,18 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -53,7 +57,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,6 +74,7 @@ import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
+import com.idomarhaim.goalpilot.ui.components.Avatar
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
@@ -76,6 +84,7 @@ import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
+import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 
@@ -86,9 +95,12 @@ fun DashboardScreen(
     onAddGoal: () -> Unit,
     onSeeAllGoals: () -> Unit,
     onOpenAnalytics: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var avatarSheetOpen by remember { mutableStateOf(false) }
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
     val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
     val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
@@ -152,6 +164,19 @@ fun DashboardScreen(
                         "GoalPilot",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
+                    )
+                },
+                actions = {
+                    Avatar(
+                        photoUrl = state.userPhotoUrl,
+                        name = state.userFullName,
+                        size = 36.dp,
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .clip(CircleShape)
+                            .clickable { avatarSheetOpen = true }
+                            .semantics { this.contentDescription = "Your account" }
+                            .testTag(TAG_HOME_AVATAR),
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -263,7 +288,80 @@ fun DashboardScreen(
         )
     }
 
+    if (avatarSheetOpen) {
+        AccountSheet(
+            onOpenProfile = {
+                avatarSheetOpen = false
+                onOpenProfile()
+            },
+            onOpenSettings = {
+                avatarSheetOpen = false
+                onOpenSettings()
+            },
+            onDismiss = { avatarSheetOpen = false },
+        )
+    }
+
 }
+
+/**
+ * Spec §4.2's avatar sheet: **two siblings, *Your profile* and *Settings*.**
+ *
+ * The siblinghood is the design. §4.9 splits one screen into two along a line
+ * the user can actually test — *does it survive sign-out?* — and a sheet that
+ * offered Profile with Settings tucked inside it would put the account back in
+ * charge of the device. They are peers here because they are peers in the
+ * model.
+ *
+ * Each row carries the boundary in a supporting line rather than in a help
+ * link: the user picking between them is the one person who needs to know which
+ * is which, and they need it now.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AccountSheet(
+    onOpenProfile: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AppModalBottomSheet(onDismissRequest = onDismiss) {
+        ListItem(
+            headlineContent = { Text("Your profile", style = MaterialTheme.typography.titleMedium) },
+            supportingContent = { Text("Friend code, level, points — leaves with the account.") },
+            leadingContent = {
+                Icon(
+                    Icons.Filled.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .clickable(onClick = onOpenProfile)
+                .testTag(TAG_SHEET_PROFILE),
+        )
+        ListItem(
+            headlineContent = { Text("Settings", style = MaterialTheme.typography.titleMedium) },
+            supportingContent = { Text("Appearance, language, your day — stays on this phone.") },
+            leadingContent = {
+                Icon(
+                    Icons.Filled.Tune,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier
+                .clickable(onClick = onOpenSettings)
+                .testTag(TAG_SHEET_SETTINGS),
+        )
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+const val TAG_HOME_AVATAR = "home_avatar"
+const val TAG_SHEET_PROFILE = "home_sheet_profile"
+const val TAG_SHEET_SETTINGS = "home_sheet_settings"
 
 /**
  * Status and manual override for the Health Connect sync (spec §5, §6 nice-to-have).

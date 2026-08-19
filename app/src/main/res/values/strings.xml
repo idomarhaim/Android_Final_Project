@@ -25,11 +25,11 @@
     <string name="tasks_consent_grant_action">Grant Google Tasks access</string>
 
     <!--
-      Device settings (spec §4.9 / §5.1). These live on Profile until #48 builds
-      the Settings surface that §4.9 specifies; #48 relocates the whole group.
+      Device settings (spec §4.9 / §5.1). #48 moved them off Profile onto the
+      Settings surface §4.9 specifies; they are resolved from feature/settings/.
     -->
     <string name="settings_appearance_title">Appearance</string>
-    <string name="settings_appearance_description">Pick the colour theme for the whole app. Light and dark mode still follow your system setting.</string>
+    <string name="settings_appearance_description">Pick the colour theme for the whole app.</string>
 
     <string name="settings_language_title">Language</string>
     <!--

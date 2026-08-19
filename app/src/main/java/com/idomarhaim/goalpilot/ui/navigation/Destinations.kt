@@ -22,6 +22,14 @@ object Routes {
     const val ANALYTICS = "analytics"
     const val LIFE_AREAS = "life_areas"
 
+    /**
+     * Spec §4.9's Settings surface. Registered in **both** graphs: the
+     * signed-in one below the tabs, and the signed-out one beside the sign-in
+     * screen — reachability with no account is what proves Profile is the
+     * account and Settings is the device.
+     */
+    const val SETTINGS = "settings"
+
     const val ARG_GOAL_ID = "goalId"
     const val GOAL_DETAIL = "goal_detail"
     const val ADD_EDIT_GOAL = "add_edit_goal"

@@ -12,17 +12,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,8 +43,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.ui.theme.BrandSystemBars
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 
+/**
+ * @param onOpenSettings opens §4.9's Settings screen **with no account**.
+ *
+ * ⚠️ **This parameter is the ticket, not a convenience.** §4.9's claim is that
+ * *Profile is the account, Settings is the device*, and the only thing that
+ * demonstrates it is a device setting a signed-out user can actually reach.
+ * §5.1 stores language per-device precisely because *the account is not known
+ * until Auth resolves* — so a language control unreachable before sign-in is
+ * unreachable exactly when its own justification says it is needed.
+ */
 @Composable
-fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
+fun SignInScreen(
+    onOpenSettings: () -> Unit,
+    viewModel: SignInViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val accents = MaterialTheme.gpAccents
 
@@ -155,5 +172,35 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
                 )
             }
         }
+
+        // A word beside the icon, not a bare gear: §0.8's surviving sub-rule is
+        // form and words before iconography, and this is the only control on
+        // the screen that is not the sign-in button.
+        TextButton(
+            onClick = onOpenSettings,
+            // This screen is outside ui/root's Scaffold, so it insets itself --
+            // without this the row renders under the status bar (AGENTS.md).
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .safeDrawingPadding()
+                .padding(top = 4.dp, end = 4.dp)
+                .testTag(TAG_SIGN_IN_SETTINGS),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Tune,
+                contentDescription = null,
+                tint = accents.onHero,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Settings",
+                color = accents.onHero,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+        }
     }
 }
+
+/** So the instrumented test can find the one door #48 exists to prove. */
+const val TAG_SIGN_IN_SETTINGS = "sign_in_settings"

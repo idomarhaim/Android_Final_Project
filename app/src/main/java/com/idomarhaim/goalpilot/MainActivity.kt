@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -41,12 +42,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             val skin by appPreferences.skin.collectAsStateWithLifecycle()
             val language by appPreferences.language.collectAsStateWithLifecycle()
+            val brightness by appPreferences.brightness.collectAsStateWithLifecycle()
 
             // Outside the theme, because it redirects every `stringResource`
             // below it and sets the layout direction the theme's own surfaces
             // are measured in (spec §5.1).
             AppLocale(language = language) {
-                GoalPilotTheme(skin = skin) {
+                // Read here rather than inside GoalPilotTheme's default
+                // argument: the app's own setting is the authority now, and the
+                // device only answers when the setting says SYSTEM.
+                GoalPilotTheme(
+                    skin = skin,
+                    darkTheme = brightness.isDark(isSystemInDarkTheme()),
+                ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background,

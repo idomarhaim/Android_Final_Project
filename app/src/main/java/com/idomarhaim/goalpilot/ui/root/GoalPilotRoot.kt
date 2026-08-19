@@ -33,6 +33,7 @@ import com.idomarhaim.goalpilot.feature.goals.GoalsScreen
 import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreaDetailScreen
 import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreasScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
+import com.idomarhaim.goalpilot.feature.settings.SettingsScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.gpCardContainerColor
@@ -45,7 +46,7 @@ fun GoalPilotRoot(viewModel: RootViewModel = hiltViewModel()) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     when (authState) {
         AuthUiState.Loading -> LoadingBox()
-        AuthUiState.SignedOut -> SignInScreen()
+        AuthUiState.SignedOut -> SignedOutGraph()
         is AuthUiState.SignedIn -> {
             // Health Connect syncs whenever the app comes forward. ON_START rather
             // than ON_RESUME because a permission dialog or the app switcher briefly
@@ -54,6 +55,39 @@ fun GoalPilotRoot(viewModel: RootViewModel = hiltViewModel()) {
             // so this also fires on cold start and immediately after sign-in.
             LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onAppForegrounded() }
             MainScaffold()
+        }
+    }
+}
+
+/**
+ * The signed-out area: the sign-in screen, and §4.9's Settings screen beside it.
+ *
+ * ⚠️ **This graph exists for one destination, and that destination is the point
+ * of #48.** §4.9 makes Settings reachable *"from the sign-in screen, with no
+ * account at all"*, because that is the only thing that actually proves the
+ * split — a Settings screen you can only open once signed in is a second
+ * Profile with a different title. §5.1's own justification for storing language
+ * per-device is that *it must be known before the first frame, and the account
+ * is not known until Auth resolves*; a control locked behind Auth is
+ * unreachable exactly when its reason for existing says it is needed.
+ *
+ * A `NavHost` rather than a hoisted boolean, so the system back gesture returns
+ * to sign-in without this file re-implementing a back stack.
+ */
+@Composable
+private fun SignedOutGraph() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = Routes.SIGN_IN) {
+        composable(Routes.SIGN_IN) {
+            SignInScreen(onOpenSettings = { navController.navigate(Routes.SETTINGS) })
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                // No account, so no Profile to open. The Account section states
+                // the boundary anyway -- on this branch it is the whole proof.
+                onOpenProfile = null,
+            )
         }
     }
 }
@@ -123,6 +157,8 @@ private fun MainScaffold() {
                     onAddGoal = { navController.navigate(Routes.addEditGoal()) },
                     onSeeAllGoals = { navController.navigate(Routes.GOALS) },
                     onOpenAnalytics = { navController.navigate(Routes.ANALYTICS) },
+                    onOpenProfile = { navController.navigate(Routes.PROFILE) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }
             composable(Routes.GOALS) {
@@ -169,6 +205,12 @@ private fun MainScaffold() {
                 AnalyticsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
+                )
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenProfile = { navController.navigate(Routes.PROFILE) },
                 )
             }
             composable(Routes.LIFE_AREAS) {

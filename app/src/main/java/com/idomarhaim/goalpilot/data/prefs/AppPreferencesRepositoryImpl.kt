@@ -2,8 +2,12 @@ package com.idomarhaim.goalpilot.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
+import com.idomarhaim.goalpilot.domain.model.DaySchedule
+import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +57,56 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _language.value = language
     }
 
+    private val _brightness =
+        MutableStateFlow(AppBrightness.fromId(prefs.getString(KEY_BRIGHTNESS, null)))
+    override val brightness: StateFlow<AppBrightness> = _brightness.asStateFlow()
+
+    override fun setBrightness(brightness: AppBrightness) {
+        if (_brightness.value == brightness) return
+        prefs.edit { putString(KEY_BRIGHTNESS, brightness.id) }
+        _brightness.value = brightness
+    }
+
+    private val _region = MutableStateFlow(AppRegion.fromId(prefs.getString(KEY_REGION, null)))
+    override val region: StateFlow<AppRegion> = _region.asStateFlow()
+
+    override fun setRegion(region: AppRegion) {
+        if (_region.value == region) return
+        prefs.edit { putString(KEY_REGION, region.id) }
+        _region.value = region
+    }
+
+    // The planning override is stored as a sentinel rather than by absence:
+    // SharedPreferences has no nullable Int, and `contains()` plus `getInt()` is
+    // two reads that can disagree if a write lands between them. NO_OVERRIDE is
+    // outside 0..1439, so it can never collide with a real minute-of-day.
+    private val _daySchedule = MutableStateFlow(
+        DaySchedule(
+            waking = WakingHours(
+                startMinutes = prefs.getInt(KEY_WAKING_START, WakingHours.DEFAULT.startMinutes),
+                endMinutes = prefs.getInt(KEY_WAKING_END, WakingHours.DEFAULT.endMinutes),
+            ),
+            planningOverrideMinutes = prefs.getInt(KEY_PLANNING_OVERRIDE, NO_OVERRIDE)
+                .takeIf { it != NO_OVERRIDE },
+        ),
+    )
+    override val daySchedule: StateFlow<DaySchedule> = _daySchedule.asStateFlow()
+
+    override fun setWakingHours(wakingHours: WakingHours) {
+        if (_daySchedule.value.waking == wakingHours) return
+        prefs.edit {
+            putInt(KEY_WAKING_START, wakingHours.startMinutes)
+            putInt(KEY_WAKING_END, wakingHours.endMinutes)
+        }
+        _daySchedule.value = _daySchedule.value.copy(waking = wakingHours)
+    }
+
+    override fun setPlanningOverrideMinutes(minutes: Int?) {
+        if (_daySchedule.value.planningOverrideMinutes == minutes) return
+        prefs.edit { putInt(KEY_PLANNING_OVERRIDE, minutes ?: NO_OVERRIDE) }
+        _daySchedule.value = _daySchedule.value.copy(planningOverrideMinutes = minutes)
+    }
+
     override fun healthLastSyncAt(uid: String): Long = prefs.getLong(healthSyncKey(uid), 0L)
 
     override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
@@ -63,6 +117,14 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
         const val KEY_LANGUAGE = "app_language"
+        const val KEY_BRIGHTNESS = "app_brightness"
+        const val KEY_REGION = "app_region"
+        const val KEY_WAKING_START = "day_waking_start_minutes"
+        const val KEY_WAKING_END = "day_waking_end_minutes"
+        const val KEY_PLANNING_OVERRIDE = "day_planning_override_minutes"
+
+        /** Outside `0..1439`, so it cannot collide with a real minute-of-day. */
+        const val NO_OVERRIDE = -1
 
         /** One key per account, so switching users does not inherit a sync clock. */
         fun healthSyncKey(uid: String) = "health_last_sync_$uid"

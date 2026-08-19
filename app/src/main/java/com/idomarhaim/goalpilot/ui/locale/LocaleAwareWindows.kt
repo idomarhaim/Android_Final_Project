@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.ui.locale
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.rememberScrollState
@@ -9,7 +10,11 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -244,4 +249,59 @@ fun AppDialog(
     Dialog(onDismissRequest = onDismissRequest, properties = properties) {
         InheritAppLocale(content)
     }
+}
+
+/**
+ * A clock picker, in the app's language.
+ *
+ * **Built on [AppAlertDialog] rather than on Material3's own
+ * `TimePickerDialog`, for two reasons and only one of them is availability.**
+ * The one this project is pinned to (`compose-bom 2024.12.01` → material3
+ * 1.3.1) has `TimePicker` but no public dialog around it, so it would have to
+ * be hand-rolled regardless. The better reason is that composing it out of the
+ * wrapper above means this file never opens a second raw window: when
+ * `TimePickerDialog` does arrive in a later BOM, the guard in
+ * `DialogLocaleGuardTest` already names it, and nothing here has to be
+ * remembered.
+ *
+ * The picker's own numerals and its AM/PM labels come from
+ * `LocalConfiguration`, which [InheritAppLocale] re-provides inside the dialog —
+ * the same mechanism, and the same `Inferred:` caveat, as [AppDatePickerDialog].
+ *
+ * [is24Hour] is read from the **device**, not from the app's Region setting.
+ * A clock format is a habit of the person holding the phone rather than a
+ * property of where they live, and the platform already asked them.
+ *
+ * @param initialMinutesOfDay minutes since midnight, `0..1439`.
+ * @param onConfirm receives the chosen time in the same units.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTimePickerDialog(
+    initialMinutesOfDay: Int,
+    confirmLabel: String,
+    dismissLabel: String,
+    onDismissRequest: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    title: @Composable (() -> Unit)? = null,
+) {
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val state = rememberTimePickerState(
+        initialHour = Math.floorMod(initialMinutesOfDay, 24 * 60) / 60,
+        initialMinute = Math.floorMod(initialMinutesOfDay, 60),
+        is24Hour = is24Hour,
+    )
+    AppAlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(state.hour * 60 + state.minute) }) {
+                Text(confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) { Text(dismissLabel) }
+        },
+        title = title,
+        text = { TimePicker(state = state) },
+    )
 }

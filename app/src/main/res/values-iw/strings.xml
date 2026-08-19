@@ -39,7 +39,7 @@
 
     <!-- Device settings (§4.9 / §5.1). On Profile until #48 builds the Settings surface. -->
     <string name="settings_appearance_title">מראה</string>
-    <string name="settings_appearance_description">בחרו את ערכת הצבעים של האפליקציה כולה. מצב בהיר וכהה ממשיך לעקוב אחרי הגדרת המערכת.</string>
+    <string name="settings_appearance_description">בחרו את ערכת הצבעים של האפליקציה כולה.</string>
 
     <string name="settings_language_title">שפה</string>
     <!-- "שבה" stands alone before the Latin run, per the §4.8 prefix rule above. -->
