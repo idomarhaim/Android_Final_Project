@@ -25,13 +25,13 @@
 1. **First Gradle build**: no standalone JDK on this machine — set `JAVA_HOME`
    to `C:\Program Files\Android\Android Studio\jbr`. Expect a large dependency
    download. `.\gradlew assembleDebug`, or the user's `Run GoalPilot.cmd`.
-2. **Cloud Functions redeploy — conditional**: the deployed GROQ proxy still
-   holds the OLD machine's key. If that key was revoked when the user created
-   the new one, AI recommendations are silently serving local fallback (the
-   documented failure shape). **Node.js and firebase-tools are NOT installed**
-   — install first, then `cd functions && npm install && firebase deploy
-   --only functions` (docs/SETUP.md step). If the old key still works, this
-   can wait, but say so in the changelog.
+2. ~~Cloud Functions redeploy~~ — **DONE 2026-08-19 by the migration session**:
+   Node.js LTS + firebase-tools installed, user completed `firebase login`
+   (name.iddo@gmail.com), and `firebase deploy --only functions` updated all
+   three functions (`getRecommendations`, `classifyTask`, `scoreTask`,
+   us-central1, Node.js 22 2nd Gen) with the new **repo-specific** GROQ key
+   from `functions/.env`. Nothing left here beyond a live smoke test of one
+   recommendation once the app builds (item 1).
 3. **Emulator Google accounts**: both AVDs are fresh images with no accounts.
    Per the run scripts: first emulator = name.iddo@gmail.com, second
    (`Pixel_10_Pro_XL_B`) = rachil751@gmail.com. **Respect the device-state
