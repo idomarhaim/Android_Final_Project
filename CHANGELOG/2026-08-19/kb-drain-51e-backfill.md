@@ -94,3 +94,75 @@ candidate file named in its own row while this session ran.
 **`dev/flows/`** table, where it does not belong — it is a `dev/` page. Pre-existing, not this
 brief's scope, and not this session's row. *(My own new row landed in the same wrong table on first
 write, which is how it was noticed, and was moved.)*
+
+---
+
+# Round 2 — the two files round 1 scoped out, drained after their sessions closed
+
+**Trigger:** Ido's delegation, 2026-08-19 — *"regarding the questions to me, do what is most
+right."* Recorded as a **delegation** (the 🎬 rule rates it *weaker* than a waive: it removes
+the judgment half of a gate and leaves the mechanical half owed; it is not *ship it*).
+
+## Why the scope changed, and it is not a deviation
+
+Round 1's brief said *"draining candidate files that do not exist yet — later sessions write
+their own."* Correct when written, and its premise expired within the same day:
+
+- **`docs-hygiene-backfill`** closed, and its candidate file's own header says
+  *"`/kickoff kb-drain-51e-backfill` owns draining."*
+- **`new-machine-checkup`** closed (`e5d3db4`) and released its row; its candidate file routes
+  all three entries to this session by name.
+
+So by round 2 **neither file had an owner**, and the folder whose whole purpose is *the next
+session looks* held six orphaned entries. Both boards were empty, no singleton was involved, and
+the work is the same kind this session already had loaded.
+
+## What landed — pages in `C:\Dev\JARVIS` at `8d9b07c`, bundle 90 → 93
+
+| Entry | Landed |
+|---|---|
+| `dh` 1 — a generator escaping one separator collides on the other | `kb/dev/machine-edited-records-break-quietly.md` §1 *(new)* |
+| `dh` 2 — extract, never compose; the title is the thesis | `kb/dev/extract-never-compose.md` *(new)* |
+| `dh` 3 — a false claim propagates into comments | `kb/dev/retracting-a-copied-claim.md` *(new)* |
+| `nmc` 1 — an escape-processed config fails one layer below | `kb/dev/escapes-die-in-transit.md` §6 |
+| `nmc` 2 — the tool shell holds an environment snapshot | `kb/dev/claude-code-surfaces.md` |
+| `nmc` 3 — a text-mode round-trip is not lossless | `kb/dev/machine-edited-records-break-quietly.md` §2 |
+
+`dh` 1 and `nmc` 3 were **merged**: they are one claim read at two points — *a record you
+machine-edit breaks on text you did not write, and stays syntactically valid* — and the page's
+§3 states what they share. `nmc` 1 asked for a new page; `escapes-die-in-transit.md` already
+was the home, which is the second no-bundle-check candidate on that bundle in three days.
+
+**Two findings from these entries that concern this repo directly:**
+
+1. **`New-ChangelogIndex.ps1`'s middot defect is still live at HEAD.** `ConvertTo-CellSafe`
+   escapes the table pipe only; the ` · ` it joins entries with is unguarded, so any summary
+   containing ` · ` renders as two entries and one session reads as two. Not fixed here — it
+   rewrites existing rows, so it belongs to whoever owns that script.
+2. **`gradle.properties:10` still carries the retracted JDK claim**, correctly left alone at the
+   time because a sibling held `#gradle-daemon`. That session has since closed, so the copy is
+   now takeable by anyone.
+
+## The `rules/` question round 1 parked — answered `no`
+
+`kb/dev/flows/lease.md` §4e-i. The mechanical half was run rather than assumed: **one** recorded
+instance (`bc5ef69`) with **no harm realised**; the proposed duty **cannot state where it stays
+silent** (a `pip install`, a machine `PATH`, a started daemon all satisfy *announce environment
+changes*); and §5's *claim the shared singletons* already implies it, so the clause adds no
+behaviour. **Verdict recorded as the agent's decision, Ido's to overturn**, with the reopening
+condition written down: a second instance, or any instance where a sibling actually lost work.
+
+## 🧪 Tests
+
+- **`Check-KbLinks.ps1`** — **CLEAN**, **93 pages**. The orphan check proves the three new pages
+  are reachable from the index.
+- **All 6 promotions and the §4e-i verdict** `grep -F`-verified against `git show 8d9b07c:<file>`
+  — the destination commit, not the commit message — before these two files were deleted.
+- **Table columns counted** on every table authored, after the new page's first draft put a raw
+  pipe **inside a table cell**, which is that page's own §1 defect.
+- **No app-layer suite applies** — no `app/src/` change, no build, no device.
+
+## Candidate files
+
+Both **fully drained → deleted**, in the same commit as this entry.
+**`kb-candidates/` is now empty for the first time since 2026-08-17.**

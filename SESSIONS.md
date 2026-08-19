@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `50-offline-stamps` | **#50 — offline as-of stamps.** `updatedAt` on the two cross-boundary DTOs, an unconditional *"as of HH:MM"* caption on `feature/social` + `feature/challenges`, a *"Not loaded yet"* state discriminated on `isFromCache && isEmpty`, and the **deletion** of `core/net/ConnectivityMonitor.kt` (authorised by the ticket itself, not extended by one file). Holds the **Gradle daemon** for JVM unit + `assembleDebug`. **No device.** Overlaps `kb-drain-51e-backfill` only on the generated `CHANGELOG_README.md`. | `app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Dtos.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/social/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModel.kt`, `app/src/main/java/com/idomarhaim/goalpilot/core/net/ConnectivityMonitor.kt` *(delete)*, `app/src/test/java/com/idomarhaim/goalpilot/feature/social/`, `app/src/test/java/com/idomarhaim/goalpilot/feature/challenges/`, `app/src/test/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModelTest.kt`, `functions/src/index.ts`, `sessions/50-offline-stamps.md`, `CHANGELOG/2026-08-19/50-offline-stamps.md` | **Gradle daemon** | 2026-08-19 |
 > 🏁 **`cloud-emulator` RELEASED 2026-08-19 — `83f648d` (claim) → `0fee40c` (the work) → this
 > note.** No singletons held: **no local Gradle build and no local device**, which is what kept it
 > disjoint from `new-machine-checkup` while that row held both. Account:
@@ -38,6 +39,28 @@ before your first write. Normative rule:
 >
 > 📥 KB drained the same day into `C:\Dev\JARVIS` (`aa90ecb`): `look-at-your-own-output.md`
 > §5.3 and `android-device-verification.md` §7.
+
+> 🏁 **`kb-drain-51e-backfill` ROUND 2 RELEASED 2026-08-19 — the two orphaned candidate files, on
+> Ido's delegation.** No singletons held. Account: appended as a *Round 2* section to
+> [`CHANGELOG/2026-08-19/kb-drain-51e-backfill.md`](CHANGELOG/2026-08-19/kb-drain-51e-backfill.md)
+> — one file per session, which also stops the generated day-row reporting one session as two.
+>
+> 🗒️ **`kb-candidates/` IS NOW EMPTY** for the first time since 2026-08-17. 6 entries drained →
+> 3 new pages + 2 in-place extensions in `C:/Dev/JARVIS` at `8d9b07c`; bundle 90 → 93.
+> Round 1 scoped these two files out because they did not exist when its brief was written; by
+> the time round 1 finished, **both their sessions had closed and both files named this session
+> as owner in their own headers**, so nobody else could take them.
+>
+> ⚠️ **TWO LIVE DEFECTS IN THIS REPO, found by draining and NOT fixed here — both now unowned.**
+> (1) **`scripts/New-ChangelogIndex.ps1` still has the middot defect.** `ConvertTo-CellSafe`
+> escapes the table pipe only; the ` · ` it joins entries with is unguarded, so **any changelog
+> summary containing ` · ` renders as two entries and one session reads as two.** Five files hit
+> it on 2026-08-19. Not fixed because the fix rewrites existing rows. (2) **`gradle.properties:10`
+> still carries the retracted *JDK 25 / AGP* claim** — correctly skipped when `#gradle-daemon`
+> was held by a live sibling; that session has since closed, so it is takeable now.
+>
+> ⚖️ **The `rules/` question is ANSWERED `no`** — `kb/dev/flows/lease.md` §4e-i, recorded as the
+> agent's decision and Ido's to overturn, with the reopening condition stated.
 
 > 🏁 **`kb-drain-51e-backfill` RELEASED 2026-08-19 — `07ebc4d` (claim) → this commit.** No
 > singletons held. Account:
