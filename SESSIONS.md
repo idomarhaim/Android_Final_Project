@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `50b-transaction-guard` *(round 3)* | **`gh` is installed, the 🎬 gate was waived, and the eight open issues need a run order.** Correcting `CLAUDE.md`'s *"`gh` is NOT INSTALLED on this machine at all"*, which is now false — v2.97.0 portable at `%LOCALAPPDATA%\Programs\gh`, on the **User PATH**, **not authenticated** (`gh auth login` is Ido's). Then the wave-3 briefs the 🚥 line has been naming, against a dependency map verified at HEAD rather than read off the tickets. | `CLAUDE.md`, `sessions/` *(new briefs)*, `CHANGELOG/2026-08-20/50b-transaction-guard.md` | none — no build, no device | 2026-08-20 |
 > 🏁 **`cloud-emulator` RELEASED 2026-08-19 — `83f648d` (claim) → `0fee40c` (the work) → this
 > note.** No singletons held: **no local Gradle build and no local device**, which is what kept it
 > disjoint from `new-machine-checkup` while that row held both. Account:
