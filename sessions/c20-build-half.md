@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: ready
-issue: 42
+issue: 52
 created: 2026-08-20
 ---
 
@@ -140,13 +140,14 @@ change, deliberately:
 - **`50b-transaction-guard` (round 3) holds `CLAUDE.md`, `docs/CLOUD-DEVICE.md`, `sessions/` and
   its own changelog.** Disjoint from every path here. Read `SESSIONS.md` and claim before your
   first write — that session's board note names what it owns.
-- **`gh` is installed now** (v2.97.0, `C:\Program Files\GitHub CLI\`, Machine `PATH`) but **not
-  authenticated** — `gh auth login` is Ido's. The unauthenticated REST read path still works; see
-  [`CLAUDE.md`](../CLAUDE.md).
-- **File the issue first.** #42 is closed as *decided*; this build half has no ticket. The
-  ready-to-paste title and scope are in
-  [`CHANGELOG/2026-08-20/50-offline-stamps-r2.md`](../CHANGELOG/2026-08-20/50-offline-stamps-r2.md)
-  — **but correct its stale `goal.currentValue` sentence before posting**, per the ⚠️ above.
+- **`gh` is installed and usable — v2.97.0, and it needs no `gh auth login`.** Windows Credential
+  Manager already holds a token with `repo` + `workflow` scope; read it per command rather than
+  persisting a second copy:
+  `GH_TOKEN=$(printf 'protocol=https\nhost=github.com\n\n' | git credential fill | grep ^password= | cut -d= -f2-) gh …`
+  Full note and the `winget` trap in [`CLAUDE.md`](../CLAUDE.md).
+- **The issue is filed: [#52](https://github.com/idomarhaim/Android_Final_Project/issues/52)**
+  *(2026-08-20)*, and #42 now carries a comment pointing at it. Its body already omits §5.2's
+  stale `goal.currentValue` sentence — nothing to correct before you start.
 - Touching `app/**` fires the cloud emulator workflow on push. **The screenshot job does not run on
   push** — `.github/workflows/instrumented-tests.yml:197` gates it on
   `github.event_name == 'workflow_dispatch' && inputs.capture-screenshots`. If you want screenshots,

@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: ready
-issue: 32
+issue: 54
 created: 2026-08-20
 ---
 
@@ -12,11 +12,11 @@ created: 2026-08-20
 **The second hole in [#48](https://github.com/idomarhaim/Android_Final_Project/issues/48).**
 Independent of `C20`. Needs the **Gradle daemon**; a device for the render pass.
 
-## ⚠️ File the issue first
+## The issue is filed
 
-`C13` is [#32](https://github.com/idomarhaim/Android_Final_Project/issues/32), **closed as a
-decision, and it shipped no code.** Same *decided-read-as-built* shape as `C20` and `C12`
-(`C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12). File the build half before you build it.
+[**#54**](https://github.com/idomarhaim/Android_Final_Project/issues/54) *(2026-08-20)*, and
+[#32](https://github.com/idomarhaim/Android_Final_Project/issues/32) — the closed `C13` decision —
+now carries a comment pointing at it.
 
 ## Why it exists
 

@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: ready
-issue: 31
+issue: 53
 created: 2026-08-20
 ---
 
@@ -13,12 +13,12 @@ created: 2026-08-20
 Independent of `C20`. Needs the **Gradle daemon** and a **device or the cloud emulator** — this is
 the most visual unit in the plan and cannot be judged from source.
 
-## ⚠️ File the issue first
+## The issue is filed
 
-`C12` is [#31](https://github.com/idomarhaim/Android_Final_Project/issues/31), **closed as a
-decision**. Its build half has no ticket — the same *decided-read-as-built* shape as `C20`
-(`C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12). File it before you build, so the next
-session can find this work from the issue list.
+[**#53**](https://github.com/idomarhaim/Android_Final_Project/issues/53) *(2026-08-20)*, and
+[#31](https://github.com/idomarhaim/Android_Final_Project/issues/31) — the closed `C12` decision —
+now carries a comment pointing at it, so the *decided-read-as-built* trap
+(`C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12) is closed for this one.
 
 ## Why it exists
 
