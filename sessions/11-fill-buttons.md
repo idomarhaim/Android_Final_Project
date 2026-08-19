@@ -14,6 +14,10 @@ created: 2026-08-20
 
 Needs the **Gradle daemon**; a device or the cloud emulator for the render pass.
 
+> ⚠️ **Conflicts with `c20-build-half` on `data/firestore/dto/Dtos.kt`** — `unit` at `:48`, `level`
+> at `:109`. Same file; do not overlap. **Independent of `9-duration-box`**, verified 2026-08-20:
+> no file mentions both `unit` and `looksLikeFallback`.
+
 ## Why it exists — and it is not hypothetical
 
 `R25`: *"For the task 'drink 4 litres a day' I have several fill buttons I can tap more than once

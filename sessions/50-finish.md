@@ -12,6 +12,9 @@ created: 2026-08-20
 **The smallest session in the plan: ~10 lines deleted, one test file removed. Closes #50.**
 Needs the **Gradle daemon**; needs **no device**.
 
+> **Runs alone, and first among the wave-2 pair.** It edits `GoalDetailViewModel.toggleTask`, which
+> `7-quickadd-complete` also reaches. Ten minutes; do not overlap it with anything.
+
 ## ⛔ Precondition — one check, and it is mechanical
 
 Run this first:
@@ -76,8 +79,9 @@ The point of C20 is that an offline tick **works**, not that the refusal was rem
 ## Exit
 
 - JVM unit green · `assembleDebug` green · layers that do not apply stated explicitly.
-- **Post the #50 close comment** naming the guard's skip as the evidence the premise flipped
-  (`gh` is installed; auth and permission are Ido's — ask).
+- **Post the #50 close comment** naming the guard's skip as the evidence the premise flipped.
+  `gh` works with no `gh auth login` — see [`CLAUDE.md`](../CLAUDE.md) for the `git credential
+  fill` recipe. **Ido's permission for the write is still required; ask.**
 - `CHANGELOG/<today>/50-finish.md` · board row released · this brief closed to `sessions/done/`
   with `status: done` in the same commit · commit and push under AUTO MODE.
 

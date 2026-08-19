@@ -13,6 +13,10 @@ created: 2026-08-20
 with anything. Needs the **Gradle daemon** and a **device or the cloud emulator**; a real device is
 better, because notification behaviour is where emulators diverge most.
 
+> ✅ **Collides with nothing. Verified 2026-08-20.** New package, plus `AndroidManifest.xml` and
+> `GoalPilotApp.kt`, which no other open brief touches. This is the one that can run whenever a
+> build slot is free.
+
 ## ⚠️ Size it before you plan it — this is not "add a notification"
 
 `AndroidManifest.xml` today declares `INTERNET`, `ACCESS_NETWORK_STATE` and two Health permissions.

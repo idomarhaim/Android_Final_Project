@@ -13,6 +13,11 @@ created: 2026-08-20
 Independent of `C20`. Needs the **Gradle daemon** and a **device or the cloud emulator** — this is
 the most visual unit in the plan and cannot be judged from source.
 
+> ⚠️ **Runs BEFORE `c13-key-store`, and never beside it. Verified 2026-08-20.** Both edit
+> `feature/settings/SettingsScreen.kt` — this adds the Material tiles to `AppearanceCard` (`:275`),
+> `c13` adds the AI section to `SettingsScreen` (`:103`). This one goes first because the material
+> contract decides how **every** section renders, the AI section included.
+
 ## The issue is filed
 
 [**#53**](https://github.com/idomarhaim/Android_Final_Project/issues/53) *(2026-08-20)*, and

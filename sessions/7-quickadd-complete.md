@@ -11,6 +11,14 @@ created: 2026-08-20
 
 **Depends on `c20-build-half`.** Needs the **Gradle daemon**; a device only for the render pass.
 
+> ⚠️ **Runs AFTER `9-duration-box`, and BEFORE `6-silent-filing`. Verified 2026-08-20, not assumed.**
+> · `GoalDetailScreen.kt:319` `AddTaskRow` is where this affordance goes **and** where #9's duration
+>   box goes — it already holds `aiMinutes` at `:332`. #9 changes what that value *means* (stored
+>   provenance instead of a reconstruction), so building on it first is building on a value about to
+>   be redefined.
+> · `DashboardScreen.kt` — this touches `SmartAddCard` (`:616`); `6-silent-filing` removes
+>   `SmartAddDialog` (`:275`, `:659`) from the existing-goal branch. Same file, adjacent functions.
+
 ## Why it exists
 
 `R6`: *"There should be a way to complete the task from within 'quick add'."* Today a task you type

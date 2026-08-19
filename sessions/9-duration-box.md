@@ -15,6 +15,15 @@ share nothing and will not collide.
 
 Needs the **Gradle daemon**; a device or the cloud emulator for the render pass.
 
+> ⚠️ **Runs BEFORE `7-quickadd-complete`. Verified 2026-08-20.** Both land in
+> `GoalDetailScreen.kt:319` `AddTaskRow`, which already holds `aiMinutes` at `:332` — *"the AI's
+> answer while the title still matches, and a function of the points the moment the user types
+> something new"*. That reconstruction **is** what this brief replaces with stored provenance, so
+> #7 built first would be built on a value about to be redefined.
+>
+> Independent of `11-fill-buttons` — different documents, and **no file mentions both**
+> (`grep -rl unit … | xargs grep -l looksLikeFallback` returns empty).
+
 ## Why it exists
 
 `R8`: *"A person may optionally type the work duration into a box, but the default is that the AI

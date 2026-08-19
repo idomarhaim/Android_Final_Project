@@ -12,6 +12,10 @@ created: 2026-08-20
 **The second hole in [#48](https://github.com/idomarhaim/Android_Final_Project/issues/48).**
 Independent of `C20`. Needs the **Gradle daemon**; a device for the render pass.
 
+> ⚠️ **Runs AFTER `c12-material-contract`, and never beside it. Verified 2026-08-20.** Both edit
+> `feature/settings/SettingsScreen.kt` (`:103` here, `AppearanceCard` at `:275` there). `c12` first,
+> because the material contract decides how this section renders.
+
 ## The issue is filed
 
 [**#54**](https://github.com/idomarhaim/Android_Final_Project/issues/54) *(2026-08-20)*, and

@@ -12,6 +12,11 @@ created: 2026-08-20
 **Independent of `C20`.** Touches `functions/` — so **check the board**: `c20-build-half` owns
 `functions/src/index.ts` while it runs. Needs the **Gradle daemon** and the **Firebase emulator**.
 
+> ⚠️ **Runs AFTER `7-quickadd-complete`. Verified 2026-08-20.** Both edit
+> `feature/dashboard/DashboardScreen.kt`: this one removes `SmartAddDialog` (`:275`, `:659`) from
+> the existing-goal branch, #7 adds a done-affordance to `SmartAddCard` (`:616`). Adjacent
+> functions in one file. Also conflicts with `c20-build-half` on `functions/src/index.ts`.
+
 ## ⚠️ The ask was promoted, and that deletes the thing it asked for
 
 `R3`: *"It asks for approval on where to file every task you enter. The configuration default
