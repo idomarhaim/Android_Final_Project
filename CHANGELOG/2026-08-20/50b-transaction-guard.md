@@ -167,3 +167,130 @@ can predict, which is why `AnalyticsLiteralSweepTest` stays crude too.
 The machine clock read `2026-08-19T22:0x` during these runs while the harness date is `2026-08-20`;
 the XML timestamps above are quoted as the machine wrote them. Folder and board dates follow the repo
 convention already set by the two sessions that committed today.
+
+---
+
+# Rounds 3–4 — `gh`, the ten briefs, and three decision issues that were being read as built
+
+> **Summary:** The session continued past its unit on Ido's direction. `gh` installed and found to
+> need no `gh auth login` at all; **ten session briefs written** so every open issue has one; **three
+> build-half issues filed** (#52, #53, #54) and their closed decision issues cross-referenced; and the
+> ordering question answered by opening files rather than asserting — which found **four real
+> conflicts** and killed one coupling I had claimed that did not exist.
+
+**Singletons:** none held in rounds 3–4 — no Gradle build, no device. `c20-build-half` ran in a
+parallel session throughout and nothing here touched a path it owns.
+
+## `gh` — and the bullet that was wrong within an hour of being written
+
+Round 3 corrected `CLAUDE.md`'s *"`gh` is NOT INSTALLED on this machine at all"* (true 2026-08-19,
+false once installed) and replaced it with three bullets. **One of those three was itself wrong**,
+and round 4 replaced it:
+
+| Claim | Verdict |
+|---|---|
+| `winget install --id GitHub.cli` hangs silently | **true** — 1.1 s CPU over 12 min, zero output, waiting on an elevation prompt it cannot display. The tell is CPU time, not the absence of output |
+| a tool shell inherits a pre-install environment | **true** — same shape as `JAVA_HOME` |
+| *"Authentication is Ido's and nobody else's"* | **FALSE.** `git push` works, so a credential exists; `git credential fill` returns it with `repo` + `gist` + `workflow` scope |
+
+`gh auth login` is therefore not merely unnecessary but mildly harmful — it writes a **second copy**
+of the same secret into `~/.config/gh/hosts.yml`, to be rotated separately and forgotten. Same family
+as `kb/dev/redaction-leaves-a-second-copy.md`. The token is now read per command and persisted
+nowhere.
+
+**The permission gate is unchanged**, and that is the half that was never mechanical: binary and
+token are mechanics; Ido's word is still required before a write. He gave it by naming the action.
+
+**Two `gh` installs existed briefly.** A portable zip was installed while `winget` appeared hung;
+`winget` then completed after Ido approved the prompt. The portable copy and its User `PATH` entry
+were removed — two copies of one binary means whichever wins the `PATH` race decides the version, and
+only one of them is upgradable.
+
+## Ten briefs — every open issue now has one
+
+| Brief | Issue |
+|---|---|
+| `c20-build-half` | **#52** *(filed here)* |
+| `50-finish` | #50 |
+| `7-quickadd-complete` · `9-duration-box` · `11-fill-buttons` · `8-notifications` · `6-silent-filing` | #7 · #9 · #11 · #8 · #6 |
+| `c12-material-contract` · `c13-key-store` | **#53** · **#54** *(filed here)* |
+| `51-freeze-verify` | #51 *(pre-existing)* |
+
+**#48 is the one open issue with no brief, deliberately** — its remainder *is* #53 and #54. That is
+now recorded on #48 itself rather than only in a reply.
+
+### `c20-build-half` was written against HEAD, and the spec turned out to be stale
+
+`/kickoff c20-derived-state` failed in a parallel session: that is a **past session label**
+(`CHANGELOG/2026-08-14/`, `2026-08-15/`), not a brief. It halted correctly at `/kickoff` §1, took
+nothing, and noted that `sessions/` was claimed here — so this session wrote the brief.
+
+Writing it surfaced a **defect in the design of record**. `docs/PRODUCT_v0.3.md` §5.2 says *"two
+client transactions already write `goal.currentValue` (`GoalRepositoryImpl.kt:87`,
+`TaskRepositoryImpl.kt:135`)"*. **Both are gone** — removed by #49, recorded in `TaskRepositoryImpl`'s
+own KDoc at `:33-36`; `grep -n '"currentValue"'` returns nothing in either file. A brief that
+repeated it would have sent a session hunting two writers that do not exist.
+
+The real remainder is **one function** — `setDone`'s three writes, of which `:114` is a fact that
+stays and `:122`/`:123` are derived numbers that go to the server. #52's body omits the stale
+sentence and says so, so the new ticket does not re-seed the claim its own brief exists to correct.
+
+**§5.2 itself is still uncorrected** and is this session's one open issue — `docs/` was not in this
+session's claim.
+
+## Three decision issues were being read as built — in this tracker, three times over
+
+#42 (`C20`), #31 (`C12`) and #32 (`C13`) all closed as **decided**, all shipped no code, and none
+carried a pointer to a build half. That is exactly `kb/dev/decision-map-charting.md` §12, live.
+Each now carries a comment naming its build half and why the distinction matters, with the #50
+near-miss as the worked example.
+
+## The ordering question — checked, not asserted
+
+Ido asked whether everything after `c20-build-half` could run in parallel with order irrelevant.
+**No**, and the previous answer was partly wrong:
+
+- **Retracted:** *"#9 and #11 are one wave — split them and you migrate twice."* False. Different
+  documents; `grep -rl unit … | xargs grep -l looksLikeFallback` returns **empty**. They are
+  independent.
+- **Found, by opening the files:** `9 → 7` (both land in `AddTaskRow`, which holds the very
+  `aiMinutes` value #9 redefines) · `7 → 6` (both edit `DashboardScreen.kt`) · `c12 → c13` (both edit
+  `SettingsScreen.kt`) · `11` after `C20` (both edit `Dtos.kt`) · `50-finish` alone.
+- **`8-notifications` collides with nothing** and is the only true free-floater.
+- **The Gradle daemon is exclusive anyway**, so the list is a queue rather than a parallel plan.
+
+Each constraint is written into the brief that needs it, so a session opening only its own file
+still sees it.
+
+## 🧪 Tests
+
+**Nothing was built or run in rounds 3–4** — no Kotlin, no resources, no `app/**` path. The unit's
+own suite (**420/0, 45 suites**) is recorded above and unchanged.
+
+**The cloud emulator ran twice and both were green**, which is a real result rather than a formality:
+
+- **run #5**, push-triggered on `a632ad2` — `success`, 7m24s. The guard test shipped in this
+  session's unit ran on a cloud runner and passed.
+- **run 32313901157**, dispatched here with `capture-screenshots=true` — `success`, 7m07s.
+
+**#48's last owed item is closed by observation.** `48-settings-surface` finished with *"the sign-in
+screen's Settings button has not been seen on a device"*. Both runs' screenshot artifacts were
+downloaded and **looked at**: the Settings control is present on the sign-in screen on a runner with
+**no Google account** — the exact condition it needed. Navigation is covered by `SettingsScreenTest`
+(*"the signed-out branch — §4.9's proof that Settings is the device"*), green on both runs.
+
+**Finding worth keeping:** the screenshot job is `workflow_dispatch`-only —
+`.github/workflows/instrumented-tests.yml:197` gates it on
+`github.event_name == 'workflow_dispatch' && inputs.capture-screenshots`. **A push-triggered run
+never photographs anything**, which is why run #5 carried only a test report.
+
+## Errors made and fixed in these rounds
+
+1. **A `\r` written into a candidate file** — a Windows path `JARVIS\rules\` in a code path that
+   collapsed the escape, so `\r` became a carriage return mid-word. Found by scanning every file the
+   session wrote for control characters, **not** by reading them.
+2. **The literal word `PATH` destroyed in `CLAUDE.md`** — a placeholder token chosen for backslash
+   substitution collided with the word it was standing next to. Caught by re-reading the rendered
+   line, which is the only thing that would have caught it.
+
+Both are the same class as `kb/dev/escapes-die-in-transit.md`: the transformation, not the text.
