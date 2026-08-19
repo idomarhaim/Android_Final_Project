@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v17; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v18; do not edit in-project, edit user-level then re-sync -->
 ---
 applyTo: "**"
 description: "Cross-cutting project conventions: language, documentation, changelogs, TODOs."
@@ -56,14 +56,14 @@ At the project root, ensure these exist (create if missing, with minimal stubs):
   ```
 
 - **`CHANGELOG/CHANGELOG_README.md`'s Available Files table is derived content — never write prose into it.** One row per **day** (link the folder), and the row is a link, a session count, and **one line per session**: each session's own `> **Summary:**`, nothing more.
-  - **Where a generator exists, run it and never hand-edit the table** — in JARVIS that is `powershell -File scripts\New-ChangelogIndex.ps1`, which rebuilds the region between the `CHANGELOG-INDEX:BEGIN`/`END` markers from the day folders, with `-Check` wired into pre-commit. Absent a generator, append **only your own one-line segment** to the day row, re-reading the file immediately before you write it.
+  - **Where a generator exists, run it and never hand-edit the table** — in JARVIS that is `powershell -File scripts\New-ChangelogIndex.ps1`, which rebuilds the region between the `CHANGELOG-INDEX:BEGIN`/`END` markers from the day folders. **Its pre-commit gate reads the git index (`-Check -Staged`), so stage your changelog file *before* regenerating and pass `-Staged` when you do**: `git add CHANGELOG/<day>/<session>.md` → `New-ChangelogIndex.ps1 -Staged` → `git add` the index → commit, ideally collapsed into one command. Regenerating from the working tree and then committing is what fails the staged gate, because the two halves would have read different inputs. Absent a generator, append **only your own one-line segment** to the day row, re-reading the file immediately before you write it.
   - **A day's prose belongs in `YYYY-MM-DD/SUMMARY.md`**, never in the index.
   - **Why:** the day row used to be one table cell that every session of that day appended a paragraph to — a shared singleton one level above the changelog files that had already been sharded for exactly this reason. On 2026-08-04 in JARVIS six sessions shared one cell, one of them could not write its sentence at all and a third session paid the debt two minutes later, and the file became the second-most contended in the repo (30 touches). *Shard before you lease* — `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md` §5.2.
 
 ## ✅ After completing a task
 1. Update `README.md` / `ARCHITECTURE.md` if behavior or structure changed.
 2. Append / create **your own** `CHANGELOG/YYYY-MM-DD/<session-label>.md`.
-3. Refresh the **Available Files** table in `CHANGELOG_README.md` — run the generator where one exists (JARVIS: `powershell -File scripts\New-ChangelogIndex.ps1`), otherwise append only your own one-line segment to the day row. Never paste prose into it; your `> **Summary:**` line is what the row is built from.
+3. Refresh the **Available Files** table in `CHANGELOG_README.md` — run the generator where one exists (JARVIS: **stage your changelog file first**, then `powershell -File scripts\New-ChangelogIndex.ps1 -Staged`), otherwise append only your own one-line segment to the day row. Never paste prose into it; your `> **Summary:**` line is what the row is built from.
 4. If the task came from `TODO/`, mark its checkbox `[x]` only **after user confirmation**.
 
 ## 🤖 Agent operations
