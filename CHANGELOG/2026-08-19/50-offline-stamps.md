@@ -217,13 +217,24 @@ before this commit**, after run #1 came back green in 12m 02s. Its path filter i
 the 15 instrumented tests on a GitHub-hosted API-34 emulator with no local device involved. That run
 is also the first exercise of the trigger by a commit rather than by hand.
 
-Until it reports, the changed Compose surfaces — `FreshnessNote`, and the caption and never-loaded
-branches on both screens — are **`Untested:` on a device**. `ChallengesUiTest` builds
+**It reported, and it is green.** `Observed:` run **#2**, event `push`, head `d577dcf` —
+**success**, every step of *androidTest on API 34* green, including *"Count what actually ran, and
+fail if nothing did"*, the guard `cloud-emulator` added hours earlier because
+`connectedDebugAndroidTest` goes green on **zero** discovered tests. So the suite genuinely ran and
+genuinely passed. `Untested:` the exact count was not read — it is written into the run summary
+page, and the jobs API returns step conclusions only; what is verified here is *non-zero and
+passing*, not *15 of 15*. The *Photograph the running app* job was **skipped** on a `push` event,
+so there are no screenshots from this run.
+
+That covers regression. It does not cover appearance: the changed Compose surfaces —
+`FreshnessNote`, and the caption and never-loaded branches on both screens — are still
+**`Untested:` as pixels**. `ChallengesUiTest` builds
 `ChallengeWithStandings` with named arguments and the new field is defaulted, so it still compiles
 and still covers what it covered; it drives `MyChallengeCard` and never `StandingsSheet`, so the new
 sheet content sits outside it either way. Nothing in the suite renders `StandingsSheet` or the
-leaderboard section, so a green cloud run proves **no regression**, not that the new pixels are
-right; seeing those still needs a render pass or a screenshot artifact.
+leaderboard section, so the green run proves **no regression**, not that the new pixels are right;
+seeing those needs a render pass, or a `workflow_dispatch` of the same workflow with
+`capture-screenshots` on — which is Ido's to trigger.
 
 **`functions/` has no test layer at all** (#50 §7.2). Stated rather than skipped silently — and this
 session added nothing to `functions/`, for the reason in §1.
