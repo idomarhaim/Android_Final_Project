@@ -1,3 +1,11 @@
+---
+repo: c:\Dev\Android_Final_Project
+branch: main
+mode: auto
+status: active
+created: 2026-08-19
+---
+
 # Brief: `new-machine-checkup` — first working session on the new machine
 
 > **Filed:** 2026-08-19, by the migration session (old machine in repair since ~2026-08-18).
