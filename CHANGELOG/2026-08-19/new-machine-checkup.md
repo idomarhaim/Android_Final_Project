@@ -541,3 +541,66 @@ That is the **first real-device evidence** for the clamp. Scope honestly:
 |---|---|
 | Device / manual | ✅ Hebrew + English keyboards live together on `Pixel_10_Pro_XL`, verified by looking. ✅ App stays English with `iw-IL` in the device locale list. |
 | `#51` freeze | ✅ `SYSTEM`-branch clamp confirmed on a real device for the first time — partly, see §16. |
+
+## Round 6 — brief item 3 closed, and the session's close-out
+
+### 17 · Both AVDs now hold their own account
+
+`Observed:` `Pixel_10_Pro_XL_B` → `Account {name=rachil751@gmail.com}`, and GoalPilot renders
+**"Hi רחיל 👋", 0 pts, 6 goals, 5 % overall** — a genuinely different user's Firestore data
+from account A's *"Hi עידו", 70 pts, 8 goals, 25 %* on the same live project
+`goalpilot-56e30`. Per-user isolation confirmed end to end, on real devices, without touching
+`firestore.rules`.
+
+The passkey QR was **not** the obstacle in the end: Rachel approved from her own phone, which
+is the ordinary network prompt and works fine. The distinction is worth keeping —
+**the phone *prompt* works on an emulator; the QR *passkey* does not**, because only the
+latter needs a real BLE radio between the two devices.
+
+`Pixel_10_Pro_XL` was shut down cleanly before B booted, and both AVDs now carry
+`hw.keyboard=yes`, `hw.gpu.enabled=yes` / `mode=host`, and `system_locales=en-US,iw-IL`.
+
+### 18 · Brief status at close
+
+| Brief item | State |
+|---|---|
+| 1 · First Gradle build | ✅ `assembleDebug` green, 364/0 unit tests |
+| 2 · Functions redeploy + live smoke test | ✅ redeploy was already done; smoke test **passes** and is proven not-fallback (§11) |
+| 3 · Emulator Google accounts | ✅ **both** — `name.iddo@` on A, `rachil751@` on B |
+| 4 · RAM note | ✅ observed and quantified, and the cause turned out to be GPU-related (§10) |
+
+**Not closed, and not this brief's:** the **two-account demo itself** —
+[docs/OPERATIONS.md:173](../../docs/OPERATIONS.md#L173) wants both emulators **up at once**,
+friend code `NDXVJC` added, and the leaderboard / friends / shared-feed flow exercised with
+both screens visible. This session established the **precondition** (two signed-in devices);
+the demo is a separate unit, and on 16 GB with ~3 GB per emulator it needs the machine
+otherwise quiet. That is a strong argument for the `cloud-emulator` lane.
+
+### Findings this session leaves for others
+
+1. 📌 **`RecommendationRepositoryImpl` swallows every exception** into
+   `Resource.Success(fallback)` with no log line — a dead GROQ key is indistinguishable from a
+   working one from outside the app (§11). Ticket-worthy; the fallback itself should stay.
+2. 📌 **`Set-EmulatorWindowLayout` is wrong on a DPI-scaled display** — it sizes in device
+   pixels while Windows lays out in scaled pixels, so its "fit" overshoots by the scaling
+   factor and its own off-screen guard has to rescue it (§10). Not fixed here.
+3. 📌 **`AGENTS.md` §JDK** still carries the false *"`PATH` offers JDK 17"* and the stale
+   *"two wrecked Adoptium directories"*; the measured replacement is in §3.
+4. 📌 **`#51`'s render pass is partly discharged** (§16) — carry into
+   [`sessions/51-freeze-verify.md`](../../sessions/51-freeze-verify.md).
+5. 📌 **Rotating the GROQ key is not live until `firebase deploy --only functions` runs**
+   (§12), and §11's silent catch makes the gap invisible.
+
+## 🧪 Tests — final
+
+| Layer | Result |
+|---|---|
+| Build (`:app:assembleDebug`) | ✅ green, 6m 24s |
+| JVM unit | ✅ **364 / 0**, 39 suites |
+| Cloud Functions (live) | ✅ `getRecommendations` invoked, auth VALID, output not the fallback |
+| Device / manual | ✅ two devices, two accounts, isolated data; Hebrew + English keyboards |
+| Instrumented | ⛔ **Never run, deliberately** — it uninstalls the app and would have wiped both accounts this session existed to create |
+| Firestore rules (`firestore-tests/`) | ⏳ Not run — RAM will not carry the Firebase emulator beside an AVD |
+
+**No test was written or changed.** This session compiled nothing of its own; the suite was
+the instrument, not the subject.

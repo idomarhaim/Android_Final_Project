@@ -2,8 +2,9 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 created: 2026-08-19
+closed: 2026-08-19
 ---
 
 # Brief: `new-machine-checkup` — first working session on the new machine
