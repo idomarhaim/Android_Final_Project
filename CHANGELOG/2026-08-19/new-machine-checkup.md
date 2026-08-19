@@ -147,3 +147,76 @@ is the instrument being checked, not the subject.
   `sessions/kb-drain-51e-backfill.md` owns them. Reported, not touched.
 - The brief's item 2 (Cloud Functions redeploy) was already done by the migration session;
   only its **live smoke test** remains, and that is gated on the sign-in.
+
+## Round 2 — the device lane
+
+### 4 · Both AVDs had `hw.keyboard=no`, so the host keyboard reached neither
+
+`Pixel_10_Pro_XL` booted in 52 s (`emulator-5554`), the debug APK installed, and the app
+launched clean — no `FATAL`, correct branding, correct 1344×2992 profile, English.
+
+Then Ido could not type his email into Google's sign-in field. Cause: **both AVDs carry
+`hw.keyboard=no`** in `~/.android/avd/<name>.avd/config.ini`. They were created headlessly
+by the migration session, and that default means the guest ignores the host's physical
+keyboard entirely — you are left tapping the on-screen keyboard, which on the sign-in
+WebView had opened in a floating mode that is easy to read as "typing is broken".
+
+Set to `hw.keyboard=yes` on **both** AVDs (`.bak-2026-08-19` kept beside each), which takes
+effect only on the next boot, so the emulator was restarted.
+
+> ⚠️ **`Untested:` whether this was Ido's actual complaint.** He reported a moment later
+> that his text *did* appear — *"maybe there was a delay"* — which is equally consistent
+> with a cold, RAM-starved emulator lagging, and with what appeared being the email this
+> session had typed via `adb shell input text`. So: `Observed:` the setting was `no` on both
+> AVDs and is now `yes`; `Inferred:` that it was the cause of what he saw. The restart was
+> already in flight when his message landed, and it is named here rather than presented as
+> a confirmed fix. What is **not** in doubt is that with `hw.keyboard=no` a physical keyboard
+> cannot reach the guest at all, so the change is right regardless of which symptom it
+> explains.
+
+### 5 · What the device is holding now
+
+Rebooted in 51 s with `hw.keyboard=yes` confirmed live, app relaunched, and the device
+handed to Ido to sign in as `name.iddo@gmail.com`. **`Pixel_10_Pro_XL_B` was never booted**
+and is untouched.
+
+## 🧪 Tests — round 2
+
+| Layer | Result |
+|---|---|
+| Device / manual | ✅ App installs, launches and renders its sign-in screen on a fresh API 35 image. ⏳ Sign-in and the live recommendation smoke test are with Ido. |
+| Instrumented | ⛔ Still deliberately not run — see round 1. |
+
+### 6 · Hebrew added to the emulator's keyboard (device config, unrelated to `#51`)
+
+Ido asked for Hebrew input on the emulator. **This is the device's IME, not the app's
+locale** — `#51` stays deferred, `AppLanguage.OFFERED` is untouched, and nothing here makes
+the app reachable in Hebrew. The two are easy to conflate and are not the same switch.
+
+The fresh API 35 image ships Gboard with English (US) only. Rather than adding a **system
+language** — which would put `iw-IL` into the device locale list and reach
+`AppLocale`'s `SYSTEM` branch — only the **Gboard subtype** was enabled, which is the
+narrower change and touches no locale the app reads:
+
+```
+# Gboard's Hebrew subtype, from dumpsys input_method:
+#   InputMethodSubtype #70  mSubtypeLocale=iw_IL  mSubtypeHashCode=1317880268
+adb root
+adb shell settings put secure enabled_input_methods \
+  'com.google.android.inputmethod.latin/....LatinIME;1594443099;1317880268:com.google.android.tts/...'
+adb shell am force-stop com.google.android.inputmethod.latin
+```
+
+`1594443099` is the English (US) subtype that was already there; Hebrew is **appended**, so
+both layouts are live and the globe key switches between them. Read back and confirmed.
+`adb unroot` afterwards, so the device is not left running as root.
+
+> ⚠️ `Untested:` **not yet seen on screen.** Confirming it needs a focused text field with
+> the keyboard up, and the device was in Ido's hands mid-sign-in. `Observed:` the setting
+> reads back correctly and the IME manager reports the `iw_IL` subtype. The next session to
+> hold the device should open any text field, press the globe key, and look.
+
+**Also worth knowing for the sign-in itself:** Google offered a **passkey / QR-code**
+challenge, which an emulator cannot satisfy — no camera, no screen lock, no passkey. The way
+through is *Cancel* → *Try another way* → password. That is a device-flow property, not a
+GoalPilot one, and it will recur on `Pixel_10_Pro_XL_B`.
