@@ -409,3 +409,20 @@ invisible: §11's silent catch means the app keeps serving plausible tips throug
 | Cloud Functions (live) | ✅ `getRecommendations` invoked `18:43:28Z`, auth VALID, output demonstrably not the fallback. |
 | Instrumented | ⛔ Still not run, and still must not be — it would wipe the account just created. |
 | Firestore rules (`firestore-tests/`) | ⏳ Not run — RAM (1.09 GB free) will not carry the Firebase emulator beside the AVD. |
+
+### Foreign commit carried by this session's push
+
+`git push` is **branch-scoped, not commit-scoped**, so this session's push also publishes
+**`83f648d` — `cloud-emulator: claim`**, which is not mine. Adjudicated rather than waved
+through:
+
+- It touches **`SESSIONS.md` only**, one inserted line: that session's own Active row.
+- `SESSIONS.md` is **not** in `cloud-emulator`'s claimed `Owns` list (it claims
+  `.github/workflows/instrumented-tests.yml`, `docs/CLOUD-DEVICE.md`, its own changelog and
+  candidate files, and one `AGENTS.md` doc-index line), so precondition 5's *"paths under a
+  live row → stop and ask"* does not fire.
+- Precondition 4 is satisfied by being able to account for it completely, and a claim row is
+  written to be seen — publishing it costs that session nothing.
+- Its **uncommitted** work (`.github/scripts/`, the workflow file) does **not** ride along:
+  every commit in this session named explicit paths, and `SESSIONS.md` is not among them
+  this round.
