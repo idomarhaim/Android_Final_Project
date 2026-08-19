@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "graphify-android-final-project": {
+      "command": "C:\\Users\\namei\\.local\\bin\\graphify-mcp.exe",
+      "args": [
+        "C:\\Dev\\Android_Final_Project\\graphify-out\\graph.json"
+      ]
+    }
+  }
+}

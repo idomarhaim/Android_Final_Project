@@ -94,6 +94,17 @@ with per-session briefs in `sessions/`. Account of the freeze itself:
   split, because the transcription is linked from seven places and the source
   from one.
 
+<!-- JARVIS:BEGIN knowledge-graph local -->
+## 🕸️ Codebase knowledge graph
+
+- `graphify-out/` at the repo root (**gitignored** — a regenerable local cache) holds the code knowledge graph: `graph.json`, `graph.html`, `GRAPH_REPORT.md`. Wired 2026-08-19 (the new-machine migration; FP_DEMO has had one since 2026-07-18).
+- **For architecture / structure / "how does X connect to Y" questions, consult the graph before grepping.** The `/graphify` skill auto-detects `graphify-out/graph.json` and answers via `graphify query "<question>"`; the `graphify-android-final-project` MCP server in `.mcp.json` serves the same graph to both agents.
+- **Freshness:** the post-commit hook re-runs the free AST rebuild on changed files, so graph *structure* tracks HEAD. Community *labels* are not refreshed by the hook — when names stop matching the code, re-run `graphify label C:\Dev\Android_Final_Project --backend=claude-cli` (standing-approved).
+- **Fresh clone / missing graph** — rebuild in three commands: `graphify extract C:\Dev\Android_Final_Project --code-only --out C:\Dev\Android_Final_Project`, then `graphify cluster-only C:\Dev\Android_Final_Project --no-label`, then the label command above.
+- **Kotlin note:** tree-sitter extracts Kotlin fine — first run measured 2,339 nodes / 4,373 edges / 152 communities across `app/`, `functions/` and the test suites.
+- **Policy** (canonical: `C:\Dev\JARVIS\kb\dev\tool-adoptions.md`, B11): code-only AST by default; labeling standing-approved; deep/semantic extraction ASK-FIRST; **never an API-key backend** — the `claude-cli` backend bills the subscription, and its model is pinned by the machine-wide `GRAPHIFY_CLAUDE_CLI_MODEL` env var (`claude-opus-5`), **not** by `--model`, which this backend ignores.
+<!-- JARVIS:END knowledge-graph -->
+
 ## 🔧 Common commands
 
 ```powershell

@@ -53,3 +53,10 @@ Thumbs.db
 # machine's JDK setup and should not be imposed on a fresh clone. `.idea/` above
 # is ignored for the same reason.
 .vscode/
+
+# ── graphify knowledge graph (wired 2026-08-19) ───────────────────
+# Regenerable local cache, never source: the free AST rebuild runs from the
+# post-commit hook, and community labels are re-derived on demand
+# (`graphify label . --backend=claude-cli`). Placement per JARVIS B11:
+# in-tree per project, gitignored there.
+/graphify-out/
