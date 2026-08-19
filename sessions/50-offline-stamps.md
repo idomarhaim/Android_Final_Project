@@ -1,6 +1,6 @@
 ---
 repo: c:\Dev\Android_Final_Project
-branch: feat/goalpilot-implementation
+branch: main
 mode: auto
 status: ready
 issue: 50

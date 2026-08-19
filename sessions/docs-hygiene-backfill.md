@@ -1,6 +1,6 @@
 ---
 repo: c:\Dev\Android_Final_Project
-branch: feat/goalpilot-implementation
+branch: main
 mode: auto
 status: ready
 created: 2026-08-17
@@ -10,6 +10,26 @@ created: 2026-08-17
 
 **Runs in parallel with any feature session** — it builds nothing, needs no device, and
 touches no Kotlin. Claim `scripts/README.md`, `CHANGELOG/**` and `AGENTS.md` only.
+
+## ⚠️ Re-verified against HEAD on the new machine, 2026-08-19 — this brief never ran
+
+**Nothing in it landed.** No `CHANGELOG/*/docs-hygiene-backfill.md` exists, and every
+number below was re-measured today. What you may remember happening is
+`changelog-index-backfill` (`a1aa041`, which *generated* the index) — a different session.
+
+| The brief said | Actually, at HEAD `1ff8a5e` |
+|---|---|
+| `scripts/README.md:48-49` | **line 53** — the file moved under it |
+| *"one known copy"* of the false claim | **four live copies**: `scripts/README.md:53`, `docs/OPERATIONS.md:134`, `docs/RELEASING.md:207`, `knowledge/release-distribution.md:70`. The five hits under `CHANGELOG/` are historical accounts and stay untouched (see *Out of scope*) |
+| **7 of 84** files carry `> **Summary:**` | **11 of 88** |
+| *"do not touch `CHANGELOG/2026-08-17/51e-sweep-components.md` if still dirty"* | **stale** — committed in `105baaf`. No such warning applies now |
+
+**New, and it is the reason the JDK item got bigger:** the machine changed on 2026-08-19.
+There is **no Adoptium JDK on this machine at all**, so `AGENTS.md:136`'s whole JDK
+paragraph — `jdk-21.0.12.8-hotspot`, the `PATH`-offers-17 trap, the wrecked Adoptium
+directories — describes a machine that no longer exists. Correcting it is **more than the
+one-line fix this brief scoped**, so *ask Ido before growing past item 1*; do not silently
+expand. See `sessions/new-machine-checkup.md`, which owns the live blocker.
 
 ## Read first
 

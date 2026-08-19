@@ -1,6 +1,6 @@
 ---
 repo: c:\Dev\Android_Final_Project
-branch: feat/goalpilot-implementation
+branch: main
 mode: auto
 status: ready
 created: 2026-08-17
@@ -10,6 +10,22 @@ created: 2026-08-17
 
 **Runs in parallel with any feature session** — no build, no device, no `app/src/`.
 But it is **cross-repo**, so it owes a row on **two** boards.
+
+## ⚠️ Re-verified against HEAD on the new machine, 2026-08-19 — this brief never ran
+
+**Nothing was drained.** All **9** entries across the **three** candidate files still read
+`**Status.** Not drained`, and no `CHANGELOG/*/kb-drain-51e-backfill.md` exists. What you may
+remember happening is the two *earlier* drains — `kb-drain-51d` (`dad8f12`) and
+`kb-drain-widget-hebrew` (`CHANGELOG/2026-08-16/`) — different sessions, already closed.
+
+**The title says "two"; there are three.** 51e (4 entries) + `changelog-index-backfill`
+(3) + `completion-roadmap` (2).
+
+**"Three things that will bite" — item 1 is now dead.** `C:\Dev\JARVIS`'s Active-claims
+section holds **zero rows** as of 2026-08-19 (JARVIS HEAD `3591857`); `kb-drain-jarvis-own`
+released. And a drain run today appends to `kb/log/2026-08-19.md`, not the contended
+`2026-08-17.md`. **Items 2 and 3 still stand in full** — both always-ask candidates are
+untouched and must be parked, not drained.
 
 ## Read first
 

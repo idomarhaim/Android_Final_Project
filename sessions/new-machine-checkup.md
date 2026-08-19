@@ -22,9 +22,25 @@
 
 ## To do in this session
 
-1. **First Gradle build**: no standalone JDK on this machine — set `JAVA_HOME`
-   to `C:\Program Files\Android\Android Studio\jbr`. Expect a large dependency
-   download. `.\gradlew assembleDebug`, or the user's `Run GoalPilot.cmd`.
+1. **First Gradle build** — ⚠️ **blocked as written; corrected 2026-08-19.**
+
+   The original instruction (*"set `JAVA_HOME` to Android Studio's `jbr`"*) **will not
+   work**, for two independent reasons, both measured today:
+   - **`gradle.properties:22` pins `org.gradle.java.home=C:/Program Files/Eclipse
+     Adoptium/jdk-21.0.12.8-hotspot`, and that directory does not exist on this
+     machine.** `org.gradle.java.home` **overrides** `JAVA_HOME`, so setting
+     `JAVA_HOME` changes nothing until this line is fixed or removed.
+   - **Android Studio's `jbr` is JDK 25** (`openjdk 25.0.2`), and the wrapper is
+     **Gradle 8.10.2**, which does not run on 25. So `jbr` is not a usable substitute
+     even after the pin is removed.
+
+   **There is no JDK 21 on this machine at all** (`C:\Program Files\Eclipse Adoptium\`
+   is absent; `C:\Program Files\Java\` does not exist). So the first real step is
+   **install Temurin JDK 21**, then point `org.gradle.java.home` at it and set
+   `JAVA_HOME` to match. Only then `.\gradlew assembleDebug`, or `Run GoalPilot.cmd`.
+
+   **Do not "fix" this by bumping Gradle/AGP to accept 25** — that is a toolchain
+   upgrade, not a machine setup, and it is not this session's scope. Ask Ido first.
 2. ~~Cloud Functions redeploy~~ — **DONE 2026-08-19 by the migration session**:
    Node.js LTS + firebase-tools installed, user completed `firebase login`
    (name.iddo@gmail.com), and `firebase deploy --only functions` updated all
