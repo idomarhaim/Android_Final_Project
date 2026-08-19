@@ -2,6 +2,9 @@ package com.idomarhaim.goalpilot.feature.social
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.Freshness
+import com.idomarhaim.goalpilot.domain.model.Leaderboard
+import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.util.MainDispatcherRule
@@ -49,8 +52,11 @@ class SocialViewModelTest {
         isMine = isMine,
     )
 
-    private fun viewModel(feed: List<SharedItem> = emptyList()): SocialViewModel {
-        every { repository.observeLeaderboard(any()) } returns flowOf(emptyList())
+    private fun viewModel(
+        feed: List<SharedItem> = emptyList(),
+        leaderboard: Leaderboard = Leaderboard(),
+    ): SocialViewModel {
+        every { repository.observeLeaderboard(any()) } returns flowOf(leaderboard)
         every { repository.observeFeed() } returns flowOf(feed)
         every { repository.observeFriendUids() } returns flowOf(emptySet())
         return SocialViewModel(repository)
@@ -114,5 +120,68 @@ class SocialViewModelTest {
 
         assertThat(state.feed.single { it.id == "mine" }.isMine).isTrue()
         assertThat(state.feed.single { it.id == "theirs" }.isMine).isFalse()
+    }
+
+    // ── #50 · the as-of stamp and the never-loaded state ────────────────
+
+    @Test
+    fun `a never-loaded leaderboard reaches the screen as never-loaded, not as empty`() = runTest {
+        // The heart of #50 item 3. `publicProfiles` is somebody else's data, so an
+        // empty read that came from cache means this device has never seen the
+        // collection — the app does not know whether anyone is there. The screen
+        // has to be able to tell that from a genuine empty, or it renders "no one
+        // here yet" about data it has never read.
+        val vm = viewModel(
+            leaderboard = Leaderboard(
+                entries = emptyList(),
+                freshness = Freshness(neverLoaded = true),
+            ),
+        )
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.leaderboard).isEmpty()
+        assertThat(state.leaderboardFreshness.neverLoaded).isTrue()
+    }
+
+    @Test
+    fun `an empty leaderboard that did reach the server is an ordinary empty`() = runTest {
+        // The other half of the same discrimination, and the one that keeps the
+        // first honest: empty-from-the-server means nobody is there, and must not
+        // turn into "Not loaded yet".
+        val vm = viewModel(leaderboard = Leaderboard(entries = emptyList()))
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.leaderboardFreshness.neverLoaded).isFalse()
+    }
+
+    @Test
+    fun `the as-of stamp survives the trip to the screen`() = runTest {
+        // The caption is drawn from this and nothing else — no clock, no radio.
+        val vm = viewModel(
+            leaderboard = Leaderboard(
+                entries = listOf(LeaderboardEntry(uid = "u1", points = 10)),
+                freshness = Freshness(asOfEpochMillis = 1_760_000_000_000L),
+            ),
+        )
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.leaderboardFreshness.asOfEpochMillis).isEqualTo(1_760_000_000_000L)
+        assertThat(state.leaderboardFreshness.hasStamp).isTrue()
+    }
+
+    @Test
+    fun `no stamp anywhere in the list means there is no caption to draw`() = runTest {
+        // Rows written before #50 shipped carry no `updatedAt`. The caption is
+        // unconditional on the *connection*, never on having something true to say.
+        val vm = viewModel(
+            leaderboard = Leaderboard(entries = listOf(LeaderboardEntry(uid = "u1"))),
+        )
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.leaderboardFreshness.hasStamp).isFalse()
     }
 }

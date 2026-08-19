@@ -1,7 +1,7 @@
 package com.idomarhaim.goalpilot.domain.repository
 
 import com.idomarhaim.goalpilot.core.result.Resource
-import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
+import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.ProgressSummary
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import kotlinx.coroutines.flow.Flow
@@ -9,8 +9,14 @@ import kotlinx.coroutines.flow.Flow
 /** Sharing + friends leaderboard (spec §7, a core course requirement). */
 interface SocialRepository {
 
-    /** Global/friends leaderboard ordered by points, with rank + current-user flag. */
-    fun observeLeaderboard(friendsOnly: Boolean = false): Flow<List<LeaderboardEntry>>
+    /**
+     * Global/friends leaderboard ordered by points, with rank + current-user flag.
+     *
+     * Returns a [Leaderboard] rather than a bare list because `publicProfiles` is
+     * cross-boundary: the caption and the *"Not loaded yet"* state both need what
+     * the **read** knows, and only this layer ever sees the snapshot (#50).
+     */
+    fun observeLeaderboard(friendsOnly: Boolean = false): Flow<Leaderboard>
 
     /**
      * The shared achievement feed (own + friends' posts), newest first, each item

@@ -15,6 +15,11 @@ object DateTimeUtils {
     // "process-scoped vals no switch can move".
     private val dayFormatter get() = AppDateFormatters.of("MMM d, yyyy")
 
+    // 24-hour and pattern-fixed on purpose: the as-of caption is a short clock
+    // reading beside a number, and "9:14 AM" doubles its width for nothing. Still
+    // goes through AppDateFormatters so the locale is read at call time.
+    private val timeFormatter get() = AppDateFormatters.of("HH:mm")
+
     fun formatDay(epochMillis: Long): String =
         dayFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
 
@@ -31,6 +36,25 @@ object DateTimeUtils {
             days < 7 -> "${days}d ago"
             else -> formatDay(epochMillis)
         }
+    }
+
+    /**
+     * The *as-of* caption's time (#50, spec §5.3 §3): `"09:14"` for a stamp from
+     * today, `"Aug 17, 2026 09:14"` for anything older.
+     *
+     * The split is the whole point rather than a nicety. The caption exists to stop
+     * a stale number reading as a current one, and a bare `"09:14"` on a stamp three
+     * days old reads as *this morning* — it would make the caption say the opposite
+     * of what it is for. [relative] is not used here for the same reason in reverse:
+     * *"3d ago"* is right for a feed post, but a standings caption is read as a
+     * claim about a clock time, and the ticket writes it as one.
+     */
+    fun formatAsOf(epochMillis: Long, now: Long = System.currentTimeMillis()): String {
+        val zone = ZoneId.systemDefault()
+        val stamp = Instant.ofEpochMilli(epochMillis).atZone(zone)
+        val time = timeFormatter.format(stamp)
+        val sameDay = stamp.toLocalDate() == Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        return if (sameDay) time else "${formatDay(epochMillis)} $time"
     }
 
     /** Inclusive start-of-day epoch millis for the given local date. */

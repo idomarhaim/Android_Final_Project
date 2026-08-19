@@ -1,6 +1,8 @@
 package com.idomarhaim.goalpilot.data.firestore.dto
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.ServerTimestamp
 
 /**
  * Firestore data-transfer objects. They are mutable [var]s with defaults and a
@@ -107,6 +109,20 @@ data class PublicProfileDto(
     var level: Int = 1,
     /** Mirrored from the private user doc so friends can look this profile up. */
     var friendCode: String = "",
+    /**
+     * When the owner last wrote this row — the *as-of* stamp (#50, spec §5.3 §3).
+     *
+     * **Server-set, never device-set**, and that is the whole point: the reader of
+     * this document is on a *different device* from its writer, so a writer whose
+     * clock is wrong would caption a stale number with a time the reader has no way
+     * to doubt. [ServerTimestamp] fills it in on a POJO write; a map write does the
+     * same with `FieldValue.serverTimestamp()`.
+     *
+     * `null` on a row written before #50 shipped, and on a locally-pending write
+     * the server has not yet confirmed — both mean *no stamp*, and the caption says
+     * nothing rather than inventing one.
+     */
+    @ServerTimestamp var updatedAt: Timestamp? = null,
 )
 
 data class SharedItemDto(
@@ -146,4 +162,13 @@ data class ChallengeParticipantDto(
     var photoUrl: String? = null,
     var score: Double = 0.0,
     var joinedAt: Long = 0L,
+    /**
+     * When the owner last wrote this row — the *as-of* stamp (#50, spec §5.3 §3).
+     *
+     * A **different fact** from [joinedAt], which says when they entered and never
+     * moves again; this says when the *score* last moved, which is what a reader
+     * looking at somebody else's standing actually needs. See
+     * [PublicProfileDto.updatedAt] for why it is server-set.
+     */
+    @ServerTimestamp var updatedAt: Timestamp? = null,
 )

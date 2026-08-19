@@ -9,6 +9,7 @@ import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
+import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -288,6 +289,9 @@ data class ChallengeCard(
     val myStanding: ChallengeStanding? get() = data.myStanding
     val isOwner: Boolean get() = data.isOwner
     val participantCount: Int get() = data.participantCount
+
+    /** What the *participants* read knows about itself — the as-of caption (#50). */
+    val standingsFreshness: Freshness get() = data.standingsFreshness
 
     /** Scoring an upcoming challenge, or one that is over, is not a thing. */
     val canReportScore: Boolean get() = phase == ChallengePhase.ACTIVE

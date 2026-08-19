@@ -42,6 +42,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.ui.components.Avatar
+import com.idomarhaim.goalpilot.ui.components.FreshnessNote
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 import com.idomarhaim.goalpilot.ui.locale.AppDatePickerDialog
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
@@ -297,9 +298,26 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )
+            // The as-of caption, unconditional — drawn the same online and offline,
+            // because a standings row fetched forty minutes ago over perfect Wi-Fi
+            // is exactly as stale as one served from cache (#50, spec §5.3 §2).
+            // Suppressed only when there is no stamp to state; see [FreshnessNote].
+            if (card.standingsFreshness.hasStamp) {
+                FreshnessNote(
+                    "Standings as of " +
+                        DateTimeUtils.formatAsOf(card.standingsFreshness.asOfEpochMillis),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
 
+            // Never fetched on this device: the participants are somebody else's
+            // documents, so an empty cached read means the app does not know whether
+            // anyone is in this challenge — not that nobody is (#50, spec §5.3 §3).
+            if (card.standingsFreshness.neverLoaded) {
+                FreshnessNote("Not loaded yet", modifier = Modifier.padding(vertical = 16.dp))
+            }
             LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
                 items(card.standings, key = { it.uid }) { standing ->
                     Row(

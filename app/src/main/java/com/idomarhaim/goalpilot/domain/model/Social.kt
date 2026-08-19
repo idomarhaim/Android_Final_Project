@@ -18,6 +18,18 @@ data class LeaderboardEntry(
 )
 
 /**
+ * The leaderboard as one read: its rows, plus what the read knows about itself.
+ *
+ * `publicProfiles` is cross-boundary — somebody else writes every row here — so
+ * this is one of exactly two surfaces in v0.3 that owes an as-of caption and a
+ * *"Not loaded yet"* state (#50, spec §5.3 §4). The other is challenge standings.
+ */
+data class Leaderboard(
+    val entries: List<LeaderboardEntry> = emptyList(),
+    val freshness: Freshness = Freshness(),
+)
+
+/**
  * Orders leaderboard rows by points (highest first) and stamps 1-based ranks.
  *
  * Ranking happens *after* any friends-only filtering, so the "Friends" tab shows

@@ -1,7 +1,9 @@
 package com.idomarhaim.goalpilot.data.firestore
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
@@ -88,7 +90,10 @@ class ChallengeRepositoryImpl @Inject constructor(
         auth.uidFlow().flatMapLatest { uid ->
             combine(
                 challengeDoc(challengeId).snapshotsFlow(),
-                participantsCol(challengeId).snapshotsFlow(),
+                // INCLUDE, not the default: a participants collection that is empty
+                // on the server changes no documents when it stops being served
+                // from cache, so without this the never-loaded state would stick.
+                participantsCol(challengeId).snapshotsFlow(MetadataChanges.INCLUDE),
             ) { challengeSnap, participantsSnap ->
                 val dto = challengeSnap.toObject(ChallengeDto::class.java)
                     ?: return@combine null
@@ -100,6 +105,11 @@ class ChallengeRepositoryImpl @Inject constructor(
                     standings = participants.rankedByScore(uid),
                     isOwner = uid != null && dto.ownerUid == uid,
                     hasJoined = participants.any { it.uid == uid },
+                    // Only the participants read is stamped. The challenge document
+                    // beside it is cross-boundary too, but it holds owner-authored
+                    // title and dates rather than a moving number, so an as-of
+                    // caption on it would answer a question nobody is asking (#50).
+                    standingsFreshness = participantsSnap.crossBoundaryFreshness(),
                 )
             }
         }
@@ -210,7 +220,15 @@ class ChallengeRepositoryImpl @Inject constructor(
                 // participant row with no mirror edge, leaving the user scoring
                 // in a challenge that never appears in their own list.
                 participantsCol(challengeId).document(uid)
-                    .update(SCORE, score).await()
+                    .update(
+                        mapOf(
+                            SCORE to score,
+                            // Rides the write that moves the score, so a reader on
+                            // another device can be told when this number was last
+                            // touched rather than whether their own radio is on (#50).
+                            UPDATED_AT to FieldValue.serverTimestamp(),
+                        ),
+                    ).await()
                 Resource.Success(Unit)
             } catch (e: Exception) {
                 Resource.Error("Join the challenge before reporting a score", e)
@@ -232,6 +250,11 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * A brand-new participant row. `updatedAt` is left null on purpose: it is
+     * annotated `@ServerTimestamp`, so Firestore fills it in on this very write —
+     * see [ChallengeParticipantDto.updatedAt].
+     */
     private fun meAsParticipant(now: Long): ChallengeParticipantDto {
         val user = auth.currentUser
         return ChallengeParticipantDto(

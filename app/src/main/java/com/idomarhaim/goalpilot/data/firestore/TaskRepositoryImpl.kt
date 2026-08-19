@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.data.firestore
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
@@ -126,6 +127,13 @@ class TaskRepositoryImpl @Inject constructor(
                             "level" to newLevel,
                             "displayName" to (userSnap.getString("displayName") ?: ""),
                             "photoUrl" to userSnap.getString("photoUrl"),
+                            // The as-of stamp (#50), on the same write that moves the
+                            // number and only on such a write — a merge that touched
+                            // only the display name would otherwise tell every reader
+                            // the score had just changed. Server-set, because the
+                            // reader of this row is on a different device from its
+                            // writer and cannot audit that device's clock.
+                            UPDATED_AT to FieldValue.serverTimestamp(),
                         ),
                         com.google.firebase.firestore.SetOptions.merge(),
                     )

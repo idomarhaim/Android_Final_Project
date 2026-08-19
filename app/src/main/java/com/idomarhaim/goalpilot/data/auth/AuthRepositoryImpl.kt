@@ -3,11 +3,13 @@ package com.idomarhaim.goalpilot.data.auth
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.data.firestore.UPDATED_AT
 import com.idomarhaim.goalpilot.data.firestore.dto.UserDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.snapshotsFlow
@@ -109,6 +111,11 @@ class AuthRepositoryImpl @Inject constructor(
                     "points" to 0L,
                     "level" to 1,
                     "friendCode" to friendCode,
+                    // This write sets the number, so it carries the as-of stamp
+                    // (#50). The merge below deliberately does not: it refreshes the
+                    // display name and photo, and stamping it would announce a score
+                    // change to every reader on the strength of a renamed account.
+                    UPDATED_AT to FieldValue.serverTimestamp(),
                 ),
             ).await()
         } else {

@@ -48,6 +48,13 @@ data class ChallengeWithStandings(
     val standings: List<ChallengeStanding> = emptyList(),
     val isOwner: Boolean = false,
     val hasJoined: Boolean = false,
+    /**
+     * What the *participants* read knows about itself — every row of it is written
+     * by somebody else (#50, spec §5.3 §4). The challenge document beside it gets
+     * no stamp: its title and dates are owner-authored prose, not a derived number
+     * anyone can be misled about.
+     */
+    val standingsFreshness: Freshness = Freshness(),
 ) {
     val participantCount: Int get() = standings.size
 

@@ -57,6 +57,7 @@ import com.idomarhaim.goalpilot.domain.model.FriendCode
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.ui.components.Avatar
+import com.idomarhaim.goalpilot.ui.components.FreshnessNote
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.gpCardColors
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -120,21 +121,38 @@ fun SocialScreen(
                 }
             }
             item { SectionHeader(title = "Leaderboard") }
-            if (state.leaderboard.isEmpty()) {
-                item {
+            when {
+                // Never fetched on this device, so the app does not know whether
+                // there is anyone to show. Saying "no one here yet" would be the app
+                // stating a fact about other people's data it has never read (#50).
+                state.leaderboardFreshness.neverLoaded -> item { FreshnessNote("Not loaded yet") }
+
+                state.leaderboard.isEmpty() -> item {
                     Text(
                         "No one here yet. Add a friend by their code to compare progress.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            } else {
-                items(state.leaderboard, key = { it.uid }) { entry ->
-                    LeaderboardRow(
-                        entry = entry,
-                        onAddFriend = { viewModel.addFriend(entry.uid) },
-                        onRemoveFriend = { viewModel.removeFriend(entry.uid) },
-                    )
+
+                else -> {
+                    if (state.leaderboardFreshness.hasStamp) {
+                        item {
+                            FreshnessNote(
+                                "Leaderboard as of " +
+                                    DateTimeUtils.formatAsOf(
+                                        state.leaderboardFreshness.asOfEpochMillis,
+                                    ),
+                            )
+                        }
+                    }
+                    items(state.leaderboard, key = { it.uid }) { entry ->
+                        LeaderboardRow(
+                            entry = entry,
+                            onAddFriend = { viewModel.addFriend(entry.uid) },
+                            onRemoveFriend = { viewModel.removeFriend(entry.uid) },
+                        )
+                    }
                 }
             }
             item {

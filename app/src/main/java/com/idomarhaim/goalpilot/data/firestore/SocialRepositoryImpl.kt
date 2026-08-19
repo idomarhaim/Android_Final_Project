@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.data.firestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
@@ -12,10 +13,13 @@ import com.idomarhaim.goalpilot.data.firestore.dto.PublicProfileDto
 import com.idomarhaim.goalpilot.data.firestore.dto.SharedItemDto
 import com.idomarhaim.goalpilot.data.firestore.dto.resolvedLevel
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
+import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.FriendCode
+import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.ProgressSummary
 import com.idomarhaim.goalpilot.domain.model.SharedItem
+import com.idomarhaim.goalpilot.domain.model.merge
 import com.idomarhaim.goalpilot.domain.model.rankedByPoints
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
@@ -56,7 +60,7 @@ class SocialRepositoryImpl @Inject constructor(
      * the global top-N client-side would silently drop any friend who sits outside
      * it — exactly the friend a new user is most likely to have just added.
      */
-    override fun observeLeaderboard(friendsOnly: Boolean): Flow<List<LeaderboardEntry>> =
+    override fun observeLeaderboard(friendsOnly: Boolean): Flow<Leaderboard> =
         auth.uidFlow().flatMapLatest { uid ->
             observeFriendUids().flatMapLatest { friends ->
                 val profiles = if (friendsOnly) {
@@ -65,26 +69,60 @@ class SocialRepositoryImpl @Inject constructor(
                     publicCol
                         .orderBy("points", Query.Direction.DESCENDING)
                         .limit(LEADERBOARD_LIMIT)
-                        .snapshotsFlow()
-                        .map { it.toObjects(PublicProfileDto::class.java) }
+                        // INCLUDE, not the default: without it an empty
+                        // `publicProfiles` would render "Not loaded yet" and never
+                        // leave it. See crossBoundaryFreshness.
+                        .snapshotsFlow(MetadataChanges.INCLUDE)
+                        .map { snap ->
+                            ProfileRead(
+                                snap.toObjects(PublicProfileDto::class.java),
+                                snap.crossBoundaryFreshness(),
+                            )
+                        }
                 }
-                profiles.map { list -> list.toEntries(uid, friends).rankedByPoints() }
+                profiles.map { read ->
+                    Leaderboard(
+                        entries = read.profiles.toEntries(uid, friends).rankedByPoints(),
+                        freshness = read.freshness,
+                    )
+                }
             }
         }
+
+    /** One `publicProfiles` read: its rows, and what the snapshot knows about itself. */
+    private data class ProfileRead(
+        val profiles: List<PublicProfileDto>,
+        val freshness: Freshness,
+    )
 
     /**
      * Streams the given profiles. Firestore's `in` filter caps out at 30 values,
      * so larger friend lists are split across parallel listeners and merged.
+     *
+     * No ids at all is a genuine empty rather than a never-loaded one: the friend
+     * set comes from `users/{uid}/friends`, which the reader owns and which is
+     * therefore complete offline. "You have no friends yet" is a fact this device
+     * holds; "we have never seen anyone's profile" is not.
      */
-    private fun observeProfilesByIds(ids: Set<String>): Flow<List<PublicProfileDto>> {
+    private fun observeProfilesByIds(ids: Set<String>): Flow<ProfileRead> {
         val chunks = ids.filter { it.isNotBlank() }.chunked(IN_QUERY_LIMIT)
-        if (chunks.isEmpty()) return flowOf(emptyList())
+        if (chunks.isEmpty()) return flowOf(ProfileRead(emptyList(), Freshness()))
         val flows = chunks.map { chunk ->
             publicCol.whereIn(FieldPath.documentId(), chunk)
-                .snapshotsFlow()
-                .map { it.toObjects(PublicProfileDto::class.java) }
+                .snapshotsFlow(MetadataChanges.INCLUDE)
+                .map { snap ->
+                    ProfileRead(
+                        snap.toObjects(PublicProfileDto::class.java),
+                        snap.crossBoundaryFreshness(),
+                    )
+                }
         }
-        return combine(flows) { arrays -> arrays.toList().flatten() }
+        return combine(flows) { reads ->
+            ProfileRead(
+                profiles = reads.flatMap { it.profiles },
+                freshness = reads.map { it.freshness }.merge(),
+            )
+        }
     }
 
     private fun List<PublicProfileDto>.toEntries(

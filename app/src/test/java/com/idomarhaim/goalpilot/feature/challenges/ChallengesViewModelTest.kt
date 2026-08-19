@@ -8,6 +8,7 @@ import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
+import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
@@ -417,5 +418,58 @@ class ChallengesViewModelTest {
         val phase = Challenge(startAtEpochMillis = start, endAtEpochMillis = end).phaseAt(noon)
 
         assertThat(phase).isEqualTo(ChallengePhase.ACTIVE)
+    }
+
+    // ── #50 · what the standings read knows about itself ────────────────
+
+    @Test
+    fun `the standings as-of stamp reaches the card the sheet draws from`() = runTest {
+        // The caption is drawn from this and from nothing else — no clock reading,
+        // no connectivity check. Participant rows are somebody else's documents, so
+        // this is one of exactly two surfaces in v0.3 that owes a stamp at all.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(),
+                    standingsFreshness = Freshness(asOfEpochMillis = 1_760_000_000_000L),
+                ),
+            ),
+        )
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.standingsFreshness.asOfEpochMillis).isEqualTo(1_760_000_000_000L)
+        assertThat(card.standingsFreshness.hasStamp).isTrue()
+    }
+
+    @Test
+    fun `standings never fetched on this device are never-loaded, not empty`() = runTest {
+        // A challenge whose participants have never been read renders
+        // "Not loaded yet" rather than an empty standings list, which would state
+        // that nobody has joined — a fact about other people's data the app has
+        // never read (#50 item 3).
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(),
+                    standingsFreshness = Freshness(neverLoaded = true),
+                ),
+            ),
+        )
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.standings).isEmpty()
+        assertThat(card.standingsFreshness.neverLoaded).isTrue()
+    }
+
+    @Test
+    fun `standings that reached the server and found nobody are an ordinary empty`() = runTest {
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.standingsFreshness.neverLoaded).isFalse()
+        assertThat(card.standingsFreshness.hasStamp).isFalse()
     }
 }

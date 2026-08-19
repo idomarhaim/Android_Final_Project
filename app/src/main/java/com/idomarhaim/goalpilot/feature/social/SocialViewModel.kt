@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.feature.social
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
@@ -36,7 +37,8 @@ class SocialViewModel @Inject constructor(
             SocialUiState(
                 isLoading = false,
                 friendsOnly = friendsOnly,
-                leaderboard = leaderboard,
+                leaderboard = leaderboard.entries,
+                leaderboardFreshness = leaderboard.freshness,
                 feed = feed,
                 friendUids = friends,
             )
@@ -96,6 +98,12 @@ data class SocialUiState(
     val isLoading: Boolean = true,
     val friendsOnly: Boolean = false,
     val leaderboard: List<LeaderboardEntry> = emptyList(),
+    /**
+     * What the leaderboard *read* knows about itself — the as-of caption and the
+     * *"Not loaded yet"* state (#50). The feed beside it gets neither: a share is
+     * an immutable event, so there is nothing an as-of stamp would fix.
+     */
+    val leaderboardFreshness: Freshness = Freshness(),
     val feed: List<SharedItem> = emptyList(),
     val friendUids: Set<String> = emptySet(),
     val error: String? = null,
