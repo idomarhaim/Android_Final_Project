@@ -16,7 +16,30 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `new-machine-checkup` | **First build + first device run on the new machine.** `/kickoff` of [`sessions/new-machine-checkup.md`](sessions/new-machine-checkup.md): run `assembleDebug` (JDK blocker already fixed in `0e52a66`), smoke-test one live recommendation against the redeployed functions, and get both AVDs signed in. **No `app/src/` edits planned** — this is a verification session. ⚠️ Takes **both** singletons: no other session may build or touch a device until this row clears. ✅ **Round 1 done, `b5fb371`→HEAD: `assembleDebug` green (6m 24s) and JVM unit 364/0.** 📱 **`Pixel_10_Pro_XL` is UP (`emulator-5554`), app installed and launched, and it is SIGNED OUT** — waiting on Ido. **DO NOT run `connectedDebugAndroidTest` on it**: that uninstalls the app and takes the account with it, which is the one thing this session is trying to create. Use `Pixel_10_Pro_XL_B` for instrumented runs. | `CLAUDE.md`, `local.properties` *(git-ignored)*, `sessions/new-machine-checkup.md`, `CHANGELOG/2026-08-19/new-machine-checkup.md`, `kb-candidates/2026-08-19-new-machine-checkup.md` | `#gradle-daemon`, `#emulator` | 2026-08-19 |
-| `kb-drain-51e-backfill` | **Drain the three pending `kb-candidates/` files into the central KB.** `/kickoff` of [`sessions/kb-drain-51e-backfill.md`](sessions/kb-drain-51e-backfill.md): 9 entries across `51e-sweep-components` (4), `changelog-index-backfill` (3), `completion-roadmap` (2). **Cross-repo** — also holds a row on `C:\Dev\JARVIS`. **No build, no device, no `app/src/` change**, so it is disjoint from `new-machine-checkup` and takes neither singleton. The two 2026-08-19 candidate files are **out of scope** and untouched — their own sessions own them. | `kb-candidates/2026-08-17-51e-sweep-components.md`, `kb-candidates/2026-08-17-changelog-index-backfill.md`, `kb-candidates/2026-08-17-completion-roadmap.md`, `sessions/kb-drain-51e-backfill.md`, `CHANGELOG/2026-08-19/kb-drain-51e-backfill.md`, `CHANGELOG/CHANGELOG_README.md` *(generated)* | _none_ | 2026-08-19 |
+
+> 🏁 **`kb-drain-51e-backfill` RELEASED 2026-08-19 — `07ebc4d` (claim) → this commit.** No
+> singletons held. Account:
+> [`CHANGELOG/2026-08-19/kb-drain-51e-backfill.md`](CHANGELOG/2026-08-19/kb-drain-51e-backfill.md).
+>
+> **All three 2026-08-17 candidate files are drained and deleted — 9 entries, 0 parked.** Pages
+> are in `C:/Dev/JARVIS` at `e12b88c` (1 new page, 7 in-place extensions across 6 pages, 6 index
+> rows); each promotion was verified against `git show e12b88c:<file>` **before** the source files
+> were deleted, not against the commit message. That repo's board row is released too.
+>
+> ⚖️ **Both always-ask gates were checked and neither opened, which is a finding and not a
+> formality.** (1) `51e` entry 3 *looked* like the supersede shape — the precedent `kb-drain-51d`
+> entry 1 narrowed a standing claim — but §1's fourth idiom prescribes an **end state** that this
+> entry leaves untouched, so it was appended and **no committed sentence was rewritten**. (2)
+> `changelog-index-backfill` entry 2 was **split**: its documented gap (`.git/hooks` is not
+> version-controlled, so a hook is neither claimable nor deliverable by a commit) is knowledge and
+> was ingested to `kb/dev/flows/lease.md` §4e; its **duty** half — that the installing session
+> owes an announcement — is a clause on §5's singleton list, i.e. a `rules/` change, i.e. **Ido's**
+> under the 🎬 walkthrough rule. Left undrafted and named in the page.
+>
+> 📌 **Two candidate files here are still undrained and were deliberately not touched:**
+> `kb-candidates/2026-08-19-docs-hygiene-backfill.md` and
+> `kb-candidates/2026-08-19-new-machine-checkup.md`. Both post-date this brief, both belong to
+> sessions of their own, and `new-machine-checkup` was **live** with its file named in its own row.
 
 > 🏁 **`completion-roadmap` RELEASED 2026-08-17.** No singletons held (no build, no device,
 > no `app/src/` change). Account:

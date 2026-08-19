@@ -2,9 +2,17 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 created: 2026-08-17
 ---
+
+> ✅ **DONE 2026-08-19** — all **9** entries across all **three** candidate files drained.
+> Pages landed in `C:\Dev\JARVIS` at commit `e12b88c`; that repo's account is
+> `CHANGELOG\2026-08-19\kb-drain-51e-backfill.md` there. This repo's account:
+> [`CHANGELOG/2026-08-19/kb-drain-51e-backfill.md`](../CHANGELOG/2026-08-19/kb-drain-51e-backfill.md).
+> **Nothing parked** — both always-ask gates were checked and neither opened;
+> `changelog-index-backfill` entry 2 was split, its documented gap ingested to
+> `flows/lease.md` §4e and its `rules/` half left undrafted for Ido.
 
 # Drain the two pending `kb-candidates/` files into the central KB
 
