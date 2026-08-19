@@ -16,7 +16,29 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `new-machine-checkup` | **First build + first device run on the new machine.** `/kickoff` of [`sessions/new-machine-checkup.md`](sessions/new-machine-checkup.md): run `assembleDebug` (JDK blocker already fixed in `0e52a66`), smoke-test one live recommendation against the redeployed functions, and get both AVDs signed in. **No `app/src/` edits planned** — this is a verification session. ⚠️ Takes **both** singletons: no other session may build or touch a device until this row clears. ✅ **Round 1 done, `b5fb371`→HEAD: `assembleDebug` green (6m 24s) and JVM unit 364/0.** 📱 **`Pixel_10_Pro_XL` is UP (`emulator-5554`), app installed and launched, and it is SIGNED OUT** — waiting on Ido. **DO NOT run `connectedDebugAndroidTest` on it**: that uninstalls the app and takes the account with it, which is the one thing this session is trying to create. Use `Pixel_10_Pro_XL_B` for instrumented runs. | `CLAUDE.md`, `local.properties` *(git-ignored)*, `sessions/new-machine-checkup.md`, `CHANGELOG/2026-08-19/new-machine-checkup.md`, `kb-candidates/2026-08-19-new-machine-checkup.md` | `#gradle-daemon`, `#emulator` | 2026-08-19 |
-| `cloud-emulator` | **Run the emulator in the cloud instead of on this machine.** Ido's ask, 2026-08-19: the machine has 15.67 GB and **0.85 GB free** when he asked, so an AVD is not affordable next to Gradle. Adds a GitHub Actions workflow that boots an emulator on a GitHub-hosted runner and runs the 15 instrumented tests there, a screenshot job that photographs the running app, and [`docs/CLOUD-DEVICE.md`](docs/CLOUD-DEVICE.md) covering the interactive (browser/streamed) options. ⚠️ **Takes neither singleton on purpose — no local Gradle build, no local device.** That is the entire point of the session, and it is what makes it disjoint from `new-machine-checkup`. | `.github/workflows/instrumented-tests.yml` *(new)*, `docs/CLOUD-DEVICE.md` *(new)*, `CHANGELOG/2026-08-19/cloud-emulator.md` *(new)*, `kb-candidates/2026-08-19-cloud-emulator.md` *(new)*, `AGENTS.md` *(one doc-index line)* | _none_ | 2026-08-19 |
+> 🏁 **`cloud-emulator` RELEASED 2026-08-19 — `83f648d` (claim) → `0fee40c` (the work) → this
+> note.** No singletons held: **no local Gradle build and no local device**, which is what kept it
+> disjoint from `new-machine-checkup` while that row held both. Account:
+> [`CHANGELOG/2026-08-19/cloud-emulator.md`](CHANGELOG/2026-08-19/cloud-emulator.md).
+>
+> ☁️ **THERE IS NOW A CLOUD EMULATOR, AND IT COSTS THIS MACHINE NOTHING.**
+> Actions tab → **Instrumented tests (cloud emulator)** → *Run workflow*. It boots an emulator on a
+> GitHub runner, runs all 15 instrumented tests there, and photographs the running app; both land
+> as downloadable artifacts. The repo is public, so the minutes are free. Click-path and the
+> interactive alternatives: [`docs/CLOUD-DEVICE.md`](docs/CLOUD-DEVICE.md).
+>
+> ⚠️ **IT HAS NEVER RUN.** A workflow's real consumer is GitHub and cannot be reached from a
+> working tree, so what is verified is the YAML parse and `bash -n`, nothing more. **The first
+> dispatch run is the test.** Most likely to fail on the 15 tests themselves (only ever run on a
+> local Pixel AVD, so density, API level and the absent Google account are live differences), or on
+> `assembleDebugAndroidTest` build time against a cold runner cache.
+>
+> 📌 **Do not add the `push:` trigger until one dispatch run is green.** It is written and
+> commented at the top of the workflow. A workflow that turns `main` red on its first commit is a
+> workflow people switch off — which costs the whole capability to save one manual click.
+>
+> 📥 KB drained the same day into `C:\Dev\JARVIS` (`aa90ecb`): `look-at-your-own-output.md`
+> §5.3 and `android-device-verification.md` §7.
 
 > 🏁 **`kb-drain-51e-backfill` RELEASED 2026-08-19 — `07ebc4d` (claim) → this commit.** No
 > singletons held. Account:

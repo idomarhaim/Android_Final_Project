@@ -113,3 +113,46 @@ Two things it is most likely to fail on, so the next session does not re-derive 
    all live differences.
 2. **`assembleDebugAndroidTest` build time.** KSP + Hilt on a cold runner cache is the long pole;
    the 60-minute timeout is generous on purpose for the first run and can come down after one.
+
+### `defect` found in passing, reported and NOT fixed
+
+`SESSIONS.md`'s **Recently released** table holds a `brief-refresh` row whose last cell names
+`C:/Dev/JARVIS` immediately followed by `ules/scale-adaptive-ceremony.md` — the intended
+`.../JARVIS/rules/...` with its **`r`-escape collapsed into a literal carriage return** somewhere
+in transit. It is the only lone CR in the file.
+
+Two things make it worth a paragraph rather than a shrug. It renders as `JARVISules`, which reads
+as a **typo** rather than as damage, so nobody investigates. And it makes that row invisible to any
+tool that treats a bare CR as a line break — this session's own rewrite of `SESSIONS.md` split the
+row in two, and only a byte-level comparison against `HEAD` caught it before the commit.
+
+**Left exactly as found, byte for byte.** It is another session's *released* row; the correct text
+is obvious but the row is still someone else's account, and a silent repair riding an unrelated
+commit is precisely the drive-by this repo's board exists to forbid. One edit fixes it, and it is
+the owner's or Ido's to make. Mechanism and its family: JARVIS `kb/dev/escapes-die-in-transit.md`.
+
+---
+
+## Second unit — the KB drain (cross-repo)
+
+`kb-candidates/2026-08-19-cloud-emulator.md`, both entries, drained under AUTO MODE at this
+session's commit trigger rather than routed to a session of its own — the JARVIS board had
+**no active row**, so the contention that made the three previous GoalPilot drains wait did not
+exist. Claimed as a visitor there (`JARVIS@9596fe0`), released in `JARVIS@aa90ecb`.
+
+📥 **Ingested:** verification when the consumer is unreachable from the working tree →
+`kb/dev/look-at-your-own-output.md` §5.3
+📥 **Ingested:** an Android CI emulator and the three invisible defaults →
+`kb/dev/android-device-verification.md` §7
+
+**0 new pages, 2 in-place extensions, 2 reciprocal cross-refs, 2 index rows rewritten; bundle
+stays at 90 pages, `Check-KbLinks.ps1` CLEAN.** Update-in-place won against the candidate's own
+proposal on entry 2: it asked for a new `android-emulator-in-ci.md`, and §5 of the existing
+`android-device-verification.md` already owned the *local* RAM floor this is the off-machine
+counterpart to. Neither always-ask gate opened — no `rules/` destination, nothing superseded.
+Full account: `C:\Dev\JARVIS\CHANGELOG\2026-08-19\cloud-emulator.md`.
+
+The candidate file is deleted in the same commit as this note, per the drained-candidate
+carve-out. **Two candidate files in this repo remain undrained and were deliberately untouched**
+— `2026-08-19-docs-hygiene-backfill.md` and `2026-08-19-new-machine-checkup.md`, each belonging
+to a session of its own, and `new-machine-checkup` is live on the board and owns its by name.
