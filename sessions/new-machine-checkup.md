@@ -9,8 +9,9 @@
 ## Already done by the migration session (2026-08-19)
 
 - `feat/goalpilot-implementation` **merged to `main` (`a0d8c9b`) and the local
-  branch deleted — this repo is main-only now.** (The remote branch still
-  exists; the user was asked to delete it on github.com.)
+  branch deleted — this repo is main-only now.** The **remote** branch was
+  deleted on 2026-08-19 too, after confirming 0 commits not already in
+  `origin/main`; only `refs/heads/main` remains.
 - Template sync v18/v3 (`7ad0cb8`); git hooks reinstalled; `local.properties`
   regenerated.
 - Android SDK (API 35, google_apis x86_64) installed headlessly; **both AVDs
@@ -22,36 +23,43 @@
 
 ## To do in this session
 
-1. **First Gradle build** — ⚠️ **blocked as written; corrected 2026-08-19.**
+1. **First Gradle build** — ✅ **JDK resolved 2026-08-19; the `assembleDebug` run is still owed.**
 
-   The original instruction (*"set `JAVA_HOME` to Android Studio's `jbr`"*) **will not
-   work**, for two independent reasons, both measured today:
-   - **`gradle.properties:22` pins `org.gradle.java.home=C:/Program Files/Eclipse
-     Adoptium/jdk-21.0.12.8-hotspot`, and that directory does not exist on this
-     machine.** `org.gradle.java.home` **overrides** `JAVA_HOME`, so setting
-     `JAVA_HOME` changes nothing until this line is fixed or removed.
-   - **Android Studio's `jbr` is JDK 25** (`openjdk 25.0.2`) and the toolchain rejects
-     it. **Measured 2026-08-19, don't re-derive this:** `gradlew --version` on the `jbr`
-     **succeeds** (Gradle 8.10.2 launches, printing *"Support for Java 23"* as its
-     highlight), so a version check alone looks fine and is **not** the test. The real
-     test is configuration — `gradlew help -Dorg.gradle.java.home=<jbr>` fails in 20s with
-     the whole error message being the literal string:
+   **Do not follow the original instruction** (*"set `JAVA_HOME` to Android Studio's
+   `jbr`"*) — it was wrong, and the record of why is worth keeping because the obvious
+   check does not catch it.
 
-     ```
-     * What went wrong:
-     25.0.2
-     ```
+   **What was actually wrong.** `gradle.properties:22` pins
+   `org.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-21.0.12.8-hotspot`, and
+   that key **overrides** `JAVA_HOME` — so no amount of setting `JAVA_HOME` reaches it.
+   The machine `JAVA_HOME` was *already* correct; the directory it named simply did not
+   exist, because the new machine had **no JDK outside Android Studio**.
 
-     A bare version number as the failure text is a version **parser** giving up on `25`.
-     So `jbr` is not a usable substitute even after the pin is removed.
+   **Why `jbr` is not the substitute. Measured — don't re-derive it:** Android Studio's
+   `jbr` is `openjdk 25.0.2`, and `gradlew --version` on it **succeeds** (Gradle 8.10.2
+   launches and prints *"Support for Java 23"*). So the cheap check **passes** and is not
+   the test. Configuration is: `gradlew help -Dorg.gradle.java.home=<jbr>` fails in 20 s
+   with the entire error body being the literal string `25.0.2` — a version parser giving
+   up on `25`.
 
-   **There is no JDK 21 on this machine at all** (`C:\Program Files\Eclipse Adoptium\`
-   is absent; `C:\Program Files\Java\` does not exist). So the first real step is
-   **install Temurin JDK 21**, then point `org.gradle.java.home` at it and set
-   `JAVA_HOME` to match. Only then `.\gradlew assembleDebug`, or `Run GoalPilot.cmd`.
+   **The fix, already applied — nothing left to do here:**
+   - `winget install EclipseAdoptium.Temurin.21.JDK` → **21.0.12.8**, which lands at
+     *exactly* the path already pinned. **No repo file was changed**; `gradle.properties`
+     was right all along.
+   - Machine `JAVA_HOME` already pointed there and is now valid. **`java` is still not on
+     `PATH`** — that matters only for tools that read `PATH` instead of `JAVA_HOME`
+     (`firebase-tools`; `firestore-tests/run-tests.mjs` works around it).
+   - One stale `.gradle\8.10.2\dependencies-accessors` workspace, left by the failed
+     JDK 25 attempt, produced the Windows *"Could not move temporary workspace"* error.
+     Deleted; it regenerates. **If you hit that error, this is what it is** — not a code
+     fault. See the note in `CLAUDE.md`.
+   - **Verified:** `gradlew help` → `BUILD SUCCESSFUL in 1m 24s`. The Android project
+     configures end to end on JDK 21.
 
-   **Do not "fix" this by bumping Gradle/AGP to accept 25** — that is a toolchain
-   upgrade, not a machine setup, and it is not this session's scope. Ask Ido first.
+   **Still owed by this session:** the real build. `.\gradlew assembleDebug`, or the
+   user's `Run GoalPilot.cmd`. Expect a large dependency download on first run. Note this
+   takes the `#gradle-daemon` singleton — claim it.
+
 2. ~~Cloud Functions redeploy~~ — **DONE 2026-08-19 by the migration session**:
    Node.js LTS + firebase-tools installed, user completed `firebase login`
    (name.iddo@gmail.com), and `firebase deploy --only functions` updated all

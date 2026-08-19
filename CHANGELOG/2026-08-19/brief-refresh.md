@@ -84,3 +84,35 @@ machine yet. No layer applies: this session changed only Markdown under `session
 Verification was by re-measurement against HEAD rather than by test: every count and line
 number in the two re-verified blocks was produced by `grep`/`find` against the working
 tree at `1ff8a5e`, not copied from the briefs being corrected.
+
+## Addendum — the JDK blocker is fixed, and the repo was never wrong
+
+Ido asked whether to move the project to JDK 25 since Android Studio already ships one,
+then told this session to fix the blocker rather than leave it to `/kickoff
+new-machine-checkup`.
+
+**Answer to the question: no.** Measured above — configuration dies on 25 with a bare
+`25.0.2` as the whole error. And it would not have been a JDK swap: Gradle 8.10.2, AGP
+8.7.3, Kotlin 2.0.21 and KSP 2.0.21-1.0.28 are four coupled upgrades, which is the
+highest-risk change available under a *"functionality before Hebrew, time is short"*
+constraint — post-upgrade codegen failures read as bugs in your own code.
+
+**The fix, and the part worth remembering: no repo file needed changing.**
+
+- `winget install EclipseAdoptium.Temurin.21.JDK` installed **21.0.12.8** — at *exactly*
+  the path `gradle.properties:22` already pinned. The pin was correct; the directory was
+  missing. Machine `JAVA_HOME` was correct too, for the same reason.
+- So the earlier framing (*"fix or remove the pin"*) was the wrong remedy for a right
+  diagnosis. `org.gradle.java.home` **does** override `JAVA_HOME`, which is why the
+  original brief's `jbr` instruction could never have worked — but the pinned value was
+  never the fault.
+- One stale `.gradle\8.10.2\dependencies-accessors` workspace, left behind by the failed
+  JDK 25 attempt, then produced the Windows *"Could not move temporary workspace"* error.
+  Deleted; it regenerates. This is the lock class `CLAUDE.md` already documents.
+- **Verified:** `gradlew help` → `BUILD SUCCESSFUL in 1m 24s`. The Android project
+  configures end to end.
+
+**Not done, and deliberately left to `/kickoff new-machine-checkup`:** `assembleDebug`.
+Configuration succeeding is not compilation succeeding, and the real build takes the
+`#gradle-daemon` singleton plus a large first-run download — that is the kickoff's item 1,
+which now says so.
