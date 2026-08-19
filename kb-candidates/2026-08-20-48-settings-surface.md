@@ -6,6 +6,21 @@ Account: [`CHANGELOG/2026-08-20/48-settings-surface.md`](../CHANGELOG/2026-08-20
 
 ---
 
+> **PARTIALLY DRAINED 2026-08-20 by `50b-transaction-guard` r2**, on Ido's *"ingest what is needed
+> as long as it does not harm anything"*. Entry 1 was **split**: its **knowledge** half — the
+> commands, the mechanism and the measurement — landed as `kb/dev/android-device-verification.md`
+> **§8**, written **additively** so that §7's text is untouched and now points to it. Its
+> ***`rules/`* half is still parked**, which is why this file still exists.
+
+## Drained — recorded, not re-ingestable
+
+- **1a · The mechanism half of entry 1** → `kb/dev/android-device-verification.md` **§8**
+  (2026-08-20), narrowing §7 point 2's *"tests and screenshots need two devices"* without
+  deleting it. Index row and `kb/log/2026-08-20.md` updated. **What is left below is the
+  behaviour question only.**
+
+---
+
 ## Standing — always-ask, parked
 
 ## 1 — An instrumented run and a render pass are **not** mutually exclusive on one device; `connectedDebugAndroidTest` is
@@ -58,7 +73,15 @@ nearest existing section; this is a sibling to it, not a replacement.
 **Supersedes.** Narrows — does not delete — the *"cannot share a device session"* half of the
 📱 device-state rule, 2026-08-16.
 
-**Status.** ⛔ **PARKED — always-ask in both modes**, on two independent grounds and either alone
-is enough: the destination includes `rules/`, which `AUTO MODE` never drains and which the 🎬
-walkthrough gate owns; and it **modifies a standing claim**, which is a deletion of committed
-knowledge. Ido decides.
+**Status.** ⛔ **STILL PARKED — always-ask in both modes, and now on one ground instead of two.**
+
+The **second** ground is discharged: *modifying a standing claim* was answered by writing
+`kb/dev/android-device-verification.md` §8 **additively** — §7's paragraph is intact, a pointer
+block was added under it, and §8 lists three things it explicitly does **not** change. Nothing was
+overwritten, so no committed knowledge was deleted.
+
+The **first** ground stands unchanged and is enough on its own: the narrowing clause on the 📱
+device-state rule in `C:\Dev\JARVIS\user-rules\my-rules.instructions.md` is a `rules/`
+change, which `AUTO MODE` never drains and which the 🎬 walkthrough gate owns. The run that would
+test it is already drafted at
+`C:\Dev\JARVIS\walkthroughs\device-state-banner.md`. Ido decides.

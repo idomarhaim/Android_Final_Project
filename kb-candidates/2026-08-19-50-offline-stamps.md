@@ -6,14 +6,19 @@ Account: [`CHANGELOG/2026-08-19/50-offline-stamps.md`](../CHANGELOG/2026-08-19/5
 
 ---
 
-> **PARTIALLY DRAINED 2026-08-19** — entries 1 and 2 landed in `C:\Dev\JARVIS\kb\`; entry 3 is
-> **parked**, always-ask, and is why this file still exists. A partly-drained file is rewritten
-> down to its survivors, never deleted.
+> **PARTIALLY DRAINED 2026-08-19** — entries 1 and 2 landed in `C:\Dev\JARVIS\kb\`.
+>
+> **DRAINED AGAIN 2026-08-20 by `50b-transaction-guard` r2, on Ido's *"ingest what is needed as
+> long as it does not harm anything"*.** Entry 3 was **split**: its **knowledge** half — the
+> mechanism — landed as `kb/dev/decision-map-charting.md` **§12a**, the action corollary of §12.
+> Its ***`rules/`* half is still parked**, which is why this file still exists. A partly-drained
+> file is rewritten down to its survivors, never deleted.
 
 ## Drained — recorded, not re-ingestable
 
 - **1 · A decision issue closed as *decided* is read downstream as *built*** → `kb/dev/decision-map-charting.md` **§12**, filed as the third staleness member after §8 (ticket body) and §9 (previous verdict). Index row and `kb/log/2026-08-19.md` updated.
 - **2 · `MetadataChanges.EXCLUDE` hides an empty snapshot's cache→server transition** → `kb/dev/firestore-write-semantics.md` **§8**, the read-side sibling of a page that was entirely about writes. Same.
+- **3a · The mechanism half of entry 3** → `kb/dev/decision-map-charting.md` **§12a** (2026-08-20). Index row and `kb/log/2026-08-20.md` updated. **What is left below is the behaviour question only.**
 
 ---
 
@@ -51,6 +56,15 @@ ticket-authorised deletion, so it is a **behaviour** change, not a KB page.
 **Supersedes.** Possibly narrows the always-ask deletion carve-outs in
 `C:\Dev\JARVIS\rules\derivable-decision.md` — check before drafting.
 
-**Status.** ⛔ **PARKED — always-ask in both modes.** Destination is `rules/`, which `AUTO MODE`
-never covers and which the 🎬 walkthrough rule owns. Not dropped: it stays here until Ido rules
-on it.
+**Status.** ⛔ **STILL PARKED — always-ask in both modes, and now narrower than it was.**
+
+The **mechanism** is no longer owed: it is committed at `kb/dev/decision-map-charting.md` §12a
+(2026-08-20), which records the claim, the incident and the asymmetry, and says in its own text
+that it does **not** enact a rule. `look-at-your-own-output.md` §4b holds the guard that made it
+checkable rather than merely written down.
+
+What remains is **only the behaviour question**: *may an agent execute a ticket-granted deletion
+without re-verifying the stated premise at HEAD?* Destination `C:\Dev\JARVIS\rules\`, which
+`AUTO MODE` never covers and which the 🎬 walkthrough rule owns, and it may narrow
+`rules/derivable-decision.md` §1's deletion carve-outs — a rewrite of a standing claim, always-ask
+twice over. Not dropped: it stays here until Ido rules on it.
