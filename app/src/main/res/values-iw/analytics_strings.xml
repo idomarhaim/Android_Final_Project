@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hebrew for the analytics screen (issue #51's literal sweep, first package).
+
+  ⚠️ THE BUCKET IS `values-iw`, NOT `values-he` — see values-iw/strings.xml for
+  the measurement, and note that the usual explanation for it ("Java reports
+  Hebrew as iw") is FALSE on current Android.
+
+  Three wording rules this file follows, each bought by a defect:
+
+  1 · TERMINOLOGY (§5.1 / `E1`): the `Goal` entity is יעד, NEVER מטרה. "Progress
+      by goal" is התקדמות לפי יעד.
+
+  2 · NO HEBREW PREFIX ATTACHED TO A LATIN RUN (§4.8). `ה‑AI` renders as `AI‑ה`,
+      on the far side of the run. So "the AI" is הבינה המלאכותית throughout —
+      pure Hebrew, no Latin run to attach to, and the natural Hebrew term anyway.
+      The same rule is why no sentence here attaches a prefix directly to a %1$s
+      that may hold a number: `ב%1$s` would land on the wrong side of the digits.
+      Where English says "in this week", this says בטווח הנוכחי (%1$s) instead.
+
+  3 · THE ARROW FLIPS. English "before → after" reads left-to-right; the same
+      claim in Hebrew reads right-to-left, so analytics_backfill_change uses ←.
+      This is a translation, not a typo.
+-->
+<resources>
+
+    <!-- ── Screen chrome ───────────────────────────────────────── -->
+    <string name="analytics_title">אנליטיקה</string>
+    <string name="analytics_back">חזרה</string>
+    <string name="analytics_empty_title">אין עדיין מה להציג</string>
+    <string name="analytics_empty_subtitle">הוסיפו יעדים והשלימו משימות כדי לראות את הניתוח שלכם.</string>
+    <string name="analytics_untitled_goal">ללא כותרת</string>
+
+    <!-- ── Range picker ────────────────────────────────────────────
+         Hebrew has no letter case, so the `_inline` form is the same word as the
+         standalone one. That is precisely why it is a separate resource rather
+         than a .lowercase() call on the first: the transformation is a property
+         of English, not of the string. -->
+    <string name="analytics_range_day">יום</string>
+    <string name="analytics_range_week">שבוע</string>
+    <string name="analytics_range_month">חודש</string>
+    <string name="analytics_range_quarter">רבעון</string>
+    <string name="analytics_range_year">שנה</string>
+
+    <string name="analytics_range_day_inline">יום</string>
+    <string name="analytics_range_week_inline">שבוע</string>
+    <string name="analytics_range_month_inline">חודש</string>
+    <string name="analytics_range_quarter_inline">רבעון</string>
+    <string name="analytics_range_year_inline">שנה</string>
+
+    <string name="analytics_bucket_day">4 שעות</string>
+    <string name="analytics_bucket_week">יום</string>
+    <string name="analytics_bucket_month">שבוע</string>
+    <string name="analytics_bucket_quarter">שבוע</string>
+    <string name="analytics_bucket_year">חודש</string>
+
+    <!-- ── Time allocation card ────────────────────────────────── -->
+    <string name="analytics_allocation_title">לאן הזמן שלכם הולך</string>
+    <string name="analytics_allocation_subtitle">%1$s · חלקו של הזמן שנמדד בכל תחום חיים</string>
+    <string name="analytics_allocation_empty">עדיין לא הושלם דבר בטווח הנוכחי (%1$s). סמנו משימה כבוצעה והזמן שלה יופיע כאן.</string>
+    <string name="analytics_tap_slice">הקישו על פלח כדי לראות פירוט</string>
+    <plurals name="analytics_slice_selected">
+        <item quantity="one">%1$s משימה · הקישו שוב לניקוי</item>
+        <item quantity="two">%1$s משימות · הקישו שוב לניקוי</item>
+        <item quantity="other">%1$s משימות · הקישו שוב לניקוי</item>
+    </plurals>
+    <string name="analytics_donut_tracked">נמדד</string>
+
+    <string name="analytics_no_life_areas">תחומי החיים הם הפלחים של התרשים הזה — בריאות, לימודים, קריירה, כל מה שהחיים שלכם עשויים ממנו. הגדירו אותם פעם אחת (או משכו אותם ישירות מרשימות Google Tasks שלכם), וכל יעד שתשייכו לאחד מהם יתחיל לדווח כאן.</string>
+    <string name="analytics_set_up_life_areas">הגדרת תחומי חיים</string>
+
+    <string name="analytics_unfiled">%1$s מהזמן הזה אינו משויך לתחום חיים.</string>
+    <string name="analytics_unfiled_fix">תיקון</string>
+
+    <!-- ── The estimate footnote ───────────────────────────────── -->
+    <plurals name="analytics_estimates_all">
+        <item quantity="one">משך הזמן הוערך על ידי הבינה המלאכותית עבור %1$s משימה</item>
+        <item quantity="two">משכי הזמן הוערכו על ידי הבינה המלאכותית עבור כל %1$s המשימות</item>
+        <item quantity="other">משכי הזמן הוערכו על ידי הבינה המלאכותית עבור כל %1$s המשימות</item>
+    </plurals>
+    <plurals name="analytics_estimates_none">
+        <item quantity="one">משך הזמן הוסק מרמת הקושי של המשימה (%1$s משימה)</item>
+        <item quantity="two">משכי הזמן הוסקו מרמת הקושי של המשימות (%1$s משימות)</item>
+        <item quantity="other">משכי הזמן הוסקו מרמת הקושי של המשימות (%1$s משימות)</item>
+    </plurals>
+    <string name="analytics_estimates_mixed">%1$s מתוך %2$s משכי זמן הוערכו על ידי הבינה המלאכותית; השאר הוסקו מרמת הקושי של המשימה</string>
+
+    <plurals name="analytics_reestimate">
+        <item quantity="one">הערכה מחדש של %1$s משך זמן</item>
+        <item quantity="two">הערכה מחדש של %1$s משכי זמן</item>
+        <item quantity="other">הערכה מחדש של %1$s משכי זמן</item>
+    </plurals>
+    <string name="analytics_asking_ai">שואלים את הבינה המלאכותית…</string>
+
+    <!-- ── Trend card ──────────────────────────────────────────── -->
+    <string name="analytics_trend_title">איך זה זז</string>
+    <string name="analytics_trend_subtitle">זמן שנמדד לכל %1$s, מוערם לפי תחום חיים.</string>
+    <string name="analytics_trend_empty">עדיין לא נמדד זמן בטווח הנוכחי (%1$s) — המגמה תתמלא ככל שתסמנו משימות כבוצעו.</string>
+    <string name="analytics_trend_busiest">העמוס ביותר: %1$s · %2$s</string>
+    <string name="analytics_trend_busiest_all_areas">העמוס ביותר: %1$s · %2$s (כל התחומים)</string>
+
+    <!-- ── Re-estimation review sheet ──────────────────────────── -->
+    <string name="analytics_backfill_title">הערכה מחדש של משכי זמן</string>
+    <string name="analytics_backfill_loading">שואלים את הבינה המלאכותית כמה זמן אלה לוקחים…</string>
+    <plurals name="analytics_backfill_intro">
+        <item quantity="one">%1$s משימה. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+        <item quantity="two">%1$s משימות. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+        <item quantity="other">%1$s משימות. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_partial">
+        <item quantity="one">%1$s משימה מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+        <item quantity="two">%1$s משימות מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+        <item quantity="other">%1$s משימות מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הקישו על שורה כדי לכלול או להחריג אותה.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_unanswered">
+        <item quantity="one">%1$s משימה. הבינה המלאכותית לא ענתה עבור %2$s מהן, ולכן הן מתחילות ללא סימון.</item>
+        <item quantity="two">%1$s משימות. הבינה המלאכותית לא ענתה עבור %2$s מהן, ולכן הן מתחילות ללא סימון.</item>
+        <item quantity="other">%1$s משימות. הבינה המלאכותית לא ענתה עבור %2$s מהן, ולכן הן מתחילות ללא סימון.</item>
+    </plurals>
+    <plurals name="analytics_backfill_intro_partial_unanswered">
+        <item quantity="one">%1$s משימה מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הבינה המלאכותית לא ענתה עבור %3$s מהן, ולכן הן מתחילות ללא סימון.</item>
+        <item quantity="two">%1$s משימות מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הבינה המלאכותית לא ענתה עבור %3$s מהן, ולכן הן מתחילות ללא סימון.</item>
+        <item quantity="other">%1$s משימות מתוך %2$s ללא הערכה של הבינה המלאכותית — הריצו שוב עבור השאר. הבינה המלאכותית לא ענתה עבור %3$s מהן, ולכן הן מתחילות ללא סימון.</item>
+    </plurals>
+
+    <string name="analytics_backfill_fallback">הבינה המלאכותית לא ענתה — זהו ערך ברירת מחדל</string>
+    <!-- ← and not →: the same before/after claim reads right-to-left in Hebrew. -->
+    <string name="analytics_backfill_change">%1$s ← %2$s</string>
+    <string name="analytics_backfill_confirms">%1$s · מאשר את ההערכה הנוכחית</string>
+    <string name="analytics_backfill_update">עדכון %1$s</string>
+    <string name="analytics_backfill_updating">מעדכנים…</string>
+    <string name="analytics_backfill_close">סגירה</string>
+    <string name="analytics_backfill_cancel">ביטול</string>
+
+    <!-- ── The two goal-level charts — יעד, never מטרה (§5.1 / E1) ── -->
+    <string name="analytics_progress_title">התקדמות לפי יעד</string>
+    <string name="analytics_progress_subtitle">כמה התקדם כל יעד.</string>
+    <string name="analytics_focus_title">מיקוד משימות</string>
+    <string name="analytics_focus_subtitle">חלקן של המשימות שהושלמו בכל יעד (לאן המאמץ שלכם הולך).</string>
+    <string name="analytics_focus_empty">השלימו כמה משימות כדי לראות את פילוח המיקוד שלכם.</string>
+
+    <!-- ── TalkBack ────────────────────────────────────────────── -->
+    <string name="analytics_a11y_allocation">הזמן מחולק בין %1$s תחומי חיים, %2$s</string>
+    <string name="analytics_a11y_slice">%1$s %2$s</string>
+    <string name="analytics_a11y_trend">זמן שנמדד לכל %1$s לאורך %2$s תקופות</string>
+    <string name="analytics_a11y_busiest">העמוס ביותר %1$s עם %2$s</string>
+    <string name="analytics_a11y_bucket">%1$s %2$s</string>
+    <!-- Quoted so aapt keeps the trailing space — see the English file. -->
+    <string name="analytics_a11y_separator">", "</string>
+
+    <!-- ── Messages ────────────────────────────────────────────── -->
+    <string name="analytics_error_all_estimated">לכל המשימות כבר יש הערכת משך זמן מהבינה המלאכותית.</string>
+    <string name="analytics_update_failed">לא ניתן היה לעדכן את משכי הזמן האלה</string>
+    <plurals name="analytics_updated">
+        <item quantity="one">עודכן משך הזמן של %1$s משימה</item>
+        <item quantity="two">עודכנו משכי הזמן של %1$s משימות</item>
+        <item quantity="other">עודכנו משכי הזמן של %1$s משימות</item>
+    </plurals>
+
+    <string name="analytics_percent">%1$d%%</string>
+</resources>

@@ -43,4 +43,14 @@ data class SharedItem(
     val completedTasks: Int = 0,
     val imageUrl: String? = null,
     val createdAtEpochMillis: Long = 0L,
+    /**
+     * Whether the signed-in user wrote this post — the feed's only ownership
+     * signal, and what decides whether the card offers to delete it.
+     *
+     * Stamped by the repository from the auth uid *flow*, exactly as
+     * [LeaderboardEntry.isCurrentUser] is, and deliberately not derived in the UI
+     * from the leaderboard: the leaderboard is a bounded top-N, so a user outside
+     * it would silently lose the ability to delete their own posts.
+     */
+    val isMine: Boolean = false,
 )

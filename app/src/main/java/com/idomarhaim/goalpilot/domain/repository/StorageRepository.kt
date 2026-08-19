@@ -11,4 +11,15 @@ interface StorageRepository {
      * The stored path is namespaced by the current user's uid.
      */
     suspend fun uploadImage(folder: String, localUri: Uri): Resource<String>
+
+    /**
+     * Deletes the object behind a download URL previously returned by
+     * [uploadImage], so an image cannot outlive the thing that referenced it.
+     *
+     * A URL that resolves to nothing is **success**, not failure: the caller
+     * wants the object gone, and it already is. Only the uploading user may
+     * delete it — `storage.rules` scopes `write` (which covers delete) to the
+     * uid segment in the path.
+     */
+    suspend fun deleteImage(downloadUrl: String): Resource<Unit>
 }

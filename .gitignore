@@ -31,6 +31,9 @@ build/
 /functions/node_modules/
 *.keystore
 !debug.keystore
+# The release signing key. Permanent and irreplaceable — back it up off this
+# machine (see docs/RELEASING.md); never commit it.
+*.jks
 service-account*.json
 
 # ── Logs / crash dumps ────────────────────────────────────────────
@@ -45,3 +48,8 @@ npm-debug.log*
 
 # ── OS / editor cruft ─────────────────────────────────────────────
 Thumbs.db
+# Machine-local VS Code settings. Holds only
+# `java.configuration.updateBuildConfiguration: disabled`, which suits this
+# machine's JDK setup and should not be imposed on a fresh clone. `.idea/` above
+# is ignored for the same reason.
+.vscode/

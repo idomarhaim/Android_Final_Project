@@ -1,0 +1,148 @@
+# Build a signed release APK and hand it to Firebase App Distribution, which is
+# how GoalPilot reaches testers — the app is sideloaded, so there is no Play
+# Store doing this for us.
+#
+# Deliberately NOT triggered by every push to main. versionCode is bumped by
+# hand (docs/RELEASING.md), so a push-triggered job would publish build after
+# build carrying the *same* versionCode: App Distribution would accept them,
+# testers would be notified each time, and none of the notifications would
+# describe an installable update. A tag is the signal that a version number was
+# actually decided on.
+#
+# One-time setup — the required secrets and how to produce them — is in
+# docs/RELEASING.md §4. Until they exist this workflow fails at the first step
+# that needs one.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: 'Release notes shown to testers'
+        required: false
+        default: 'Manual build from the Actions tab.'
+
+# Two releases uploading at once would race on which one testers see last.
+concurrency:
+  group: app-distribution
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Un-pin the machine-local JDK path
+        # gradle.properties hard-codes org.gradle.java.home to a Windows path so
+        # that local builds skip this machine's JDK 25 (AGP rejects it). That
+        # line is meaningless on the runner and fails the build outright, so it
+        # is stripped here rather than removed from the repo, where it earns its
+        # keep on every developer build.
+        run: sed -i '/^org\.gradle\.java\.home=/d' gradle.properties
+
+      - name: Make the Gradle wrapper executable
+        # gradlew was committed from Windows, which does not carry a POSIX exec
+        # bit, so the runner gets "./gradlew: Permission denied" (exit 126). The
+        # tidier fix is `git update-index --chmod=+x gradlew`, but gradlew* is
+        # marked frozen in AGENTS.md, so this stays on the CI side.
+        run: chmod +x ./gradlew
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore the release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 is not set. See docs/RELEASING.md §4."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > app/goalpilot-release.jks
+          echo "Keystore restored ($(stat -c%s app/goalpilot-release.jks) bytes)"
+
+      - name: Write local.properties
+        # The web client id is read at build time into R.string.gp_web_client_id;
+        # without it Google Sign-In fails at runtime with a bare "10:" error.
+        env:
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          {
+            echo "GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}"
+            echo "FUNCTIONS_REGION=us-central1"
+          } > local.properties
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Assemble the signed release APK
+        env:
+          RELEASE_STORE_FILE: app/goalpilot-release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Confirm the APK is signed with the release key
+        # An unsigned or debug-signed APK still assembles. Catching it here beats
+        # catching it on a tester's phone, where the fix is "uninstall first".
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          $ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | tail -1)/apksigner verify --print-certs "$APK"
+
+      - name: Compose the release notes
+        env:
+          MANUAL_NOTES: ${{ inputs.notes }}
+        run: |
+          if [ -n "$MANUAL_NOTES" ]; then
+            echo "$MANUAL_NOTES" > app/release-notes.txt
+          else
+            # Annotated-tag message; falls back to the subject for a lightweight tag.
+            git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" > app/release-notes.txt
+            [ -s app/release-notes.txt ] || git log -1 --pretty=%B > app/release-notes.txt
+          fi
+          echo "--- release notes ---"; cat app/release-notes.txt
+
+      - name: Upload to Firebase App Distribution
+        env:
+          # Service-account JSON with the "Firebase App Distribution Admin" role.
+          # CI tokens (firebase login:ci) are deprecated — do not switch back.
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/service-account.json
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Release app id for goalpilot-56e30, per docs/OPERATIONS.md §2.
+          FIREBASE_APP_ID: '1:297750736036:android:b5d15ee73b43a6fa058a31'
+        run: |
+          if [ -z "$SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT is not set. See docs/RELEASING.md §4."
+            exit 1
+          fi
+          printf '%s' "$SERVICE_ACCOUNT_JSON" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npm install -g firebase-tools
+          firebase appdistribution:distribute \
+            app/build/outputs/apk/release/app-release.apk \
+            --app "$FIREBASE_APP_ID" \
+            --groups testers \
+            --release-notes-file app/release-notes.txt \
+            --project goalpilot-56e30
+          rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
+
+      - name: Keep the APK on the workflow run
+        # So a build can still be downloaded and shared by hand if a tester is
+        # not in the group yet.
+        uses: actions/upload-artifact@v4
+        with:
+          name: goalpilot-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 90

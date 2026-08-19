@@ -1,0 +1,5 @@
+GoalPilot — see the repository CHANGELOG for what changed in this build.
+
+This file is the default release note shown to testers in Firebase App
+Distribution. The release workflow overwrites it with the tag message before
+uploading; edit it by hand for a manual `./gradlew appDistributionUploadRelease`.

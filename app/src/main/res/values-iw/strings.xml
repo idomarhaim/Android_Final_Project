@@ -1,0 +1,48 @@
+<resources>
+    <!--
+      Hebrew — and the directory name is the load-bearing part.
+
+      ⚠️ THE BUCKET IS `values-iw`, NOT `values-he`. A `values-he` copy compiles,
+      ships, reviews as done and renders NOTHING: AAPT2 stores Hebrew under the
+      legacy qualifier `iw` and does not fold `he` into it. `Observed:` 2026-08-16
+      on a he-IL Samsung — the widget rendered English while its layout mirrored
+      correctly to RTL, which is the tell. This file lived in `values-he/` from
+      #36 until #51 moved it, so it had never rendered once.
+      `HebrewLocaleResourceTest` fails if a `he` bucket comes back.
+
+      ⚠️ AND THE USUAL REASON GIVEN FOR THIS IS WRONG. It is *not* because
+      `Locale` reports Hebrew as `iw` — `Observed:` Android 17 / API 37,
+      2026-08-16, `Locale.forLanguageTag("he").language` returns `he`, and this
+      bucket still resolves (`AppLocaleInstrumentedTest`). Checking that code and
+      finding `he` looks like permission to rename this directory. It is not.
+
+      PARTIAL, AND THE TEST SAYS SO. Parity with `values/strings.xml` is
+      enforced, so this file is complete with respect to every English string
+      that exists — but the `feature/` literal sweep (§7.2) is what *creates*
+      those English strings, and it is not finished. See this session's
+      CHANGELOG entry for exactly which screens have been swept.
+
+      Wording note (§4.8): a Hebrew prefix attached to a Latin run lays out on
+      the far side of it — `ל‑Google Tasks` renders as `Google Tasks‑ל`. These
+      strings therefore use standalone words (`אל`, `ואז`) in front of every
+      Latin run instead of an attached prefix.
+
+      Terminology (§5.1 / `E1`): the `Goal` entity is יעד, never מטרה.
+    -->
+
+    <string name="app_tagline">נווטו אל יעדי החיים שלכם</string>
+
+    <!-- Google Tasks consent (issue #36, spec §2.6 / §0.4). -->
+    <string name="tasks_consent_missing_title">לא אושרה גישה אל Google Tasks</string>
+    <string name="tasks_consent_missing_body">במסך ההרשאות של Google, התיבה של הרשאת המשימות מגיעה לא מסומנת — ולכן ההתחברות יכולה להצליח בלי להעניק דבר. אשרו כאן, ואז GoalPilot יוכל לקרוא את המשימות שלכם.</string>
+    <string name="tasks_consent_grant_action">אישור גישה אל Google Tasks</string>
+
+    <!-- Device settings (§4.9 / §5.1). On Profile until #48 builds the Settings surface. -->
+    <string name="settings_appearance_title">מראה</string>
+    <string name="settings_appearance_description">בחרו את ערכת הצבעים של האפליקציה כולה. מצב בהיר וכהה ממשיך לעקוב אחרי הגדרת המערכת.</string>
+
+    <string name="settings_language_title">שפה</string>
+    <!-- "שבה" stands alone before the Latin run, per the §4.8 prefix rule above. -->
+    <string name="settings_language_description">בחרו את השפה שבה GoalPilot מדבר. היעדים, המשימות ותחומי החיים שלכם נשארים בדיוק כפי שכתבתם אותם.</string>
+    <string name="settings_language_system">ברירת המחדל של המכשיר</string>
+</resources>

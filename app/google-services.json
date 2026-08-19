@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "297750736036-r480cuvi1cdkabfpp72nt0vkiaeijmqb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.idomarhaim.goalpilot",
+            "certificate_hash": "e7d5534cb6ce2fd81a48af9d1304be254dfc9062"
+          }
+        },
+        {
           "client_id": "297750736036-58a2rb27kfqveitf0iost2vc3o2qi42v.apps.googleusercontent.com",
           "client_type": 3
         }

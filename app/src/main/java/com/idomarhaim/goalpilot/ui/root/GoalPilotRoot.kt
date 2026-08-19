@@ -1,15 +1,20 @@
 package com.idomarhaim.goalpilot.ui.root
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -25,9 +30,12 @@ import com.idomarhaim.goalpilot.feature.dashboard.DashboardScreen
 import com.idomarhaim.goalpilot.feature.goals.AddEditGoalScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalDetailScreen
 import com.idomarhaim.goalpilot.feature.goals.GoalsScreen
+import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreaDetailScreen
+import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreasScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
+import com.idomarhaim.goalpilot.ui.components.gpCardContainerColor
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import com.idomarhaim.goalpilot.ui.navigation.TopLevelTab
 
@@ -38,7 +46,15 @@ fun GoalPilotRoot(viewModel: RootViewModel = hiltViewModel()) {
     when (authState) {
         AuthUiState.Loading -> LoadingBox()
         AuthUiState.SignedOut -> SignInScreen()
-        is AuthUiState.SignedIn -> MainScaffold()
+        is AuthUiState.SignedIn -> {
+            // Health Connect syncs whenever the app comes forward. ON_START rather
+            // than ON_RESUME because a permission dialog or the app switcher briefly
+            // pauses the activity, and resuming from those is not "opening the app".
+            // A lifecycle already past STARTED replays the event to a new observer,
+            // so this also fires on cold start and immediately after sign-in.
+            LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onAppForegrounded() }
+            MainScaffold()
+        }
     }
 }
 
@@ -52,10 +68,16 @@ private fun MainScaffold() {
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                // Same fill as a card, so the bar reads as chrome lifted off the
+                // tinted canvas rather than another band of background.
+                NavigationBar(
+                    containerColor = gpCardContainerColor(),
+                    tonalElevation = 0.dp,
+                ) {
                     TopLevelTab.entries.forEach { tab ->
+                        val selected = currentRoute == tab.route
                         NavigationBarItem(
-                            selected = currentRoute == tab.route,
+                            selected = selected,
                             onClick = {
                                 navController.navigate(tab.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
@@ -65,8 +87,25 @@ private fun MainScaffold() {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) tab.selectedIcon else tab.icon,
+                                    contentDescription = tab.label,
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = tab.label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                         )
                     }
                 }
@@ -120,13 +159,34 @@ private fun MainScaffold() {
                 ProfileScreen(
                     onOpenAnalytics = { navController.navigate(Routes.ANALYTICS) },
                     onOpenChallenges = { navController.navigate(Routes.CHALLENGES) },
+                    onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
                 )
             }
             composable(Routes.CHALLENGES) {
                 ChallengesScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.ANALYTICS) {
-                AnalyticsScreen(onBack = { navController.popBackStack() })
+                AnalyticsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
+                )
+            }
+            composable(Routes.LIFE_AREAS) {
+                LifeAreasScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenArea = { navController.navigate(Routes.lifeAreaDetail(it)) },
+                )
+            }
+            composable(
+                route = "${Routes.LIFE_AREA_DETAIL}/{${Routes.ARG_LIFE_AREA_ID}}",
+                arguments = listOf(
+                    navArgument(Routes.ARG_LIFE_AREA_ID) { type = NavType.StringType },
+                ),
+            ) {
+                LifeAreaDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenGoal = { navController.navigate(Routes.goalDetail(it)) },
+                )
             }
         }
     }

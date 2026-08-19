@@ -4,6 +4,26 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!--
+      Health Connect (spec §5, §6 nice-to-have). Read-only: GoalPilot never writes
+      back, so no WRITE_* permission is declared and the user is never asked for one.
+    -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+
+    <!--
+      Package visibility for Health Connect. On Android 13 and below the provider is
+      a separate app, and without this <queries> entry Android 11+ package filtering
+      hides it — getSdkStatus() then reports SDK_UNAVAILABLE on a device that has it
+      installed. Redundant on 14+, where the provider is part of the system.
+    -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".GoalPilotApp"
         android:allowBackup="true"
@@ -24,6 +44,113 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Health Connect refuses to grant health permissions to an app that cannot
+          explain itself. It launches this screen from its own settings, so the
+          activity is exported and lives outside the main nav graph.
+        -->
+        <activity
+            android:name=".feature.health.HealthPermissionsRationaleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.GoalPilot">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Android 14+ moved the same rationale behind VIEW_PERMISSION_USAGE. It has
+          to be an <activity-alias> rather than a second <intent-filter>: the system
+          requires the START_VIEW_PERMISSION_USAGE permission on the component it
+          launches, and putting that on the activity itself would also gate the 13-
+          and-below entry point above, which is not allowed to be gated.
+        -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".feature.health.HealthPermissionsRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
+        <!--
+          The widget pack (spec §4.5). One <receiver> per tile, because the
+          launcher's widget picker lists receivers — so five entries with five
+          descriptions is what the user chooses from, rather than one entry and a
+          configuration screen standing between "show me my week" and seeing it.
+
+          Every one is exported: the component is launched by the *launcher*,
+          which is a different app, so android:exported="false" would make the
+          tile un-placeable with no error the user could act on.
+
+          APPWIDGET_UPDATE is the only action declared. Glance's own receiver
+          handles the rest of the AppWidgetProvider protocol (options changed,
+          deleted, enabled) through the base class, and re-declaring them here
+          would mean two places to keep in step.
+        -->
+        <receiver
+            android:name=".ui.widget.GoalsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_goals">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_goals_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.WeekWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_week">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_week_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.TrendWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_trend">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_trend_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.EffortWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_effort">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_effort_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.LevelWidgetReceiver"
+            android:exported="true"
+            android:label="@string/gp_widget_level">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_level_info" />
+        </receiver>
 
     </application>
 

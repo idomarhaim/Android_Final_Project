@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy for ui/components/ — issue #51's literal sweep, the shared package.
+
+  A sibling file to strings.xml, following analytics_strings.xml and
+  widget_strings.xml: they merge into one R.string namespace at build time, and
+  keeping a package's speech in its own file is what lets two sessions sweep two
+  packages without contending on one file. Every key is prefixed components_.
+
+  HebrewLocaleResourceTest pairs files by NAME, so this owes a values-iw/
+  counterpart with exactly these keys.
+
+  WHY THIS PACKAGE HOLDS COPY THAT IS NOT ITS OWN
+
+  Most of ui/components/ takes its words as PARAMETERS — EmptyState, LoadingBox,
+  DonutChart, StackedColumnChart and SimpleBarChart all receive their labels from
+  the screen that renders them, so their Hebrew belongs to the eight callers and
+  not here. What is actually shared, and what this file exists for, is the copy
+  hanging off two DOMAIN ENUMS that several packages render:
+
+    * GoalCategory — ten labels, rendered by ui/components/GoalCard.kt and by
+      three feature packages that are still unswept.
+    * AppSkin — two names and two taglines, rendered only by SkinPicker.
+
+  Both were constructor arguments on the enum, which is the fourth idiom in
+  kb/dev/untranslatable-idioms.md: a language switch cannot reach a constructor
+  argument. The remedy is the split iconForKey already uses — the enum keeps
+  IDENTITY, and a UI-side mapper resolves the resource. ComponentStrings.kt is
+  that mapper.
+
+  Two things this file is deliberate about:
+
+  1 · NUMBERS ARE PASSED IN PRE-ISOLATED (%1$s, never %1$d) wherever they land
+      inside prose. §4.8: a Latin-digit run inside an RTL paragraph is re-ordered
+      by the bidi algorithm, so `5/10` renders as `10/5`. The caller wraps the
+      whole run with core/util/Bidi.kt and hands over a String. The single
+      exception is components_percent, which is nothing BUT a number and is
+      isolated as a whole by percentText().
+
+  2 · THE GOAL ENTITY IS יעד, NEVER מטרה (§5.1 / E1). Nothing in the English
+      changes; see the values-iw/ counterpart.
+-->
+<resources>
+
+    <!-- ── GoalCard ────────────────────────────────────────────────
+         The meta line was a four-part Kotlin concatenation:
+             "${category.label} • ${current}/${target} ${unit}"
+         Word order is a property of the language and no resource file can
+         reorder a buildString, so it is one whole string with three arguments.
+
+         Reading each argument against the code that fills it, which is the only
+         way to know whether it needs isolating (untranslatable-idioms.md §5):
+           %1$s  the category label — app speech, resolved from this file.
+           %2$s  the current/target ratio, ALREADY ISOLATED by the caller. Two
+                 digit runs and a slash: unisolated it renders as `10/5`, which
+                 is not a typo but a reversal of the claim.
+           %3$s  the unit — USER-AUTHORED CONTENT ("workouts", "hours", and the
+                 "%" default). Never translated (§8: content never moves), and
+                 isolated because its script is unknown at authorship. -->
+    <string name="components_goal_meta">%1$s • %2$s %3$s</string>
+    <string name="components_goal_untitled">Untitled goal</string>
+    <!-- TalkBack only: the check mark that replaces no visible words. -->
+    <string name="components_goal_complete">Goal complete</string>
+
+    <!-- Percentage, as its own string so the sign's placement is the
+         translator's call. Letters-free, so the untranslated-copy rule in
+         HebrewLocaleResourceTest exempts it by construction. -->
+    <string name="components_percent">%1$d%%</string>
+
+    <!-- ── GoalCategory ────────────────────────────────────────────
+         The ten labels that were constructor arguments on the enum. The enum
+         keeps its `name` and `iconKey`; these are its speech.
+
+         Rendered by GoalCard here and by feature/dashboard, feature/goals'
+         AddEditGoalScreen and GoalDetailScreen, which are unswept — those three
+         still read GoalCategory.label and switch to localizedLabel() when their
+         own sweep lands. The Hebrew is authored once, here, either way. -->
+    <string name="components_category_health">Health</string>
+    <string name="components_category_fitness">Fitness</string>
+    <string name="components_category_sleep">Sleep</string>
+    <string name="components_category_nutrition">Nutrition</string>
+    <string name="components_category_relationships">Relationships</string>
+    <string name="components_category_career">Career</string>
+    <string name="components_category_projects">Projects</string>
+    <string name="components_category_learning">Learning</string>
+    <string name="components_category_finance">Finance</string>
+    <string name="components_category_other">Other</string>
+
+    <!-- ── AppSkin ─────────────────────────────────────────────────
+         Names and taglines, previously on the enum beside the persisted `id`.
+         The id is unchanged and stays the identity, so no stored preference
+         moves; only the words did.
+
+         The names ARE translated rather than marked translatable="false". They
+         are evocative words, not a brand: "Aurora" and "Blossom" both have
+         ordinary Hebrew equivalents, and leaving them in Latin would put a bare
+         Latin run in the middle of an otherwise Hebrew list — §4.8's problem,
+         for no gain. -->
+    <string name="components_skin_aurora">Aurora</string>
+    <string name="components_skin_aurora_tagline">Ocean blue &amp; evergreen</string>
+    <string name="components_skin_blossom">Blossom</string>
+    <string name="components_skin_blossom_tagline">Sunset pink &amp; orange</string>
+
+</resources>

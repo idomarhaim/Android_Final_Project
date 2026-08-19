@@ -1,0 +1,219 @@
+# PROTOTYPE — the in-app calendar surface (`C9b`, [#26])
+
+> **Throwaway. Not app code. Nothing here ships.**
+> The map's standing preference is *plan, don't do* — no ticket on
+> [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12) ships code.
+
+**Plan, in one line:** three structurally different answers to *"what is a calendar
+for in this app"*, switchable via `?variant=A|B|C` on one page, each rendered inside a
+phone frame at 390×844, with a Hebrew/RTL toggle.
+
+## How to open it
+
+```powershell
+start docs\prototypes\2026-08-10-calendar-surface\index.html
+```
+
+No build, no emulator, no Gradle daemon. `←`/`→` cycle variants; the pill at the
+bottom also switches **HE / EN**, which flips the whole frame to RTL.
+
+## Why HTML and not a throwaway Compose route
+
+The skill's default is a throwaway route inside the real app, and it is the better
+shape *when it is available*. Here it is not, for two committed reasons:
+
+1. **The map forbids it.** `#12`'s Notes: *"No ticket on this map ships code."* A
+   `Routes.CALENDAR_PROTOTYPE` under `app/` is code in the app whatever it is named.
+2. **It would take two exclusive singletons** — the Gradle daemon and an emulator —
+   for a question about *layout*, while a sibling session (`c17-many-to-many`) is live.
+
+The cost is real and worth stating: **an HTML mockup cannot prove a Compose layout
+compiles, scrolls at 60fps, or survives a real `LazyColumn`.** It answers *what should
+this be*, which is what #26 asks. Anything that needs to be proven in Compose is
+handed to the build session, not decided here.
+
+The one place HTML is strictly *better*: `dir="rtl"` mirrors the whole frame in one
+attribute, so **"how does a calendar grid survive Hebrew" is something you can look at**
+rather than reason about. That is one of the six things the ticket must settle and the
+only one prose reliably gets wrong.
+
+## Rev 2 — Ido's review, 2026-08-10
+
+Four things changed, and one of them was a design error rather than a taste call.
+
+1. **A block shows its end time**, not only its start — `09:00–11:00`.
+2. **The rung glyphs are gone.** They were unreadable because *the chip was carrying
+   two unrelated axes*: the **rung** (a property of the occurrence) and the **life
+   area** (a property of the goal). Forced into one pill, the rung had to degrade
+   into a symbol. The chip now carries **only** the life area — a colour dot and its
+   name — and the rung is carried by **the form of the leading time column**:
+
+   | Rung | Time column | Reads as |
+   |---|---|---|
+   | `BLOCK` | start over end with a **filled rail** between | a span of time you are inside |
+   | `DEADLINE` | `due` + the time, then a **single point** | a moment, not a duration |
+   | `SPAN` | a date range + a **soft capsule** | days, not hours |
+   | `ALL_DAY` | the words **all-day**, no time at all | a day with no slot |
+
+   No legend and no symbol vocabulary to learn — form first, then words, and icons
+   only where there is no room for words. A regression test asserts that none of the
+   four old glyphs survives anywhere in any variant, in either language.
+3. **C was rebuilt as a decision stack**, because "I couldn't tell C from B" was
+   correct: both had become lists of rows. C now has **no list and no browsing at
+   all** — one card, `1/3`, two buttons, a stack peeking behind it. Its cost is now
+   honest and visible: you cannot see a week from it.
+4. **Plurals fixed** in both languages, both branches — `4 בלוקים` / `4 blocks`,
+   and `בלוק אחד` / `1 block` at n=1.
+
+Plus a full visual pass: the flat white cards were replaced by the **M3 tonal
+container ladder** derived from the Aurora skin (five levels between `surfaceBright`
+and `surfaceDim`), event fills went from saturated-with-white-text to **tinted with
+coloured text**, corner radii moved onto the M3 Expressive scale, the type scale was
+rebuilt around one weight axis, and every icon is now hand-authored inline SVG so
+nothing depends on a font or a CDN.
+
+## Rev 3 — Ido's second review, 2026-08-10
+
+**The clipped times in A had two causes, and the second one is a product decision.**
+
+1. **Bidi reordering.** `09:00–12:00` is a Latin-digit run inside an RTL paragraph, so
+   the Unicode bidi algorithm reorders it — it renders as `12:00–09:00` and *then*
+   clips. Every time string in the prototype now goes through one helper that wraps it
+   in `direction:ltr; unicode-bidi:isolate`. This is a real Hebrew-app defect class,
+   not a mockup artefact: **the same bug will appear in Compose** unless the build
+   session isolates time and date strings the same way.
+2. **46 pixels.** Seven columns on a 390 dp phone leaves ~46 dp per day. No Hebrew
+   title fits, and neither does `09:00–12:00`. Widening the text was never going to
+   work — so **A now has a `day / 3 days / week` switch and opens on 3 days**, where a
+   column is ~110 dp and both the title and a single-line range fit comfortably.
+   Week view keeps the times **stacked start over end**, which is exactly what Ido
+   proposed and is the only thing that fits at 46 dp.
+
+That switch is not a detour: *"which views — day, week, month, agenda — and which one
+opens by default"* is the **first** thing #26 says it must settle. The prototype now
+has an answer to react to rather than a question to discuss.
+
+Craft pass, since he asked for it: tabular figures so columns of times stop looking
+ragged; sticky headers that blur content passing beneath them; the today column tinted
+and the Fri/Sat weekend columns shaded; a live `now` pill on the current-time line;
+part-of-day group headers in B (morning / afternoon / evening) so a flat list becomes
+scannable; staggered entry animation; a gradient hero card and heavier display type in
+C; M3-Expressive nav pill; two-layer tinted shadows throughout.
+
+## Rev 4 — the app is no longer the only author
+
+**`C9c` ([#27](https://github.com/idomarhaim/Android_Final_Project/issues/27)) closed
+while this prototype was open, and it invalidated a premise it was built on.** Ido chose
+a **two-way** sync, so an occurrence can change without the app doing anything. Four new
+states are now drawn, in both languages and both themes:
+
+| State | What it means | How it reads |
+|---|---|---|
+| `MOVED` | dragged to a new time **in Google** | solid, a move badge, the old time struck through in the time column |
+| `AWAY` | planned, but it **left your GoalPilot calendar** — indistinguishable from a delete | ghosted, dashed, neutral: *not on your calendar* |
+| `SILENT` | agent-placed **and already confirmed**, because the slot was visibly free | solid, a small spark — no decision owed |
+| `EXTERNAL` | you made it **by hand** inside the GoalPilot calendar; no task behind it | neutral grey, chip reads *from your calendar* |
+
+`SILENT` and `PROVISIONAL` sit **on the same day on purpose**: `C9c`'s point is that they
+differ by whether the app could *see* the slot, not by how confident it is. A deadline is
+now drawn **only in the all-day banner strip** and never as a timed block, because in
+Google it is an all-day banner — asserted by a test.
+
+**A real bug the checks found, not a cosmetic one:** B carried `OVERDUE` items forward
+from other days but not `AWAY` ones, so an event that vanished from Thursday's calendar
+would surface only when Thursday arrived — exactly too late to put it back. Both states
+are now carried, for the same reason: they need action, and neither waits for you to
+navigate to its date.
+
+**Dark mode**, from the committed `AuroraDark` palette — the app ships `values-night`, so
+a calendar that only works in light is half a design. The whole surface ladder now uses
+the **committed** Aurora container tones rather than the values this prototype had been
+guessing at.
+
+Craft: a punch-hole and a raking gloss on the device (most of why a mockup reads as a
+phone), concentric radii, inner highlights on raised surfaces, soft hero glows built from
+the committed `AuroraHero` stops, Hebrew UI faces first in the font stack, and springy
+easing on everything that moves.
+
+**One question this prototype poses rather than answers**, handed over by `C9c`: an event
+you create **by hand** inside the GoalPilot calendar is readable at no extra scope and has
+no task behind it. It is drawn here in grey so you can say whether you want it at all.
+
+## Rev 5 — the resolution: `D` and `E`
+
+Ido answered three of the four questions and **delegated the fourth** — *"choose the
+solution that gives the highest standard and quality, and if you can improve it, improve
+it."* So `A`/`B`/`C` are no longer offered as rivals. They are kept as the **record of
+what was explored**, and the answer sits in front of them as `D` and `E`.
+
+**The option list was the wrong shape, and that is the finding.** `A`, `B` and `C` are
+not three rival screens — they are three **zoom levels of one thing**:
+
+| | horizon | the user's question |
+|---|---|---|
+| `C` | now | *what needs me?* |
+| `B` | today | *what do I do?* |
+| `A` | this week | *when does it fit?* |
+
+Picking one throws away two. So the resolution collapses them into **two surfaces, one
+job each**:
+
+- **`E` — Home answers *what needs me?*** It leads with the decision stack when
+  decisions are waiting and falls back to the ordinary dashboard when none are. Adaptive,
+  so it is never a permanent nag.
+- **`D` — a Calendar tab answers *when?*** with a zoom: **agenda ⇄ 3 days ⇄ week**.
+  `B` was never a rival screen; it is the **agenda level** of this control.
+
+**Navigation, and the improvement beyond the options offered.** Five bottom tabs is a
+crowded bar, so rather than adding one, **Profile moves to an avatar in Home's top-right**
+— what Gmail, YouTube and Google Calendar all do — and Calendar takes the freed tab. Four
+tabs: `בית · מטרות · לוח שנה · חברתי`. Nothing is lost.
+
+**Ido's other answers, applied:** fully actionable (create via FAB or by tapping a slot,
+drag to move, tick to complete); all three views kept with **3 days** as the default; plus
+challenge windows and goal deadlines.
+
+**Two additions he asked me to make if I saw them:**
+
+1. **A per-day load bar.** The calendar already knows every block's length, so *"is this
+   day full?"* is free arithmetic — no model call. Turns red past 75% of waking hours.
+   Spans contribute nothing, per `C9a`.
+2. **A strip for work due today that was never given a time.** Without it the calendar
+   quietly lies about the day's real workload.
+
+Both are subtraction and addition over data already on screen, which is what keeps them
+inside the free-model constraint.
+
+## What the three variants disagree about *(the record — superseded by `D`/`E` above)*
+
+They are not three skins. They disagree about the **primary affordance** — what the
+screen is *for* — and therefore about what belongs on it and where it lives in
+navigation.
+
+| | **A — The Grid** | **B — The Day Rail** | **C — The Decision Stack** |
+|---|---|---|---|
+| Primary affordance | **Place time** (drag a block into a slot) | **Tick things off** | **Decide, one at a time** |
+| Shape | Real hour grid, Sun→Sat | Week strip + agenda list, one day at a time | One card at a time, `1/3`, stack behind it |
+| Shows | Everything — blocks, all-days, spans, deadlines, **challenge windows** | Tasks and deadlines only; goal deadlines as a chip | **Only what needs a decision** |
+| Lives in nav | A **5th bottom tab** | A segmented control **inside Goals** | On **Home**; the grid is a top-bar icon |
+| Costs | 5 tabs is a crowded bar | No cross-day view at all | **No browsing at all** — you cannot see a week |
+
+## The data is one week, shared by all three
+
+Same twelve occurrences in every variant — they are three views of one week, not three
+demos. It deliberately contains every state `C9a` defined, because a mockup that only
+shows the happy path settles nothing:
+
+- all four rungs — `ALL_DAY` · `DEADLINE` · `BLOCK` · `SPAN`
+- `PROVISIONAL` (dashed, agent-placed, not yet on Google) beside confirmed
+- one `MISSED` block, one `OVERDUE` deadline (**late but still owed — not a failure**),
+  one `EXPIRED` provisional (**counts for nothing**)
+- Hebrew titles under Ido's real life areas, in the committed `GoalCategory` colours
+
+## What it is for
+
+Flip through, then say **which affordance is right** — and expect the useful answer to
+be *"the header from A with the review from C"*. That recombination is the actual
+finding; the variants exist to make it sayable.
+
+[#26]: https://github.com/idomarhaim/Android_Final_Project/issues/26

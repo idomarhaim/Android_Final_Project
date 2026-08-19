@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,16 +28,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.ui.theme.BrandSystemBars
+import com.idomarhaim.goalpilot.ui.theme.gpAccents
 
 @Composable
 fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val accents = MaterialTheme.gpAccents
+
+    // This screen is the one place the brand gradient fills the whole window.
+    BrandSystemBars()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -44,12 +54,21 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            // The full brand sweep, not primary→primaryContainer: the old pair
+            // put two tones of the same hue next to each other, which on a phone
+            // screen just looked like a flat fill with a seam.
             .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primaryContainer,
-                    ),
+                Brush.linearGradient(
+                    colors = accents.heroGradient,
+                    start = Offset.Zero,
+                    end = Offset.Infinite,
+                ),
+            )
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(Color.White.copy(alpha = 0.18f), Color.Transparent),
+                    center = Offset(0f, 0f),
+                    radius = 1400f,
                 ),
             ),
         contentAlignment = Alignment.Center,
@@ -63,34 +82,34 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(96.dp)
+                    .size(104.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
+                    .background(Color.White.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Filled.MyLocation,
                     contentDescription = null,
-                    modifier = Modifier.size(52.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(54.dp),
+                    tint = accents.onHero,
                 )
             }
             Text(
                 text = "GoalPilot",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.displaySmall,
+                color = accents.onHero,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 20.dp),
+                modifier = Modifier.padding(top = 24.dp),
             )
             Text(
                 text = "Pilot your life goals — track, get AI guidance, and stay motivated with friends.",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                color = accents.onHeroVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 12.dp, start = 8.dp, end = 8.dp),
             )
 
-            Box(modifier = Modifier.height(40.dp))
+            Spacer(Modifier.height(44.dp))
 
             Button(
                 onClick = {
@@ -99,13 +118,22 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
                 },
                 enabled = !state.isLoading,
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 14.dp),
+                shape = MaterialTheme.shapes.large,
+                contentPadding = PaddingValues(vertical = 16.dp),
+                // A tonal button on a saturated gradient disappears into it. White
+                // is the one fill guaranteed to read against every skin's sweep.
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = accents.heroGradient.first(),
+                    disabledContainerColor = Color.White.copy(alpha = 0.7f),
+                    disabledContentColor = accents.heroGradient.first().copy(alpha = 0.7f),
+                ),
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = accents.heroGradient.first(),
                     )
                 } else {
                     Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
@@ -121,7 +149,7 @@ fun SignInScreen(viewModel: SignInViewModel = hiltViewModel()) {
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = accents.onHero,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 16.dp),
                 )

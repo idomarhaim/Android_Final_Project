@@ -10,7 +10,10 @@ import java.util.Locale
 /** Small date/time helpers used across the UI and summary calculations. */
 object DateTimeUtils {
 
-    private val dayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    // `get()`, never `val` — see AppDateFormatters. A `val` here resolves
+    // Locale.getDefault() once at class-init and is precisely §5.1's
+    // "process-scoped vals no switch can move".
+    private val dayFormatter get() = AppDateFormatters.of("MMM d, yyyy")
 
     fun formatDay(epochMillis: Long): String =
         dayFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
@@ -33,6 +36,25 @@ object DateTimeUtils {
     /** Inclusive start-of-day epoch millis for the given local date. */
     fun startOfDay(date: LocalDate = LocalDate.now()): Long =
         date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    /**
+     * "45m", "2h 15m", "18h" — the shape people say out loud, not "1.75 hours".
+     *
+     * Used anywhere a task duration is shown: the AI's estimate on the smart-add
+     * sheet, the import review rows, and every label on the time-allocation chart.
+     * One implementation so the same 90 minutes never reads as "1.5h" on one screen
+     * and "1h 30m" on the next.
+     */
+    fun formatMinutes(minutes: Int): String {
+        if (minutes <= 0) return "0m"
+        val hours = minutes / 60
+        val rest = minutes % 60
+        return when {
+            hours == 0 -> "${rest}m"
+            rest == 0 -> "${hours}h"
+            else -> "${hours}h ${rest}m"
+        }
+    }
 
     /** Start epoch millis for the [SummaryPeriod] window ending now. */
     fun windowStart(period: SummaryPeriod, now: LocalDate = LocalDate.now()): Long {

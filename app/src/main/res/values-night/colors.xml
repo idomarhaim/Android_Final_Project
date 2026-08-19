@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Dark-mode counterpart of the pre-Compose window background; tracks
+      AuroraDarkBackground. Without this, launching the app in dark mode flashed
+      a white rectangle before the first composition.
+    -->
+    <color name="gp_window_background">#0C1520</color>
+</resources>

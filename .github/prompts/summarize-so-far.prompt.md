@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v1; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
 ---
 mode: agent
 description: "Incremental 'so-far' summary on the current branch, starting from the previous so-far checkpoint (or branch root)."
@@ -19,7 +19,7 @@ Write to `CHANGELOG/branch-summaries/<branch>--so-far-<YYYY-MM-DD>.md` (today's 
    1. Most recent existing `CHANGELOG/branch-summaries/<branch>--so-far-*.md` — use its generation date as the start.
    2. Otherwise: branch merge-base with the default branch.
 3. **Commits since checkpoint**: `git log --oneline --no-decorate <checkpoint-ref>..HEAD`
-4. **Changelogs since checkpoint date**: every `CHANGELOG/YYYY-MM-DD.md` with date ≥ checkpoint date and ≤ today.
+4. **Changelogs since checkpoint date**: every file under `CHANGELOG/YYYY-MM-DD/` (and any legacy flat `CHANGELOG/YYYY-MM-DD.md`) with date ≥ checkpoint date and ≤ today. Prefer a day's `SUMMARY.md` where it exists, else its per-session files.
 5. **TODO diffs since checkpoint**.
 
 ## 📝 Output format

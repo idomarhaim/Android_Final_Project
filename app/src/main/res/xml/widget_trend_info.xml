@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  trend tile (spec §4.5).
+
+  minWidth is 250dp here, not the 110dp floor the square tiles use, and that is
+  deliberate. targetCellWidth="4" alone did not produce a 4-wide default:
+  observed 2026-08-16 on Pixel_10_Pro_XL / API 37, the picker offered this tile
+  at 2x2 because minWidth won. This card is designed wide — a stacked week and a
+  ranked list both need the horizontal room — so arriving narrow means arriving
+  cramped. minResizeWidth stays at 110dp, so the user can still shrink it and get
+  the layout that was designed for that size.
+
+  The resize range spans 2..4 in both directions on purpose: §4.5 ships every
+  card at 2×2, 4×2, 2×4 and 4×4, and a user reaches those four by dragging a
+  handle rather than by placing four different widgets. BuildWidgetTileUseCase
+  picks the layout from the dp the launcher actually granted, so every point in
+  that range renders something designed rather than something stretched.
+
+  updatePeriodMillis is 30 minutes, the platform floor. Anything smaller is
+  silently clamped, and the tile carries an as-of stamp precisely because this
+  interval is a request rather than a promise — the system defers it while the
+  device dozes.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="280dp"
+    android:maxResizeHeight="280dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen"
+    android:description="@string/gp_widget_pick_trend_desc"
+    android:previewImage="@mipmap/ic_launcher"
+    android:initialLayout="@layout/glance_default_loading_layout" />

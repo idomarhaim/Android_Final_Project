@@ -9,13 +9,19 @@ import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.GoalDto
+import com.idomarhaim.goalpilot.data.firestore.dto.ProgressDto
+import com.idomarhaim.goalpilot.data.firestore.dto.TaskDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.dto.toDto
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.ProgressEntry
+import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.withDerivedProgress
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -35,6 +41,12 @@ class GoalRepositoryImpl @Inject constructor(
     private fun goalsCol(uid: String): CollectionReference =
         firestore.collection(FirestorePaths.USERS).document(uid).collection(FirestorePaths.GOALS)
 
+    private fun tasksCol(uid: String): CollectionReference =
+        firestore.collection(FirestorePaths.USERS).document(uid).collection(FirestorePaths.TASKS)
+
+    private fun progressCol(uid: String, goalId: String): CollectionReference =
+        goalsCol(uid).document(goalId).collection(FirestorePaths.PROGRESS)
+
     override fun observeGoals(includeArchived: Boolean): Flow<List<Goal>> =
         auth.uidFlow().flatMapLatest { uid ->
             if (uid == null) {
@@ -48,6 +60,16 @@ class GoalRepositoryImpl @Inject constructor(
                             .map { it.toDomain() }
                             .filter { includeArchived || !it.isArchived }
                     }
+                    .flatMapLatest { goals ->
+                        if (goals.isEmpty()) {
+                            flowOf(goals)
+                        } else {
+                            combine(
+                                entriesFlow(uid, goals.map { it.id }),
+                                tasksFlow(uid),
+                            ) { entries, tasks -> goals.withDerivedProgress(entries, tasks) }
+                        }
+                    }
             }
         }
 
@@ -56,10 +78,60 @@ class GoalRepositoryImpl @Inject constructor(
             if (uid == null) {
                 flowOf(null)
             } else {
-                goalsCol(uid).document(goalId).snapshotsFlow()
-                    .map { it.toObject(GoalDto::class.java)?.toDomain() }
+                combine(
+                    goalsCol(uid).document(goalId).snapshotsFlow()
+                        .map { it.toObject(GoalDto::class.java)?.toDomain() },
+                    entriesFlow(uid, listOf(goalId)),
+                    tasksFlow(uid, goalId),
+                ) { goal, entries, tasks ->
+                    goal?.withDerivedProgress(entries, tasks)
+                }
             }
         }
+
+    /**
+     * The user's tasks, for the completed-task half of the sum. Optionally narrowed
+     * to one goal — the detail screen needs no others, and the query is the same
+     * one `TaskRepositoryImpl.observeTasks` already runs, so Firestore serves both
+     * from a single listen target.
+     */
+    private fun tasksFlow(uid: String, goalId: String? = null): Flow<List<Task>> {
+        val query = if (goalId != null) {
+            tasksCol(uid).whereEqualTo("goalId", goalId)
+        } else {
+            tasksCol(uid)
+        }
+        return query.snapshotsFlow()
+            .map { snap -> snap.toObjects(TaskDto::class.java).map { it.toDomain() } }
+    }
+
+    /**
+     * Every progress entry belonging to [goalIds], flattened.
+     *
+     * **One listener per goal, and that is not an oversight.** Progress entries are
+     * a subcollection of each goal, so the single-query alternative is
+     * `collectionGroup("progressEntries")` — and a collection-group query needs its
+     * own `match /{path=**}/progressEntries/{id}` rule, inside which the path
+     * segments are not addressable, so binding it to the signed-in user means
+     * denormalising `uid` onto every entry document. That is a schema change and a
+     * backfill, and #49's whole claim is that it needs neither: the entries are
+     * already the record.
+     *
+     * The fan-out is rebuilt whenever the goal list emits, which sounds worse than
+     * it is — and is *less* frequent than before this change, because deleting the
+     * two `currentValue` writers means a goal document no longer changes every time
+     * something is logged against it or a task under it is ticked.
+     */
+    private fun entriesFlow(uid: String, goalIds: List<String>): Flow<List<ProgressEntry>> {
+        val ids = goalIds.filter { it.isNotBlank() }.distinct()
+        if (ids.isEmpty()) return flowOf(emptyList())
+        return combine(
+            ids.map { goalId ->
+                progressCol(uid, goalId).snapshotsFlow()
+                    .map { snap -> snap.toObjects(ProgressDto::class.java).map { it.toDomain() } }
+            },
+        ) { perGoal -> perGoal.asList().flatten() }
+    }
 
     override suspend fun upsertGoal(goal: Goal): Resource<String> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
@@ -79,24 +151,33 @@ class GoalRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addProgress(goalId: String, delta: Double): Resource<Unit> =
+    // `addProgress` used to sit here: a read-modify-write transaction on
+    // `currentValue`, called by `logProgress` *after* it had already committed the
+    // entry it was crediting. It is deleted rather than made atomic (#49, §5.2) —
+    // the number it maintained is now summed from the entries themselves, so there
+    // is no second write to sequence and no fourth clamp to make legal overshoot
+    // unreachable on the one screen a human writes to.
+
+    override suspend fun setLifeAreas(goalId: String, lifeAreaIds: List<String>): Resource<Unit> =
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
             try {
-                val ref = goalsCol(uid).document(goalId)
-                firestore.runTransaction { txn ->
-                    val snap = txn.get(ref)
-                    val target = snap.getDouble("targetValue") ?: 100.0
-                    val current = snap.getDouble("currentValue") ?: 0.0
-                    val next = (current + delta).coerceIn(0.0, target)
-                    txn.update(
-                        ref,
-                        mapOf("currentValue" to next, "updatedAt" to System.currentTimeMillis()),
+                // The legacy singular field is cleared in the same update, not left
+                // behind: a document that carried both would read back one answer
+                // through the mapper and a different one through any query still
+                // written against `lifeAreaId`.
+                goalsCol(uid).document(goalId)
+                    .update(
+                        mapOf(
+                            "lifeAreaIds" to lifeAreaIds.filter { it.isNotBlank() }.distinct(),
+                            "lifeAreaId" to null,
+                            "updatedAt" to System.currentTimeMillis(),
+                        ),
                     )
-                }.await()
+                    .await()
                 Resource.Success(Unit)
             } catch (e: Exception) {
-                Resource.Error(e.message ?: "Could not update progress", e)
+                Resource.Error(e.message ?: "Could not change the goal's life areas", e)
             }
         }
 

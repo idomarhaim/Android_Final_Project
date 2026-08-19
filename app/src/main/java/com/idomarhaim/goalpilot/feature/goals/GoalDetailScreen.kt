@@ -26,11 +26,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -56,21 +53,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.ui.components.EmptyState
+import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.icon
-import com.idomarhaim.goalpilot.ui.components.toComposeColor
+import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.trimNumber
+import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
+import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +112,7 @@ fun GoalDetailScreen(
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "More")
                         }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        AppDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
                                 onClick = { menuOpen = false; onEdit(state.goal!!.id) },
@@ -151,6 +154,7 @@ fun GoalDetailScreen(
                             fraction = goal.progressFraction,
                             accentHex = goal.colorHex,
                             categoryLabel = goal.category.label,
+                            lifeAreaNames = state.lifeAreas.map { it.name },
                             current = goal.currentValue.trimNumber(),
                             target = goal.targetValue.trimNumber(),
                             unit = goal.unit,
@@ -163,6 +167,7 @@ fun GoalDetailScreen(
                         AddTaskRow(
                             isScoring = action.isScoring,
                             suggestedPoints = action.suggestedPoints,
+                            suggestedMinutes = action.suggestedMinutes,
                             onSuggestPoints = viewModel::suggestPoints,
                             onSuggestionApplied = viewModel::consumeSuggestedPoints,
                             onAdd = viewModel::addTask,
@@ -217,7 +222,7 @@ fun GoalDetailScreen(
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete goal?") },
             text = { Text("This permanently removes the goal. This cannot be undone.") },
@@ -240,14 +245,15 @@ private fun GoalHeaderCard(
     fraction: Float,
     accentHex: String,
     categoryLabel: String,
+    lifeAreaNames: List<String>,
     current: String,
     target: String,
     unit: String,
     description: String,
     onLogProgress: () -> Unit,
 ) {
-    val accent = accentHex.toComposeColor(MaterialTheme.colorScheme.primary)
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val accent = accentHex.toGoalAccent()
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -268,6 +274,20 @@ private fun GoalHeaderCard(
                 text = "$current / $target $unit",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 12.dp),
+            )
+            // Which parts of the user's life this goal counts towards — plural
+            // since §1.2. Absent when the goal is unfiled, and then it says so,
+            // because unfiled time shows up as "Unassigned" in the analytics pie
+            // and that should not be a mystery.
+            Text(
+                text = when (lifeAreaNames.size) {
+                    0 -> "No life area yet"
+                    1 -> "Life area: ${lifeAreaNames.single()}"
+                    else -> "Life areas: ${lifeAreaNames.joinToString(", ")}"
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
             )
             if (description.isNotBlank()) {
                 Text(
@@ -299,24 +319,38 @@ private fun GoalHeaderCard(
 private fun AddTaskRow(
     isScoring: Boolean,
     suggestedPoints: Int?,
+    suggestedMinutes: Int?,
     onSuggestPoints: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Int) -> Unit,
+    onAdd: (String, Int, Int) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("10") }
+    // Held separately from the points field because it has no input of its own:
+    // it is the AI's answer while the title still matches, and a function of the
+    // points the moment the user types something new.
+    var aiMinutes by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(suggestedPoints) {
+    LaunchedEffect(suggestedPoints, suggestedMinutes) {
         suggestedPoints?.let {
             points = it.toString()
+            aiMinutes = suggestedMinutes
             onSuggestionApplied()
         }
     }
 
+    val minutes = aiMinutes ?: TaskDuration.fallbackMinutes(points.toIntOrNull() ?: 10)
+
+    Column {
     Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
             value = title,
-            onValueChange = { title = it },
+            onValueChange = {
+                title = it
+                // The estimate belonged to the old wording; keeping it would credit
+                // a rewritten task with the previous one's time.
+                aiMinutes = null
+            },
             label = { Text("Add a task") },
             singleLine = true,
             modifier = Modifier.weight(1f),
@@ -348,19 +382,33 @@ private fun AddTaskRow(
         }
         IconButton(
             onClick = {
-                onAdd(title, points.toIntOrNull() ?: 10)
+                onAdd(title, points.toIntOrNull() ?: 10, minutes)
                 title = ""
                 points = "10"
+                aiMinutes = null
             },
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add task")
         }
     }
+        // The duration is what this task will contribute to the analytics pie, so
+        // it is shown before the task is created rather than discovered later.
+        Text(
+            text = if (aiMinutes != null) {
+                "AI estimate: about ${DateTimeUtils.formatMinutes(minutes)} of your time"
+            } else {
+                "Counts as about ${DateTimeUtils.formatMinutes(minutes)} of your time"
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+        )
+    }
 }
 
 @Composable
 private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -368,19 +416,41 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(checked = task.isDone, onCheckedChange = { onToggle() })
+            // A done task should recede rather than disappear — struck through and
+            // muted keeps it countable without competing with what's still open.
             Text(
                 text = task.title,
                 style = MaterialTheme.typography.bodyLarge,
+                color = if (task.isDone) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
                 modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = DateTimeUtils.formatMinutes(TaskDuration.minutesOf(task)),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 8.dp),
             )
             Text(
                 text = "+${task.points}",
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                color = if (task.isDone) {
+                    MaterialTheme.gpAccents.positive
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
                 fontWeight = FontWeight.Bold,
             )
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete task")
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Delete task",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -388,7 +458,7 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
 
 @Composable
 private fun ProgressEntryRow(entry: ProgressEntry, unit: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (!entry.imageUrl.isNullOrBlank()) {
                 AsyncImage(
@@ -437,7 +507,7 @@ private fun LogProgressDialog(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri -> imageUri = uri }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Log progress") },
         text = {

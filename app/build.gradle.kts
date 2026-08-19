@@ -1,3 +1,8 @@
+// Required by App Distribution plugin 5.x for a `firebaseAppDistribution { }`
+// block inside a buildType. Without it the block still resolves, but through a
+// deprecated path that warns on every configuration.
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import org.gradle.api.tasks.testing.Test
 import java.util.Properties
 
 plugins {
@@ -8,6 +13,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 // Read developer-specific config from local.properties (git-ignored) so no
@@ -23,6 +29,24 @@ val googleWebClientId: String =
 val functionsRegion: String =
     localProps.getProperty("FUNCTIONS_REGION") ?: "us-central1"
 
+/**
+ * Release-signing credentials. local.properties on a developer machine (written
+ * by `scripts/new-release-keystore.ps1`), environment variables on CI — neither
+ * is ever committed. See docs/RELEASING.md.
+ */
+fun secret(key: String): String? =
+    localProps.getProperty(key) ?: System.getenv(key)
+
+val releaseStoreFile: String? = secret("RELEASE_STORE_FILE")
+val releaseStorePassword: String? = secret("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias: String? = secret("RELEASE_KEY_ALIAS")
+val releaseKeyPassword: String? = secret("RELEASE_KEY_PASSWORD")
+
+// Resolved once so both signingConfigs and the sanity check below agree on it.
+val releaseKeystore = releaseStoreFile?.let { rootProject.file(it) }
+val hasReleaseKey = releaseKeystore?.exists() == true &&
+    releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+
 android {
     namespace = "com.idomarhaim.goalpilot"
     compileSdk = 35
@@ -31,8 +55,14 @@ android {
         applicationId = "com.idomarhaim.goalpilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // BUMP BOTH ON EVERY RELEASE — versionCode strictly upward. Nothing
+        // detects "an update is available" without it: App Distribution
+        // compares versionCode, and Android refuses to install a build whose
+        // versionCode is lower than the one already on the device. The release
+        // checklist in docs/RELEASING.md exists because forgetting this is
+        // silent — the build succeeds and testers are simply never prompted.
+        versionCode = 4
+        versionName = "0.2.2"
 
         testInstrumentationRunner = "com.idomarhaim.goalpilot.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -40,6 +70,17 @@ android {
         // Exposed to code as R.string.gp_web_client_id and BuildConfig.FUNCTIONS_REGION.
         resValue("string", "gp_web_client_id", googleWebClientId)
         buildConfigField("String", "FUNCTIONS_REGION", "\"$functionsRegion\"")
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -55,10 +96,23 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Debug signing so `assembleRelease` produces an installable APK
-            // out of the box for the course demo. Replace with a real
-            // release keystore before publishing.
-            signingConfig = signingConfigs.getByName("debug")
+            // The real key when its credentials are present, the debug key
+            // otherwise — a fresh clone can still `assembleRelease` and get an
+            // installable APK. The fallback is for *local* builds only: the
+            // release workflow fails the build outright when the real key is
+            // missing (see the check below), because a debug-signed APK handed
+            // to a tester can never be updated by a properly signed one.
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
+
+            firebaseAppDistribution {
+                // Testers are managed in the Firebase console. The group alias
+                // must exist there or the upload fails with a 404 that reads
+                // like an auth problem.
+                groups = "testers"
+                artifactType = "APK"
+                releaseNotesFile = "release-notes.txt"
+            }
         }
     }
 
@@ -119,9 +173,28 @@ dependencies {
     implementation(libs.firebase.functions)
     implementation(libs.play.services.auth)
 
+    // ── Firebase App Distribution (in-app update prompt) ──────────
+    // `-api` is a no-op stub compiled into every variant; the real
+    // implementation is release-only, so debug builds carry no updater and
+    // AppUpdateChecker quietly does nothing there. That asymmetry is the
+    // whole point of the split — do not "simplify" it to one dependency.
+    implementation(libs.firebase.appdistribution.api)
+    releaseImplementation(libs.firebase.appdistribution)
+
     // ── Media / serialization ─────────────────────────────────────
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
+
+    // ── Health Connect (fitness & sleep, spec §5 nice-to-have) ────
+    implementation(libs.androidx.health.connect)
+
+    // ── Glance (home-screen widget pack, spec §4.5) ───────────────
+    // Compose-shaped, but it does not render Compose: the composable tree is
+    // compiled to a RemoteViews that the *launcher* inflates in its own process.
+    // Nothing from ui/components/ crosses that line — no Canvas, no
+    // Modifier.blur, no animation — which is why ui/widget/ draws its charts
+    // into bitmaps instead of reusing them.
+    implementation(libs.androidx.glance.appwidget)
 
     // ── Unit tests ────────────────────────────────────────────────
     testImplementation(libs.junit)
@@ -138,4 +211,67 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
     kspAndroidTest(libs.hilt.compiler)
+}
+
+/**
+ * The localization guards read files off disk, and Gradle cannot see that.
+ *
+ * `HebrewLocaleResourceTest`, `AnalyticsLiteralSweepTest`,
+ * `WidgetHebrewResourceTest` and `WidgetPaletteResourceTest` do not exercise
+ * code — they open `src/main/res` and `src/main/java` with `java.io.File` and
+ * assert on the text. Nothing in that is
+ * visible to Gradle's up-to-date check, whose declared inputs for a unit-test
+ * task are the test classes and the runtime classpath. **Editing the *value* of
+ * an existing string changes neither**: `R.jar` is keyed on the resource *names*,
+ * so a translated-to-English `values-iw/` string leaves every declared input
+ * byte-identical, `:app:testDebugUnitTest` reports UP-TO-DATE, and the guard that
+ * exists to catch exactly that edit never executes a single assertion.
+ *
+ * It fails in the flattering direction, and it fails precisely when it matters:
+ * a resource-only change is what a localization sweep *is*, so the guard is off
+ * on the one commit shape it was written for. `Observed:` 2026-08-16 by session
+ * `51c-analytics-render` and reproduced here before this block was added —
+ * `gp_widget_level` set to `"Level"` in `values-iw/` still built green.
+ *
+ * Declaring the two trees as inputs is the fix rather than `outputs.upToDateWhen
+ * { false }`, which would also work and would cost the whole suite on every
+ * unrelated build. `--rerun-tasks` is the manual version of the same thing and
+ * depends on someone remembering, which is what made this a defect.
+ *
+ * `withPathSensitivity(RELATIVE)` is there for the build cache, which is on in
+ * this repo: `Test` is `@CacheableTask`, and an `inputs.dir` normalizes on
+ * ABSOLUTE paths unless told otherwise, which would key every cache entry to
+ * this checkout directory. `Observed:` 2026-08-16 — deleting these two lines and
+ * re-running under `--warning-mode=all` produces **no warning of any kind**, so
+ * nothing in the build will tell you if they are dropped, which is why the
+ * reason is written here rather than left to be rediscovered. `Inferred:` the
+ * cache-reuse consequence itself, from Gradle's documented default
+ * normalization; not measured here.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/res"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("fileScanningGuardResources")
+    inputs.dir(layout.projectDirectory.dir("src/main/java"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("fileScanningGuardSources")
+}
+
+/**
+ * A debug-signed APK is a dead end: the moment a tester installs one, the
+ * properly signed successor can no longer update it — Android rejects a
+ * signature change and the only way out is uninstall-and-lose-your-data. Local
+ * `assembleRelease` may still fall back to the debug key (handy, and it never
+ * leaves the machine), but *distributing* one is unrecoverable, so the upload
+ * task refuses rather than warns.
+ */
+tasks.matching { it.name.startsWith("appDistributionUpload") }.configureEach {
+    doFirst {
+        check(hasReleaseKey) {
+            "Refusing to distribute: no release signing key. RELEASE_STORE_FILE / " +
+                "RELEASE_STORE_PASSWORD / RELEASE_KEY_ALIAS / RELEASE_KEY_PASSWORD must " +
+                "resolve from local.properties or the environment, and the keystore must " +
+                "exist. Run scripts/new-release-keystore.ps1 — see docs/RELEASING.md."
+        }
+    }
 }

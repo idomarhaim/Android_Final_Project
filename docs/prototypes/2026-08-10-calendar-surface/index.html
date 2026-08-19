@@ -1,0 +1,1027 @@
+<!doctype html>
+<!--
+  PROTOTYPE — GoalPilot in-app calendar surface (C9b, issue #26).
+  THROWAWAY. Not app code.
+  ?variant=A|B|C · ?lang=he|en · ?view=1|3|7 (A only) · ?theme=light|dark
+
+  Rev 5 — 2026-08-10: Ido delegated the choice, so A/B/C are folded into a
+  RESOLUTION and kept beside it as the record of what was explored:
+    D  the CALENDAR tab — one surface answering "when?", zoomable agenda/3/week.
+       B was never a rival screen; it is the agenda level of this control.
+    E  HOME — leads with whatever needs a decision, dashboard when nothing does.
+    *  Four tabs, not five: Calendar earns one, Profile moves to Home's avatar.
+    *  Fully actionable (Ido's answer): create, drag, complete.
+    *  Two additions beyond the options offered — a per-day load bar, and a strip
+       for work due today that was never given a time.
+
+  Rev 4 — 2026-08-10:
+    * C9c (#27) landed while this was open: Ido chose a TWO-WAY sync, so the app
+      is no longer the only author of an occurrence. The surface now draws MOVED,
+      DISAPPEARED and EXTERNAL state, and C's queue carries the third batch.
+    * SILENT vs PROVISIONAL now differ by VISIBILITY, not confidence (C9c).
+    * A DEADLINE is an all-day banner, optionally PAIRED with a real block.
+    * Dark mode, from the committed AuroraDark palette (the app ships values-night).
+    * Surface ladder now uses the COMMITTED Aurora container tones, not my guesses.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — GoalPilot calendar surface (C9b / #26)</title>
+<style>
+  /* ═══ tokens — lifted verbatim from ui/theme/Color.kt, both schemes ═══ */
+  .phone{
+    --s-lowest:#FFFFFF; --s-low:#F2F7FD; --s:#EBF2FB; --s-high:#E4EDF8; --s-highest:#DDE8F5;
+    --bg:#D0E2F5; --s-dim:#B8CBDF; --s-var:#D9E2EF;
+    --primary:#0A56C4; --on-primary:#FFFFFF; --p-container:#D8E2FF; --on-p-container:#001A41;
+    --secondary:#0A6045; --sec-container:#A8F2D3;
+    --on-surface:#131A22; --on-surface-var:#414A57; --outline:#6C7684; --outline-var:#BAC6D6;
+    --hero-1:#0B62D6; --hero-2:#0C7CA4; --hero-3:#0E7F63; --tertiary-a:#00596B;
+    --error:#B3261E; --late:#9A3412; --late-container:#FFE7D6;
+    --ghost:#6C7684; --ghost-container:rgba(108,118,132,.13);
+    --tint-a:.17; --tint-b:.20; --glow:rgba(10,86,196,.28);
+    --hair:rgba(10,30,60,.07); --lift:rgba(255,255,255,.85);
+    --sh-1:0 1px 2px rgba(14,52,120,.07), 0 3px 12px rgba(14,52,120,.08);
+    --sh-2:0 2px 8px rgba(14,52,120,.09), 0 16px 38px rgba(14,52,120,.14);
+  }
+  .phone[data-theme="dark"]{
+    --s-lowest:#070C13; --s-low:#141D29; --s:#18212E; --s-high:#222C3A; --s-highest:#2D3745;
+    --bg:#0C1520; --s-dim:#0C1520; --s-var:#404A58;
+    --primary:#AFC6FF; --on-primary:#002E6A; --p-container:#004494; --on-p-container:#D8E2FF;
+    --secondary:#8AD6B7; --sec-container:#00513E;
+    --on-surface:#DEE6F2; --on-surface-var:#BFCADA; --outline:#8A94A5; --outline-var:#404A58;
+    --hero-1:#12406F; --hero-2:#0F4E63; --hero-3:#12513F; --tertiary-a:#57D6F0;
+    --error:#FFB4AB; --late:#FFB68A; --late-container:#5A2408;
+    --ghost:#8A94A5; --ghost-container:rgba(138,148,165,.16);
+    --tint-a:.30; --tint-b:.34; --glow:rgba(175,198,255,.22);
+    --hair:rgba(255,255,255,.07); --lift:rgba(255,255,255,.05);
+    --sh-1:0 1px 2px rgba(0,0,0,.30), 0 2px 8px rgba(0,0,0,.26);
+    --sh-2:0 2px 6px rgba(0,0,0,.34), 0 14px 34px rgba(0,0,0,.45);
+  }
+  :root{--r-sm:12px; --r-md:18px; --r-lg:24px; --r-xl:30px;
+        --spring:cubic-bezier(.2,.9,.22,1)}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 700px at 50% -12%, #22303f 0%, #10161e 62%);
+    color:#dbe6f2;min-height:100vh;
+    /* Hebrew UI faces first — they are what a modern Israeli app actually ships;
+       the stack degrades to the system face rather than loading anything remote */
+    font-family:'Rubik','Heebo','Assistant','Inter','Segoe UI Variable Text','Segoe UI',
+                Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 12px 130px;
+  }
+  .num,.when,.hours,.dayhdr,.statusbar,.ev .tm{font-variant-numeric:tabular-nums}
+  /* a Latin-digit run inside an RTL paragraph is REORDERED by the bidi algorithm:
+     "09:00–12:00" renders "12:00–09:00". Isolation is the fix, not a workaround. */
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+  svg{display:block}
+  .i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;
+     stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+  .banner{max-width:800px;text-align:center}
+  .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;color:#eaf2fb}
+  .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#93a7bd}
+  .banner code{background:#0b1219;padding:1.5px 6px;border-radius:5px;font-size:11.5px;color:#b9cde2}
+  .banner a{color:#7dd3fc}
+
+  /* ── device ──────────────────────────────────────────────────────────── */
+  .phone{
+    width:392px;height:848px;border-radius:48px;background:var(--bg);
+    border:11px solid #04080c;position:relative;overflow:hidden;color:var(--on-surface);
+    display:flex;flex-direction:column;
+    box-shadow:0 0 0 1px rgba(255,255,255,.10), 0 1px 0 rgba(255,255,255,.10) inset,
+               0 34px 80px rgba(0,0,0,.65);
+    animation:in .36s var(--spring);
+  }
+  /* a punch-hole and a raking gloss cost nothing and are most of why a mockup
+     reads as a phone rather than as a web page in a rounded box */
+  .phone::before{content:'';position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:88px;height:26px;border-radius:999px;background:#04080c;z-index:60}
+  .phone::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:59;
+    background:linear-gradient(128deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 32%);
+    mix-blend-mode:screen}
+  /* A gradient with no texture still reads as plastic - every serious app surface
+     carries a little noise. Self-contained: an inline feTurbulence data URI, no
+     network, no asset. soft-light so it darkens and lightens rather than greying. */
+  .grain{position:absolute;inset:0;z-index:58;pointer-events:none;opacity:.42;
+    mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .phone[data-theme="dark"] .grain{opacity:.30}
+
+  @keyframes in{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
+
+  .statusbar{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;
+             padding:6px 26px 0;font-size:12.5px;font-weight:650}
+  .statusbar .rt{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none;
+    background:
+      radial-gradient(600px 320px at 6% 0%, var(--lift), transparent 62%),
+      radial-gradient(520px 340px at 98% 12%, var(--glow), transparent 64%);}
+  /* Dark mode is not "light mode with the lights off". A flat near-black reads as
+     cheap because real materials still catch coloured light - so the canvas keeps
+     an aurora of blue, teal and violet at low opacity, and every raised surface
+     gets a faint chroma lift rather than a lighter grey. */
+  /* Light mode had the same failure dark did, in the other direction: a pale wash
+     with white cards on it is "clean" the way an empty room is clean. It gets the
+     same aurora - warmer, because a light canvas can carry warm chroma that a dark
+     one turns to mud - and every raised surface gets a gradient rather than a flat
+     fill, so the light catches somewhere. */
+  /* FIVE hues instead of one flat fill. The base sweep travels blue -> periwinkle
+     -> lilac down the screen so no two thirds of the canvas are the same colour,
+     and the radials sit on top of it. Same value range as the committed
+     AuroraBackground, so cards keep their contrast - what changed is chroma and
+     variation, not lightness. */
+  .phone[data-theme="light"]{
+    background:linear-gradient(168deg, #C7DCFB 0%, #CFDAFA 38%, #D8D6F7 72%, #DCDCF6 100%);}
+  .phone[data-theme="light"] .screen{
+    background:
+      radial-gradient(700px 430px at -10% -8%, rgba(88,138,255,.50), transparent 60%),
+      radial-gradient(620px 450px at 110% 0%, rgba(0,198,190,.42), transparent 60%),
+      radial-gradient(720px 520px at 38% 108%, rgba(172,112,246,.38), transparent 62%),
+      radial-gradient(520px 340px at 98% 52%, rgba(255,164,116,.30), transparent 62%),
+      radial-gradient(470px 330px at 2% 64%, rgba(104,228,198,.28), transparent 64%);}
+  .phone[data-theme="light"] .card,
+  .phone[data-theme="light"] .body,
+  .phone[data-theme="light"] .rail .p,
+  .phone[data-theme="light"] .recap,
+  .phone[data-theme="light"] .queue .q,
+  .phone[data-theme="light"] .free,
+  .phone[data-theme="light"] .stat,
+  .phone[data-theme="light"] .goalrow,
+  .phone[data-theme="light"] .daysum,
+  .phone[data-theme="light"] .iconbtn{
+    background:linear-gradient(158deg, #FFFFFF 0%, #F6FAFF 52%, #EFF5FF 100%);
+    box-shadow:var(--sh-1), inset 0 1px 0 #FFFFFF;}
+  .phone[data-theme="light"] .deck{
+    background:linear-gradient(155deg, #FFFFFF 0%, #F4F9FF 44%, #EEF6F6 100%);}
+  .phone[data-theme="light"] .navbar{
+    background:linear-gradient(to bottom, rgba(226,236,255,.86), rgba(214,226,252,.94));}
+  .phone[data-theme="light"] .sticky{
+    background:linear-gradient(to bottom, rgba(211,228,254,.92), rgba(206,220,252,.76));}
+  .phone[data-theme="light"] .col.today{
+    background:linear-gradient(to bottom, rgba(180,206,255,.55), rgba(180,206,255,.10) 82%);}
+  .phone[data-theme="light"] .col.weekend{background:rgba(150,178,210,.16)}
+
+  /* The one element that should genuinely pop off the canvas gets the committed
+     hero sweep - blue to teal to evergreen - rather than another pale container.
+     Color.kt says the hero is "the one element that should pop off the canvas
+     rather than sit level with it"; this is that element. */
+  .pending{background:linear-gradient(142deg, var(--hero-1) 0%, var(--hero-2) 56%, var(--hero-3) 100%)!important;
+    box-shadow:0 8px 24px color-mix(in srgb, var(--hero-1) 34%, transparent),
+               inset 0 1px 0 rgba(255,255,255,.24)!important}
+  .pending .pt b,.pending .pt span{color:#FFFFFF!important}
+  .pending .pl{background:rgba(255,255,255,.20);color:#FFFFFF;box-shadow:none}
+  .pending .btn{background:#FFFFFF;color:var(--hero-1);box-shadow:0 3px 10px rgba(0,0,0,.16)}
+  .phone[data-theme="dark"] .pending .btn{background:#EAF2FF;color:#0B2E52}
+
+  .phone[data-theme="dark"] .screen{
+    background:
+      radial-gradient(760px 420px at -6% -4%, rgba(72,116,255,.20), transparent 58%),
+      radial-gradient(680px 460px at 104% 6%, rgba(0,190,196,.16), transparent 60%),
+      radial-gradient(820px 560px at 46% 104%, rgba(150,92,230,.16), transparent 64%),
+      radial-gradient(500px 300px at 88% 62%, rgba(10,150,120,.12), transparent 66%),
+      radial-gradient(420px 300px at 6% 58%, rgba(230,120,90,.09), transparent 66%);}
+  .phone[data-theme="dark"] .card,
+  .phone[data-theme="dark"] .body,
+  .phone[data-theme="dark"] .rail .p,
+  .phone[data-theme="dark"] .recap,
+  .phone[data-theme="dark"] .queue .q,
+  .phone[data-theme="dark"] .free,
+  .phone[data-theme="dark"] .iconbtn{
+    background:linear-gradient(158deg, rgba(126,158,255,.10), rgba(90,220,210,.05) 55%,
+                                       rgba(160,110,235,.08));
+    box-shadow:var(--sh-1), inset 0 1px 0 rgba(180,205,255,.13);}
+  .phone[data-theme="dark"] .deck{
+    background:linear-gradient(155deg, #1B2740 0%, #17283A 45%, #16303A 100%);
+    box-shadow:var(--sh-2), inset 0 1px 0 rgba(190,215,255,.16);}
+  .phone[data-theme="dark"] .navbar,
+  .phone[data-theme="dark"] .sticky{
+    background:linear-gradient(to bottom, rgba(18,28,44,.90), rgba(14,22,36,.80));}
+  .screen::-webkit-scrollbar{width:0}
+  .sticky{position:sticky;top:0;z-index:20;
+    background:linear-gradient(to bottom, color-mix(in srgb, var(--bg) 94%, transparent),
+                                          color-mix(in srgb, var(--bg) 78%, transparent));
+    backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+    box-shadow:0 1px 0 var(--hair)}
+
+  .appbar{padding:2px 18px 12px;display:flex;align-items:flex-start;gap:10px}
+  .appbar .ttl{font-size:30px;font-weight:680;letter-spacing:-.034em;line-height:1.08}
+  .appbar .sub{font-size:12.5px;color:var(--on-surface-var);margin-top:4px;font-weight:500}
+  .appbar .spacer{flex:1}
+  .iconbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    background:var(--s-low);color:var(--on-surface-var);font-size:20px;flex:none;
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .iconbtn.accent{background:var(--primary);color:var(--on-primary);
+    box-shadow:0 5px 16px var(--glow)}
+
+  .navbar{flex:none;height:82px;padding-top:12px;display:flex;align-items:flex-start;
+    justify-content:space-around;
+    background:color-mix(in srgb, var(--s-low) 92%, transparent);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    box-shadow:0 -1px 0 var(--hair)}
+  .navbar .t{display:flex;flex-direction:column;align-items:center;gap:5px;width:64px;
+    font-size:11px;font-weight:560;color:var(--on-surface-var)}
+  .navbar .t .pill{padding:0 20px;height:33px;border-radius:17px;font-size:22px;display:grid;
+    place-items:center;transition:all .3s var(--spring)}
+  .navbar .t.on{color:var(--on-p-container);font-weight:680}
+  .navbar .t.on .pill{background:var(--p-container);color:var(--on-p-container);
+    box-shadow:0 4px 12px var(--glow)}
+  .navbar .t.new .pill{box-shadow:0 0 0 2px #C2410C, 0 0 0 5px rgba(194,65,12,.16)}
+
+  .sect{font-size:11.5px;font-weight:680;letter-spacing:.07em;text-transform:uppercase;
+        color:var(--on-surface-var);margin:12px 18px 9px}
+  .muted{color:var(--on-surface-var);font-size:12.5px;line-height:1.55}
+  .area{display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+        padding:3.5px 11px 3.5px 9px;font-size:11.5px;font-weight:650;white-space:nowrap}
+  .area i{width:7px;height:7px;border-radius:50%;flex:none}
+  .tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3.5px 10px;
+       font-size:11px;font-weight:680;white-space:nowrap}
+  .btn{border:0;border-radius:999px;padding:14px 20px;font-size:14.5px;font-weight:650;
+       background:var(--primary);color:var(--on-primary);font-family:inherit;cursor:default;
+       display:inline-flex;align-items:center;justify-content:center;gap:8px;
+       box-shadow:0 5px 16px var(--glow)}
+  .btn.tonal{background:var(--p-container);color:var(--on-p-container);box-shadow:none}
+  .btn.ghost{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--outline-var)}
+  .btn.sm{padding:9px 15px;font-size:12.5px}
+  .seg{display:flex;background:var(--s-highest);border-radius:999px;padding:4px;flex:none}
+  .seg span{flex:1;text-align:center;font-size:12.5px;font-weight:650;padding:7px 0;
+    border-radius:999px;color:var(--on-surface-var);cursor:pointer;transition:all .26s var(--spring)}
+  .seg span.on{background:var(--s-lowest);color:var(--primary);box-shadow:var(--sh-1)}
+
+  /* ── A · grid ─────────────────────────────────────────────────────────── */
+  .dayhdr{display:grid;padding:2px 10px 6px}
+  /* all three grids must share one inline padding or the all-day bands sit
+     10px off the columns they belong to - visible in Ido's screenshot */
+  .dayhdr .d{text-align:center;font-size:10.5px;font-weight:650;color:var(--on-surface-var)}
+  .dayhdr .d b{display:block;font-size:16px;font-weight:680;color:var(--on-surface);
+    width:31px;height:31px;line-height:31px;margin:3px auto 0;border-radius:50%;transition:all .28s var(--spring)}
+  .dayhdr .d.today{color:var(--primary)}
+  .dayhdr .d.today b{background:var(--primary);color:var(--on-primary);box-shadow:0 5px 14px var(--glow)}
+  .banded{display:grid;gap:3px;padding:2px 10px 9px}
+  .banded .slot{overflow:hidden}
+  .banded .lbl{font-size:9px;font-weight:650;color:var(--on-surface-var);align-self:center;
+    text-align:center;line-height:1.2}
+  .banded .slot{display:flex;flex-direction:column;gap:3px;min-height:18px}
+  .band{font-size:10px;font-weight:650;padding:4px 7px;border-radius:7px;overflow:hidden;
+    white-space:nowrap;text-overflow:ellipsis;line-height:1.15}
+  .band.cap-s{border-start-start-radius:999px;border-end-start-radius:999px;padding-inline-start:10px}
+  .band.cap-e{border-start-end-radius:999px;border-end-end-radius:999px}
+
+  .grid{display:grid;position:relative;padding:0 10px}
+  .hours .h{height:56px;font-size:10px;font-weight:600;color:var(--on-surface-var);
+    text-align:end;padding-inline-end:8px;transform:translateY(-6px)}
+  .col{position:relative}
+  .col::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:1px;
+    background:var(--outline-var);opacity:.55}
+  .col.weekend{background:color-mix(in srgb, var(--s-dim) 22%, transparent)}
+  .col.today{background:linear-gradient(to bottom,
+             color-mix(in srgb, var(--p-container) 48%, transparent), transparent 78%)}
+  .col .line{height:56px;box-shadow:inset 0 -1px 0 color-mix(in srgb, var(--outline-var) 70%, transparent)}
+  .ev{position:absolute;inset-inline:2px;border-radius:10px;overflow:hidden;
+    padding:4px 5px 4px 9px;font-size:9.5px;line-height:1.3;animation:rise .34s both;
+    box-shadow:var(--sh-1)}
+  .ev::before{content:'';position:absolute;inset-block:4px;inset-inline-start:3px;width:3px;
+    border-radius:999px;background:currentColor}
+  .ev b{display:block;font-size:10px;font-weight:680;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;letter-spacing:-.012em}
+  .ev .tm{font-size:9px;font-weight:600;opacity:.85;white-space:nowrap;display:block}
+  .ev.prov{border:1.6px dashed;background:transparent!important;box-shadow:none}
+  .ev.gone{opacity:.46;box-shadow:none}
+  .ev.gone b{text-decoration:line-through}
+  /* C9c: an occurrence that left the Google calendar — planned, but not there */
+  .ev.away{border:1.6px dashed var(--ghost)!important;background:var(--ghost-container)!important;
+    color:var(--ghost)!important;box-shadow:none}
+  .ev.away::before{opacity:.45}
+  /* C9c: an event Ido made by hand inside the GoalPilot calendar — no task behind it */
+  .ev.ext{background:var(--ghost-container)!important;color:var(--ghost)!important;box-shadow:none}
+  .ev .badge{position:absolute;inset-inline-end:3px;top:3px;font-size:8px;opacity:.9}
+  .now{position:absolute;inset-inline:0;border-top:2px solid var(--error);z-index:6}
+  .nowpill{position:absolute;z-index:7;transform:translateY(-50%);background:var(--error);
+    color:var(--bg);font-size:9px;font-weight:750;padding:2px 7px;border-radius:999px;
+    inset-inline-start:2px;box-shadow:0 4px 10px color-mix(in srgb, var(--error) 45%, transparent)}
+
+  /* ── B · day rail ─────────────────────────────────────────────────────── */
+  .rail{display:flex;gap:7px;padding:0 14px 13px;flex:none}
+  .rail .p{flex:1;text-align:center;border-radius:var(--r-md);padding:8px 0 7px;
+    background:var(--s-low);font-size:10.5px;font-weight:650;color:var(--on-surface-var);
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift);transition:all .28s var(--spring)}
+  .rail .p b{display:block;font-size:16.5px;font-weight:680;color:var(--on-surface);margin:3px 0 5px}
+  .rail .p.on{background:var(--primary);box-shadow:0 6px 18px var(--glow)}
+  .rail .p.on,.rail .p.on b{color:var(--on-primary)}
+  .rail .dots{display:flex;gap:3px;justify-content:center;height:5px}
+  .rail .dots i{width:4.5px;height:4.5px;border-radius:50%;display:block}
+
+  .agenda{padding:0 14px}
+  .grouphd{font-size:11px;font-weight:680;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--on-surface-var);margin:15px 4px 9px;display:flex;align-items:center;gap:9px}
+  .grouphd::after{content:'';flex:1;height:1px;background:var(--outline-var);opacity:.7}
+  .row{display:flex;margin-bottom:9px;align-items:stretch;animation:rise .36s both}
+  .when{width:58px;flex:none;display:flex;flex-direction:column;align-items:center;padding-top:3px;
+    font-size:12.5px;font-weight:680;line-height:1.35;text-align:center}
+  .when small{font-size:10.5px;font-weight:600;color:var(--on-surface-var)}
+  .when s{font-size:10px;font-weight:600;color:var(--on-surface-var);opacity:.75}
+  .when .bar{width:4.5px;flex:1;border-radius:999px;margin:5px 0 2px;min-height:14px}
+  .when .pt{width:10px;height:10px;border-radius:50%;margin:6px 0 2px;box-shadow:0 0 0 3.5px var(--bg)}
+  .when .cap{width:4.5px;flex:1;border-radius:999px;margin:5px 0 2px;min-height:14px;opacity:.42}
+  .body{flex:1;min-width:0;background:var(--s-low);border-radius:var(--r-md);padding:13px 15px;
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .row.prov .body{background:transparent;border:1.6px dashed var(--primary);box-shadow:none}
+  .row.away .body{background:var(--ghost-container);border:1.6px dashed var(--ghost);box-shadow:none}
+  .row.band-row .body{border-radius:999px;padding:11px 19px}
+  .body .t{font-size:15px;font-weight:640;line-height:1.3;letter-spacing:-.014em}
+  .row.done .body .t{text-decoration:line-through;color:var(--on-surface-var)}
+  .body .m{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .tick{width:26px;height:26px;border-radius:9px;flex:none;align-self:center;margin-inline-start:11px;
+    display:grid;place-items:center;box-shadow:inset 0 0 0 2px var(--outline);color:transparent}
+  .tick.done{background:var(--secondary);box-shadow:0 4px 12px color-mix(in srgb,var(--secondary) 40%,transparent);
+    color:var(--bg)}
+
+  /* ── C · decision stack ───────────────────────────────────────────────── */
+  .hero{margin:0 14px 4px;position:relative}
+  .hero .peek{position:absolute;inset-inline:13px;height:28px;border-radius:var(--r-xl);
+    background:var(--s-high);top:-10px;z-index:0;box-shadow:var(--sh-1)}
+  .hero .peek.b2{inset-inline:25px;top:-19px;background:var(--s-highest)}
+  .deck{position:relative;z-index:1;border-radius:var(--r-xl);padding:20px 19px 17px;
+    background:var(--s-lowest);box-shadow:var(--sh-2), inset 0 1px 0 var(--lift);
+    animation:rise .38s both;overflow:hidden}
+  /* the hero gradient uses the committed AuroraHero stops, softened to a glow */
+  .deck::before{content:'';position:absolute;inset-inline-end:-70px;top:-90px;width:230px;height:230px;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle, color-mix(in srgb,var(--hero-2) 26%,transparent) 0%,
+                                       transparent 68%)}
+  .deck::after{content:'';position:absolute;inset-inline-start:-60px;bottom:-110px;width:210px;height:210px;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle, color-mix(in srgb,var(--hero-3) 20%,transparent) 0%,
+                                       transparent 70%)}
+  .deck>*{position:relative;z-index:1}
+  .deck .kicker{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--primary)}
+  .deck h3{margin:11px 0 5px;font-size:24px;font-weight:690;letter-spacing:-.034em;line-height:1.16}
+  .deck .lede{font-size:13px;line-height:1.55;color:var(--on-surface-var)}
+  .mini{margin-top:15px;border-radius:var(--r-md);
+    background:color-mix(in srgb,var(--s-highest) 60%,transparent);overflow:hidden}
+  .mini .r{display:flex;align-items:center;gap:11px;padding:11px 13px}
+  .mini .r+.r{box-shadow:inset 0 1px 0 var(--outline-var)}
+  .mini .cb{width:22px;height:22px;border-radius:8px;flex:none;display:grid;place-items:center;
+    background:var(--primary);color:var(--on-primary);box-shadow:0 3px 9px var(--glow)}
+  .mini .cb.off{background:transparent;box-shadow:inset 0 0 0 2px var(--outline);color:transparent}
+  .mini .tx{flex:1;min-width:0}
+  .mini .tx b{display:block;font-size:13.5px;font-weight:640;line-height:1.25}
+  .mini .tx span{font-size:11.5px;color:var(--on-surface-var)}
+  .acts{display:flex;gap:9px;margin-top:16px}
+  .acts .btn{flex:1}
+  .skip{text-align:center;margin-top:12px;font-size:12.5px;font-weight:640;color:var(--on-surface-var)}
+  .pips{display:flex;justify-content:center;gap:7px;padding:17px 0 10px}
+  .pips i{width:7px;height:7px;border-radius:50%;background:var(--s-dim);display:block;transition:all .32s var(--spring)}
+  .phone[data-theme="dark"] .pips i{background:var(--s-highest)}
+  .pips i.on{background:var(--primary);width:24px;border-radius:999px}
+  /* the queue behind the hero — shows there are more decisions without breaking
+     the one-at-a-time model that is the whole point of C */
+  .queue{margin:0 14px 12px}
+  .queue .q{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--s-low);
+    border-radius:var(--r-md);margin-bottom:7px;box-shadow:var(--sh-1)}
+  .queue .q .n{width:22px;height:22px;border-radius:50%;background:var(--s-highest);flex:none;
+    display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--on-surface-var)}
+  .queue .q .tx{flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.3}
+  .queue .q .tx span{display:block;font-size:11px;font-weight:550;color:var(--on-surface-var);margin-top:2px}
+  .recap{margin:6px 14px 12px;background:var(--s-low);border-radius:var(--r-lg);padding:14px 16px;
+    display:flex;align-items:center;gap:14px;box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .recap .n{font-size:21px;font-weight:720;line-height:1;letter-spacing:-.02em}
+  .recap .sep{width:1px;align-self:stretch;background:var(--outline-var)}
+  .recap .u{font-size:11px;font-weight:640;color:var(--on-surface-var);margin-top:4px}
+  .toweek{margin:0 14px 18px;text-align:center;font-size:13.5px;font-weight:640;color:var(--primary);
+    padding:14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--outline-var)}
+
+  /* ── D / E · the resolution ───────────────────────────────────────────── */
+  /* capacity: the calendar already knows every block's length, so "is this day
+     full?" is free arithmetic. Spans contribute nothing (C9a: a week-long span
+     would otherwise swamp the day it starts on). */
+  .cap-bar{height:5px;border-radius:999px;background:var(--outline-var);margin:6px 8px 0;overflow:hidden}
+  .cap-n{font-size:9px;font-weight:700;color:var(--on-surface-var);margin-top:2px;opacity:.75}
+  .cap-bar i{display:block;height:100%;border-radius:999px;background:var(--primary)}
+  .cap-bar.full i{background:var(--late)}
+  .avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:13px;font-weight:700;background:var(--p-container);color:var(--on-p-container);
+    box-shadow:var(--sh-1)}
+  .fab{position:absolute;inset-inline-end:18px;bottom:96px;z-index:30;height:56px;
+    padding:0 20px;border-radius:18px;border:0;font-family:inherit;font-size:15px;font-weight:650;
+    background:var(--primary);color:var(--on-primary);display:flex;align-items:center;gap:9px;
+    box-shadow:0 8px 24px var(--glow);cursor:default}
+  .fab .i{width:20px;height:20px}
+  .loose{margin:0 14px 4px;padding:11px 14px;border-radius:var(--r-md);
+    background:var(--late-container);color:var(--late);display:flex;align-items:center;gap:10px;
+    font-size:12.5px;font-weight:640;line-height:1.35}
+  .loose b{font-weight:750}
+  .free{display:flex;align-items:center;gap:8px;margin:0 14px 10px;padding:10px 14px;
+    border-radius:var(--r-md);background:var(--s-low);box-shadow:var(--sh-1);
+    font-size:12.5px;font-weight:600;color:var(--on-surface-var)}
+  .free b{color:var(--secondary);font-weight:750}
+  .slotHint{position:absolute;inset-inline:2px;border-radius:10px;border:1.6px dashed var(--outline);
+    color:var(--on-surface-var);display:grid;place-items:center;font-size:10px;font-weight:650;
+    opacity:.55}
+
+  .pending{display:flex;align-items:center;gap:12px;margin:6px 14px 12px;padding:14px 15px;
+    border-radius:var(--r-lg);
+    background:linear-gradient(150deg, var(--p-container), color-mix(in srgb,var(--p-container) 55%, var(--s-low)));
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .pending .pl{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:var(--primary);color:var(--on-primary);font-size:19px;box-shadow:0 4px 12px var(--glow)}
+  .pending .pt{flex:1;min-width:0}
+  .pending .pt b{display:block;font-size:14.5px;font-weight:680;letter-spacing:-.018em;
+    color:var(--on-p-container)}
+  .pending .pt span{display:block;font-size:11.5px;font-weight:550;color:var(--on-p-container);
+    opacity:.78;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .daysum{display:flex;align-items:center;gap:12px;margin:0 18px 12px;padding:12px 15px;
+    border-radius:var(--r-lg);background:var(--s-low);box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .daysum .lead{flex:1;min-width:0}
+  .daysum .lead b{display:block;font-size:14px;font-weight:650;letter-spacing:-.015em}
+  .daysum .lead span{font-size:11.5px;color:var(--on-surface-var);font-weight:550}
+  .daysum .lead em{font-style:normal;color:var(--secondary);font-weight:700}
+  .ringwrap{position:relative;width:44px;height:44px;flex:none;display:grid;place-items:center}
+  .ringwrap .ring{position:absolute;inset:0;width:44px;height:44px}
+  .ringwrap span{font-size:11px;font-weight:750}
+
+  .stats{display:flex;gap:9px;margin:0 14px 6px}
+  .stat{flex:1;background:var(--s-low);border-radius:var(--r-md);padding:12px 10px;text-align:center;
+    box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .stat .v{font-size:22px;font-weight:720;letter-spacing:-.03em;line-height:1}
+  .stat .v span{font-size:13px;font-weight:600;color:var(--on-surface-var)}
+  .stat .k{font-size:10.5px;font-weight:600;color:var(--on-surface-var);margin-top:5px}
+  .goalrow{display:flex;align-items:center;gap:9px;margin:0 14px 8px;padding:11px 14px;
+    background:var(--s-low);border-radius:var(--r-md);box-shadow:var(--sh-1), inset 0 1px 0 var(--lift)}
+  .goalrow .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .goalrow .nm{font-size:13px;font-weight:640;white-space:nowrap}
+  .goalrow .track{flex:1;height:7px;border-radius:999px;background:var(--outline-var);overflow:hidden}
+  .goalrow .track i{display:block;height:100%;border-radius:999px;
+    box-shadow:0 1px 4px color-mix(in srgb, currentColor 30%, transparent)}
+  .goalrow .pc{font-size:11.5px;font-weight:700;color:var(--on-surface-var);width:32px;text-align:end}
+
+  /* ── switcher ────────────────────────────────────────────────────────── */
+  .switcher{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;
+    display:flex;align-items:center;gap:2px;background:#f8fafc;color:#0f172a;
+    border-radius:999px;padding:6px;box-shadow:0 14px 42px rgba(0,0,0,.6)}
+  .switcher button{border:0;background:transparent;font:inherit;font-size:17px;cursor:pointer;
+    width:36px;height:34px;border-radius:999px;color:#0f172a}
+  .switcher button:hover{background:#e2e8f0}
+  .switcher .lab{padding:0 14px;font-size:13px;font-weight:700;white-space:nowrap;min-width:206px;
+    text-align:center;letter-spacing:-.014em}
+  .switcher .lab small{display:block;font-weight:500;font-size:10.5px;color:#64748b}
+  .switcher .grp{border-inline-start:1px solid #cbd5e1;padding-inline-start:6px;margin-inline-start:4px;
+    display:flex;gap:2px}
+  .switcher .grp button{width:auto;padding:0 11px;font-size:12px;font-weight:700;color:#64748b}
+  .switcher .grp button.on{background:#0f172a;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <h1>PROTOTYPE · <code>C9b</code> — the in-app calendar surface (<a href="https://github.com/idomarhaim/Android_Final_Project/issues/26">#26</a>)</h1>
+  <p><b>D</b> and <b>E</b> are the resolution — two surfaces, one job each. <b>A/B/C</b> are kept as the record of what was explored.<br>
+     <code>←</code> <code>→</code> cycle · <b>HE</b> flips to RTL · <b>☀/☾</b> switches theme · in <b>D</b>, tap the zoom: <b>סדר יום / 3 ימים / שבוע</b>.
+     Throwaway; nothing here ships.</p>
+</div>
+
+<div id="stage"></div>
+
+<div class="switcher">
+  <button id="prev" title="Previous">‹</button>
+  <span class="lab" id="lab"></span>
+  <button id="next" title="Next">›</button>
+  <span class="grp"><button data-lang="en">EN</button><button data-lang="he">HE</button></span>
+  <span class="grp"><button data-theme="light">☀</button><button data-theme="dark">☾</button></span>
+</div>
+
+<script>
+const svg = d => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
+const ICON = {
+  home:  svg('<path d="M3.5 11 12 3.6 20.5 11v8.4a1 1 0 0 1-1 1h-4.4v-5.6H8.9v5.6H4.5a1 1 0 0 1-1-1z"/>'),
+  goals: svg('<path d="M6.4 21V3.6h11.2l-3 4.2 3 4.2H6.4"/>'),
+  social:svg('<path d="M7.4 4h9.2v4.6a4.6 4.6 0 0 1-9.2 0zM7.4 5.2H4.6v1.6a3 3 0 0 0 2.8 3M16.6 5.2h2.8v1.6a3 3 0 0 1-2.8 3M12 13.2v4.2M8.4 20h7.2"/>'),
+  person:svg('<circle cx="12" cy="8" r="3.9"/><path d="M4.4 20.2a7.6 7.6 0 0 1 15.2 0"/>'),
+  cal:   svg('<rect x="3.6" y="5.2" width="16.8" height="15.2" rx="3"/><path d="M8 3.2v3.6M16 3.2v3.6M3.6 10.2h16.8"/>'),
+  search:svg('<circle cx="11" cy="11" r="6.8"/><path d="M16.2 16.2 21 21"/>'),
+  plus:  svg('<path d="M12 5.4v13.2M5.4 12h13.2"/>'),
+  check: svg('<path d="M5 12.4 9.6 17 19 7.4"/>'),
+  spark: svg('<path d="M12 3.4l1.9 4.7 4.7 1.9-4.7 1.9L12 16.6l-1.9-4.7-4.7-1.9 4.7-1.9zM18.4 15.6l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+  alert: svg('<circle cx="12" cy="12" r="8.6"/><path d="M12 7.6v5M12 16.1h.01"/>'),
+  moved: svg('<path d="M4 12h13M13 7.4 17.6 12 13 16.6M20 5.6v12.8"/>'),
+  away:  svg('<path d="M4.2 4.2 19.8 19.8M9.6 5.2h9.2v9.2M5.2 9.6v9.2h9.2"/>'),
+};
+const SYS = `<svg viewBox="0 0 46 14" style="height:11px;width:36px;fill:currentColor">
+  <rect x="0" y="9" width="3" height="5" rx="1"/><rect x="4.5" y="6.5" width="3" height="7.5" rx="1"/>
+  <rect x="9" y="4" width="3" height="10" rx="1"/><rect x="13.5" y="1.5" width="3" height="12.5" rx="1"/>
+  <path d="M25.5 4.2a7.6 7.6 0 0 1 8.6 0l-1.5 1.9a5.2 5.2 0 0 0-5.6 0zm2.2 3.1a4 4 0 0 1 4.2 0l-2.1 2.7z"/>
+  <rect x="37" y="3" width="8" height="9" rx="2" opacity=".45"/><rect x="38" y="4" width="6" height="7" rx="1.2"/></svg>`;
+
+/* GoalCategory.defaultColorHex is a LIGHT-MODE palette - every one of the ten is
+   picked for contrast against a white-ish surface, and on #0C1520 they go muddy
+   and stop being distinguishable from each other. A dark tone is owed per
+   category. These are M3 tone-80 equivalents of the committed hues; the finding
+   itself belongs to the build session, not the mockup. */
+const CAT = {
+  HEALTH:  {he:'בריאות',    en:'Health',  c:'#CF3636', d:'#FF8A85'},
+  FITNESS: {he:'אימון ריצה',en:'Running', c:'#B85107', d:'#FFB77A'},
+  LEARNING:{he:'לימודים',   en:'Studies', c:'#8B39C4', d:'#D8A9FF'},
+  CAREER:  {he:'קריירה',    en:'Career',  c:'#0F6FCB', d:'#93C5FF'},
+};
+/* set once per render; colOf() reads it so the colour lookup does not have to be
+   threaded through every helper in a throwaway file */
+let THEME = 'light';
+/* st: DONE · CONFIRMED · SILENT (agent-placed, slot visibly free — C9c)
+       PROVISIONAL (agent-placed blind) · MOVED (changed in Google, `was`)
+       AWAY (left the GoalPilot calendar) · EXTERNAL (hand-made, no task)
+       MISSED · EXPIRED · OVERDUE */
+const OCC = [
+  {d:0,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'DONE',       he:'ריצה 5 ק״מ',       en:'Run 5 km'},
+  {d:0,rung:'BLOCK',   s:1200,e:1230,cat:'LEARNING',st:'EXPIRED',    he:'לקרוא פרק',        en:'Read a chapter'},
+  {d:0,rung:'DEADLINE',s:1439,       cat:'LEARNING',st:'OVERDUE',    he:'תשלום שכר לימוד',  en:'Pay tuition'},
+  {d:1,rung:'SPAN',  until:5,        cat:'LEARNING',st:'CONFIRMED',  he:'שבוע מבחנים',      en:'Exam week'},
+  {d:1,rung:'ALL_DAY',              cat:'HEALTH',  st:'CONFIRMED',   he:'יום ללא סוכר',     en:'No-sugar day'},
+  {d:1,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'MISSED',     he:'ריצה 5 ק״מ',       en:'Run 5 km'},
+  /* SILENT and PROVISIONAL deliberately sit on the SAME day: C9c's point is that
+     they differ by whether the app could SEE the slot, not by how sure it is */
+  {d:1,rung:'BLOCK',   s:450, e:510, cat:'HEALTH',  st:'SILENT',     he:'מתיחות ושתייה',    en:'Stretch and hydrate'},
+  {d:1,rung:'BLOCK',   s:540, e:660, cat:'LEARNING',st:'PROVISIONAL',he:'תרגול אלגוריתמים', en:'Algorithms practice'},
+  {d:1,rung:'BLOCK',   s:1140,e:1230,cat:'CAREER',  st:'MOVED', was:1020,
+                                                                     he:'הכנה לראיון',      en:'Interview prep'},
+  {d:1,rung:'DEADLINE',s:1439,       cat:'LEARNING',st:'CONFIRMED',  he:'הגשת תרגיל 3',     en:'Submit exercise 3'},
+  {d:2,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'AWAY',       he:'ריצה 8 ק״מ',       en:'Run 8 km'},
+  {d:3,rung:'BLOCK',   s:540, e:720, cat:'LEARNING',st:'CONFIRMED',  he:'מבחן מערכות הפעלה',en:'OS exam'},
+  {d:3,rung:'BLOCK',   s:1200,e:1260,cat:'CAREER',  st:'SILENT', pairs:1,
+                                                                     he:'לעבוד על קורות החיים',en:'Work on the CV'},
+  {d:3,rung:'DEADLINE',s:1439,       cat:'CAREER',  st:'CONFIRMED',  he:'עדכון קורות חיים', en:'Update the CV'},
+  {d:4,rung:'BLOCK',   s:840, e:900, cat:'CAREER',  st:'CONFIRMED',  he:'ראיון עבודה',      en:'Job interview'},
+  {d:4,rung:'BLOCK',   s:360, e:420, cat:'FITNESS', st:'SILENT',     he:'ריצה קלה',         en:'Easy run'},
+  {d:4,rung:'BLOCK',   s:1080,e:1170,cat:null,      st:'EXTERNAL',   he:'ארוחה עם רועי',    en:'Dinner with Roy'},
+  {d:6,rung:'BLOCK',   s:1080,e:1140,cat:'FITNESS', st:'PROVISIONAL',he:'ריצה ארוכה 12 ק״מ',en:'Long run 12 km'},
+];
+const CHALLENGE = {from:0, until:6, he:'אתגר · 10,000 צעדים ביום', en:'Challenge · 10k steps a day',
+  get c(){ return THEME==='dark' ? '#8AD6B7' : '#0A6045'; }};
+
+const T = {
+  he:{home:'בית',goals:'מטרות',social:'חברתי',profile:'פרופיל',cal:'לוח שנה',
+      allday:'כל היום',today:'היום',list:'רשימה',agenda:'סדר יום',
+      vDay:'יום',v3:'3 ימים',vWeek:'שבוע',
+      due:'עד',prov:'הצעה',silent:'שובץ אוטומטית',moved:'הוזז ביומן',was:'היה',
+      away:'לא ביומן שלך',ext:'מהיומן שלך',
+      missed:'פוספס',late:'באיחור · עדיין פתוח',done:'הושלם',
+      review:'סיכום היום',plan:'תכנן את מחר →',toweek:'לוח השבוע המלא →',
+      decisions:'ממתין להחלטה',confirm:'אשר הכול',later:'אחר כך',resched:'תזמון מחדש',
+      skip:'דלג על ההחלטה הזו',next:'בהמשך התור',
+      keep:'להשאיר',cancel:'לבטל',putback:'להחזיר ליומן',
+      qAway:n=>`${n} פריטים יצאו מהיומן — עדיין עושה אותם?`,
+      qMissed:'ריצה 5 ק״מ פוספסה',qLate:'תשלום שכר לימוד באיחור',
+      morning:'בוקר',afternoon:'צהריים ואחה״צ',evening:'ערב',allDayHd:'לאורך היום',
+      agentTitle:n=>`הסוכן תכנן ${n===1?'בלוק אחד':n+' בלוקים'} לשבוע הקרוב`,
+      agentLede:'שום דבר לא נכתב ליומן שלך עד שתאשר. אפשר לבטל סימון של כל אחד מהם.',
+      hint:'לחיצה ארוכה גוררת בלוק לשעה אחרת',
+      zAgenda:'סדר יום',z3:'3 ימים',z7:'שבוע',
+      newTask:'משימה חדשה',tapSlot:'הקש כדי לתזמן כאן',
+      loose:n=>`${n===1?'משימה אחת':n+' משימות'} להיום בלי שעה`,schedule:'לתזמן',
+      freeLeft:h=>`נשארו לך ${h} שעות פנויות היום`,
+      cap:'עומס',needsYou:'ממתין לך',allClear:'הכול מסודר',
+      today:'היום',pts:'נקודות',tasksDone:'משימות הושלמו',progress:'התקדמות השבוע',
+      dayAt:'היום שלך',booked:'מתוכנן',freeH:'פנוי',seeAll:'לכל המטרות →',
+      nDecisions:n=>`${n===1?'החלטה אחת ממתינה':n+' החלטות ממתינות'} לך`,
+      openStack:'לפתוח',firstUp:'הראשונה בתור',hrUnit:'ש׳',minUnit:'ד׳',initial:'א'},
+  en:{home:'Home',goals:'Goals',social:'Social',profile:'Profile',cal:'Calendar',
+      allday:'All-day',today:'Today',list:'List',agenda:'Agenda',
+      vDay:'Day',v3:'3 days',vWeek:'Week',
+      due:'due',prov:'proposed',silent:'placed for you',moved:'moved in Google',was:'was',
+      away:'not on your calendar',ext:'from your calendar',
+      missed:'missed',late:'late · still owed',done:'done',
+      review:'Your day',plan:'Plan tomorrow →',toweek:'Open the full week →',
+      decisions:'Waiting on you',confirm:'Confirm all',later:'Later',resched:'Reschedule',
+      skip:'Skip this decision',next:'Next in the queue',
+      keep:'Keep',cancel:'Cancel',putback:'Put back',
+      qAway:n=>`${n} item${n===1?'':'s'} left your calendar — still doing ${n===1?'it':'them'}?`,
+      qMissed:'Run 5 km was missed',qLate:'Tuition payment is late',
+      morning:'Morning',afternoon:'Afternoon',evening:'Evening',allDayHd:'Across the day',
+      agentTitle:n=>`The agent planned ${n===1?'1 block':n+' blocks'} for the week`,
+      agentLede:'Nothing reaches your Google calendar until you confirm. Untick any of them.',
+      hint:'long-press drags a block to another hour',
+      zAgenda:'Agenda',z3:'3 days',z7:'Week',
+      newTask:'New task',tapSlot:'Tap to schedule here',
+      loose:n=>`${n} task${n===1?'':'s'} due today with no time`,schedule:'Schedule',
+      freeLeft:h=>`${h} free hours left today`,
+      cap:'Load',needsYou:'Waiting on you',allClear:'All clear',
+      today:'Today',pts:'points',tasksDone:'tasks done',progress:'This week',
+      dayAt:'Your day',booked:'booked',freeH:'free',seeAll:'All goals →',
+      nDecisions:n=>`${n} decision${n===1?'':'s'} waiting on you`,
+      openStack:'Open',firstUp:'First up',hrUnit:'h',minUnit:'m',initial:'I'},
+};
+
+const TODAY = new Date(2026,7,10);
+const SUNDAY = new Date(TODAY); SUNDAY.setDate(TODAY.getDate()-TODAY.getDay());
+const TODAY_IDX = TODAY.getDay();
+const NOW_MIN = 20*60+10, H0 = 5, H1 = 23, ROW = 56;
+
+const hhmm = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const time  = m => `<span class="ltr">${hhmm(m)}</span>`;
+const range = (a,b) => `<span class="ltr">${hhmm(a)}–${hhmm(b)}</span>`;
+const dayDate = i => { const d=new Date(SUNDAY); d.setDate(SUNDAY.getDate()+i); return d; };
+const dayName = (i,l) => new Intl.DateTimeFormat(l==='he'?'he-IL':'en-GB',{weekday:'short'}).format(dayDate(i));
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const rgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const tint = (h,a) => `rgba(${rgb(h).join(',')},${a})`;
+const colOf = o => o.cat ? (THEME === 'dark' ? CAT[o.cat].d : CAT[o.cat].c)
+                         : (THEME === 'dark' ? '#94A3B8' : '#6C7684');
+/* class-list join that drops the falsy branches — a bare ternary leaves
+   `class="col  weekend"`, which is harmless to render and a nuisance to assert on */
+const cx = (...xs) => xs.filter(Boolean).join(' ');
+const areaChip = (o,l) => o.cat
+  ? `<span class="area" style="background:${tint(CAT[o.cat].c,.13)};color:${CAT[o.cat].c}">
+       <i style="background:${CAT[o.cat].c}"></i>${esc(CAT[o.cat][l])}</span>`
+  : `<span class="area" style="background:var(--ghost-container);color:var(--ghost)">
+       <i style="background:var(--ghost)"></i>${T[l].ext}</span>`;
+
+/* THE RESOLUTION'S NAV — four tabs, not five. Calendar earns a tab; Profile moves
+   to an avatar in Home's top-right, which is what Gmail, YouTube and Google
+   Calendar all do. Nothing is lost and the bar stays comfortable. */
+const NAV4 = t => [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social]];
+/* a day's load, in minutes. SPANs contribute nothing: C9a established that a
+   week-long span would otherwise swamp the day it starts on. */
+const loadOf = d => OCC.filter(o=>o.d===d && o.rung==='BLOCK'
+                    && !['AWAY','EXPIRED','MISSED'].includes(o.st))
+                      .reduce((a,o)=>a+(o.e-o.s),0);
+const WAKING = 16*60;
+const capBar = (d, wide) => {
+  const pct = Math.min(100, Math.round(loadOf(d)/WAKING*100));
+  return `<div class="${cx('cap-bar', pct>=75&&'full')}"><i style="width:${pct}%"></i></div>`
+       + (wide ? `<div class="cap-n">${pct}%</div>` : '');
+};
+
+function phone(lang,theme,{tabs,active,newTab,sticky,body,fab}){
+  const t = T[lang];
+  const TABS = tabs || [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.social,t.social],[ICON.person,t.profile]];
+  return `<div class="phone" data-theme="${theme}" dir="${lang==='he'?'rtl':'ltr'}" lang="${lang}">
+    <div class="statusbar"><span>${hhmm(NOW_MIN)}</span><span class="rt">${SYS}<span>84%</span></span></div>
+    <div class="screen"><div class="sticky">${sticky}</div>${body}</div>${fab||''}
+    <div class="grain"></div>
+    <div class="navbar">${TABS.map((x,i)=>
+      `<div class="${cx('t', i===active&&'on', i===newTab&&'new')}">
+         <span class="pill">${x[0]}</span><span>${x[1]}</span></div>`).join('')}</div></div>`;
+}
+
+/* ═══ A — THE GRID ═══ */
+function variantA(lang, view, theme, ans){
+  THEME = theme;
+  const t = T[lang];
+  const days = view===1 ? [TODAY_IDX]
+             : view===3 ? [0,1,2].map(k=>Math.min(4,Math.max(0,TODAY_IDX-1))+k)
+             : [0,1,2,3,4,5,6];
+  const tight = days.length===7;
+  const cols = `grid-template-columns:44px repeat(${days.length},1fr)`;
+
+  let hours=''; for(let h=H0;h<=H1;h++) hours += `<div class="h">${String(h).padStart(2,'0')}:00</div>`;
+
+  const colHtml = days.map(d=>{
+    let lines=''; for(let i=0;i<H1-H0;i++) lines += '<div class="line"></div>';
+    const evs = OCC.filter(o=>o.d===d && o.rung==='BLOCK').map((o,k)=>{
+      const top=((o.s-H0*60)/60)*ROW, h=((o.e-o.s)/60)*ROW, c=colOf(o);
+      const prov = o.st==='PROVISIONAL'||o.st==='EXPIRED';
+      const gone = o.st==='MISSED'||o.st==='EXPIRED';
+      const away = o.st==='AWAY', ext = o.st==='EXTERNAL';
+      const cls = ['ev', prov&&'prov', gone&&'gone', away&&'away', ext&&'ext'].filter(Boolean).join(' ');
+      const style = (prov||away||ext)
+        ? `top:${top}px;height:${h-2}px;color:${c};border-color:${c};animation-delay:${k*40}ms`
+        : `top:${top}px;height:${h-2}px;color:${c};animation-delay:${k*40}ms;`
+          + `background:linear-gradient(150deg, ${tint(c,THEME==='dark'?.30:.24)}, ${tint(c,THEME==='dark'?.17:.13)})`;
+      const times = tight
+        ? `<span class="tm">${time(o.s)}</span><span class="tm">${time(o.e)}</span>`
+        : `<span class="tm">${range(o.s,o.e)}</span>`;
+      const badge = o.st==='MOVED'  ? `<span class="badge">${ICON.moved}</span>`
+                  : o.st==='SILENT' ? `<span class="badge">${ICON.spark}</span>`
+                  : o.st==='DONE'   ? `<span class="badge">${ICON.check}</span>` : '';
+      return `<div class="${cls}" style="${style}">${badge}<b>${esc(o[lang])}</b>${h>=34?times:''}</div>`;
+    }).join('');
+    const isToday = d===TODAY_IDX, weekend = d===5||d===6;
+    const now = isToday ? `<div class="now" style="top:${((NOW_MIN-H0*60)/60)*ROW}px"></div>` : '';
+    return `<div class="${cx('col', isToday&&'today', weekend&&'weekend')}">${lines}${evs}${now}</div>`;
+  }).join('');
+
+  const nowPill = days.includes(TODAY_IDX)
+    ? `<div class="nowpill" style="top:${((NOW_MIN-H0*60)/60)*ROW}px">${time(NOW_MIN)}</div>` : '';
+
+  let hdr='<div></div>';
+  days.forEach(d=> hdr += `<div class="${cx('d', d===TODAY_IDX&&'today')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>${ans?capBar(d, days.length<=3):''}</div>`);
+
+  let bands = `<div class="lbl">${t.allday}</div>`;
+  days.forEach(d=>{
+    let here='';
+    const capsule=(o,c,label)=>{
+      const start=d===o.d, end=d===(o.until ?? o.d);
+      return `<div class="${cx('band', start&&'cap-s', end&&'cap-e')}"
+        style="background:${tint(c,.2)};color:${c}">${start?esc(label):'&nbsp;'}</div>`;
+    };
+    if(d>=CHALLENGE.from&&d<=CHALLENGE.until) here+=capsule({d:CHALLENGE.from,until:CHALLENGE.until},CHALLENGE.c,CHALLENGE[lang]);
+    OCC.filter(o=>o.rung==='SPAN'&&d>=o.d&&d<=o.until).forEach(o=>here+=capsule(o,colOf(o),o[lang]));
+    OCC.filter(o=>o.d===d&&o.rung==='ALL_DAY').forEach(o=>
+      here+=`<div class="band" style="background:${tint(colOf(o),.2)};color:${colOf(o)}">${esc(o[lang])}</div>`);
+    /* C9c: in Google a DEADLINE is an all-day banner, never a timed event —
+       so it belongs in this strip and nowhere in the grid below */
+    OCC.filter(o=>o.d===d&&o.rung==='DEADLINE').forEach(o=>{
+      const late=o.st==='OVERDUE', c=late?'#9A3412':colOf(o);
+      here+=`<div class="band" style="background:${late?'var(--late-container)':tint(c,.2)};color:${late?'var(--late)':c}">
+        ${t.due} ${time(o.s)} · ${esc(o[lang])}</div>`;
+    });
+    bands += `<div class="slot">${here}</div>`;
+  });
+
+  const month = new Intl.DateTimeFormat(lang==='he'?'he-IL':'en-GB',{month:'long'}).format(TODAY);
+  const sticky = `<div class="appbar">
+      <div><div class="ttl">${t.cal}</div>
+        <div class="sub num">${dayDate(days[0]).getDate()}–${dayDate(days[days.length-1]).getDate()} ${month}</div></div>
+      <div class="spacer"></div>
+      <div class="iconbtn">${ICON.search}</div><div class="iconbtn accent">${ICON.plus}</div></div>
+    ${ans ? zoomSeg(lang,view) : `<div class="seg" style="margin:0 18px 11px">
+      <span data-view="1" class="${view===1?'on':''}">${t.vDay}</span>
+      <span data-view="3" class="${view===3?'on':''}">${t.v3}</span>
+      <span data-view="7" class="${view===7?'on':''}">${t.vWeek}</span></div>`}
+    ${ans ? daySummary(lang) : ''}
+    <div class="dayhdr" style="${cols}">${hdr}</div>
+    <div class="banded" style="${cols}">${bands}</div>`;
+
+  return phone(lang,theme,{active:2, newTab: ans?undefined:2,
+    tabs: ans ? NAV4(t)
+              : [[ICON.home,t.home],[ICON.goals,t.goals],[ICON.cal,t.cal],[ICON.social,t.social],[ICON.person,t.profile]],
+    sticky,
+    fab: ans ? `<button class="fab">${ICON.plus}${t.newTask}</button>` : '',
+    body:`<div class="grid" style="${cols}"><div class="hours">${hours}</div>${colHtml}${nowPill}</div>
+          <div class="muted" style="padding:14px 16px ${ans?'96px':'22px'};text-align:center">${ans?t.tapSlot:t.hint}</div>`});
+}
+
+/* ═══ B — THE DAY RAIL ═══ */
+function variantB(lang, view, theme, ans){
+  THEME = theme;
+  const t = T[lang], sel = TODAY_IDX;
+  let rail='';
+  for(let d=0;d<7;d++){
+    const dots = OCC.filter(o=>o.d===d).slice(0,4)
+      .map(o=>`<i style="background:${d===sel?'rgba(255,255,255,.9)':colOf(o)}"></i>`).join('');
+    rail += `<div class="${cx('p', d===sel&&'on')}">${dayName(d,lang)}<b>${dayDate(d).getDate()}</b>
+      <div class="dots">${dots}</div></div>`;
+  }
+
+  const rowOf = (o,i) => {
+    const c = colOf(o);
+    const prov=o.st==='PROVISIONAL', done=o.st==='DONE', missed=o.st==='MISSED';
+    const late=o.st==='OVERDUE', away=o.st==='AWAY', moved=o.st==='MOVED', silent=o.st==='SILENT';
+    let when;
+    if(o.rung==='BLOCK')
+      when = `${time(o.s)}${moved?`<s class="ltr">${hhmm(o.was)}</s>`:''}
+              <div class="bar" style="background:${prov||away?tint(c,.4):c}"></div><small>${time(o.e)}</small>`;
+    else if(o.rung==='DEADLINE')
+      when = `<small>${t.due}</small>${time(o.s)}<div class="pt" style="background:${late?'var(--late)':c}"></div>`;
+    else if(o.rung==='SPAN')
+      when = `<small class="ltr">${dayDate(o.d).getDate()}–${dayDate(o.until).getDate()}</small>
+              <div class="cap" style="background:${c}"></div>`;
+    else when = `<small>${t.allday}</small>`;
+
+    const tags=[areaChip(o,lang)];
+    if(prov)   tags.push(`<span class="tag" style="color:var(--primary);box-shadow:inset 0 0 0 1.4px var(--primary)">${ICON.spark}${t.prov}</span>`);
+    if(silent) tags.push(`<span class="tag" style="background:var(--p-container);color:var(--on-p-container)">${ICON.spark}${t.silent}</span>`);
+    if(moved)  tags.push(`<span class="tag" style="background:var(--p-container);color:var(--on-p-container)">${ICON.moved}${t.moved}</span>`);
+    if(away)   tags.push(`<span class="tag" style="background:var(--ghost-container);color:var(--ghost)">${ICON.away}${t.away}</span>`);
+    if(missed) tags.push(`<span class="tag" style="background:var(--s-highest);color:var(--on-surface-var)">${t.missed}</span>`);
+    if(late)   tags.push(`<span class="tag" style="background:var(--late-container);color:var(--late)">${ICON.alert}${t.late}</span>`);
+
+    const cls = ['row', prov&&'prov', done&&'done', away&&'away',
+                 (o.rung==='ALL_DAY'||o.rung==='SPAN')&&'band-row'].filter(Boolean).join(' ');
+    return `<div class="${cls}" style="animation-delay:${i*45}ms">
+      <div class="when">${when}</div>
+      <div class="body"><div class="t">${esc(o[lang])}</div><div class="m">${tags.join('')}</div></div>
+      <div class="${cx('tick', done&&'done')}">${ICON.check}</div></div>`;
+  };
+
+  /* Two states are carried into today from whichever day they sit on, because both
+     are things you have to act on and neither waits for you to navigate to its date:
+     OVERDUE (late and still owed) and — C9c's — AWAY (planned, but it left your
+     Google calendar). Without the AWAY carry you learn an event vanished only when
+     its day finally arrives, which is exactly too late to put it back. */
+  const here = OCC.filter(o=>o.d===sel || (o.rung==='SPAN'&&sel>o.d&&sel<=o.until))
+                  .concat(OCC.filter(o=>(o.st==='OVERDUE'||o.st==='AWAY')&&o.d!==sel));
+  const groups = [
+    [t.allDayHd,  here.filter(o=>o.rung==='ALL_DAY'||o.rung==='SPAN')],
+    [t.morning,   here.filter(o=>o.rung==='BLOCK'&&o.s<12*60)],
+    [t.afternoon, here.filter(o=>o.rung==='BLOCK'&&o.s>=12*60&&o.s<17*60)],
+    [t.evening,   here.filter(o=>(o.rung==='BLOCK'&&o.s>=17*60)||o.rung==='DEADLINE')],
+  ];
+  let n=0;
+  const agenda = groups.filter(g=>g[1].length).map(([name,items])=>
+    `<div class="grouphd">${name}</div>` +
+    items.sort((a,b)=>(a.s||0)-(b.s||0)).map(o=>rowOf(o,n++)).join('')).join('');
+
+  const sticky = `<div class="appbar">
+      <div><div class="ttl">${ans?t.cal:t.goals}</div>
+        <div class="sub">${t.today} · ${dayName(sel,lang)} <span class="num">${dayDate(sel).getDate()}</span></div></div>
+      <div class="spacer"></div>
+      <div class="iconbtn">${ICON.search}</div>${ans?'':`<div class="iconbtn accent">${ICON.plus}</div>`}</div>
+    ${ans ? zoomSeg(lang,0)
+          : `<div class="seg" style="margin:0 14px 12px"><span>${t.list}</span><span class="on">${t.agenda}</span></div>`}
+    <div class="rail">${rail}</div>`;
+
+  /* Answer mode adds two things the calendar already knows and no variant showed:
+     work due today that was never given a time, and how much of the day is still
+     unspent. Both are arithmetic over data already on screen - no model call. */
+  const freeH = Math.max(0, Math.round((WAKING - loadOf(sel))/60));
+  const extras = ans ? `
+    <div class="loose">${ICON.alert}<b>${esc(t.loose(2))}</b>
+      <div style="flex:1"></div><button class="btn sm">${t.schedule}</button></div>
+    <div class="free">${ICON.clock}<span>${esc(t.freeLeft(freeH))}</span></div>` : '';
+
+  return phone(lang,theme,{active:ans?2:1,sticky,
+    tabs: ans ? NAV4(t) : undefined,
+    fab: ans ? `<button class="fab">${ICON.plus}${t.newTask}</button>` : '',
+    body:`${extras}<div class="agenda">${agenda}</div>
+      <div style="padding:14px 14px ${ans?'96px':'22px'}"><button class="btn ghost" style="width:100%">${t.plan}</button></div>`});
+}
+
+/* ═══ C — THE DECISION STACK ═══ */
+function variantC(lang, view, theme, ans){
+  THEME = theme;
+  const t = T[lang];
+  const props  = OCC.filter(o=>o.st==='PROVISIONAL');
+  const aways  = OCC.filter(o=>o.st==='AWAY');
+  const done   = OCC.filter(o=>o.st==='DONE').length;
+  const missed = OCC.filter(o=>o.st==='MISSED').length;
+  const late   = OCC.filter(o=>o.st==='OVERDUE').length;
+
+  const hero = `<div class="hero"><div class="peek b2"></div><div class="peek"></div>
+    <div class="deck">
+      <div class="kicker">${ICON.spark}${t.decisions} · <span class="num">1/4</span></div>
+      <h3>${esc(t.agentTitle(props.length))}</h3>
+      <div class="lede">${esc(t.agentLede)}</div>
+      <div class="mini">${props.map((o,i)=>`<div class="r">
+        <div class="${cx('cb', i===props.length-1&&'off')}">${ICON.check}</div>
+        <div class="tx"><b>${esc(o[lang])}</b>
+          <span>${dayName(o.d,lang)} · ${range(o.s,o.e)} · ${esc(CAT[o.cat][lang])}</span></div>
+        <span style="width:9px;height:9px;border-radius:50%;background:${colOf(o)};flex:none"></span>
+      </div>`).join('')}</div>
+      <div class="acts"><button class="btn">${ICON.check}${t.confirm}</button>
+        <button class="btn ghost">${t.later}</button></div>
+      <div class="skip">${t.skip}</div>
+    </div></div>
+    <div class="pips"><i class="on"></i><i></i><i></i><i></i></div>`;
+
+  /* C9c's third batch rides the same queue — Keep / Cancel / Put back */
+  const queue = `<div class="sect">${t.next}</div><div class="queue">
+    <div class="q"><span class="n">2</span><div class="tx">${esc(t.qAway(aways.length))}
+      <span>${t.keep} · ${t.cancel} · ${t.putback}</span></div>${ICON.away}</div>
+    <div class="q"><span class="n">3</span><div class="tx">${esc(t.qMissed)}
+      <span>${t.resched}</span></div>${ICON.alert}</div>
+    <div class="q"><span class="n">4</span><div class="tx">${esc(t.qLate)}
+      <span>${t.done} · ${t.resched}</span></div>${ICON.alert}</div></div>`;
+
+  const recap = `<div class="recap">
+      <div><div class="n" style="color:var(--secondary)">${done}</div><div class="u">${t.done}</div></div>
+      <div class="sep"></div>
+      <div><div class="n" style="color:var(--on-surface-var)">${missed}</div><div class="u">${t.missed}</div></div>
+      <div class="sep"></div>
+      <div><div class="n" style="color:var(--late)">${late}</div><div class="u">${t.late}</div></div>
+      <div style="flex:1"></div><button class="btn tonal sm">${t.resched}</button></div>`;
+
+  /* Answer mode: Profile leaves the bottom bar and becomes the top-right avatar.
+     That is what frees the fourth tab for the calendar - nothing is dropped. */
+  const sticky = `<div class="appbar">
+      <div><div class="ttl">${t.home}</div>
+        <div class="sub">${dayName(TODAY_IDX,lang)} · ${time(NOW_MIN)}</div></div>
+      <div class="spacer"></div>
+      ${ans ? `<div class="avatar">${t.initial}</div>`
+            : `<div class="iconbtn">${ICON.cal}</div><div class="iconbtn">${ICON.person}</div>`}</div>`;
+
+  /* THE difference between E and the explored C: C was ONLY a decision stack, so
+     an empty queue left an empty screen. E is Home - the queue sits on top of a
+     real dashboard, which is what makes "leads with decisions, falls back to the
+     dashboard" something you can see standing still rather than a claim in prose. */
+  const dash = !ans ? '' : `
+    <div class="sect">${t.today}</div>
+    <div class="stats">
+      <div class="stat"><div class="v" style="color:var(--primary)">120</div><div class="k">${t.pts}</div></div>
+      <div class="stat"><div class="v" style="color:var(--secondary)">3<span>/7</span></div>
+        <div class="k">${t.tasksDone}</div></div>
+      <div class="stat"><div class="v" style="color:var(--tertiary-a)">4<span>${t.hrUnit}</span></div>
+        <div class="k">${t.booked}</div></div>
+    </div>
+    <div class="sect">${t.progress}</div>
+    ${[['LEARNING',0.62],['FITNESS',0.4],['CAREER',0.25]].map(([c,v])=>`
+      <div class="goalrow">
+        <span class="dot" style="background:${THEME==='dark'?CAT[c].d:CAT[c].c}"></span>
+        <span class="nm">${esc(CAT[c][lang])}</span>
+        <div class="track"><i style="width:${v*100}%;background:${THEME==='dark'?CAT[c].d:CAT[c].c}"></i></div>
+        <span class="pc num">${Math.round(v*100)}%</span></div>`).join('')}
+    <div class="toweek" style="margin-top:12px">${t.seeAll}</div>`;
+
+  /* HOME SUMMARISES; IT DOES NOT HOST. The explored C is a full-screen decision
+     stack - a destination. Putting that same deck on Home made two screens that
+     look identical, which is exactly what Ido reported. So E carries a compact
+     banner that says how many decisions are waiting and what the first one is,
+     and opens C. One deck, one home for it, and the link between them visible. */
+  const banner = `<div class="pending">
+    <div class="pl">${ICON.spark}</div>
+    <div class="pt"><b>${esc(t.nDecisions(4))}</b>
+      <span>${t.firstUp}: ${esc(t.agentTitle(props.length))}</span></div>
+    <button class="btn sm">${t.openStack}</button></div>`;
+
+  return phone(lang,theme,{active:0,sticky,
+    tabs: ans ? NAV4(t) : undefined,
+    body: ans
+      ? `${banner}${recap}${dash}`
+      : `<div class="sect">${t.review}</div>${hero}${queue}${recap}
+         <div class="toweek">${t.toweek}</div>`});
+}
+
+/* THE difference between D and the explored A: A opened straight onto a grid and
+   said nothing about the day. D opens with what the calendar already knows -
+   how much of today is spoken for and how much is left - which is the question
+   you actually have before you look at any hour. */
+function daySummary(lang){
+  const t = T[lang];
+  const mins = loadOf(TODAY_IDX), freeH = Math.max(0, Math.round((WAKING-mins)/60));
+  const pct = Math.min(100, Math.round(mins/WAKING*100));
+  return `<div class="daysum">
+    <div class="lead"><b>${t.dayAt}</b>
+      <span>${Math.floor(mins/60)}${t.hrUnit} ${mins%60}${t.minUnit} ${t.booked}
+            · <em>${freeH}${t.hrUnit} ${t.freeH}</em></span></div>
+    <div class="ringwrap"><svg viewBox="0 0 40 40" class="ring">
+      <circle cx="20" cy="20" r="16" fill="none" stroke="var(--outline-var)" stroke-width="5"/>
+      <circle cx="20" cy="20" r="16" fill="none" stroke="var(--primary)" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="${(pct/100*100.5).toFixed(1)} 100.5"
+        transform="rotate(-90 20 20)"/></svg>
+      <span class="num">${pct}%</span></div></div>`;
+}
+
+/* The calendar's ZOOM. B was never a rival screen - it is the agenda level of
+   this control, which is why the resolution has two surfaces and not three. */
+function zoomSeg(lang, view){
+  const t = T[lang];
+  return `<div class="seg" style="margin:0 18px 11px">
+    <span data-view="0" class="${cx(view===0&&'on')}">${t.zAgenda}</span>
+    <span data-view="3" class="${cx(view===3&&'on')}">${t.z3}</span>
+    <span data-view="7" class="${cx(view===7&&'on')}">${t.z7}</span></div>`;
+}
+/* D - the CALENDAR tab. One surface answering "when?", zoomable from an agenda
+   to three days to a week. Fully actionable, per Ido's answer. */
+const variantD = (lang,view,theme) =>
+  view===0 ? variantB(lang,view,theme,true) : variantA(lang,view,theme,true);
+/* E - HOME. Leads with whatever needs a decision and falls back to the ordinary
+   dashboard when nothing does. Profile is the avatar; the calendar has a tab. */
+const variantE = (lang,view,theme) => variantC(lang,view,theme,true);
+
+/* ═══ switcher ═══ */
+const VARIANTS = [
+  ['D','THE ANSWER · Calendar','when? — agenda / 3 days / week',variantD],
+  ['E','THE ANSWER · Home','what needs me?',variantE],
+  ['A','explored · The Grid','?variant=A — kept as the record',variantA],
+  ['B','explored · The Day Rail','?variant=B — kept as the record',variantB],
+  ['C','explored · The Decision Stack','?variant=C — kept as the record',variantC],
+];
+/* The arrows walk the ANSWER only. A/B/C are the record of what was explored and
+   are still reachable by URL - kept rather than deleted, but off the path,
+   because landing on them by accident is exactly what made D and E hard to read. */
+const CYCLE = [0,1];
+const step = (i,d) => { const at = CYCLE.indexOf(i);
+  return at < 0 ? 0 : CYCLE[(at + d + CYCLE.length) % CYCLE.length]; };
+function state(){
+  const p = new URLSearchParams(location.search);
+  let i = VARIANTS.findIndex(x=>x[0]===(p.get('variant')||'D').toUpperCase());
+  const v = parseInt(p.get('view'),10);
+  return [i<0?0:i, p.get('lang')==='he'?'he':'en', [0,1,3,7].includes(v)?v:3,
+          p.get('theme')==='dark'?'dark':'light'];
+}
+function go(i,lang,view,theme){
+  const p = new URLSearchParams(location.search);
+  p.set('variant',VARIANTS[i][0]); p.set('lang',lang); p.set('view',view); p.set('theme',theme);
+  history.replaceState(null,'',location.pathname+'?'+p); render();
+}
+function render(){
+  const [i,lang,view,theme] = state();
+  document.getElementById('stage').innerHTML = VARIANTS[i][3](lang,view,theme);
+  document.getElementById('lab').innerHTML =
+    `${VARIANTS[i][0]} — ${VARIANTS[i][1]}<small>${VARIANTS[i][2]}</small>`;
+  document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  document.querySelectorAll('.switcher [data-theme]').forEach(b=>b.classList.toggle('on',b.dataset.theme===theme));
+  document.querySelectorAll('[data-view]').forEach(s=>
+    s.onclick = () => go(i, lang, parseInt(s.dataset.view,10), theme));
+}
+document.getElementById('prev').onclick = () => { const [i,l,v,th]=state(); go(step(i,-1),l,v,th); };
+document.getElementById('next').onclick = () => { const [i,l,v,th]=state(); go(step(i,+1),l,v,th); };
+document.querySelectorAll('[data-lang]').forEach(b=>
+  b.onclick = () => { const [i,,v,th]=state(); go(i,b.dataset.lang,v,th); });
+document.querySelectorAll('.switcher [data-theme]').forEach(b=>
+  b.onclick = () => { const [i,l,v]=state(); go(i,l,v,b.dataset.theme); });
+addEventListener('keydown', e=>{
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)||e.target.isContentEditable) return;
+  const [i,l,v,th]=state();
+  if(e.key==='ArrowLeft')  go(step(i,-1),l,v,th);
+  if(e.key==='ArrowRight') go(step(i,+1),l,v,th);
+});
+render();
+</script>
+</body>
+</html>

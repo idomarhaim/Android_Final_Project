@@ -84,18 +84,35 @@ export const getRecommendations = onCall(async (request: CallableRequest) => {
   }
 });
 
-/** Classify a free-text task onto a goal, or suggest a new goal (spec §6 Bonus). */
+/**
+ * Classify a free-text task onto a goal, or suggest a new goal (spec §6 Bonus).
+ *
+ * Also returns the two numbers the client cannot get anywhere else: what the task
+ * is worth in points, and **how many minutes it takes** — the raw material of the
+ * time-allocation chart, which reports what share of the user's life went into
+ * each life area. `suggestedLifeAreaId` must be one of the ids in `lifeAreas`;
+ * the client drops anything else rather than filing real time under a made-up id.
+ */
 export const classifyTask = onCall(async (request: CallableRequest) => {
-  const { taskTitle = "", goals = [] } = request.data ?? {};
+  const { taskTitle = "", goals = [], lifeAreas = [] } = request.data ?? {};
 
   const system =
-    "Classify a task into one of the user's existing goals, or suggest creating a new goal. " +
+    "Classify a task into one of the user's existing goals, or suggest creating a new goal, " +
+    "and file it under one of the user's life areas. " +
     "Reply ONLY with a JSON object: " +
     "{\"suggestedGoalId\":string|null,\"suggestedNewGoalTitle\":string|null," +
     `\"suggestedCategory\":\"${CATEGORIES.join("|")}\",` +
-    "\"estimatedPoints\":number,\"confidence\":number,\"rationale\":string}. " +
-    "estimatedPoints is 5-50 by difficulty; confidence is 0..1.";
-  const user = `Task: "${taskTitle}". Existing goals: ${JSON.stringify(goals)}.`;
+    "\"suggestedLifeAreaId\":string|null," +
+    "\"estimatedPoints\":number,\"estimatedMinutes\":number," +
+    "\"confidence\":number,\"rationale\":string}. " +
+    "suggestedLifeAreaId MUST be one of the given life area ids, or null if none fits. " +
+    "estimatedPoints is 5-50 by difficulty. " +
+    "estimatedMinutes is how long the task realistically takes to do, 5-480, " +
+    "for one sitting of it (a 30-minute run is 30, not the whole training plan). " +
+    "confidence is 0..1. The task title may be in any language, including Hebrew.";
+  const user =
+    `Task: "${taskTitle}". Existing goals: ${JSON.stringify(goals)}. ` +
+    `Life areas: ${JSON.stringify(lifeAreas)}.`;
 
   try {
     return await callGroqJson(system, user);
@@ -105,25 +122,44 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
       suggestedGoalId: null,
       suggestedNewGoalTitle: String(taskTitle).slice(0, 40),
       suggestedCategory: "OTHER",
+      suggestedLifeAreaId: null,
       estimatedPoints: 10,
+      estimatedMinutes: 30,
       confidence: 0,
       rationale: "fallback",
     };
   }
 });
 
-/** Estimate point value for a task (spec §6 Core: point scoring). */
+/**
+ * Estimate what a task costs (spec §6 Core: point scoring) — difficulty in points
+ * and duration in minutes.
+ *
+ * One call returns both because the free GROQ tier allows 30 requests/minute and
+ * the Google Tasks import already spends one per imported row; asking twice about
+ * the same sentence would halve what a single import can cover.
+ */
 export const scoreTask = onCall(async (request: CallableRequest) => {
   const { taskTitle = "" } = request.data ?? {};
   const system =
-    "Estimate difficulty points (integer 5-50) for a personal task. " +
-    "Reply ONLY with JSON: {\"points\":number}.";
+    "Estimate difficulty points (integer 5-50) and duration in minutes (integer 5-480) " +
+    "for one sitting of a personal task. The title may be in any language, including Hebrew. " +
+    "Reply ONLY with JSON: {\"points\":number,\"minutes\":number}.";
   try {
     const json = await callGroqJson(system, `Task: "${taskTitle}"`);
     const points = Number(json?.points);
-    return { points: Number.isFinite(points) ? Math.min(50, Math.max(5, Math.round(points))) : 10 };
+    const minutes = Number(json?.minutes);
+    const safePoints = Number.isFinite(points)
+      ? Math.min(50, Math.max(5, Math.round(points)))
+      : 10;
+    return {
+      points: safePoints,
+      minutes: Number.isFinite(minutes)
+        ? Math.min(480, Math.max(5, Math.round(minutes)))
+        : safePoints * 3,
+    };
   } catch (e) {
     logger.error("scoreTask failed", e);
-    return { points: 10 };
+    return { points: 10, minutes: 30 };
   }
 });

@@ -1,0 +1,934 @@
+<!doctype html>
+<!--
+  PROTOTYPE — GoalPilot visual language, four candidates (C12, issue #31).
+  THROWAWAY. Not app code.
+  ?style=glass|liquid|neo|darkneo|compare · ?lang=he|en · ?theme=light|dark
+  ?canvas=shared|native
+
+  Rev 1 — 2026-08-11. Ido: rev 4's charts "look like a balloon — dated, not
+  pretty". The balloon is one specific thing: feSpecularLighting over a fat
+  stroke inflates the ring into a tube. Every style here deletes that filter and
+  gets its depth from somewhere else:
+
+    glass   — depth from BLUR and translucency. Thin flat arcs over a frosted
+              panel; the background is visible through the surface.
+    liquid  — depth from REFRACTION. A bright thin rim, a dark counter-rim, one
+              specular streak, and the canvas showing through the body.
+    neo     — depth from SHADOW PAIRS on one flat surface. Inset track, softly
+              extruded arc, muted hues.
+    darkneo — Ido's reference, added 2026-08-11. Charcoal, deep soft shadows,
+              very large radii, and exactly ONE cyan-to-blue accent. Its donut
+              runs a RAMP of that accent, because six category hues would
+              destroy the single-accent idea the style is built on — so colour
+              stops carrying category identity and the labels carry it instead.
+
+  Rev 13 — 2026-08-12. METAL DELETED, on Ido's decision: the other four all ship
+  as a user-selectable material and metal does not. Removed rather than hidden
+  behind a flag, because a candidate nobody can pick is dead code that still has
+  to be maintained through every later revision.
+
+  Same screen, same week, same palette in all four, so the only variable is the
+  material. "compare" puts the same card in all four side by side.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — GoalPilot visual language, four candidates</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:#0b1017;color:#dbe6f2;min-height:100vh;
+    font-family:'Rubik','Heebo','Assistant','Inter','Segoe UI Variable Text','Segoe UI',
+                Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px 12px 120px;
+  }
+  .ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+  svg{display:block}
+  .banner{max-width:900px;text-align:center}
+  .banner h1{margin:0 0 5px;font-size:14.5px;font-weight:600;color:#eaf2fb}
+  .banner p{margin:0;font-size:12.5px;line-height:1.6;color:#93a7bd}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .cbtn{border:1px solid #2a3a4c;background:#131c26;color:#cfe0f0;border-radius:999px;
+        padding:6px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .cbtn:hover{border-color:#4f7fb5}
+  .cbtn.on{background:#3f7fd4;border-color:#3f7fd4;color:#fff}
+  #stage{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+       text-align:center;color:#8ba1b8;margin-top:9px}
+
+  /* ── device shell (identical in every style, so it is not a variable) ── */
+  .ph{width:392px;height:836px;border-radius:46px;border:11px solid #04080c;position:relative;
+      overflow:hidden;display:flex;flex-direction:column;
+      box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 30px 70px rgba(0,0,0,.6)}
+  .ph::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:86px;height:25px;border-radius:999px;background:#04080c;z-index:60}
+  .sb{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:6px 26px 0;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums}
+  .sc{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;position:relative;z-index:2}
+  .sc::-webkit-scrollbar{width:0}
+  .hdr{padding:2px 20px 14px;display:flex;align-items:center;gap:11px}
+  .hdr .ttl{font-size:27px;font-weight:700;letter-spacing:-.035em;line-height:1.05;flex:1}
+  .hdr .sub{font-size:12px;opacity:.7;font-weight:500;margin-top:3px}
+  .wrap{padding:0 18px 26px;display:flex;flex-direction:column;gap:15px}
+  .row{display:flex;align-items:center;gap:12px}
+  .grow{flex:1;min-width:0}
+  .nm{font-size:14px;font-weight:640;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mt{font-size:11.5px;opacity:.66;font-weight:550;margin-top:2px}
+  .h3{font-size:16px;font-weight:700;letter-spacing:-.02em}
+  .sub2{font-size:12px;opacity:.65;font-weight:500;margin-top:2px}
+  .sep{height:1px;margin:11px 0}
+  .avat{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+        font-weight:750;font-size:14px}
+  .seg{display:flex;padding:4px;gap:3px}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:640;padding:8px 4px}
+
+  /* ════════════════════════ 1 · GLASSMORPHISM ════════════════════════
+     Frosted panels over a colourful canvas. Depth comes from BLUR: the
+     background is legible through the surface, so the panel reads as a sheet
+     of glass rather than a painted rectangle. */
+  .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass .card,.st-glass .seg,.st-glass .btn,.st-glass .chip,.st-glass .avat{
+    background:rgba(255,255,255,.13);
+    backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+    border:1px solid rgba(255,255,255,.26);
+    box-shadow:0 10px 30px rgba(6,12,28,.30), inset 0 1px 0 rgba(255,255,255,.42);}
+  .st-glass[data-theme="light"] .card,.st-glass[data-theme="light"] .seg,
+  .st-glass[data-theme="light"] .btn,.st-glass[data-theme="light"] .chip,
+  .st-glass[data-theme="light"] .avat{
+    background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.85);
+    box-shadow:0 10px 26px rgba(40,60,110,.13), inset 0 1px 0 rgba(255,255,255,.9);}
+  .st-glass .card{border-radius:var(--rad);padding:17px 18px}
+  .st-glass .seg{border-radius:999px}
+  .st-glass .seg span{border-radius:999px}
+  .st-glass .seg span.on{background:rgba(255,255,255,.30)}
+  .st-glass .sep{background:rgba(255,255,255,.16)}
+  .st-glass .btn{border-radius:999px;padding:13px 20px;font-weight:660;font-size:14px;
+    text-align:center}
+  .st-glass .chip{border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:650}
+
+  /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════
+     Thick refractive glass. Depth comes from REFRACTION at the edge: a bright
+     rim where light enters, a dark counter-rim where it leaves, one specular
+     streak, and the canvas bending through the body. Capsules everywhere. */
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
+    background:
+      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid .card,.st-liquid .seg,.st-liquid .btn,.st-liquid .chip,.st-liquid .avat{
+    position:relative;overflow:hidden;
+    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
+               rgba(255,255,255,.14));
+    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    box-shadow:
+      inset 1.4px 1.4px 0 rgba(255,255,255,.72),      /* light enters here  */
+      inset -1.4px -1.4px 0 rgba(255,255,255,.16),    /* and leaves here    */
+      inset 0 0 24px rgba(255,255,255,.10),
+      0 18px 40px rgba(4,10,24,.42);}
+  .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .seg,
+  .st-liquid[data-theme="light"] .btn,.st-liquid[data-theme="light"] .chip,
+  .st-liquid[data-theme="light"] .avat{
+    background:linear-gradient(150deg, rgba(255,255,255,.72), rgba(255,255,255,.34) 52%,
+               rgba(255,255,255,.55));
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
+               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
+               0 18px 36px rgba(40,60,110,.18);}
+  /* the moving specular streak that makes it read as liquid rather than frost */
+  .st-liquid .card::after,.st-liquid .btn::after{content:'';position:absolute;
+    inset:-40% -10%;pointer-events:none;
+    background:linear-gradient(108deg, transparent 34%, rgba(255,255,255,.30) 46%,
+               rgba(255,255,255,.06) 52%, transparent 64%)}
+  .st-liquid .card{border-radius:var(--rad);padding:18px 19px}
+  .st-liquid .seg{border-radius:999px}
+  .st-liquid .seg span{border-radius:999px}
+  .st-liquid .seg span.on{background:rgba(255,255,255,.34);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.8)}
+  .st-liquid .sep{background:rgba(255,255,255,.22)}
+  .st-liquid .btn{border-radius:999px;padding:14px 22px;font-weight:670;font-size:14px;
+    text-align:center}
+  .st-liquid .chip{border-radius:999px;padding:5px 13px;font-size:11.5px;font-weight:660}
+
+  /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════
+     One flat surface, and every element is pressed out of it or into it.
+     Depth comes from a SHADOW PAIR — light from the top-left, dark from the
+     bottom-right — so nothing is translucent and nothing has an edge. */
+  .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
+    --lo:#FFFFFF;--sh:rgba(163,177,198,.62);background:#E7ECF3;}
+  .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
+    --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);background:#252A32;}
+  .st-neo .card,.st-neo .seg,.st-neo .btn,.st-neo .chip,.st-neo .avat{
+    background:var(--bgc,inherit);
+    box-shadow:7px 7px 16px var(--sh), -7px -7px 16px var(--lo);}
+  .st-neo .card{border-radius:var(--rad);padding:18px 19px;background:transparent}
+  .st-neo .seg{border-radius:999px;padding:5px;
+    box-shadow:
+      inset 0 2.5px 2px color-mix(in srgb, var(--sh) 70%, transparent),
+      inset 8px 8px 16px var(--sh),
+      inset -7px -7px 15px var(--lo),
+      inset 0 -2px 1.5px var(--lo),
+      0 1px 0 var(--lo)}
+  .st-neo .seg span{border-radius:999px}
+  .st-neo .seg span.on{box-shadow:4px 4px 9px var(--sh), -4px -4px 9px var(--lo)}
+  .st-neo .sep{background:var(--sh);opacity:.35}
+  .st-neo .btn{border-radius:999px;padding:13px 20px;font-weight:660;font-size:14px;
+    text-align:center}
+  .st-neo .chip{border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:650}
+  .st-neo .avat{border-radius:50%}
+  .st-neo .inset{box-shadow:inset 5px 5px 11px var(--sh), inset -5px -5px 11px var(--lo)}
+
+  /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════
+     Ido's reference, 2026-08-11. Charcoal canvas, deep soft shadows, very large
+     radii — and exactly ONE saturated gradient, cyan → blue, reserved for the
+     thing that matters on the screen. Everything else is monochrome, which is
+     what makes the accent read as bright rather than as another colour. */
+  .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
+    --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);
+    --a1:#5FD8FF;--a2:#1170E4;background:#1B1F26;}
+  .st-darkneo[data-theme="light"]{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);
+    background:#22262E;}  /* it has no light scheme — see the blurb */
+  .st-darkneo .card,.st-darkneo .seg,.st-darkneo .chip,.st-darkneo .avat{
+    background:linear-gradient(158deg,#232830,#1A1E25);
+    box-shadow:10px 10px 22px var(--sh), -8px -8px 20px var(--lo),
+               inset 0 1px 0 rgba(255,255,255,.05);}
+  .st-darkneo .card{border-radius:var(--rad);padding:19px 20px}
+  /* a recess is DARKER than the surface it is cut into, and it has two hard
+     edges: a near-black lip where the light is blocked at the top, and a bright
+     rim at the bottom where it spills out. Blur alone reads as a smudge. */
+  .st-darkneo .seg{border-radius:999px;padding:5px;
+    background:linear-gradient(180deg,#101419,#1C212A 62%,#232935);
+    box-shadow:
+      inset 0 2.5px 2px rgba(0,0,0,.95),
+      inset 9px 9px 18px rgba(0,0,0,.92),
+      inset -7px -7px 16px rgba(255,255,255,.055),
+      inset 0 -2px 1.5px rgba(255,255,255,.10),
+      0 1px 0 rgba(255,255,255,.055)}
+  .st-darkneo .seg span{border-radius:999px}
+  .st-darkneo .seg span.on{background:linear-gradient(120deg,var(--a1),var(--a2));color:#04121F;
+    box-shadow:0 5px 14px rgba(23,130,228,.55), 0 1px 3px rgba(0,0,0,.5),
+               inset 0 1px 0 rgba(255,255,255,.55)}
+  .st-darkneo .sep{background:rgba(255,255,255,.07)}
+  .st-darkneo .btn{border-radius:999px;padding:15px 22px;font-weight:700;font-size:14.5px;
+    text-align:center;background:linear-gradient(110deg,var(--a2),var(--a1));color:#06121C;
+    box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
+  .st-darkneo .chip{border-radius:999px;padding:6px 13px;font-size:11.5px;font-weight:660}
+  .st-darkneo .avat{border-radius:50%}
+
+  /* ═════════════════ SHARED CANVAS (Ido, 2026-08-11) ═══════════════════
+     All four materials on the glassmorphism canvas, so the only variable left
+     is the surface itself. Two class selectors, so this beats each style's own
+     one-class background rule. */
+  .st.shared{
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st.shared[data-theme="light"]{
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  /* Liquid keeps its own text colours; glass is already this canvas.
+     NEO is the one that genuinely changes, and it is worth knowing why:
+     neumorphism is DEFINED by the surface being the same colour as what is
+     behind it — that is what makes the shadow pair read as an extrusion rather
+     than as a floating card. On a gradient there is no single "same colour", so
+     the honest rendering is a neutral plate, slightly translucent, carrying the
+     shadow pair. It is soft UI on a canvas rather than true neumorphism, and
+     the difference is visible: the card now has an edge. */
+  .st-neo.shared{--fg:#F0F4FA;--fg2:rgba(240,244,250,.72)}
+  .st-neo.shared[data-theme="light"]{--fg:#18202C;--fg2:rgba(24,32,44,.64)}
+  .st-neo.shared .card,.st-neo.shared .seg,.st-neo.shared .btn,
+  .st-neo.shared .chip,.st-neo.shared .avat{
+    background:rgba(30,36,46,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:7px 7px 16px rgba(0,0,0,.52), -7px -7px 16px rgba(255,255,255,.07);}
+  .st-neo.shared[data-theme="light"] .card,.st-neo.shared[data-theme="light"] .seg,
+  .st-neo.shared[data-theme="light"] .btn,.st-neo.shared[data-theme="light"] .chip,
+  .st-neo.shared[data-theme="light"] .avat{
+    background:rgba(233,238,246,.80);
+    box-shadow:7px 7px 16px rgba(120,138,166,.40), -7px -7px 16px rgba(255,255,255,.80);}
+  .st-neo.shared .seg{
+    box-shadow:inset 0 2.5px 2px rgba(0,0,0,.6), inset 8px 8px 16px rgba(0,0,0,.55),
+      inset -7px -7px 15px rgba(255,255,255,.075), inset 0 -2px 1.5px rgba(255,255,255,.09)}
+  .st-neo.shared[data-theme="light"] .seg{
+    box-shadow:inset 0 2.5px 2px rgba(120,138,166,.5), inset 8px 8px 16px rgba(120,138,166,.45),
+      inset -7px -7px 15px rgba(255,255,255,.9), inset 0 -2px 1.5px rgba(255,255,255,.95)}
+  /* dark neo has the same problem as neo, one shade darker: its shadows need a
+     charcoal to sit on. On the shared canvas it becomes a charcoal plate. */
+  .st-darkneo.shared .card,.st-darkneo.shared .seg,.st-darkneo.shared .chip,
+  .st-darkneo.shared .avat{
+    background:linear-gradient(158deg,rgba(35,40,48,.88),rgba(26,30,37,.90));
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+
+  .st{color:var(--fg)}
+  .st .mt,.st .sub,.st .sub2{color:var(--fg2)}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <h1>PROTOTYPE — <span id="ttl">…</span></h1>
+  <p id="sub">…</p>
+</div>
+
+<div class="bar">
+  <button class="cbtn" data-s="glass">Glassmorphism</button>
+  <button class="cbtn" data-s="liquid">Liquid glass</button>
+  <button class="cbtn" data-s="neo">Neo (soft UI)</button>
+  <button class="cbtn" data-s="darkneo">Dark neo · neon accent</button>
+  <button class="cbtn" data-s="compare">Compare all four</button>
+</div>
+<div class="bar">
+  <button class="cbtn on" id="empty">Empty channel</button>
+  <button class="cbtn" id="raised">Raised 3D arc</button>
+</div>
+<div class="bar">
+  <button class="cbtn on" id="canvas">Shared canvas</button>
+  <button class="cbtn" id="lang">עברית</button>
+  <button class="cbtn" id="theme">Light</button>
+</div>
+
+<div id="stage"></div>
+
+<script>
+/* the harmonised category set from C12 rev 4 — held constant so the only
+   variable between these four screens is the MATERIAL, not the colour */
+const CAT={
+  LEARNING:{he:'לימודים',      en:'Studies',       l:'#6E56D8', d:'#B6A6F5'},
+  HEALTH:  {he:'בריאות',       en:'Health',        l:'#D8564C', d:'#F5A196'},
+  CAREER:  {he:'קריירה',       en:'Career',        l:'#2E7BC4', d:'#95C4EE'},
+  RELATION:{he:'מערכות יחסים', en:'Relationships', l:'#C24586', d:'#EEA0C6'},
+  FINANCE: {he:'כספים',        en:'Finance',       l:'#1D8C86', d:'#7FCFC7'},
+  OTHER:   {he:'ללא שיוך',     en:'Unfiled',       l:'#7C8798', d:'#AEB9C7'},
+};
+const AREAS=[{k:'LEARNING',min:420},{k:'HEALTH',min:260},{k:'CAREER',min:210},
+             {k:'RELATION',min:120},{k:'FINANCE',min:60},{k:'OTHER',min:40}];
+const TOTAL=AREAS.reduce((s,a)=>s+a.min,0);
+const GOALS=[{en:'Run 4 km a week',he:'לרוץ 4 ק״מ בשבוע',k:'HEALTH',pct:80,
+              me:'3.2 / 4 km',meHe:'3.2 / 4 ק״מ'},
+             {en:'A date night every week',he:'ערב זוגי כל שבוע',k:'RELATION',pct:75,
+              me:'3 / 4 weeks',meHe:'3 / 4 שבועות'}];
+
+let S='glass', L='en', THEME='dark', UID=0, SHARED=true, EMPTY=true, RAISED=false;
+/* a 26-hour week, used only when EMPTY is on so the ring stops short */
+const TARGET=26*60;
+const T=o=>L==='he'?(o.he??o.en):o.en;
+const t=(en,he)=>L==='he'?he:en;
+const ltr=s=>`<span class="ltr">${s}</span>`;
+/* Dark neo is built on ONE accent, so a six-hue categorical palette would break
+   the very thing that makes it work. Its donut therefore runs a ramp of the
+   accent — and the cost is real and worth seeing rather than arguing about:
+   COLOUR STOPS CARRYING CATEGORY IDENTITY. The direct labels added in C12 rev 4
+   are what make that survivable, since the name is on the slice either way. */
+const RAMP=['#6FDEFF','#39C0F5','#22A2E8','#1A82DC','#1663CE','#2A49A6'];
+/* neo needs muted, low-chroma hues or the shadows fight the fill; the others
+   take the palette straight */
+const cc=k=>{
+  if(S==='darkneo'){
+    const i=AREAS.findIndex(a=>a.k===k);
+    return RAMP[i<0 ? 1 : i];
+  }
+  const base = THEME==='dark' ? CAT[k].d : CAT[k].l;
+  return S==='neo' ? mix(base, THEME==='dark'?[37,42,50]:[231,236,243], .30) : base;
+};
+const hx=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));
+const rgbs=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const mix=(h,to,a)=>rgbs(hx(h).map((v,i)=>v+(to[i]-v)*a));
+const lite=(h,a=.35)=>mix(h,[255,255,255],a);
+const dk=(h,a=.30)=>mix(h,[8,14,24],a);
+/* A REAL groove. feDropShadow casts OUTSIDE a shape, which is why the earlier
+   track read as a flat dark ring with a halo rather than as a channel milled
+   into the surface. An inner shadow has to be built: offset the alpha, blur it,
+   subtract it from the original, and fill what is left — that band is the wall
+   of the channel. Twice, opposite directions: dark where the light is blocked
+   (top-left) and a bright rim where it spills out (bottom-right). */
+function groove(id, darkC, liteC, d, blur, o1, o2){
+  return `<filter id="${id}" x="-35%" y="-35%" width="170%" height="170%">
+    <feOffset in="SourceAlpha" dx="${d}" dy="${d}" result="oa"/>
+    <feGaussianBlur in="oa" stdDeviation="${blur}" result="ba"/>
+    <feComposite operator="out" in="SourceAlpha" in2="ba" result="ma"/>
+    <feFlood flood-color="${darkC}" flood-opacity="${o1}" result="ca"/>
+    <feComposite operator="in" in="ca" in2="ma" result="sa"/>
+    <feOffset in="SourceAlpha" dx="${-d}" dy="${-d}" result="ob"/>
+    <feGaussianBlur in="ob" stdDeviation="${blur}" result="bb"/>
+    <feComposite operator="out" in="SourceAlpha" in2="bb" result="mb"/>
+    <feFlood flood-color="${liteC}" flood-opacity="${o2}" result="cb"/>
+    <feComposite operator="in" in="cb" in2="mb" result="sb"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="sa"/>
+      <feMergeNode in="sb"/></feMerge></filter>`;
+}
+/* the channel wall is not one flat tone — a cylinder cut into a solid is darker
+   where it faces the light source and lighter where it faces away */
+function wall(id, top, bot){
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="0.25" y2="1">
+    <stop offset="0%" stop-color="${top}"/><stop offset="100%" stop-color="${bot}"/></linearGradient>`;
+}
+const pol=(cx,cy,r,d)=>[cx+r*Math.cos(d*Math.PI/180), cy+r*Math.sin(d*Math.PI/180)];
+/* a CLOSED annular sector — a stroked arc has no outline, and without an
+   outline there is no body to extrude and no face to light */
+/* A label that runs off the card is not a label. SVG cannot wrap or ellipsise,
+   so the budget has to be computed: the space left on that side, minus what the
+   percentage will take. Found by rendering the real card, not by reading code. */
+function clampLabel(name, avail, pct){
+  const CW=4.9, need=(' '+pct+'%').length*CW;
+  const max=Math.max(3, Math.floor((avail-need)/CW));
+  return name.length>max ? name.slice(0,max-1)+'…' : name;
+}
+function sector(cx,cy,ro,ri,a0,a1){
+  const [x0,y0]=pol(cx,cy,ro,a0), [x1,y1]=pol(cx,cy,ro,a1);
+  const [x2,y2]=pol(cx,cy,ri,a1), [x3,y3]=pol(cx,cy,ri,a0);
+  const big=a1-a0>180?1:0;
+  return `M ${x0} ${y0} A ${ro} ${ro} 0 ${big} 1 ${x1} ${y1} `
+       + `L ${x2} ${y2} A ${ri} ${ri} 0 ${big} 0 ${x3} ${y3} Z`;
+}
+/* THE ENVELOPE. A union silhouette behind the top face is not a side face —
+   it has no fold, no separate tone, and no end, so it reads as a shadow. A
+   solid needs its faces drawn as faces: the outer wall, the inner wall, and an
+   END CAP at each end of the slice. The caps are what make each block read as
+   its own slab rather than as a segment of one painted ring. */
+function wallStrip(cx,cy,rad,a0,a1,vx,vy){
+  const [x0,y0]=pol(cx,cy,rad,a0), [x1,y1]=pol(cx,cy,rad,a1);
+  const big=a1-a0>180?1:0;
+  return `M ${x0} ${y0} A ${rad} ${rad} 0 ${big} 1 ${x1} ${y1} `
+       + `L ${x1+vx} ${y1+vy} A ${rad} ${rad} 0 ${big} 0 ${x0+vx} ${y0+vy} Z`;
+}
+function endCap(cx,cy,ro,ri,ang,vx,vy){
+  const [xo,yo]=pol(cx,cy,ro,ang), [xi,yi]=pol(cx,cy,ri,ang);
+  return `M ${xo} ${yo} L ${xi} ${yi} L ${xi+vx} ${yi+vy} L ${xo+vx} ${yo+vy} Z`;
+}
+const arc=(cx,cy,r,a0,a1)=>{
+  const [x0,y0]=pol(cx,cy,r,a0),[x1,y1]=pol(cx,cy,r,a1);
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The donut, once per material. Same geometry, same data, same labels —
+   only the surface treatment differs. NO feSpecularLighting anywhere: that
+   filter over a fat stroke is what inflated rev 4's ring into a balloon.
+   ═══════════════════════════════════════════════════════════════════════ */
+function donut(w, r, thick, style, centre, labels){
+  const id='u'+(++UID), cx=w/2, cy=(labels?r+thick/2+22:r+thick/2);
+  const h=labels? cy+r+thick/2+24 : r*2+thick;
+  const dark=THEME==='dark';
+  let defs='', segs='', over='', acc=0;
+  const pts=[];
+
+  /* EMPTY: size the slices against the 26-hour week rather than against the
+     tracked total, so the ring stops short and the bare channel is visible.
+     This exists to let the groove be JUDGED — it is a rendering test, not a
+     proposed metric. */
+  const DEN = EMPTY ? TARGET : TOTAL;
+
+  /* ── RAISED, rebuilt 2026-08-12 ──────────────────────────────────────
+     The first attempt faked height with a stack of translated copies. Ido saw
+     exactly what that is: a pack of cards, wider than the channel, cutting its
+     walls, and spilling over the neighbouring slice. All three follow from the
+     same mistake — N discrete copies instead of ONE body — so this builds the
+     body properly:
+       · each slice is a CLOSED annular sector, not a stroked arc, so it has a
+         real outline;
+       · the side wall is ONE filled path containing the face and its offset
+         base as two subpaths — a single fill, so there is no banding to read
+         as cards, and a single silhouette, so it is one body;
+       · the block is NARROWER than the channel and the whole group is CLIPPED
+         to the channel annulus, so nothing can cross a wall;
+       · walls are drawn for every slice first and faces second, in two passes,
+         so no neighbour's wall can ever land on top of a face.
+     Soft-UI materials only; height would contradict glass and liquid. */
+  const RZ = RAISED && (style==='neo'||style==='darkneo');
+  let bevDefs='';
+  const ch = thick*1.30;              // the channel, as cut by the groove
+  /* The body must FIT the channel, walls included — so the extrusion is part of
+     the width budget, not an addition to it. h is the height, the block is what
+     is left over, and the body is centred by offsetting the face half a height
+     toward the light. Then nothing can reach a wall of the groove even before
+     the clip catches it. */
+  const H  = RZ ? ch*0.34 : 0;
+  const HX = H*0.58, HY = H*0.81;     // one light direction: from the top-left
+  /* the body is CENTRED in the channel, so it swings only ±H/2 — the margin
+     owed is H, not 2H. Budgeting 2H is what made the blocks thin. */
+  const bw = RZ ? ch*0.62 : ch*0.66;
+  const fx = cx-HX/2, fy = cy-HY/2;   // face centre, half a height up-light
+  const ro = r+bw/2, ri = r-bw/2;
+  let walls='', faces='';
+
+  AREAS.forEach(a=>{
+    const gap = RZ ? 4.2 : 2.4;
+    const f=a.min/DEN, a0=acc*360-90, a1=a0+f*360-gap, c=cc(a.k);
+    const d=arc(cx,cy,r,a0,a1);
+    pts.push({a,mid:(a0+a1)/2,f}); acc+=f;
+
+    if(RZ){
+      const face = sector(fx,fy,ro,ri,a0,a1);
+      const mid=(a0+a1)/2;
+      const L0=cx-r-thick, L1=cy-r-thick, L2=cx+r+thick, L3=cy+r+thick;
+      /* userSpaceOnUse, spanning the WHOLE chart: an objectBoundingBox gradient
+         is relative to each slice's own box, so every block ends up lit from a
+         different direction and the ring stops being one scene. This is one
+         light, from the top-left, for every face and every wall. */
+      defs+=`<linearGradient id="${id}-f${a.k}" gradientUnits="userSpaceOnUse"
+          x1="${L0}" y1="${L1}" x2="${L2}" y2="${L3}">
+          <stop offset="0%"   stop-color="${lite(c,.46)}"/>
+          <stop offset="50%"  stop-color="${c}"/>
+          <stop offset="100%" stop-color="${dk(c,.20)}"/></linearGradient>
+        <linearGradient id="${id}-o${a.k}" gradientUnits="userSpaceOnUse"
+          x1="${L0}" y1="${L1}" x2="${L2}" y2="${L3}">
+          <stop offset="0%"   stop-color="${dk(c,.14)}"/>
+          <stop offset="100%" stop-color="${dk(c,.44)}"/></linearGradient>
+        <clipPath id="${id}-fc${a.k}"><path d="${face}"/></clipPath>`;
+      /* CONTACT SHADOW. Half the ring never shows a wall — the light comes from
+         one direction, so the blocks on the lit side present only their face.
+         Those blocks were reading as flat plates because nothing tied them to
+         the floor of the groove. An object in a scene casts onto what it sits
+         on; without that it is a decal. Drawn first, so every wall and face
+         lands on top of it. */
+      walls+=
+        `<path d="${sector(fx+HX*0.75,fy+HY*0.75,ro+H*0.5,ri-H*0.5,a0-1.4,a1+1.4)}"
+           fill="#000" opacity=".72" filter="url(#${id}-ao)"/>`
+      + `<path d="${wallStrip(fx,fy,ro,a0,a1,HX,HY)}" fill="url(#${id}-o${a.k})"/>`
+      + `<path d="${wallStrip(fx,fy,ri,a0,a1,HX,HY)}" fill="${dk(c,.46)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a0,HX,HY)}" fill="${dk(c,.22)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a1,HX,HY)}" fill="${dk(c,.32)}"/>`
+      + `<path d="${endCap(fx,fy,ro,ri,a0,HX,HY)}" fill="none" stroke="${lite(c,.30)}"
+           stroke-width=".8" opacity=".7"/>`
+      /* the FOLD, where the face turns into the wall — one line, on the one
+          edge that actually folds, so it defines the envelope instead of
+          outlining the shape */
+      + `<path d="${arc(fx,fy,ro,a0,a1)}" fill="none" stroke="${lite(c,.18)}"
+           stroke-width="1.1" opacity=".8"/>`
+      /* and the RIM, but ONLY where a wall is actually facing the viewer. On a
+          slice whose outer face turns away from the extrusion there is no wall
+          to catch light, and drawing the rim anyway puts a bright line around a
+          block that has no side — which is a frame again, on exactly the small
+          slices where it is most visible. */
+      + (Math.cos(mid*Math.PI/180)*0.58 + Math.sin(mid*Math.PI/180)*0.81 > 0.12
+          ? `<path d="${arc(fx+HX,fy+HY,ro,a0,a1)}" fill="none" stroke="${lite(c,.34)}"
+               stroke-width="1.1" opacity=".42"/>` : '');
+      /* Edges are DIRECTIONAL. A rim drawn all the way round is a white frame,
+         and a frame is the one thing that guarantees a shape reads as flat —
+         it says "sticker", not "solid". Light bevel only where the face turns
+         toward the light; dark fold only where it turns down into a wall. Both
+         clipped to the face, so they are bevels on the plane rather than an
+         outline around it. */
+      /* A stroked rim — even an offset one — is still a LINE, and a line all
+         round a shape is a frame. A bevel is not a line: it is the face itself
+         catching more light near the edge that turns toward the source. So the
+         highlight is a soft gradient wash clipped to the face, brightest at the
+         up-light border and gone within a third of the block, with the matching
+         shadow wash from the opposite side. No outline anywhere. */
+      faces+=`<path d="${face}" fill="url(#${id}-f${a.k})"/>
+        <g clip-path="url(#${id}-fc${a.k})">
+          <rect x="${L0}" y="${L1}" width="${L2-L0}" height="${L3-L1}" fill="url(#${id}-bev)"/>
+          <rect x="${L0}" y="${L1}" width="${L2-L0}" height="${L3-L1}" fill="url(#${id}-shd)"/>
+          <path d="${sector(fx,fy,ro-0.7,ri+0.7,a0,a1)}" fill="none"
+            stroke="${lite(c,.75)}" stroke-width="1" opacity=".55"
+            transform="translate(${-HX*0.30},${-HY*0.30})"/>
+        </g>`;
+      return;
+    }
+
+    if(style==='glass'){
+      /* flat, slightly transparent, with a coloured bloom instead of a bevel */
+      /* The filter region defaults to 120% of the OBJECT's bounding box. A 3%
+         slice has a tiny box, so a 5px bloom overruns it and is cut off square
+         — which is why the small slices grew grey rectangles. The region has to
+         be stated in USER SPACE, sized to the chart, not to the slice. */
+      defs+=`<filter id="${id}-b${a.k}" filterUnits="userSpaceOnUse"
+        x="${cx-r-thick*2}" y="${cy-r-thick*2}" width="${(r+thick*2)*2}" height="${(r+thick*2)*2}">
+        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="${c}" flood-opacity=".55"/></filter>`;
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt" opacity=".92" filter="url(#${id}-b${a.k})"/>`;
+      over+=`<path d="${d}" stroke="rgba(255,255,255,.34)" stroke-width="1.2" fill="none"
+        transform="translate(0,-${thick/2-0.6})" opacity=".5"/>`;
+    }
+
+    if(style==='liquid'){
+      /* refraction: translucent body, bright inner rim, dark outer rim */
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt" opacity="${dark?.62:.55}"/>`;
+      over+=`<path d="${arc(cx,cy,r-thick/2+1.1,a0,a1)}" stroke="rgba(255,255,255,${dark?.78:.9})"
+          stroke-width="1.5" fill="none"/>
+        <path d="${arc(cx,cy,r+thick/2-1.1,a0,a1)}" stroke="rgba(255,255,255,${dark?.22:.45})"
+          stroke-width="1.1" fill="none"/>`;
+    }
+
+    if(style==='neo'||style==='darkneo'){
+      /* one soft extrusion, no rim, no gloss */
+      segs+=`<path d="${d}" stroke="${c}" stroke-width="${thick}" fill="none"
+        stroke-linecap="butt"/>`;
+    }
+  });
+
+  /* Two passes, clipped to the channel. Walls for EVERY slice first, faces
+     second — that ordering is what stops a neighbour's wall from landing on
+     top of a face, which is the "blocks climbing over each other" defect. The
+     clip is the channel annulus itself, so a body physically cannot cross a
+     wall of the groove. */
+  if(RZ){
+    const G0=cx-r-thick, G1=cy-r-thick, G2=cx+r+thick, G3=cy+r+thick;
+    defs+=`<filter id="${id}-ao" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="${Math.max(1.6,H*0.42)}"/></filter>
+      <linearGradient id="${id}-bev" gradientUnits="userSpaceOnUse"
+        x1="${G0}" y1="${G1}" x2="${G2}" y2="${G3}">
+        <stop offset="0%"  stop-color="#ffffff" stop-opacity=".34"/>
+        <stop offset="34%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="${id}-shd" gradientUnits="userSpaceOnUse"
+        x1="${G2}" y1="${G3}" x2="${G0}" y2="${G1}">
+        <stop offset="0%"  stop-color="#000000" stop-opacity=".30"/>
+        <stop offset="30%" stop-color="#000000" stop-opacity="0"/></linearGradient>`;
+    /* strict again, and this time it costs nothing: the block was sized as
+       ch - 2H, so the whole body already fits between the walls and the clip
+       never has anything to cut. It is a guarantee, not a crop. */
+    const co=r+ch/2, ci=r-ch/2;
+    defs+=`<clipPath id="${id}-clip"><path fill-rule="evenodd" d="
+      M ${cx-co} ${cy} a ${co} ${co} 0 1 0 ${co*2} 0 a ${co} ${co} 0 1 0 ${-co*2} 0 Z
+      M ${cx-ci} ${cy} a ${ci} ${ci} 0 1 0 ${ci*2} 0 a ${ci} ${ci} 0 1 0 ${-ci*2} 0 Z
+      "/></clipPath>`;
+    segs=`<g clip-path="url(#${id}-clip)">${walls}${faces}</g>`;
+  }
+
+  /* the track, which is where the two soft-UI materials do their real work */
+  let track='';
+  if(style==='darkneo'){
+    /* the channel is drawn WIDER than the arcs sitting in it, so its walls stay
+       visible on both sides — that is most of what makes it read as solid */
+    const ch=thick*1.30;
+    defs+=groove(`${id}-in`, '#000000', '#79879B', 4, 3.4, .95, .58)
+        + wall(`${id}-w`, '#12161C', '#2B323C')
+        + `<filter id="${id}-ex" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow dx="3" dy="4" stdDeviation="4" flood-color="#04060A" flood-opacity=".8"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".30"/>
+        </filter>`;
+    track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="url(#${id}-w)" stroke-width="${ch}"/></g>
+      <circle cx="${cx}" cy="${cy}" r="${r+ch/2}" fill="none" stroke="rgba(255,255,255,.07)"
+        stroke-width=".9"/>
+      <circle cx="${cx}" cy="${cy}" r="${r-ch/2}" fill="none" stroke="rgba(0,0,0,.55)"
+        stroke-width=".9"/>`;
+    /* raised already carries its own wall — a second cast shadow on top of it
+       reads as two objects, so only the glow (which is light) survives */
+    segs=RZ ? `<g filter="url(#${id}-gw)">${segs}</g>`
+            : `<g filter="url(#${id}-ex)">${segs}</g>`;
+    if(RZ) defs+=`<filter id="${id}-gw" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#2AA6F0" flood-opacity=".22"/>
+      </filter>`;
+  } else if(style==='neo'){
+    const ch=thick*1.26;
+    defs+=groove(`${id}-in`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
+                 3.4, 3, dark?.92:.85, dark?.5:.95)
+        + wall(`${id}-w`, dark?'#1E222A':'#DDE3EC', dark?'#2C323C':'#F4F7FC')
+        + `<filter id="${id}-ex" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="2.5" dy="3" stdDeviation="3" flood-color="${dark?'#0b0e13':'#9DAAC0'}"
+          flood-opacity="${dark?.8:.55}"/></filter>`;
+    track=`<g filter="url(#${id}-in)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
+    if(!RZ) segs=`<g filter="url(#${id}-ex)">${segs}</g>`;
+  } else {
+    track=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.14)"
+      stroke-width="${thick}"/>`;
+  }
+
+  /* one specular streak for liquid, drawn as a short arc rather than a filter */
+  if(style==='liquid'){
+    over+=`<path d="${arc(cx,cy,r-thick*0.22,-152,-104)}" stroke="rgba(255,255,255,.85)"
+      stroke-width="${thick*0.26}" fill="none" stroke-linecap="round" opacity=".9"/>`;
+  }
+
+  /* direct labels — kept from rev 4, they are a decision, not a style */
+  let lab='';
+  if(labels){
+    const R=r+thick/2, rows=pts.map(p=>{
+      const [x,y]=pol(cx,cy,R+4,p.mid);
+      return {p, s:Math.cos(p.mid*Math.PI/180)>=0?1:-1, x, y, ty:y};});
+    [1,-1].forEach(sg=>{
+      const g=rows.filter(o=>o.s===sg).sort((a,b)=>a.ty-b.ty);
+      for(let i=1;i<g.length;i++) if(g[i].ty-g[i-1].ty<15) g[i].ty=g[i-1].ty+15;
+      const ov=g.length?g[g.length-1].ty-(h-14):0;
+      if(ov>0) g.forEach(o=>o.ty-=ov);});
+    rows.forEach(o=>{
+      const ex=fx+o.s*(R+8), lx=fx+o.s*(R+13), c=cc(o.p.a.k);
+      /* one line, not two. Two stacked lines need ~22px of vertical room and the
+         de-collision only guarantees 15, so on the crowded side the name of one
+         area landed on the percentage of the next — visible in a full render,
+         invisible in the geometry. */
+      lab+=`<path d="M ${o.x} ${o.y} L ${ex} ${o.ty} L ${lx} ${o.ty}" fill="none" stroke="${c}"
+          stroke-width="1.2" opacity=".8" stroke-linecap="round"/>
+        <circle cx="${lx}" cy="${o.ty}" r="2.3" fill="${c}"/>
+        <text x="${lx+o.s*7}" y="${o.ty+3.5}" text-anchor="${o.s>0?'start':'end'}" font-size="10.5"
+          font-weight="640" fill="var(--fg)">${clampLabel(T(CAT[o.p.a.k]),
+            o.s>0 ? w-(lx+7)-3 : (lx-7-3), Math.round(o.p.f*100))}<tspan font-size="9.5"
+          font-weight="600" fill="var(--fg2)"> ${Math.round(o.p.f*100)}%</tspan></text>`;});
+  }
+
+  return `<div style="position:relative;width:${w}px;height:${h}px;flex:none">
+    <svg width="${w}" height="${h}"><defs>${defs}</defs>${track}${segs}${over}${lab}</svg>
+    ${centre?`<div style="position:absolute;left:0;width:${w}px;top:${cy-26}px;height:52px;
+      display:grid;place-items:center;text-align:center">${centre}</div>`:''}</div>`;
+}
+
+function ring(size,pct,k,txt,style){
+  const id='v'+(++UID), th=Math.max(5,size*.13), r=(size-th)/2, c=size/2, col=cc(k);
+  const dark=THEME==='dark';
+  let defs='',trk='',bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="${col}"
+    stroke-width="${th}" fill="none" stroke-linecap="round"/>`, ov='';
+  if(style==='darkneo'){
+    /* the reference's signature: a thick round-capped arc in the one accent
+       gradient, glowing, sitting in a groove pressed into the charcoal */
+    const ch=size*.19, tk=ch*0.66, rr=(size-ch)/2;
+    defs=`<linearGradient id="${id}-a" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1170E4"/><stop offset="100%" stop-color="#6FDEFF"/></linearGradient>`
+      + groove(`${id}-i`, '#000000', '#79879B', 3.2, 2.6, .95, .6)
+      + wall(`${id}-w`, '#12161C', '#2B323C')
+      + `<filter id="${id}-gl" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="2.4" flood-color="#04060A" flood-opacity=".75"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".6"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${rr}" fill="none"
+        stroke="url(#${id}-w)" stroke-width="${ch}"/></g>
+      <circle cx="${c}" cy="${c}" r="${rr+ch/2}" fill="none" stroke="rgba(255,255,255,.07)"
+        stroke-width=".8"/>`;
+    const dpath=arc(c,c,rr,-90,-90+pct*3.6);
+    if(RAISED){
+      /* ONE base and ONE face — two draws, never a stack. A stack of strokes is
+         what read as a pack of cards, and the fix is not fewer steps, it is no
+         steps at all. Clipped to the channel so the body cannot cross a wall. */
+      const CO=rr+ch/2+4, CI=Math.max(2,rr-ch/2-4);
+      defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
+          M ${c-CO} ${c} a ${CO} ${CO} 0 1 0 ${CO*2} 0 a ${CO} ${CO} 0 1 0 ${-CO*2} 0 Z
+          M ${c-CI} ${c} a ${CI} ${CI} 0 1 0 ${CI*2} 0 a ${CI} ${CI} 0 1 0 ${-CI*2} 0 Z"/></clipPath>
+        <filter id="${id}-gw" x="-60%" y="-60%" width="220%" height="220%">
+          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#2AA6F0" flood-opacity=".42"/>
+        </filter>`;
+      /* the ring gets the same envelope as the donut — a solid bar with slab
+         ends, not a round-capped stroke, because a body has faces */
+      const A0=-90, A1=-90+pct*3.6, RO=rr+tk/2, RI=rr-tk/2, VX=2.6, VY=3.6;
+      bar=`<g clip-path="url(#${id}-cl)">
+          <path d="${wallStrip(c,c,RO,A0,A1,VX,VY)}" fill="#1B4E8E"/>
+          <path d="${wallStrip(c,c,RI,A0,A1,VX,VY)}" fill="#123663"/>
+          <path d="${endCap(c,c,RO,RI,A0,VX,VY)}" fill="#17457C"/>
+          <path d="${endCap(c,c,RO,RI,A1,VX,VY)}" fill="#1A5090"/>
+          <g filter="url(#${id}-gw)"><path d="${sector(c,c,RO,RI,A0,A1)}"
+            fill="url(#${id}-a)"/></g>
+          <path d="${sector(c,c,RO,RI,A0,A1)}" fill="none" stroke="rgba(180,230,255,.75)"
+            stroke-width="1" stroke-linejoin="round"/></g>`;
+    } else {
+      bar=`<g filter="url(#${id}-gl)"><path d="${dpath}"
+        stroke="url(#${id}-a)" stroke-width="${tk}" fill="none" stroke-linecap="round"/></g>`;
+    }
+  } else if(style==='neo'){
+    const ch=th*1.32, rr=(size-ch)/2;
+    defs=groove(`${id}-i`, dark?'#05070B':'#8FA0B8', dark?'#4A5364':'#FFFFFF',
+                2.8, 2.4, dark?.9:.85, dark?.5:.95)
+      + wall(`${id}-w`, dark?'#1E222A':'#DDE3EC', dark?'#2C323C':'#F4F7FC')
+      + `<filter id="${id}-e" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow dx="2" dy="2.5" stdDeviation="2.4"
+          flood-color="${dark?'#0b0e13':'#9DAAC0'}" flood-opacity="${dark?.8:.55}"/></filter>`;
+    trk=`<g filter="url(#${id}-i)"><circle cx="${c}" cy="${c}" r="${rr}" fill="none"
+      stroke="url(#${id}-w)" stroke-width="${ch}"/></g>`;
+    const dp2=arc(c,c,rr,-90,-90+pct*3.6), bw=ch*0.68;
+    if(RAISED){
+      /* same rule: one base, one face, no stack */
+      const DO=rr+ch/2+4, DI=Math.max(2,rr-ch/2-4);
+      defs+=`<clipPath id="${id}-cl"><path fill-rule="evenodd" d="
+        M ${c-DO} ${c} a ${DO} ${DO} 0 1 0 ${DO*2} 0 a ${DO} ${DO} 0 1 0 ${-DO*2} 0 Z
+        M ${c-DI} ${c} a ${DI} ${DI} 0 1 0 ${DI*2} 0 a ${DI} ${DI} 0 1 0 ${-DI*2} 0 Z"/></clipPath>
+        <linearGradient id="${id}-rf" x1="0" y1="0" x2=".35" y2="1">
+          <stop offset="0%" stop-color="${lite(col,.34)}"/>
+          <stop offset="55%" stop-color="${col}"/>
+          <stop offset="100%" stop-color="${dk(col,.14)}"/></linearGradient>`;
+      const B0=-90, B1=-90+pct*3.6, RO2=rr+bw/2, RI2=rr-bw/2, WX=2.4, WY=3.4;
+      bar=`<g clip-path="url(#${id}-cl)">
+        <path d="${wallStrip(c,c,RO2,B0,B1,WX,WY)}" fill="${dk(col,.30)}"/>
+        <path d="${wallStrip(c,c,RI2,B0,B1,WX,WY)}" fill="${dk(col,.56)}"/>
+        <path d="${endCap(c,c,RO2,RI2,B0,WX,WY)}" fill="${dk(col,.42)}"/>
+        <path d="${endCap(c,c,RO2,RI2,B1,WX,WY)}" fill="${dk(col,.46)}"/>
+        <path d="${sector(c,c,RO2,RI2,B0,B1)}" fill="url(#${id}-rf)"/>
+        <path d="${sector(c,c,RO2,RI2,B0,B1)}" fill="none" stroke="${lite(col,.5)}"
+          stroke-width="1" stroke-linejoin="round" opacity=".8"/></g>`;
+    } else {
+      bar=`<g filter="url(#${id}-e)"><path d="${dp2}" stroke="${col}"
+        stroke-width="${bw}" fill="none" stroke-linecap="round"/></g>`;
+    }
+  } else if(style==='liquid'){
+    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.16)"
+      stroke-width="${th}"/>`;
+    bar=`<path d="${arc(c,c,r,-90,-90+pct*3.6)}" stroke="${col}" stroke-width="${th}" fill="none"
+      stroke-linecap="round" opacity="${dark?.62:.55}"/>`;
+    ov=`<path d="${arc(c,c,r-th/2+.9,-90,-90+pct*3.6)}" stroke="rgba(255,255,255,.8)"
+      stroke-width="1.2" fill="none"/>`;
+  } else {
+    defs=`<filter id="${id}-b" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3.4" flood-color="${col}" flood-opacity=".6"/></filter>`;
+    trk=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.16)"
+      stroke-width="${th}"/>`;
+    bar=`<g filter="url(#${id}-b)">${bar}</g>`;
+  }
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex:none">
+    <svg width="${size}" height="${size}"><defs>${defs}</defs>${trk}${bar}${ov}</svg>
+    ${txt!==undefined?`<div style="position:absolute;inset:0;display:grid;place-items:center;
+      font-size:${Math.round(size*.3)}px;font-weight:730;letter-spacing:-.03em">${txt}</div>`:''}
+  </div>`;
+}
+
+/* ═══ one screen, rendered in whichever material is selected ═══ */
+function screen(style){
+  const heroCol = cc('LEARNING');
+  const goals=GOALS.map((g,i)=>`
+    ${i?'<div class="sep"></div>':''}
+    <div class="row">${ring(46,g.pct,g.k,`<span style="font-size:13px">${ltr(g.pct)}</span>`,style)}
+      <div class="grow"><div class="nm">${T(g)}</div>
+      <div class="mt">${ltr(L==='he'?g.meHe:g.me)}</div></div></div>`).join('');
+
+  return `<div class="sb"><span>${ltr('9:41')}</span><span style="font-size:11px">${ltr('▮▮▮ ⌁ 87%')}</span></div>
+  <div class="sc">
+    <div class="hdr"><div class="grow"><div class="sub">${t('Tuesday, 11 August','יום שלישי, 11 באוגוסט')}</div>
+      <div class="ttl">${t('Good evening','ערב טוב')}</div></div>
+      <div class="avat">${t('I','ע')}</div></div>
+    <div class="wrap">
+
+      <div class="card" style="display:flex;align-items:center;gap:13px">
+        <div style="width:44px;height:44px;flex:none;display:grid;place-items:center;
+          border-radius:50%;font-size:19px;font-weight:750;
+          color:${style==='neo'?'var(--fg)':'#fff'};
+          background:${style==='neo'?'transparent':`linear-gradient(150deg,${lite(heroCol,.25)},${dk(heroCol,.2)})`};
+          ${style==='neo'?'box-shadow:4px 4px 9px var(--sh),-4px -4px 9px var(--lo)':''}">4</div>
+        <div class="grow"><div class="nm">${t('4 decisions waiting','4 החלטות ממתינות')}</div>
+          <div class="mt">${t('2 missed · 1 to confirm','2 הוחמצו · 1 לאישור')}</div></div>
+        <div style="font-size:20px;opacity:.6">${L==='he'?'‹':'›'}</div></div>
+
+      <div class="seg"><span class="">${t('Day','יום')}</span><span class="on">${t('Week','שבוע')}</span>
+        <span>${t('Month','חודש')}</span><span>${t('Year','שנה')}</span></div>
+
+      <div class="card">
+        <div class="row" style="align-items:baseline;margin-bottom:4px">
+          <div class="grow"><div class="h3">${t('This week','השבוע')}</div>
+          <div class="sub2">${t('Where the time went','לאן הלך הזמן')}</div></div></div>
+        ${donut(310, 50, 18, style,
+          `<div><div style="font-size:20px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
+           <div style="font-size:9.5px;opacity:.65;font-weight:600">${EMPTY
+             ? t('of a 26h week','מתוך שבוע של 26 ש׳') : t('tracked','נמדדו')}</div></div>`, true)}
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:11px"><div class="grow">
+          <div class="h3">${t('Your goals','המטרות שלך')}</div></div>
+          <span class="chip">${t('All 7','כל ה־7')}</span></div>
+        ${goals}
+      </div>
+
+      <div class="btn" style="${style==='neo'?'':`background:linear-gradient(150deg,${lite(heroCol,.2)},${dk(heroCol,.25)});color:#fff;border:0`}">
+        ${t('Plan tomorrow','לתכנן את מחר')}</div>
+
+    </div></div>`;
+}
+
+const NAMES={glass:'Glassmorphism',liquid:'Liquid glass',neo:'Neo · soft UI',
+             darkneo:'Dark neo · one neon accent'};
+const BLURB={
+  glass:'Frosted panels over a colourful canvas. Depth comes from BLUR — the background stays legible through the surface, so a panel reads as a sheet of glass. Arcs are thin, flat and slightly transparent, with a coloured bloom instead of a bevel.',
+  liquid:'Thick refractive glass. Depth comes from REFRACTION at the edge — a bright rim where light enters, a dim counter-rim where it leaves, one specular streak, and the canvas bending through the body. Capsules everywhere.',
+  neo:'One flat surface; everything is pressed out of it or into it. Depth comes from a SHADOW PAIR — light top-left, dark bottom-right. Nothing is translucent, nothing has an edge, and the hues are muted or the shadows fight the fill.',
+  darkneo:'Charcoal, deep soft shadows, very large radii — and exactly ONE saturated gradient, cyan to blue, reserved for the thing that matters. Everything else is monochrome, which is what makes the accent read as bright rather than as another colour. The cost is visible in the donut: with one accent there is no room for six category hues, so the slices run a RAMP of the accent and colour stops carrying category identity. The direct labels are what make that survivable.',
+  compare:'The same card, the same week, the same palette, in all four materials. The only variable is the surface. All four ship — this is the picker, not a shortlist.',
+};
+const CANVAS_NOTE={
+  shared:' · On the SHARED canvas: all four sit on the glassmorphism background, so the only variable left is the material.',
+  native:' · On each material’s NATIVE canvas — the background it was designed for.',
+};
+const NEO_NOTE=' Neumorphism is defined by the surface being the same colour as what is behind it, and a gradient has no single such colour — so on the shared canvas it becomes a neutral plate carrying the shadow pair, which gives the card an edge it would not otherwise have. That is a real difference, not a rendering shortcut.';
+
+function render(){
+  const st=document.getElementById('stage');
+  document.getElementById('ttl').textContent = S==='compare' ? 'Four materials, one card' : NAMES[S];
+  document.getElementById('sub').textContent =
+    BLURB[S] + CANVAS_NOTE[SHARED?'shared':'native']
+    + (SHARED && (S==='neo'||S==='darkneo'||S==='compare') ? NEO_NOTE : '');
+  document.documentElement.lang=L;
+  UID=0;
+  const dir = L==='he'?'rtl':'ltr';
+  if(S==='compare'){
+    st.innerHTML = ['glass','liquid','neo','darkneo'].map(s=>{
+      const cur=S; S=s;
+      const html=`<div>
+        <div class="st st-${s}${SHARED?' shared':''}" data-theme="${THEME}" dir="${dir}"
+          style="width:340px;border-radius:30px;padding:15px;overflow:hidden">
+          <div class="card">
+            <div class="h3" style="margin-bottom:2px">${t('This week','השבוע')}</div>
+            <div class="sub2" style="margin-bottom:6px">${t('Where the time went','לאן הלך הזמן')}</div>
+            ${donut(310,54,19,s,
+              `<div><div style="font-size:19px;font-weight:740;letter-spacing:-.04em">${ltr('18h 30m')}</div>
+               <div style="font-size:9px;opacity:.65;font-weight:600">${EMPTY
+                 ? t('of 26h','מתוך 26 ש׳') : t('tracked','נמדדו')}</div></div>`,true)}
+          </div>
+          <div style="height:14px"></div>
+          <div class="row" style="gap:10px">
+            <div class="btn" style="flex:1">${t('Plan tomorrow','לתכנן את מחר')}</div>
+            ${ring(46,80,'HEALTH',`<span style="font-size:13px">${ltr('80')}</span>`,s)}
+          </div>
+        </div>
+        <div class="lbl">${NAMES[s]}</div></div>`;
+      S=cur; return html;}).join('');
+  } else {
+    st.innerHTML = `<div class="ph st st-${S}${SHARED?' shared':''}" data-theme="${THEME}"
+      dir="${dir}">${screen(S)}</div>`;
+  }
+  document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',b.dataset.s===S));
+  const u=new URL(location);
+  u.searchParams.set('style',S); u.searchParams.set('lang',L); u.searchParams.set('theme',THEME);
+  u.searchParams.set('canvas',SHARED?'shared':'native');
+  u.searchParams.set('fill',EMPTY?'partial':'full');
+  u.searchParams.set('arc',RAISED?'raised':'flat');
+  history.replaceState({},'',u);
+}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S=b.dataset.s;render();});
+document.getElementById('empty').onclick=e=>{EMPTY=!EMPTY;
+  e.target.classList.toggle('on',EMPTY);render();};
+document.getElementById('raised').onclick=e=>{RAISED=!RAISED;
+  e.target.classList.toggle('on',RAISED);render();};
+document.getElementById('canvas').onclick=e=>{SHARED=!SHARED;
+  e.target.textContent=SHARED?'Shared canvas':'Native canvas';
+  e.target.classList.toggle('on',SHARED);render();};
+document.getElementById('lang').onclick=e=>{L=L==='en'?'he':'en';
+  e.target.textContent=L==='en'?'עברית':'English';e.target.classList.toggle('on',L==='he');render();};
+document.getElementById('theme').onclick=e=>{THEME=THEME==='dark'?'light':'dark';
+  e.target.textContent=THEME==='dark'?'Light':'Dark';render();};
+addEventListener('keydown',e=>{
+  const ks=['glass','liquid','neo','darkneo','compare'], i=ks.indexOf(S);
+  if(e.key==='ArrowRight'){S=ks[(i+(L==='he'?-1:1)+ks.length)%ks.length];render();}
+  if(e.key==='ArrowLeft'){S=ks[(i+(L==='he'?1:-1)+ks.length)%ks.length];render();}});
+const q=new URL(location).searchParams;
+if(NAMES[q.get('style')]||q.get('style')==='compare') S=q.get('style');
+if(q.get('lang')==='he'){L='he';const b=document.getElementById('lang');
+  b.textContent='English';b.classList.add('on');}
+if(q.get('theme')==='light'){THEME='light';document.getElementById('theme').textContent='Dark';}
+if(q.get('canvas')==='native'){SHARED=false;const b=document.getElementById('canvas');
+  b.textContent='Native canvas';b.classList.remove('on');}
+if(q.get('fill')==='full'){EMPTY=false;document.getElementById('empty').classList.remove('on');}
+if(q.get('arc')==='raised'){RAISED=true;document.getElementById('raised').classList.add('on');}
+render();
+</script>
+</body>
+</html>

@@ -122,12 +122,37 @@ Per spec §8, keep OAuth in **Testing** mode and add your Google account under
 
 ## 6. Run
 
+One command brings up a device, builds, installs and launches — no Android
+Studio required (see [scripts/README.md](../scripts/README.md)):
+
+```powershell
+.\scripts\run-goalpilot.ps1          # phone if plugged in, else the emulator
+```
+
+Or double-click `scripts\Run GoalPilot.cmd`. The manual equivalent:
+
 ```powershell
 # start an emulator (or plug in a device), then:
 .\gradlew :app:installDebug
 ```
 
 Sign in with a **test user** Google account. You should land on the dashboard.
+
+### Installing on a physical phone
+
+The debug keystore SHA-1 registered in Firebase is this machine's
+(`F1:D0:96:...:DB:3F`), and both `com.idomarhaim.goalpilot` and
+`com.idomarhaim.goalpilot.debug` are registered. So a build produced **on this
+machine** signs in correctly on a real phone with no extra setup:
+
+1. Phone: `Settings → About phone` → tap **Build number** ×7.
+2. `Settings → System → Developer options` → **USB debugging** on.
+3. Plug in with a data cable, accept *"Allow USB debugging?"*.
+4. `.\scripts\run-goalpilot.ps1 -Target device`
+
+Building on a *different* machine produces a different debug keystore, and
+Google Sign-In then fails with **code 10 (DEVELOPER_ERROR)** — see the
+troubleshooting table below.
 
 ---
 

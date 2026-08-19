@@ -29,16 +29,41 @@ The system works on three levels (spec §1):
   friends added with a 6-character **friend code**
 - ✅ **AI recommendations & encouragement** via GROQ (through a Cloud Function proxy)
 - ✅ Points, levels, and level progress (gamification)
+- ✅ **Two selectable colour skins** — *Aurora* (ocean blue → evergreen, default)
+  and *Blossom* (sunset pink → orange), chosen on the Profile tab and applied
+  instantly across the app. Both ship a full light **and** dark palette.
+
+- ✅ **Life areas** — your own division of your life (health, studies, career,
+  relationships…), defined on *Profile → Life areas* or **synced from your Google
+  Tasks list names**. Every goal is filed under one, and that is what the time
+  chart reports on.
 
 **Bonus (implemented)**
 - 🤖 **LLM task→goal classification** — the "Smart add a task" card: describe a
   task in plain language and GoalPilot files it under the right goal, or proposes
-  a new one, with an estimated point value. You confirm before anything is saved.
-- 📊 **Analytics charts** (progress per goal, task-focus split)
+  a new one, with an estimated point value, an estimated **duration**, and the life
+  area it belongs to. You confirm before anything is saved.
+- 🥧 **"Where your time goes"** — an interactive donut showing what share of your
+  life went into each life area, from the AI's duration estimate for every task you
+  completed. Switch between **day / week / month / quarter / year**; tap a slice
+  for its hours and share.
+- 📊 **Analytics charts** (progress per goal, task-focus split) — every chart draws
+  itself: bars grow from zero with a staggered sweep, the donut unrolls clockwise,
+  and the numbers count up with them.
+
+**Nice-to-have (implemented)**
+- ✅ **Import tasks from Google Tasks** — the "Import from Google Tasks" card
+  pulls your open tasks in and files each one under the right goal. Deduped
+  against what is already there; you review everything before it is saved.
+- ✅ **Pull fitness & sleep from Health Connect** — steps and sleep are read
+  automatically **every time you open the app** (at most once every fifteen
+  minutes) and logged against a fitness or sleep goal, creating one if you have
+  none. **Read-only** (GoalPilot never writes to your health store). A day is
+  never counted twice, and today is topped up by the difference as you walk, so
+  the goal keeps up without the day being logged again. The "Health data" card
+  shows when the last sync ran and can force one.
 
 **Nice-to-have (architected + scaffolded, see `TODO/`)**
-- 🧩 Import tasks from **Google Tasks** — `data/tasks/GoogleTasksClient` stub
-- 🧩 Pull fitness/sleep from **Health Connect** — `data/health/HealthConnectManager` stub
 - 🧩 Shared/competitive **challenges** — model + Firestore rules + preview screen
 
 ---
@@ -83,7 +108,8 @@ app/                     Android app (Compose + MVVM)
     data/                Firebase + GROQ implementations, integration stubs
     di/                  Hilt modules
     ui/                  theme · shared components · navigation · root
-    feature/             auth · goals · dashboard · social · profile · analytics · challenges
+    feature/             auth · goals · dashboard · social · profile · analytics ·
+                         lifeareas · challenges
   src/test/              JVM unit tests
   src/androidTest/       Compose UI + instrumented tests
 functions/               GROQ proxy Cloud Functions (TypeScript)

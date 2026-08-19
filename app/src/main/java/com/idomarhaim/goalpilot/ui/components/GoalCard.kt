@@ -5,22 +5,28 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
 import com.idomarhaim.goalpilot.domain.model.Goal
 
 /** Compact card summarising one goal's progress; tapping opens the detail. */
@@ -30,22 +36,28 @@ fun GoalCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = goal.colorHex.toComposeColor(MaterialTheme.colorScheme.primary)
-    Card(modifier = modifier.fillMaxWidth(), onClick = onClick) {
+    val accent = goal.colorHex.toGoalAccent()
+    GpCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Squircle rather than a circle: it sits better against the card's
+            // own rounded rectangle and gives the icon more optical weight.
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(accent.copy(alpha = 0.15f)),
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(accent.copy(alpha = 0.22f), accent.copy(alpha = 0.10f)),
+                        ),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = goal.category.icon(),
-                    contentDescription = goal.category.label,
+                    contentDescription = goal.category.localizedLabel(),
                     tint = accent,
                     modifier = Modifier.size(24.dp),
                 )
@@ -61,33 +73,53 @@ fun GoalCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = goal.title.ifBlank { "Untitled goal" },
+                        text = goal.title.ifBlank {
+                            stringResource(R.string.components_goal_untitled)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    Spacer(Modifier.width(8.dp))
+                    if (goal.isComplete) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = stringResource(R.string.components_goal_complete),
+                            tint = accent,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                     Text(
-                        text = "${goal.progressPercent}%",
+                        text = percentText(goal.progressPercent),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = accent,
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { goal.progressFraction },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
+                GpLinearProgress(
+                    progress = goal.progressFraction,
                     color = accent,
-                    trackColor = accent.copy(alpha = 0.15f),
+                    height = 8.dp,
+                    modifier = Modifier.padding(top = 10.dp),
                 )
                 Text(
-                    text = "${goal.category.label} • ${goal.currentValue.trimNumber()}/" +
-                        "${goal.targetValue.trimNumber()} ${goal.unit}",
+                    // One resource with three arguments, not a four-part
+                    // concatenation: word order is a property of the language
+                    // and no resource file can reorder a Kotlin `+`. The ratio
+                    // is isolated as ONE run — `5/10` reverses to `10/5` in an
+                    // RTL paragraph otherwise — and `unit` is isolated because
+                    // it is user-authored (§8) and its script is unknown here.
+                    text = stringResource(
+                        R.string.components_goal_meta,
+                        goal.category.localizedLabel(),
+                        "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()}"
+                            .bidiIsolated(),
+                        goal.unit.bidiIsolated(),
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
         }

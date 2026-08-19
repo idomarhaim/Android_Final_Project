@@ -1,4 +1,4 @@
-<!-- SOURCE: user-template v1; do not edit in-project, edit user-level then re-sync -->
+<!-- SOURCE: user-template v2; do not edit in-project, edit user-level then re-sync -->
 ---
 mode: agent
 description: "Produce a full branch summary at CHANGELOG/branch-summaries/<branch>.md aggregating every changelog and commit on the current branch."
@@ -21,7 +21,7 @@ If the file exists, ask before overwriting (offer: overwrite / append-as-new-rou
    - `git merge-base HEAD origin/main` (fall back to `origin/master` or repo default branch) → base
 2. **Commits**: `git log --oneline --no-decorate <base>..HEAD`
 3. **Changed files**: `git diff --name-status <base>..HEAD`
-4. **Changelog entries**: every `CHANGELOG/YYYY-MM-DD.md` whose date is between the first commit date on this branch and today.
+4. **Changelog entries**: every file under `CHANGELOG/YYYY-MM-DD/` (and any legacy flat `CHANGELOG/YYYY-MM-DD.md`) whose date is between the first commit date on this branch and today. A day folder holds one file per session plus a `SUMMARY.md`; prefer the summary where it exists, and read the per-session files where it does not.
 5. **TODO updates**: every `TODO/**/*.md` modified on this branch — note which items moved from `[ ]` → `[x]`.
 
 ## 📝 Output format

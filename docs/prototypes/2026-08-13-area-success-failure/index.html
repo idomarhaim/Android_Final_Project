@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>C19 · Per-life-area success and failure — GoalPilot prototype</title>
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     C19 · SUCCESS AND FAILURE INSIDE A LIFE AREA — prototype for #41 on #12.
+
+     The four material blocks are adapted from
+     docs/prototypes/2026-08-13-log-progress/index.html (which adapted them
+     from 2026-08-11-visual-styles, C12 #31), because #12's Standing
+     preferences require every screen to be designed against the MATERIAL
+     CONTRACT — surface · groove · elevation · accent — not against one look.
+
+     Carried forward unchanged, both earned by defects rather than taste:
+       --edge  every control carries a hairline contrast anchor, so no
+               affordance is ever shadow-only (neo's WCAG failure mode).
+       .tag    a life area is NAMED in words beside its dot; dark neo
+               collapses the categorical hues into one accent ramp, so
+               colour may never carry identity alone.
+
+     One addition this screen forces:
+       --miss / --keep  outcome state is never carried by hue alone either.
+               A missed window is a HOLLOW dot and a kept one is FILLED, so
+               the run reads in dark neo, in greyscale, and to a colour-blind
+               eye. Red is used nowhere on this screen — see the README.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+       background:#070A0F;color:#C9D6E4;padding:26px 20px 60px;-webkit-font-smoothing:antialiased}
+  h1{font-size:19px;font-weight:700;letter-spacing:-.02em;color:#EAF1F8}
+  .lede{font-size:13px;line-height:1.65;color:#8FA3B8;max-width:1020px;margin-top:8px}
+  .lede b{color:#C9D6E4;font-weight:640}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 8px;align-items:center}
+  .bar .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+            color:#5C7086;font-weight:700;margin-right:2px}
+  .bar button{background:#111823;color:#9FB3C8;border:1px solid #1E2A3A;border-radius:999px;
+    padding:7px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .bar button.on{background:#1C4C7A;border-color:#2F7FC4;color:#EAF6FF}
+  .bar .gap{width:14px}
+  .stage{display:flex;flex-wrap:wrap;gap:28px;margin-top:22px;align-items:flex-start}
+  .frame{display:flex;flex-direction:column;align-items:center}
+  .cap{font-size:11.5px;color:#7C90A6;text-align:center;margin-top:10px;max-width:392px;
+       line-height:1.55}
+  .cap b{color:#AEC2D6}
+
+  /* ── device shell (identical in every material, so it is not a variable) ──
+     colour lives on the frame, not on the scroller — the log-progress rev
+     found that a sibling of .sc inherits the page's grey instead. */
+  .ph{width:392px;height:812px;border-radius:46px;border:11px solid #04080c;position:relative;
+      overflow:hidden;display:flex;flex-direction:column;color:var(--fg);
+      box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 30px 70px rgba(0,0,0,.6)}
+  .ph::before{content:'';position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:86px;height:25px;border-radius:999px;background:#04080c;z-index:60}
+  .sb{height:40px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:6px 26px 0;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;
+      color:var(--fg)}
+  .sc{flex:1;overflow:hidden;position:relative;z-index:2;display:flex;flex-direction:column;
+      gap:11px;padding:6px 15px 14px;color:var(--fg)}
+
+  /* ── screen chrome ── */
+  .top{display:flex;align-items:center;gap:10px}
+  .back{font-size:19px;opacity:.6;font-weight:700}
+  .h-area{font-size:21px;font-weight:730;letter-spacing:-.02em;flex:1}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;flex:none;
+       display:inline-flex;align-items:center;gap:5px;letter-spacing:.01em}
+  .tag i{width:7px;height:7px;border-radius:50%;flex:none;display:block}
+
+  .card{padding:14px 15px 13px;display:flex;flex-direction:column;gap:11px}
+  .c-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .h3{font-size:15px;font-weight:710;letter-spacing:-.015em}
+  .win{display:flex;gap:6px}
+  /* nowrap: rev 1 rendered "30 days" as two lines inside the pill. Invisible
+     in the source, obvious in the render. */
+  .win .chip{padding:6px 11px;font-size:11px;font-weight:660;cursor:pointer;white-space:nowrap;
+             font-variant-numeric:tabular-nums}
+
+  /* the pair — two numbers, never one ratio.
+     C3 ruled effort and outcome are two and the gap between them is the
+     signal; a single "success rate" is the same tidying-away C5 refused. */
+  .pair{display:flex;align-items:stretch;gap:10px}
+  .pair .n{flex:1;display:flex;flex-direction:column;gap:2px;padding:11px 13px}
+  .pair .nv{font-size:30px;font-weight:740;line-height:1;font-variant-numeric:tabular-nums;
+            letter-spacing:-.02em}
+  .pair .nl{font-size:11.5px;font-weight:640;opacity:.66}
+  .pair .n.keep .nv{color:var(--keep)}
+  .pair .n.miss .nv{color:var(--fg);opacity:.86}
+
+  /* the run — C5 §4's record: a missed occurrence is never edited, so the
+     row of windows IS the history. Hollow = missed, filled = kept,
+     ring = still owed (OVERDUE, and C9a says that is not a failure). */
+  .run{display:flex;flex-direction:column;gap:7px}
+  .dots{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .d{width:17px;height:17px;border-radius:50%;flex:none;border:2px solid var(--edge);
+     position:relative}
+  .d.keep{background:var(--keep);border-color:transparent}
+  .d.miss{background:transparent}
+  /* rev 1's dashed ring was nearly invisible at 17px on a glass surface, so the
+     one state that must NOT read as a failure read as one. It now carries a
+     centre pip as well: still owed is the only dot with an inside and an edge. */
+  .d.owed{background:transparent;border-color:var(--acc);border-style:dashed;border-width:2.5px;
+          box-shadow:inset 0 0 0 2px transparent}
+  .d.owed::after{content:'';position:absolute;inset:3.5px;border-radius:50%;
+          background:var(--acc);opacity:.55}
+  .d.none{background:transparent;border-style:dotted;opacity:.5}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:10.5px;font-weight:600;opacity:.68}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .legend .d{width:11px;height:11px;border-width:1.5px}
+
+  /* the two lines. The FIRST is always the good one — C10 reserved one of
+     its three feed slots for a goal in a good state at identical cost, and
+     this screen inherits that rule rather than re-litigating it. */
+  .line{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;font-size:12.5px;
+        line-height:1.5;font-weight:560}
+  .line .ic{font-size:15px;flex:none;line-height:1.25}
+  .line b{font-weight:730}
+  .line .sub{display:block;opacity:.66;font-size:11.5px;font-weight:560;margin-top:3px}
+
+  /* the area's own goal list, in situ. Rev 1 floated the block on an empty
+     screen, which answered none of "is this a life-area block, an analytics
+     counterpart, or both" — the block only means something above the goals it
+     summarises. `asleep` is a STATE IN THIS LIST, not a separate panel: that is
+     how a never-scheduled goal stays visible without being accused. */
+  .glist{display:flex;flex-direction:column;gap:7px}
+  .g-row{display:flex;align-items:center;gap:10px;padding:10px 13px}
+  .g-row .gm{width:15px;height:15px;border-radius:50%;flex:none;border:2px solid var(--edge);
+             position:relative}
+  .g-row .gm.keep{background:var(--keep);border-color:transparent}
+  .g-row .gm.miss{background:transparent}
+  .g-row .gm.late{background:transparent;border-color:var(--acc);border-style:dashed}
+  /* rev 5: no dormancy marker any more. A goal with nothing due is showing a
+     MISSING NEXT STEP, so its marker is an invitation (dashed ring, plus sign),
+     deliberately unlike all four outcome dots — kept, missed, still-owed,
+     nothing-due — because it is not an outcome at all. */
+  .g-row .gm.next{border-style:dashed;background:none;display:grid;place-items:center;
+                  font-size:11px;font-weight:800;opacity:.75;line-height:1}
+  .g-row .gt{flex:1;font-size:13px;font-weight:650;line-height:1.35}
+  /* .64 was unreadable where liquid glass's page gradient runs bright behind
+     the card — the asleep rows sit lowest on the screen, which is exactly where
+     that gradient is hottest. */
+  .g-row .gt small{display:block;font-size:11px;font-weight:560;opacity:.76;margin-top:2px}
+  .g-row.quiet .gt{opacity:.86}
+  .foot{font-size:11px;font-weight:600;opacity:.7;padding:0 4px;display:flex;gap:7px;
+        align-items:baseline;line-height:1.45}
+
+  /* dormant — the third state. Not a failure, not invisible. */
+  .dorm{display:flex;flex-direction:column;gap:10px;padding:13px}
+  .dorm .dh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:680}
+  .dorm .dh .cnt{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+                 border:1px solid var(--edge);opacity:.85}
+  .dorm .g{font-size:13px;font-weight:640}
+  .dorm .g small{display:block;font-size:11px;opacity:.62;font-weight:560;margin-top:2px}
+  .acts{display:flex;gap:8px}
+  .acts .btn{flex:1;cursor:pointer;padding:11px 12px;font-size:12.5px;font-weight:680;
+             text-align:center;border-radius:999px}
+
+  .disc{font-size:11.5px;font-weight:560;line-height:1.55;opacity:.74;padding:11px 12px;
+        border-radius:12px;border:1px solid var(--edge);display:flex;gap:8px}
+  .disc b{font-weight:730;opacity:.95}
+
+  /* ── analytics counterpart ── */
+  .split{display:flex;flex-direction:column;gap:11px}
+  .donut{display:flex;align-items:center;gap:12px}
+  .donut svg{flex:none}
+  .dleg{display:flex;flex-direction:column;gap:6px;font-size:11.5px;font-weight:620}
+  .dleg span{display:inline-flex;align-items:center;gap:7px}
+  .dleg i{width:9px;height:9px;border-radius:2px;flex:none}
+  .dleg em{font-style:normal;opacity:.6;font-variant-numeric:tabular-nums;font-weight:600}
+  .hb{display:flex;flex-direction:column;gap:9px}
+  .hb .row{display:flex;flex-direction:column;gap:5px}
+  .hb .rl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;
+          font-weight:650}
+  .hb .rl em{font-style:normal;font-size:11px;opacity:.62;font-variant-numeric:tabular-nums}
+  .track{height:13px;border-radius:999px;overflow:hidden;display:flex;
+         border:1px solid var(--edge)}
+  .track .k{background:var(--keep)}
+  /* rev 1's hatch was so light that a missed segment read as empty track —
+     the one thing this bar exists to show. Denser, and 60% opaque. */
+  .track .m{background:repeating-linear-gradient(115deg,var(--fg2) 0 3px,transparent 3px 5.5px);
+            opacity:.6}
+  .track .z{background:transparent}
+
+  /* ════════════════════════ 1 · GLASSMORPHISM ════════════════════════ */
+  .st-glass{--fg:#F2F7FF;--fg2:rgba(242,247,255,.72);--rad:26px;--edge:rgba(255,255,255,.34);
+    --acc:#7FE8DC;--accfg:#06222B;--keep:#7FE8DC;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #4E6BFF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #00C8B4 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #A65CF5 0%, transparent 62%),
+      linear-gradient(170deg,#131A34,#0C1120);}
+  .st-glass[data-theme="light"]{--fg:#0E1626;--fg2:rgba(14,22,38,.66);
+    --edge:rgba(20,36,66,.26);--acc:#0E7C8F;--accfg:#EAFBFF;--keep:#0E7C8F;
+    background:
+      radial-gradient(700px 460px at 8% -6%, #8FB0FF 0%, transparent 62%),
+      radial-gradient(640px 470px at 104% 8%, #7FE8DC 0%, transparent 60%),
+      radial-gradient(760px 540px at 44% 108%, #D3AEFF 0%, transparent 62%),
+      linear-gradient(170deg,#EAF0FF,#DCE6FA);}
+  .st-glass .card,.st-glass .chip,.st-glass .btn,.st-glass .tag,.st-glass .line,
+  .st-glass .dorm,.st-glass .pair .n{
+    background:rgba(255,255,255,.13);
+    backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+    border:1px solid var(--edge);
+    box-shadow:0 10px 30px rgba(6,12,28,.30), inset 0 1px 0 rgba(255,255,255,.42);}
+  .st-glass[data-theme="light"] .card,.st-glass[data-theme="light"] .chip,
+  .st-glass[data-theme="light"] .btn,.st-glass[data-theme="light"] .tag,
+  .st-glass[data-theme="light"] .line,.st-glass[data-theme="light"] .dorm,
+  .st-glass[data-theme="light"] .pair .n{
+    background:rgba(255,255,255,.62);
+    box-shadow:0 10px 26px rgba(40,60,110,.13), inset 0 1px 0 rgba(255,255,255,.9);}
+  .st-glass .card,.st-glass .dorm{border-radius:var(--rad)}
+  .st-glass .chip,.st-glass .btn,.st-glass .tag{border-radius:999px}
+  .st-glass .line,.st-glass .pair .n{border-radius:18px}
+  .st-glass .chip.on{background:rgba(255,255,255,.34);border-color:rgba(255,255,255,.75)}
+  .st-glass[data-theme="light"] .chip.on{background:rgba(255,255,255,.95);
+    border-color:rgba(20,36,66,.5)}
+
+  /* ═══════════════════════ 2 · LIQUID GLASS ═══════════════════════════ */
+  .st-liquid{--fg:#FFFFFF;--fg2:rgba(255,255,255,.74);--rad:34px;--edge:rgba(255,255,255,.42);
+    --acc:#9BEFE5;--accfg:#04262A;--keep:#9BEFE5;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #7A5CFF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #16D8C6 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FF6FB0 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFB25C 0%, transparent 58%),
+      linear-gradient(160deg,#101A2E,#0A1020);}
+  .st-liquid[data-theme="light"]{--fg:#0B1220;--fg2:rgba(11,18,32,.66);
+    --edge:rgba(16,28,54,.28);--acc:#0C6C7E;--accfg:#F0FEFF;--keep:#0C6C7E;
+    background:
+      radial-gradient(600px 420px at 12% 0%, #BDB0FF 0%, transparent 58%),
+      radial-gradient(560px 420px at 96% 14%, #9BEFE5 0%, transparent 56%),
+      radial-gradient(680px 520px at 40% 104%, #FFB7D4 0%, transparent 58%),
+      radial-gradient(520px 380px at 88% 74%, #FFD9A8 0%, transparent 58%),
+      linear-gradient(160deg,#F3F6FF,#E8EEFC);}
+  .st-liquid .card,.st-liquid .chip,.st-liquid .btn,.st-liquid .tag,.st-liquid .line,
+  .st-liquid .dorm,.st-liquid .pair .n{
+    position:relative;overflow:hidden;border:1px solid var(--edge);
+    background:linear-gradient(150deg, rgba(255,255,255,.22), rgba(255,255,255,.07) 52%,
+               rgba(255,255,255,.14));
+    backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(2) brightness(1.06);
+    box-shadow:
+      inset 1.4px 1.4px 0 rgba(255,255,255,.72),
+      inset -1.4px -1.4px 0 rgba(255,255,255,.16),
+      0 18px 40px rgba(4,10,24,.42);}
+  .st-liquid[data-theme="light"] .card,.st-liquid[data-theme="light"] .chip,
+  .st-liquid[data-theme="light"] .btn,.st-liquid[data-theme="light"] .tag,
+  .st-liquid[data-theme="light"] .line,.st-liquid[data-theme="light"] .dorm,
+  .st-liquid[data-theme="light"] .pair .n{
+    background:linear-gradient(150deg, rgba(255,255,255,.74), rgba(255,255,255,.4) 52%,
+               rgba(255,255,255,.58));
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.95),
+               inset -1.4px -1.4px 0 rgba(255,255,255,.5),
+               0 18px 36px rgba(40,60,110,.18);}
+  .st-liquid .card,.st-liquid .dorm{border-radius:var(--rad)}
+  .st-liquid .chip,.st-liquid .btn,.st-liquid .tag{border-radius:999px}
+  .st-liquid .line,.st-liquid .pair .n{border-radius:22px}
+  .st-liquid .chip.on{background:rgba(255,255,255,.4);
+    box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.9), 0 6px 16px rgba(4,10,24,.3)}
+  .st-liquid[data-theme="light"] .chip.on{background:rgba(255,255,255,.96);
+    border-color:rgba(16,28,54,.5)}
+
+  /* ═════════════════════════ 3 · NEO (neumorphism) ═════════════════════ */
+  .st-neo{--fg:#2A3340;--fg2:rgba(42,51,64,.60);--rad:24px;
+    --lo:#FFFFFF;--sh:rgba(163,177,198,.62);--edge:rgba(42,51,64,.26);
+    --acc:#3B7DA8;--accfg:#F2FAFF;--keep:#3B7DA8;background:#E7ECF3;}
+  .st-neo[data-theme="dark"]{--fg:#DDE4EE;--fg2:rgba(221,228,238,.58);
+    --lo:rgba(255,255,255,.055);--sh:rgba(0,0,0,.60);--edge:rgba(221,228,238,.26);
+    --acc:#6FB6E8;--accfg:#06202E;--keep:#6FB6E8;background:#252A32;}
+  .st-neo .card,.st-neo .chip,.st-neo .btn,.st-neo .tag,.st-neo .dorm{
+    background:transparent;border:1px solid var(--edge);
+    box-shadow:6px 6px 14px var(--sh), -6px -6px 14px var(--lo);}
+  /* the two lines and the pair are RECESSED in neo: they are read, not pressed,
+     and neo's only way to say "not a control" is to invert the groove. */
+  .st-neo .line,.st-neo .pair .n{background:transparent;border:1px solid var(--edge);
+    box-shadow:inset 4px 4px 10px var(--sh), inset -4px -4px 10px var(--lo);}
+  .st-neo .card,.st-neo .dorm{border-radius:var(--rad)}
+  .st-neo .chip,.st-neo .btn,.st-neo .tag{border-radius:999px}
+  .st-neo .line,.st-neo .pair .n{border-radius:18px}
+  .st-neo .chip.on{box-shadow:inset 4px 4px 9px var(--sh), inset -4px -4px 9px var(--lo);
+    border-color:var(--acc);border-width:2px}
+
+  /* ═══════════════ 4 · DARK NEO · one neon accent ═════════════════════ */
+  .st-darkneo{--fg:#EDF2F8;--fg2:rgba(237,242,248,.56);--rad:30px;
+    --lo:rgba(255,255,255,.045);--sh:rgba(0,0,0,.72);--edge:rgba(237,242,248,.22);
+    --a1:#5FD8FF;--a2:#1170E4;--acc:#5FD8FF;--accfg:#04121F;--keep:#5FD8FF;background:#1B1F26;}
+  .st-darkneo[data-theme="light"]{background:#22262E;} /* it has no light scheme */
+  .st-darkneo .card,.st-darkneo .chip,.st-darkneo .tag,.st-darkneo .dorm{
+    background:linear-gradient(158deg,#232830,#1A1E25);border:1px solid var(--edge);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo),
+               inset 0 1px 0 rgba(255,255,255,.05);}
+  .st-darkneo .line,.st-darkneo .pair .n{background:linear-gradient(158deg,#1F242C,#191D24);
+    border:1px solid var(--edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  .st-darkneo .card,.st-darkneo .dorm{border-radius:var(--rad)}
+  .st-darkneo .chip,.st-darkneo .tag{border-radius:999px}
+  .st-darkneo .line,.st-darkneo .pair .n{border-radius:22px}
+  .st-darkneo .btn{border-radius:999px;background:linear-gradient(110deg,var(--a2),var(--a1));
+    color:#06121C;border:1px solid rgba(255,255,255,.2);
+    box-shadow:0 10px 26px rgba(23,130,228,.42), inset 0 1px 0 rgba(255,255,255,.35)}
+  .st-darkneo .btn.ghost{background:linear-gradient(158deg,#232830,#1A1E25);color:var(--fg);
+    box-shadow:9px 9px 20px var(--sh), -7px -7px 18px var(--lo)}
+  .st-darkneo .chip.on{background:linear-gradient(120deg,var(--a1),var(--a2));color:#04121F;
+    border-color:rgba(255,255,255,.45);
+    box-shadow:0 5px 14px rgba(23,130,228,.5), inset 0 1px 0 rgba(255,255,255,.5)}
+
+  /* shared button skin for the three materials that do not override it.
+     .st .btn.primary, not .btn.primary — the light-theme overrides are
+     (class + attr + class) and would re-paint it with the surface gradient. */
+  .btn{padding:11px 14px;font-size:12.5px;font-weight:680;text-align:center;border-radius:999px}
+  .st .btn.primary{background:var(--acc);color:var(--accfg);border:1px solid var(--edge)}
+  .st-neo .btn.primary{box-shadow:5px 5px 12px var(--sh), -5px -5px 12px var(--lo)}
+
+  /* RTL: only the flow mirrors. Numbers, dates and ranges are isolated with
+     <bdi> in the markup, because bidi reorders 09:00–12:00 and "3 of 8". */
+  [dir="rtl"] .back{transform:scaleX(-1)}
+</style>
+</head>
+<body>
+
+<h1>C19 · What counts as a success and a failure inside a life area</h1>
+<p class="lede">
+  Prototype for <b>#41</b> on map <b>#12</b>, revision 5. Drawn against the <b>material
+  contract</b> (surface · groove · elevation · accent), so switching material changes the surface
+  and nothing else. Three proposals are embodied here rather than argued:
+  <b>the pair is two numbers, never one rate</b> (<code>C3</code>);
+  <b>a goal nobody ever scheduled has <i>no next step</i> — neither a failure nor a state of its
+  own</b> (<code>C9a</code> — you cannot fail to do something you never agreed to — read through
+  <code>C10</code>'s already-decided <i>days idle · open work · age</i>);
+  and <b>nothing ages out of history — the window is a query, not decay</b> (<code>C5</code> §2).
+  Outcome state never rides on hue: kept is <b>filled</b>, missed is <b>hollow</b>, still-owed is
+  <b>dashed</b>. There is no red on this screen.
+</p>
+
+<div class="bar">
+  <span class="lbl">Material</span>
+  <button data-m="glass" class="on">Glassmorphism</button>
+  <button data-m="liquid">Liquid glass</button>
+  <button data-m="neo">Neo</button>
+  <button data-m="darkneo">Dark neo</button>
+  <span class="gap"></span>
+  <span class="lbl">Theme</span>
+  <button data-t="dark" class="on">Dark</button>
+  <button data-t="light">Light</button>
+  <span class="gap"></span>
+  <span class="lbl">Language</span>
+  <button data-l="en" class="on">English</button>
+  <button data-l="he">עברית</button>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+/* ── the four frames, each proving one thing the ticket must settle ──────────
+   1  Health   · an area in good shape — the pair, the run, the two lines
+   2  Career   · an area in bad shape  — proves the tone rule holds when the
+                 news is bad, which is the only case where it matters
+   3  Analytics· the counterpart to the time donut, stating C17's asymmetry
+   4  Dormant  · the abandoned goal, in full: the case none of the closed
+                 tickets covers, and the one real question for Ido
+   ------------------------------------------------------------------------- */
+
+const HUE = {health:'#5FBF93', career:'#6FA5DC', learn:'#B98FD8', family:'#D8A35F'};
+
+const T = {
+  en: {
+    dir:'ltr', clock:'9:41',
+    win:[{k:'30d', t:'30 days'},{k:'8w', t:'8 weeks'},{k:'6m', t:'6 months'}],
+    kept:'kept', missed:'missed', owed:'still owed', dormant:'dormant',
+    record:'Window by window', holding:'What is holding', slipped:'What slipped',
+    legend:{keep:'kept', miss:'missed', owed:'still owed — not a failure', none:'nothing due'},
+    areas:{health:'Health', career:'Career', learn:'Learning', family:'Family'},
+    f1:{
+      hold:['Drink 2 L a day','<bdi>6</bdi> weeks unbroken — the longest run you have had'],
+      slip:['Run 20 km a week','missed <bdi>3</bdi> of the last <bdi>8</bdi> weeks · this week is <bdi>2</bdi> days late and still open'],
+    },
+    f2:{
+      hold:['Update the CV','you kept it last week, after <bdi>9</bdi> weeks of nothing — that is the one to build on'],
+      slip:['Apply to 2 roles a week','missed <bdi>7</bdi> of the last <bdi>8</bdi> weeks'],
+    },
+    f3:{
+      hold:['Finish the Kotlin course','<bdi>5</bdi> weeks unbroken — the only thing here with a rhythm'],
+      slip:['Nothing was missed here','<bdi>2</bdi> of <bdi>3</bdi> goals have no next step — so nothing was owed, and nothing counted against you'],
+    },
+    dorm:{
+      hd:'Asleep, not failed',
+      a1:'Give it a rhythm', a2:'Let it go',
+    },
+    goals:'Goals in this area',
+    /* rev 1 showed "Learn to cook" — a Learning goal — inside Health and
+       Career. Same class of content error as log-progress's steps reading
+       filed under a weight goal, and it only shows up when you look. */
+    list:{
+      health:[['keep','Drink 2 L a day','<bdi>6</bdi> weeks unbroken'],
+              ['late','Run 20 km a week','<bdi>2</bdi> days late — still owed, not missed'],
+              ['next','Stretch every morning','no next step · idle <bdi>3</bdi> months','plan']],
+      career:[['keep','Update the CV','kept last week'],
+              ['miss','Apply to 2 roles a week','missed <bdi>7</bdi> of <bdi>8</bdi> weeks'],
+              ['next','Ask for a review meeting','<bdi>1</bdi> task, never scheduled · idle <bdi>5</bdi> weeks','sched']],
+      learn:[['keep','Finish the Kotlin course','<bdi>5</bdi> weeks unbroken'],
+             ['next','Learn to cook','no next step · idle <bdi>4</bdi> months','plan'],
+             ['next','Read 12 books this year','<bdi>3</bdi> tasks, none scheduled · idle <bdi>5</bdi> months','sched']],
+    },
+    /* "1 goals here are asleep" in rev 2 — a plural bug, and the render is the
+       only place it showed, since the count is data. */
+    act:{plan:'Break it into steps', sched:'Schedule the first one'},
+    foot: n => n===1
+      ? `<bdi>1</bdi> goal here has <b>no next step</b> — nothing was owed, so nothing was missed, and neither number above counts it.`
+      : `<bdi>${n}</bdi> goals here have <b>no next step</b> — nothing was owed, so nothing was missed, and neither number above counts them.`,
+    /* what a window IS — the ticket's headline question, answered on the screen
+       rather than in the spec, because the numbers are meaningless without it */
+    windowIs:'a window counts as kept when everything due in it was done',
+    disc:'A task serving two areas is a success <b>in full in both</b>. Only its minutes are divided — that asymmetry is deliberate.',
+    an:{
+      title:'This life, in 8 weeks', where:'Where the time went', held:'Where it held',
+      note:'The donut <b>divides</b> a task between its areas. The bars <b>do not</b> — a success counts in full in every area it serves, so these two totals are not meant to agree.',
+      mins:'of your logged minutes',
+    },
+    dormNote:'Nothing here is scored. A goal you never scheduled has never been owed, so it cannot be missed — but it does not vanish either, or the app would quietly agree that you gave up.',
+  },
+  he: {
+    dir:'rtl', clock:'9:41',
+    win:[{k:'30d', t:'30 יום'},{k:'8w', t:'8 שבועות'},{k:'6m', t:'6 חודשים'}],
+    kept:'עמדת', missed:'הוחמצו', owed:'עוד פתוח', dormant:'רדומים',
+    record:'שבוע אחר שבוע', holding:'מה מחזיק', slipped:'מה נשמט',
+    legend:{keep:'עמדת', miss:'הוחמץ', owed:'עוד פתוח — לא כישלון', none:'לא נדרש כלום'},
+    areas:{health:'בריאות', career:'קריירה', learn:'לימודים', family:'משפחה'},
+    f1:{
+      hold:['לשתות 2 ליטר ביום','<bdi>6</bdi> שבועות רצוף — הרצף הארוך ביותר שהיה לך'],
+      slip:['לרוץ 20 ק״מ בשבוע','הוחמצו <bdi>3</bdi> מתוך <bdi>8</bdi> השבועות האחרונים · השבוע באיחור של <bdi>2</bdi> ימים ועוד פתוח'],
+    },
+    f2:{
+      hold:['לעדכן קורות חיים','עמדת בזה בשבוע שעבר, אחרי <bdi>9</bdi> שבועות של כלום — משם ממשיכים'],
+      slip:['להגיש ל־2 משרות בשבוע','הוחמצו <bdi>7</bdi> מתוך <bdi>8</bdi> השבועות האחרונים'],
+    },
+    f3:{
+      hold:['לסיים את הקורס בקוטלין','<bdi>5</bdi> שבועות רצוף — הדבר היחיד כאן עם קצב'],
+      slip:['כאן לא הוחמץ כלום','ל<bdi>2</bdi> מתוך <bdi>3</bdi> המטרות אין צעד הבא — ולכן שום דבר לא נדרש, ושום דבר לא נספר לרעתך'],
+    },
+    dorm:{
+      hd:'רדום, לא נכשל',
+      a1:'לקבוע קצב', a2:'לשחרר',
+    },
+    goals:'מטרות בתחום הזה',
+    list:{
+      health:[['keep','לשתות 2 ליטר ביום','<bdi>6</bdi> שבועות רצוף'],
+              ['late','לרוץ 20 ק״מ בשבוע','באיחור של <bdi>2</bdi> ימים — עוד פתוח, לא הוחמץ'],
+              ['next','למתוח כל בוקר','אין צעד הבא · <bdi>3</bdi> חודשים ללא תנועה','plan']],
+      career:[['keep','לעדכן קורות חיים','עמדת בזה בשבוע שעבר'],
+              ['miss','להגיש ל־2 משרות בשבוע','הוחמצו <bdi>7</bdi> מתוך <bdi>8</bdi> שבועות'],
+              ['next','לבקש שיחת משוב','משימה אחת, לא נקבע לה מועד · <bdi>5</bdi> שבועות ללא תנועה','sched']],
+      learn:[['keep','לסיים את הקורס בקוטלין','<bdi>5</bdi> שבועות רצוף'],
+             ['next','ללמוד לבשל','אין צעד הבא · <bdi>4</bdi> חודשים ללא תנועה','plan'],
+             ['next','לקרוא 12 ספרים בשנה','<bdi>3</bdi> משימות, לאף אחת אין מועד · <bdi>5</bdi> חודשים ללא תנועה','sched']],
+    },
+    act:{plan:'לפרק לצעדים', sched:'לקבוע מועד לראשונה'},
+    foot: n => n===1
+      ? `למטרה אחת כאן <b>אין צעד הבא</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. היא לא נכללת במספרים שלמעלה.`
+      : `ל<bdi>${n}</bdi> מטרות כאן <b>אין צעד הבא</b> — לא נדרש כלום, ולכן שום דבר לא הוחמץ. הן לא נכללות במספרים שלמעלה.`,
+    windowIs:'מועד נחשב «עמדת בו» כשכל מה שנדרש בו נעשה',
+    disc:'משימה שמשרתת שני תחומים נספרת כהצלחה <b>במלואה בשניהם</b>. רק הדקות מתחלקות — האי־סימטריה הזאת מכוונת.',
+    an:{
+      title:'החיים שלך, ב־8 שבועות', where:'לאן הלך הזמן', held:'איפה זה החזיק',
+      note:'הדונאט <b>מחלק</b> משימה בין התחומים שלה. העמודות <b>לא</b> — הצלחה נספרת במלואה בכל תחום שהיא משרתת, ולכן שני הסכומים האלה לא אמורים להסכים.',
+      mins:'מהדקות שתיעדת',
+    },
+    dormNote:'שום דבר כאן לא נספר לרעתך. מטרה שלא נקבע לה מועד מעולם לא נדרשה, ולכן היא לא יכולה להיות מוחמצת — אבל היא גם לא נעלמת, אחרת האפליקציה פשוט מסכימה בשקט שוויתרת.',
+  },
+};
+
+/* run patterns, oldest → newest. k kept · m missed · o still owed · n nothing due */
+const RUN = {
+  health: 'kkkmkkko',
+  career: 'mmmmmkmm',
+  learn:  'nmmkkkkk',   /* quiet, then a rhythm — matches 5 kept / 2 missed */
+};
+
+/* per-area 8-week tallies, and the minute share the donut divides */
+const AREAS = [
+  {id:'health', keep:23, miss:5,  zero:2, mins:34},
+  {id:'career', keep:6,  miss:19, zero:1, mins:28},
+  /* rev 2 gave Learning 11 kept / 7 missed while its own goal list showed one
+     goal with a rhythm and two asleep — the numbers contradicted the list.
+     Only visible side by side, i.e. only in the render. */
+  {id:'learn',  keep:5,  miss:2,  zero:1, mins:21},
+  {id:'family', keep:14, miss:3,  zero:0, mins:17},
+];
+
+let M = 'glass', TH = 'dark', L = 'en';
+
+/* ── pieces ─────────────────────────────────────────────────────────────── */
+
+const tag = (id, t) =>
+  `<span class="tag"><i style="background:${HUE[id]}"></i>${t.areas[id]}</span>`;
+
+const windows = t =>
+  `<div class="win">${t.win.map((w,i)=>
+    `<div class="chip${i===1?' on':''}">${w.t}</div>`).join('')}</div>`;
+
+/* the pair. Two numbers side by side and no ratio between them: C3 ruled that
+   effort and outcome are two quantities and the gap is the signal, and a
+   "success rate" is exactly the single number C5 refused. */
+const pair = (t, keep, miss) => `
+  <div class="pair">
+    <div class="n keep"><span class="nv"><bdi>${keep}</bdi></span>
+      <span class="nl">${t.kept}</span></div>
+    <div class="n miss"><span class="nv"><bdi>${miss}</bdi></span>
+      <span class="nl">${t.missed}</span></div>
+  </div>`;
+
+const run = (t, pattern) => `
+  <div class="run">
+    <div class="dots">${[...pattern].map(c=>`<div class="d ${
+      {k:'keep',m:'miss',o:'owed',n:'none'}[c]}"></div>`).join('')}</div>
+    <div class="legend">
+      ${pattern.includes('k')?`<span><i class="d keep"></i>${t.legend.keep}</span>`:''}
+      ${pattern.includes('m')?`<span><i class="d miss"></i>${t.legend.miss}</span>`:''}
+      ${pattern.includes('o')?`<span><i class="d owed"></i>${t.legend.owed}</span>`:''}
+      ${pattern.includes('n')?`<span><i class="d none"></i>${t.legend.none}</span>`:''}
+      <span style="opacity:.72">${t.windowIs}</span>
+    </div>
+  </div>`;
+
+const line = (icon, label, title, sub) => `
+  <div class="line"><span class="ic">${icon}</span><span>
+    <b>${title}</b> <span class="sub">${label} · ${sub}</span></span></div>`;
+
+/* the goal list, with `asleep` as one of its states. A never-scheduled goal is
+   a row like any other — visible, unscored, and not gathered into a panel that
+   would read as a list of things you abandoned. */
+const goalList = (t, id, acts) => {
+  /* the action is the step that is actually missing, never one generic verb:
+     no tasks at all      -> break it down   (C8's territory)
+     tasks but no dates   -> schedule one    (C9a's)
+     C10's theme axis already derives which, from open work + days idle. */
+  const rows = t.list[id].map(([st, name, detail, need]) => `
+    <div class="g-row${st==='next'?' quiet':''}">
+      <span class="gm ${st}">${st==='next'?'+':''}</span>
+      <span class="gt">${name}<small>${detail}</small></span>
+    </div>
+    ${st==='next' && acts ? `<div class="acts" style="padding:0 2px 4px">
+        <div class="btn primary">${t.act[need]}</div>
+        <div class="btn ghost">${t.dorm.a2}</div></div>` : ''}`).join('');
+  const asleep = t.list[id].filter(r=>r[0]==='next').length;
+  return `
+  <div class="card">
+    <span class="h3">${t.goals}</span>
+    <div class="glist">${rows}</div>
+  </div>
+  <div class="foot"><span>+</span><span>${t.foot(asleep)}</span></div>`;
+};
+
+/* ── frames ─────────────────────────────────────────────────────────────── */
+
+function areaFrame(t, id, tally, pattern, copy) {
+  return `
+  <div class="sb"><span><bdi>${t.clock}</bdi></span><span>▮▮▮</span></div>
+  <div class="sc">
+    <div class="top"><span class="back">‹</span>
+      <span class="h-area">${t.areas[id]}</span>${tag(id, t)}</div>
+
+    <div class="card">
+      <div class="c-hd"><span class="h3">${t.record}</span>${windows(t)}</div>
+      ${pair(t, tally.keep, tally.miss)}
+      ${run(t, pattern)}
+    </div>
+
+    ${line('◆', t.holding, copy.hold[0], copy.hold[1])}
+    ${line('◇', t.slipped, copy.slip[0], copy.slip[1])}
+    ${goalList(t, id, false)}
+  </div>`;
+  /* the C17 asymmetry line was on both area frames in rev 1 and said the same
+     thing twice. It belongs where the two numbers actually meet — the analytics
+     screen — and nowhere else. */
+}
+
+function analyticsFrame(t) {
+  const total = AREAS.reduce((s,a)=>s+a.mins,0);
+  let off = 0;
+  const arcs = AREAS.map(a=>{
+    const frac = a.mins/total, len = frac*339.3, seg =
+      `<circle r="54" cx="60" cy="60" fill="none" stroke="${HUE[a.id]}" stroke-width="15"
+        stroke-dasharray="${len-3} ${339.3-len+3}" stroke-dashoffset="${-off}"
+        transform="rotate(-90 60 60)"></circle>`;
+    off += len; return seg;
+  }).join('');
+
+  const maxTotal = Math.max(...AREAS.map(a=>a.keep+a.miss+a.zero));
+  const bars = AREAS.map(a=>{
+    const w = x => (x/maxTotal*100).toFixed(1)+'%';
+    return `
+    <div class="row">
+      <div class="rl"><span>${t.areas[a.id]}</span>
+        <em><bdi>${a.keep}</bdi> ${t.kept} · <bdi>${a.miss}</bdi> ${t.missed}</em></div>
+      <div class="track">
+        <div class="k" style="width:${w(a.keep)}"></div>
+        <div class="m" style="width:${w(a.miss)}"></div>
+        <div class="z" style="width:${w(a.zero)}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="sb"><span><bdi>${t.clock}</bdi></span><span>▮▮▮</span></div>
+  <div class="sc">
+    <div class="top"><span class="h-area">${t.an.title}</span></div>
+
+    <div class="card split">
+      <span class="h3">${t.an.where}</span>
+      <div class="donut">
+        <svg width="120" height="120" viewBox="0 0 120 120">${arcs}</svg>
+        <div class="dleg">${AREAS.map(a=>
+          `<span><i style="background:${HUE[a.id]}"></i>${t.areas[a.id]}
+             <em><bdi>${a.mins}%</bdi></em></span>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="card split">
+      <div class="c-hd"><span class="h3">${t.an.held}</span>${windows(t)}</div>
+      <div class="hb">${bars}</div>
+    </div>
+
+    <div class="disc"><span>⇄</span><span>${t.an.note}</span></div>
+  </div>`;
+}
+
+/* The hard case, and the same component: an area where almost nothing was ever
+   scheduled. Rev 1 made this a separate "Asleep, not failed" screen, which is
+   not a screen the app has — it is the Learning area on a quiet month. */
+function learnFrame(t) {
+  return `
+  <div class="sb"><span><bdi>${t.clock}</bdi></span><span>▮▮▮</span></div>
+  <div class="sc">
+    <div class="top"><span class="back">‹</span>
+      <span class="h-area">${t.areas.learn}</span>${tag('learn', t)}</div>
+
+    <div class="card">
+      <div class="c-hd"><span class="h3">${t.record}</span>${windows(t)}</div>
+      ${pair(t, AREAS[2].keep, AREAS[2].miss)}
+      ${run(t, RUN.learn)}
+    </div>
+
+    ${line('◆', t.holding, t.f3.hold[0], t.f3.hold[1])}
+    ${/* rev 5 deleted the "nothing was missed here" line: the footer under the
+         list now says it, and better, because it says it beside the goals it is
+         about. Two statements of one fact, and the duplicate was crowding the
+         two action pairs — which differ, and are the whole point of this frame
+         — off the bottom of the screen. */''}
+    ${goalList(t, 'learn', true)}
+  </div>`;
+}
+
+/* ── stage ──────────────────────────────────────────────────────────────── */
+
+const CAPS = {
+  en:[
+    '<b>Good shape.</b> Two numbers, never a rate. The run is the record — <code>C5</code> §4 — and the first line is always the good one.',
+    '<b>Bad shape, and this is the frame that matters.</b> Same component, no red, and the good line is still filled: the one kept window, named.',
+    '<b>The counterpart to the time donut.</b> Minutes divide; successes do not. <code>C17</code> put both on one screen deliberately.',
+    '<b>The case no closed ticket covered.</b> Nothing here was ever due, so the screen names the <b>missing step</b> — break it down, or schedule it — never a dormancy badge, and counts it in neither number.',
+  ],
+  he:[
+    '<b>מצב טוב.</b> שני מספרים, לא אחוז. הרצף הוא הרשומה — <code>C5</code> §4 — והשורה הראשונה תמיד הטובה.',
+    '<b>מצב רע, וזה הפריים שקובע.</b> אותו רכיב, בלי אדום, והשורה הטובה עדיין מלאה: השבוע האחד שעמדת בו, בשמו.',
+    '<b>המשלים לדונאט הזמן.</b> הדקות מתחלקות, ההצלחות לא. <code>C17</code> שם את שניהם על מסך אחד בכוונה.',
+    '<b>המקרה שאף כרטיס סגור לא כיסה.</b> כאן מעולם לא נדרש כלום, ולכן המסך מציג את <b>הצעד החסר</b> — לפרק, או לקבוע מועד — לא תווית של רדימה, ולא נספר באף מספר.',
+  ],
+};
+
+function render() {
+  const t = T[L];
+  const frames = [
+    areaFrame(t, 'health', AREAS[0], RUN.health, t.f1),
+    areaFrame(t, 'career', AREAS[1], RUN.career, t.f2),
+    analyticsFrame(t),
+    learnFrame(t),
+  ];
+  document.getElementById('stage').innerHTML = frames.map((html,i)=>`
+    <div class="frame">
+      <div class="ph st st-${M}" data-theme="${TH}" dir="${t.dir}">${html}</div>
+      <div class="cap">${CAPS[L][i]}</div>
+    </div>`).join('');
+}
+
+document.querySelectorAll('.bar button').forEach(b=>{
+  b.onclick = () => {
+    const g = b.dataset.m ? 'm' : b.dataset.t ? 't' : 'l';
+    document.querySelectorAll(`.bar button[data-${g}]`).forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if (g==='m') M = b.dataset.m; else if (g==='t') TH = b.dataset.t; else L = b.dataset.l;
+    render();
+  };
+});
+
+/* query string, so shoot.ps1 can render any state: ?m=neo&t=light&l=he */
+const q = new URLSearchParams(location.search);
+if (q.get('m')) M = q.get('m');
+if (q.get('t')) TH = q.get('t');
+if (q.get('l')) L = q.get('l');
+document.querySelectorAll('.bar button').forEach(b=>{
+  if (b.dataset.m) b.classList.toggle('on', b.dataset.m===M);
+  if (b.dataset.t) b.classList.toggle('on', b.dataset.t===TH);
+  if (b.dataset.l) b.classList.toggle('on', b.dataset.l===L);
+});
+render();
+</script>
+</body>
+</html>

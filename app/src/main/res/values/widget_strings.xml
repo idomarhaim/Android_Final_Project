@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy for the home-screen widget pack (spec §4.5).
+
+  Deliberately a sibling file to strings.xml rather than a section inside it:
+  it merges into the same R.string namespace at build time, and keeping it
+  separate is what let this unit ship while `36-tasks-consent` held strings.xml
+  (SESSIONS.md, 2026-08-15). Every key is prefixed gp_widget_ for the same reason.
+
+  A widget's copy is not the app's copy shortened. Space here is decided by a
+  launcher this app does not control (§4.5), so several strings exist in two or
+  three lengths and BuildWidgetTileUseCase picks between them — that is §4.5's
+  size rule, and it is why "the disclosure shrinks" is a string-table concern
+  and not a truncation.
+-->
+<resources>
+
+    <!-- ── Tile names ────────────────────────────────────────────
+         The singular at 2×2 is load-bearing, not a typo: that size shows one
+         goal of several, and a plural header there would be a claim the tile
+         cannot keep. It is also why that size is allowed to carry no
+         disclosure. -->
+    <string name="gp_widget_goal">Goal</string>
+    <string name="gp_widget_goals">Your goals</string>
+    <string name="gp_widget_week">This week</string>
+    <string name="gp_widget_week_large">Where the week went</string>
+    <string name="gp_widget_trend">Day by day</string>
+    <string name="gp_widget_effort_short">Effort</string>
+    <string name="gp_widget_effort">Effort and outcome</string>
+    <string name="gp_widget_level">Level</string>
+    <string name="gp_widget_level_large">Level and points</string>
+
+    <!-- ── Freshness (§5.3's as-of stamp, applied to a snapshot surface) ── -->
+    <string name="gp_widget_as_of">as of %1$s</string>
+
+    <!-- ── Empty states — three different facts, three sentences ── -->
+    <string name="gp_widget_never_opened">Open GoalPilot once and this fills in</string>
+    <string name="gp_widget_signed_out">Sign in to see your week</string>
+    <string name="gp_widget_nothing_tracked">Nothing tracked this week yet</string>
+    <string name="gp_widget_no_goals">No goals yet — tap to add one</string>
+
+    <!-- ── Numbers ───────────────────────────────────────────────
+         Formatted through resources rather than in Kotlin so a locale that
+         orders them differently can say so here (§5.1). -->
+    <string name="gp_widget_duration_hm">%1$dh %2$dm</string>
+    <string name="gp_widget_duration_m">%1$dm</string>
+    <string name="gp_widget_percent">%1$d%%</string>
+    <string name="gp_widget_points">%1$s points</string>
+
+    <!-- ── goals ─────────────────────────────────────────────────
+         `C7` permits a goal with no measure, so the tile has to be able to say
+         it drew fewer rings than the user has goals. -->
+    <string name="gp_widget_goals_ring_meaning">Each ring is progress toward that goal\'s own target.</string>
+    <plurals name="gp_widget_goals_without_measure">
+        <item quantity="one">Only a goal with a measure can show a ring — %1$d of yours has none.</item>
+        <item quantity="other">Only a goal with a measure can show a ring — %1$d of yours have none.</item>
+    </plurals>
+
+    <!-- ── week ──────────────────────────────────────────────────
+         `C17` §3's disclosure at three lengths. The tile divides shared minutes
+         across areas, so it owes one at every size — that is the rule Ido's
+         overturn of the widget ban was re-cut into, and dropping it at the
+         smallest size would restore exactly the dishonesty the ban was aimed at. -->
+    <string name="gp_widget_divided_small">shared time divided</string>
+    <string name="gp_widget_divided_mid">Shared time is divided across areas; multi-day periods are not counted.</string>
+    <string name="gp_widget_divided_large">A 40-minute run serving two areas counts 20 minutes in each, so this adds up to your real week. Multi-day periods are not counted at all.</string>
+    <string name="gp_widget_tracked">tracked</string>
+
+    <!-- ── trend ─────────────────────────────────────────────────
+         The prototype gave 4×2 no footnote; it gets one here, because the
+         columns are the same divided minutes as the donut and §4.5's rule is
+         about the number, not about the size. -->
+    <string name="gp_widget_trend_small">7 days · same divided minutes</string>
+    <string name="gp_widget_trend_mid">The same divided minutes as the donut, cut into days.</string>
+    <string name="gp_widget_busiest">Busiest: %1$s, %2$s</string>
+
+    <!-- ── effort ────────────────────────────────────────────────
+         §4.4: the app orders only the quantity it may order — minutes — and
+         NAMES the rest, because a percentage is a fraction of its own target
+         and ranking by movement would partly rank how modest the goals are. -->
+    <string name="gp_widget_effort_headline">%1$s took most of your week</string>
+    <string name="gp_widget_effort_no_measure">and it has no measure, so nothing here can say whether it moved.</string>
+    <string name="gp_widget_effort_lead">and %1$s is at %2$s.</string>
+    <string name="gp_widget_effort_small">ranked by minutes</string>
+    <string name="gp_widget_effort_large">Ranked by minutes — the one quantity the app may order.</string>
+
+    <!-- ── level ─────────────────────────────────────────────────
+         Points are round(minutes/3) × difficulty, so this tile shows a derived
+         number and owes the sentence at every size. -->
+    <string name="gp_widget_to_next_level">%1$s to the next level</string>
+    <string name="gp_widget_points_small">points are minutes, scored</string>
+    <string name="gp_widget_points_large">Points are your minutes, scored — not a separate score.</string>
+    <string name="gp_widget_tracked_this_week">%1$s tracked this week</string>
+
+    <!-- ── The launcher's own widget picker ──────────────────────
+         The description is the only place a user reads what a tile is before
+         placing it, so each says what the tile SHOWS rather than what it is
+         called. -->
+    <string name="gp_widget_pick_goals_desc">Rings for the goals you are measuring</string>
+    <string name="gp_widget_pick_week_desc">Where this week\'s time went, by life area</string>
+    <string name="gp_widget_pick_trend_desc">The same week, day by day</string>
+    <string name="gp_widget_pick_effort_desc">Which area took the week, and what stands where</string>
+    <string name="gp_widget_pick_level_desc">Your level, and the points to the next one</string>
+
+</resources>

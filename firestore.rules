@@ -37,12 +37,25 @@ service cloud.firestore {
     }
 
     // ── Challenges (nice-to-have) ──────────────────────────────────
+    // The challenge document itself is owner-only: title, dates and type are
+    // the owner's to set. Joining is NOT an edit to it — see participants.
     match /challenges/{challengeId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.ownerUid == request.auth.uid;
       allow update, delete: if isSignedIn()
         && resource.data.ownerUid == request.auth.uid;
+
+      // One row per participant, id = their uid, writable only by them. This
+      // is what makes joining possible without letting a non-owner edit the
+      // challenge. A subcollection is not covered by the match above, so
+      // without this block these documents match no rule and are denied.
+      // Scores are client-written, exactly as publicProfiles.points is above,
+      // and carry the same caveat.
+      match /participants/{uid} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(uid);
+      }
     }
   }
 }

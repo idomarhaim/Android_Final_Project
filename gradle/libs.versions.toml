@@ -12,6 +12,16 @@ activityCompose = "1.9.3"
 composeBom = "2024.12.01"
 navigationCompose = "2.8.5"
 
+# ── Glance (home-screen widgets, spec §4.5) ────────────────────────
+# Glance is Compose-shaped but does NOT render Compose: it compiles a composable
+# tree down to a RemoteViews, which the launcher inflates in its own process.
+# That is why the widget pack draws its charts into bitmaps rather than reusing
+# ui/components/ — there is no Canvas, no Modifier.blur and no animation on the
+# other side of that boundary (§4.5). 1.1.1 is the current stable line and the
+# newest that does not require an AGP bump; the toolchain constraint is the same
+# one pinning Health Connect below.
+glance = "1.1.1"
+
 # ── DI ─────────────────────────────────────────────────────────────
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
@@ -22,10 +32,27 @@ coroutines = "1.9.0"
 # ── Firebase / Google ──────────────────────────────────────────────
 firebaseBom = "33.7.0"
 playServicesAuth = "21.3.0"
+# App Distribution ships OUTSIDE the Firebase BoM — its Android SDK is still
+# beta, so the BoM deliberately does not pin it and an explicit version is
+# mandatory. `appDistributionPlugin` (build-time upload) and `appDistribution`
+# (in-app update prompt) version independently of each other.
+appDistributionPlugin = "5.3.0"
+appDistribution = "16.0.0-beta20"
 
 # ── Media / serialization ──────────────────────────────────────────
 coil = "2.7.0"
 kotlinxSerialization = "1.7.3"
+
+# ── Health Connect ─────────────────────────────────────────────────
+# PINNED BY THE TOOLCHAIN, not by preference. 1.1.0 is the first stable
+# connect-client (there is no stable 1.0.0 — that line ends at alpha11), but
+# 1.1.0 and 1.1.0-rc* both demand compileSdk 36 AND AGP 8.9.1+; this project is
+# on compileSdk 35 / AGP 8.7.3 / Gradle 8.10.2. beta01 is the newest release
+# that builds against the current toolchain, and the APIs used in
+# data/health/HealthConnectManager.kt have been settled since 1.0.0-alpha.
+# Moving to 1.1.0 means bumping AGP, the Gradle wrapper and compileSdk together
+# — tracked in TODO/TODO_FUTURE/, deliberately not bundled into this feature.
+healthConnect = "1.1.0-beta01"
 
 # ── Test ───────────────────────────────────────────────────────────
 junit = "4.13.2"
@@ -75,9 +102,22 @@ firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
+# App Distribution — the api/impl split is load-bearing, not tidiness. The `-api`
+# artifact is a no-op stub that ships in every variant so the call site compiles
+# and does nothing; the full implementation is added to the *release* variant
+# only. A build that never reaches a tester therefore carries no updater at all.
+firebase-appdistribution-api = { group = "com.google.firebase", name = "firebase-appdistribution-api", version.ref = "appDistribution" }
+firebase-appdistribution = { group = "com.google.firebase", name = "firebase-appdistribution", version.ref = "appDistribution" }
+
 # Media / serialization
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Health Connect (fitness & sleep)
+androidx-health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
+
+# Glance (home-screen widgets)
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 
 # Unit test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -100,3 +140,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "appDistributionPlugin" }

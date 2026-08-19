@@ -51,26 +51,39 @@ class SocialViewModel @Inject constructor(
 
     /** Adds a friend straight from a leaderboard row (uid already known). */
     fun addFriend(uid: String) {
-        viewModelScope.launch { report(socialRepository.addFriend(uid)) }
+        viewModelScope.launch { report(socialRepository.addFriend(uid), "Friend added") }
     }
 
     /** Adds a friend from the short code typed into the "Add a friend" dialog. */
     fun addFriendByCode(code: String) {
-        viewModelScope.launch { report(socialRepository.addFriendByCode(code)) }
+        viewModelScope.launch { report(socialRepository.addFriendByCode(code), "Friend added") }
     }
 
     fun removeFriend(uid: String) {
+        // Went through report() in the issue #3 sweep: this used to announce
+        // "Friend removed" before looking at the result, so a failed removal
+        // claimed to have succeeded and the row stayed on screen contradicting it.
+        viewModelScope.launch { report(socialRepository.removeFriend(uid), "Friend removed") }
+    }
+
+    /**
+     * Deletes one of the signed-in user's own posts, and the photo it carried.
+     *
+     * Takes the whole [SharedItem] rather than an id: the image URL is the other
+     * half of what has to be deleted, and it is on the item the card is already
+     * holding — asking the caller to pass both invites passing only one.
+     */
+    fun deleteShare(item: SharedItem) {
         viewModelScope.launch {
-            socialRepository.removeFriend(uid)
-            _message.value = "Friend removed"
+            report(socialRepository.deleteShare(item.id, item.imageUrl), "Post deleted")
         }
     }
 
     /** Surfaces the repository's own error text — "no user with that code" is
      *  far more actionable than a generic failure message. */
-    private fun report(result: Resource<Unit>) {
+    private fun report(result: Resource<Unit>, onSuccess: String) {
         _message.value = when (result) {
-            is Resource.Success -> "Friend added"
+            is Resource.Success -> onSuccess
             is Resource.Error -> result.message
             Resource.Loading -> null
         }

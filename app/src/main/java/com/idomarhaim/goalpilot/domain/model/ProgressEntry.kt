@@ -12,4 +12,14 @@ data class ProgressEntry(
     val note: String = "",
     val imageUrl: String? = null,
     val createdAtEpochMillis: Long = 0L,
+    /**
+     * Identity of the external reading this entry came from, e.g.
+     * `hc:steps:2026-08-01` for a Health Connect sync. Null for a manual log.
+     *
+     * It exists so an importer can recognise its own earlier writes exactly. Steps
+     * are cumulative — re-syncing a day already logged would silently double it —
+     * and matching on [note] text is the guesswork the Google Tasks import is
+     * stuck with because its rows carry no such handle.
+     */
+    val sourceKey: String? = null,
 )
