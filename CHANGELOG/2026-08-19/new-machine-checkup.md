@@ -297,3 +297,115 @@ firebase apps:android:sha:create \
 ⚠️ **This recurs on every new machine, and it will recur on the release app too** the first
 time a release APK is built here (the release keystore is a different, also-machine-local
 file — see `scripts/new-release-keystore.ps1`).
+
+## Round 3 — signed in, and the AI is genuinely live
+
+### 9 · The SHA fix worked — first sign-in on this machine
+
+`firebase apps:android:sha:create` run **on Ido's explicit authorisation** (outward action;
+`AUTO MODE` does not cover it). The debug app now carries both fingerprints — the old
+machine's `f1d0964d…` and this machine's `448d0d94…`; **nothing was deleted**.
+
+`Observed:` `dumpsys account` → `Account {name=name.iddo@gmail.com, type=com.google}`, and
+GoalPilot's dashboard renders his real Firestore data: **8 goals, 5 tasks done, 70 pts,
+Level 1, 25% overall**. No rebuild or reinstall was needed, exactly as predicted — the
+fingerprint check is server-side.
+
+`app/google-services.json` refreshed from `firebase apps:sdkconfig` and committed. **Ido
+delegated this decision** (*"do whatever is most right"*), so it is recorded as **mine**:
+refresh only if the diff is confined to the SHA list — measured, and it was. **8 insertions,
+0 deletions, 0 modifications**; both packages and both web client ids byte-identical. Written
+back as CRLF with no trailing newline, matching the committed file, so the diff is purely
+additive. The risk I named when offering the choice (*"re-downloading can churn unrelated
+fields"*) was checked rather than assumed, and did not occur.
+
+### 10 · The emulator hang was **software rendering**, not only RAM
+
+`hw.gpu.enabled=no` on both AVDs — created headlessly, and that default means a
+**1344×2992** framebuffer rendered on the CPU. The emulator went `Responding=False` with
+**772 s** of accumulated CPU. Set to `hw.gpu.enabled=yes` / `hw.gpu.mode=host` on both.
+
+| | before | after |
+|---|---|---|
+| renderer | software | `Intel(R) UHD Graphics` via the ES translator (`dumpsys SurfaceFlinger`) |
+| `Responding` | **False** | True |
+| accumulated CPU | 772 s | 100 s |
+
+⚠️ **RAM went the other way and is now the binding constraint:** the GPU path costs
+resident memory — qemu 736 MB → **3.0 GB**, host free **1.09 GB**. With WSL not even
+running, the biggest consumer is VS Code (**48 processes, 2.8 GB**). This also retro-explains
+the unexplained exit recorded in §7 and the earlier hang: both were a software-rendered
+4-megapixel screen on a starved host.
+
+**And the window-fit code is wrong on a scaled display.** `Set-EmulatorWindowLayout`
+computed `scale 0.275 → 370x823`; the real window was **437×978** on a **1536×912** working
+area — taller than the screen, which is why its own guard reported *"window was off-screen
+(top=-897)"* and pinned it to `y=0`. The factor is Windows **DPI scaling (125 %)**: the
+script sizes in device pixels and Windows lays out in scaled pixels. Repositioned by hand to
+311×700 centred; `scripts/run-goalpilot.ps1` is **not** changed here — that is a real defect
+in someone else's script and it is left as a finding, not folded into a checkup session.
+
+### 11 · Live recommendation smoke test — **PASSES**, and I got it wrong first
+
+Brief item 2's residue is closed. But the first reading was wrong and the correction is the
+useful part:
+
+- ❌ **What I said first:** *"the last call was 2026-08-17, so these tips are the local
+  fallback."* The `functions:log` window I read was truncated and simply did not reach
+  today's lines.
+- ✅ **Measured:** `getRecommendations` was invoked **`2026-08-19T18:40:17Z` and
+  `18:43:28Z`** — the second is this session's app restart — with
+  `verifications: {auth: VALID}`.
+- ✅ **And the output is not the fallback.** The fallback strings are exactly
+  `"Start with one goal"`, `"Keep the streak alive"` and `"Nudge: <goal title>"`. The screen
+  showed **"Identify Obstacles"** and *"…stretch, or a short walk"*, which appear **nowhere**
+  in `app/src/main/java` (`grep` returns only an unrelated hit in `WidgetCharts.kt`). Text
+  the app cannot produce came from the model.
+
+**Why the wrong reading was so easy, and the defect underneath it.**
+`RecommendationRepositoryImpl.getRecommendations` ends:
+
+```kotlin
+} catch (e: Exception) {
+    Resource.Success(fallbackRecommendations(goals, completedTasksLast7d, totalPoints))
+}
+```
+
+Every failure — dead key, retired model, no network, auth refused — becomes
+`Resource.Success` with **no log line and no UI difference**. `AGENTS.md` warns that a
+retired GROQ model *"fails silently and the AI looks bland rather than broken"*; this is the
+line that makes it so, and it is broader than the model. **The only reliable discriminator
+from outside is comparing the rendered text against the fallback strings** — which is what
+was done here, and it is not something a demo audience could do.
+📌 **Worth a ticket:** log the swallowed exception. `Resource.Success` on the fallback is a
+deliberate product decision (spec §8, never block the user) and should stay; being unable to
+*tell* is the defect.
+
+### 12 · GROQ key rotation — nothing was left stale
+
+Ido rotated the key and asked whether anywhere still holds the old one. Checked every place
+it can live; **no action needed**:
+
+| Where | State |
+|---|---|
+| `functions/.env` | ✅ new key — ends `HjPa`, matching his GROQ console. Written **18:56:14**. Git-ignored (`functions/.gitignore:3`). |
+| Deployed function runtime env | ✅ `functions/lib/index.js` built **19:16:52**, deploy commit `c464eaf` at **19:19:19** — both **after** `.env` was written, so all three functions carry it. |
+| The Android app | ✅ by design — the key never ships in the client (spec §5). |
+| Secret Manager | n/a — `functions/src/index.ts:31` reads plain `process.env.GROQ_API_KEY`, baked at deploy time. |
+| `functions/.env.example` | ✅ placeholder only. |
+
+`Observed:` his console shows the key used today, and §11 proves the model answered.
+
+⚠️ **The rule to keep:** because the key is a **deploy-time** environment value and not a
+secret reference, editing `functions/.env` alone changes nothing — **a rotation is not live
+until `firebase deploy --only functions` runs after it.** The window between the two is
+invisible: §11's silent catch means the app keeps serving plausible tips throughout.
+
+## 🧪 Tests — round 3
+
+| Layer | Result |
+|---|---|
+| Device / manual | ✅ Google sign-in completes; dashboard renders live Firestore data (8 goals, 70 pts). |
+| Cloud Functions (live) | ✅ `getRecommendations` invoked `18:43:28Z`, auth VALID, output demonstrably not the fallback. |
+| Instrumented | ⛔ Still not run, and still must not be — it would wipe the account just created. |
+| Firestore rules (`firestore-tests/`) | ⏳ Not run — RAM (1.09 GB free) will not carry the Firebase emulator beside the AVD. |

@@ -59,6 +59,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "297750736036-5gf7q1sbk98ta62ue7n376v8i22drb1f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.idomarhaim.goalpilot.debug",
+            "certificate_hash": "448d0d9424fa876a6ce8980c0c5b740d11a7b3ec"
+          }
+        },
+        {
           "client_id": "297750736036-5ks5r68etl8ofm7o7f905o8fbgbpa52i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
