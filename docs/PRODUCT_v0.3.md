@@ -1595,6 +1595,24 @@ resurrect them. It exists for exactly one reason, stated in its own KDoc — `se
 already deleted. §4's surviving case does **not** need it: `isFromCache` is a property of the
 snapshot, so **nothing in v0.3 needs to ask the OS about the radio.**
 
+> ⚠️ **This paragraph describes intent, not `HEAD` — and acting on it as fact would re-open a closed
+> bug.** *(Added 2026-08-20 by `50-offline-stamps`, which hit it while executing #50.)* `C20` has
+> **not** removed the transaction: `TaskRepositoryImpl.setDone` is still `firestore.runTransaction`,
+> because [#49](https://github.com/idomarhaim/Android_Final_Project/issues/49) removed the *goal*
+> write from **inside** it, not the transaction itself. `C20` is a **decision** issue
+> ([#42](https://github.com/idomarhaim/Android_Final_Project/issues/42), closed *decided*) whose
+> **build half has never shipped** — no projection function in `functions/`, no field-level condition
+> in `firestore.rules`, `publicProfiles.level` still on the DTO.
+>
+> A Firestore transaction cannot be served from the cache, so `setDone` is still server-only and the
+> pre-check is still load-bearing. **`ConnectivityMonitor` and its caller therefore still exist**, and
+> deleting them today re-opens closed
+> [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3) — the measured 7.9 s
+> optimistic-tick undo. #50 shipped its other four items and left this one open for that reason.
+>
+> **The sentence above becomes true the day `C20`'s build half ships**, so it is annotated rather than
+> rewritten — it is the design record, and the design is not wrong. What was missing is the date.
+
 **Why this was a product decision and not defect work:** `C12` already made *how a surface discloses
 the honesty of a number* a **product rule** rather than a bug fix, and applied it to widgets. §§1–4 are
 that rule on a second axis — and §3 changes a **stored schema** that `C20`'s function must write,
