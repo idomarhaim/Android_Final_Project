@@ -220,3 +220,33 @@ both layouts are live and the globe key switches between them. Read back and con
 challenge, which an emulator cannot satisfy — no camera, no screen lock, no passkey. The way
 through is *Cancel* → *Try another way* → password. That is a device-flow property, not a
 GoalPilot one, and it will recur on `Pixel_10_Pro_XL_B`.
+
+### 7 · Two corrections to §6, both found by looking rather than by reasoning
+
+**(a) "The emulator has no Bluetooth" was wrong as stated.** `pm list features` returns
+`android.hardware.bluetooth` **and** `android.hardware.bluetooth_le`, so the passkey flow's
+own capability check passes and it offers the QR path. What is missing is a **radio** behind
+those features: the emulated stack cannot advertise over the air to a physical phone, so the
+hybrid/caBLE handshake the QR starts can never complete and the phone sits on *"connecting
+to device"* indefinitely. The correction matters because the first phrasing predicts the
+device would not offer the option at all — and it does. *Route through anyway: Cancel →
+**Try another way** → password.*
+
+**(b) The Hebrew subtype did not survive the reboot.** After the emulator came back,
+`enabled_input_methods` read `…LatinIME;1594443099:…` — English only. The AVD restores from a
+**quickboot snapshot** that predates the change, so a `settings put` made in a session that
+does not end with a snapshot save is simply rolled back. Re-applied and re-read.
+⚠️ **It will roll back again on any cold boot or `-Recover` run** until a snapshot is saved
+holding it, so treat *"is Hebrew still there?"* as a thing to check, not to assume. The
+mechanical check is one line:
+
+```
+adb shell settings get secure enabled_input_methods   # want ...;1594443099;1317880268:...
+```
+
+**Unexplained, and recorded as such:** between `adb unroot` and the next `adb` command the
+**emulator process itself exited** — `qemu-system-x86_64` count 0, not merely an adb
+disconnect — losing the in-flight sign-in. `Untested:` the cause. It is not `unroot`, which
+restarts `adbd` and not the VM; RAM was 3.4 GB free afterwards, so pressure is a candidate
+but not a demonstrated one. It rebooted cleanly in 36 s. If it recurs, that is a real defect
+worth a session; one occurrence is a note.
