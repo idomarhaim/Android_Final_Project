@@ -30,9 +30,20 @@
      Adoptium/jdk-21.0.12.8-hotspot`, and that directory does not exist on this
      machine.** `org.gradle.java.home` **overrides** `JAVA_HOME`, so setting
      `JAVA_HOME` changes nothing until this line is fixed or removed.
-   - **Android Studio's `jbr` is JDK 25** (`openjdk 25.0.2`), and the wrapper is
-     **Gradle 8.10.2**, which does not run on 25. So `jbr` is not a usable substitute
-     even after the pin is removed.
+   - **Android Studio's `jbr` is JDK 25** (`openjdk 25.0.2`) and the toolchain rejects
+     it. **Measured 2026-08-19, don't re-derive this:** `gradlew --version` on the `jbr`
+     **succeeds** (Gradle 8.10.2 launches, printing *"Support for Java 23"* as its
+     highlight), so a version check alone looks fine and is **not** the test. The real
+     test is configuration — `gradlew help -Dorg.gradle.java.home=<jbr>` fails in 20s with
+     the whole error message being the literal string:
+
+     ```
+     * What went wrong:
+     25.0.2
+     ```
+
+     A bare version number as the failure text is a version **parser** giving up on `25`.
+     So `jbr` is not a usable substitute even after the pin is removed.
 
    **There is no JDK 21 on this machine at all** (`C:\Program Files\Eclipse Adoptium\`
    is absent; `C:\Program Files\Java\` does not exist). So the first real step is

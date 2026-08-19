@@ -49,10 +49,18 @@ cannot work, for two independent reasons.
   on this machine, and `org.gradle.java.home` **overrides** `JAVA_HOME` — so setting
   `JAVA_HOME` changes nothing while that line stands.
 - Android Studio's `jbr` reports `openjdk version "25.0.2"`. The wrapper is Gradle
-  **8.10.2**. **Inferred** (from the published compatibility matrix, not run here): 8.10.2
-  does not run on JDK 25, and AGP 8.7.3 / Kotlin 2.0.21 / KSP 2.0.21-1.0.28 are not
-  qualified on it either. **Untested:** nobody has attempted the build on 25 — the pin
-  above fails first, so the second reason has never been reached.
+  **8.10.2**. This started as an inference from the compatibility matrix and was then
+  **run**, because Ido asked whether the project should simply move to 25.
+
+  **Observed 2026-08-19.** `gradlew --version` on the `jbr` **succeeds** — Gradle 8.10.2
+  launches on JDK 25 and prints *"Support for Java 23"* as its release highlight. So the
+  cheap check passes and is not the test. Configuration is:
+  `gradlew help -Dorg.gradle.java.home=<jbr>` fails in 20 s, and the entire body of the
+  error is the literal string `25.0.2` — a version parser giving up on `25`.
+
+  Recorded here in that shape deliberately: the earlier draft of this entry said Gradle
+  *"does not run on 25"*, which a later session would have disproved in one command and
+  then distrusted the rest of the paragraph.
 
 There is **no JDK 21 on this machine** (`C:\Program Files\Java\` absent too). The brief now
 says: install Temurin JDK 21, then repoint the pin. It also says explicitly **not** to
