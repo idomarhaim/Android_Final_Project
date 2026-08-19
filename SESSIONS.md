@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `48-settings-surface` | #48 — build §4.9's Settings screen; move device-scoped controls out of Profile | `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/` (new) · `feature/profile/` · `feature/dashboard/DashboardScreen.kt` + `DashboardViewModel.kt` · `ui/root/GoalPilotRoot.kt` · `ui/navigation/Destinations.kt` · `ui/locale/LocaleAwareWindows.kt` · `ui/theme/Theme.kt` · `MainActivity.kt` · `domain/model/AppBrightness.kt` + `AppRegion.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `app/src/main/res/values/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/{domain,feature}/` (new tests) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/` (new test) · `CHANGELOG/2026-08-20/48-settings-surface.md` · `sessions/48-settings-surface.md` | **Gradle daemon**, emulator **`Pixel_10_Pro_XL`** | 2026-08-19 |
 > 🏁 **`cloud-emulator` RELEASED 2026-08-19 — `83f648d` (claim) → `0fee40c` (the work) → this
 > note.** No singletons held: **no local Gradle build and no local device**, which is what kept it
 > disjoint from `new-machine-checkup` while that row held both. Account:
