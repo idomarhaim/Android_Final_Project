@@ -161,3 +161,33 @@ The first render-pass attempt **hung for twenty minutes at 0% CPU** and took `ad
 none. Waking and dismissing the keyguard first turned the same 16-frame pass into **8 seconds**.
 The recovery cost the app's install (the device's Google account, `name.iddo@gmail.com`,
 survived); `MaterialRenderPass`'s KDoc now carries the wake step as part of the recipe.
+
+---
+
+## 📤 What this push carries besides my own work
+
+Precondition 5 says name the foreign commits in the changelog as well as in the reply, because
+the reply is throwaway and this is where *"who published `ba3c763`?"* is still answerable in a
+month. Four commits from two sibling sessions ride up with `05ec6aa` and `3a24af1`:
+
+| Commit | Session | What it is |
+|---|---|---|
+| `58ab30e` | `ticket-close-gap` r3 | `#7` closed, and why nothing else could be |
+| `0b7cd66` | `ticket-close-gap` | `#55`/`#56` opened, `#7`/`#8` closed, **the whole `kb-candidates/` backlog drained** — 8 entries across 5 files, pages in `C:/Dev/JARVIS` `818f359` |
+| `70ac459` | `ticket-close-gap` | `#55` and `#56` recorded as v0.3 scope, both briefs written |
+| `ba3c763` | `c13-key-store` | its own brief's *"can run in parallel"* claim corrected to **false** — it collides with this session on `SettingsScreen.kt` |
+
+**Adjudicated, not assumed.** Neither session held a live row when I read the board. `0b7cd66`'s
+own message says *"let c12's push carry the held commit"*, and `c13-key-store`'s last transcript
+turn (2026-08-20T17:57Z) reads *"all done. Commits still ride `c12`'s push, as you chose"* — both
+are positive signals those sessions wrote about themselves, so this is a handover rather than a
+silence I decided to read as one.
+
+**The five deletions in the range are all `kb-candidates/*.md`**, drained in `0b7cd66` with every
+entry promoted — the one deletion `derivable-decision.md` §1 permits without asking, and the one
+carve-out precondition 2 makes for it. The single rename is this brief's own close into
+`sessions/done/`, with `status: done` set in the same commit.
+
+**One thing worth a second look and not a stop: 16 PNGs, ~3.7 MB.** They are the render pass the
+brief requires (*"put the images in the changelog"*), at half resolution, in the established
+`docs/render-passes/` folder — deliberate payload rather than an accidental binary.
