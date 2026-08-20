@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 7
 created: 2026-08-20
+done: 2026-08-20 by `7-quickadd-complete` — `e573404` (claim) → `153620b` (#7 ships) → `0234745` (KB, in `C:\Dev\JARVIS`)
 ---
 
 # `#7` — complete a task from inside the add flow

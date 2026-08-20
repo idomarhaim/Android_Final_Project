@@ -15,7 +15,42 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `7-quickadd-complete` | `#7` — complete a task from inside the add flow | `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModel.kt`, `app/src/main/java/com/idomarhaim/goalpilot/domain/`, `app/src/test/java/com/idomarhaim/goalpilot/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/`, `sessions/7-quickadd-complete.md`, `CHANGELOG/2026-08-20/7-quickadd-complete.md`, `kb-candidates/2026-08-20-7-quickadd-complete.md` | Gradle daemon; **AVD `Pixel_10_Pro_XL`** (claimed 2026-08-20 for the instrumented + render pass) | 2026-08-20 |
+> 🏁 **`7-quickadd-complete` RELEASED 2026-08-20 — `e573404` (claim) → `153620b` (`#7` ships).**
+> Singletons released: Gradle daemon, AVD `Pixel_10_Pro_XL`.
+>
+> ✅ **`#7` ships.** An **Already done** chip on **both** add surfaces, and the completion rides the
+> task's **own single `set()`** — never `upsertTask` then `setDone`. `TaskCompletion` is applied
+> inside `upsertTask`, the one function every task write passes through.
+>
+> ⚠️ **The invariant it enforces was worth more than the affordance.** `isDone` and
+> `completedAtEpochMillis` are **one fact read by consumers that disagree about which field is the
+> fact** — the projection function counts `done`, while the weekly summary, the dashboard's
+> done-this-week count and the time chart all require the stamp. A half-written fact **awards
+> points and is invisible everywhere the user could reconcile them**, with nothing red.
+> `Observed:` by reading the four call sites at HEAD; `#7` is the first ticket that could hit it.
+>
+> 🔎 **The brief's *corrected* precondition grep is itself a false negative.** `50-finish`
+> diagnosed the original's three hits as prose and shipped a narrower grep that **also** hits
+> prose. A pattern precise enough to match the code matches the sentence *about* the code.
+> Precondition met, established by reading `setDone`. → `kb/dev/look-at-your-own-output.md` §4b-ii.
+>
+> 🚩 **`#19` is CLOSED, and three sessions defer implementation work to it.** §1.4's points
+> inversion has a **decision and no implementation owner** — 6 open issues, none of them it;
+> `TODO/` lists `C1` only as a map question; no brief names it. **No issue filed — outward-facing,
+> Ido's call.** → `kb/dev/decision-map-charting.md` §12d.
+>
+> 📥 **Candidate file drained in full and deleted** — four entries into three **existing**
+> pages, `0234745` in `C:\Dev\JARVIS`. No new page: two of the four already existed under a
+> heading the candidate did not name.
+>
+> 📌 **Five other candidate files remain undrained** and are other sessions': `50-offline-stamps`,
+> `9-duration-box` (partly — 4b parked always-ask), `11-fill-buttons`, `48-settings-surface`,
+> `ticket-close-gap`.
+>
+> 🤝 **Carried `db1597b` + `7c7ef77` (`ticket-close-gap`, released) on the push** — and closed
+> the gap they flagged: they could not re-run the suites because this session held the daemon.
+> **515/0 JVM and 139/0 instrumented** are now green, including the suites their `#6`/`#9`/`#11`
+> evidence tables cite.
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ✅ **`#6`, `#9` and `#11` closed** — three tickets whose briefs were `status: done`, whose
