@@ -13,6 +13,7 @@ import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
@@ -152,6 +153,9 @@ fun TaskDto.toDomain(): Task = Task(
     source = TaskSource.fromName(source),
     progressContribution = progressContribution,
     estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
+    // Absent, unknown and misspelled all read as UNKNOWN — see TaskDto.durationSource
+    // for why a legacy row is left absent rather than back-filled.
+    durationSource = DurationSource.fromName(durationSource),
     createdAtEpochMillis = createdAt,
     completedAtEpochMillis = completedAt,
 )
@@ -165,6 +169,7 @@ fun Task.toDto(): TaskDto = TaskDto(
     source = source.name,
     progressContribution = progressContribution,
     estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
+    durationSource = durationSource.name,
     createdAt = createdAtEpochMillis,
     completedAt = completedAtEpochMillis,
 )

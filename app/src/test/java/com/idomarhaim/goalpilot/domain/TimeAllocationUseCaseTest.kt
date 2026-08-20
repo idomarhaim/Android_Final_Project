@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.domain
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.TimeBucket
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -31,13 +32,21 @@ class TimeAllocationUseCaseTest {
 
     private val window = TimeWindow(startMillis = 1_000L, endMillisExclusive = 9_000L)
 
-    private fun done(id: String, goalId: String?, at: Long, minutes: Int? = null, points: Int = 10) =
+    private fun done(
+        id: String,
+        goalId: String?,
+        at: Long,
+        minutes: Int? = null,
+        points: Int = 10,
+        source: DurationSource = DurationSource.UNKNOWN,
+    ) =
         Task(
             id = id,
             goalId = goalId,
             isDone = true,
             points = points,
             estimatedMinutes = minutes,
+            durationSource = source,
             completedAtEpochMillis = at,
         )
 
@@ -107,7 +116,7 @@ class TimeAllocationUseCaseTest {
     @Test
     fun `a task with no stored estimate still counts, using its points`() {
         val tasks = listOf(
-            done("estimated", "g-run", at = 2_000L, minutes = 45),
+            done("estimated", "g-run", at = 2_000L, minutes = 45, source = DurationSource.AI),
             done("guessed", "g-thesis", at = 2_000L, minutes = null, points = 20),
         )
 
@@ -118,6 +127,29 @@ class TimeAllocationUseCaseTest {
         assertThat(result.totalMinutes).isEqualTo(105)
         assertThat(result.estimatedTaskCount).isEqualTo(1)
         assertThat(result.completedTasks).isEqualTo(2)
+    }
+
+    @Test
+    fun `the AI count reads provenance, not merely that a duration is stored`() {
+        // Before #9 this counted every stored duration, which was the same set while
+        // only the model could write one. R8's box breaks that: a task the user timed
+        // by hand has a stored duration and did NOT come from the AI, and the card's
+        // own line — "x of y durations estimated by AI" — would have claimed it did.
+        val tasks = listOf(
+            done("by-hand", "g-run", at = 2_000L, minutes = 45, source = DurationSource.USER),
+            done("by-model", "g-sleep", at = 2_000L, minutes = 45, source = DurationSource.AI),
+            // A row written before #9: a duration with no recorded origin. Not the
+            // AI's on any evidence the app holds, so it is not counted as the AI's.
+            done("legacy", "g-thesis", at = 2_000L, minutes = 45),
+        )
+
+        val result = useCase(window, areas, goals, tasks)
+
+        assertThat(result.completedTasks).isEqualTo(3)
+        assertThat(result.estimatedTaskCount).isEqualTo(1)
+        // All three still contribute their minutes — provenance decides attribution,
+        // never whether the time happened.
+        assertThat(result.totalMinutes).isEqualTo(135)
     }
 
     @Test

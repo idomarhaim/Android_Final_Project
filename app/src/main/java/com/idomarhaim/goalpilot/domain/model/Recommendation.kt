@@ -41,8 +41,15 @@ data class TaskClassification(
      */
     val suggestedLifeAreaId: String? = null,
     val estimatedPoints: Int = 10,
-    /** Minutes the task is expected to take — the input to the time-allocation chart. */
-    val estimatedMinutes: Int = TaskDuration.DEFAULT_MINUTES,
+    /**
+     * Minutes the task is expected to take — the input to the time-allocation
+     * chart — or **null when the model did not say** (#9, spec §3.4).
+     *
+     * Nullable since #9. It defaulted to [TaskDuration.DEFAULT_MINUTES], which made
+     * a silent failure indistinguishable from a thirty-minute answer at the one
+     * place the difference is recorded forever: the task's stored duration.
+     */
+    val estimatedMinutes: Int? = null,
     val confidence: Float = 0f,
     val rationale: String = "",
 )

@@ -493,7 +493,7 @@ private fun DurationBackfillDialog(
                                     )
                                     Text(
                                         text = when {
-                                            proposal.isFallback -> stringResource(
+                                            proposal.noModelAnswer -> stringResource(
                                                 R.string.analytics_backfill_fallback,
                                             )
                                             // A duration RANGE — §4.8's named

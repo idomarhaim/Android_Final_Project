@@ -53,8 +53,12 @@ class RecommendationRepositoryFallbackTest {
         val classification = (result as Resource.Success).data
         // "Read"/"book" (>3 chars) matches goal g2 ("Read books").
         assertThat(classification.suggestedGoalId).isEqualTo("g2")
-        // Offline or not, a task must carry a duration or it cannot be charted.
-        assertThat(classification.estimatedMinutes).isAtLeast(TaskDuration.MIN_MINUTES)
+        // #9, spec §3.4: no model spoke, so there is NO duration to report. It used
+        // to arrive as `fallbackMinutes(10)` — a number invented from a point score
+        // that is itself derived from the title's word count. The task still lands in
+        // the time chart, via `TaskDuration.minutesOf`, which is the chart's own
+        // business and is not written to the document as an estimate.
+        assertThat(classification.estimatedMinutes).isNull()
     }
 
     @Test
@@ -84,7 +88,7 @@ class RecommendationRepositoryFallbackTest {
     }
 
     @Test
-    fun `scoreTask falls back to a local estimate when the function fails`() = runTest {
+    fun `scoreTask falls back to a local POINT estimate, and reports no duration`() = runTest {
         every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
 
         val result = repo.scoreTask("Run five kilometres before work")
@@ -92,9 +96,13 @@ class RecommendationRepositoryFallbackTest {
         assertThat(result).isInstanceOf(Resource.Success::class.java)
         val estimate = (result as Resource.Success).data
         // 5 words → 5 + 5*3 = 20, inside the 5..50 range the function is prompted for.
+        // Points still fall back (spec §8); #9 does not touch scoring.
         assertThat(estimate.points).isEqualTo(20)
-        // …and 20 points → 60 minutes, so the task still lands in the time chart.
-        assertThat(estimate.minutes).isEqualTo(60)
+        // The duration does NOT. This asserted 60 before #9 — 20 points × 3 — which is
+        // the app deriving how long your life took from a word count and storing it as
+        // though a model had said so. Absence is what the caller can act on: the box
+        // asks, and a skipped answer is stored as DurationSource.UNKNOWN (§3.4).
+        assertThat(estimate.minutes).isNull()
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
@@ -104,7 +105,15 @@ class GoalDetailViewModel @Inject constructor(
     private val _action = MutableStateFlow(GoalDetailActionState())
     val action = _action.asStateFlow()
 
-    fun addTask(title: String, points: Int, minutes: Int) {
+    /**
+     * Creates the task, with the duration **and where it came from** (#9).
+     *
+     * [durationSource] is carried rather than inferred: the add-task row is the one
+     * place that knows whether the number in the box was typed or estimated, and
+     * §1.4 makes that difference permanent — a `USER` duration is never re-estimated
+     * again for the life of the task.
+     */
+    fun addTask(title: String, points: Int, minutes: Int, durationSource: DurationSource) {
         if (title.isBlank()) return
         viewModelScope.launch {
             val result = taskRepository.upsertTask(
@@ -113,6 +122,7 @@ class GoalDetailViewModel @Inject constructor(
                     title = title.trim(),
                     points = points.coerceIn(1, 1000),
                     estimatedMinutes = TaskDuration.sanitize(minutes),
+                    durationSource = durationSource,
                 ),
             )
             // No optimistic row is needed here, unlike toggleTask: upsertTask is an

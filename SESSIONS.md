@@ -15,7 +15,46 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `9-duration-box` | **#9 — the duration box: AI estimate by default, typed value wins forever.** R8's placeholder icon becomes **stored provenance**; `looksLikeFallback` + `SERVER_FALLBACK` deleted; §1.4's sticky hand-typed duration enforced structurally. | `domain/model/TaskEstimate.kt` · `domain/model/Task.kt` · `domain/usecase/BackfillDurationsUseCase.kt` · `data/firestore/dto/Dtos.kt` · `data/firestore/dto/Mappers.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/goals/GoalDetailViewModel.kt` · `feature/analytics/AnalyticsViewModel.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/` + `app/src/androidTest/` (new + edited suites) · `sessions/9-duration-box.md` · `CHANGELOG/2026-08-20/9-duration-box.md` · `SESSIONS.md` | **Gradle daemon** (build + JVM tests); **`Pixel_10_Pro_XL_B` CLAIMED** — an instrumented run is next, which **uninstalls the app**, so any Google account on it goes with it | 2026-08-20 |
+> 🏁 **`9-duration-box` RELEASED 2026-08-20 — `48e94bc` (r1) → `1e42b5d` (r2 claim) →
+> **this commit** (r2, the ticket). `#9` SHIPPED.**
+> **`Pixel_10_Pro_XL_B` and the Gradle daemon both released.** ⚠️ The emulator is **signed out** — the
+> instrumented run uninstalls the app, which takes the Google account with it. The render pass needed
+> no account: it is a Compose capture, `install -r` + `am instrument` (see
+> `kb/dev/android-device-verification.md` §8). Account:
+> [`CHANGELOG/2026-08-20/9-duration-box.md`](CHANGELOG/2026-08-20/9-duration-box.md).
+>
+> ✅ **`R8`'s placeholder icon is stored provenance.** `DurationSource { USER, AI, UNKNOWN }` on the
+> task; `TaskScoring.looksLikeFallback` and `SERVER_FALLBACK` **deleted** — they reconstructed the
+> answer by recomputing both silent fallbacks and comparing. `TaskEstimate.minutes` is **nullable**,
+> so `scoreTask` no longer manufactures a duration from a point score that is itself a word count.
+>
+> ✅ **§1.4's typed duration is sticky, enforced structurally** — such a task is excluded from the
+> re-estimation candidate set rather than checked on the way back. Tested in **both** directions, plus
+> a third against `limit = Int.MAX_VALUE` so it cannot start passing for the wrong reason.
+>
+> 📌 **THE MIGRATION WAS SETTLED BY A FACT, NOT A PREFERENCE.** Legacy rows read as `UNKNOWN`,
+> non-sticky, **no backfill write at all** — because `Observed:` **no code path let a person type a
+> duration before this ticket**, so the one value stickiness protects provably cannot exist yet.
+>
+> ⚠️ **A DEFECT THIS TICKET WOULD OTHERWISE HAVE CREATED, fixed here:**
+> `TimeAllocation.estimatedTaskCount` counted *any stored duration* while its KDoc claimed *"came from
+> the LLM"*. Same set until `R8`'s box existed — after it, the analytics card would have called the
+> user's own hand-typed number the AI's. Now reads `durationSource == AI`.
+>
+> 🔍 **FOUND BY LOOKING, WITH 13 GREEN ASSERTIONS IN PLACE:** the box's state marker was a filled
+> `AutoAwesome` tinted `tertiary` — pixel-identical to the AI *button* on the same row. Every
+> assertion was correct; the defect was the **relation** between two nodes, which no Compose query
+> ranges over. Now outlined + `onSurfaceVariant`. Ingested as
+> `kb/dev/look-at-your-own-output.md` §4e.
+>
+> 🧠 **For `7-quickadd-complete`, which is next in this cluster:** the `aiMinutes` reconstruction at
+> `GoalDetailScreen.kt:332` is **gone** — that was the value #7 would have built on. The quick-add and
+> Google-Tasks sheets now carry a **nullable** `minutes` and say *"no estimate · counts as 30m"*;
+> §3.4's *ask the user how long* is #7's surface and is deliberately not built here.
+>
+> 📌 **`C1` #19 is untouched, deliberately.** §1.4's points inversion (`round(minutes/3) × difficulty`,
+> the `difficulty` enum, the `5..50` cap, completion facts) shares a paragraph with #9's precedence
+> rule and is a different ticket. `heuristicPoints` survives; `C1` retires it.
 > 🏁 **`11-fill-buttons` RELEASED 2026-08-20 — `8eb37b9` (claim) → `d832eac` (emulator) → this note.**
 > **`#11` SHIPPED.** `Pixel_10_Pro_XL_B` and the Gradle daemon both released; the emulator is left
 > **running and idle**, app installed, and the *device* Google account `rachil751@gmail.com`

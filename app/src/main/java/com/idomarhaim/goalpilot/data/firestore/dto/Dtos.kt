@@ -82,8 +82,18 @@ data class TaskDto(
     var done: Boolean = false,
     var source: String = "MANUAL",
     var progressContribution: Double = 1.0,
-    /** LLM duration estimate in minutes; absent on tasks created before it existed. */
+    /** Duration in minutes; absent on tasks created before it existed. */
     var estimatedMinutes: Int? = null,
+    /**
+     * `USER` | `AI` | `UNKNOWN` — where [estimatedMinutes] came from (#9, §1.4).
+     *
+     * Absent on every task written before #9, and absent reads as `UNKNOWN`, so
+     * **there is no migration write**: the honest provenance of a legacy row is
+     * *not recorded*, and nothing is gained by stamping a guess onto it. Safe
+     * because no code path let a person type a duration before this ticket, so no
+     * stored value can be a sticky one.
+     */
+    var durationSource: String? = null,
     var createdAt: Long = 0L,
     var completedAt: Long? = null,
 )

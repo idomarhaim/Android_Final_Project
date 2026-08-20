@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.feature.goals
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
@@ -256,7 +257,7 @@ class GoalDetailViewModelTest {
         coEvery { taskRepository.upsertTask(any()) } returns Resource.Error("Could not save task")
         val vm = subscribedViewModel()
 
-        vm.addTask("Swim", 10, 30)
+        vm.addTask("Swim", 10, 30, DurationSource.UNKNOWN)
 
         assertThat(vm.action.value.message).isEqualTo("Could not save task")
     }

@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
 import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
@@ -243,7 +244,12 @@ class DashboardViewModel @Inject constructor(
                     goalId = goalId,
                     title = state.taskTitle,
                     points = state.points,
-                    estimatedMinutes = state.minutes,
+                    estimatedMinutes = state.minutes ?: TaskDuration.DEFAULT_MINUTES,
+                    // §3.4: a duration nobody supplied is recorded as unsupplied. It
+                    // still counts as DEFAULT_MINUTES so the task keeps its slice of
+                    // the pie, but it is not attributed to the model, and it stays
+                    // re-estimable — which a USER value never is.
+                    durationSource = state.minutes.durationSource(),
                 ),
             )
             _smartAdd.value = SmartAddState()
@@ -404,8 +410,10 @@ class DashboardViewModel @Inject constructor(
                                         imported.listTitle.isNotBlank(),
                                     points = (classification?.estimatedPoints ?: 10)
                                         .coerceIn(1, 1000),
-                                    minutes = classification?.estimatedMinutes
-                                        ?: TaskDuration.DEFAULT_MINUTES,
+                                    // Not `?: DEFAULT_MINUTES` any more (#9): the
+                                    // substitution happens once, at the write, where
+                                    // the provenance is recorded beside it.
+                                    minutes = classification?.estimatedMinutes,
                                 )
                             }
                         }.awaitAll()
@@ -494,7 +502,8 @@ class DashboardViewModel @Inject constructor(
                         title = proposal.title,
                         points = proposal.points,
                         source = TaskSource.GOOGLE_TASKS,
-                        estimatedMinutes = proposal.minutes,
+                        estimatedMinutes = proposal.minutes ?: TaskDuration.DEFAULT_MINUTES,
+                        durationSource = proposal.minutes.durationSource(),
                     ),
                 )
                 if (result is Resource.Success) saved++
@@ -732,7 +741,12 @@ data class SmartAddState(
     val lifeAreaName: String? = null,
     val points: Int = 10,
     /** Minutes the AI thinks the task takes — carried onto the saved task. */
-    val minutes: Int = TaskDuration.DEFAULT_MINUTES,
+    /**
+     * What the model said the task takes, or **null when it did not say** (#9,
+     * §3.4). Null is stored as [TaskDuration.DEFAULT_MINUTES] with
+     * `DurationSource.UNKNOWN`, never as an AI estimate.
+     */
+    val minutes: Int? = null,
     val rationale: String = "",
 )
 
@@ -772,6 +786,16 @@ fun HealthSyncOutcome.Logged.describe(): String = buildString {
     }
     if (topUps > 0) append(" · $topUps topped up")
 }
+
+/**
+ * The provenance of a proposed duration: the model's if it supplied one, otherwise
+ * nobody's (#9, §3.4).
+ *
+ * One function rather than two call sites so the quick-add sheet and the Google
+ * Tasks import cannot drift into disagreeing about what an absent minute count means.
+ */
+private fun Int?.durationSource(): DurationSource =
+    if (this == null) DurationSource.UNKNOWN else DurationSource.AI
 
 /** "Just now" / "12 minutes ago" / "Yesterday" for the card's footer. */
 fun healthSyncAgoLabel(lastSyncAtMillis: Long, nowMillis: Long): String? {
@@ -823,6 +847,11 @@ data class ImportProposal(
     /** True when confirming will also create a life area for this task's list. */
     val createsLifeArea: Boolean = false,
     val points: Int = 10,
-    val minutes: Int = TaskDuration.DEFAULT_MINUTES,
+    /**
+     * What the model said the task takes, or **null when it did not say** (#9,
+     * §3.4). Null is stored as [TaskDuration.DEFAULT_MINUTES] with
+     * `DurationSource.UNKNOWN`, never as an AI estimate.
+     */
+    val minutes: Int? = null,
     val selected: Boolean = true,
 )

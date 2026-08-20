@@ -5,6 +5,7 @@ import com.idomarhaim.goalpilot.core.util.TimeWindow
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import javax.inject.Inject
@@ -169,7 +170,12 @@ class TimeAllocationUseCase @Inject constructor() {
             slices = slices,
             totalMinutes = total,
             completedTasks = completed.size,
-            estimatedTaskCount = completed.count { (it.estimatedMinutes ?: 0) > 0 },
+            // Provenance, not nullness (#9). This counted *any* stored duration,
+            // which was the same set while only the model could write one — and
+            // stops being so the moment R8's box lets a person type one. Reading
+            // the stored source keeps the card's own KDoc claim true instead of
+            // quietly re-attributing the user's number to the AI.
+            estimatedTaskCount = completed.count { it.durationSource == DurationSource.AI },
         )
     }
 

@@ -2,10 +2,10 @@ package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
-import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import com.idomarhaim.goalpilot.domain.usecase.BackfillDurationsUseCase
 import com.idomarhaim.goalpilot.domain.usecase.DurationCandidate
 import org.junit.Test
@@ -14,10 +14,10 @@ import org.junit.Test
  * Which tasks the AI re-estimation spends its per-run budget on, and which of its
  * answers are worth writing.
  *
- * The second half is the one that matters: every AI path in this app falls back
- * silently, so a proposal that is really the offline heuristic has to be
- * recognised before it is written as an AI estimate — the analytics card counts
- * those, and the count is the whole point of the feature.
+ * The second half is the one that matters: a proposal that no model answered must
+ * not be written as an AI estimate — the analytics card counts those, and the count
+ * is the whole point of the feature. Since #9 that is **read**, not reconstructed:
+ * `TaskEstimate.minutes` is absent when nobody answered.
  */
 class BackfillDurationsUseCaseTest {
 
@@ -33,12 +33,14 @@ class BackfillDurationsUseCaseTest {
         completedAt: Long? = null,
         createdAt: Long = 0L,
         points: Int = 10,
+        durationSource: DurationSource = DurationSource.UNKNOWN,
     ) = Task(
         id = id,
         title = title,
         points = points,
         isDone = done,
         estimatedMinutes = minutes,
+        durationSource = durationSource,
         createdAtEpochMillis = createdAt,
         completedAtEpochMillis = completedAt,
     )
@@ -117,42 +119,43 @@ class BackfillDurationsUseCaseTest {
         val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 75))
 
         assertThat(proposal.proposedMinutes).isEqualTo(75)
-        assertThat(proposal.isFallback).isFalse()
+        assertThat(proposal.noModelAnswer).isFalse()
         assertThat(proposal.selected).isTrue()
         assertThat(proposal.changesTheChart).isTrue()
     }
 
     @Test
-    fun `an answer identical to the client's offline heuristic arrives unticked`() {
-        // Exactly what the repository produces with no network at all.
-        val offline = TaskEstimate(points = 20, minutes = 60)
+    fun `an answer that happens to match the old fallback numbers is now written`() {
+        // Before #9 this arrived UNTICKED. `looksLikeFallback` recomputed the client
+        // heuristic (5 + 3×words = 20 points, ×3 = 60 minutes) and rejected any
+        // estimate that matched it — "evidence, not proof" by its own KDoc, because a
+        // model is free to land on those numbers by agreement rather than by failure.
+        // The repository now reports absence directly, so a real 60-minute answer is
+        // a real answer and the false positive is gone rather than tolerated.
+        val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 60))
 
-        val proposal = useCase.propose(candidate, offline)
-
-        assertThat(proposal.isFallback).isTrue()
-        assertThat(proposal.selected).isFalse()
+        assertThat(proposal.noModelAnswer).isFalse()
+        assertThat(proposal.selected).isTrue()
     }
 
     @Test
-    fun `the Cloud Function's own fallback is caught too, though no word count makes it`() {
-        // `functions/src/index.ts` returns a flat 10 points / 30 minutes when the
-        // call reached the function but GROQ did not answer. The client heuristic
-        // is 5 + 3×words, which is never 10 — so a check that knew only the client
-        // rule would write this through as a genuine AI estimate.
-        val serverFallback = TaskEstimate(points = 10, minutes = 30)
-        assertThat(TaskScoring.heuristicPoints(candidate.title)).isNotEqualTo(10)
+    fun `the server's flat ten-and-thirty is no longer special-cased, because it cannot arrive`() {
+        // `functions/src/index.ts` returns 10 points / 30 minutes when the call
+        // reached the function but GROQ did not answer, and the client used to
+        // pattern-match that pair. It no longer needs to: whatever the transport
+        // does, a duration the model did not produce arrives as null. A genuine
+        // thirty-minute answer is therefore believed.
+        val proposal = useCase.propose(candidate, TaskEstimate(points = 10, minutes = 30))
 
-        val proposal = useCase.propose(candidate, serverFallback)
-
-        assertThat(proposal.isFallback).isTrue()
-        assertThat(proposal.selected).isFalse()
+        assertThat(proposal.noModelAnswer).isFalse()
+        assertThat(proposal.selected).isTrue()
     }
 
     @Test
     fun `no answer at all keeps the duration the chart already infers`() {
         val proposal = useCase.propose(candidate, estimate = null)
 
-        assertThat(proposal.isFallback).isTrue()
+        assertThat(proposal.noModelAnswer).isTrue()
         assertThat(proposal.selected).isFalse()
         assertThat(proposal.proposedMinutes).isEqualTo(candidate.inferredMinutes)
         assertThat(proposal.changesTheChart).isFalse()
@@ -163,7 +166,70 @@ class BackfillDurationsUseCaseTest {
         val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 5_000))
 
         assertThat(proposal.proposedMinutes).isEqualTo(TaskDuration.MAX_MINUTES)
-        assertThat(proposal.isFallback).isFalse()
+        assertThat(proposal.noModelAnswer).isFalse()
+    }
+
+    // ── §1.4: a hand-typed duration is sticky ───────────────────────
+
+    @Test
+    fun `a hand-typed duration is never offered for re-estimation`() {
+        val typed = task(
+            id = "typed",
+            minutes = 45,
+            done = true,
+            completedAt = 5_000L,
+            durationSource = DurationSource.USER,
+        )
+
+        assertThat(useCase(listOf(typed), window)).isEmpty()
+    }
+
+    @Test
+    fun `a hand-typed duration is still excluded when the filter is asked for everything`() {
+        // The structural half of §3.3 A: such a task is not in `tasks[]` AT ALL, so
+        // raising the cap must not reach it either. Without the explicit provenance
+        // filter this passes for the wrong reason — a typed value implies a stored
+        // one — and would start failing silently the day the candidate set widens.
+        val typed = task(
+            id = "typed",
+            minutes = 45,
+            done = true,
+            completedAt = 5_000L,
+            durationSource = DurationSource.USER,
+        )
+
+        assertThat(useCase(listOf(typed), window, limit = Int.MAX_VALUE)).isEmpty()
+    }
+
+    @Test
+    fun `the other direction - an untyped task with no duration IS still re-estimated`() {
+        // The direction the edit breaks if it is written as "skip everything with a
+        // source". A legacy row reads UNKNOWN, which is not USER, and re-estimating
+        // it is the entire point of the backfill feature.
+        val untyped = task(
+            id = "legacy",
+            minutes = null,
+            done = true,
+            completedAt = 5_000L,
+            durationSource = DurationSource.UNKNOWN,
+        )
+
+        val candidates = useCase(listOf(untyped), window)
+
+        assertThat(candidates.map { it.taskId }).containsExactly("legacy")
+    }
+
+    @Test
+    fun `a task the AI already estimated is left alone too, having a duration already`() {
+        val estimated = task(
+            id = "ai",
+            minutes = 45,
+            done = true,
+            completedAt = 5_000L,
+            durationSource = DurationSource.AI,
+        )
+
+        assertThat(useCase(listOf(estimated), window)).isEmpty()
     }
 
     @Test

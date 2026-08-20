@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -51,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
@@ -61,6 +63,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.DurationEntry
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.FillLadder
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -334,100 +338,173 @@ private fun GoalHeaderCard(
 }
 
 /**
- * Add-task row with an LLM point estimate (spec §6 Core: "point scoring for
- * tasks"). The estimate arrives asynchronously via [suggestedPoints]; the row
- * writes it into the editable field and clears it so the user stays in control.
+ * Add-task row with an LLM point estimate and `R8`'s **duration box** (spec §6
+ * Core "point scoring for tasks", §1.4, #9).
+ *
+ * The estimate arrives asynchronously via [suggestedPoints]/[suggestedMinutes]; the
+ * row writes it into the editable fields so the user stays in control. The duration
+ * half is held as a [DurationEntry] rather than reconstructed here — every
+ * transition it makes is §1.4's precedence rule, and that rule is tested on the JVM
+ * instead of only on a device.
+ *
+ * What replaced what: the row used to carry an `aiMinutes` variable that was *"the
+ * AI's answer while the title still matches, and a function of the points the moment
+ * the user types something new"*. There was no way to type a duration at all, and a
+ * point-derived number was written to the task as though it were an estimate.
  */
 @Composable
-private fun AddTaskRow(
+internal fun AddTaskRow(
     isScoring: Boolean,
     suggestedPoints: Int?,
     suggestedMinutes: Int?,
     onSuggestPoints: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Int, Int) -> Unit,
+    onAdd: (String, Int, Int, DurationSource) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("10") }
-    // Held separately from the points field because it has no input of its own:
-    // it is the AI's answer while the title still matches, and a function of the
-    // points the moment the user types something new.
-    var aiMinutes by remember { mutableStateOf<Int?>(null) }
+    var duration by remember { mutableStateOf(DurationEntry()) }
 
     LaunchedEffect(suggestedPoints, suggestedMinutes) {
         suggestedPoints?.let {
             points = it.toString()
-            aiMinutes = suggestedMinutes
+            // Not an assignment: withEstimate is where §1.4 lives, and a duration the
+            // user typed comes back out of it unchanged. Re-estimating is exactly the
+            // event the rule is about, so the rule is applied at the event.
+            duration = duration.withEstimate(suggestedMinutes)
             onSuggestionApplied()
         }
     }
 
-    val minutes = aiMinutes ?: TaskDuration.fallbackMinutes(points.toIntOrNull() ?: 10)
-
     Column {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = title,
-            onValueChange = {
-                title = it
-                // The estimate belonged to the old wording; keeping it would credit
-                // a rewritten task with the previous one's time.
-                aiMinutes = null
-            },
-            label = { Text("Add a task") },
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-        )
-        OutlinedTextField(
-            value = points,
-            onValueChange = { points = it.filter { c -> c.isDigit() } },
-            label = { Text("Pts") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .width(72.dp),
-        )
-        IconButton(
-            onClick = { onSuggestPoints(title) },
-            enabled = !isScoring,
-            modifier = Modifier.padding(start = 2.dp),
-        ) {
-            if (isScoring) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else {
-                Icon(
-                    Icons.Filled.AutoAwesome,
-                    contentDescription = "Estimate points with AI",
-                    tint = MaterialTheme.colorScheme.tertiary,
-                )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    // An AI estimate belonged to the old wording; keeping it would
+                    // credit a rewritten task with the previous one's time. A typed
+                    // duration survives — see DurationEntry.withRetitle.
+                    duration = duration.withRetitle()
+                },
+                label = { Text("Add a task") },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedTextField(
+                value = points,
+                onValueChange = { points = it.filter { c -> c.isDigit() } },
+                label = { Text("Pts") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .width(72.dp),
+            )
+            IconButton(
+                onClick = { onSuggestPoints(title) },
+                enabled = !isScoring,
+                modifier = Modifier.padding(start = 2.dp),
+            ) {
+                if (isScoring) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(
+                        Icons.Filled.AutoAwesome,
+                        contentDescription = "Estimate points with AI",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
+            }
+            IconButton(
+                onClick = {
+                    val (storedMinutes, storedSource) = duration.resolve()
+                    onAdd(title, points.toIntOrNull() ?: 10, storedMinutes, storedSource)
+                    title = ""
+                    points = "10"
+                    duration = DurationEntry()
+                },
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Add task")
             }
         }
-        IconButton(
-            onClick = {
-                onAdd(title, points.toIntOrNull() ?: 10, minutes)
-                title = ""
-                points = "10"
-                aiMinutes = null
-            },
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "Add task")
+
+        // R8's box. Optional by design: empty is a legitimate state and is stored as
+        // DEFAULT_MINUTES with UNKNOWN provenance (§3.4) rather than as a guess
+        // derived from the title's word count, which is what happened before #9.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = duration.text(),
+                onValueChange = { duration = duration.typed(it) },
+                label = { Text("Minutes") },
+                placeholder = { Text("How long?") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                // "an icon inside the box for as long as the person has not entered
+                // a number" — R8 literally. It reads stored provenance rather than
+                // comparing the number against what a fallback would have produced.
+                //
+                // OUTLINED and muted, deliberately, where the button above is filled
+                // and tertiary-tinted. Found by looking at the render pass, not by a
+                // test: the same filled glyph in the same colour sat inches from the
+                // AI *button*, so one row carried two identical marks meaning "press
+                // me" and "nobody typed this". That is §0.8's surviving sub-rule —
+                // one chip may not carry two axes — and it is invisible to every
+                // assertion here, because both nodes are correct in isolation.
+                trailingIcon = if (duration.showsEstimateIcon) {
+                    {
+                        Icon(
+                            Icons.Outlined.AutoAwesome,
+                            contentDescription = AI_ESTIMATE_ICON_LABEL,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .width(140.dp)
+                    .testTag(DURATION_BOX_TAG),
+            )
+            // The duration is what this task will contribute to the analytics pie,
+            // so it is said before the task is created rather than discovered later.
+            Text(
+                text = durationCaption(duration),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp),
+            )
         }
     }
-        // The duration is what this task will contribute to the analytics pie, so
-        // it is shown before the task is created rather than discovered later.
-        Text(
-            text = if (aiMinutes != null) {
-                "AI estimate: about ${DateTimeUtils.formatMinutes(minutes)} of your time"
-            } else {
-                "Counts as about ${DateTimeUtils.formatMinutes(minutes)} of your time"
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-        )
+}
+
+/**
+ * What the line under the box says — **derived from what will actually be stored**,
+ * not from what is in the field.
+ *
+ * That distinction is the whole ticket in miniature, and reading the field directly
+ * produced the exact defect #9 exists to remove: typing `0` left `isTyped` true and
+ * `minutes` non-null, so the caption read *"You said about 0m"* while
+ * [DurationEntry.resolve] correctly stored `30` as nobody's answer. A caption that
+ * disagrees with the stored value is §0.3's *second number that quietly disagrees*,
+ * one line below the box built to end it. Going through `resolve()` makes the
+ * disagreement unrepresentable rather than merely fixed.
+ */
+private fun durationCaption(duration: DurationEntry): String {
+    val (minutes, source) = duration.resolve()
+    return when (source) {
+        DurationSource.USER -> "You said about ${DateTimeUtils.formatMinutes(minutes)}"
+        DurationSource.AI ->
+            "AI estimate: about ${DateTimeUtils.formatMinutes(minutes)} of your time"
+        DurationSource.UNKNOWN -> "Not set — counts as ${DateTimeUtils.formatMinutes(minutes)}"
     }
 }
+
+/** Stable handles for the instrumented test; the icon's label is also its a11y text. */
+internal const val DURATION_BOX_TAG = "add-task-duration-box"
+internal const val AI_ESTIMATE_ICON_LABEL = "Duration estimated by AI"
 
 @Composable
 private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {

@@ -1,10 +1,10 @@
 package com.idomarhaim.goalpilot.domain.usecase
 
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
-import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import javax.inject.Inject
 
 /**
@@ -26,18 +26,23 @@ data class DurationCandidate(
 /**
  * One candidate plus what the model said, awaiting the user's confirmation.
  *
- * [isFallback] means the estimate is indistinguishable from one of the two
- * silent fallbacks (see [TaskScoring.looksLikeFallback]) — no model answered.
- * Such a row arrives **unselected**: writing it would increment the count of
- * durations the analytics card attributes to the AI, which is the one number this
- * whole feature exists to make honest.
+ * [noModelAnswer] means exactly that: the call produced no duration, so there is
+ * nothing to write. Such a row arrives **unselected** — writing it would increment
+ * the count of durations the analytics card attributes to the AI, which is the one
+ * number this whole feature exists to make honest.
+ *
+ * Before #9 this was `isFallback`, and it was decided by *recomputing* what each
+ * silent fallback would have returned and comparing — evidence, not proof, since a
+ * model may land on the same numbers by agreement. `TaskEstimate.minutes` is now
+ * absent when no model spoke (§3.4), so the question is answered rather than
+ * estimated.
  */
 data class DurationProposal(
     val taskId: String,
     val title: String,
     val inferredMinutes: Int,
     val proposedMinutes: Int,
-    val isFallback: Boolean,
+    val noModelAnswer: Boolean,
     val inWindow: Boolean,
     val selected: Boolean,
 ) {
@@ -70,6 +75,13 @@ class BackfillDurationsUseCase @Inject constructor() {
         limit: Int = MAX_PER_RUN,
     ): List<DurationCandidate> = tasks
         .filter { it.id.isNotBlank() && it.title.isNotBlank() }
+        // §1.4/§3.3 A, and this is the whole enforcement of it: a hand-typed
+        // duration is sticky, so such a task is never *sent* for re-estimation —
+        // "those tasks are not in tasks[] at all". Redundant against the line
+        // below while a typed value always implies a stored one, and deliberately
+        // kept anyway: the rule is about provenance, not about nullness, and the
+        // day something widens this filter is the day the redundancy stops.
+        .filter { it.durationSource != DurationSource.USER }
         .filter { (it.estimatedMinutes ?: 0) <= 0 }
         .sortedWith(
             compareByDescending<Task> { it.isInWindow(window) }
@@ -102,17 +114,15 @@ class BackfillDurationsUseCase @Inject constructor() {
      */
     fun propose(candidate: DurationCandidate, estimate: TaskEstimate?): DurationProposal {
         val minutes = TaskDuration.sanitize(estimate?.minutes)
-        val isFallback = estimate == null ||
-            minutes == null ||
-            TaskScoring.looksLikeFallback(candidate.title, estimate)
+        val noModelAnswer = minutes == null
         return DurationProposal(
             taskId = candidate.taskId,
             title = candidate.title,
             inferredMinutes = candidate.inferredMinutes,
             proposedMinutes = minutes ?: candidate.inferredMinutes,
-            isFallback = isFallback,
+            noModelAnswer = noModelAnswer,
             inWindow = candidate.inWindow,
-            selected = !isFallback,
+            selected = !noModelAnswer,
         )
     }
 

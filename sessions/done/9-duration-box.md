@@ -2,12 +2,25 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 9
 created: 2026-08-20
 ---
 
 # `#9` — the duration box: AI estimate by default, typed value wins forever
+
+> ✅ **DONE 2026-08-20.** Shipped in round 2 of session `9-duration-box`, after round 1 was blocked at
+> kickoff by `11-fill-buttons`. Rounds: `48e94bc` (r1, the conflict finding) → `1e42b5d` (r2 claim) →
+> **this commit** (r2, the ticket). JVM unit **481/0**, instrumented **105/0**, `assembleDebug` green,
+> render pass looked at twice —
+> [`docs/render-passes/2026-08-20-9-duration-box/duration-box.png`](../docs/render-passes/2026-08-20-9-duration-box/duration-box.png).
+> Account: [`CHANGELOG/2026-08-20/9-duration-box.md`](../CHANGELOG/2026-08-20/9-duration-box.md).
+>
+> **Everything the ✅ block below predicted held**, including the migration decision. Two things it
+> did not predict, both found by looking rather than by testing: the state marker was pixel-identical
+> to the AI *button* beside it (13 green assertions, all correct, defect in the relation between two
+> nodes), and `TimeAllocation.estimatedTaskCount` would have counted a hand-typed duration as the
+> AI's. Both fixed here.
 
 > ⛔ **CORRECTION 2026-08-20 — THIS BRIEF SAID IT COULD RUN IN PARALLEL WITH `#11`. IT CANNOT.**
 > The struck line below read: *"Independent of `C20` — can run at any time, in parallel with #11, #8

@@ -1,11 +1,13 @@
 # `9-duration-box` — 2026-08-20
 
-> **Summary:** `#9` did **not** start — `11-fill-buttons` is live and its board row owns five of the files the duration box needs, plus the Gradle daemon. The "verified independent" line in **both** briefs is **false**, and for a reproducible reason: the conflict map was run at **symbol** level (`unit` vs `looksLikeFallback`) while the two tickets collide at **file** level. Wave 3's original *"strictly sequential, one working set"* was right and `505f083` overturned it on bad evidence. Nothing under `app/` was touched. The design and the migration decision are derived and written down, so the next run starts at the keyboard.
+> **Summary:** `#9` ships. `R8`'s placeholder icon is **stored provenance** — a `DurationSource` on the task, written by whoever produced the duration — and `looksLikeFallback` + `SERVER_FALLBACK`, which reconstructed that answer by recomputing both silent fallbacks and comparing, are deleted. `TaskEstimate.minutes` is **nullable**: `scoreTask` no longer manufactures a duration out of a point score that is itself a word count. §1.4's hand-typed duration is sticky, unconditionally, enforced by **exclusion from the candidate set** rather than by a check on what comes back. The migration turned out to be settled by a fact — no code path let a person type a duration before this ticket — so legacy rows read as `UNKNOWN`, non-sticky, with **no backfill write at all**. JVM unit **481/0** (+22), instrumented **105/0** (+14), `assembleDebug` green, render pass looked at twice. **Round 1 of this session built nothing**: it opened while `11-fill-buttons` held five of these files, and the "verified independent" line in both briefs turned out to be false for a reproducible reason — the conflict map was run at **symbol** granularity while the tickets collide at **file** level.
 
 **Session:** `9-duration-box` · **Date:** 2026-08-20 · **Mode:** `AUTO MODE` · **Brief:** [`sessions/9-duration-box.md`](../../sessions/9-duration-box.md)
-**Blocked by:** `11-fill-buttons` (`8eb37b9`, claimed 2026-08-20)
+**Rounds:** r1 blocked (`48e94bc`) · r2 shipped. **Unblocked by** `11-fill-buttons` releasing at `28edeb2`.
 
 ---
+
+# Round 1 — blocked, and the finding that came out of it
 
 ## Why nothing was built
 
@@ -176,3 +178,145 @@ check** that decides whether two tickets are ever offered in parallel at all.
 - **`SESSIONS.md` untouched.** `11-fill-buttons` holds it and was mid-write during this session; a
   blocked session that lands no work in `app/` has nothing to claim, and the pathspec commit remedy
   explicitly cannot cover a file both sessions write.
+
+---
+
+# Round 2 — the ticket, built
+
+`/kickoff 9-duration-box` was re-run once `11-fill-buttons` released. The block-clearance check the
+round-1 correction block demanded was run first and is recorded in `1e42b5d`: zero active rows, clean
+tree, `28edeb2` on `main` with `#11` closed to `sessions/done/`.
+
+**Round 1's derived design survived contact.** `#11` had edited `GoalDetailScreen.kt`,
+`GoalDetailViewModel.kt`, `Dtos.kt`, `Mappers.kt` and `RecommendationRepositoryImpl.kt` in between, so
+all five were re-read at HEAD before anything was written. `AddTaskRow` itself was untouched by `#11`.
+
+## What shipped
+
+**1 · Provenance is stored, and the two reconstructors are gone.**
+`DurationSource { USER, AI, UNKNOWN }` lives on `Task` and on `TaskDto` as a string.
+`TaskScoring.looksLikeFallback` and its `SERVER_FALLBACK` sentinel are **deleted**: they existed to
+recognise an estimate no model had produced by recomputing what each fallback *would* have returned
+and comparing — *"evidence, not proof"* by their own KDoc, since a model may land on the same numbers
+by agreement. The producer knows the answer at the moment it produces it.
+
+**2 · `TaskEstimate.minutes` is nullable, and that is where the rule actually bites.**
+`scoreTask` no longer reads `?: TaskDuration.fallbackMinutes(points)` on either the missing-minutes
+path or the `catch` path, and `parseClassification` and both offline classification fallbacks now
+report `null` too. That chain was the concrete site of *"the app never guesses a duration from a word
+count"*: with no network, `points` is `heuristicPoints` = `5 + 3×words`, and `fallbackMinutes` turned
+that word count into *how long your life took* — then stored it as though a model had said so.
+`fallbackMinutes` survives, **narrowed to one caller**, `TaskDuration.minutesOf`, which decides what an
+undated task is worth **to the chart** and writes nothing.
+
+**3 · The precedence rule is a pure object.**
+`DurationEntry(minutes, source)` carries every transition: `withEstimate` (a typed value returns
+untouched — no comparison, so there is nothing to soften later), `withRetitle`, `typed`, `resolve`.
+`AddTaskRow` holds one of these instead of the `aiMinutes` variable it replaced. Two consequences worth
+naming: **a retitle no longer clears a typed duration**, and **clearing the box makes it estimable
+again** rather than leaving it permanently sticky and the AI button apparently dead.
+
+**4 · The structural half of §3.3 A.**
+`BackfillDurationsUseCase.invoke` filters `durationSource != USER` explicitly. It is redundant today —
+a typed value implies a stored one, which the existing null filter already excludes — and is kept
+because the rule is about **provenance**, not nullness. A test pins both directions and a third pins it
+against `limit = Int.MAX_VALUE`, so it cannot start passing for the wrong reason if the candidate set
+ever widens.
+
+**5 · The migration — decided on a fact, and it is a read.**
+**Legacy rows read as `UNKNOWN`, no backfill write runs, and `UNKNOWN` is not sticky.** `Observed:`
+2026-08-20 — no code path let a person type a duration before this ticket. Every `estimatedMinutes`
+write under `app/src/main` was model- or fallback-derived, and a grep for a minutes `TextField` across
+`feature/` and `ui/` returned nothing. So the one value stickiness protects **provably cannot exist
+yet**, which is what makes a non-sticky `UNKNOWN` safe rather than merely convenient.
+
+## A defect this ticket would otherwise have created
+
+`TimeAllocation.estimatedTaskCount` counted **any stored duration**, while its own KDoc says *"tasks
+whose duration came from the LLM"*. Those were the same set for as long as only the model could write
+one — and `R8`'s box ends that. Without the fix, the analytics card's *"x of y durations estimated by
+AI"* would have counted the user's own hand-typed number as the AI's. It now reads
+`durationSource == AI`. Not in the brief; it is the brief's own §0.3 complaint arriving one file over.
+
+## Two things found by looking, not by testing
+
+**The icon was indistinguishable from the button beside it.** `R8`'s state marker shipped as a filled
+`AutoAwesome` tinted `tertiary` — which is exactly what the **AI-estimate button** on the same row is.
+Thirteen instrumented assertions passed, each true of its own node; the render pass put both in one
+frame and the duplication was immediate. **No number of assertions would have caught it**: Compose
+queries are per-node and the defect is a relation between two of them. Fixed by making the marker
+**outlined and `onSurfaceVariant`**. Flagged as a KB candidate and ingested.
+
+**The caption disagreed with what was stored.** Found in the pre-commit self-review: typing `0` left
+`isTyped` true and `minutes` non-null, so the line under the box read *"You said about 0m"* while
+`resolve()` correctly stored `30` as nobody's answer. A second number quietly disagreeing, one line
+below the box built to end them. `durationCaption` now derives from `resolve()`, which makes the
+disagreement unrepresentable rather than merely fixed.
+
+## What `#7` inherits
+
+`7-quickadd-complete` lands in this same `AddTaskRow`, and the brief predicted this exactly: the
+`aiMinutes` reconstruction it would have built on is gone. Two concrete hand-overs — the quick-add and
+Google-Tasks sheets now carry a **nullable** `minutes` and render *"no estimate · counts as 30m"*
+rather than printing thirty minutes as an answer, and §3.4's *ask the user how long* is **that sheet's**
+surface, deliberately not built here.
+
+## Deliberately not built
+
+The §1.4 **points inversion** — `points = round(minutes/3) × difficulty`, the `difficulty` enum, the
+`5..50` cap deletion, points banked as completion facts — is `C1`
+[#19](https://github.com/idomarhaim/Android_Final_Project/issues/19). §1.4 discusses it and #9's
+precedence rule in one paragraph, and only one of the two is this ticket's. `heuristicPoints` therefore
+survives; `C1` retires it.
+
+## 🧪 Tests
+
+| Layer | Result |
+|---|---|
+| **JVM unit** | **481 / 0**, 0 skipped (+22 on `#11`'s 459). New `DurationEntryTest` (16); `BackfillDurationsUseCaseTest` +4 and two rewritten; `TimeAllocationUseCaseTest` +1 |
+| **Instrumented** | **105 / 0** on `Pixel_10_Pro_XL_B` (+14 on `#11`'s 91). New `DurationBoxUiTest` (13) and `DurationBoxRenderTest` (1) |
+| **Build** | `assembleDebug` green |
+| **Render pass** | **Looked at twice** — `docs/render-passes/2026-08-20-9-duration-box/duration-box.png`. The first look found the duplicate-icon defect; the second confirmed the fix |
+| **`firestore.rules`** | **Not applicable, stated rather than skipped.** Task documents live under `users/{uid}` with no field allowlist, so a new field needs no rule change and `firestore-tests/` is unaffected |
+| **`functions/`** | **No test layer exists** in this project; unchanged by this ticket |
+
+**Two tests were rewritten rather than deleted, and it matters which way.** The two that existed only
+to exercise `looksLikeFallback` now assert the **opposite**: an estimate matching the old fallback
+numbers is *believed*. That was `looksLikeFallback`'s admitted false positive — a real 60-minute answer
+rejected because the offline heuristic would also have said 60 — and it is now gone rather than
+tolerated.
+
+## 📥 KB — round 2
+
+📥 **Ingested:** *a Compose assertion suite is structurally blind to a **relational** defect* →
+`kb/dev/look-at-your-own-output.md` **§4e**, the sixth instrument failure and the first that is not a
+weak instrument at all.
+📥 **Ingested:** *a placeholder assertion tests focus, not emptiness* →
+`kb/dev/android-device-verification.md` **§7a**.
+
+Both in `C:\Dev\JARVIS` (`d07eec3` claim → `664d03d` content); index rows, `kb/log/2026-08-20.md` and
+the board note updated, `Check-KbLinks` **CLEAN** (94 pages). Neither always-ask gate opened.
+
+⚠️ **Noted rather than ingested:** `kb/dev/android-device-verification.md` **§8 already says** that
+`connectedDebugAndroidTest`'s uninstall destroys device state and that `install -r` + `am instrument`
+avoids it. This session re-derived it from scratch after the Gradle task deleted the render-pass PNG.
+A **retrieval** failure, not a knowledge gap, so nothing in §8 changed.
+
+## Files — round 2
+
+- **Main:** `domain/model/TaskEstimate.kt` · `domain/model/Task.kt` · `domain/model/Recommendation.kt` ·
+  `domain/usecase/BackfillDurationsUseCase.kt` · `domain/usecase/TimeAllocationUseCase.kt` ·
+  `data/firestore/dto/Dtos.kt` · `data/firestore/dto/Mappers.kt` ·
+  `data/remote/RecommendationRepositoryImpl.kt` · `feature/goals/GoalDetailScreen.kt` ·
+  `feature/goals/GoalDetailViewModel.kt` · `feature/analytics/AnalyticsViewModel.kt` ·
+  `feature/analytics/AnalyticsScreen.kt` · `feature/dashboard/DashboardViewModel.kt` ·
+  `feature/dashboard/DashboardScreen.kt`
+- **Tests:** `domain/DurationEntryTest.kt` *(new)* · `ui/DurationBoxUiTest.kt` *(new)* ·
+  `ui/DurationBoxRenderTest.kt` *(new)* · `domain/BackfillDurationsUseCaseTest.kt` ·
+  `domain/TimeAllocationUseCaseTest.kt` · `data/RecommendationRepositoryFallbackTest.kt` ·
+  `feature/goals/GoalDetailViewModelTest.kt`
+- **Other:** `docs/render-passes/2026-08-20-9-duration-box/duration-box.png` *(new)* ·
+  `kb-candidates/2026-08-20-9-duration-box.md` *(new, drained and deleted in this unit)* ·
+  `SESSIONS.md` · `sessions/9-duration-box.md`
+- **In `C:\Dev\JARVIS`:** `kb/dev/look-at-your-own-output.md`, `kb/dev/android-device-verification.md`,
+  `kb/index.md`, `kb/log/2026-08-20.md`, `SESSIONS.md`

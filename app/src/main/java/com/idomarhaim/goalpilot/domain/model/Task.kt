@@ -14,14 +14,31 @@ data class Task(
     /** How much this task advances its goal's [Goal.currentValue] when completed. */
     val progressContribution: Double = 1.0,
     /**
-     * How long the task takes, in minutes — estimated by the LLM when the task is
-     * classified or scored, and the raw material of the time-allocation chart.
+     * How long the task takes, in minutes — typed by the user, or estimated by the
+     * LLM when the task is classified or scored. The raw material of the
+     * time-allocation chart.
      *
-     * Null means "never estimated" (hand-typed task, or the model was unreachable
-     * and nothing was written); [TaskDuration.minutesOf] supplies the fallback
-     * rather than dropping the task from the chart.
+     * Null means "no duration at all"; [TaskDuration.minutesOf] supplies the chart's
+     * fallback rather than dropping the task from it. [durationSource] says which of
+     * the two wrote it, and is the only thing that may be read to find out.
      */
     val estimatedMinutes: Int? = null,
+    /**
+     * Where [estimatedMinutes] came from (#9, spec §1.4).
+     *
+     * [DurationSource.USER] is **sticky**: no re-estimation may overwrite it,
+     * unconditionally and with no threshold. Enforced structurally rather than by a
+     * check on what comes back — such a task is never *sent* for re-estimation
+     * (§3.3 A: *"those tasks are not in `tasks[]` at all"*), which is why
+     * `BackfillDurationsUseCase` filters on this field rather than comparing numbers
+     * afterwards.
+     *
+     * Every task written before #9 reads as [DurationSource.UNKNOWN], and that is
+     * the honest value rather than a convenient one: no code path let a person type
+     * a duration before this ticket, so no stored value can be a typed one, and
+     * `UNKNOWN` is therefore safe to re-estimate.
+     */
+    val durationSource: DurationSource = DurationSource.UNKNOWN,
     val createdAtEpochMillis: Long = 0L,
     val completedAtEpochMillis: Long? = null,
 )

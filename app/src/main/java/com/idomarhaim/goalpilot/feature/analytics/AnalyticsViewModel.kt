@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.AnalyticsRange
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -202,7 +203,13 @@ class AnalyticsViewModel @Inject constructor(
             for (proposal in chosen) {
                 val task = byId[proposal.taskId] ?: continue
                 val result = taskRepository.upsertTask(
-                    task.copy(estimatedMinutes = proposal.proposedMinutes),
+                    task.copy(
+                        estimatedMinutes = proposal.proposedMinutes,
+                        // The whole point of the run: a duration that came from the
+                        // model is stamped as one. Only unselected rows lack an
+                        // answer, and those never reach here.
+                        durationSource = DurationSource.AI,
+                    ),
                 )
                 if (result is Resource.Success) saved++
             }
@@ -239,8 +246,8 @@ data class BackfillState(
     val totalCandidates: Int = 0,
     val error: AnalyticsMessage? = null,
 ) {
-    /** Rows a model actually answered for; the rest came back as a fallback. */
-    val answeredCount: Int get() = proposals.count { !it.isFallback }
+    /** Rows a model actually answered for; the rest carry no duration at all. */
+    val answeredCount: Int get() = proposals.count { !it.noModelAnswer }
     val selectedCount: Int get() = proposals.count { it.selected }
 }
 

@@ -71,6 +71,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
@@ -569,7 +570,7 @@ private fun GoogleTasksImportDialog(
                                                     ?: "→ new goal “${proposal.newGoalTitle}”",
                                             )
                                             append(" · ${proposal.points} pts")
-                                            append(" · ${formatMinutes(proposal.minutes)}")
+                                            append(" · ${durationLabel(proposal.minutes)}")
                                             proposal.lifeAreaName?.let {
                                                 append(
                                                     if (proposal.createsLifeArea) {
@@ -691,7 +692,7 @@ private fun SmartAddDialog(
                     Text(
                         // The minutes are not decoration: they are what this task
                         // will contribute to the time-allocation chart once ticked.
-                        "Worth ${state.points} pts · about ${formatMinutes(state.minutes)}",
+                        "Worth ${state.points} pts · ${durationLabel(state.minutes)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -925,3 +926,19 @@ private fun ShareSummaryCard(onShare: () -> Unit, onShareWithPhoto: () -> Unit) 
         }
     }
 }
+
+/**
+ * How a proposed duration reads before it is written (#9, §3.4).
+ *
+ * Null means the model did not supply one, and the sheet says so rather than
+ * printing thirty minutes as though it were an answer — the task will still be
+ * stored as `DEFAULT_MINUTES`, but as `DurationSource.UNKNOWN`, so it stays
+ * re-estimable and is never counted among the durations the analytics card
+ * attributes to the AI. Asking *"how long?"* here is #7's surface, not this one's.
+ */
+private fun durationLabel(minutes: Int?): String =
+    if (minutes == null) {
+        "no estimate · counts as ${formatMinutes(TaskDuration.DEFAULT_MINUTES)}"
+    } else {
+        "about ${formatMinutes(minutes)}"
+    }

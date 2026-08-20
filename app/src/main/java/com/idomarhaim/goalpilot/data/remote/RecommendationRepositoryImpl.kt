@@ -98,15 +98,20 @@ class RecommendationRepositoryImpl @Inject constructor(
             val points = (data?.get("points") as? Number)?.toInt()
                 ?.coerceIn(TaskScoring.MIN_POINTS, TaskScoring.MAX_POINTS)
                 ?: TaskScoring.heuristicPoints(taskTitle)
-            // A model that answers with points but no duration is common enough
-            // that it must not cost the task its slice of the chart.
+            // #9, spec §3.4: a model that answered with points but no duration has
+            // NOT answered about the duration, and the honest value is absent. This
+            // used to read `?: fallbackMinutes(points)`, which manufactured a
+            // duration out of a point score that is itself `5 + 3×words` when the
+            // call never left the device — the app deriving how long your life took
+            // from a word count. The caller asks instead (§3.4), and a skipped
+            // answer is stored as DurationSource.UNKNOWN, never as an estimate.
             val minutes = TaskDuration.sanitize((data?.get("minutes") as? Number)?.toInt())
-                ?: TaskDuration.fallbackMinutes(points)
             Resource.Success(TaskEstimate(points = points, minutes = minutes))
         } catch (e: Exception) {
-            val points = TaskScoring.heuristicPoints(taskTitle)
+            // Points still fall back — spec §8, and #9 does not touch scoring. The
+            // duration does not: no model spoke, so there is no duration to report.
             Resource.Success(
-                TaskEstimate(points = points, minutes = TaskDuration.fallbackMinutes(points)),
+                TaskEstimate(points = TaskScoring.heuristicPoints(taskTitle), minutes = null),
             )
         }
     }
@@ -139,8 +144,8 @@ class RecommendationRepositoryImpl @Inject constructor(
             suggestedLifeAreaId = (m["suggestedLifeAreaId"] as? String)
                 ?.takeIf { id -> lifeAreas.any { it.id == id } },
             estimatedPoints = points,
-            estimatedMinutes = TaskDuration.sanitize((m["estimatedMinutes"] as? Number)?.toInt())
-                ?: TaskDuration.fallbackMinutes(points),
+            // Absent when the model did not say — same rule as `scoreTask` above.
+            estimatedMinutes = TaskDuration.sanitize((m["estimatedMinutes"] as? Number)?.toInt()),
             confidence = (m["confidence"] as? Number)?.toFloat() ?: 0f,
             rationale = (m["rationale"] as? String).orEmpty(),
         )
@@ -207,7 +212,7 @@ class RecommendationRepositoryImpl @Inject constructor(
                 // and a task the user then files is filed by hand anyway.
                 suggestedLifeAreaId = match.lifeAreaIds.firstOrNull(),
                 estimatedPoints = 10,
-                estimatedMinutes = TaskDuration.fallbackMinutes(10),
+                estimatedMinutes = null,
                 confidence = 0.4f,
                 rationale = "Matched by keyword to \"${match.title}\" (offline heuristic).",
             )
@@ -220,7 +225,7 @@ class RecommendationRepositoryImpl @Inject constructor(
                 suggestedCategory = GoalCategory.OTHER,
                 suggestedLifeAreaId = areaMatch?.id,
                 estimatedPoints = 10,
-                estimatedMinutes = TaskDuration.fallbackMinutes(10),
+                estimatedMinutes = null,
                 confidence = 0.2f,
                 rationale = "No matching goal found (offline heuristic).",
             )
