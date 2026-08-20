@@ -1651,6 +1651,13 @@ snapshot, so **nothing in v0.3 needs to ask the OS about the radio.**
 >
 > **The sentence above becomes true the day `C20`'s build half ships**, so it is annotated rather than
 > rewritten — it is the design record, and the design is not wrong. What was missing is the date.
+>
+> ✅ **THAT DAY CAME: 2026-08-20.** *(Closed by `50-finish`.)* `c20-build-half` shipped the build half
+> (`731961b`, `e5e0ef0`), `setDone` is one `update()` on one document, and `OfflineWriteGuardTest` went
+> from green to **`<skipped/>`** — which is what authorised the deletion in code rather than in prose.
+> `core/net/ConnectivityMonitor.kt`, the `GoalDetailViewModel` pre-check and `OFFLINE_MESSAGE` are
+> **now deleted**, so the paragraph above this warning describes `HEAD` again and the warning itself is
+> spent. Account: [`CHANGELOG/2026-08-20/50-finish.md`](../CHANGELOG/2026-08-20/50-finish.md).
 
 **Why this was a product decision and not defect work:** `C12` already made *how a surface discloses
 the honesty of a number* a **product rule** rather than a bug fix, and applied it to widgets. §§1–4 are

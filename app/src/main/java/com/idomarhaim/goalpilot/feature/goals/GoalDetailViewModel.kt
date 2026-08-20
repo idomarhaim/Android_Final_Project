@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.idomarhaim.goalpilot.core.net.ConnectivityMonitor
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -35,7 +34,6 @@ class GoalDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val progressRepository: ProgressRepository,
     private val recommendationRepository: RecommendationRepository,
-    private val connectivity: ConnectivityMonitor,
     lifeAreaRepository: LifeAreaRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -46,21 +44,25 @@ class GoalDetailViewModel @Inject constructor(
      * Task completions drawn on screen before Firestore has confirmed them, as
      * `task id -> the done state we optimistically rendered`.
      *
-     * This exists because [TaskRepository.setDone] is a **server-only**
-     * `runTransaction` (see `TaskRepositoryImpl`), and that is deliberate — it is
-     * what keeps `task.done`, the user's points and the level derived from them in
-     * agreement. (Goal progress is no longer in that list: since #49 it is summed
-     * from `done` rather than written beside it.) The price is that, unlike an
-     * ordinary `set()`/`update()`, a transaction never touches the offline cache,
-     * so there is **no local write for the snapshot listener to render**. Without
-     * this overlay the screen sits perfectly still for the whole server round trip
-     * — measured at 2.24 s on a real device — which reads as broken rather than
-     * slow (issue #3).
+     * **The premise this was built on has expired, and the overlay is kept
+     * deliberately rather than by inertia.** It existed because
+     * [TaskRepository.setDone] was a **server-only** `runTransaction`, which never
+     * touches the offline cache — so there was *no local write for the snapshot
+     * listener to render* and the screen sat still for the whole round trip
+     * (measured 2.24 s on a device; issue #3). `C20` (#42, spec §5.2) made `setDone`
+     * a single `update()` on one document, so that is no longer true: the write
+     * lands in the cache synchronously and the listener renders the tick at once,
+     * radio on or off. **`Observed:` 2026-08-20** by reading
+     * `TaskRepositoryImpl.setDone` at `731961b`.
      *
-     * The overlay is only half the fix. [toggleTask] removes the entry again when
-     * the write fails, which is what stops an offline tap — where the transaction
-     * cannot reach anything at all — from becoming a *silent lie*: a ticked box and
-     * raised points over a write that never landed.
+     * What still argues for keeping it: `update().await()` resolves on **server
+     * ack**, not on the cache write, so a rejected write (rules, a stale doc) comes
+     * back long after the tick is drawn, and [toggleTask] needs somewhere to take it
+     * back from. `Inferred:` that the optimistic half is now largely redundant —
+     * `inFlight` retires an entry the moment the cached snapshot arrives, which is
+     * immediately — but the undo half is not. `Untested:` whether removing the
+     * overlay entirely is safe; that is a behaviour change and its own ticket, not
+     * part of #50 item 5.
      */
     private val _pendingToggles = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
@@ -72,7 +74,7 @@ class GoalDetailViewModel @Inject constructor(
         _pendingToggles,
     ) { goal, tasks, entries, areas, pending ->
         // An entry the snapshot listener has caught up with is retired here rather
-        // than when setDone returns. That ordering matters: the transaction's
+        // than when setDone returns. That ordering matters: setDone's own
         // completion callback and the snapshot that reflects it arrive on two
         // different channels, so dropping the overlay on completion can re-render
         // the *old* state for the frames in between — a visible flicker on every
@@ -159,21 +161,14 @@ class GoalDetailViewModel @Inject constructor(
      * Ticks the task on screen straight away, then asks Firestore to make it true —
      * and takes the tick back, with a message, if it could not.
      *
-     * See [_pendingToggles] for why the optimistic half is necessary. The undo half
-     * is not optional decoration: an optimistic update *on its own* would turn the
-     * offline case from a silent no-op into a silent lie, which is worse. The two
-     * ship together or not at all.
+     * See [_pendingToggles] for what the two halves are now for. **There is no
+     * offline pre-check here any more** — it was deleted with `ConnectivityMonitor`
+     * under #50 item 5, because the reason for it (`runTransaction` could not reach
+     * the cache and took a measured 7.9 s to fail) died with `C20`. An offline tap
+     * is now an ordinary cached write: it ticks instantly and syncs when the radio
+     * comes back. The undo below stays for a write the **server** rejects.
      */
     fun toggleTask(task: Task) {
-        // Refuse rather than mislead. Measured on a device: offline, the
-        // transaction takes 7.9 s to come back UNAVAILABLE, and drawing an
-        // optimistic tick across those eight seconds is a lie the undo only
-        // eventually corrects. The undo below still has to exist — this check
-        // proves a network, not that Firestore answered.
-        if (!connectivity.isOnline()) {
-            _action.update { it.copy(message = OFFLINE_MESSAGE) }
-            return
-        }
         val target = !task.isDone
         viewModelScope.launch {
             _pendingToggles.update { it + (task.id to target) }
@@ -240,7 +235,6 @@ class GoalDetailViewModel @Inject constructor(
     fun consumeMessage() = _action.update { it.copy(message = null) }
 
     companion object {
-        const val OFFLINE_MESSAGE = "You're offline — task changes need a connection"
         const val SAVE_FAILED_MESSAGE = "Couldn't save that — check your connection"
     }
 }

@@ -40,8 +40,10 @@ import javax.inject.Singleton
  * 1. There is no transaction here any more, which is the offline win (spec §5.3): one
  *    single-document write lands in the Firestore cache with the radio off, and the tick
  *    is instant. `runTransaction` could not be served from the cache and took a measured
- *    7.9 s to fail (closed #3). `app/src/test/.../guards/OfflineWriteGuardTest.kt` is
- *    watching for exactly this and reports **skipped** from the moment it is true.
+ *    7.9 s to fail (closed #3). `app/src/test/.../guards/OfflineWriteGuardTest.kt` watched for
+ *    exactly this and went **skipped** the moment it became true; `50-finish` then read that skip,
+ *    deleted `core/net/ConnectivityMonitor.kt` and the `GoalDetailViewModel` pre-check it guarded,
+ *    and retired the guard itself (2026-08-20). **The guard no longer exists — do not go looking.**
  * 2. **Points do not move until the projection function runs — including the owner's own.**
  *    Nothing in this app sums these facts on the device: `AuthRepositoryImpl.authState()` reads
  *    the stored `users/{uid}.points` and `UserDto.toDomain()` passes it straight through, so

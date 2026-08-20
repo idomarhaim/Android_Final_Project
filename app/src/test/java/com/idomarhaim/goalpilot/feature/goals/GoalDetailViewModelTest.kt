@@ -2,7 +2,6 @@ package com.idomarhaim.goalpilot.feature.goals
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import com.idomarhaim.goalpilot.core.net.ConnectivityMonitor
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -49,9 +48,6 @@ class GoalDetailViewModelTest {
     private val recommendationRepository = mockk<RecommendationRepository>(relaxed = true)
     private val lifeAreaRepository = mockk<LifeAreaRepository>(relaxed = true)
 
-    /** Online unless a test says otherwise — the offline path is the interesting one. */
-    private val connectivity = mockk<ConnectivityMonitor> { every { isOnline() } returns true }
-
     private val goalId = "g1"
 
     /** What the snapshot listener is currently reporting — the tests push into these. */
@@ -83,7 +79,6 @@ class GoalDetailViewModelTest {
             taskRepository = taskRepository,
             progressRepository = progressRepository,
             recommendationRepository = recommendationRepository,
-            connectivity = connectivity,
             lifeAreaRepository = lifeAreaRepository,
             savedStateHandle = handle,
         )
@@ -182,32 +177,6 @@ class GoalDetailViewModelTest {
 
         assertThat(vm.action.value.message).doesNotContain("UNAVAILABLE")
         assertThat(vm.action.value.message).doesNotContain("googleapis")
-    }
-
-    // ── The offline pre-check: refuse rather than mislead ─────────────────
-
-    @Test
-    fun `an offline tap is refused outright and never fakes a tick`() = runTest {
-        // Measured on a device: offline, setDone takes 7.9 s to come back
-        // UNAVAILABLE. Drawing a tick across those eight seconds is a lie, so the
-        // tap is refused up front instead of optimistically drawn and undone.
-        every { connectivity.isOnline() } returns false
-        val vm = subscribedViewModel()
-
-        vm.toggleTask(task())
-
-        assertThat(vm.uiState.value.tasks.single().isDone).isFalse()
-        assertThat(vm.action.value.message).isEqualTo(GoalDetailViewModel.OFFLINE_MESSAGE)
-    }
-
-    @Test
-    fun `an offline tap never reaches the repository at all`() = runTest {
-        every { connectivity.isOnline() } returns false
-        val vm = subscribedViewModel()
-
-        vm.toggleTask(task())
-
-        coVerify(exactly = 0) { taskRepository.setDone(any(), any()) }
     }
 
     @Test

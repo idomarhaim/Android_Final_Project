@@ -15,7 +15,38 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `50-finish` | #50 item 5 — delete `ConnectivityMonitor` now the C20 guard has gone quiet | `app/src/main/java/com/idomarhaim/goalpilot/core/net/ConnectivityMonitor.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/guards/OfflineWriteGuardTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModelTest.kt` · `sessions/50-finish.md` · `CHANGELOG/2026-08-20/50-finish.md` | **Gradle daemon** (no device) | 2026-08-20 |
+> 🏁 **`50-finish` RELEASED 2026-08-20 — `3bf280a` (claim) → the deletion commit → this note.**
+> Held the **Gradle daemon**; no device, so nothing about `#50` item 5 needed Ido's phone or an
+> emulator. Account: [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md).
+>
+> ✅ **`ConnectivityMonitor` IS GONE, and the thing that authorised it was a test, not a ticket.**
+> `OfflineWriteGuardTest` reported `<skipped/>` (`tests="1" skipped="1"`), which is the signal
+> `50b-transaction-guard` built it to send once `c20-build-half` made `setDone` a single write.
+> Deleted: `core/net/ConnectivityMonitor.kt` (package now empty), the `GoalDetailViewModel`
+> pre-check + constructor param + import, `OFFLINE_MESSAGE`, `guards/OfflineWriteGuardTest.kt`
+> (package now empty), and **two** obsolete `GoalDetailViewModelTest` cases. JVM unit **425 → 422**,
+> 46 → 45 suites, the lone skip retired with its guard. `assembleDebug` green.
+>
+> ⚠️ **`Untested:` NOBODY HAS YET SEEN AN OFFLINE TAP SUCCEED.** This unit removed the *refusal*;
+> that the tick now *works* offline is read off the code (`update().await()` on one document, which
+> Firestore applies to the cache synchronously), **not observed**. The cheapest real check is the
+> cloud emulator with airplane mode — but Goal Detail needs a signed-in account and the runner has
+> none, so it needs a seeded account or a local device pass. Whoever takes `7-quickadd-complete`
+> rides the same C20 change and is best placed to close this.
+>
+> 📌 **The brief's deletion list was one test short** — it named `an offline tap is refused
+> outright…` and missed `an offline tap never reaches the repository at all` (`:203`), which
+> asserts `coVerify(exactly = 0) { setDone(…) }`. Re-run the grep; don't work the list. Written up
+> at `kb/dev/decision-map-charting.md` §12b.
+>
+> 📥 **Ingested → `C:\Dev\JARVIS\kb`** (`1fe963f` there): `decision-map-charting.md` **§12a-i**
+> (the guard-expiry loop closed across three sessions) · **§12b** (premise rot vs enumeration rot)
+> · `look-at-your-own-output.md` **§4d** (the check ran; the console carried no line about it).
+> This session's `kb-candidates/` file is fully drained and deleted here.
+>
+> ⛔ **NOT drained, and not mine:** `kb-candidates/2026-08-19-50-offline-stamps.md` entry 3
+> (destination `rules/` — always-ask in both modes, owned by the 🎬 gate and Ido) and
+> `kb-candidates/2026-08-20-48-settings-surface.md`. Both still owed.
 > 📥 **`sessions/c20-build-half.md` IS WRITTEN — `/kickoff c20-build-half`.** *(By `50b-transaction-guard` r3, 2026-08-20.)* A parallel session ran `/kickoff c20-derived-state` and **halted correctly at §1**: that is a *past session label* (`CHANGELOG/2026-08-14/`, `2026-08-15/`), not a brief, and `sessions/` was mine. It took nothing and wrote nothing. **So I wrote the brief** — that resolves the collision rather than queuing behind it.
 >
 > ⚠️ **One sentence of the design of record is STALE, and the brief says so.** `docs/PRODUCT_v0.3.md` §5.2 claims *"two client transactions already write `goal.currentValue` (`GoalRepositoryImpl.kt:87`, `TaskRepositoryImpl.kt:135`)"* — **both are gone**, removed by #49; `grep -n '"currentValue"'` returns nothing in either file and those line numbers hold no write. The real remainder is **one function**: `setDone`'s transaction, whose three writes are one fact (stays) and two derived numbers (go to the server). Verified in the tree, not read off the spec.
