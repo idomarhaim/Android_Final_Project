@@ -16,8 +16,8 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 > 🏁 **`50-finish` RELEASED 2026-08-20 — `3bf280a` (claim) → the deletion commit → this note.**
-> Held the **Gradle daemon**; no device, so nothing about `#50` item 5 needed Ido's phone or an
-> emulator. Account: [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md).
+> **`#gradle-daemon` RELEASED with this commit**; no device was ever claimed, so nothing about
+> `#50` item 5 needed Ido's phone or an emulator. Account: [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md).
 >
 > ✅ **`ConnectivityMonitor` IS GONE, and the thing that authorised it was a test, not a ticket.**
 > `OfflineWriteGuardTest` reported `<skipped/>` (`tests="1" skipped="1"`), which is the signal

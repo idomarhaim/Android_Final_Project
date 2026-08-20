@@ -35,6 +35,22 @@ of a transactional `setDone` ships the 7.9 s lie in a second place.
 Check: `grep -c runTransaction app/src/main/java/com/idomarhaim/goalpilot/data/firestore/TaskRepositoryImpl.kt`
 must be **0**.
 
+> ⚠️ **That check is a FALSE NEGATIVE as written — it returns `3`, and the precondition is
+> nevertheless MET.** *(Found by `50-finish`, 2026-08-20, by running it.)* All three hits are
+> **prose** — `:31` and `:42` in the KDoc and `:136` in a comment, each describing the transaction
+> that *used to* be there. **Zero are code.** `setDone` has been a single
+> `document(taskId).update(…)` since `c20-build-half` (`731961b`), and `ConnectivityMonitor` plus
+> the `GoalDetailViewModel` pre-check are deleted (`941d6a8`, #50 item 5). Use instead:
+>
+> ```bash
+> grep -n "firestore.runTransaction" app/…/TaskRepositoryImpl.kt   # code only — must be empty
+> ```
+>
+> Same family as the brief-list rot written up at `kb/dev/decision-map-charting.md` §12b: a
+> mechanical check is a grep frozen at authoring time, and this one was authored while the removal
+> it tests for was still in the future. **The ordering warning above it is unaffected and still
+> binds — #9 first.**
+
 ## The three questions the spec already answers — do not re-derive them
 
 1. **What completing awards — §1.4.** `round(minutesOf(task) / 3) × difficulty`, with
