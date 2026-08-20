@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.InputMode
@@ -128,6 +129,14 @@ class AddEditGoalViewModel @Inject constructor(
                 title = current.title.trim(),
                 description = current.description.trim(),
                 category = current.category,
+                // §1.1's intrinsic marker, and this form is the one place that can set it
+                // honestly (#6): a goal that has been through *New goal* / *Edit goal* is one
+                // Ido wrote or read and saved, which is exactly the consent §0.7 asks for
+                // before an intrinsic edge is asserted. It is set on every save rather than
+                // only on create, so keeping a suggestion by editing it is a declaration too
+                // — and so that an edit can never silently strip a marker back to UNKNOWN,
+                // which is what leaving the field to its default here would do.
+                declaredBy = DeclaredBy.USER,
                 lifeAreaIds = current.lifeAreaIds,
                 targetValue = target,
                 // `currentValue` is not carried through the form any more (#49). It

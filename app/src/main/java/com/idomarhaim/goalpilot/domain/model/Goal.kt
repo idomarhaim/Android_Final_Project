@@ -13,6 +13,23 @@ data class Goal(
     val description: String = "",
     val category: GoalCategory = GoalCategory.OTHER,
     /**
+     * Who declared this objective a **goal** — §1.1 (`#6`) — or **null when nobody did**,
+     * which is how a purely instrumental objective (a milestone) is said.
+     *
+     * The default is [DeclaredBy.UNKNOWN] rather than [DeclaredBy.USER] because that is the
+     * honest reading of a `Goal` built by hand: a test fixture, a half-filled form, a document
+     * written before the field existed. Claiming Ido declared it would manufacture consent on
+     * the one kind of object §0.7 says needs consent, so the screens that *know* stamp their
+     * own value — the goal editor writes [DeclaredBy.USER], the sorter writes
+     * [DeclaredBy.AI_SUGGESTED] — and everything else stays honestly unattributed.
+     *
+     * Nothing filters on it yet. §1.1's *"the goals list filters to intrinsic only"* waits for
+     * `C16` #37 to give a milestone somewhere to be seen; filtering now would make a demoted
+     * goal vanish from the only list that renders it, which is the opposite of the **lossless**
+     * demotion the marker exists to offer.
+     */
+    val declaredBy: DeclaredBy? = DeclaredBy.UNKNOWN,
+    /**
      * The user-defined [LifeArea]s this goal serves. **Unfiled is the empty
      * collection** — never a made-up default, because that would put real time
      * into the wrong slice of the time-allocation chart; "Unassigned" is an
@@ -128,6 +145,16 @@ data class Goal(
      * that means nothing rather than a number that means zero.
      */
     val hasMeasure: Boolean get() = targetValue > 0.0 && measureWord.isNotBlank()
+
+    /**
+     * Whether the sorter proposed this goal and nobody has ruled on it yet (§1.1, `#6`).
+     *
+     * The read side of `#6`'s witness: silent filing is legal precisely because a goal the app
+     * created is **marked** as the app's until Ido keeps it, so an accessor rather than a
+     * scattered `declaredBy == AI_SUGGESTED` keeps the one question the surfaces ask in one
+     * place.
+     */
+    val isPendingSuggestion: Boolean get() = declaredBy?.isPending == true
 }
 
 /**

@@ -83,7 +83,7 @@ class RecommendationRepositoryImpl @Inject constructor(
             )
             val result = functions.getHttpsCallable(CloudFunctions.CLASSIFY_TASK)
                 .call(payload).await()
-            val parsed = parseClassification(result.getData(), lifeAreas)
+            val parsed = parseClassification(result.getData())
             Resource.Success(parsed ?: fallbackClassification(taskTitle, goals, lifeAreas))
         } catch (e: Exception) {
             Resource.Success(fallbackClassification(taskTitle, goals, lifeAreas))
@@ -132,17 +132,21 @@ class RecommendationRepositoryImpl @Inject constructor(
         }.filter { it.message.isNotBlank() }
     }
 
-    private fun parseClassification(data: Any?, lifeAreas: List<LifeArea>): TaskClassification? {
+    private fun parseClassification(data: Any?): TaskClassification? {
         val m = data as? Map<*, *> ?: return null
         val points = (m["estimatedPoints"] as? Number)?.toInt() ?: 10
         return TaskClassification(
             suggestedGoalId = m["suggestedGoalId"] as? String,
             suggestedNewGoalTitle = m["suggestedNewGoalTitle"] as? String,
             suggestedCategory = GoalCategory.fromName(m["suggestedCategory"] as? String),
-            // Models invent ids. Only an area the caller actually sent survives —
-            // an invented one would file real minutes under nothing.
-            suggestedLifeAreaId = (m["suggestedLifeAreaId"] as? String)
-                ?.takeIf { id -> lifeAreas.any { it.id == id } },
+            // Read, not re-checked. Membership is the Cloud Function's job and ONLY the
+            // Cloud Function's (#6, §3.4: "validation lives in the Cloud Function, singly")
+            // — a second implementation here is a second answer to "is this id real?", free
+            // to drift from the first the moment either is edited. What still happens on the
+            // client is RESOLUTION, in `SmartFiling.decide`: an id that names nothing the
+            // user has finds nothing and the task lands unfiled, which cannot disagree with
+            // anything because it is a lookup rather than a rule.
+            suggestedLifeAreaId = m["suggestedLifeAreaId"] as? String,
             estimatedPoints = points,
             // Absent when the model did not say — same rule as `scoreTask` above.
             estimatedMinutes = TaskDuration.sanitize((m["estimatedMinutes"] as? Number)?.toInt()),

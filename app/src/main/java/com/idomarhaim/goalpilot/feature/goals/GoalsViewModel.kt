@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.feature.goals
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.usecase.GoalGroup
@@ -12,11 +13,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class GoalsViewModel @Inject constructor(
-    goalRepository: GoalRepository,
+    private val goalRepository: GoalRepository,
     lifeAreaRepository: LifeAreaRepository,
     groupGoals: GroupGoalsByLifeAreaUseCase,
 ) : ViewModel() {
@@ -39,6 +41,31 @@ class GoalsViewModel @Inject constructor(
             SharingStarted.WhileSubscribed(5_000),
             GoalsUiState(isLoading = true),
         )
+
+    /**
+     * Ido keeps a goal the sorter proposed — §1.1, `#6`.
+     *
+     * The marker becomes [DeclaredBy.USER], which is the whole transition: nothing moves, no
+     * document is rewritten, and every task already filed under it stays where it is. That is
+     * the point of putting provenance on the goal instead of in a separate *suggestions*
+     * collection — accepting a proposal costs one field.
+     */
+    fun keepSuggestion(goalId: String) {
+        viewModelScope.launch { goalRepository.setDeclaredBy(goalId, DeclaredBy.USER) }
+    }
+
+    /**
+     * Ido says it is not a goal — §1.1's **lossless demotion**.
+     *
+     * Drops the marker and nothing else. The object survives, its tasks survive, its life
+     * areas survive; what it loses is the claim that he wants it for its own sake, which is
+     * the only thing the sorter ever asserted. **Not a delete**, and deliberately not offered
+     * as one: the task that caused the goal to exist is still real work he typed in, and
+     * throwing the goal away would take that with it.
+     */
+    fun demoteSuggestion(goalId: String) {
+        viewModelScope.launch { goalRepository.setDeclaredBy(goalId, null) }
+    }
 }
 
 data class GoalsUiState(

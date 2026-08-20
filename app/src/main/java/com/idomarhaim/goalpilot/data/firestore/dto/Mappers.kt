@@ -4,6 +4,7 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.InputMode
@@ -94,6 +95,17 @@ fun GoalDto.toDomain(): Goal = Goal(
     title = title,
     description = description,
     category = GoalCategory.fromName(category),
+    // §1.1's intrinsic marker, with §7.1's backfill applied on READ rather than by a
+    // migration write: an absent field is `UNKNOWN`, and the explicit `"NONE"` sentinel is
+    // the only thing that reads back as null. See GoalDto.declaredBy for why absence cannot
+    // do both jobs, and why no goal in goalpilot-56e30 is rewritten to find this out.
+    // NOT `fromName(declaredBy) ?: UNKNOWN`: that elvis fires for BOTH an absent field and
+    // the NONE sentinel, so a demoted goal reads back as UNKNOWN — a goal again — on the very
+    // next snapshot. The two cases must be split before the enum is consulted, and
+    // `GoalDeclaredByMigrationTest` is what caught it.
+    declaredBy = declaredBy.let { stored ->
+        if (stored == null) DeclaredBy.UNKNOWN else DeclaredBy.fromName(stored)
+    },
     lifeAreaIds = resolvedLifeAreaIds(),
     healthSourceKey = healthSourceKey?.takeIf { it.isNotBlank() },
     targetValue = targetValue,
@@ -121,6 +133,10 @@ fun Goal.toDto(): GoalDto = GoalDto(
     title = title,
     description = description,
     category = category.name,
+    // Never null: absence is reserved for documents that predate the field, so writing null
+    // here would re-open the ambiguity the DTO's sentinel exists to close — a demoted goal
+    // would read back as UNKNOWN and quietly become a goal again on the next snapshot.
+    declaredBy = declaredBy?.name ?: GoalDto.DECLARED_BY_NONE,
     // Null, always: a write migrates the document, and leaving the old field
     // populated would be exactly the "second number that quietly disagrees" the
     // map names three times over.

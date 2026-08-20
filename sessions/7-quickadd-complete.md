@@ -11,13 +11,30 @@ created: 2026-08-20
 
 **Depends on `c20-build-half`.** Needs the **Gradle daemon**; a device only for the render pass.
 
-> ⚠️ **Runs AFTER `9-duration-box`, and BEFORE `6-silent-filing`. Verified 2026-08-20, not assumed.**
-> · `GoalDetailScreen.kt:319` `AddTaskRow` is where this affordance goes **and** where #9's duration
->   box goes — it already holds `aiMinutes` at `:332`. #9 changes what that value *means* (stored
->   provenance instead of a reconstruction), so building on it first is building on a value about to
->   be redefined.
-> · `DashboardScreen.kt` — this touches `SmartAddCard` (`:616`); `6-silent-filing` removes
->   `SmartAddDialog` (`:275`, `:659`) from the existing-goal branch. Same file, adjacent functions.
+> ✅ **BOTH ORDERING CONSTRAINTS ARE DISCHARGED — `9-duration-box` and `6-silent-filing` have
+> both shipped (2026-08-20). Nothing blocks this brief.**
+>
+> · `#9` landed in `8187bbb`. `GoalDetailScreen.kt`'s `AddTaskRow` now reads a `DurationEntry`
+>   rather than reconstructing `aiMinutes`, so the value this brief was told to wait for is
+>   settled: build on it.
+> · `#6` landed after it, and it **ran second rather than first** — `6-silent-filing` checked the
+>   constraint instead of obeying it on sight, and found that `613b454` justified this pair on
+>   **file adjacency alone**, which binds concurrent sessions and not sequential ones. Its own
+>   check went further: this brief puts the done-affordance in `SmartAddCard`, and removing the
+>   dialog *forces* that placement rather than removing it.
+>
+> ⚠️ **So the landmarks in *Where it goes* below have MOVED. Re-read the file, do not trust the
+> line numbers.** `SmartAddDialog` **no longer exists** — deleted with `confirmSmartAdd` and
+> `dismissSmartAdd`. `SmartAddCard` is now `internal`, takes a `SmartAddState`, and shows an
+> in-place progress row while a task is in flight (`SmartAddTestTags.SORTING`).
+> `classifyForSmartAdd` classifies **and writes**, then posts a `SmartAddReceipt` that the screen
+> turns into a snackbar with **Undo**.
+>
+> 🔑 **What that means for THIS ticket.** There is no confirmation step left to hang a
+> *"...and it is already done"* checkbox on, so the affordance belongs in the card's input row
+> beside *Sort* — which is what this brief already said. Whatever it emits has to ride the
+> **same single write** `classifyForSmartAdd` already makes (see *The trap* below), and the
+> receipt is where its undo belongs, not a second snackbar.
 
 ## Why it exists
 
@@ -69,7 +86,8 @@ must be **0**.
 
 ## Where it goes
 
-- `feature/dashboard/DashboardScreen.kt:616` — `SmartAddCard`, the quick-add entry point.
+- `feature/dashboard/DashboardScreen.kt` — `SmartAddCard`, the quick-add entry point. **The
+  line number is stale since `#6`; grep for `internal fun SmartAddCard`.**
 - `feature/goals/GoalDetailScreen.kt:319` — `AddTaskRow`, the other add surface. **Decide
   explicitly whether it gets the affordance too, and say why** — an affordance on one add surface
   and not the other is the kind of asymmetry that reads as a bug.

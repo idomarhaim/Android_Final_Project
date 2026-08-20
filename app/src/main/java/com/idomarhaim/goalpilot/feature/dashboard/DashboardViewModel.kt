@@ -12,7 +12,10 @@ import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
 import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
 import com.idomarhaim.goalpilot.domain.model.DurationSource
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
+import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.SmartFiling
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -154,22 +157,44 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    // ── Smart add (spec §6 Bonus: LLM task→goal classification) ──────
+    // ── Smart add — silent filing (#6, R3; spec §0.7, §3.4, §3.5) ────
 
     private val _smartAdd = MutableStateFlow(SmartAddState())
     val smartAdd = _smartAdd.asStateFlow()
 
+    private val _filed = MutableStateFlow<SmartAddReceipt?>(null)
+
     /**
-     * Runs a free-text task title through the `classifyTask` Cloud Function and
-     * opens a confirmation sheet with the proposal: attach it to an existing goal,
-     * or create the goal the LLM suggests. The user always confirms — the LLM
-     * proposes, it never writes (spec §8: LLM output can be inconsistent).
+     * The witness for a filing that happened without asking (`#6`).
+     *
+     * §0.7 permits acting without asking; it does **not** permit acting without a witness.
+     * The first time the sorter is wrong, this receipt is how Ido finds out what it did and
+     * takes it back — so it is not a courtesy snackbar, it is the thing that makes the silence
+     * legitimate. The screen turns it into a message with an **Undo**.
+     */
+    val filed = _filed.asStateFlow()
+
+    /**
+     * Files a free-text task, and asks nobody where it goes.
+     *
+     * `R3` was *"it asks for approval on where to file every task you enter; the default should
+     * be that it does not ask and just does it"*, and the triage promoted it out of settings —
+     * §0.7 makes silence the rule rather than a preference, so **there is no dialog and no
+     * toggle**. What used to sit here was `SmartAddDialog`: classify, then show the proposal and
+     * wait for *Add* or *Cancel*, on every single task.
+     *
+     * The branch table is [SmartFiling.decide], which is pure and tested on the JVM. This
+     * function is the part that cannot be: one call out, one or two writes, one receipt.
+     *
+     * **One write when the goal exists, two when it does not** — and the second case creates
+     * the goal *before* the task, so a failure leaves nothing rather than a task pointing at a
+     * goal that was never written.
      */
     fun classifyForSmartAdd(rawTitle: String) {
         val title = rawTitle.trim()
         if (title.isBlank()) return
         viewModelScope.launch {
-            _smartAdd.value = SmartAddState(isVisible = true, isClassifying = true, taskTitle = title)
+            _smartAdd.value = SmartAddState(isClassifying = true, taskTitle = title)
             val goals = lastGoals
             val areas = lastLifeAreas
             val classification =
@@ -179,93 +204,96 @@ class DashboardViewModel @Inject constructor(
                 }
             if (classification == null) {
                 _smartAdd.value = SmartAddState()
-                _message.value = "Could not analyse that task"
+                _message.value = "Could not add that task"
                 return@launch
             }
-            // The model can name a goal id that does not exist; only trust ids we
-            // can actually resolve, otherwise fall through to the new-goal branch.
-            val matched = goals.firstOrNull { it.id == classification.suggestedGoalId }
-            // A new goal is filed under the area the model picked; an existing goal
-            // keeps whatever areas the user already gave it. The sheet names one
-            // area, so a goal serving several shows its first — the goal itself is
-            // not re-filed from here, and this row is a "where will this land?"
-            // label rather than a write.
-            val area = areas.firstOrNull {
-                it.id == (matched?.lifeAreaIds?.firstOrNull() ?: classification.suggestedLifeAreaId)
-            }
-            _smartAdd.value = SmartAddState(
-                isVisible = true,
-                isClassifying = false,
-                taskTitle = title,
-                targetGoalId = matched?.id,
-                targetGoalTitle = matched?.title,
-                newGoalTitle = if (matched == null) {
-                    classification.suggestedNewGoalTitle?.takeIf { it.isNotBlank() } ?: title
-                } else {
-                    null
-                },
-                newGoalCategory = classification.suggestedCategory,
-                lifeAreaId = area?.id,
-                lifeAreaName = area?.name,
-                points = classification.estimatedPoints.coerceIn(1, 1000),
-                minutes = classification.estimatedMinutes,
-                rationale = classification.rationale,
-            )
-        }
-    }
 
-    /** Applies the proposal: creates the goal if needed, then the task. */
-    fun confirmSmartAdd() {
-        val state = _smartAdd.value
-        if (state.isClassifying || state.isSaving) return
-        viewModelScope.launch {
-            _smartAdd.update { it.copy(isSaving = true) }
-            val goalId = state.targetGoalId ?: run {
-                val newGoal = Goal(
-                    title = state.newGoalTitle.orEmpty().ifBlank { state.taskTitle },
-                    category = state.newGoalCategory,
-                    // One area, or none — §1.2's empty collection. The sheet
-                    // proposes a single area, and inventing a second here would
-                    // be the app asserting a filing the user never saw.
-                    lifeAreaIds = listOfNotNull(state.lifeAreaId),
-                )
-                when (val r = goalRepository.upsertGoal(newGoal)) {
-                    is Resource.Success -> r.data
-                    else -> null
+            val decision = SmartFiling.decide(classification, goals, areas)
+            val goalId = when (decision) {
+                is FilingDecision.ExistingGoal -> decision.goalId
+                is FilingDecision.NoGoal -> null
+                is FilingDecision.NewGoal -> {
+                    val created = goalRepository.upsertGoal(
+                        Goal(
+                            title = decision.title,
+                            category = decision.category,
+                            // §1.1's pending state. The app has NOT asserted that Ido wants this
+                            // for its own sake — that is his to say, and until he does the goals
+                            // list marks it and offers to drop the marker (§0.7, §3.5).
+                            declaredBy = DeclaredBy.AI_SUGGESTED,
+                            // One area, or none — §1.2's empty collection.
+                            lifeAreaIds = listOfNotNull(decision.lifeAreaId),
+                        ),
+                    )
+                    when (created) {
+                        is Resource.Success -> created.data
+                        else -> {
+                            _smartAdd.value = SmartAddState()
+                            _message.value = "Could not add that task"
+                            return@launch
+                        }
+                    }
                 }
             }
-            if (goalId == null) {
-                _smartAdd.value = SmartAddState()
-                _message.value = "Could not create the goal"
-                return@launch
-            }
+
             val saved = taskRepository.upsertTask(
                 Task(
                     goalId = goalId,
-                    title = state.taskTitle,
-                    points = state.points,
-                    estimatedMinutes = state.minutes ?: TaskDuration.DEFAULT_MINUTES,
-                    // §3.4: a duration nobody supplied is recorded as unsupplied. It
-                    // still counts as DEFAULT_MINUTES so the task keeps its slice of
-                    // the pie, but it is not attributed to the model, and it stays
-                    // re-estimable — which a USER value never is.
-                    durationSource = state.minutes.durationSource(),
+                    title = title,
+                    points = classification.estimatedPoints,
+                    estimatedMinutes = classification.estimatedMinutes ?: TaskDuration.DEFAULT_MINUTES,
+                    // §3.4: a duration nobody supplied is recorded as unsupplied. It still counts
+                    // as DEFAULT_MINUTES so the task keeps its slice of the pie, but it is not
+                    // attributed to the model, and it stays re-estimable — which a USER value
+                    // never is.
+                    durationSource = classification.estimatedMinutes.durationSource(),
                 ),
             )
             _smartAdd.value = SmartAddState()
-            _message.value = when (saved) {
-                is Resource.Success ->
-                    if (state.targetGoalId != null) {
-                        "Added to “${state.targetGoalTitle}”"
-                    } else {
-                        "Created “${state.newGoalTitle}” and added the task"
-                    }
-                else -> "Could not add the task"
+            if (saved !is Resource.Success) {
+                // A goal may already exist at this point, and it is left alone rather than
+                // rolled back: it is marked AI_SUGGESTED, so it shows up as a proposal Ido can
+                // drop in one tap. A second write on a path that has just proved it cannot
+                // write is not a repair.
+                _message.value = "Could not add that task"
+                return@launch
             }
+            _filed.value = SmartAddReceipt(
+                taskId = saved.data,
+                taskTitle = title,
+                decision = decision,
+                // Only a goal THIS filing created may be taken back with the task. An existing
+                // goal is Ido's and predates the quick-add; undoing a filing must never delete
+                // something the filing did not make.
+                createdGoalId = if (decision is FilingDecision.NewGoal) goalId else null,
+            )
         }
     }
 
-    fun dismissSmartAdd() { _smartAdd.value = SmartAddState() }
+    /** Clears the receipt once the screen has shown it. */
+    fun consumeFiled() { _filed.value = null }
+
+    /**
+     * Takes back the last silent filing — the *undoable* half of §0.7's witness.
+     *
+     * Deletes the task, and the goal **only if this filing created it**. A goal that was
+     * already there keeps every task it had; a goal the sorter minted seconds ago that now
+     * holds nothing is not worth keeping, and leaving it behind would turn *undo* into *half of
+     * what you just did*.
+     */
+    fun undoFiling(receipt: SmartAddReceipt) {
+        viewModelScope.launch {
+            _filed.value = null
+            val removed = taskRepository.deleteTask(receipt.taskId)
+            if (removed !is Resource.Success) {
+                _message.value = "Could not undo that"
+                return@launch
+            }
+            receipt.createdGoalId?.let { goalRepository.deleteGoal(it) }
+            _message.value = "Undone"
+        }
+    }
+
 
     // ── Google Tasks import (spec §6 nice-to-have) ────────────────────
 
@@ -489,6 +517,13 @@ class DashboardViewModel @Inject constructor(
                             Goal(
                                 title = proposal.newGoalTitle.orEmpty().ifBlank { proposal.title },
                                 category = proposal.newGoalCategory,
+                                // USER, not AI_SUGGESTED, even though the same sorter proposed
+                                // the title (#6, §0.7). The import has a **review sheet**: this
+                                // goal is on a list Ido ticked and confirmed, so the intrinsic
+                                // edge is his assertion, not the app's. Quick-add has no such
+                                // moment, which is exactly why its new goals sit pending and
+                                // these do not.
+                                declaredBy = DeclaredBy.USER,
                                 lifeAreaIds = listOfNotNull(areaId),
                             ),
                         )
@@ -723,31 +758,38 @@ data class RecommendationsState(
 )
 
 /**
- * The LLM's proposal for a free-text task, awaiting the user's confirmation.
- * Exactly one of [targetGoalId] (attach to an existing goal) or [newGoalTitle]
- * (create one) is set once classification finishes.
+ * The quick-add card's in-flight state — **and nothing else** (`#6`).
+ *
+ * It used to be a whole proposal awaiting confirmation: a target goal, a proposed new goal, a
+ * life area, points, minutes, a rationale, `isVisible`, `isSaving`. All of it existed to fill a
+ * dialog that asked *"Add this task?"* about every task the user typed, which is what `R3`
+ * asked to be rid of and what §0.7 says was never legitimate. The proposal now goes straight to
+ * [SmartFiling.decide] and then to disk, so the only thing the card still has to show is that
+ * it is thinking.
  */
 data class SmartAddState(
-    val isVisible: Boolean = false,
     val isClassifying: Boolean = false,
-    val isSaving: Boolean = false,
     val taskTitle: String = "",
-    val targetGoalId: String? = null,
-    val targetGoalTitle: String? = null,
-    val newGoalTitle: String? = null,
-    val newGoalCategory: GoalCategory = GoalCategory.OTHER,
-    /** Life area the resulting goal is filed under, when one could be resolved. */
-    val lifeAreaId: String? = null,
-    val lifeAreaName: String? = null,
-    val points: Int = 10,
-    /** Minutes the AI thinks the task takes — carried onto the saved task. */
+)
+
+/**
+ * What the app did, after it did it — `#6`'s witness (§0.7).
+ *
+ * *"Silent" is not "invisible".* Every silent filing must be visible after the fact and
+ * undoable, or the first time the sorter is wrong there is no way to find what it did. This
+ * carries exactly what is needed to say so and to take it back, and nothing more.
+ */
+data class SmartAddReceipt(
+    val taskId: String,
+    val taskTitle: String,
+    val decision: FilingDecision,
     /**
-     * What the model said the task takes, or **null when it did not say** (#9,
-     * §3.4). Null is stored as [TaskDuration.DEFAULT_MINUTES] with
-     * `DurationSource.UNKNOWN`, never as an AI estimate.
+     * The goal this filing **created**, or null when it filed under one that already existed.
+     *
+     * The distinction is what keeps undo safe: it is the difference between removing what the
+     * app just made and deleting something of Ido's.
      */
-    val minutes: Int? = null,
-    val rationale: String = "",
+    val createdGoalId: String? = null,
 )
 
 /** Review sheet for a Google Tasks import, before anything is written. */

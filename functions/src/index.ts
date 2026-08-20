@@ -31,6 +31,13 @@ initializeApp();
  */
 export { projectPoints, projectChallengeScore } from "./projection";
 
+// `classify`'s validator (spec §3.4), in its own Firebase-free module so
+// `test/classify.test.mjs` can run it with no emulator — same arrangement as
+// `derived.ts`. `CATEGORIES` lives there too: the list the prompt offers and the
+// list the response is checked against must be one list, or the prompt can drift
+// into offering a value the validator then silently drops.
+import { CATEGORIES, listsFromRequest, validateClassification } from "./classify";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 // GROQ deprecated llama-3.1-8b-instant on 2026-06-17 (shutdown 2026-08-16) and
 // recommends openai/gpt-oss-20b as its replacement. Override per deployment with
@@ -38,10 +45,6 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 // pinning a new one.
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
-const CATEGORIES = [
-  "HEALTH", "FITNESS", "SLEEP", "NUTRITION", "RELATIONSHIPS",
-  "CAREER", "PROJECTS", "LEARNING", "FINANCE", "OTHER",
-];
 
 /** Calls GROQ's OpenAI-compatible chat endpoint and parses a JSON object reply. */
 async function callGroqJson(system: string, user: string): Promise<any> {
@@ -102,16 +105,29 @@ export const getRecommendations = onCall(async (request: CallableRequest) => {
 });
 
 /**
- * Classify a free-text task onto a goal, or suggest a new goal (spec §6 Bonus).
+ * `classify` — which existing goal a free-text task belongs to, or that none does
+ * (`docs/PRODUCT_v0.3.md` §3.3 D, §3.4; `#6`, `R3`).
  *
- * Also returns the two numbers the client cannot get anywhere else: what the task
- * is worth in points, and **how many minutes it takes** — the raw material of the
- * time-allocation chart, which reports what share of the user's life went into
- * each life area. `suggestedLifeAreaId` must be one of the ids in `lifeAreas`;
- * the client drops anything else rather than filing real time under a made-up id.
+ * **This is the highest-volume AI call in the app** — one per quick-add and one per
+ * imported Google Tasks row — **and the one where the only measured failure lives**:
+ * of `C11a`'s 248 live calls the sole two failures were *semantic*, a plausible id
+ * that was not real. So every echoed id is checked against the list that travelled
+ * with the request, here and nowhere else (§3.4: *"validation lives in the Cloud
+ * Function, singly"*).
+ *
+ * **What the client does with the answer is decided by presence, not by value.** An
+ * absent `suggestedGoalId` is the new-goal branch, which is the one row of §3.4's
+ * fallback table that speaks; every other absence is silent. That is why nothing in
+ * here substitutes: a fabricated value would be indistinguishable from an answer at
+ * exactly the field the branch is chosen on.
+ *
+ * Also carries the estimate group — what the task is worth and **how many minutes it
+ * takes**, the raw material of the time-allocation chart — validated independently of
+ * the filing fields, so a nonsense duration costs the user nothing but the duration.
  */
 export const classifyTask = onCall(async (request: CallableRequest) => {
   const { taskTitle = "", goals = [], lifeAreas = [] } = request.data ?? {};
+  const lists = listsFromRequest(request.data);
 
   const system =
     "Classify a task into one of the user's existing goals, or suggest creating a new goal, " +
@@ -122,7 +138,10 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
     "\"suggestedLifeAreaId\":string|null," +
     "\"estimatedPoints\":number,\"estimatedMinutes\":number," +
     "\"confidence\":number,\"rationale\":string}. " +
+    "suggestedGoalId MUST be one of the given goal ids, or null if no existing goal fits — " +
+    "never invent an id and never adapt one. " +
     "suggestedLifeAreaId MUST be one of the given life area ids, or null if none fits. " +
+    "suggestedNewGoalTitle is only meaningful when suggestedGoalId is null. " +
     "estimatedPoints is 5-50 by difficulty. " +
     "estimatedMinutes is how long the task realistically takes to do, 5-480, " +
     "for one sitting of it (a 30-minute run is 30, not the whole training plan). " +
@@ -132,19 +151,21 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
     `Life areas: ${JSON.stringify(lifeAreas)}.`;
 
   try {
-    return await callGroqJson(system, user);
+    return validateClassification(await callGroqJson(system, user), lists);
   } catch (e) {
+    // §3.4, the **transport** class: whole-response fallback, silent, no retry — and
+    // the whole-response fallback is the CLIENT's (spec §8), which has to work offline
+    // anyway and can keyword-match against goals this function never received in full.
+    //
+    // This used to return a fabricated object here: `suggestedGoalId: null` plus
+    // `suggestedNewGoalTitle: taskTitle.slice(0, 40)` and a made-up 10 points / 30
+    // minutes. Two things were wrong with it. It was a **second** implementation of the
+    // client's own fallback, one the client could not tell apart from a real answer; and
+    // because it nulled the goal id, every transport failure took the **new-goal
+    // branch** — the one branch in §3.4's table that speaks. A dead network made the app
+    // announce a new goal. Throwing puts the failure back where the contract says it is.
     logger.error("classifyTask failed", e);
-    return {
-      suggestedGoalId: null,
-      suggestedNewGoalTitle: String(taskTitle).slice(0, 40),
-      suggestedCategory: "OTHER",
-      suggestedLifeAreaId: null,
-      estimatedPoints: 10,
-      estimatedMinutes: 30,
-      confidence: 0,
-      rationale: "fallback",
-    };
+    throw e;
   }
 });
 

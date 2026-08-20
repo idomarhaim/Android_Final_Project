@@ -16,6 +16,7 @@ import com.idomarhaim.goalpilot.data.firestore.dto.toDto
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.withDerivedProgress
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -178,6 +179,28 @@ class GoalRepositoryImpl @Inject constructor(
                 Resource.Success(Unit)
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Could not change the goal's life areas", e)
+            }
+        }
+
+    override suspend fun setDeclaredBy(goalId: String, declaredBy: DeclaredBy?): Resource<Unit> =
+        withContext(io) {
+            val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            try {
+                // `null` is written as the NONE sentinel, never as a Firestore null and never
+                // by deleting the field: absence means *this document predates `#6`*, so
+                // erasing the marker would make a demoted goal read back as UNKNOWN — a goal
+                // again — on the very next snapshot. See `GoalDto.declaredBy`.
+                goalsCol(uid).document(goalId)
+                    .update(
+                        mapOf(
+                            "declaredBy" to (declaredBy?.name ?: GoalDto.DECLARED_BY_NONE),
+                            "updatedAt" to System.currentTimeMillis(),
+                        ),
+                    )
+                    .await()
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not change the goal", e)
             }
         }
 

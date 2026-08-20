@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.domain.repository
 
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
 import kotlinx.coroutines.flow.Flow
 
@@ -41,6 +42,18 @@ interface GoalRepository {
      * adding one area sends the areas the goal already had alongside it.
      */
     suspend fun setLifeAreas(goalId: String, lifeAreaIds: List<String>): Resource<Unit>
+
+    /**
+     * Rules on §1.1's intrinsic marker: [DeclaredBy.USER] keeps a goal the sorter proposed,
+     * `null` **demotes** it — drops the marker, leaving the object and every edge intact.
+     *
+     * Separate from [upsertGoal] for [setLifeAreas]' reason, and one more that is specific to
+     * this field: keeping or demoting a suggestion is a one-tap act on a **list** screen, which
+     * does not hold the whole goal, and a read-modify-write from there would clobber whatever
+     * the user is editing on the goal's own screen. The demotion has to be lossless, and a
+     * write that can lose a concurrent edit is not.
+     */
+    suspend fun setDeclaredBy(goalId: String, declaredBy: DeclaredBy?): Resource<Unit>
 
     suspend fun setArchived(goalId: String, archived: Boolean): Resource<Unit>
 

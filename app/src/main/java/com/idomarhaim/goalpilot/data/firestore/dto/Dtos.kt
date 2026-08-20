@@ -17,6 +17,38 @@ data class GoalDto(
     var description: String = "",
     var category: String = "OTHER",
     /**
+     * `USER` | `AI_SUGGESTED` | `NONE` — §1.1's intrinsic marker, and the field `#6`'s silent
+     * filing is only legal because of.
+     *
+     * **Three states on the wire, and they are not the domain's three.** The domain says
+     * *instrumental* with a `null` [com.idomarhaim.goalpilot.domain.model.Goal.declaredBy];
+     * storage cannot, because §7.1 makes an **absent** field mean something else entirely —
+     * *"backfill `UNKNOWN`: nothing records who made the existing goals, and the migration
+     * must not pretend otherwise"*. So absence is already spoken for, and a demoted goal needs
+     * a value of its own or its demotion does not survive a round trip.
+     *
+     * | Stored | Reads as | Means |
+     * |---|---|---|
+     * | *(absent)* | `UNKNOWN` | written before `#6`; nobody recorded an author |
+     * | `"USER"` | `USER` | Ido wrote it, or kept one the sorter proposed |
+     * | `"AI_SUGGESTED"` | `AI_SUGGESTED` | the sorter proposed it; **pending** |
+     * | `"NONE"` | `null` | the marker was deliberately dropped — instrumental |
+     *
+     * `"NONE"` is **not** the fourth enum value §1.1 rejects. That rejection is about the
+     * *domain*, where a `NONE` constant would be a stored judgement duplicating a null that
+     * already says it — and the domain still has exactly three values plus null. This is a
+     * **wire** distinction between *never written* and *written as none*, which no absence can
+     * carry, and it is the same shape as [unit]'s null below: one value whose whole job is to
+     * mean *this document predates nothing*.
+     *
+     * **No backfill write runs.** Absence is mapped to `UNKNOWN` on read, and the field is
+     * written on the next save of the goal like every other migrating field here — safe today
+     * because nothing in the app can create an instrumental objective: `parentIds` does not
+     * exist on this DTO and no screen renders a sub-objective, so absence provably cannot
+     * already mean *milestone*. `C16` #37 changes that, and owes a real backfill when it does.
+     */
+    var declaredBy: String? = null,
+    /**
      * **Legacy, read-only.** The single life-area id goals carried before
      * `PRODUCT_v0.3` §1.2 made the edge plural. Kept on the DTO purely so an
      * un-migrated document still resolves to `[current]` on read; every write
@@ -72,7 +104,19 @@ data class GoalDto(
     var archived: Boolean = false,
     var createdAt: Long = 0L,
     var updatedAt: Long = 0L,
-)
+) {
+    companion object {
+        /**
+         * What [declaredBy] holds when the marker has been **dropped** — §1.1's lossless
+         * demotion, spelled out on the wire because absence already means *predates `#6`*.
+         *
+         * Deliberately not a member of `DeclaredBy`: the domain says *instrumental* with a
+         * null, and adding a fourth constant there would be the stored judgement §1.1 rejects.
+         * `DeclaredBy.fromName` returns null for this string, which is exactly the point.
+         */
+        const val DECLARED_BY_NONE = "NONE"
+    }
+}
 
 data class TaskDto(
     @DocumentId var id: String = "",

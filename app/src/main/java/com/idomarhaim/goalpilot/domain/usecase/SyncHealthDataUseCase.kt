@@ -243,6 +243,16 @@ class SyncHealthDataUseCase @Inject constructor(
                             // Pinned at birth, so this goal is never matched by a
                             // category the user is free to edit (#47).
                             healthSourceKey = proposal.metric.goalSourceKey,
+                            // `declaredBy` is left at its UNKNOWN default, and that is a
+                            // decision rather than an omission (#6). The two honest values are
+                            // both wrong here: USER would claim a consent nobody gave — this
+                            // sync runs on every foreground with **no review sheet**, so a goal
+                            // appears without anyone watching — and AI_SUGGESTED would put #6's
+                            // *Suggested / Not a goal* banner on the step goal of every user who
+                            // has ever connected Health Connect, over a goal that is working.
+                            // What §0.7 means for structure the SYNC asserts is a question #6
+                            // does not answer, and inventing an answer here would change a
+                            // shipped feature nobody asked to change.
                             // The kind comes off the metric, never off the word
                             // (§1.3) — the app authored this goal, so it knows
                             // what it counts without reading any text.

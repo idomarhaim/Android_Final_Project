@@ -25,6 +25,9 @@ import assert from "node:assert/strict";
 import { initializeApp, deleteApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
+// The one list the prompt offers and the validator checks against (#6).
+import { CATEGORIES } from "../lib/classify.js";
+
 const UID = "uid_runner";
 const CHALLENGE = "challenge_run_streak";
 const DEADLINE_MS = 15_000;
@@ -173,4 +176,65 @@ test("deleting the report leaves the last standing alone", async () => {
   await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).delete();
   await new Promise((r) => setTimeout(r, 3000));
   assert.equal((await standing()).score, 7, "the last reported number stands");
+});
+
+// ── classifyTask (#6, spec §3.3 D / §3.4) ────────────────────────────
+
+/**
+ * The callable's emulator URL. Port and region are `firebase.json`'s and `setGlobalOptions`'
+ * respectively, and both are hard-coded here rather than read from the environment because
+ * `emulators:exec` exports a host for Firestore but not for Functions — a wrong guess would
+ * silently connect to nothing and report a network error as a test failure.
+ */
+const CLASSIFY_URL = "http://127.0.0.1:5001/demo-goalpilot/us-central1/classifyTask";
+
+/** Invokes the callable the way the Android client does: `{ data: … }` in, `{ result: … }` out. */
+async function callClassify(data) {
+  const res = await fetch(CLASSIFY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data }),
+  });
+  return { status: res.status, body: await res.json().catch(() => null) };
+}
+
+test("classifyTask cannot echo a goal id when no goals were sent — and a failure stays a failure", async () => {
+  // **Why an EMPTY goals list.** This case calls the real model through the emulator, so the one
+  // thing it must not assert is what the model says. Membership against an empty list is the
+  // assertion that holds whatever comes back: §3.4 requires `suggestedGoalId` to be a member of
+  // the list that travelled with the request, and no string is a member of nothing. If the field
+  // survives, the validator is not wired into the deployed handler — which is precisely the
+  // failure `projection.test.mjs`-style pure tests cannot see.
+  const { status, body } = await callClassify({
+    taskTitle: "Run 5 km on Friday",
+    goals: [],
+    lifeAreas: [],
+  });
+
+  if (status !== 200) {
+    // The other half of the change, and the branch this takes when GROQ has no key or is
+    // unreachable. `classifyTask` used to answer a transport failure with a fabricated 200 —
+    // `suggestedGoalId: null` plus a sliced title — which took the NEW-GOAL branch, the one
+    // branch of §3.4's table that speaks. A dead network made the app announce a new goal.
+    // A failure must now arrive as a failure, so the client runs spec §8's own fallback.
+    assert.ok(body?.error, `a failed classify must carry an error, got ${JSON.stringify(body)}`);
+    assert.equal(body.result, undefined, "a transport failure must not carry a result body");
+    return;
+  }
+
+  const result = body?.result;
+  assert.ok(result && typeof result === "object", "a 200 must carry a result object");
+  assert.equal(
+    "suggestedGoalId" in result, false,
+    `no goal was offered, so none may be echoed — got ${JSON.stringify(result)}`,
+  );
+  assert.equal("suggestedLifeAreaId" in result, false, "no life area was offered either");
+  // Omit, never substitute (§3.3): a null would be indistinguishable from an answer at the
+  // one field the client picks its branch on.
+  for (const [k, v] of Object.entries(result)) {
+    assert.notEqual(v, null, `${k} came back as null; the contract is absence`);
+  }
+  if ("suggestedCategory" in result) {
+    assert.ok(CATEGORIES.includes(result.suggestedCategory), "category must be a declared enum");
+  }
 });

@@ -42,6 +42,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -72,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
+import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
@@ -104,6 +107,7 @@ fun DashboardScreen(
     var avatarSheetOpen by remember { mutableStateOf(false) }
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
     val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
+    val filed by viewModel.filed.collectAsStateWithLifecycle()
     val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
     val healthSync by viewModel.healthSync.collectAsStateWithLifecycle()
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
@@ -120,6 +124,20 @@ fun DashboardScreen(
     }
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
+    }
+    // #6's witness. The receipt is consumed BEFORE the snackbar is awaited, because
+    // `showSnackbar` suspends until it is dismissed — leaving it in the flow would make a
+    // second quick-add during those seconds either queue behind this one or be swallowed.
+    LaunchedEffect(filed) {
+        val receipt = filed ?: return@LaunchedEffect
+        viewModel.consumeFiled()
+        val result = snackbarHost.showSnackbar(
+            message = receipt.sentence(),
+            actionLabel = "Undo",
+            withDismissAction = true,
+            duration = SnackbarDuration.Long,
+        )
+        if (result == SnackbarResult.ActionPerformed) viewModel.undoFiling(receipt)
     }
 
     val sharePicker = rememberLauncherForActivityResult(
@@ -213,7 +231,12 @@ fun DashboardScreen(
                     onOpenAnalytics = onOpenAnalytics,
                 )
             }
-            item { SmartAddCard(onClassify = viewModel::classifyForSmartAdd) }
+            item {
+                SmartAddCard(
+                    state = smartAdd,
+                    onClassify = viewModel::classifyForSmartAdd,
+                )
+            }
             item {
                 GoogleTasksImportCard(
                     isLoading = tasksImport.isLoading,
@@ -270,14 +293,6 @@ fun DashboardScreen(
                 )
             }
         }
-    }
-
-    if (smartAdd.isVisible) {
-        SmartAddDialog(
-            state = smartAdd,
-            onConfirm = viewModel::confirmSmartAdd,
-            onDismiss = viewModel::dismissSmartAdd,
-        )
     }
 
     if (tasksImport.isVisible) {
@@ -614,7 +629,7 @@ private fun GoogleTasksImportDialog(
  * to — or proposes a new one — and estimates its point value.
  */
 @Composable
-private fun SmartAddCard(onClassify: (String) -> Unit) {
+internal fun SmartAddCard(state: SmartAddState, onClassify: (String) -> Unit) {
     var title by remember { mutableStateOf("") }
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -630,6 +645,9 @@ private fun SmartAddCard(onClassify: (String) -> Unit) {
                 )
             }
             Text(
+                // Says what it does, in the indicative. It used to promise a question —
+                // the card described a proposal and a dialog then asked about it — and
+                // #6 removed the question, so the sentence stops implying one.
                 "Describe anything you want to do — GoalPilot files it under the right goal.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -644,6 +662,10 @@ private fun SmartAddCard(onClassify: (String) -> Unit) {
                     onValueChange = { title = it },
                     label = { Text("e.g. Run 5 km on Friday") },
                     singleLine = true,
+                    // NOT disabled while a previous task is being sorted. The classify call
+                    // is a round trip to a Cloud Function, so the field would die for a
+                    // second or more every time — and the whole point of a quick-add is that
+                    // you can type the next thing while the last one lands.
                     modifier = Modifier.weight(1f),
                 )
                 FilledTonalButton(
@@ -652,68 +674,54 @@ private fun SmartAddCard(onClassify: (String) -> Unit) {
                     modifier = Modifier.padding(start = 8.dp),
                 ) { Text("Sort") }
             }
+            // The only thing left of the old dialog: while a task is in flight the card says
+            // so, in place, without taking the screen. #6 removed the confirmation, not the
+            // feedback — a tap that appears to do nothing for a second reads as a broken
+            // button, and the snackbar that follows arrives too late to answer that.
+            if (state.isClassifying) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                        .testTag(SmartAddTestTags.SORTING),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Text(
+                        "Filing “${state.taskTitle}”…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 10.dp),
+                    )
+                }
+            }
         }
     }
 }
 
-@Composable
-private fun SmartAddDialog(
-    state: SmartAddState,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AppAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (state.isClassifying) "Analysing…" else "Add this task?") },
-        text = {
-            if (state.isClassifying) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Text("“${state.taskTitle}”", modifier = Modifier.padding(start = 12.dp))
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(state.taskTitle, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        if (state.targetGoalId != null) {
-                            "Goal: ${state.targetGoalTitle}"
-                        } else {
-                            "New goal: ${state.newGoalTitle} (${state.newGoalCategory.label})"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    state.lifeAreaName?.let {
-                        Text(
-                            "Life area: $it",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Text(
-                        // The minutes are not decoration: they are what this task
-                        // will contribute to the time-allocation chart once ticked.
-                        "Worth ${state.points} pts · ${durationLabel(state.minutes)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    if (state.rationale.isNotBlank()) {
-                        Text(
-                            state.rationale,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = !state.isClassifying && !state.isSaving,
-            ) { Text(if (state.isSaving) "Saving…" else "Add") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+/** Test handles for the surfaces `#6` replaced the confirmation dialog with. */
+object SmartAddTestTags {
+    const val SORTING = "smartAdd:sorting"
+}
+
+/**
+ * What the app says after it has filed something without asking — `#6`'s witness (§0.7).
+ *
+ * *"Silent" is not "invisible".* Two sentences, decided by [FilingDecision.speaks]:
+ *
+ *  - **filed under a goal you already have** — the instrumental case, so it states the outcome
+ *    and offers to undo it, and nothing more. §3.4 calls this row silent, and a snackbar that
+ *    can be ignored is what silent means for an act that has already happened.
+ *  - **no existing goal fit** — §3.4's one row that *speaks*, because an absent goal id does
+ *    not degrade the outcome, it changes it. It **tells**; it does not ask. A proposed goal is
+ *    named as a suggestion, and an unfiled task says so plainly.
+ */
+private fun SmartAddReceipt.sentence(): String = when (val d = decision) {
+    is FilingDecision.ExistingGoal -> "Added to “${d.goalTitle}”"
+    is FilingDecision.NewGoal -> "No goal fitted — suggested “${d.title}”"
+    is FilingDecision.NoGoal -> "Added “$taskTitle” — no goal fits it yet"
 }
 
 /**

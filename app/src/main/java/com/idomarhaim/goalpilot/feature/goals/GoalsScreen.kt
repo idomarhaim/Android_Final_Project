@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.feature.goals
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -18,17 +20,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
+import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GoalCard
@@ -98,12 +103,100 @@ fun GoalsScreen(
                         group.goals,
                         key = { "${group.area?.id ?: "unfiled"}-${it.id}" },
                     ) { goal ->
-                        GoalCard(goal = goal, onClick = { onOpenGoal(goal.id) })
+                        GoalListRow(
+                            goal = goal,
+                            onOpen = { onOpenGoal(goal.id) },
+                            onKeep = { viewModel.keepSuggestion(goal.id) },
+                            onDemote = { viewModel.demoteSuggestion(goal.id) },
+                        )
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * One row of the goals list: the card, and — for a goal the sorter proposed — the two answers
+ * to it (`#6`).
+ *
+ * Stateless and lambda-driven so `GoalsPendingSuggestionUiTest` can drive it with no Hilt, no
+ * Firebase and no ViewModel. The behaviour worth testing is which goals get the banner at all,
+ * and that lives here rather than in the banner itself.
+ *
+ * The banner sits **under** the card rather than as a chip on it. `GoalCard` is in
+ * `ui/components`, which is one of the two packages already swept for `#51`, so a raw English
+ * literal there would fail `AnalyticsLiteralSweepTest` — and AGENTS.md is explicit that opting
+ * a package in as a favour is the wrong move while Hebrew is parked. §0.8's surviving second
+ * sub-rule points the same way anyway: form and words before iconography, and *Suggested* is
+ * two verbs' worth of meaning that no badge can carry.
+ */
+@Composable
+internal fun GoalListRow(
+    goal: Goal,
+    onOpen: () -> Unit,
+    onKeep: () -> Unit,
+    onDemote: () -> Unit,
+) {
+    Column {
+        GoalCard(goal = goal, onClick = onOpen)
+        if (goal.isPendingSuggestion) {
+            SuggestedGoalBanner(onKeep = onKeep, onDemote = onDemote)
+        }
+    }
+}
+
+/**
+ * A goal the sorter proposed, and the two answers to it — §1.1 (`#6`).
+ *
+ * §0.7 lets the app file a task under an existing goal without asking, and forbids it to invent
+ * a goal. `#6` keeps both halves by letting an `AI_SUGGESTED` objective **sit pending** instead
+ * of silently joining the list: it holds the task, it is legible as the model's, and Ido settles
+ * it in one tap.
+ *
+ * **Neither answer destroys anything.** *Keep* stamps the marker to `USER`; *Not a goal* drops
+ * it, and the object and all its edges survive — that is §1.1's *lossless demotion*, and the
+ * reason there is no *Delete* here. The task underneath is real work he typed in.
+ */
+@Composable
+private fun SuggestedGoalBanner(onKeep: () -> Unit, onDemote: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 4.dp, top = 2.dp)
+            .testTag(GoalsTestTags.SUGGESTED_BANNER),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.AutoAwesome,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = "Suggested — not yet one of your goals",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+        )
+        TextButton(onClick = onDemote, modifier = Modifier.testTag(GoalsTestTags.DEMOTE)) {
+            Text("Not a goal")
+        }
+        TextButton(onClick = onKeep, modifier = Modifier.testTag(GoalsTestTags.KEEP)) {
+            Text("Keep")
+        }
+    }
+}
+
+/** Test handles for `#6`'s pending-goal surface. */
+object GoalsTestTags {
+    const val SUGGESTED_BANNER = "goals:suggested"
+    const val KEEP = "goals:suggested:keep"
+    const val DEMOTE = "goals:suggested:demote"
 }
 
 /**
