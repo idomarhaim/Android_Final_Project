@@ -15,7 +15,43 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `8-notifications` | `#8` — notification substrate: channel, POST_NOTIFICATIONS, local scheduling | `app/src/main/java/com/idomarhaim/goalpilot/notifications/` (new) · `domain/model/ReminderTiming.kt` (new) · `GoalPilotApp.kt` · `MainActivity.kt` · `feature/dashboard/DashboardScreen.kt` (1-line wiring) · `AndroidManifest.xml` · `app/src/main/res/values/strings.xml` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/test/java/com/idomarhaim/goalpilot/notifications/` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/notifications/` (new) · `sessions/8-notifications.md` · `CHANGELOG/2026-08-20/8-notifications.md` · `kb-candidates/2026-08-20-8-notifications.md` | Gradle daemon (from first build) | 2026-08-20 |
+> 🏁 **`8-notifications` RELEASED 2026-08-20 — `0f7dadd` (claim, see below) → `99d3e31` (ship).**
+> Singletons released: Gradle daemon, adb, AVD `Pixel_10_Pro_XL`.
+>
+> ✅ **`#8`'s substrate ships — all six pieces.** Two channels, `POST_NOTIFICATIONS` asked at the
+> **first filing outcome that speaks** rather than at launch, tap-through to the proposed goal,
+> `WorkManager` scheduling with the nightly *plan tomorrow* prompt on it. The permission-refused
+> path is safe **structurally**: the notifier is a second, independent consumer of
+> `DashboardViewModel.filed`, so deleting `notifications/` outright leaves `#6`'s snackbar and
+> Undo unchanged.
+>
+> ⛔ **`#8` stays OPEN, and the held half is not a choice I made.** §2.5's *one reminder per
+> occurrence, timed per rung* and the daily miss review need an **occurrence model that does not
+> exist** — `Task` has no due date, §2.2's four rungs are in **no Kotlin file**, §2.1 is
+> `C9a` **#25, CLOSED**. **Second instance in one day** of `7-quickadd-complete`'s §1.4/#19
+> finding: a spec section deferring implementation to a closed decision ticket with no build
+> owner. Open issues are `#54 #53 #51 #48 #40 #8 #7` and none of them carries it.
+> **No issue filed, none reopened — outward-facing, Ido's call.**
+>
+> 🔭 **The fire was observed, not asserted.** `dumpsys` + a screenshot of the shade, via
+> `am instrument` rather than `connectedDebugAndroidTest` — that task uninstalls the app and
+> would have taken the device's signed-in Google account with it. **The account on
+> `Pixel_10_Pro_XL` is intact.** `POST_NOTIFICATIONS` left **granted** on the debug build.
+>
+> ⚠️ **My claim row went up under `0f7dadd`, a sibling's commit.** Its message says *"0 rows were
+> active"* and it adds **two** rows. True when they read the board, false when they committed —
+> the one hole the pathspec remedy cannot close, and a lease was held and could not close it
+> either. Named, not amended.
+>
+> 🐛 **Two defects the runs found:** `--` is illegal inside an XML comment (three failed Gradle
+> tasks, drawable **and** manifest); and a test green in isolation, red in the suite — matching a
+> notification by **channel** finds two, because Android synthesises an `AUTOGROUP_SUMMARY`
+> carrying the first one's channel.
+>
+> 🧪 JVM **540/0** (+25) · instrumented **150/0** (+11) · `assembleDebug` green · functions and
+> `firestore-tests` **n/a**, nothing there changed.
+>
+> 📌 **`kb-candidates/2026-08-20-8-notifications.md` written, 5 entries, not yet drained.**
 > 🏁 **`51-freeze-verify` RELEASED 2026-08-20 — `0f7dadd` (claim) → this commit.**
 > Singletons released: AVD `Pixel_10_Pro_XL`, adb, Gradle daemon.
 >

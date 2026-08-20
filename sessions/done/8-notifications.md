@@ -2,9 +2,17 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 issue: 8
 created: 2026-08-20
+result: |
+  SHIPPED 99d3e31 -- substrate complete, all six pieces.
+  HELD, and it is not a deferral I chose: S2.5's "one reminder per occurrence,
+  timed per rung" and the daily miss review need an OCCURRENCE MODEL that does not
+  exist (Task has no due date; the four rungs are in no Kotlin file; S2.1 is
+  C9a #25, CLOSED, with no open issue carrying the build). The arithmetic those
+  reminders need IS shipped and tested (domain/model/ReminderTiming.kt).
+  #8 stays OPEN for that reason -- see the issue comment.
 ---
 
 # `#8` — the notification substrate: channel, permission, and local scheduling
