@@ -219,7 +219,16 @@ object TaskDuration {
  * are deleted.
  *
  * What remains is points, which #9 deliberately does not touch: the inversion that
- * retires [heuristicPoints] is §1.4's, and it belongs to `C1` #19.
+ * retires [heuristicPoints] is §1.4's.
+ *
+ * ⚠️ **It does NOT "belong to `C1` #19", and this KDoc said so until 2026-08-20.** #19 is a
+ * **decision** ticket and it is **closed** — correctly, because the decision was made; it was
+ * never going to build anything. Nothing open owns the inversion, so [heuristicPoints] survives
+ * with no scheduled retirement, and a reader who takes that sentence at face value concludes
+ * this code has an owner waiting to delete it. It does not. See the box at the top of
+ * `docs/PRODUCT_v0.3.md` §1.4 for the clause-by-clause audit, and
+ * `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12d for why this misreading is systematic
+ * rather than a one-off slip.
  */
 object TaskScoring {
 

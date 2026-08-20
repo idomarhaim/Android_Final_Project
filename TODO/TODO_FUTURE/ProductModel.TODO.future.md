@@ -56,9 +56,19 @@ The actionable half is in
 
 These four are one knot; none can be answered alone.
 
-- [ ] **C1 · What is the points-and-time model, and who is allowed to author it?** (`R7`, `R9`, `R10`)
+- [x] **C1 · What is the points-and-time model, and who is allowed to author it?** (`R7`, `R9`, `R10`)
   AI-only point authorship, a fixed evaluation format, and re-scoring every task
   under a goal when one of them changes. Upstream of C2, C3 and U4.
+  **✅ DECIDED** — [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) closed
+  2026-08-10; the answer is `docs/PRODUCT_v0.3.md` §1.4.
+  **⛔ NOT BUILT, AND UNOWNED** *(audited 2026-08-20)*. The checkbox above is ticked for the
+  **decision**, which is what this file tracks — and that is exactly the ambiguity that let four
+  later artifacts defer *implementation* here as though a ticket were carrying it. There is no
+  such ticket: the `difficulty` enum, the `5..50` cap deletion, `heuristicPoints`' retirement,
+  the `completionFacts` collection and §1.5's `goalEdges` are **all absent at `HEAD`**, 6 open
+  issues hold none of them, and no brief in `sessions/` names them. If it is wanted in v0.3 it
+  needs its own issue — Ido's call, deliberately not filed. Full clause-by-clause audit in the
+  box at the top of §1.4.
 
 - [ ] **C2 · Should tasks carry an AI-assigned type, and what is the taxonomy?** (`R11`)
   Ido's straw list: writing, thinking, analytical, creative, interpersonal,

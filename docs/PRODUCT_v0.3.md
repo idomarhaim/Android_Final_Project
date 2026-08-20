@@ -290,6 +290,55 @@ Buttons are **repeat-tappable with a running tally**.
 
 ### 1.4 Effort and outcome are two quantities, and points are neither *(`C3` #18, `C1` #19)*
 
+> ## ⛔ DECIDED — **NOT BUILT**, and **no ticket owns building it** *(audited 2026-08-20)*
+>
+> **Everything below this box is a decision, not a description.** It is written in the present
+> tense — *"the `5..50` cap **is deleted**"*, *"it **retires** `heuristicPoints`"*,
+> *"`GoalProgress.points` **is deleted**"* — and **none of those has happened.** Read it as
+> *what we decided to build*, never as *how the app works*.
+>
+> **Checked clause by clause at `HEAD`, by grep, not by assumption:**
+>
+> | §1.4 says | At `HEAD` |
+> |---|---|
+> | `points = round(minutes / 3) × difficulty` | ❌ no `difficulty` enum exists anywhere in `app/src/main` |
+> | the `5..50` cap is deleted; ceiling rises 50 → 240 | ❌ `TaskScoring.MIN_POINTS = 5`, `MAX_POINTS = 50`, alive |
+> | `heuristicPoints` (`5 + 3×words`) is retired | ❌ alive, with **two** live call sites in `RecommendationRepositoryImpl` |
+> | points banked as a **timestamped completion fact** | ❌ no `completionFacts` collection; the fact is still `done` + `completedAt` on the task document |
+> | `GoalProgress.points` is deleted | ❌ still on `ProgressSummary.kt:40` |
+> | §1.5's `goalEdges: [{ goalId, contribution }]` | ❌ absent; `Task.progressContribution` still carries it |
+>
+> **One claim here is stale in the *other* direction and is corrected below:** §1.4 cites
+> `TaskRepositoryImpl.kt:120-127` as a **live defect** — a running accumulator over `task.points`
+> that loses 30 for a 10 on an untick. That accumulator was **removed** by `C20`
+> ([#42](https://github.com/idomarhaim/Android_Final_Project/issues/42)) in `731961b`; `setDone`
+> is now a single-document `update` and the total is summed by
+> `functions/src/projection.ts`. The defect is fixed; the *inversion* around it is not.
+>
+> ### Why there is no ticket, and what to do about it
+>
+> `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) is **closed** —
+> correctly. It is a **decision** ticket (*"what is the points-and-time model, and who may author
+> it?"*), it was answered, and its closing comment **is** this section's content. It was never
+> going to build anything.
+>
+> But **four** later artifacts defer the *implementation* to it as though it would —
+> `9-duration-box`'s changelog (twice), `11-fill-buttons`'s, `#7`'s brief, and
+> `TaskEstimate.kt`'s own KDoc. Each reads as corroboration that somebody owns it. **Nobody
+> does:** 6 open issues and none is this; `TODO/` lists `C1` only as a map *question*; no brief
+> in `sessions/` names it.
+>
+> **No implementation issue was filed when this was found**, deliberately — opening one is
+> [@idomarhaim](https://github.com/idomarhaim)'s call, and a seventh open issue that nobody will
+> build during a submission push degrades the frontier rather than helping it. **If §1.4 is
+> wanted in v0.3, it needs a ticket of its own**; if it is not, this box is the record that says
+> so. It is a model migration — it changes how every point in the app is computed and where
+> completion facts live — so it is not a late-stage edit.
+>
+> Mechanism, and why *"grep the artifacts, not the ticket"* does not catch this one:
+> `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12 and §12d.
+
+
 > **The gap between effort and outcome is the app's most valuable signal, not a bug to tidy away.**
 
 - **Effort** = `minutes`. A **fact** Ido owns.
@@ -317,10 +366,14 @@ reconstruct.
 
 **Points are banked as their inputs, not as a number.** On completion, `minutes` and `difficulty` are
 stamped into a **timestamped completion fact**, and the lifetime total is a **sum over facts**. So the
-arithmetic never branches, no stored number can disagree, and **a level can never fall**. This closes
-a live defect: `TaskRepositoryImpl.kt:120-127` keeps the total as a running accumulator reading
-`task.points` *at untick time* — tick at 10, re-score to 30, untick, and the total loses 30 for a 10,
-with `.coerceAtLeast(0)` silently absorbing the drift.
+arithmetic never branches, no stored number can disagree, and **a level can never fall**. This closed
+a live defect **which `C20` has since fixed independently** *(corrected 2026-08-20 — see the box at
+the top of this section)*: `TaskRepositoryImpl.kt:120-127` **used to** keep the total as a running
+accumulator reading `task.points` *at untick time* — tick at 10, re-score to 30, untick, and the
+total lost 30 for a 10, with `.coerceAtLeast(0)` silently absorbing the drift. `731961b` reduced
+`setDone` to a single-document `update` and moved the total to `functions/src/projection.ts`, so
+**the accumulator is gone and this paragraph no longer describes `HEAD`**. The argument for banking
+points as their inputs stands on its own merits; it just no longer has this defect to point at.
 
 **Points are never rendered as a property of an objective.** `GoalProgress.points` is deleted; the
 goal header's companion number becomes **effort** — *"4h 20m of work logged toward this"*. Half of

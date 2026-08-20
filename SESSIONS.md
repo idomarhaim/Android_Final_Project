@@ -15,7 +15,31 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `7-quickadd-complete` r2 | Record §1.4/§1.5 as **decided, unbuilt, unowned** where the four false deferrals point — Ido’s delegation, follow-on to `#7` | `docs/PRODUCT_v0.3.md` (§1.4 only), `TODO/TODO_FUTURE/ProductModel.TODO.future.md`, `docs/OPERATIONS.md` (§3 only), `app/src/main/java/com/idomarhaim/goalpilot/domain/model/TaskEstimate.kt` (KDoc only), `CHANGELOG/2026-08-20/7-quickadd-complete-r2.md` | none — no build, no device | 2026-08-20 |
+> 🏁 **`7-quickadd-complete` r2 RELEASED 2026-08-20 — `279bd2e` (claim) → this commit.** No singletons.
+>
+> 🤝 **Ido delegated the `#19` question** (*תעשה מה שאתה חושב שיהיה הכי נכון*), so the decision below is
+> **mine** and is recorded as mine. **No ticket opened, none reopened.**
+>
+> 🔑 **The finding was never *“§1.4 is unbuilt”*** — that is deliberate and fine. It was that **four
+> artifacts say somebody owns building it and nobody does**, so the fix is to the **record**, not
+> the tracker. Neither option I had offered was right; the hand-back rule says to re-open the
+> problem rather than break your own tie.
+>
+> ✅ **§1.4 audited clause by clause against HEAD — six clauses, all absent** — and now carries a
+> **DECIDED — NOT BUILT** box, because the section is written entirely in the present tense and
+> reads as a description of the app. Same status on `TODO/TODO_FUTURE/`, `docs/OPERATIONS.md` §3,
+> and `TaskEstimate.kt`'s KDoc — the **fourth** copy of the false deferral, sitting next to the
+> `heuristicPoints` it claims has an owner waiting to delete it.
+>
+> 🔄 **One §1.4 claim was stale in the OTHER direction and is corrected:** it cites a running
+> accumulator defect at `TaskRepositoryImpl.kt:120-127` that `C20` removed in `731961b`. A spec
+> that keeps citing a fixed bug as motivation is how a fixed bug gets fixed twice.
+>
+> ⚖️ **What I did NOT decide, because it is Ido's:** whether §1.4 belongs in v0.3. Recorded the
+> **fact** (decided · not built · not owned · not scheduled) and what it would take.
+>
+> 🧪 JVM **515/0** unchanged; instrumented not re-run and not applicable — no composable,
+> ViewModel or repository changed.
 > 🏁 **`7-quickadd-complete` RELEASED 2026-08-20 — `e573404` (claim) → `153620b` (`#7` ships).**
 > Singletons released: Gradle daemon, AVD `Pixel_10_Pro_XL`.
 >

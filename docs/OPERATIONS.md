@@ -205,6 +205,25 @@ data. Needs a `ChallengeRepository` (interface + Firestore impl) for create/join
 and standings, and the preview screen swapped onto live data. Standings are best
 computed server-side.
 
+### ⛔ DECIDED BUT NOT BUILT, and it is **not** on any list above *(audited 2026-08-20)*
+
+`docs/PRODUCT_v0.3.md` **§1.4 / §1.5** — the points-and-time model. `points =
+round(minutes/3) × difficulty`, the `difficulty` enum, deleting the `5..50` cap,
+retiring `heuristicPoints`, banking points as a `completionFacts` collection, and
+§1.5's `goalEdges`. **None of it exists at `HEAD`**, verified clause by clause.
+
+**It is listed here because it is the one piece of remaining work with no ticket
+and no brief**, so nothing else in this document or in the tracker would ever
+surface it. `C1`
+[#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) is **closed**
+and is a *decision* ticket — it answered the question and was never going to build
+anything — yet four later artifacts defer implementation to it as though it would.
+
+**Nothing is blocked by this.** Points work today; the app is whole without it. It
+is a **model migration**, not a late edit, so it is a poor fit for a submission
+push. If it is wanted, it needs its own issue — deliberately not filed, since
+opening one is Ido's call. Full audit: the box at the top of §1.4.
+
 ---
 
 ## 4. Traps discovered the hard way
