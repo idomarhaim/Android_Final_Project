@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `9-duration-box` (r4) | **Give the KB a *withdrawal* path.** 64 of 76 `kb/dev/` pages are about this repo and `AGENTS.md` points at none of them; no rule anywhere fires a KB **read**. | `AGENTS.md` · `CHANGELOG/2026-08-20/9-duration-box.md` · `kb-candidates/2026-08-20-9-duration-box.md` · `SESSIONS.md` | none — docs only | 2026-08-20 |
 | `6-silent-filing` | **`#6`** — silent filing under an existing goal (no dialog), and the one branch that speaks: an absent `suggestedGoalId` creates an `AI_SUGGESTED` **pending** goal with a lossless demotion. Validation moves into the Cloud Function, singly (spec §3.4). | `functions/src/index.ts` · `functions/src/classify.ts` *(new)* · `functions/test/classify.test.mjs` *(new)* · `domain/model/Goal.kt` · `domain/model/Recommendation.kt` · `data/firestore/dto/Dtos.kt` · `data/firestore/Mappers.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `feature/goals/` · new suites under `app/src/test/` and `app/src/androidTest/` · `CHANGELOG/2026-08-20/6-silent-filing.md` · `SESSIONS.md` · `sessions/6-silent-filing.md` | **Gradle daemon** · **Firebase emulator** (functions). A device is claimed separately, before the first device command. | 2026-08-20 |
 > 🏁 **`9-duration-box` r3 RELEASED 2026-08-20 — `4ba1119` (claim) → this commit.** No
 > singletons: docs only, no build beyond a compile check, no device.
