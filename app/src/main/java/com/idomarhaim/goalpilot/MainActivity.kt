@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.core.update.AppUpdateChecker
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
+import com.idomarhaim.goalpilot.notifications.NotificationDeepLink
 import com.idomarhaim.goalpilot.ui.locale.AppLocale
 import com.idomarhaim.goalpilot.ui.root.GoalPilotRoot
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
@@ -33,6 +35,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // #8's tap-through. Read here rather than inside composition because the intent is
+        // resolved before the nav controller exists -- the holder is a StateFlow so the nav
+        // host can pick it up whenever it gets there.
+        NotificationDeepLink.offer(intent)
 
         // Sideloaded builds get nothing from Play, so this is the app's only
         // update path. It lives here rather than in ui/root because the SDK
@@ -64,5 +71,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * The activity is `singleTop`, so a notification tapped while the app is already running
+     * arrives here and never through `onCreate`. An app that handled only `onCreate` would
+     * route the first tap of a session and silently ignore every one after it.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        NotificationDeepLink.offer(intent)
     }
 }

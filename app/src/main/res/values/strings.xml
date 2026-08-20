@@ -39,4 +39,35 @@
     -->
     <string name="settings_language_description">Choose the language GoalPilot speaks. Your own goals, tasks and life areas stay exactly as you wrote them.</string>
     <string name="settings_language_system">System default</string>
+
+    <!--
+      Notification channels (#8, spec §2.5). Channel names and descriptions are
+      rendered by the SYSTEM, on a settings screen this app never draws, so they
+      are the one class of user-facing text that must live in res/ even when the
+      code that posts through them is unswept: nothing else can supply them at
+      the moment Android asks.
+
+      Two channels, not one, because the system's own control is per channel and
+      these two are things a person genuinely wants separately. Silencing "did
+      the app understand where this goes?" must not also silence tonight's
+      planning prompt.
+    -->
+    <string name="gp_channel_filing_name">Smart filing</string>
+    <string name="gp_channel_filing_description">When a task you added quickly did not fit any goal you already have.</string>
+    <string name="gp_channel_reminders_name">Reminders and planning</string>
+    <string name="gp_channel_reminders_description">Task reminders, and the nightly prompt to plan tomorrow.</string>
+
+    <!--
+      #8's notification bodies. The filing titles mirror DashboardScreen's
+      SmartAddReceipt.sentence() deliberately: one event, two surfaces, and a
+      notification that phrased it differently would read as a second thing
+      having happened.
+    -->
+    <string name="gp_notif_filing_new_goal_title">No goal fitted</string>
+    <string name="gp_notif_filing_new_goal_body">Suggested a new goal, &#8220;%1$s&#8221;, for &#8220;%2$s&#8221;. Tap to keep it or drop it.</string>
+    <string name="gp_notif_filing_no_goal_title">Added without a goal</string>
+    <string name="gp_notif_filing_no_goal_body">&#8220;%1$s&#8221; is in your tasks, but no goal fits it yet.</string>
+
+    <string name="gp_notif_plan_tomorrow_title">Plan tomorrow</string>
+    <string name="gp_notif_plan_tomorrow_body">A few minutes now saves the morning. Tap to look at what is open.</string>
 </resources>

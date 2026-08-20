@@ -9,6 +9,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import com.idomarhaim.goalpilot.feature.lifeareas.LifeAreasScreen
 import com.idomarhaim.goalpilot.feature.profile.ProfileScreen
 import com.idomarhaim.goalpilot.feature.settings.SettingsScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
+import com.idomarhaim.goalpilot.notifications.NotificationDeepLink
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.gpCardContainerColor
 import com.idomarhaim.goalpilot.ui.navigation.Routes
@@ -96,6 +98,14 @@ private fun SignedOutGraph() {
 private fun MainScaffold() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
+
+    // #8's tap-through, consumed here because this is the first point in the tree that holds a
+    // NavController. The route is taken (not just read), so a configuration change cannot
+    // re-navigate to a notification the user has already followed and walked away from.
+    val pendingRoute by NotificationDeepLink.pendingRoute.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingRoute) {
+        NotificationDeepLink.consume()?.let { navController.navigate(it) }
+    }
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = TopLevelTab.entries.any { it.route == currentRoute }
 

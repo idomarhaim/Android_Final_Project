@@ -77,6 +77,7 @@ import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.FilingDecision
+import com.idomarhaim.goalpilot.notifications.FilingNotificationEffect
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
@@ -132,6 +133,17 @@ fun DashboardScreen(
         hostState = snackbarHost,
         onUndo = viewModel::undoFiling,
         onConsume = viewModel::consumeFiled,
+    )
+
+    // `R5`'s other half: the same event as a system notification, for a quick-add the user has
+    // already walked away from. A SECOND, independent consumer of `filed` -- it reads and never
+    // writes back, which is what keeps the snackbar above working when the permission is
+    // refused (#8 piece 5, `notifications/GoalPilotNotifier`).
+    FilingNotificationEffect(
+        taskId = filed?.taskId,
+        decision = filed?.decision,
+        taskTitle = filed?.taskTitle,
+        createdGoalId = filed?.createdGoalId,
     )
 
     val sharePicker = rememberLauncherForActivityResult(

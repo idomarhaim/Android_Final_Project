@@ -196,6 +196,12 @@ dependencies {
     // into bitmaps instead of reusing them.
     implementation(libs.androidx.glance.appwidget)
 
+    // ── WorkManager (#8's local scheduling, spec §2.5) ─────────────
+    // §2.7 establishes there is no credential for a background sync and cannot
+    // be one, so every reminder in this app is scheduled locally or not at all.
+    // WorkManager rather than AlarmManager: see notifications/ReminderScheduler.
+    implementation(libs.androidx.work.runtime)
+
     // ── Unit tests ────────────────────────────────────────────────
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

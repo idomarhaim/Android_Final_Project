@@ -45,4 +45,30 @@
     <!-- "שבה" stands alone before the Latin run, per the §4.8 prefix rule above. -->
     <string name="settings_language_description">בחרו את השפה שבה GoalPilot מדבר. היעדים, המשימות ותחומי החיים שלכם נשארים בדיוק כפי שכתבתם אותם.</string>
     <string name="settings_language_system">ברירת המחדל של המכשיר</string>
+
+    <!--
+      Notification channels and bodies (#8, §2.5 / R5).
+
+      Added by the ticket that introduced the English keys, NOT as a Hebrew render
+      pass: §0.8 is suspended, but HebrewLocaleResourceTest is app-wide and was
+      green before this ticket, so shipping the English half alone would have
+      turned a parked suite red. Terminology follows this file's header — a Goal
+      is יעד — and the §4.8 prefix rule, so no Hebrew prefix is attached to a
+      Latin run.
+
+      ⚠️ Not yet seen on a Hebrew device: §0.8's render pass is what #51 owns,
+      and it is parked. These are parity, not a verified rendering.
+    -->
+    <string name="gp_channel_filing_name">תיוק חכם</string>
+    <string name="gp_channel_filing_description">כשמשימה שהוספתם במהירות לא התאימה לאף יעד קיים.</string>
+    <string name="gp_channel_reminders_name">תזכורות ותכנון</string>
+    <string name="gp_channel_reminders_description">תזכורות למשימות, והתזכורת הלילית לתכנן את המחר.</string>
+
+    <string name="gp_notif_filing_new_goal_title">אף יעד לא התאים</string>
+    <string name="gp_notif_filing_new_goal_body">הוצע יעד חדש, &#8220;%1$s&#8221;, עבור &#8220;%2$s&#8221;. הקישו כדי לשמור אותו או להסיר אותו.</string>
+    <string name="gp_notif_filing_no_goal_title">נוספה בלי יעד</string>
+    <string name="gp_notif_filing_no_goal_body">&#8220;%1$s&#8221; נמצאת ברשימת המשימות שלכם, אבל עדיין אין יעד שמתאים לה.</string>
+
+    <string name="gp_notif_plan_tomorrow_title">תכנון המחר</string>
+    <string name="gp_notif_plan_tomorrow_body">כמה דקות עכשיו חוסכות את הבוקר. הקישו כדי לראות מה פתוח.</string>
 </resources>

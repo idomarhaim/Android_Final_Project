@@ -5,6 +5,22 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
+      Notifications (#8, spec §2.5 / R5). Runtime-requested from API 33; below
+      that the declaration alone is the grant.
+
+      NOT asked at launch. NotificationPermissionPolicy raises the dialog at the
+      first filing outcome that speaks — from Android 13 the system stops
+      showing the dialog after two dismissals, so the first ask is very nearly
+      the only ask, and a cold-launch prompt spends it before the user has seen
+      the app do anything.
+
+      No SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM, deliberately: nothing scheduled
+      here needs the minute, and USE_EXACT_ALARM asserts to Play that this is an
+      alarm-clock app. See notifications/ReminderScheduler.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
       Health Connect (spec §5, §6 nice-to-have). Read-only: GoalPilot never writes
       back, so no WRITE_* permission is declared and the user is never asked for one.
     -->
@@ -33,10 +49,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GoalPilot">
 
+        <!--
+          singleTop for #8's notification tap-through: a tap on a second
+          notification while the app is already open must move the running
+          instance, not stack a fresh copy of it on top of itself. It arrives
+          through onNewIntent, which is why MainActivity handles both that and
+          onCreate (NotificationDeepLink.offer).
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.GoalPilot"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

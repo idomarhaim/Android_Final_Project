@@ -22,6 +22,18 @@ navigationCompose = "2.8.5"
 # one pinning Health Connect below.
 glance = "1.1.1"
 
+# -- WorkManager (#8's local scheduling, spec S2.5) -----------------
+# Declared explicitly rather than ridden in through Glance, so a future widget
+# bump cannot silently move the scheduler underneath us.
+#
+# Inferred: 2.9.1 rather than the 2.10 line, from the same toolchain constraint
+# that pins Glance and Health Connect (compileSdk 35 / AGP 8.7.3), and because
+# it is the line Glance 1.1.1 is built against. Untested: neither the version
+# choice nor the resolved graph has been checked by a build -- the Gradle daemon
+# was held by a sibling session when this landed. `gradlew :app:dependencies`
+# is what settles it.
+workManager = "2.9.1"
+
 # ── DI ─────────────────────────────────────────────────────────────
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
@@ -118,6 +130,9 @@ androidx-health-connect = { group = "androidx.health.connect", name = "connect-c
 
 # Glance (home-screen widgets)
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+
+# WorkManager (local notification scheduling)
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 
 # Unit test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
