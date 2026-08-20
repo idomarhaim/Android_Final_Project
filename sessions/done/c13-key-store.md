@@ -5,7 +5,7 @@ mode: auto
 status: done
 issue: 54
 created: 2026-08-20
-result: shipped 2026-08-20 in `c4a700c` (claim `5d84251`) — #54 left OPEN on the deploy, see below
+result: shipped 2026-08-20 in `c4a700c`; DEPLOYED and verified 2026-08-21 (r2) — #54 and #48 both CLOSED
 ---
 
 # `C13` build half — the encrypted key store, so #48's AI section can exist
@@ -123,7 +123,21 @@ a key that did not yet exist, a JSON array passing an object check, and a secrec
 had been corrupted into a control character so it could never fire. Each new guard now has a
 recorded negative control.
 
-### ⛔ `#54` is left OPEN, and the held item is named
+### ✅ `#54` CLOSED on r2 — the held item below is gone
+
+> **Round 2, 2026-08-21.** Ido authorised the deploy explicitly. `firebase deploy --only
+> functions` updated all five functions, and the ladder was verified end to end with a
+> **deliberately invalid** key — which needs no paid credential, because rung 1 has to be
+> *reached* before it can fail. The row read *"Your GROQ key was rejected — GoalPilot's free
+> model answered instead"*, a sentence only reachable if the credential travelled, the
+> deployed adapter called GROQ, a real `401` came back, `classifyStatus` mapped it to `dead`,
+> rung 2 answered, and the echo reached the client. **`#48` closed on the same round.**
+>
+> The correction r1 owed: the deploy was never a capability limit — `firebase-tools` is
+> installed and logged in. It was withheld because AUTO MODE does not extend to outward
+> actions, which is a different thing and should have been said as such.
+
+#### What r1 recorded, kept for the record
 
 **`firebase deploy --only functions` has not been run.** It is an outward action against a live
 cloud environment, so it is always-ask in both modes and it is Ido's to run. Until it does, a user

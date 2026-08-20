@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r2) | `C13` deploy + end-to-end verification, then the #54/#48 ticket writes | `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/done/c13-key-store.md` | **live Firebase env `goalpilot-56e30` · adb + emulator-5554** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
@@ -4096,6 +4095,25 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r2) RELEASED 2026-08-21 — this commit.** Singletons released: **live Firebase
+> env `goalpilot-56e30`, `adb`, `emulator-5554`.**
+>
+> 🚀 **`firebase deploy --only functions` RAN**, on Ido's explicit authorisation — all five functions
+> updated in `us-central1`. `C13`'s bring-your-own key is **live**, not merely written.
+>
+> ✅ **The ladder is verified end to end, and it needed no paid credential.** A deliberately invalid
+> key reaches rung 1 before failing, so the row reading *"Your GROQ key was rejected — GoalPilot's
+> free model answered instead"* proves the whole chain: credential on the wire → deployed adapter →
+> real `401` → `dead` → rung 2 → echo → §5's wording. Regression checked first with no key.
+>
+> 🎫 **`#54` and `#48` both CLOSED.** Open issues 4 → `#51`, `#53`, `#55`, `#56`. `#53` stays open on
+> `C12` §4.4's `.tag` collapse, which `#48` never owned.
+>
+> ⚠️ **One deploy trap for whoever deploys next:** the first attempt died with *"User code failed to
+> load … Timeout after 10000"*, which reads as a broken module. It is not — `node -e
+> "require('./lib/index.js')"` loads in 202 ms. Set `FUNCTIONS_DISCOVERY_TIMEOUT=120`.
+
 
 > 🏁 **`c13-key-store` RELEASED 2026-08-20 — this commit.** Singletons released: **Gradle daemon,
 > `adb`, `emulator-5554`.**

@@ -320,3 +320,80 @@ matcher in a guard reports *success*.
 The candidate file was fully promoted and is therefore deleted rather than rewritten down to
 survivors (`rules/derivable-decision.md` §1). It had not yet been committed, so this entry is where
 that record lives.
+
+---
+
+# Round 2 — 2026-08-21: deployed, and the ladder verified end to end
+
+> Ido authorised the deploy explicitly (*"why is it yours? if you can, run it"*), which is the gate
+> `outward-action-governance.md` puts on it. **The honest correction to r1: it was never a
+> capability limit.** `firebase-tools` 15.27.0 is installed and logged in as `name.iddo@gmail.com`
+> on `goalpilot-56e30`; r1 could have run it and did not, because AUTO MODE does not extend to
+> outward actions. Saying *"yours to run"* without saying *"and I am able to"* understated what was
+> being withheld.
+
+## The deploy
+
+`firebase deploy --only functions` → **all five functions updated**, `us-central1`, nodejs22:
+`getRecommendations` · `classifyTask` · `scoreTask` · `projectPoints` · `projectChallengeScore`.
+The two projection triggers were redeployed unchanged (`projection.ts` was not touched).
+
+⚠️ **It failed on the first attempt, and the failure names nothing useful:**
+
+```
+Error: User code failed to load. Cannot determine backend specification. Timeout after 10000.
+```
+
+That reads as *your new module is broken*. It is not: `node -e "require('./lib/index.js')"` loaded
+the compiled entry point in **202 ms** and listed all five exports. The analyzer's discovery step
+had simply exceeded its 10 s budget on this machine. `FUNCTIONS_DISCOVERY_TIMEOUT=120` and the
+identical command succeeded. **Check that the module loads before believing the message** — the
+diagnosis and the refutation are one command apart.
+
+## What the deploy made testable — and it needs no real API key
+
+The `#54` brief could not verify *key set → provider* without a paid credential. It does not need
+one: a **deliberately invalid** key exercises the entire ladder, because rung 1 has to be *reached*
+before it can fail.
+
+`Observed:` 2026-08-21, `emulator-5554`, key `gsk_DELIBERATELY_INVALID_…`, cold launch so the
+dashboard fires `getRecommendations`. The status row read:
+
+> **Your GROQ key was rejected — GoalPilot's free model answered instead. Check the key, or remove it.**
+
+That one sentence is only reachable if **every** link worked:
+
+| Link | Proven by the sentence |
+|---|---|
+| client put `provider · model · key` in the payload | the function had a credential to try |
+| the deployed adapter called GROQ's real endpoint | a real `401` came back |
+| `classifyStatus` mapped it | `dead`, not `quota` or `transient` |
+| rung 2 ran | the free model answered, so the feed still populated |
+| the function echoed | `answeredBy: "proxy"` + `keyError.class: "dead"` |
+| the client rendered §5's table | the *rejected* wording, and only for `dead` |
+
+**And the regression check first:** with **no** key, against the same new deployment, the row read
+*"GoalPilot's own free model answers. You have not added a key"* — identical to pre-`C13`.
+
+## Secrecy, re-checked against the live system
+
+- **Device logcat, whole buffer, after the failing call: 0 hits** for the invalid key.
+- **The key is gone from the device** — removed through the app's own *Remove*; the encrypted file
+  is back to two entries (Tink's own keysets), and a `grep -rl` over the whole app data directory
+  finds nothing.
+- **Cloud logs — `Inferred:`, not `Observed:`.** The claim that no provider error body reaches
+  Google's logs is structural: `ProviderError` has no body field and `callUserProvider` never reads
+  the response body, which `providers.test.mjs` asserts by flipping a flag if anything calls
+  `.text()`/`.json()` on a failed response. `Untested:` the live log was **not** confirmed — the
+  `functions:log` window ended before the test call and a full fetch failed outright with *"Failed
+  to list log entries"*.
+
+⚠️ **The first version of that last check was reported as three clean zero-counts, and all three
+were vacuous** — they were greps over a file containing only the fetch error. Caught by asking for
+the denominator (`lines fetched: 15`), which is precisely the §4k habit this session had put in the
+KB an hour earlier. Recorded because the same session wrote the rule and then broke it.
+
+## What this closes
+
+`#54`'s held item is gone: the capability is **live**, not merely written. Both `#54` and `#48` are
+closed on this round. `#53` remains open on `C12` §4.4's `.tag` collapse, which `#48` never owned.
