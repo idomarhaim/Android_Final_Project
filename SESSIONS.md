@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c12-material-contract` | #53 — the four-material contract (§4.1) + the Appearance-section Material picker (§4.9); one of the two holes in #48 | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/model/AppMaterial.kt`, `app/src/main/java/com/idomarhaim/goalpilot/data/prefs/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-20/c12-material-contract.md`, `kb-candidates/2026-08-20-c12-material-contract.md`, `sessions/c12-material-contract.md` | Gradle daemon, adb, device/emulator | 2026-08-20 |
 > 🏁 **`8-notifications` RELEASED 2026-08-20 — `0f7dadd` (claim, see below) → `99d3e31` (ship).**
 > Singletons released: Gradle daemon, adb, AVD `Pixel_10_Pro_XL`.
 >
