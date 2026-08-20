@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` | `C13` build half — encrypted key store, provider abstraction, status line; #48's AI section ([#54](https://github.com/idomarhaim/Android_Final_Project/issues/54)) | `gradle/libs.versions.toml` · `app/build.gradle.kts` · `app/src/main/AndroidManifest.xml` · `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Ai*.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AiCredentialRepository.kt` · `app/src/main/java/com/idomarhaim/goalpilot/data/security/**` · `app/src/main/java/com/idomarhaim/goalpilot/data/remote/RecommendationRepositoryImpl.kt` · `app/src/main/java/com/idomarhaim/goalpilot/di/**` · `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsViewModel.kt` · `app/src/main/res/values/**` · `app/src/main/res/values-iw/**` · `app/src/test/java/com/idomarhaim/goalpilot/domain/Ai*Test.kt` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/AiKeyUiTest.kt` · `functions/src/**` · `functions/test/**` · `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/c13-key-store.md` | **Gradle daemon · adb + device** | 2026-08-20 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
