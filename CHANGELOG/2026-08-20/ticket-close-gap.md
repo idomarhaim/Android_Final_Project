@@ -291,3 +291,71 @@ have now used it).
 | **Rule-corpus runs** | 23-deletion scoring · per-surface page resolution · 4-session confirmation |
 | **App layers** | **none apply** — Markdown and GitHub only. `c12-material-contract` holds the Gradle daemon, `adb` and the device; this session claimed **no singletons** and touched none |
 | **Ticket verification** | `#7` and `#8` re-read from the API after closing — both `closed`, comments attached |
+
+---
+
+# Round 5 — `#55` and `#56` are v0.3 after all, and both now have briefs
+
+**Ido caught an error in round 4's framing and it was a real one.** Round 4's picker offered *"open
+both, labelled post-v0.3"*, and the reply repeated *post-v0.3*. **Neither was ever true:** §1.4,
+§1.5, §2.2 and §2.5 are sections of [`docs/PRODUCT_v0.3.md`](../../docs/PRODUCT_v0.3.md), so both
+tickets have been v0.3 content since the day the spec was written. **No such label was ever applied
+either** — both carry only `enhancement`. The word was invented in a picker option and then
+repeated as if it were a decision.
+
+What *was* true, and is the only thing that was: **no ticket owned building the work.** That is what
+`#55` and `#56` fixed.
+
+**Ido's decision, 2026-08-20:** *"if they're not related to Hebrew, I do want them done now."*
+Neither is. **`#51` is the one deliberate v0.3 cut in this project**, frozen 2026-08-17, and it is
+the only one.
+
+## 📝 What that changes
+
+| | Before | Now |
+|---|---|---|
+| `#55` | carrier, scope undecided | **in v0.3**, brief written |
+| `#56` | carrier, scope undecided | **in v0.3**, brief written |
+| `#51` | frozen | unchanged — frozen |
+
+**Both tickets got a scope comment** recording the decision *and* correcting the "post-v0.3"
+framing on the ticket itself, where the next reader will actually see it.
+
+**`docs/PRODUCT_v0.3.md` §1.4's status box was updated.** It read *"⛔ DECIDED — NOT BUILT, and **no
+ticket owns building it**"* and closed with *"if §1.4 is wanted in v0.3, it needs a ticket of its
+own"*. Both are now answered: `#55` owns it and Ido wants it. The audit table below the box is
+**unchanged and still accurate** — every ❌ is still ❌ — so it was annotated, not rewritten.
+
+## 📋 The two briefs, and why they are strictly ordered
+
+[`sessions/55-scoring-model.md`](../../sessions/55-scoring-model.md) →
+[`sessions/56-occurrence-model.md`](../../sessions/56-occurrence-model.md), **in that order.**
+
+Both edit `domain/model/Task.kt`, `data/firestore/dto/Dtos.kt` and `Mappers.kt` — **one working set,
+verified by grep at HEAD, not assumed**. The order is not arbitrary: **`#55` is a migration** (it
+deletes `Task.progressContribution` and moves the completion fact into its own collection) and
+**`#56` is additive** (it adds a due date and a rung). Landing the migration first means `#56` adds
+to a settled shape rather than being carried through a document-shape change.
+
+**Grounded against HEAD, symbol by symbol**, so neither brief inherits the audit box's date:
+
+- `#55`'s surface: `TaskScoring.MIN_POINTS`/`MAX_POINTS` and `heuristicPoints` in
+  `TaskEstimate.kt` + `RecommendationRepositoryImpl.kt` (two call sites); `progressContribution`
+  across **seven** files; `GoalProgress` in `ProgressSummary.kt` + `SummaryUseCase.kt`.
+- `#56`'s surface is **smaller than the ticket implies**: `ReminderTiming.kt` already holds the
+  backward computation, the waking-hours clamp and `ReminderPlan`, and takes `dueAt` as a
+  **parameter** because nothing supplies one. Its own KDoc states this brief's premise verbatim.
+  So `#56` is mostly *give the existing machinery something to read*.
+
+**One trap named in the brief rather than left to be discovered:** `core/util/AnalyticsRange.kt`
+also contains the tokens `ALL_DAY` and `BLOCK`. It is an **analytics window, not a task rung** — a
+session reusing the name would unify two unrelated concepts, and the grep that finds the rungs finds
+this too.
+
+## 🧪 Tests
+
+| Layer | Result |
+|---|---|
+| **App layers** | **none apply** — this round wrote two briefs, one doc annotation and two ticket comments. No app code changed |
+| **Grounding check** | every symbol both briefs name was resolved against `HEAD` with `git grep`, and the conflict claim (`Task.kt`, `Dtos.kt`, `Mappers.kt` in both) was **derived from that grep**, not assumed |
+| **Singletons** | **none claimed.** `c12-material-contract` held the Gradle daemon, `adb` and the device throughout |

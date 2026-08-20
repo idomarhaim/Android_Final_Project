@@ -15,6 +15,25 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
+>
+> ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
+> in a picker option and then in a reply. **They are v0.3** — §1.4, §1.5, §2.2 and §2.5 are
+> sections of `docs/PRODUCT_v0.3.md`, and no such label was ever applied to either ticket (both are
+> plain `enhancement`). The only true part was that **no ticket owned building the work**.
+>
+> ✅ **Ido's decision:** *"if they're not related to Hebrew, I do want them done now."* Neither is.
+> **`#51` remains the one deliberate v0.3 cut.** Recorded as a comment on both tickets, and
+> `docs/PRODUCT_v0.3.md` §1.4's *"no ticket owns building it"* box annotated — its audit table is
+> untouched and still accurate.
+>
+> 📋 **Two briefs written, strictly ordered:** `55-scoring-model` → `56-occurrence-model`.
+> **One working set** — both edit `Task.kt`, `Dtos.kt` and `Mappers.kt`, verified by grep at HEAD.
+> `#55` is a **migration**, `#56` is **additive**, so the migration goes first.
+>
+> 🔎 **`#56` is smaller than its ticket implies:** `ReminderTiming.kt` already holds the backward
+> computation, the waking-hours clamp and `ReminderPlan`, taking `dueAt` as a parameter because
+> nothing supplies one. Mostly *give the existing machinery something to read*.
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held; `c12-material-contract` kept the Gradle daemon, `adb` and the device throughout.
 >
 > 🎫 **`#55` and `#56` opened; `#7` and `#8` closed behind them. Open issues 8 → 6.** The two
@@ -31,7 +50,7 @@ before your first write. Normative rule:
 > 🔍 **Collision check:** no two candidates shared a page. The live hazard was
 > `look-at-your-own-output.md` gaining §4g and §4i from two other sessions the same day — the new
 > section had to be numbered against HEAD, not against anything a candidate could predict.
-| `c12-material-contract` | #53 — the four-material contract (§4.1) + the Appearance-section Material picker (§4.9); one of the two holes in #48 | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/model/AppMaterial.kt`, `app/src/main/java/com/idomarhaim/goalpilot/data/prefs/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-20/c12-material-contract.md`, `kb-candidates/2026-08-20-c12-material-contract.md`, `sessions/c12-material-contract.md` | Gradle daemon, adb, device/emulator | 2026-08-20 |
+| `c12-material-contract` | #53 — the four-material contract (§4.1) + the Appearance-section Material picker (§4.9); one of the two holes in #48 | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/model/AppMaterial.kt`, `app/src/main/java/com/idomarhaim/goalpilot/data/prefs/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-20/c12-material-contract.md`, `kb-candidates/2026-08-20-c12-material-contract.md`, `sessions/c12-material-contract.md` | Gradle daemon, adb, AVD `Pixel_10_Pro_XL` | 2026-08-20 |
 > 🏁 **`8-notifications` RELEASED 2026-08-20 — `0f7dadd` (claim, see below) → `99d3e31` (ship).**
 > Singletons released: Gradle daemon, adb, AVD `Pixel_10_Pro_XL`.
 >

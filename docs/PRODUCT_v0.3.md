@@ -290,7 +290,9 @@ Buttons are **repeat-tappable with a running tally**.
 
 ### 1.4 Effort and outcome are two quantities, and points are neither *(`C3` #18, `C1` #19)*
 
-> ## ⛔ DECIDED — **NOT BUILT**, and **no ticket owns building it** *(audited 2026-08-20)*
+> ## ⛔ DECIDED — **NOT BUILT**. **[#55](https://github.com/idomarhaim/Android_Final_Project/issues/55) owns building it**, and it is **in v0.3** *(audited 2026-08-20; ticket opened and scoped the same day)*
+>
+> ✅ **RESOLVED 2026-08-20, later the same day this box was written.** The audit below stands — every ❌ is still ❌ — but its closing recommendation has been acted on. `#55` now owns §1.4 **and** §1.5, and Ido put it **in scope for v0.3**: *"if they're not related to Hebrew, I do want them done now."* The four artifacts that deferred to closed `C1` now have somewhere real to point.
 >
 > **Everything below this box is a decision, not a description.** It is written in the present
 > tense — *"the `5..50` cap **is deleted**"*, *"it **retires** `heuristicPoints`"*,
@@ -315,7 +317,7 @@ Buttons are **repeat-tappable with a running tally**.
 > is now a single-document `update` and the total is summed by
 > `functions/src/projection.ts`. The defect is fixed; the *inversion* around it is not.
 >
-> ### Why there is no ticket, and what to do about it
+> ### Why there was no ticket, and what was done about it *(resolved — see the ✅ above)*
 >
 > `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) is **closed** —
 > correctly. It is a **decision** ticket (*"what is the points-and-time model, and who may author
@@ -328,11 +330,11 @@ Buttons are **repeat-tappable with a running tally**.
 > does:** 6 open issues and none is this; `TODO/` lists `C1` only as a map *question*; no brief
 > in `sessions/` names it.
 >
-> **No implementation issue was filed when this was found**, deliberately — opening one is
-> [@idomarhaim](https://github.com/idomarhaim)'s call, and a seventh open issue that nobody will
-> build during a submission push degrades the frontier rather than helping it. **If §1.4 is
-> wanted in v0.3, it needs a ticket of its own**; if it is not, this box is the record that says
-> so. It is a model migration — it changes how every point in the app is computed and where
+> **No implementation issue was filed when this was found**, deliberately — opening one was
+> [@idomarhaim](https://github.com/idomarhaim)'s call. **He made it on 2026-08-20: `#55` was opened
+> as the carrier when `#7` closed, and he then put it in v0.3.** The reasoning that held it back —
+> *a seventh open issue nobody will build during a submission push degrades the frontier* — was
+> answered by the opposite fact: the work is wanted, so the ticket helps rather than pads. It is a model migration — it changes how every point in the app is computed and where
 > completion facts live — so it is not a late-stage edit.
 >
 > Mechanism, and why *"grep the artifacts, not the ticket"* does not catch this one:
