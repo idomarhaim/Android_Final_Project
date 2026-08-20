@@ -111,3 +111,38 @@ why it is marked rather than done.
 - **The deletion was not extended by one file.** `TODO/TODO_MUST/Completion-Roadmap.TODO.must.md`
   §Auto-mode: *"`#50`'s deletion of `ConnectivityMonitor` is authorised by its own ticket, not by
   this mode — name it in the reply and do not extend it by one file."* Named; not extended.
+
+## 🔀 Push held, and what would ride along when it goes
+
+**Held at precondition 2.** The range carries **two source deletions** —
+`core/net/ConnectivityMonitor.kt` and `guards/OfflineWriteGuardTest.kt`. The one deletion carve-out
+covers a fully-drained `kb-candidates/` file only, and these are not that. The *deletion* is
+authorised by #50 itself; **publishing** it is a separate gate and it is Ido's.
+
+The **rename** in the range does *not* hold it: `sessions/50-finish.md` →
+`sessions/done/50-finish.md` lands in the same commit as that brief's `status: done`, which is
+exactly the brief-close carve-out.
+
+`Observed:` upstream had **not** moved as of `2026-08-20T02:03:04Z` — checked with `git fetch` +
+`git log HEAD..@{u}`, empty. Held **and still unpublished as of that check**; a sibling's push
+would publish these commits on their schedule with no gate of mine involved, so that timestamp is
+the claim, not "held" on its own.
+
+### Foreign commits in the range — adjudicated, not merely noticed
+
+| Commit | Session | Paths | Verdict |
+|---|---|---|---|
+| `8be4b78` | `c20-build-half` *(round 3)* | `SESSIONS.md` (claim) | rides along |
+| `1a1f1c9` | `c20-build-half` *(round 3)* | `CLAUDE.md`, `SESSIONS.md` | rides along |
+
+**Why they ride:** that session **explicitly released** — its row moved to *Recently released* with
+a full account in `1a1f1c9`, which is a positive signal written by that session about itself and
+settles the question without a transcript check. Their paths are clean in the tree. Disjoint from
+this session throughout: they held `CLAUDE.md`, this session held four `app/**` paths plus its own
+brief and changelog, and their note records checking that this session's staged deletions survived
+their commits intact.
+
+**Two of their findings matter to what is still owed here:** `gh` is at
+`C:\Program Files\GitHub CLI\gh.exe` (not the `%LOCALAPPDATA%` path `CLAUDE.md` used to give), and
+**`gh` is now authenticated** — Ido ran `gh auth login --web` on 2026-08-20. So the #50 close
+comment is mechanically unblocked; only the permission is missing.
