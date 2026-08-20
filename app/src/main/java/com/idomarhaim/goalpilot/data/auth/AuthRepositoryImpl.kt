@@ -108,8 +108,13 @@ class AuthRepositoryImpl @Inject constructor(
                 mapOf(
                     "displayName" to name,
                     "photoUrl" to photo,
+                    // Zero, and the only `points` write the client is still allowed:
+                    // `firestore.rules` permits it on create and refuses every later
+                    // move, because from here on the number belongs to
+                    // `functions/src/projection.ts` (`C20` #42, spec §5.2). There is no
+                    // `level` beside it any more — §5.2 deleted that field, since it was
+                    // a function of this one in this same document.
                     "points" to 0L,
-                    "level" to 1,
                     "friendCode" to friendCode,
                     // This write sets the number, so it carries the as-of stamp
                     // (#50). The merge below deliberately does not: it refreshes the

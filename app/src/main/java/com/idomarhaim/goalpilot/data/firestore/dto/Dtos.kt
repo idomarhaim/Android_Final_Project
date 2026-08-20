@@ -105,8 +105,20 @@ data class PublicProfileDto(
     @DocumentId var uid: String = "",
     var displayName: String = "",
     var photoUrl: String? = null,
+    /**
+     * **Written only by `functions/src/projection.ts`** (`C20` #42, spec §5.2).
+     *
+     * The one number on this document a reader cannot compute: it sums the completion
+     * facts under `users/{uid}/tasks`, which `firestore.rules` keeps private to their
+     * owner. `firestore.rules` refuses a client write that moves it.
+     *
+     * **There is no `level` field here any more, and that is the point.** It was a
+     * stored function of *this* value in *this* document, so everyone who could read
+     * it could already compute it; §5.2 deleted it outright and the client derives it
+     * through `Leveling` where it is displayed. Its `resolvedLevel()` fallback went
+     * with it — it could never fire, because both writers wrote at least 1.
+     */
     var points: Long = 0L,
-    var level: Int = 1,
     /** Mirrored from the private user doc so friends can look this profile up. */
     var friendCode: String = "",
     /**

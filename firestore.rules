@@ -10,6 +10,31 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    /**
+     * True when this write does not touch `field` — the file's first field-level
+     * condition (`C20` #42, spec 5.2).
+     *
+     * `diff().affectedKeys()` is the whole reason this is expressible: it reports the
+     * keys that actually change between the stored document and the one this write
+     * would leave behind, so it catches an add, an edit AND a removal, and it works
+     * the same whether the client sends a merge or a whole document. Comparing
+     * `request.resource.data.field == resource.data.field` instead would error out on
+     * a document where the key is absent, which denies for the wrong reason and reads
+     * in the logs as a permissions bug.
+     *
+     * The `resource != null` guard is the same concern one step out. Firestore evaluates
+     * BOTH the create and the update clause for a `set()`, so on a document that does not
+     * exist yet this function is called with no `resource` at all and `diff()` fails. It
+     * denies either way -- an update of a missing document is a create, and the create
+     * clause is the one that should answer it -- but an "evaluation error" in the
+     * emulator log is indistinguishable from a rule that is actually broken, and this
+     * file is where the next person will come looking.
+     */
+    function serverOwns(field) {
+      return resource != null
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([field]);
+    }
+
     // ── Private per-user data: goals, tasks, progress, friends ──────
     match /users/{uid} {
       allow read, write: if isOwner(uid);
@@ -19,12 +44,35 @@ service cloud.firestore {
     }
 
     // ── Public leaderboard projection ──────────────────────────────
-    // Any signed-in user can read (for the leaderboard); only the owner writes.
-    // NOTE: points/level are written by the client for this course project. In
-    // production, compute them in a Cloud Function and lock writes down.
+    // Any signed-in user can read (for the leaderboard). The owner writes their own
+    // identity fields; `points` is the server's.
+    //
+    // This is what `C20` (#42, spec 5.2) changed, and the NOTE that used to sit here
+    // -- "points/level are written by the client for this course project" -- is gone
+    // because it stopped being true. `points` is the one number on this document that
+    // a reader cannot compute for themselves: `users/{uid}/**` is isOwner(uid), so a
+    // leaderboard reader can never see the tasks it sums. That is exactly the test
+    // 5.2 draws, and this is where it is enforced.
+    //
+    // `level` is not mentioned because there is no longer such a field. It was a
+    // stored function of `points` in THIS document, so every reader of it could
+    // already compute it; 5.2 deleted it outright.
+    //
+    // The projection function reaches this collection through the Admin SDK, which
+    // bypasses these rules entirely -- so the server needs no exemption written here,
+    // and there is no service-account uid to keep in step with a deployment.
     match /publicProfiles/{uid} {
       allow read: if isSignedIn();
-      allow write: if isOwner(uid);
+
+      // Sign-up creates the row with a zero score (AuthRepositoryImpl). Both spellings
+      // of zero are accepted on purpose: the Kotlin client can write an integer or a
+      // double depending on the field's type, the JS test suite can only ever produce
+      // an integer, and a rule that locks a real user out of signing up is not worth
+      // the one clause it costs to be certain.
+      allow create: if isOwner(uid)
+        && (request.resource.data.points == 0 || request.resource.data.points == 0.0);
+      allow update: if isOwner(uid) && serverOwns('points');
+      allow delete: if isOwner(uid);
     }
 
     // ── Shared achievement feed ────────────────────────────────────
@@ -46,15 +94,35 @@ service cloud.firestore {
       allow update, delete: if isSignedIn()
         && resource.data.ownerUid == request.auth.uid;
 
-      // One row per participant, id = their uid, writable only by them. This
-      // is what makes joining possible without letting a non-owner edit the
-      // challenge. A subcollection is not covered by the match above, so
-      // without this block these documents match no rule and are denied.
-      // Scores are client-written, exactly as publicProfiles.points is above,
-      // and carry the same caveat.
+      // One row per participant, id = their uid. This is what makes joining
+      // possible without letting a non-owner edit the challenge. A subcollection is
+      // not covered by the match above, so without this block these documents match
+      // no rule and are denied.
+      //
+      // The row now has writers with different rights (`C20` #42, spec 5.2), which
+      // is the one place this ruling genuinely makes the rules harder:
+      //
+      //   * the participant   -- creates the row, deletes it to leave, and edits the
+      //                          identity fields on it. NOT `score`.
+      //   * the projection    -- owns `score` and `updatedAt`, and reaches them
+      //     function             through the Admin SDK, which bypasses these rules.
+      //   * the challenge     -- reads only. There is still no "kick a participant";
+      //     owner                see the test below for why granting it is expensive.
+      //
+      // `score` crosses the ownership boundary -- the person who reports it is not
+      // the person reading the standings, and the readers cannot see the report fact
+      // at `users/{uid}/challengeReports/{challengeId}` that it is projected from.
+      // That is 5.2's test, and it is why this field survived when five of the map's
+      // seven derived quantities needed no stored writer at all.
       match /participants/{uid} {
         allow read: if isSignedIn();
-        allow write: if isOwner(uid);
+
+        // Joining starts you at zero. See publicProfiles above for why both
+        // spellings of zero are accepted.
+        allow create: if isOwner(uid)
+          && (request.resource.data.score == 0 || request.resource.data.score == 0.0);
+        allow update: if isOwner(uid) && serverOwns('score');
+        allow delete: if isOwner(uid);
       }
     }
   }

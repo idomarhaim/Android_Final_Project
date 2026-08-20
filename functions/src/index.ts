@@ -10,9 +10,26 @@
 import { onCall, CallableRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 import * as logger from "firebase-functions/logger";
+import { initializeApp } from "firebase-admin/app";
 
 // Region must match FirebaseFunctions.getInstance(region) on the client.
 setGlobalOptions({ region: "us-central1", maxInstances: 5 });
+
+// The Admin SDK, for the projection triggers re-exported below. It bypasses
+// `firestore.rules` entirely, which is what lets those rules deny the client the two
+// fields this function owns without the function needing an exemption written into them.
+initializeApp();
+
+/**
+ * `C20`'s projection (`docs/PRODUCT_v0.3.md` §5.2) — one projection, two trigger
+ * registrations, and zero client writers of derived state. Re-exported here because
+ * `firebase deploy` reads the entry point named by `package.json#main` and deploys
+ * exactly the symbols it exports.
+ *
+ * These are the first Firestore triggers in this file; everything above is an HTTPS
+ * callable the client invokes directly.
+ */
+export { projectPoints, projectChallengeScore } from "./projection";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 // GROQ deprecated llama-3.1-8b-instant on 2026-06-17 (shutdown 2026-08-16) and

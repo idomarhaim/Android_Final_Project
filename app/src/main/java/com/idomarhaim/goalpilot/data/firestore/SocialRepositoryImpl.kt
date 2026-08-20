@@ -11,12 +11,12 @@ import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.PublicProfileDto
 import com.idomarhaim.goalpilot.data.firestore.dto.SharedItemDto
-import com.idomarhaim.goalpilot.data.firestore.dto.resolvedLevel
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.FriendCode
 import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
+import com.idomarhaim.goalpilot.domain.model.Leveling
 import com.idomarhaim.goalpilot.domain.model.ProgressSummary
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.model.merge
@@ -134,7 +134,10 @@ class SocialRepositoryImpl @Inject constructor(
             displayName = p.displayName,
             photoUrl = p.photoUrl,
             points = p.points,
-            level = p.resolvedLevel(),
+            // Computed, never read from the document: `C20` deleted the stored
+            // `publicProfiles.level` because it was a function of `points` sitting in
+            // the same row (spec §5.2). `User.level` has always worked this way.
+            level = Leveling.levelForPoints(p.points),
             isCurrentUser = p.uid == uid,
             isFriend = p.uid in friends,
         )

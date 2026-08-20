@@ -1,7 +1,6 @@
 package com.idomarhaim.goalpilot.data.firestore
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
@@ -59,6 +58,16 @@ class ChallengeRepositoryImpl @Inject constructor(
     private fun myEdgesCol(uid: String) = firestore.collection(FirestorePaths.USERS)
         .document(uid)
         .collection(FirestorePaths.CHALLENGES)
+
+    /**
+     * The current user's own score reports: `users/{uid}/challengeReports/{challengeId}`.
+     *
+     * Private to them, and the fact `challenges/{id}/participants/{uid}.score` is
+     * projected from (`C20` #42, spec 5.2). See [FirestorePaths.CHALLENGE_REPORTS].
+     */
+    private fun reportsCol(uid: String) = firestore.collection(FirestorePaths.USERS)
+        .document(uid)
+        .collection(FirestorePaths.CHALLENGE_REPORTS)
 
     // ── Reads ──────────────────────────────────────────────────────
 
@@ -216,22 +225,45 @@ class ChallengeRepositoryImpl @Inject constructor(
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
             if (score < 0) return@withContext Resource.Error("A score cannot be negative")
             try {
-                // update(), not a merging set(): a merge would happily create a
-                // participant row with no mirror edge, leaving the user scoring
-                // in a challenge that never appears in their own list.
-                participantsCol(challengeId).document(uid)
-                    .update(
+                // THE REPORT IS THE FACT; THE STANDING IS ITS PROJECTION (`C20` #42,
+                // spec §5.2).
+                //
+                // This used to write `score` straight onto the public participant row.
+                // It cannot any more, and that is enforced rather than agreed:
+                // `firestore.rules` now carries the file's first field-level condition
+                // and refuses a client write that moves `score`. The number crosses the
+                // ownership boundary — the people reading the standings are not the
+                // person who measured it — which is precisely §5.2's test for a derived
+                // number that needs a stored writer, and why this was the one quantity
+                // of the map's seven that kept one.
+                //
+                // So the write goes to a fact the reporter owns, and
+                // `functions/src/projection.ts` puts the number on the standing. Two
+                // things fall out of that, both wanted:
+                //
+                //  * it works offline. This path is under `users/{uid}`, so it lands in
+                //    the Firestore cache like any other fact; the old write went to a
+                //    world-readable collection and the standing is cross-boundary data
+                //    the reader is already told the age of (#50).
+                //  * `set()` is safe here where it was not before. The comment this
+                //    replaces warned that a merging set could create a participant row
+                //    with no mirror edge — that hazard moved to the function, which uses
+                //    `update()` and writes nothing at all if the row is absent.
+                //
+                // A report from somebody who never joined therefore no longer fails: it
+                // is stored and simply projects nowhere. The join check that message
+                // used to stand for lives in the UI, which only offers the field to a
+                // participant.
+                reportsCol(uid).document(challengeId)
+                    .set(
                         mapOf(
-                            SCORE to score,
-                            // Rides the write that moves the score, so a reader on
-                            // another device can be told when this number was last
-                            // touched rather than whether their own radio is on (#50).
-                            UPDATED_AT to FieldValue.serverTimestamp(),
+                            VALUE to score,
+                            REPORTED_AT to System.currentTimeMillis(),
                         ),
                     ).await()
                 Resource.Success(Unit)
             } catch (e: Exception) {
-                Resource.Error("Join the challenge before reporting a score", e)
+                Resource.Error(e.message ?: "Could not report your score", e)
             }
         }
 
@@ -272,5 +304,9 @@ class ChallengeRepositoryImpl @Inject constructor(
         const val DESCRIPTION_MAX = 240
         const val SCORE = "score"
         const val JOINED_AT = "joinedAt"
+
+        /** Fields of a `users/{uid}/challengeReports/{challengeId}` fact. */
+        const val VALUE = "value"
+        const val REPORTED_AT = "reportedAt"
     }
 }

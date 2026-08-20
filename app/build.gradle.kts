@@ -255,6 +255,18 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/main/java"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("fileScanningGuardSources")
+
+    // The same problem one directory further out. `DerivedStateFixtureTest` reads
+    // ../shared-fixtures/derived-state.json — outside this module entirely, because
+    // functions/test/projection.test.mjs reads the identical file and neither layer may
+    // own it (docs/PRODUCT_v0.3.md §5.2). Gradle cannot infer that, so without this line
+    // editing the fixture leaves the task UP-TO-DATE and the suite reports green on the
+    // previous run's numbers. `Observed:` 2026-08-20 during the negative control for
+    // `C20`'s build half — a deliberately broken fixture went red under an explicit
+    // --tests filter and then "passed" in 1 s on the next full run.
+    inputs.file(rootProject.layout.projectDirectory.file("shared-fixtures/derived-state.json"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("sharedDerivedStateFixture")
 }
 
 /**

@@ -1,0 +1,150 @@
+{
+  "$comment": [
+    "THE SHARED FIXTURE — docs/PRODUCT_v0.3.md §5.2, 'the honest residual, not buried'.",
+    "",
+    "C20 moved the derived-state arithmetic to the server, so it now exists TWICE: in Kotlin",
+    "(domain/model/User.kt — Leveling, and the client's own reading of a fact set) and in",
+    "TypeScript (functions/src/projection.ts). That is a second IMPLEMENTATION, and two",
+    "implementations of one rule can disagree. §5.2 accepted the duplication — avoiding it costs",
+    "the offline win entirely — on one condition: that both are pinned by ONE fixture both test",
+    "layers read.",
+    "",
+    "This is that file. It is NOT two copies of the same numbers; it is one copy read from two",
+    "sides. Its readers:",
+    "  - functions/test/projection.test.mjs   (node:test, ../shared-fixtures/derived-state.json)",
+    "  - app/src/test/java/com/idomarhaim/goalpilot/derived/DerivedStateFixtureTest.kt (JUnit)",
+    "Both resolve it by walking up from their own module directory, so neither owns it.",
+    "",
+    "ADDING A CASE IS THE POINT. A number that disagreed in the wild belongs here as a case,",
+    "not as a fix in one language. If you change the level curve or the points rule, change it",
+    "here first and let both suites go red.",
+    "",
+    "SHAPE. Every case gives the FACTS and the EXPECTED PROJECTION. Facts are what the user did;",
+    "the projection is what the server stores. Nothing here stores a level: publicProfiles.level",
+    "was deleted by C20 (a stored function of points in the same document), so `level` below is",
+    "asserted as a COMPUTED value on both sides and never as a written field."
+  ],
+  "pointsCases": [
+    {
+      "name": "no tasks at all",
+      "facts": { "tasks": [] },
+      "expected": { "points": 0, "level": 1 }
+    },
+    {
+      "name": "tasks exist but none are done — an undone task contributes nothing",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": false, "points": 40 },
+          { "id": "t2", "done": false, "points": 60 }
+        ]
+      },
+      "expected": { "points": 0, "level": 1 }
+    },
+    {
+      "name": "only the done ones are summed",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true, "points": 40 },
+          { "id": "t2", "done": false, "points": 60 },
+          { "id": "t3", "done": true, "points": 35 }
+        ]
+      },
+      "expected": { "points": 75, "level": 1 }
+    },
+    {
+      "name": "exactly on a level boundary — L2 begins at 100, inclusive",
+      "facts": { "tasks": [{ "id": "t1", "done": true, "points": 100 }] },
+      "expected": { "points": 100, "level": 2 }
+    },
+    {
+      "name": "one point below a boundary stays on the lower level",
+      "facts": { "tasks": [{ "id": "t1", "done": true, "points": 99 }] },
+      "expected": { "points": 99, "level": 1 }
+    },
+    {
+      "name": "L3 begins at 300",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true, "points": 250 },
+          { "id": "t2", "done": true, "points": 50 }
+        ]
+      },
+      "expected": { "points": 300, "level": 3 }
+    },
+    {
+      "name": "L4 begins at 600, and a big pile does not skip past it",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true, "points": 599 },
+          { "id": "t2", "done": true, "points": 1 }
+        ]
+      },
+      "expected": { "points": 600, "level": 4 }
+    },
+    {
+      "name": "a negative task value cannot drag the total below zero",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true, "points": 10 },
+          { "id": "t2", "done": true, "points": -40 }
+        ]
+      },
+      "expected": { "points": 0, "level": 1 }
+    },
+    {
+      "name": "a task with no points field counts as zero, not as a crash",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true },
+          { "id": "t2", "done": true, "points": 20 }
+        ]
+      },
+      "expected": { "points": 20, "level": 1 }
+    },
+    {
+      "name": "idempotence, stated as data — the same fact set always gives the same number",
+      "facts": {
+        "tasks": [
+          { "id": "t1", "done": true, "points": 120 },
+          { "id": "t1", "done": true, "points": 120 }
+        ]
+      },
+      "expected": { "points": 240, "level": 2 },
+      "$note": [
+        "Two ROWS with the same id cannot exist in Firestore, so this case does not model a",
+        "duplicate document. It models the only way projection could double-credit — two facts",
+        "of equal weight — and pins that the answer is arithmetic over whatever the fact set",
+        "holds, never an accumulator. Run the projection twice on the real set and you get 240",
+        "both times; that is what 'structurally idempotent' means and why FieldValue.increment",
+        "stays rejected (§5.2)."
+      ]
+    }
+  ],
+  "scoreCases": [
+    {
+      "name": "a report of zero is a report, not an absence",
+      "facts": { "report": { "value": 0 } },
+      "expected": { "score": 0 }
+    },
+    {
+      "name": "the latest absolute report is the score — the UI reports a total, not a delta",
+      "facts": { "report": { "value": 12.5 } },
+      "expected": { "score": 12.5 }
+    },
+    {
+      "name": "a negative report is clamped rather than stored",
+      "facts": { "report": { "value": -3 } },
+      "expected": { "score": 0 }
+    },
+    {
+      "name": "no report at all leaves the row alone",
+      "facts": { "report": null },
+      "expected": { "score": null },
+      "$note": [
+        "score: null means DO NOT WRITE. Deleting the report fact (leaving the challenge, or an",
+        "undo) must not silently zero a standing other people are reading — the projection",
+        "writes nothing and the last reported number stands until the row itself is deleted."
+      ]
+    }
+  ]
+}

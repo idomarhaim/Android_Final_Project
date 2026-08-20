@@ -165,10 +165,73 @@ test('the fix: a non-owner can join by writing their own participant row', async
   )
 })
 
-test('a participant can update their own score', async () => {
+// -- C20: `score` is the server's, and this is where that is enforced --
+//
+// The test that used to sit here asserted the opposite -- `a participant can update
+// their own score` -- and it was right until 2026-08-20. Spec 5.2 moved the number to a
+// projection function, so the same write must now be refused. It is kept as the
+// inverted pair rather than deleted, because the pair is the argument: a participant
+// still owns their row, and what changed is exactly one field on it.
+
+test('C20: a participant can still edit their own row -- just not the score', async () => {
   const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
   await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
-  await assertSucceeds(updateDoc(ref, { score: 12.5 }))
+  await assertSucceeds(updateDoc(ref, { displayName: 'Joiner Renamed' }))
+})
+
+test('C20: a participant cannot move their own score any more', async () => {
+  // The positive half of this pair is the test above: without it, this would still
+  // pass with the whole participants block deleted, because an unmatched path is
+  // denied by default. AGENTS.md's standing warning about vacuous negatives.
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await assertFails(updateDoc(ref, { score: 12.5 }))
+})
+
+test('C20: nor set it high while joining', async () => {
+  // The create path is a separate clause, and would otherwise be the way round the
+  // update rule -- leave, re-join at 9999.
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER), {
+      displayName: 'Joiner',
+      score: 9999,
+    }),
+  )
+})
+
+test('C20: a whole-document set that drops `score` is refused too', async () => {
+  // The trap that a `request.resource.data.score == resource.data.score` rule misses
+  // in the other direction: this write does not CHANGE the score, it REMOVES it, and
+  // the standings would then render the row at zero. affectedKeys() sees a removal.
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE, 'participants', JOINER),
+      { score: 42 },
+    )
+  })
+  await assertFails(setDoc(ref, { displayName: 'Joiner' }))
+})
+
+test('C20: the projection reads a report fact the standings reader cannot see', async () => {
+  // Where the score now comes from. The fact is private to the reporter under
+  // users/{uid}/**, which is what makes `score` cross the ownership boundary -- and so
+  // the one derived quantity in spec 5.2's map of seven that needed a stored writer.
+  await assertSucceeds(
+    setDoc(doc(asUser(JOINER), 'users', JOINER, 'challengeReports', CHALLENGE), {
+      value: 12.5,
+      reportedAt: 1,
+    }),
+  )
+  await assertFails(
+    getDoc(doc(asUser(OWNER), 'users', JOINER, 'challengeReports', CHALLENGE)),
+  )
+  await assertFails(
+    setDoc(doc(asUser(OWNER), 'users', JOINER, 'challengeReports', CHALLENGE), {
+      value: 9999,
+    }),
+  )
 })
 
 test('a participant can leave by deleting their own row', async () => {
@@ -215,6 +278,95 @@ test('any signed-in user can read the standings', async () => {
   })
   await assertSucceeds(
     getDoc(doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', OWNER)),
+  )
+})
+
+// -- C20: the leaderboard projection ---------------------------------
+//
+// `publicProfiles` had no coverage in this file before 2026-08-20, because until then
+// its rule was one line that said what every other collection said. It now carries the
+// same field-level condition as a participant row, for the same reason: `points` is a
+// number a leaderboard reader cannot compute, since the tasks it sums live under
+// users/{uid}/** where only the owner can read them.
+
+test('C20: any signed-in user can read the leaderboard', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'publicProfiles', OWNER), {
+      displayName: 'Owner',
+      points: 120,
+    })
+  })
+  await assertSucceeds(getDoc(doc(asUser(JOINER), 'publicProfiles', OWNER)))
+})
+
+test('C20: sign-up may create the row, at zero', async () => {
+  await assertSucceeds(
+    setDoc(doc(asUser(JOINER), 'publicProfiles', JOINER), {
+      displayName: 'Joiner',
+      points: 0,
+      friendCode: 'ABC123',
+    }),
+  )
+})
+
+test('C20: but not create it already scored', async () => {
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'publicProfiles', JOINER), {
+      displayName: 'Joiner',
+      points: 5000,
+    }),
+  )
+})
+
+test('C20: the owner can still refresh their display name and photo', async () => {
+  // AuthRepositoryImpl does exactly this on every sign-in, as a merge. If this goes
+  // red, signing in stops updating the leaderboard row. It is also the positive half
+  // that stops the two negatives below from passing vacuously.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'publicProfiles', JOINER), {
+      displayName: 'Joiner',
+      points: 120,
+    })
+  })
+  await assertSucceeds(
+    setDoc(
+      doc(asUser(JOINER), 'publicProfiles', JOINER),
+      { displayName: 'Renamed', photoUrl: null },
+      { merge: true },
+    ),
+  )
+})
+
+test('C20: the owner cannot award themselves points', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'publicProfiles', JOINER), {
+      displayName: 'Joiner',
+      points: 120,
+    })
+  })
+  await assertFails(
+    updateDoc(doc(asUser(JOINER), 'publicProfiles', JOINER), { points: 999999 }),
+  )
+})
+
+test('C20: nor quietly drop the field on a whole-document write', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'publicProfiles', JOINER), {
+      displayName: 'Joiner',
+      points: 120,
+    })
+  })
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'publicProfiles', JOINER), { displayName: 'Joiner' }),
+  )
+})
+
+test('C20: and still cannot touch another user\u2019s row', async () => {
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'publicProfiles', OWNER), {
+      displayName: 'Owner',
+      points: 0,
+    }),
   )
 })
 

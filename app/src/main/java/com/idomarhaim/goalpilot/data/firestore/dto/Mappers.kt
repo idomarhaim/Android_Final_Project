@@ -6,7 +6,6 @@ import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
-import com.idomarhaim.goalpilot.domain.model.Leveling
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
@@ -194,6 +193,7 @@ fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticip
     joinedAtEpochMillis = joinedAt,
 )
 
-// ── PublicProfile → level convenience ──────────────────────────────
-fun PublicProfileDto.resolvedLevel(): Int =
-    if (level > 0) level else Leveling.levelForPoints(points)
+// `PublicProfileDto.resolvedLevel()` used to live here. `C20` (#42, spec §5.2) deleted
+// `publicProfiles.level`, so there is no stored value left to prefer over the computed
+// one and the fallback became the whole function. Callers use `Leveling.levelForPoints`
+// directly — see `SocialRepositoryImpl.toEntries`.

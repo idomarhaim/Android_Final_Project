@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 issue: 52
 created: 2026-08-20
+closed: 2026-08-20 by `c20-build-half`
 ---
 
 # `C20` build half — the projection function, its two triggers, and `setDone` reduced to one write
