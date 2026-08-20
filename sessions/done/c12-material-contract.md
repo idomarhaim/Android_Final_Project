@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 53
 created: 2026-08-20
+result: shipped 2026-08-20 in `05ec6aa` (claim `e1324c1`) — #53 left OPEN, see below
 ---
 
 # `C12` build half — the four-material contract, so #48's Appearance section can exist
@@ -101,3 +102,25 @@ a manual `workflow_dispatch` with `capture-screenshots` is the cheapest way to g
 ## 🚥 Hand-off line — mandatory, the last thing in your final reply
 
 Seven conditions, one heading. Name `/kickoff c13-key-store` — the other half of #48.
+
+---
+
+## Result — 2026-08-20
+
+**Shipped in `05ec6aa`.** Everything under *Exit* landed: JVM unit for the palette transforms
+and the brightness-lock declaration (`AppMaterialTest`, `MaterialPaletteTest`, and
+`ThemePaletteTest` widened from 4 schemes to the 14 distinct cells), instrumented for the
+picker (`MaterialPickerUiTest`, 7 tests), and **every material seen in both brightnesses and
+both skins** — 16 frames in `docs/render-passes/2026-08-20-c12-material-contract/`.
+
+**`#53` is left OPEN, and the held item is named rather than implied.** §4.1's `.tag` rule —
+*a category is written in words beside its dot, **because** dark neo collapses the six
+categorical hues into one ramp* — is listed in the issue's scope. The collapse arithmetic is
+built and unit-tested (`rampTint`) and is **deliberately not applied** at the call sites: the
+words are what make the collapse survivable, so shipping the collapse first installs the exact
+identity failure `.tag` exists to prevent, in every chart at once. That sweep belongs with
+`C12` §4.4's charts.
+
+**The order this brief insisted on held.** `c13-key-store` did not run beside this; its own
+session corrected its false independence claim in `ba3c763` and deferred. `/kickoff c13-key-store`
+is now unblocked — `SettingsScreen.kt` is free.
