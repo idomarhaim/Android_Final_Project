@@ -221,3 +221,90 @@ deploy is from `01:09`, before it. Handing it on rather than adopting it.
 | **Real device** | the 8 steps above, on `Pixel_10_Pro_XL_B` |
 | **Instrumented** (`connectedDebugAndroidTest`) | **deliberately not run** — it uninstalls the app and would destroy the signed-in session this round required. Unchanged from round 1: no instrumented test touches `toggleTask`, `setDone` or connectivity. |
 | **Rules / functions** | not run — this unit touches neither. |
+
+---
+
+# Round 3 — `projectPoints` diagnosed to a single cause; the fix is one command, blocked on permission
+
+Ido: *"just fix it yourself"* + *"install gcloud if you think it's worth it"*. Diagnosis is done and
+the remedy is identified. **The deploy itself was refused by the Claude Code auto-mode classifier**,
+so nothing in `functions/` was changed and nothing was deployed.
+
+## What was ruled OUT, by measurement
+
+| Hypothesis | Check | Verdict |
+|---|---|---|
+| Wrong document path | `FirestorePaths.USERS="users"`, `TASKS="tasks"`, `tasksCol()` = `users/{uid}/tasks`; trigger filter is `users/{uid}/tasks/{taskId}` | ❌ **exact match** |
+| Region mismatch (the classic silent no-fire) | `firestore:databases:get "(default)"` → **Location `us-central1`**; trigger region **`us-central1`** | ❌ **match** |
+| Function not deployed / not active | `functions:list` → `projectPoints` **v2, ACTIVE**, `google.cloud.firestore.document.v1.written` | ❌ **deployed** |
+| Code fails to load | `node -e "require('./lib/index.js')"` → **loaded in 199 ms**, exports all five functions | ❌ **loads fine** |
+| Cloud Logging latency (my own instrument) | re-queried at **02:26Z** and again at **02:36Z**, 24 min after the tick | ❌ **genuinely absent** |
+
+## What it IS
+
+**The Eventarc/Pub-Sub service agents did not exist when `c20-build-half` r2 first deployed, and the
+trigger was never wired.**
+
+The evidence is the dry run's own output:
+
+```
+i functions: generating the service identity for pubsub.googleapis.com...
+i functions: generating the service identity for eventarc.googleapis.com...
++ Dry run complete!
+```
+
+A dry run that has to *generate* those identities is telling you they were absent. That is precisely
+what r2's first deploy failed on at `01:01:31Z`:
+
+> `Validation failed for trigger …/triggers/projectpoints-764090: Invalid resource state for "":
+> Permission denied while using the Eventarc Service Agent.`
+
+r2 retried at `01:08` and the **function** was created (`ACTIVE`, trigger id `projectpoints-956857`)
+— so `Deploy complete!` was truthful about the function and silent about the trigger. `Observed:`
+the function exists and the trigger never delivers. `Inferred:` the trigger resource was created
+before its service agent could be granted, and a create-time failure of that kind does not
+self-heal. `Untested:` confirmed only by redeploying, which is the next step.
+
+**This is the same family as `kb/dev/look-at-your-own-output.md` §4c** — a green headline
+(`Deploy complete!`) over a component that never ran. r2 verified its triggers **against the local
+emulator** (9/9, and correctly so), but the emulator does not exercise Eventarc at all, so the one
+thing that broke is the one thing that suite structurally cannot see.
+
+## The remedy, and why it is not gcloud
+
+```bash
+cd C:\Dev\Android_Final_Project
+FUNCTIONS_DISCOVERY_TIMEOUT=120 firebase deploy \
+  --only functions:projectPoints,functions:projectChallengeScore --project goalpilot-56e30
+```
+
+Same code, no source change — the service agents now exist (the dry run generated them), so the
+trigger should be created wired this time.
+
+**gcloud was offered and declined, for now.** It is *diagnosis* tooling and the diagnosis is already
+complete; installing it ahead of trying the identified remedy is tooling before hypothesis. It earns
+its place the moment the redeploy fails, to inspect the Eventarc trigger state and IAM bindings
+directly — which is exactly the question that would then be open.
+
+## ⛔ Blocked — and correctly so
+
+The deploy was refused by the **Claude Code auto-mode classifier**, not by any project rule. Not
+worked around: a gate on changing live infrastructure is one that should hold. `c20-build-half` r3
+hit the same classifier on `git credential fill` earlier today, so this is a known property of this
+machine, not a one-off.
+
+**Nothing was deployed and nothing in `functions/` was modified.** `functions/lib/` was rebuilt by
+`npm run build` (git-ignored) and `functions/.env` was read but not written.
+
+**Note for whoever runs it:** `--dry-run` needs `FUNCTIONS_DISCOVERY_TIMEOUT=120` on this machine.
+The default 10 s times out during codebase discovery even though the code loads in 199 ms — that
+timeout is a local tooling flake and says nothing about the code.
+
+## After the deploy — how to actually confirm it worked
+
+Do **not** read `Deploy complete!` as the answer; that is the exact mistake above.
+
+1. Tick any task in the app.
+2. `firebase functions:log --only projectPoints -n 5` → expect an **`projectPoints`** info line with
+   `{uid, points, factCount}`, which the function logs on every run.
+3. The dashboard should then show non-zero **pts** (currently `0 pts` against **1** task done).

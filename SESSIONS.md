@@ -15,7 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `50-finish` *(round 3)* | **`projectPoints` never fires — redeploying the two projection triggers so Eventarc actually wires them.** Ido authorised the fix directly. Diagnosis done; remedy is a same-code redeploy. | `functions/**` *(no source change expected)* · `CHANGELOG/2026-08-20/50-finish.md` · `SESSIONS.md` | **live `goalpilot-56e30` functions deploy** · Gradle daemon (idle) | 2026-08-20 |
+| `50-finish` *(round 3)* | ⛔ **BLOCKED ON IDO — the live functions deploy is refused by the Claude Code auto-mode classifier.** Diagnosis is COMPLETE and committed; the remedy is one command Ido runs (or grants a permission rule for). Nothing in `functions/` was changed. | `CHANGELOG/2026-08-20/50-finish.md` · `SESSIONS.md` — **`functions/` released, untouched** | none held — **the deploy never ran** | 2026-08-20 |
 > 🏁 **`50-finish` *(round 2)* RELEASED 2026-08-20 — `58b4d97` (claim) → this note.**
 > **`#gradle-daemon` and `Pixel_10_Pro_XL_B` (`emulator-5554`) BOTH RELEASED.** Account:
 > [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md) § *Round 2*.
