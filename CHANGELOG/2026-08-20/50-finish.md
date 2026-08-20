@@ -146,3 +146,78 @@ their commits intact.
 `C:\Program Files\GitHub CLI\gh.exe` (not the `%LOCALAPPDATA%` path `CLAUDE.md` used to give), and
 **`gh` is now authenticated** — Ido ran `gh auth login --web` on 2026-08-20. So the #50 close
 comment is mechanically unblocked; only the permission is missing.
+
+---
+
+# Round 2 — the offline tap, observed
+
+**Ido, 2026-08-20:** *"do the required fixes, if you need SIGN IN use the emulator"*, then push.
+Round 1's one open `unverified` is now closed by observation.
+
+## 📱 No sign-in was needed from Ido
+
+`Pixel_10_Pro_XL_B` (`emulator-5554`) was **already running**, with GoalPilot debug installed and
+the device Google account `rachil751@gmail.com` present and the app already authenticated. Claimed
+on the board (`58b4d97`) before the first device command. **`connectedDebugAndroidTest` was
+deliberately NOT run** — it uninstalls the app and would have destroyed the very session this round
+needed.
+
+## What was observed, in order
+
+| # | Step | Result |
+|---|---|---|
+| 1 | `:app:installDebug` of the post-deletion build | installed on `Pixel_10_Pro_XL_B(AVD) - 15` |
+| 2 | Baseline: goal *"Be Slim, Pretty, and Just"*, one unticked task, ring **0%**, dashboard **0 tasks done** | — |
+| 3 | `cmd connectivity airplane-mode enable` + `svc wifi disable` + `svc data disable` | `airplane_mode_on=1`, **`Active default network: none`** |
+| 4 | **Tap the task, offline** | ✅ box ticked, title struck through, ring **0% → 1%**, `0/100` → `1/100`. **Instant. No refusal, no `OFFLINE_MESSAGE` snackbar** — which is exactly what the deleted pre-check used to produce. |
+| 5 | Wait **12 s** (the old transaction took the tick back at a measured **7.9 s**) | ✅ still ticked, still 1% — **not** taken back |
+| 6 | **Force-stop the app and cold-relaunch, still in airplane mode** | ✅ **still ticked.** This is the decisive one: a process kill destroys the in-memory `_pendingToggles` overlay, so the surviving tick proves the write is in **Firestore's local cache**, not in UI state. |
+| 7 | Airplane off, reconnect (`Active default network: 105`) | ✅ tick survives — the server accepted it, no rollback |
+| 8 | Dashboard after sync | ✅ **Tasks done 0 → 1**, **This week 0 → 1** |
+
+**So the `Untested:` from round 1 is now `Observed:` 2026-08-20.** The optimistic tick does not
+merely go un-refused offline — it lands, persists across a process death, and syncs. Step 6 is the
+evidence round 1 could not produce by reading code.
+
+Screenshots: `…/scratchpad/shots/01-launch.png` … `10-points-recheck.png` (session scratchpad, not
+committed).
+
+## ⚠️ A defect found on the way, and it is NOT this session's
+
+**`projectPoints` does not fire on a real task write.** Points stayed at **0 pts** through step 8,
+and were still **0** after a further ~12 minutes and a second cold relaunch, while *Tasks done*
+correctly read **1**.
+
+Evidence, gathered rather than assumed:
+
+- `firebase functions:list` — `projectPoints` is **deployed and ACTIVE**, `v2`,
+  `google.cloud.firestore.document.v1.written`, filter
+  `document = users/{uid}/tasks/{taskId}` (match-path-pattern).
+- The client writes to exactly that path — `TaskRepositoryImpl.tasksCol()` is
+  `users/{uid}` → `.collection("tasks")`, `FirestorePaths.USERS = "users"`, `TASKS = "tasks"`. **The
+  filter and the write path match**, so this is not a path typo.
+- `firebase functions:log --only projectPoints` — the **only** execution lines are
+  `2026-08-20T01:09:14Z` and `01:09:17Z`, both `DEPLOYMENT_ROLLOUT`. The tick landed at
+  **~02:12Z**; the check ran at **02:26Z**. **No invocation in between.**
+- Earlier in that log: the first deploy attempt failed with *"Permission denied while using the
+  Eventarc Service Agent"* (`01:01:31Z`), which `c20-build-half` r2 retried successfully at
+  `01:08`. That is the likeliest lead.
+
+`Observed:` points did not move. `Inferred:` the trigger is not being delivered. `Untested:`
+whether the cause is Eventarc delivery, the function body, or log latency — **not diagnosed here,
+because it is `c20-build-half`'s deliverable and diagnosing it inside this unit would be the same
+"one session both grants and spends" mistake the guard exists to prevent.**
+
+**It does not touch this unit.** #50 item 5 removed a *client-side connectivity pre-check*; the
+projection is a *server-side trigger*. The defect was already present when `941d6a8` was made — the
+deploy is from `01:09`, before it. Handing it on rather than adopting it.
+
+## 🧪 Tests — re-run from scratch, not read off a cache
+
+| Layer | Result |
+|---|---|
+| **JVM unit** (`--rerun-tasks`) | **422 tests / 45 suites / 0 failures / 0 errors / 0 skipped**. Forced re-run, **2m33s** wall clock — deliberately not an `UP-TO-DATE` report, per `kb/dev/look-at-your-own-output.md` §4c, whose whole incident was a suite reporting green in 1s having executed nothing. |
+| **Build** (`:app:assembleDebug`) | green, same forced run |
+| **Real device** | the 8 steps above, on `Pixel_10_Pro_XL_B` |
+| **Instrumented** (`connectedDebugAndroidTest`) | **deliberately not run** — it uninstalls the app and would destroy the signed-in session this round required. Unchanged from round 1: no instrumented test touches `toggleTask`, `setDone` or connectivity. |
+| **Rules / functions** | not run — this unit touches neither. |

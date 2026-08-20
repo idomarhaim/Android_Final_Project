@@ -15,7 +15,35 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `50-finish` *(round 2)* | **Close the one open `unverified` from round 1 — observe an offline tap actually succeeding.** Ido: *"do the required fixes, if you need SIGN IN use the emulator"*, and then push. | `CHANGELOG/2026-08-20/50-finish.md` · `SESSIONS.md` | **Gradle daemon** · **`Pixel_10_Pro_XL_B` (emulator-5554)** — found already running, account `rachil751@gmail.com` present | 2026-08-20 |
+> 🏁 **`50-finish` *(round 2)* RELEASED 2026-08-20 — `58b4d97` (claim) → this note.**
+> **`#gradle-daemon` and `Pixel_10_Pro_XL_B` (`emulator-5554`) BOTH RELEASED.** Account:
+> [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md) § *Round 2*.
+>
+> ✅ **THE OFFLINE TAP IS NO LONGER `Untested:` — IT WAS WATCHED.** In airplane mode
+> (`Active default network: none`) the tap **ticked instantly**, the ring went 0% → 1%, and there
+> was **no refusal snackbar**. Still ticked at **+12 s** (the old transaction undid it at a measured
+> **7.9 s**). **Still ticked after a force-stop and cold relaunch, still offline** — which is the
+> decisive frame, because a process kill destroys the in-memory overlay, so what survived is
+> Firestore's **local cache**. On reconnect it synced: **Tasks done 0 → 1**.
+>
+> 📱 **No sign-in was needed from Ido** — the emulator was already running with the app installed
+> and `rachil751@gmail.com` authenticated. **`connectedDebugAndroidTest` deliberately NOT run**: it
+> uninstalls the app and would have destroyed exactly that session.
+>
+> ⚠️⚠️ **HANDED ON, NOT MINE: `projectPoints` DOES NOT FIRE ON A REAL TASK WRITE.** Points stayed
+> **0 pts** through the sync and through a further ~12 min + second relaunch, while *Tasks done*
+> read **1**. The function **is** deployed and `ACTIVE` with filter `users/{uid}/tasks/{taskId}`,
+> and the client writes **exactly** that path — so it is **not** a path typo. But
+> `functions:log --only projectPoints` has **no invocation at all**: its only execution lines are
+> `01:09:14Z`/`01:09:17Z` `DEPLOYMENT_ROLLOUT`, while the tick landed **~02:12Z** and the check ran
+> **02:26Z**. 🔎 **Lead:** the first deploy failed `01:01:31Z` with *"Permission denied while using
+> the Eventarc Service Agent"*; r2 retried at `01:08` and called it propagation delay. **This is
+> `c20-build-half`'s deliverable** — not diagnosed here, because a session that both authorises and
+> spends its own fix is the failure `decision-map-charting.md` §12a exists to prevent. It is
+> **independent of #50 item 5**, which removed a *client* pre-check: the deploy predates `941d6a8`.
+>
+> 🧪 JVM **422/45/0/0** on a **forced `--rerun-tasks`** (2m33s wall clock — deliberately not an
+> `UP-TO-DATE` green, per `look-at-your-own-output.md` §4c). `assembleDebug` green.
 > 🏁 **`50-finish` RELEASED 2026-08-20 — `3bf280a` (claim) → the deletion commit → this note.**
 > **`#gradle-daemon` RELEASED with this commit**; no device was ever claimed, so nothing about
 > `#50` item 5 needed Ido's phone or an emulator. Account: [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md).
