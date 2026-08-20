@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r3) | final KB drain — the invalid-credential technique and the deploy trap | `CLAUDE.md` | _none_ | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
@@ -4096,6 +4095,19 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r3) RELEASED 2026-08-21 — this commit.** No singletons held. The session is
+> finished: `#54` and `#48` closed, the functions deployed and verified, both boards clear.
+>
+> 📝 **Three operational traps into `CLAUDE.md`**, all from the deploy round: `firebase deploy` needs
+> `FUNCTIONS_DISCOVERY_TIMEOUT=120` here and its failure names the wrong cause (the module loads in
+> 202 ms — refute it before touching the code); `firebase functions:log` truncates and can fail
+> outright, so print `wc -l` beside any count over it; and `${PIPESTATUS[0]}` belongs on any build
+> whose APK you then install, or a failed build silently re-runs the previous one.
+>
+> ⚠️ **The deploy was never a capability limit** — `firebase-tools` is installed and logged in. It
+> was withheld because AUTO MODE does not extend to outward actions. The `CLAUDE.md` note now says
+> to phrase that as *"I can, and I am waiting on your word"*.
 
 > 🏁 **`c13-key-store` (r2) RELEASED 2026-08-21 — this commit.** Singletons released: **live Firebase
 > env `goalpilot-56e30`, `adb`, `emulator-5554`.**

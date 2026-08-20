@@ -36,3 +36,19 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
   - ⚠️ **`stdin` is the other half of that trap, and it is the dangerous one.** `curl … | python -c "json.load(sys.stdin)"` decodes the response as **cp1252**, so the *data* arrives mangled — `§`→`Â§`, `—`→`â€"`, `יעד`→`×™×¢×“` — and `sys.stdout.reconfigure` does nothing about it, because the corruption already happened on the way in. `Observed:` 2026-08-20 — this made a `gh issue edit` on `#51` look like it had mojibake'd the entire public issue body, Hebrew included; re-reading the same response through `io.open(path, encoding='utf-8')` gave `identical: True`. **It fails toward panic**: you get a diff that accuses the write you just made, and the instinctive fix (re-send it) is wrong. Read the response from a **file** with an explicit `encoding='utf-8'`, exactly as the trap above already tells you to save it.
 - On Windows, KSP/`.gradle` sometimes fail with "Could not delete/move …" locks. Re-run, or `rm -rf app/build/generated/ksp` and rebuild — it is not a code error.
 - Pipe Gradle through `tail` only with `${PIPESTATUS[0]}` to read the real exit code (the pipe's exit is `tail`'s).
+  - ⚠️ **And the same `${PIPESTATUS[0]}` gate belongs on any build whose output you then *install*.** `gradlew assemble… | grep …` exits with **`grep`'s** status, so `&&` does not protect you — and the previous APK is still sitting at the output path, so `adb install -r` succeeds and the test run reports the **last build's** results. `Observed:` 2026-08-20 — a Kotlin compile error scrolled past inside a `grep` and the suite came back with the same 8 failures as the run before, which read as *"the fix did not work"*. It was never in the APK.
+- **`firebase deploy --only functions` needs `FUNCTIONS_DISCOVERY_TIMEOUT=120` on this machine, and its failure names the wrong cause.** *(2026-08-21, `c13-key-store`.)* The first attempt dies with:
+  ```
+  Error: User code failed to load. Cannot determine backend specification. Timeout after 10000.
+  ```
+  which reads as *your new module is broken*. It is not — the analyzer's discovery step simply exceeded its 10 s budget here. **Refute it in one command before touching the code:**
+  ```bash
+  node -e "const t=Date.now();const m=require('./functions/lib/index.js');console.log(Date.now()-t,'ms',Object.keys(m))"
+  ```
+  `Observed:` 202 ms, all five exports listed, immediately after that error. Then:
+  ```bash
+  export FUNCTIONS_DISCOVERY_TIMEOUT=120
+  firebase deploy --only functions --non-interactive
+  ```
+  succeeded unchanged. `firebase-tools` is installed and logged in as `name.iddo@gmail.com` on `goalpilot-56e30` — **the deploy is gated by Ido's authorisation, never by capability**, and `outward-action-governance.md` is the gate. Say *"I can, and I am waiting on your word"*, not *"it is yours to run"*.
+- **`firebase functions:log` truncates and can fail outright — check the line count before believing a `grep` over it.** A bare `firebase functions:log` returned only `Error: Failed to list log entries`, and three `grep -c` over that file returned a very convincing **0, 0, 0**. `--only <function>` works but its window may still end before the call you are looking for. Print `wc -l` beside every count, per `kb/dev/look-at-your-own-output.md` §4k.
