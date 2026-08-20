@@ -219,3 +219,75 @@ the differentiator tracked. Ido's call; nothing done here.
 | **App layers** | **none apply** — no code changed; one GitHub close and this account |
 | **Close verification** | re-read from the API: `#7` `closed`, `closed_at 2026-08-20T17:24:42Z`, 3 comments. The **list** endpoint served a stale copy showing it open — the single-issue endpoint is the one to trust |
 | **Orphan search** | every open issue's title + body grepped for the five symbols above before closing |
+
+---
+
+# Round 4 — the two carrier tickets, and the candidate backlog drained to zero
+
+Ido, in one turn: open both carrier tickets · `/kb-ingest` **all** the candidates, *"no
+collisions"*, **🎬 skipped** · let `c12`'s push carry the held commit.
+
+## 🎫 Two carrier tickets opened, and two tickets closed behind them
+
+| New | Carries | Unblocked |
+|---|---|---|
+| **#55** | §1.4's points inversion + §1.5's `goalEdges` — deferred by `#7`, `#9` **and** `#11`, all three to `C1`, which is **closed** | `#7` closed |
+| **#56** | §2.2's occurrence model — due dates and the four rungs, which §2.5's reminders need | `#8` closed |
+
+Both ticket bodies say in their first line that opening them **commits nobody to building them**.
+`#8`'s close states in full why this is a **boundary fix, not a scope cut**: §2.5's
+backward-computed deadline reminder is what the spec itself calls *"the one thing this app knows
+that Google Calendar does not"*, and it is now tracked rather than forgotten.
+
+**Open issues: 8 → 6, and the two that remain unbuilt are visible instead of buried.**
+
+## 📥 `kb-candidates/` is EMPTY — 8 entries, all landed
+
+Pages and rules live in `C:/Dev/JARVIS` (`818f359`); full account in that repo's
+`CHANGELOG/2026-08-20/ticket-close-gap.md`. What belongs here:
+
+**This repo's `CLAUDE.md` gained one supersede** — the `gh` classifier bullet, narrowed from a
+single **boundary** claim into **two kinds of denial**:
+
+- the **`git credential fill` pipeline** stays a boundary — reading a stored secret looks like
+  credential harvesting whatever the intent, and dressing it up is still out;
+- **ordinary `gh issue *` writes are a flake — retry the unchanged command once.** `Observed:` 3
+  denials in 6 attempts of the *identical* `gh issue close -c` command, same shell, same minute:
+  denied, then `#6` ✅, `#9` ✅, `#11` denied, `#11` ✅ on a plain retry.
+
+**Why the distinction earns its words.** Read as a boundary, one denial ends the attempt —
+`hebrew-defer-freeze` abandoned three `#51` writes on first denial and left them owed for **three
+days**, and they had in fact already landed. Read as a flake, one retry finishes the job.
+**Retrying the unchanged command is not evading the denial**; changing the command to get past it
+is, and that stays forbidden.
+
+## 🔍 The collision check Ido asked for
+
+All 8 entries were mapped to destinations before anything was written. **No two candidate files
+targeted the same page.** Two *looked* like collisions and both turned out already discharged —
+`android-device-verification.md` (§8 landed 2026-08-19) and this repo's `CLAUDE.md` (the `stdin`
+clause was already at line 31, written by `51-freeze-verify` itself). In both cases the candidate's
+`Status` was stale in the **safe** direction, claiming more was owed than was.
+
+The real hazard was elsewhere and is worth carrying forward: **`look-at-your-own-output.md` had
+gained §4g and §4i from two other sessions the same day**, so the new section had to be numbered
+§4j against HEAD rather than against anything a candidate could have predicted.
+
+## ⚙️ Three behaviour changes shipped — the 🎬 waiver's real content
+
+`rules/derivable-decision.md` **1a** (a ticket-granted deletion must have its premise re-verified at
+HEAD — **scored 1 fire / 22 silent** over this repo's 23 deletions, and the one fire is `941d6a8`,
+*"a test said so — not the ticket"*) · `rules/memory-promotion.md` **§ The withdrawal side**
+(retrieval gets a trigger; the fallback **dropped a surface** the draft named because no page
+exists for it) · `user-rules/my-rules.instructions.md` **§ 📱** (the *"mutually exclusive on one
+device"* claim narrowed — `install -r` + `am instrument` preserves the sign-in, and four sessions
+have now used it).
+
+## 🧪 Tests — round 4
+
+| Layer | Result |
+|---|---|
+| **`Check-KbLinks.ps1`** | **CLEAN**, 94 pages — after catching one broken link this ingest introduced |
+| **Rule-corpus runs** | 23-deletion scoring · per-surface page resolution · 4-session confirmation |
+| **App layers** | **none apply** — Markdown and GitHub only. `c12-material-contract` holds the Gradle daemon, `adb` and the device; this session claimed **no singletons** and touched none |
+| **Ticket verification** | `#7` and `#8` re-read from the API after closing — both `closed`, comments attached |

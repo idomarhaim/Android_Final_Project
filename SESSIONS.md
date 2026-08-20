@@ -15,6 +15,22 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held; `c12-material-contract` kept the Gradle daemon, `adb` and the device throughout.
+>
+> 🎫 **`#55` and `#56` opened; `#7` and `#8` closed behind them. Open issues 8 → 6.** The two
+> carriers hold work that three sessions each deferred to tickets that were **already closed** —
+> §1.4/§1.5's scoring model and §2.2's occurrence model. Neither commits anyone to building it.
+>
+> 📥 **`kb-candidates/` is EMPTY** — 8 entries across 5 files, all landed. Pages and rules in
+> `C:/Dev/JARVIS` `818f359`; this repo's `CLAUDE.md` took the `gh`-denial supersede.
+>
+> ⚠️ **🎬 waived by Ido, and three entries that had been parked for days were released by it** —
+> each already had its KB half committed and only the `rules/` question outstanding. The mechanical
+> fallback ran on all three and **changed two of them**.
+>
+> 🔍 **Collision check:** no two candidates shared a page. The live hazard was
+> `look-at-your-own-output.md` gaining §4g and §4i from two other sessions the same day — the new
+> section had to be numbered against HEAD, not against anything a candidate could predict.
 | `c12-material-contract` | #53 — the four-material contract (§4.1) + the Appearance-section Material picker (§4.9); one of the two holes in #48 | `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/model/AppMaterial.kt`, `app/src/main/java/com/idomarhaim/goalpilot/data/prefs/`, `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-20/c12-material-contract.md`, `kb-candidates/2026-08-20-c12-material-contract.md`, `sessions/c12-material-contract.md` | Gradle daemon, adb, device/emulator | 2026-08-20 |
 > 🏁 **`8-notifications` RELEASED 2026-08-20 — `0f7dadd` (claim, see below) → `99d3e31` (ship).**
 > Singletons released: Gradle daemon, adb, AVD `Pixel_10_Pro_XL`.
