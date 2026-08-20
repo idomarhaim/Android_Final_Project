@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r4) | close the one `unverified` item — the never-log claim is now OBSERVED | `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/done/c13-key-store.md` | _none_ | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
