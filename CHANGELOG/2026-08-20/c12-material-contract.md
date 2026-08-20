@@ -191,3 +191,25 @@ carve-out precondition 2 makes for it. The single rename is this brief's own clo
 **One thing worth a second look and not a stop: 16 PNGs, ~3.7 MB.** They are the render pass the
 brief requires (*"put the images in the changelog"*), at half resolution, in the established
 `docs/render-passes/` folder — deliberate payload rather than an accidental binary.
+
+---
+
+## 📥 Ingested — the candidate file is drained and deleted
+
+All six entries landed in the central bundle (`C:\Dev\JARVIS` `f0ba032`), so the file is deleted
+here rather than trimmed — the one carve-out `rules/derivable-decision.md` §1 permits without
+asking. That repo's `kb/log/2026-08-20.md` names this file **with its repo**, which is the only
+candidate-to-page tie that survives two repos and two commits.
+
+- 📥 **Ingested:** `ColorScheme` has no `equals` → `kb/dev/framework-types-without-equals.md` *(new)*
+- 📥 **Ingested:** generated values need a guard over the **axes** → `kb/dev/generated-values-need-matrix-guards.md` *(new)*
+- 📥 **Ingested:** `BlurMaskFilter` below API 28 → `kb/dev/compose-soft-shadows-below-api-28.md` *(new)*
+- 📥 **Ingested:** conform · exempt · loosen → `kb/dev/crude-guard-false-positives.md` *(new)*
+- 📥 **Ingested:** the screen-off render hang → `kb/dev/android-device-verification.md` **§2a**
+- 📥 **Ingested:** `am instrument`'s runner name → `kb/dev/android-device-verification.md` **§8b**
+
+**The reconcile grep paid for itself twice, and both are the argument for running it.** §2 already
+owned the *wedge symptom* I had found a new **cause** for — writing a page would have produced two
+descriptions of one failure. And `### 8a` had been added **the same day** by a sibling session, so
+my subsection had to be numbered **8b** against HEAD rather than against the file as my own
+candidate described it.
