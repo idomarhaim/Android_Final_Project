@@ -10,7 +10,11 @@ import com.idomarhaim.goalpilot.data.firestore.TaskRepositoryImpl
 import com.idomarhaim.goalpilot.data.health.HealthConnectManager
 import com.idomarhaim.goalpilot.data.prefs.AppPreferencesRepositoryImpl
 import com.idomarhaim.goalpilot.data.remote.RecommendationRepositoryImpl
+import com.idomarhaim.goalpilot.data.security.AiCredentialStore
+import com.idomarhaim.goalpilot.data.security.DefaultAiProviderRepository
+import com.idomarhaim.goalpilot.data.security.EncryptedAiCredentialStore
 import com.idomarhaim.goalpilot.data.storage.StorageRepositoryImpl
+import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
@@ -35,6 +39,26 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    /**
+     * `C13`'s provider abstraction (#54). Bound like every other repository, so
+     * the credential is reachable only through the domain interface — no caller
+     * can hold the store and read the key off it.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindAiProviderRepository(
+        impl: DefaultAiProviderRepository,
+    ): AiProviderRepository
+
+    /**
+     * The Keystore half, bound separately so the repository above stays free of
+     * `Context` and testable on the JVM. Substituting this one binding is the
+     * whole seam — see `AiCredentialStore`.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindAiCredentialStore(impl: EncryptedAiCredentialStore): AiCredentialStore
 
     @Binds
     @Singleton

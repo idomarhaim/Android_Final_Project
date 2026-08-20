@@ -66,6 +66,21 @@ kotlinxSerialization = "1.7.3"
 # — tracked in TODO/TODO_FUTURE/, deliberately not bundled into this feature.
 healthConnect = "1.1.0-beta01"
 
+# ── Security (C13's encrypted key store, #54 / decided in #32) ─────
+# `androidx.security:security-crypto` is the artifact #32 §1 names by name, and
+# it is the only new client-side dependency C13 creates.
+#
+# The alpha, not 1.0.0, and the choice is between two FROZEN artifacts rather
+# than between stable and bleeding edge: Google deprecated this whole library in
+# 2025 and shipped no replacement for a Keystore-backed SharedPreferences, so
+# neither line will move again. 1.0.0's entry point is `MasterKeys.getOrCreate`,
+# deprecated in favour of the `MasterKey.Builder` that only exists from
+# 1.1.0-alpha; taking 1.0.0 means writing a call that is deprecated on arrival.
+#
+# Pre-release deps are not new here — Health Connect is on a beta and App
+# Distribution on `-beta20`, both for the same shape of reason.
+securityCrypto = "1.1.0-alpha06"
+
 # ── Test ───────────────────────────────────────────────────────────
 junit = "4.13.2"
 mockk = "1.13.13"
@@ -133,6 +148,9 @@ androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidge
 
 # WorkManager (local notification scheduling)
 androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+
+# Security (C13's encrypted key store) — see the version note above
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 # Unit test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

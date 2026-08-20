@@ -4,6 +4,9 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.CloudFunctions
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
+import com.idomarhaim.goalpilot.domain.model.AiAnswer
+import com.idomarhaim.goalpilot.domain.model.AiCallEnvelope
+import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -13,6 +16,7 @@ import com.idomarhaim.goalpilot.domain.model.TaskClassification
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
 import com.idomarhaim.goalpilot.domain.model.TaskScoring
+import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.tasks.await
@@ -25,10 +29,42 @@ import javax.inject.Singleton
  * Calls the GROQ proxy Cloud Functions (spec §5, §6). If the network/LLM call
  * fails or returns nothing usable, it falls back to deterministic, locally
  * generated guidance so the feature never blocks or crashes (spec §8).
+ *
+ * ## `C13`'s ladder, and where each rung is implemented (#54, #32 §5)
+ *
+ * ```
+ * user key  →  free model (GROQ, project key)  →  local fallback (spec §8)
+ * ```
+ *
+ * Only the **third** rung is this class's. The first two are one callable away:
+ * the credential travels in the payload (#32 §2) and the Cloud Function decides
+ * between them, so there is exactly **one** copy of every prompt and every
+ * `C11b` schema no matter whose key pays. That was §2's deciding argument —
+ * mechanism count, not security — and it is why a bring-your-own key adds no
+ * outbound path from this app to any model provider.
+ *
+ * ## One switch, all four AI features
+ *
+ * §4: key present means key used, in the recommendation feed, in classification
+ * and in scoring — the three calls below — and in `C10`'s daily practical line.
+ * Per-feature opt-in was rejected as four opinions to hold for no gain.
+ *
+ * ## Every call reports who answered
+ *
+ * [AiProviderRepository.recordAnswer] fires on all three paths including the
+ * exception one, because a status line that only updates on success would go
+ * stale exactly when it matters. The `catch` blocks record [AiAnswer.Local]:
+ * nothing reached a provider, so nothing was learned about the key either.
+ *
+ * ⚠️ **Nothing here logs.** The payloads below carry the user's key from #54's
+ * one unit that handles a secret; `catch (e: Exception)` deliberately swallows
+ * without a `Log` call, and adding one would put a request object one
+ * interpolation away from a third-party secret.
  */
 @Singleton
 class RecommendationRepositoryImpl @Inject constructor(
     private val functions: FirebaseFunctions,
+    private val aiProvider: AiProviderRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : RecommendationRepository {
 
@@ -37,8 +73,9 @@ class RecommendationRepositoryImpl @Inject constructor(
         completedTasksLast7d: Int,
         totalPoints: Long,
     ): Resource<List<Recommendation>> = withContext(io) {
+        val credential = aiProvider.credential.value
         try {
-            val payload = hashMapOf(
+            val payload = hashMapOf<String, Any>(
                 "goals" to goals.map {
                     mapOf(
                         "id" to it.id,
@@ -53,12 +90,15 @@ class RecommendationRepositoryImpl @Inject constructor(
                 },
                 "completedTasksLast7d" to completedTasksLast7d,
                 "totalPoints" to totalPoints,
-            )
+            ).withCredential(credential)
             val result = functions.getHttpsCallable(CloudFunctions.GET_RECOMMENDATIONS)
                 .call(payload).await()
-            val parsed = parseRecommendations(result.getData())
+            val data = result.getData()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(data, credential))
+            val parsed = parseRecommendations(data)
             Resource.Success(parsed.ifEmpty { fallbackRecommendations(goals, completedTasksLast7d, totalPoints) })
         } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
             Resource.Success(fallbackRecommendations(goals, completedTasksLast7d, totalPoints))
         }
     }
@@ -68,8 +108,9 @@ class RecommendationRepositoryImpl @Inject constructor(
         goals: List<Goal>,
         lifeAreas: List<LifeArea>,
     ): Resource<TaskClassification> = withContext(io) {
+        val credential = aiProvider.credential.value
         try {
-            val payload = hashMapOf(
+            val payload = hashMapOf<String, Any>(
                 "taskTitle" to taskTitle,
                 "goals" to goals.map {
                     mapOf(
@@ -80,20 +121,27 @@ class RecommendationRepositoryImpl @Inject constructor(
                     )
                 },
                 "lifeAreas" to lifeAreas.map { mapOf("id" to it.id, "name" to it.name) },
-            )
+            ).withCredential(credential)
             val result = functions.getHttpsCallable(CloudFunctions.CLASSIFY_TASK)
                 .call(payload).await()
-            val parsed = parseClassification(result.getData())
+            val data = result.getData()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(data, credential))
+            val parsed = parseClassification(data)
             Resource.Success(parsed ?: fallbackClassification(taskTitle, goals, lifeAreas))
         } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
             Resource.Success(fallbackClassification(taskTitle, goals, lifeAreas))
         }
     }
 
     override suspend fun scoreTask(taskTitle: String): Resource<TaskEstimate> = withContext(io) {
+        val credential = aiProvider.credential.value
         try {
+            val payload = hashMapOf<String, Any>("taskTitle" to taskTitle)
+                .withCredential(credential)
             val result = functions.getHttpsCallable(CloudFunctions.SCORE_TASK)
-                .call(hashMapOf("taskTitle" to taskTitle)).await()
+                .call(payload).await()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(result.getData(), credential))
             val data = result.getData() as? Map<*, *>
             val points = (data?.get("points") as? Number)?.toInt()
                 ?.coerceIn(TaskScoring.MIN_POINTS, TaskScoring.MAX_POINTS)
@@ -108,6 +156,7 @@ class RecommendationRepositoryImpl @Inject constructor(
             val minutes = TaskDuration.sanitize((data?.get("minutes") as? Number)?.toInt())
             Resource.Success(TaskEstimate(points = points, minutes = minutes))
         } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
             // Points still fall back — spec §8, and #9 does not touch scoring. The
             // duration does not: no model spoke, so there is no duration to report.
             Resource.Success(
@@ -115,6 +164,20 @@ class RecommendationRepositoryImpl @Inject constructor(
             )
         }
     }
+
+    /**
+     * Adds #32 §2's `provider · model · key` to a payload, or **nothing at all**
+     * when no key is set.
+     *
+     * Written as one extension used by all three calls rather than inlined
+     * three times: §4 decided *one switch, all four AI features*, and three
+     * hand-copied insertions is exactly how a fourth call site gets added
+     * without one. A call with no credential produces a payload byte-identical
+     * to the one this app sent before `C13`.
+     */
+    private fun HashMap<String, Any>.withCredential(
+        credential: AiCredential?,
+    ): HashMap<String, Any> = apply { putAll(AiCallEnvelope.credentialFields(credential)) }
 
     // ── Parsing ────────────────────────────────────────────────────
     private fun parseRecommendations(data: Any?): List<Recommendation> {

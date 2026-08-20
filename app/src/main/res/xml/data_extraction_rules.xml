@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup and transfer exclusions for API 31+ (`android:dataExtractionRules`).
+
+  The API 30-and-below twin is `res/xml/backup_rules.xml`; `minSdk` here is 26,
+  so BOTH are live and both must name the same file. See that file for why the
+  exclusion exists at all (#54, decided in #32 §1).
+
+  Two sections rather than one, and the second is the one that gets forgotten:
+
+  * `cloud-backup` is the Google Drive upload — the same route the API 30 rules
+    cover.
+  * `device-transfer` is the phone-to-phone copy on setup, and it is a DIFFERENT
+    channel with its own opt-out. Excluding only the cloud half would leave a
+    user's key riding a device transfer, which is precisely the *re-entered on a
+    new device* behaviour #32 §1 chose on purpose.
+
+  Nothing else is excluded: the skin, language and day schedule are not secrets
+  and should follow the user to a new phone.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="goalpilot_ai_credentials.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="goalpilot_ai_credentials.xml" />
+    </device-transfer>
+</data-extraction-rules>

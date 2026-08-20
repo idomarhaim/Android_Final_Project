@@ -4,6 +4,10 @@ import com.google.common.truth.Truth.assertThat
 import com.google.firebase.functions.FirebaseFunctions
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.data.remote.RecommendationRepositoryImpl
+import com.idomarhaim.goalpilot.data.security.AiCredentialStore
+import com.idomarhaim.goalpilot.data.security.DefaultAiProviderRepository
+import com.idomarhaim.goalpilot.domain.model.AiAnswer
+import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
@@ -18,7 +22,22 @@ import org.junit.Test
 class RecommendationRepositoryFallbackTest {
 
     private val functions = mockk<FirebaseFunctions>()
-    private val repo = RecommendationRepositoryImpl(functions, UnconfinedTestDispatcher())
+
+    /**
+     * `C13` (#54) gave this repository a second dependency. A real
+     * [DefaultAiProviderRepository] over an empty in-memory store rather than a
+     * mock, because that is the state every install is in by default — **no key
+     * set** — and it is the state these fallback tests are about: spec §8's
+     * local guidance must be reached identically whether or not `C13` exists.
+     */
+    private val emptyStore = object : AiCredentialStore {
+        override fun read(): AiCredential? = null
+        override fun write(credential: AiCredential) = Unit
+        override fun clear() = Unit
+    }
+    private val aiProvider = DefaultAiProviderRepository(emptyStore)
+    private val repo =
+        RecommendationRepositoryImpl(functions, aiProvider, UnconfinedTestDispatcher())
 
     private val goals = listOf(
         Goal(id = "g1", title = "Run 5k", currentValue = 10.0, targetValue = 100.0),
@@ -115,5 +134,17 @@ class RecommendationRepositoryFallbackTest {
         // 40 words → 5 + 120 clamped to 50; 1 word → 5 + 3 = 8.
         assertThat((long as Resource.Success).data.points).isEqualTo(50)
         assertThat((short as Resource.Success).data.points).isEqualTo(8)
+    }
+
+    @Test
+    fun `a call that never reaches a provider is reported as the local rung`() = runTest {
+        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+
+        repo.scoreTask("write the report")
+
+        // #54 piece 3: the status line must not be able to say "the free model
+        // answered" about a call no model saw. This is the client-side half of
+        // that — the Cloud Function's `answeredBy: "none"` is the other one.
+        assertThat(aiProvider.lastAnswer.value).isEqualTo(AiAnswer.Local())
     }
 }

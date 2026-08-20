@@ -11,6 +11,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.domain.model.AiAnswer
+import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -20,6 +22,7 @@ import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.feature.settings.SettingsContent
 import com.idomarhaim.goalpilot.feature.settings.TAG_ACCOUNT_CONSEQUENCE
+import com.idomarhaim.goalpilot.feature.settings.TAG_AI_STATUS
 import com.idomarhaim.goalpilot.feature.settings.TAG_PLANNING_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.TAG_PROFILE_ROW
 import com.idomarhaim.goalpilot.feature.settings.TAG_REGION_CONSEQUENCE
@@ -65,6 +68,8 @@ class SettingsScreenTest {
         initialRegion: AppRegion = AppRegion.SYSTEM,
         initialMaterial: AppMaterial = AppMaterial.DEFAULT,
         initialSchedule: DaySchedule = DaySchedule.DEFAULT,
+        initialAiCredential: AiCredential? = null,
+        aiLastAnswer: AiAnswer? = null,
         signedIn: Boolean = true,
         onOpenProfile: () -> Unit = {},
     ) {
@@ -75,6 +80,7 @@ class SettingsScreenTest {
             var brightness by remember { mutableStateOf(AppBrightness.DEFAULT) }
             var material by remember { mutableStateOf(initialMaterial) }
             var language by remember { mutableStateOf(AppLanguage.ENGLISH) }
+            var aiCredential by remember { mutableStateOf(initialAiCredential) }
 
             GoalPilotTheme(skin = skin, material = material) {
                 SettingsContent(
@@ -93,6 +99,14 @@ class SettingsScreenTest {
                     onPlanningOverrideMinutes = {
                         schedule = schedule.copy(planningOverrideMinutes = it)
                     },
+                    // C13 (#54): real editable state, like everything else here,
+                    // so `MaterialPickerUiTest`-style save/replace/delete flows
+                    // are exercised end to end rather than asserted on a
+                    // constant. See `AiSectionUiTest` for those.
+                    aiCredential = aiCredential,
+                    aiLastAnswer = aiLastAnswer,
+                    onAiCredential = { aiCredential = it },
+                    onClearAiCredential = { aiCredential = null },
                     onBack = {},
                     onOpenProfile = if (signedIn) onOpenProfile else null,
                 )
@@ -115,6 +129,35 @@ class SettingsScreenTest {
         setContent()
         composeRule.onNodeWithTag(TAG_SCOPE_LINE).assertIsDisplayed()
         assertThat(textOf(TAG_SCOPE_LINE)).contains("sign out")
+    }
+
+    /**
+     * §0.4 forbids the app to be silent about what outlives sign-out, and after
+     * `C13` #54 the encrypted API key is the one thing here a user might *want*
+     * gone when they sign out. The scope line names it, and names the way out.
+     */
+    @Test
+    fun theScopeLineNamesTheKeyThatOutlivesSignOut() {
+        setContent()
+        val line = textOf(TAG_SCOPE_LINE)
+        assertThat(line).contains("API key")
+        assertThat(line).contains("remove")
+    }
+
+    // ------------------------------------------------- §4.9's fifth section
+
+    /**
+     * `#48` shipped four of §4.9's five sections and recorded the fifth as
+     * missing. `#54` built it, so the assertion that matters on the *screen* is
+     * that the section is there at all — the controls inside it are
+     * `AiSectionUiTest`'s.
+     */
+    @Test
+    fun theAiSectionIsOnTheScreenAndSpeaksBeforeAnyKeyExists() {
+        setContent()
+        composeRule.onNodeWithTag(TAG_AI_STATUS).performScrollTo().assertIsDisplayed()
+        // The default state: no key, and the row still says which model answers.
+        assertThat(textOf(TAG_AI_STATUS)).contains("free model")
     }
 
     // ----------------------------------------- week start, measured on device

@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.domain.model.AiAnswer
+import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -79,23 +81,31 @@ import java.util.Locale
  * > **Profile is the account, Settings is the device, and sign-out is the
  * > test.**
  *
- * ## What is here, and what is deliberately not
+ * ## What is here
  *
- * §4.9 lists five sections. Four are built here — Appearance, Language &
- * region, Your day, Account. **One control it names is not, and it is not an
- * oversight:**
+ * §4.9 lists five sections and **all five are built**: Appearance, Language &
+ * region, Your day, AI, Account.
  *
- * | Missing | Why | Whose ticket |
+ * ⚠️ **Two of them were entries in a *missing* table here until 2026-08-20**,
+ * and the table is deleted rather than hedged, because both of its reasons have
+ * been removed by the tickets that owned them:
+ *
+ * | Was missing | Its stated reason | Closed by |
  * |---|---|---|
- * | the whole **AI** section | its three controls are `C13`'s — an `EncryptedSharedPreferences` key store (`androidx.security:security-crypto`, not a dependency here), a provider abstraction, and a status line naming which provider answered. Every model call goes through the Cloud Function proxy today and the client holds no key at all | `C13`, designed in #32, unbuilt |
+ * | the whole **AI** section | *"its three controls are `C13`'s — an `EncryptedSharedPreferences` key store (`androidx.security:security-crypto`, not a dependency here), a provider abstraction, and a status line naming which provider answered"* | `C13` [#54](https://github.com/idomarhaim/Android_Final_Project/issues/54) — all three exist; see [AiCard] |
+ * | Appearance's **material tiles** | *"§4.1's four-material contract does not exist in this codebase"* | `C12` [#53](https://github.com/idomarhaim/Android_Final_Project/issues/53) |
  *
- * It is recorded in the changelog rather than shown as a disabled row. §4.9
- * rules that **a lock is a word, never a dimming** — and the honest word for a
- * section whose subsystem does not exist belongs in the backlog, not on the
- * user's screen.
+ * Both were right when written, and both were recorded in the changelog rather
+ * than shown as disabled rows — §4.9 rules that **a lock is a word, never a
+ * dimming**, and the honest word for a section whose subsystem does not exist
+ * belongs in the backlog and not on the user's screen. That principle survives
+ * the table it produced: [AiCard] applies it *inside* the AI section, where an
+ * install with no key gets one action rather than three controls that would
+ * change nothing.
  *
- * ⚠️ **Appearance's material tiles were the second entry in that table until
- * `C12` #53** — *"§4.1's four-material contract does not exist in this
+ * ⚠️ **The material tiles' own note, kept because it says what `C12` changed:**
+ * they were the second entry in that table until
+ * `C12` #53 — *"§4.1's four-material contract does not exist in this
  * codebase — no `AppMaterial`, no palette transform, and no open issue
  * scheduling one. A picker over materials nothing renders is a control that
  * changes nothing."* That was the right call and #53 removed its reason:
@@ -124,6 +134,8 @@ fun SettingsScreen(
     val language by viewModel.language.collectAsStateWithLifecycle()
     val region by viewModel.region.collectAsStateWithLifecycle()
     val schedule by viewModel.daySchedule.collectAsStateWithLifecycle()
+    val aiCredential by viewModel.aiCredential.collectAsStateWithLifecycle()
+    val aiLastAnswer by viewModel.aiLastAnswer.collectAsStateWithLifecycle()
 
     SettingsContent(
         skin = skin,
@@ -139,6 +151,10 @@ fun SettingsScreen(
         schedule = schedule,
         onWakingHours = viewModel::setWakingHours,
         onPlanningOverrideMinutes = viewModel::setPlanningOverrideMinutes,
+        aiCredential = aiCredential,
+        aiLastAnswer = aiLastAnswer,
+        onAiCredential = viewModel::setAiCredential,
+        onClearAiCredential = viewModel::clearAiCredential,
         onBack = onBack,
         onOpenProfile = onOpenProfile,
     )
@@ -170,6 +186,10 @@ fun SettingsContent(
     schedule: DaySchedule,
     onWakingHours: (WakingHours) -> Unit,
     onPlanningOverrideMinutes: (Int?) -> Unit,
+    aiCredential: AiCredential?,
+    aiLastAnswer: AiAnswer?,
+    onAiCredential: (AiCredential) -> Unit,
+    onClearAiCredential: () -> Unit,
     onBack: () -> Unit,
     onOpenProfile: (() -> Unit)?,
 ) {
@@ -233,6 +253,14 @@ fun SettingsContent(
                 onFollowWakingHours = { onPlanningOverrideMinutes(null) },
             )
 
+            SectionHeader(stringResource(R.string.settings_ai_title))
+            AiCard(
+                credential = aiCredential,
+                lastAnswer = aiLastAnswer,
+                onSave = onAiCredential,
+                onClear = onClearAiCredential,
+            )
+
             SectionHeader("Account")
             AccountCard(onOpenProfile = onOpenProfile)
 
@@ -271,17 +299,24 @@ fun SettingsContent(
 /**
  * §4.9: *"the screen opens with a **scope line**, not a title alone"*.
  *
- * §0.4 forbids the app to be silent about what outlives sign-out. §4.9's own
- * example of that is `C13`'s encrypted third-party key, which is not built — so
- * this line states the scope that **is** true today rather than announcing a
- * secret the app does not hold. It is a sentence to rewrite the day `C13`
- * lands, not one to delete.
+ * §0.4 forbids the app to be silent about what outlives sign-out, and §4.9's own
+ * example of that is `C13`'s encrypted third-party key.
+ *
+ * ⚠️ **Rewritten by `C13` #54, exactly as this KDoc said it would be.** It used
+ * to end at *"it stays exactly as it is when you sign out"* and carried a note
+ * saying the key was not built, so the line must not announce a secret the app
+ * does not hold. The app holds one now, so the second sentence names it: the
+ * key is the one thing here a user might *want* gone when they sign out, and
+ * §0.4's whole point is that the app may not be silent about that. The word
+ * **removed** is doing work — it says the door exists and where it is, which is
+ * what stops *"stays on this phone"* reading as *"you are stuck with it"*.
  */
 @Composable
 private fun ScopeLine() {
     Text(
         text = "Everything here belongs to this phone, not to your account. " +
-            "It stays exactly as it is when you sign out.",
+            "It stays exactly as it is when you sign out — including your own " +
+            "API key, if you add one, until you remove it below.",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
@@ -625,7 +660,7 @@ private fun AccountCard(onOpenProfile: (() -> Unit)?) {
  * failure §4.9's table exists to prevent.
  */
 @Composable
-private fun SettingDescription(text: String) {
+internal fun SettingDescription(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
@@ -635,7 +670,7 @@ private fun SettingDescription(text: String) {
 }
 
 @Composable
-private fun SettingLabel(text: String) {
+internal fun SettingLabel(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleSmall,
@@ -646,7 +681,7 @@ private fun SettingLabel(text: String) {
 
 /** A tappable row showing the current value of a setting edited in a window. */
 @Composable
-private fun ValueRow(
+internal fun ValueRow(
     value: String,
     onClick: () -> Unit,
     testTag: String,

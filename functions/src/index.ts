@@ -38,6 +38,16 @@ export { projectPoints, projectChallengeScore } from "./projection";
 // into offering a value the validator then silently drops.
 import { CATEGORIES, listsFromRequest, validateClassification } from "./classify";
 
+// `C13`'s four provider adapters (#54, decided in #32). Firebase-free for the same
+// reason `classify.ts` is: `test/providers.test.mjs` runs them under plain
+// `node --test` with no emulator.
+import {
+  callUserProvider,
+  credentialFromRequest,
+  ProviderError,
+  type FailureClass,
+} from "./providers";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 // GROQ deprecated llama-3.1-8b-instant on 2026-06-17 (shutdown 2026-08-16) and
 // recommends openai/gpt-oss-20b as its replacement. Override per deployment with
@@ -46,7 +56,18 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
 
-/** Calls GROQ's OpenAI-compatible chat endpoint and parses a JSON object reply. */
+/**
+ * Calls GROQ's OpenAI-compatible chat endpoint on **the project's own key** and
+ * parses a JSON object reply — rung two of `C13`'s ladder, and the only rung
+ * this app had before `C13`.
+ *
+ * The error body is still interpolated into the thrown message, and that is
+ * deliberate rather than an oversight: this key is GoalPilot's, its error text
+ * is GoalPilot's, and losing it would make the free tier harder to debug for
+ * nothing. #32's spec line is scoped to a **user-key** call, and a user's key
+ * never reaches this function — `providers.ts` handles those and never reads a
+ * response body at all.
+ */
 async function callGroqJson(system: string, user: string): Promise<any> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY is not configured");
@@ -78,6 +99,111 @@ async function callGroqJson(system: string, user: string): Promise<any> {
   return JSON.parse(content);
 }
 
+/**
+ * What a callable reports about **who answered** — `C13`'s honesty half
+ * (#54 piece 3, #32 §5).
+ *
+ * Spread into every callable's own return value rather than wrapping it, so the
+ * response shape stays backward compatible: a client that predates `C13` reads
+ * the fields it always read and ignores these.
+ */
+interface Answered {
+  json: any;
+  answeredBy: "user" | "proxy";
+  keyError?: { class: FailureClass; status: number };
+}
+
+/**
+ * #32 §5's ladder — **rungs one and two**, which are both this function's.
+ *
+ * ```
+ * user key  ->  free model (GROQ, project key)  ->  local fallback (spec §8)
+ * ```
+ *
+ * The third rung is the Android client's and is reached by this function
+ * throwing or by it reporting that nothing answered. The ladder **never
+ * degrades below where the app stood before `C13`**: with no credential in the
+ * payload this is exactly the old `callGroqJson` call, byte for byte.
+ *
+ * ## What is logged when a user's key fails
+ *
+ * The adapter, the status and the class. **Never the provider's error body** —
+ * the spec line #32 filed after finding `callGroqJson` throwing
+ * `GROQ HTTP ${status}: ${body}` into `logger.error`, which is harmless on the
+ * project's own key and is a third-party provider's error text in Google's logs
+ * the moment a user key is in play. `providers.ts` makes that structural: its
+ * `ProviderError` has no body field to log, and the response body is never read.
+ *
+ * `logger.warn` and not `logger.error`: a user key failing is an expected state
+ * of this system with a defined behaviour, not a fault of the service.
+ */
+async function answer(
+  request: CallableRequest,
+  system: string,
+  user: string,
+): Promise<Answered> {
+  const cred = credentialFromRequest(request.data);
+  if (!cred) return { json: await callGroqJson(system, user), answeredBy: "proxy" };
+
+  try {
+    return { json: await callUserProvider(cred, system, user), answeredBy: "user" };
+  } catch (e) {
+    const keyError = e instanceof ProviderError
+      ? { class: e.failureClass, status: e.status }
+      : { class: "transient" as FailureClass, status: 0 };
+    logger.warn("user provider failed, falling back to the free model", {
+      provider: cred.provider,
+      status: keyError.status,
+      class: keyError.class,
+    });
+    // Rung two. If THIS throws as well, it propagates to the caller's catch,
+    // which is rung three — and `keyError` goes with it, because a dead key is
+    // still dead when the free model is down too.
+    try {
+      return { json: await callGroqJson(system, user), answeredBy: "proxy", keyError };
+    } catch (proxyError) {
+      throw new LadderError(keyError, proxyError);
+    }
+  }
+}
+
+/**
+ * Both rungs failed. Carries the user-key class forward so the caller can still
+ * report it — the combination where the app is furthest from working is the one
+ * where it must not go quiet. See `AiAnswer.keyFailure` on the Kotlin side.
+ */
+class LadderError extends Error {
+  constructor(
+    readonly keyError: { class: FailureClass; status: number },
+    readonly cause: unknown,
+  ) {
+    super("both the user key and the free model failed");
+    this.name = "LadderError";
+  }
+}
+
+/** The `answeredBy` / `keyError` half of a response, ready to spread. */
+function provenance(a: Answered) {
+  return a.keyError
+    ? { answeredBy: a.answeredBy, keyError: a.keyError }
+    : { answeredBy: a.answeredBy };
+}
+
+/**
+ * The same half for a call where **nothing answered** — the third rung, reported
+ * rather than inferred.
+ *
+ * `"none"` is deliberately distinct from omitting the field: an omitted
+ * `answeredBy` means a deployment that predates `C13` and really did answer on
+ * the project key, so collapsing the two would make an outage read as *"the free
+ * model answered"*. `AiCallEnvelope.answeredBy` states the same rule from the
+ * other end.
+ */
+function nothingAnswered(e: unknown) {
+  const keyError = e instanceof LadderError ? e.keyError : undefined;
+  return keyError ? { answeredBy: "none", keyError } : { answeredBy: "none" };
+}
+
 /** Recommendations + encouragement (spec §6 Core). */
 export const getRecommendations = onCall(async (request: CallableRequest) => {
   const { goals = [], completedTasksLast7d = 0, totalPoints = 0 } = request.data ?? {};
@@ -96,11 +222,16 @@ export const getRecommendations = onCall(async (request: CallableRequest) => {
     "Give recommendations to keep momentum and improve weaker goals.";
 
   try {
-    const json = await callGroqJson(system, user);
-    return { recommendations: Array.isArray(json?.recommendations) ? json.recommendations : [] };
+    const a = await answer(request, system, user);
+    return {
+      recommendations: Array.isArray(a.json?.recommendations) ? a.json.recommendations : [],
+      ...provenance(a),
+    };
   } catch (e) {
     logger.error("getRecommendations failed", e);
-    return { recommendations: [] };
+    // The client falls back to spec §8's local guidance on an empty list, so the
+    // honest report is that NOTHING answered — not that the free model did.
+    return { recommendations: [], ...nothingAnswered(e) };
   }
 });
 
@@ -151,7 +282,8 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
     `Life areas: ${JSON.stringify(lifeAreas)}.`;
 
   try {
-    return validateClassification(await callGroqJson(system, user), lists);
+    const a = await answer(request, system, user);
+    return { ...validateClassification(a.json, lists), ...provenance(a) };
   } catch (e) {
     // §3.4, the **transport** class: whole-response fallback, silent, no retry — and
     // the whole-response fallback is the CLIENT's (spec §8), which has to work offline
@@ -165,6 +297,13 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
     // branch** — the one branch in §3.4's table that speaks. A dead network made the app
     // announce a new goal. Throwing puts the failure back where the contract says it is.
     logger.error("classifyTask failed", e);
+    // `C13` note: this stays a THROW rather than a `nothingAnswered` object,
+    // because §3.4's transport class hands the whole response to the client's own
+    // fallback and an object here would be the second implementation that
+    // paragraph exists to forbid. The client's catch records `AiAnswer.Local`,
+    // which is the same third rung by a different route — what it loses is the
+    // user-key CLASS, so a dead key discovered on a classify call is reported by
+    // the next feed or scoring call instead of this one.
     throw e;
   }
 });
@@ -184,9 +323,9 @@ export const scoreTask = onCall(async (request: CallableRequest) => {
     "for one sitting of a personal task. The title may be in any language, including Hebrew. " +
     "Reply ONLY with JSON: {\"points\":number,\"minutes\":number}.";
   try {
-    const json = await callGroqJson(system, `Task: "${taskTitle}"`);
-    const points = Number(json?.points);
-    const minutes = Number(json?.minutes);
+    const a = await answer(request, system, `Task: "${taskTitle}"`);
+    const points = Number(a.json?.points);
+    const minutes = Number(a.json?.minutes);
     const safePoints = Number.isFinite(points)
       ? Math.min(50, Math.max(5, Math.round(points)))
       : 10;
@@ -195,9 +334,10 @@ export const scoreTask = onCall(async (request: CallableRequest) => {
       minutes: Number.isFinite(minutes)
         ? Math.min(480, Math.max(5, Math.round(minutes)))
         : safePoints * 3,
+      ...provenance(a),
     };
   } catch (e) {
     logger.error("scoreTask failed", e);
-    return { points: 10, minutes: 30 };
+    return { points: 10, minutes: 30, ...nothingAnswered(e) };
   }
 });

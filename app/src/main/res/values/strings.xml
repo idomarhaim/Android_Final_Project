@@ -41,6 +41,15 @@
     <string name="settings_language_system">System default</string>
 
     <!--
+      C13's AI section (#54, decided in #32). Section title and description are
+      resources like Appearance's and Language's; the card's own sentences are
+      literals like every other card in feature/settings/, which #51's literal
+      sweep has not reached (AnalyticsLiteralSweepTest.SWEPT_PACKAGES).
+    -->
+    <string name="settings_ai_title">AI</string>
+    <string name="settings_ai_description">GoalPilot answers with its own free model. You can add your own API key instead — it stays on this phone, encrypted, and is never saved to your account.</string>
+
+    <!--
       Notification channels (#8, spec §2.5). Channel names and descriptions are
       rendered by the SYSTEM, on a settings screen this app never draws, so they
       are the one class of user-facing text that must live in res/ even when the

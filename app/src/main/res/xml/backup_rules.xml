@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup exclusions for API 30 and below (`android:fullBackupContent`).
+
+  ONE entry, and it is C13's key store (#54, decided in #32 §1). The user's
+  third-party model API key must never leave the device, and Auto Backup is a
+  route off it that no code path in this app controls: the framework uploads
+  `shared_prefs/` to the user's Google Drive on its own schedule.
+
+  The ciphertext would be useless there — it is sealed with a Keystore master
+  key that never leaves the device and is itself never backed up — but #32 §1
+  rejected Firestore on POSTURE rather than on reachability, and a secret in a
+  backed-up store is the same posture wherever the store lives.
+
+  Everything else stays backed up on purpose: the skin, the language and the day
+  schedule are not secrets, and losing them on a device migration would be a
+  regression paid for nothing.
+
+  The path is the file `EncryptedAiProviderRepository.FILE_NAME` produces.
+  Renaming it there without changing it here silently un-excludes the key.
+  `res/xml/data_extraction_rules.xml` is this file's API 31+ twin and must move
+  with it.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="goalpilot_ai_credentials.xml" />
+</full-backup-content>

@@ -117,6 +117,16 @@ class MaterialRenderPass {
                     onPlanningOverrideMinutes = {
                         schedule.value = schedule.value.copy(planningOverrideMinutes = it)
                     },
+                    // C13 (#54) added §4.9's fifth section. Passed explicitly
+                    // rather than defaulted: a default would let a real screen
+                    // forget them and render an AI section that silently does
+                    // nothing, which is the one thing that section must not be.
+                    // This file is about the MATERIAL contract, so the AI state
+                    // is the app's default — no key, nothing asked yet.
+                    aiCredential = null,
+                    aiLastAnswer = null,
+                    onAiCredential = {},
+                    onClearAiCredential = {},
                     onBack = {},
                     onOpenProfile = {},
                 )

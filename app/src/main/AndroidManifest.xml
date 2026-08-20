@@ -40,9 +40,23 @@
         </intent>
     </queries>
 
+    <!--
+      C13's key store forces a deliberate backup posture (#54, #32 §1).
+
+      `allowBackup` STAYS `true` and the encrypted key file alone is excluded, on
+      both schemes: `fullBackupContent` for API 30 and below, `dataExtractionRules`
+      for 31+ including its device-transfer half. `minSdk` is 26, so both are live.
+
+      Turning backup off wholesale was the other candidate and was rejected: it
+      would take the theme, the language and the day schedule with it to protect a
+      file that is excluded either way. The reasoning is written out in the two
+      rule files and in `data/security/EncryptedAiProviderRepository`.
+    -->
     <application
         android:name=".GoalPilotApp"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

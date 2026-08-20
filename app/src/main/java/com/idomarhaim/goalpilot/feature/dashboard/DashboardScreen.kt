@@ -364,7 +364,12 @@ private fun AccountSheet(
         )
         ListItem(
             headlineContent = { Text("Settings", style = MaterialTheme.typography.titleMedium) },
-            supportingContent = { Text("Appearance, language, your day — stays on this phone.") },
+            // "AI" added by C13 #54, which built §4.9's fifth section. This line
+            // enumerates the sections, so leaving it at four would have made the
+            // door to the new one invisible from the one place it is opened.
+            supportingContent = {
+                Text("Appearance, language, your day, AI — stays on this phone.")
+            },
             leadingContent = {
                 Icon(
                     Icons.Filled.Tune,

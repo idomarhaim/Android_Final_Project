@@ -181,6 +181,14 @@ dependencies {
     implementation(libs.firebase.appdistribution.api)
     releaseImplementation(libs.firebase.appdistribution)
 
+    // ── Encrypted key store (C13 #54, decided in #32 §1) ──────────
+    // The ONE place a third-party secret is at rest in this app. Keystore-backed
+    // EncryptedSharedPreferences, never Firestore: #32 §1 rejected the cheaper
+    // Firestore option on posture, not on reachability. See
+    // data/security/EncryptedAiProviderRepository and the two backup-exclusion
+    // rule files it forces into the manifest.
+    implementation(libs.androidx.security.crypto)
+
     // ── Media / serialization ─────────────────────────────────────
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)

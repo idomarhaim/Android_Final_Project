@@ -1,6 +1,8 @@
 package com.idomarhaim.goalpilot.feature.settings
 
 import androidx.lifecycle.ViewModel
+import com.idomarhaim.goalpilot.domain.model.AiAnswer
+import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -8,6 +10,7 @@ import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
+import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +35,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val appPreferences: AppPreferencesRepository,
+    private val aiProvider: AiProviderRepository,
 ) : ViewModel() {
 
     val skin: StateFlow<AppSkin> = appPreferences.skin
@@ -61,4 +65,27 @@ class SettingsViewModel @Inject constructor(
     /** `null` hands *Plan tomorrow at* back to the derivation. */
     fun setPlanningOverrideMinutes(minutes: Int?) =
         appPreferences.setPlanningOverrideMinutes(minutes)
+
+    // ── C13's AI section (#54) ─────────────────────────────────────
+    //
+    // A SECOND repository on a screen whose KDoc above says depending on one
+    // and only one is "the whole design rather than a small mercy" — so the
+    // reason it is allowed here is worth stating rather than assuming. That
+    // rule is about `AuthRepository` specifically: this screen is reachable
+    // from the sign-in screen with NO ACCOUNT, and a repository that needs one
+    // would make the signed-out entry point empty or broken. `C13`'s key store
+    // is device-local exactly as the preferences are (#32 §1 rejected Firestore
+    // on that ground), needs no account, and works identically signed out. It
+    // is on the same side of §4.9's sign-out test, not the other one.
+
+    /** `null` — the default — means the Cloud Function proxy answers. */
+    val aiCredential: StateFlow<AiCredential?> = aiProvider.credential
+
+    /** Who answered the last model call this process made; drives §5's status line. */
+    val aiLastAnswer: StateFlow<AiAnswer?> = aiProvider.lastAnswer
+
+    fun setAiCredential(credential: AiCredential) = aiProvider.save(credential)
+
+    /** A real delete (#54). The app returns to the proxy path with no restart. */
+    fun clearAiCredential() = aiProvider.clear()
 }

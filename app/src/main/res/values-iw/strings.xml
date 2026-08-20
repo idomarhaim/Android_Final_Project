@@ -46,6 +46,10 @@
     <string name="settings_language_description">בחרו את השפה שבה GoalPilot מדבר. היעדים, המשימות ותחומי החיים שלכם נשארים בדיוק כפי שכתבתם אותם.</string>
     <string name="settings_language_system">ברירת המחדל של המכשיר</string>
 
+    <!-- C13's AI section (#54). Parity with values/ is enforced by HebrewLocaleResourceTest. -->
+    <string name="settings_ai_title">בינה מלאכותית</string>
+    <string name="settings_ai_description">GoalPilot עונה באמצעות המודל החינמי שלו. אפשר להוסיף מפתח API משלכם במקום — הוא נשאר על הטלפון הזה, מוצפן, ולעולם אינו נשמר לחשבון שלכם.</string>
+
     <!--
       Notification channels and bodies (#8, §2.5 / R5).
 
