@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r5) | distribute the build to Ido's phone — release signing + App Distribution | `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/done/c13-key-store.md` · `docs/RELEASING.md` | **release keystore · Gradle daemon** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
@@ -4096,6 +4095,33 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r5) RELEASED 2026-08-21 — this commit.** Singletons released: **release
+> keystore (CI-held), Gradle daemon, `emulator-5554`.** The session is finished.
+>
+> 🚀 **`v0.3.0` is distributed.** `versionCode 5`, signed in CI, uploaded and **`distributed to
+> testers/groups successfully`** — the group holds `name.iddo@gmail.com` and one other. Carries #48's
+> whole §4.9 surface, #53's material contract and #54's AI section.
+>
+> ⚠️ **THE RELEASE SIGNING KEY EXISTS IN EXACTLY ONE PLACE, AND IT IS WRITE-ONLY.**
+> `app/goalpilot-release.jks` is **gone** — no `.jks` anywhere under the user profile, no `RELEASE_*`
+> in `local.properties`. It died with the machine that was replaced. It survives **only** as the
+> GitHub secret `RELEASE_KEYSTORE_BASE64`, which cannot be read back. **Consequence:** a local
+> `assembleRelease` falls back to the debug key, so **the tag route is the only one that can produce
+> an installable update** — and if that repo or that secret is lost, no future build can ever install
+> over what testers now have. Backing it up is Ido's call and no session can do it for him; **do not**
+> try to exfiltrate it through a workflow artifact — this repo is **public**.
+>
+> 🧪 **R8 was the real risk and it was measured.** `C13`'s code had never been minified, and
+> `proguard-rules.pro` has **no Tink / `androidx.security` keep rules**. A stripped Tink would have
+> read as *"you have not added a key"*, because `openOrNull()` catches — invisible, and only in the
+> builds real users get. `Observed:` minified APK, key stored, **process force-stopped**, relaunched,
+> key still there, zero Tink errors. `security-crypto` ships its own consumer rules; that is now a
+> measurement, and it can change on a dependency bump.
+>
+> 📌 **`v0.2.2` never shipped** — its run died with *"The job was not acquired by Runner of type
+> hosted"*, a runner-allocation failure. `versionCode 4` was never distributed, which is why this is
+> **5**.
 
 > 🏁 **`c13-key-store` (r3) RELEASED 2026-08-21 — this commit.** No singletons held. The session is
 > finished: `#54` and `#48` closed, the functions deployed and verified, both boards clear.
