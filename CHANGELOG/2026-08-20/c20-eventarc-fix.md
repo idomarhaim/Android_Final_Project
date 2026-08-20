@@ -185,3 +185,143 @@ step is Ido's** and cannot be automated from here.
   resources were replaced by identical code.
 - The two projection functions were **already non-functional**, so the delete window cost nothing
   that was working.
+
+---
+
+# Round 3 — the projection was never broken. **The device was never talking to Firestore.**
+
+`gcloud` (now authenticated) took four checks to overturn the entire investigation, including two of
+my own earlier conclusions.
+
+## The chain, and where it actually broke
+
+| # | Check | Result |
+|---|---|---|
+| 1 | `gcloud eventarc triggers list` | ✅ `projectpoints-560022` **ACTIVE**, new id — the recreate worked |
+| 2 | `gcloud eventarc triggers describe` | ✅ filters `document=users/{uid}/tasks/{taskId}`, `database=(default)`, destination = the function. **Flawless.** |
+| 3 | `gcloud projects get-iam-policy` | ✅ `eventarc.serviceAgent`, `eventarc.eventReceiver`, `firestore.serviceAgent`, `pubsub.serviceAgent`, `run.invoker` — **all present.** The original permission error is long resolved. |
+| 4 | **Publish a probe straight to the trigger's Pub/Sub topic** | ✅ **the function ran 4 s later** and threw parsing my junk payload. **Delivery works end to end.** |
+
+So Eventarc, IAM, the trigger and the function are all healthy. Which left one possibility, and the
+Firestore REST API confirmed it:
+
+```
+task 7r0G8yvRFSWRek3j6ABb  "להיות רזה יפה וצודקת"  done=False  points=30
+updateTime = 2026-08-02T22:12:18Z
+```
+
+**That is the task I ticked. On the server it is still `done=False`, last written 2026-08-02.**
+Every write this session stayed in the device's local Firestore cache and **never reached the
+server**. The trigger never fired because **there was nothing to fire on** — Firestore behaved
+perfectly.
+
+## Root cause: the emulator has no DNS
+
+```
+adb shell ping 8.8.8.8               → 2/2 received, 297 ms      ← IP routing fine
+adb shell ping firestore.googleapis.com → ping: unknown host     ← name resolution dead
+nslookup firestore.googleapis.com    → 142.250.75.138            ← the HOST resolves fine
+```
+
+`Unable to resolve host firestore.googleapis.com` is, word for word, the symptom
+[#3](https://github.com/idomarhaim/Android_Final_Project/issues/3) was opened for. A wifi cycle did
+not clear it; the emulator was rebooted.
+
+`Untested:` whether the airplane-mode toggling in round 2 **caused** this or merely revealed it. The
+very first screenshot of the session (`01-launch.png`, 02:11Z) already shows the wifi icon carrying
+the no-internet `!` badge, **before** I touched anything — which points to pre-existing, but that is
+one pixel of evidence and not proof. Recorded as unresolved rather than guessed.
+
+## ⚠️ TWO CORRECTIONS TO THIS SESSION'S OWN EARLIER CLAIMS
+
+**1. `50-finish` round 2 said the offline tick "synced on reconnect: Tasks done 0 → 1". That is
+FALSE.** The counter moved because the *local cache* held the write; the server never received it.
+The reconnect reconnected the radio, not the client to Firestore. **The claim is withdrawn, not
+softened.**
+
+What round 2 **did** legitimately prove is unaffected, because none of it depends on the server:
+- ✅ The tap is **no longer refused** — no `OFFLINE_MESSAGE`, which is exactly what deleting
+  `ConnectivityMonitor` was for. **#50 item 5 remains correct and verified.**
+- ✅ The tick renders **instantly** offline, and the goal ring moves.
+- ✅ It **survives a process kill**, proving the write is in Firestore's local persistence.
+- ❌ **Sync to the server: never observed, and now known not to have happened.**
+
+**2. Rounds 1–2 called `projectPoints` a defect. It is not.** The function, its trigger, its IAM and
+its delivery path are all healthy — proven by the probe. `c20-build-half` shipped it correctly. The
+`UpdateFunction`-reuses-the-trigger finding from round 1 is still true and still worth knowing, but
+it was **not** the cause of anything observed here.
+
+## What this says about the method
+
+Three rounds of increasingly precise infrastructure work, all of it correct, all of it aimed at a
+component that was never broken — because the **client** was assumed healthy and never checked.
+Every instrument I trusted (the app UI, the dashboard counter, the leaderboard, `Tasks done 0 → 1`)
+was reading the **same local cache**, so they agreed with each other and none of them was evidence.
+The first reading that came from a genuinely independent source — the Firestore REST API — overturned
+all of them at once.
+
+**KB candidate:** *when every instrument agrees, check whether they share a source. Agreement between
+readings drawn from one cache is not corroboration, it is one reading counted N times.* Destination
+`kb/dev/look-at-your-own-output.md`, next to §4c.
+
+---
+
+# Round 4 — DNS restored, and the whole C20 pipeline works. **`projectPoints` was never broken.**
+
+## The fix
+
+`adb reboot` did **not** help — it restarts Android, not the qemu process, and the DNS config is
+inherited from qemu at launch. `net.dns1` and `net.dns2` were both **empty**. The AVD was stopped
+(scoped `adb emu kill`, never a blanket `qemu-system-x86_64` kill — `AGENTS.md` forbids that) and
+relaunched with explicit resolvers:
+
+```bash
+emulator -avd Pixel_10_Pro_XL_B -dns-server 8.8.8.8,8.8.4.4 -netdelay none -netspeed full
+```
+
+`ping firestore.googleapis.com` → **2/2 received**. The wifi icon lost its no-internet badge.
+
+## What happened in the next four seconds, unprompted
+
+The app was merely opened. Firestore flushed the write it had been holding in its offline queue
+since `03:11Z`, and the whole chain ran by itself:
+
+| Time | Event | Source |
+|---|---|---|
+| `03:38:24.828Z` | `users/…/tasks/7r0G…` → **`done=True`** | Firestore REST — the queued cache write reached the **server** |
+| `03:38:26.5Z` | `projectPoints` invoked — `uid=n3X0X…, points=30, factCount=5` | Cloud Run log, the function's own `logger.info` |
+| `03:38:26.536Z` | `publicProfiles/…` → **`points=30`**, `updatedAt` stamped | Firestore REST |
+| `03:38:26.458Z` | `users/…` → **`points=30`** | Firestore REST |
+
+**Two seconds from the fact landing to both projections being written.** The trigger fires, the
+function computes correctly, both destination documents are written, and the `updatedAt` stamp that
+had read *"Aug 17"* for the whole investigation is now current.
+
+## Verdict on three deploys' worth of work
+
+**`c20-build-half` shipped `C20` correctly.** The projection, its triggers, its IAM and its delivery
+path were healthy the entire time. Nothing in `functions/`, `firestore.rules` or the DTOs was ever
+at fault, and none of it was changed.
+
+What the deploys *did* achieve, and it is not nothing: round 1's `UpdateFunction`-reuses-the-trigger
+finding is real, correct, and would have mattered had the trigger actually been broken. It simply
+was not the cause here. The delete-and-recreate was therefore **unnecessary but harmless** — same
+code, fresh trigger, three callables untouched throughout.
+
+**The one real defect was local: an Android emulator with no DNS servers.** Every symptom followed
+from it.
+
+`Untested:` still, whether round 2's airplane-mode toggling caused the DNS loss or merely exposed it.
+`01-launch.png` (02:11Z) already shows the no-internet badge **before** any toggling, which favours
+pre-existing — but it is one pixel of evidence, so it stays marked rather than resolved.
+
+## 🧪 Tests
+
+| Layer | Result |
+|---|---|
+| **End-to-end, live** | ✅ **PASS** — tick → server write → trigger → `points=30` in both destination documents, in ~2 s |
+| **Function invocation** | ✅ `projectPoints` logs `{uid, points: 30, factCount: 5}` — the exact line the brief said to demand instead of `Deploy complete!` |
+| **Pub/Sub delivery probe** | ✅ function invoked 4 s after a manual publish (run before the fix; proved delivery was never the fault) |
+| **Eventarc / IAM** | ✅ trigger `ACTIVE`, filters correct, all five service-agent roles present |
+| **Deployed surface** | ✅ five functions, unchanged: the two projections plus `classifyTask`, `getRecommendations`, `scoreTask` |
+| **App source** | not touched this session — no Gradle build, no APK, no instrumented run |

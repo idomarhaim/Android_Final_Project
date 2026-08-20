@@ -2,12 +2,37 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 issue: 42
 created: 2026-08-20 by `50-finish` (round 3)
+closed: 2026-08-20 — RESOLVED, and the cause was NOT what this brief assumed
 ---
 
 # `C20` — `projectPoints` never fires: the trigger exists, Eventarc never wired it
+
+> ## ✅ CLOSED 2026-08-20 — RESOLVED, **and this brief's premise was wrong.**
+>
+> `projectPoints` works and always did. `c20-build-half` shipped `C20` correctly; Eventarc, IAM, the
+> trigger and the delivery path were **all healthy throughout**.
+>
+> **The real fault was the emulator having no DNS servers.** `net.dns1`/`net.dns2` empty; `ping
+> 8.8.8.8` fine, `ping firestore.googleapis.com` → *unknown host*. Every write sat in the device's
+> offline cache and never reached the server, so the trigger had nothing to fire on. Fix: `adb emu
+> kill` then relaunch with `-dns-server 8.8.8.8,8.8.4.4` — **`adb reboot` does not work**, it
+> restarts Android and not qemu.
+>
+> Proof after the fix: tick → `done=True` `03:38:24.8Z` → `projectPoints {points: 30, factCount: 5}`
+> `03:38:26.5Z` → `users.points=30` and `publicProfiles.points=30`. **Two seconds.**
+>
+> **What was still worth doing:** the `UpdateFunction`-reuses-the-trigger finding (below) is real and
+> correct, and the delete-and-recreate was harmless. It simply was not the cause.
+>
+> **The lesson worth more than the fix:** every instrument I trusted — app UI, dashboard counter,
+> leaderboard — read the **same local cache**, so they agreed with each other for three rounds while
+> all being wrong. The first genuinely independent read (Firestore REST) overturned them at once.
+>
+> Full account: [`CHANGELOG/2026-08-20/c20-eventarc-fix.md`](../CHANGELOG/2026-08-20/c20-eventarc-fix.md).
+
 
 **The diagnosis is DONE. This session is the fix and its verification — likely one command and
 ten minutes.** Needs **no device** and **no Gradle**. Needs the **live `goalpilot-56e30` project**.

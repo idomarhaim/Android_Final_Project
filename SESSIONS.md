@@ -15,7 +15,39 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c20-eventarc-fix` *(round 2)* | **Delete + recreate the two projection triggers so Eventarc mints fresh ones.** Ido authorised the deletion explicitly. ⚠️ ONLY `projectPoints` + `projectChallengeScore` — the three callables (`classifyTask`, `getRecommendations`, `scoreTask`) must survive untouched. | `sessions/c20-eventarc-fix.md` · `CHANGELOG/2026-08-20/c20-eventarc-fix.md` · `SESSIONS.md` | **live `goalpilot-56e30` functions** · **`Pixel_10_Pro_XL_B`** (signed in, no uninstall) | 2026-08-20 |
+> 🏁 **`c20-eventarc-fix` RELEASED 2026-08-20 — `2cfd90d` (claim) → `57afd55` → this note. RESOLVED.**
+> `Pixel_10_Pro_XL_B` and the live-functions claim both released. Account:
+> [`CHANGELOG/2026-08-20/c20-eventarc-fix.md`](CHANGELOG/2026-08-20/c20-eventarc-fix.md).
+>
+> ✅ **`projectPoints` WORKS AND ALWAYS DID. `c20-build-half` shipped `C20` correctly.** Live proof:
+> tick → `users/…/tasks/7r0G…` `done=True` at `03:38:24.8Z` → `projectPoints` logs
+> `{uid, points: 30, factCount: 5}` at `03:38:26.5Z` → **`users/{uid}.points = 30`** and
+> **`publicProfiles/{uid}.points = 30`** with a fresh `updatedAt`. **Two seconds, end to end.**
+>
+> ⚠️⚠️ **THE FAULT WAS NEVER IN FIREBASE, FIRESTORE, EVENTARC OR IAM — IT WAS THE EMULATOR'S DNS.**
+> `net.dns1`/`net.dns2` were **empty**; `ping 8.8.8.8` worked and `ping firestore.googleapis.com`
+> said *unknown host* — literally the symptom [#3](https://github.com/idomarhaim/Android_Final_Project/issues/3)
+> was opened for. **Every write this session sat in the device's offline cache and never reached the
+> server** (`done=False`, `updateTime=2026-08-02`, read from the Firestore REST API). The trigger did
+> not fire because **there was nothing to fire on**. Fix: `adb emu kill` (scoped) then relaunch with
+> `-dns-server 8.8.8.8,8.8.4.4`. **`adb reboot` does NOT fix it** — it restarts Android, not qemu,
+> and DNS is inherited at qemu launch.
+>
+> ⚠️ **CORRECTION TO `50-finish` r2, which is MINE:** its claim that the offline tick *"synced on
+> reconnect — Tasks done 0 → 1"* is **FALSE and withdrawn**. That counter was the local cache. What
+> r2 legitimately proved is untouched and does not depend on the server: the tap is **no longer
+> refused**, the tick renders **instantly**, and it **survives a process kill**. **#50 item 5 remains
+> correct and complete.**
+>
+> 📌 **`gcloud` IS NOW INSTALLED AND AUTHENTICATED** (SDK 581.0.0, portable zip, no admin, User
+> `PATH` + `CLOUDSDK_PYTHON`; Ido ran `gcloud auth login`). It is what broke the case open: the
+> Pub/Sub probe proved delivery worked, and the Firestore REST read proved the client never wrote.
+> ⚠️ Install notes: the documented `google-cloud-cli-windows-x86_64*.zip` URLs **404** — use
+> `google-cloud-sdk.zip`; the zip ships **no Windows wrappers**, run `install.bat --quiet`.
+>
+> 🧠 **KB candidate:** *when every instrument agrees, check whether they share a source.* The app UI,
+> the dashboard counter and the leaderboard all read one local cache, so they corroborated each other
+> for three rounds while all being wrong. One genuinely independent read overturned them at once.
 > 🏁 **`c20-eventarc-fix` *(round 1)* RELEASED 2026-08-20 — `23e8734` (claim) → `8201d70` (the
 > finding) → this note. `Pixel_10_Pro_XL_B` RELEASED**, sign-in intact, no uninstall. The brief
 > stays **`status: ready`** — the work is not finished. Account:
