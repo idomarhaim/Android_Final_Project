@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 54
 created: 2026-08-20
+result: shipped 2026-08-20 in `c4a700c` (claim `5d84251`) — #54 left OPEN on the deploy, see below
 ---
 
 # `C13` build half — the encrypted key store, so #48's AI section can exist
@@ -104,3 +105,45 @@ They are both #48's remainders, and **#48 does not close until both have landed.
 
 Seven conditions, one heading. If `c12-material-contract` has also landed, say that **#48 is now
 closable** and name posting the close comment as the next step.
+
+---
+
+## Result — 2026-08-20 (finished after midnight on 08-21)
+
+**Shipped in `c4a700c`.** All three pieces plus §4.9's AI section and its three controls.
+Full account: [`CHANGELOG/2026-08-20/c13-key-store.md`](../CHANGELOG/2026-08-20/c13-key-store.md).
+
+**Tests, every layer this project has:** functions **56/56** · JVM unit **609/609** (48 new,
+0 skipped) · instrumented **174/174** (13 new, API 35) · `firestore-tests/` not run, and `C13`
+does not reach it — nothing it stores goes to Firestore at all (#32 §1 rejected exactly that).
+
+**Four defects found by the checks rather than by reading, all fixed** — an off-screen Save button
+that discarded the typed key on a scrim tap, a status line claiming the free model was chosen over
+a key that did not yet exist, a JSON array passing an object check, and a secrecy guard whose regex
+had been corrupted into a control character so it could never fire. Each new guard now has a
+recorded negative control.
+
+### ⛔ `#54` is left OPEN, and the held item is named
+
+**`firebase deploy --only functions` has not been run.** It is an outward action against a live
+cloud environment, so it is always-ask in both modes and it is Ido's to run. Until it does, a user
+who sets a key has that key travel to a function that ignores it — so *bring-your-own key* is
+written and tested but **not live**, which is more than a formality and is why the ticket stays
+open rather than closing with a footnote.
+
+**Nothing is broken meanwhile, by construction rather than by luck.** The pre-`C13` deployment
+answers on the project key, and `AiCallEnvelope.answeredBy` reads an absent echo as *the free model
+answered* — which is the truth. `Observed:` on `emulator-5554`, with a key stored, the status row
+read *"GoalPilot's free model answered, not your OpenAI key"*.
+
+### Also not built, deliberately
+
+**#32's *test-call the key once on entry*.** It is in that ticket's *Also settled*, and it is in
+neither `#54`'s scope list nor its exit criteria — it needs a fifth callable. §5's `401/403`
+message still fires, one surface later.
+
+### `#48`
+
+Both remainders have now landed as code: `C12` #53's material contract in `05ec6aa`, and this.
+`#53` stays open on `C12` §4.4's `.tag` collapse, which is a different §4.1 item that `#48` never
+owned — so it does not hold `#48`.

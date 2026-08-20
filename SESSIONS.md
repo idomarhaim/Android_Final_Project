@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` | `C13` build half — encrypted key store, provider abstraction, status line; #48's AI section ([#54](https://github.com/idomarhaim/Android_Final_Project/issues/54)) | `gradle/libs.versions.toml` · `app/build.gradle.kts` · `app/src/main/AndroidManifest.xml` · `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Ai*.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AiCredentialRepository.kt` · `app/src/main/java/com/idomarhaim/goalpilot/data/security/**` · `app/src/main/java/com/idomarhaim/goalpilot/data/remote/RecommendationRepositoryImpl.kt` · `app/src/main/java/com/idomarhaim/goalpilot/di/**` · `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsViewModel.kt` · `app/src/main/res/values/**` · `app/src/main/res/values-iw/**` · `app/src/test/java/com/idomarhaim/goalpilot/domain/Ai*Test.kt` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/AiKeyUiTest.kt` · `functions/src/**` · `functions/test/**` · `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/c13-key-store.md` | **Gradle daemon · adb + device** | 2026-08-20 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
@@ -4096,6 +4095,28 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` RELEASED 2026-08-20 — this commit.** Singletons released: **Gradle daemon,
+> `adb`, `emulator-5554`.**
+>
+> ✅ **`C13`'s encrypted key store ships in `c4a700c`** (claim `5d84251`), so **§4.9's fifth and
+> last Settings section exists**. Tests green at every layer this project has: functions **56/56**,
+> JVM unit **609/609** (48 new), instrumented **174/174** (13 new). `firestore-tests/` not run —
+> `C13` stores nothing in Firestore, which is #32 §1's decision rather than an omission.
+>
+> ⛔ **`#54` left OPEN, and the held item is named: `firebase deploy --only functions`.** Outward
+> action against a live cloud environment, always-ask in both modes, Ido's to run. The client is
+> **honest without it** — an absent `answeredBy` echo is read as *the free model answered*, which
+> is what a pre-`C13` deployment actually does.
+>
+> 🔎 **`#48` is now closable** — both its remainders have landed as code (`C12` #53 in `05ec6aa`,
+> `C13` #54 here). `#53` stays open on `C12` §4.4's `.tag` collapse, a different §4.1 item that
+> `#48` never owned.
+>
+> 📱 **The emulator's sign-in was preserved throughout** — `install -r` + `am instrument`, never
+> `connectedDebugAndroidTest`. The obviously-fake fixture key was removed from the device before
+> the commit; `shared_prefs/goalpilot_ai_credentials.xml` holds only Tink's own two keysets.
+
 
 | Session | Task | Released | Landed in |
 |---|---|---|---|
