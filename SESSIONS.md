@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `50-finish` *(round 2)* | **Close the one open `unverified` from round 1 — observe an offline tap actually succeeding.** Ido: *"do the required fixes, if you need SIGN IN use the emulator"*, and then push. | `CHANGELOG/2026-08-20/50-finish.md` · `SESSIONS.md` | **Gradle daemon** · **`Pixel_10_Pro_XL_B` (emulator-5554)** — found already running, account `rachil751@gmail.com` present | 2026-08-20 |
 > 🏁 **`50-finish` RELEASED 2026-08-20 — `3bf280a` (claim) → the deletion commit → this note.**
 > **`#gradle-daemon` RELEASED with this commit**; no device was ever claimed, so nothing about
 > `#50` item 5 needed Ido's phone or an emulator. Account: [`CHANGELOG/2026-08-20/50-finish.md`](CHANGELOG/2026-08-20/50-finish.md).
