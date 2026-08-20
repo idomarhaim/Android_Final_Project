@@ -16,7 +16,25 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `7-quickadd-complete` | `#7` — complete a task from inside the add flow | `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModel.kt`, `app/src/main/java/com/idomarhaim/goalpilot/domain/`, `app/src/test/java/com/idomarhaim/goalpilot/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/`, `sessions/7-quickadd-complete.md`, `CHANGELOG/2026-08-20/7-quickadd-complete.md`, `kb-candidates/2026-08-20-7-quickadd-complete.md` | Gradle daemon; **AVD `Pixel_10_Pro_XL`** (claimed 2026-08-20 for the instrumented + render pass) | 2026-08-20 |
-| `ticket-close-gap` | Finished tickets are never closed — verify `#6`/`#9`/`#11` against HEAD and close them; add the missing close step to `/kickoff` §5 | `SESSIONS.md` (this row), `CHANGELOG/2026-08-20/ticket-close-gap.md`, `kb-candidates/2026-08-20-ticket-close-gap.md`, `sessions/done/6-silent-filing.md`, `sessions/done/9-duration-box.md`, `sessions/done/11-fill-buttons.md` — plus **cross-repo** `C:\Dev\JARVIS\skills\kickoff\SKILL.md` | **none.** No Gradle daemon, no device — `7-quickadd-complete` holds the daemon and its edits are in the tree, so a run here would test its work-in-progress, not HEAD | 2026-08-20 |
+> 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
+>
+> ✅ **`#6`, `#9` and `#11` closed** — three tickets whose briefs were `status: done`, whose
+> work had shipped, and which nobody had a step telling them to close. `#48` and `#51` were
+> checked too and are **correctly** open (`#48` held two sections into `#53`/`#54`; `#51` is
+> parked with `51-freeze-verify` still `ready`).
+>
+> 🛠️ **Cause fixed at the source:** `/kickoff` §5 *Exit* had three steps and closing the
+> tracker issue was not one of them. New **step 4** shipped in `C:\Dev\JARVIS\skills\kickoff\SKILL.md`.
+>
+> ⚠️ **The corpus run killed two drafts and then caught a wrong number in the third's own
+> changelog.** *Brief done ⇒ close the ticket* is wrong on `#48` and `#51`; the shipped test
+> (a sibling brief still `ready`/`active`) is 15 of 16, and the sixteenth is unmechanisable.
+> Account: [`CHANGELOG/2026-08-20/ticket-close-gap.md`](CHANGELOG/2026-08-20/ticket-close-gap.md).
+>
+> 📋 **Reported, not drained:** `kb-candidates/` holds four undrained files from other
+> sessions — `2026-08-19-50-offline-stamps`, `2026-08-20-9-duration-box`,
+> `2026-08-20-11-fill-buttons`, `2026-08-20-48-settings-surface`.
+
 > 🏁 **`9-duration-box` r4 RELEASED 2026-08-20 — `bc66295` (claim) → this commit.** No
 > singletons.
 >
