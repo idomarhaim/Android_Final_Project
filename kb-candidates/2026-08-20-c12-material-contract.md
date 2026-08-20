@@ -127,3 +127,30 @@ Every entry stands alone. A transcript is not a source.
   `app/src/test/java/com/idomarhaim/goalpilot/resources/AnalyticsLiteralSweepTest.kt` (`isProse`).
 - **Supersedes:** nothing.
 - **Status:** pending.
+
+## 6. `captureToImage` on a screen-off device hangs forever at 0% CPU and takes the AVD with it
+
+- **Claim:** a Compose screenshot (`composeRule.onRoot().captureToImage()`) goes through
+  `PixelCopy`, which waits for the window to **produce a frame**. A screen-off or locked emulator
+  produces none, so the call blocks **indefinitely** — and because the guest is idle rather than
+  busy, `adb shell` and `adb logcat` hang too while `adb devices` keeps reporting `device`. The
+  only exit is killing the AVD. Wake and unlock first, every time:
+  `adb shell input keyevent KEYCODE_WAKEUP && adb shell wm dismiss-keyguard`.
+- **Why:** `Observed:` 2026-08-20 — a 16-frame render pass hung for **20 minutes**; after waking
+  the device the identical run took **8 seconds**. Two things make this worth a page rather than a
+  comment. **It presents as slowness, not as a hang** — a big screenshot job on an emulator is
+  plausibly slow, so the instinct is to wait longer, and waiting is exactly wrong. And **the
+  diagnostic that settles it is on the host, not the guest**: `Get-Process qemu-system-x86_64`
+  showing **0 s of CPU delta over 5 s** proves the guest is asleep rather than thrashing, which
+  flips the diagnosis from *slow* to *blocked* in one command — and it is available precisely when
+  every adb route into the device has stopped answering.
+  **Rejected:** raising the instrumentation timeout (it never completes); assuming the emulator
+  was corrupted (it was not — a cold boot with the same test still hung until the screen was woken).
+  Also worth recording: the recovery **cost the app package** (reinstalled) but the device's Google
+  account **survived** the kill and cold boot, so a wedged AVD is not automatically a lost sign-in.
+- **Destination:** `kb/dev/android-device-verification.md` — beside §8's `am instrument` recipe,
+  since anyone following §8 to avoid the uninstall is doing so *in order to* keep screenshots.
+- **Anchors:** `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MaterialRenderPass.kt` KDoc,
+  which carries the wake step as part of the command block.
+- **Supersedes:** nothing.
+- **Status:** pending.
