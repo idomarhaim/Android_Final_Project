@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `9-duration-box` (r3) | Fix a **wrong instruction** the render tests give: *"`adb pull` fetches it"* does not work after `connectedDebugAndroidTest`, which uninstalls the app and deletes the file. | `app/src/androidTest/.../DurationBoxRenderTest.kt` · `app/src/androidTest/.../WaterGoalRenderTest.kt` · `AGENTS.md` · `CHANGELOG/2026-08-20/9-duration-box.md` · `SESSIONS.md` | none — docs only, no build, no device | 2026-08-20 |
 > 🏁 **`9-duration-box` RELEASED 2026-08-20 — `48e94bc` (r1) → `1e42b5d` (r2 claim) →
 > **this commit** (r2, the ticket). `#9` SHIPPED.**
 > **`Pixel_10_Pro_XL_B` and the Gradle daemon both released.** ⚠️ The emulator is **signed out** — the
