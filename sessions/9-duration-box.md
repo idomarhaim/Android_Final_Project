@@ -9,9 +9,31 @@ created: 2026-08-20
 
 # `#9` — the duration box: AI estimate by default, typed value wins forever
 
-**Independent of `C20` — can run at any time, in parallel with #11, #8 or #6.** Verified
-2026-08-20: no file touching `TaskEstimate` also touches `Goal.unit`, so this and `11-fill-buttons`
-share nothing and will not collide.
+> ⛔ **CORRECTION 2026-08-20 — THIS BRIEF SAID IT COULD RUN IN PARALLEL WITH `#11`. IT CANNOT.**
+> The struck line below read: *"Independent of `C20` — can run at any time, in parallel with #11, #8
+> or #6. Verified 2026-08-20: no file touching `TaskEstimate` also touches `Goal.unit`, so this and
+> `11-fill-buttons` share nothing and will not collide."*
+>
+> **That grep is true and it is not a conflict test.** It asks whether one file mentions both symbols
+> *today*; a conflict is about the edits each ticket is *about to make*. `#11` adds a per-goal input
+> mode to `GoalDetailScreen.kt`; `#9` adds the duration box to the same file. Neither symbol ever has
+> to appear beside the other. **The brief already applies the right test two paragraphs down** — *"both
+> land in `GoalDetailScreen.kt:319` `AddTaskRow`"* is a **file**-level argument, and it was simply not
+> run against `#11`.
+>
+> `11-fill-buttons`'s board row owns `feature/goals/` · `data/firestore/dto/Dtos.kt` ·
+> `data/firestore/dto/Mappers.kt` · `data/remote/RecommendationRepositoryImpl.kt` · new suites under
+> `app/src/test/` and `app/src/androidTest/` — **and the Gradle daemon.** `Observed:` 2026-08-20,
+> `8eb37b9`, with their claim landing between two of this session's tool calls.
+>
+> **`TODO/TODO_MUST/Completion-Roadmap.TODO.must.md` Wave 3 was right**: `#6 → #7 → #9 → #11` is
+> **one working set, strictly sequential**. `505f083`'s *"#9 and #11 turn out to be parallel"* is
+> withdrawn. Account: [`CHANGELOG/2026-08-20/9-duration-box.md`](../CHANGELOG/2026-08-20/9-duration-box.md).
+>
+> **Precondition for the next `/kickoff 9-duration-box`:** `11-fill-buttons` released on the board.
+> Check it before the first write, not after.
+
+**Independent of `C20`** — nothing here waits on the Eventarc work.
 
 Needs the **Gradle daemon**; a device or the cloud emulator for the render pass.
 
@@ -21,8 +43,9 @@ Needs the **Gradle daemon**; a device or the cloud emulator for the render pass.
 > something new"*. That reconstruction **is** what this brief replaces with stored provenance, so
 > #7 built first would be built on a value about to be redefined.
 >
-> Independent of `11-fill-buttons` — different documents, and **no file mentions both**
-> (`grep -rl unit … | xargs grep -l looksLikeFallback` returns empty).
+> ~~Independent of `11-fill-buttons` — different documents, and **no file mentions both**
+> (`grep -rl unit … | xargs grep -l looksLikeFallback` returns empty).~~ **Withdrawn — see the
+> correction at the top of this file.** Both tickets edit `GoalDetailScreen.kt`.
 
 ## Why it exists
 
@@ -71,6 +94,55 @@ The migration. Existing tasks have no stored provenance, and the honest value fo
 **absent**, not a guessed `SERVER_FALLBACK`. Backfilling them by running `looksLikeFallback` one
 last time re-imports the exact guess this ticket deletes. Decide it explicitly and write the
 decision down.
+
+---
+
+## ✅ Already derived 2026-08-20 while blocked — do not re-derive, do check it still holds
+
+The blocked `9-duration-box` session could not compile anything, so it spent the wait on the design.
+Full reasoning and evidence: [`CHANGELOG/2026-08-20/9-duration-box.md`](../CHANGELOG/2026-08-20/9-duration-box.md).
+All of it is `Untested:` — nothing was built or run.
+
+**1 · Provenance is a stored enum, three values.** `enum class DurationSource { USER, AI, UNKNOWN }`
+on `Task` (`durationSource: DurationSource = UNKNOWN`) and on `TaskDto` as a string.
+`looksLikeFallback` and `SERVER_FALLBACK` are deleted — the repository knows at the point of
+production whether a model answered. A fourth `NONE` was considered and collapsed:
+`estimatedMinutes == null` already says *no duration*, and two fields that can disagree is §0.3's
+defect rather than its fix.
+
+**2 · `TaskEstimate.minutes` becomes nullable.** `null` = the model supplied none (§3.4). `scoreTask`
+stops calling `fallbackMinutes(points)` on **both** the missing-minutes path and the `catch` path —
+that is the concrete site of *"never guesses a duration from a word count"*. **`points` keeps its
+heuristic.** The §1.4 points inversion (`round(minutes/3) × difficulty`, the `difficulty` enum, the
+`5..50` cap deletion, completion facts) is `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19),
+**not this ticket** — §1.4 discusses both in one paragraph and only one of them is yours.
+
+**3 · The precedence rule as a pure, JVM-testable object** — this is what makes the Exit's *"both
+directions"* test possible with no emulator, and it keeps `AddTaskRow` thin:
+
+```kotlin
+data class DurationEntry(val minutes: Int? = null, val source: DurationSource = UNKNOWN) {
+    val isTyped: Boolean           get() = source == DurationSource.USER
+    val showsEstimateIcon: Boolean get() = !isTyped        // R8, exactly as worded
+    fun withEstimate(m: Int?): DurationEntry = if (isTyped) this else …  // unconditional, no threshold
+    fun withRetitle(): DurationEntry         = if (isTyped) this else DurationEntry()
+    fun resolve(): Pair<Int, DurationSource> = …           // DEFAULT_MINUTES + UNKNOWN when skipped
+}
+```
+
+It replaces the `aiMinutes` reconstruction at `GoalDetailScreen.kt:332`. Note the consequence worth
+watching in the instrumented test: **a retitle no longer clears a typed duration.**
+`BackfillDurationsUseCase.invoke` gains an explicit `.filter { it.durationSource != DurationSource.USER }`
+— redundant today, but it **is** the rule and §3.3 A wants it structural.
+
+**4 · The migration — decided, on a fact.** **Legacy rows read as `UNKNOWN`, no backfill write runs
+at all, and `UNKNOWN` is not sticky.** `Observed:` 2026-08-20 — **no code path lets a person type a
+duration today**; every `estimatedMinutes` write under `app/src/main` is model- or fallback-derived
+(`Mappers.kt:83,96` · `RecommendationRepositoryImpl.kt:139,207,220` · `AnalyticsViewModel.kt:205` ·
+`DashboardViewModel.kt:246,497` · `GoalDetailViewModel.kt:115`), and a grep for a minutes
+`TextField`/`onValueChange` across `feature/` and `ui/` returns nothing. So the one value stickiness
+protects **provably cannot exist yet**, which is what makes non-sticky `UNKNOWN` safe rather than
+merely convenient. The migration is a **read**, not a write.
 
 ## Exit
 
