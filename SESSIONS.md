@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c20-eventarc-fix` | **Verify the Eventarc redeploy actually wired the trigger — Ido ran the deploy, `Deploy complete!` is NOT the answer.** Tick a task, read the function log for `{uid, points, factCount}`, check the dashboard. | `sessions/c20-eventarc-fix.md` · `CHANGELOG/2026-08-20/c20-eventarc-fix.md` · `SESSIONS.md` | **`Pixel_10_Pro_XL_B` (emulator-5554)** — signed in, no uninstall | 2026-08-20 |
 > 🏁 **`50-finish` *(round 3)* RELEASED 2026-08-20 — `bee5628` (claim) → `310b6f8` (the diagnosis)
 > → this note.** **No singletons held and NOTHING WAS DEPLOYED.** `functions/` released untouched;
 > `functions/lib/` was rebuilt (git-ignored) and `functions/.env` read, not written.
