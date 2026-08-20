@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.ui.theme.accentsFor
@@ -13,24 +14,44 @@ import org.junit.Test
 import kotlin.math.sqrt
 
 /**
- * Guards the two skins against a colour edit that looks fine in an IDE swatch and
- * is unreadable on a phone.
+ * Guards every **generated** colour scheme against a colour edit that looks fine
+ * in an IDE swatch and is unreadable on a phone.
  *
  * Runs on the JVM: `ColorScheme`, `Color` and `luminance()` are pure Kotlin, so
  * the arithmetic half of theming needs no emulator.
  *
  * Thresholds are WCAG 2.1 — 4.5:1 for normal text, 3:1 for non-text boundaries
  * such as `outline`.
+ *
+ * ## Why the matrix and not the four hand-authored schemes
+ *
+ * `C12` #53 made the material a second axis, so the app now renders
+ * **four materials × two skins × two brightnesses**. Twelve of those sixteen
+ * are *generated* by `MaterialPalettes.kt` from the four that are written by
+ * hand — and a transform is exactly the thing that passes review and fails
+ * contrast, because nobody can read a desaturation in their head. Iterating
+ * `AppMaterial.entries` here rather than naming the base four is what makes a
+ * new material inherit every assertion below on the day it is added.
+ *
+ * `AppMaterial.resolveDark` collapses dark neo's two cases into one, so the
+ * matrix is **fourteen** distinct schemes rather than sixteen. That is §4.1's
+ * *"the product is ragged, not rectangular"*, arriving in a test.
  */
 class ThemePaletteTest {
 
-    private data class Case(val skin: AppSkin, val dark: Boolean) {
-        val scheme: ColorScheme get() = colorSchemeFor(skin, dark)
-        override fun toString() = "${skin.name}/${if (dark) "dark" else "light"}"
+    private data class Case(val skin: AppSkin, val material: AppMaterial, val dark: Boolean) {
+        val scheme: ColorScheme get() = colorSchemeFor(skin, material, dark)
+        override fun toString() =
+            "${skin.name}/${material.name}/${if (dark) "dark" else "light"}"
     }
 
     private val cases = AppSkin.entries.flatMap { skin ->
-        listOf(Case(skin, dark = false), Case(skin, dark = true))
+        AppMaterial.entries.flatMap { material ->
+            listOf(
+                Case(skin, material, dark = false),
+                Case(skin, material, dark = true),
+            )
+        }
     }
 
     @Test
@@ -94,7 +115,7 @@ class ThemePaletteTest {
     @Test
     fun `hero gradient carries its on-colour across every stop`() {
         cases.forEach { case ->
-            val accents = accentsFor(case.skin, case.dark)
+            val accents = accentsFor(case.skin, case.material, case.dark)
             assertThat(accents.heroGradient).isNotEmpty()
             accents.heroGradient.forEachIndexed { index, stop ->
                 assertPair(case, "onHero on gradient stop $index", accents.onHero, stop)
@@ -105,7 +126,7 @@ class ThemePaletteTest {
     @Test
     fun `positive accent is readable on surface`() {
         cases.forEach { case ->
-            val accents = accentsFor(case.skin, case.dark)
+            val accents = accentsFor(case.skin, case.material, case.dark)
             assertPair(case, "positive on surface", accents.positive, case.scheme.surface)
         }
     }

@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.feature.settings
 
 import android.content.res.Resources
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,12 +46,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
@@ -58,6 +61,8 @@ import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.model.displayName
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LanguagePicker
+import com.idomarhaim.goalpilot.ui.components.MaterialPicker
+import com.idomarhaim.goalpilot.ui.components.label
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.SkinPicker
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
@@ -77,18 +82,26 @@ import java.util.Locale
  * ## What is here, and what is deliberately not
  *
  * §4.9 lists five sections. Four are built here — Appearance, Language &
- * region, Your day, Account. **Two controls it names are not, and neither is an
+ * region, Your day, Account. **One control it names is not, and it is not an
  * oversight:**
  *
  * | Missing | Why | Whose ticket |
  * |---|---|---|
- * | Appearance's **material (4 tiles)** | §4.1's four-material contract does not exist in this codebase — no `AppMaterial`, no palette transform, and no open issue scheduling one. A picker over materials nothing renders is a control that changes nothing, which is §0.3's defect installed in the screen built to prevent it | `C12` §4.1 |
  * | the whole **AI** section | its three controls are `C13`'s — an `EncryptedSharedPreferences` key store (`androidx.security:security-crypto`, not a dependency here), a provider abstraction, and a status line naming which provider answered. Every model call goes through the Cloud Function proxy today and the client holds no key at all | `C13`, designed in #32, unbuilt |
  *
- * Both are recorded in this session's changelog rather than shown as a disabled
- * row. §4.9 rules that **a lock is a word, never a dimming** — and the honest
- * word for a section whose subsystem does not exist belongs in the backlog, not
- * on the user's screen.
+ * It is recorded in the changelog rather than shown as a disabled row. §4.9
+ * rules that **a lock is a word, never a dimming** — and the honest word for a
+ * section whose subsystem does not exist belongs in the backlog, not on the
+ * user's screen.
+ *
+ * ⚠️ **Appearance's material tiles were the second entry in that table until
+ * `C12` #53** — *"§4.1's four-material contract does not exist in this
+ * codebase — no `AppMaterial`, no palette transform, and no open issue
+ * scheduling one. A picker over materials nothing renders is a control that
+ * changes nothing."* That was the right call and #53 removed its reason:
+ * `AppMaterial`, the palette transforms and the `GpMaterialSpec` contract all
+ * exist now, and the tiles below are a picker over materials the whole app
+ * renders.
  *
  * ## Why it takes no `AuthRepository`
  *
@@ -107,6 +120,7 @@ fun SettingsScreen(
 ) {
     val skin by viewModel.skin.collectAsStateWithLifecycle()
     val brightness by viewModel.brightness.collectAsStateWithLifecycle()
+    val material by viewModel.material.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val region by viewModel.region.collectAsStateWithLifecycle()
     val schedule by viewModel.daySchedule.collectAsStateWithLifecycle()
@@ -116,6 +130,8 @@ fun SettingsScreen(
         onSkin = viewModel::setSkin,
         brightness = brightness,
         onBrightness = viewModel::setBrightness,
+        material = material,
+        onMaterial = viewModel::setMaterial,
         language = language,
         onLanguage = viewModel::setLanguage,
         region = region,
@@ -145,6 +161,8 @@ fun SettingsContent(
     onSkin: (AppSkin) -> Unit,
     brightness: AppBrightness,
     onBrightness: (AppBrightness) -> Unit,
+    material: AppMaterial,
+    onMaterial: (AppMaterial) -> Unit,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
     region: AppRegion,
@@ -189,6 +207,8 @@ fun SettingsContent(
 
             SectionHeader(stringResource(R.string.settings_appearance_title))
             AppearanceCard(
+                material = material,
+                onMaterial = onMaterial,
                 brightness = brightness,
                 onBrightness = onBrightness,
                 skin = skin,
@@ -271,29 +291,92 @@ private fun ScopeLine() {
     )
 }
 
+/**
+ * §4.9's Appearance section, in §4.9's own order: **material · colour ·
+ * brightness**.
+ *
+ * ## Why the material comes first
+ *
+ * It is the only one of the three that changes what the other two *mean*. The
+ * skin is a palette and brightness is an end of it; the material decides how
+ * both are rendered — and, for dark neo, whether brightness can move at all. A
+ * user who picks brightness first and material second has had their first
+ * choice silently overruled, which is the shape §0.3 is about.
+ *
+ * ## The lock, said twice on purpose
+ *
+ * §4.1 requires the picker to **say** dark neo is brightness-locked, and §4.9
+ * rules that **a lock is a word, never a dimming**. So it is stated in two
+ * places that cannot drift, because both read
+ * [AppMaterial.isBrightnessLocked]: the word `Dark only` on the tile, and the
+ * struck-through, captioned brightness control here. The segments are *also*
+ * disabled — the rule forbids a dimming **instead of** a word, not alongside
+ * one, and a control that is legible, captioned and still inert is worse than
+ * one you cannot press.
+ *
+ * **The stored brightness is not overwritten by the lock.** That is what the
+ * consequence line's second sentence is for: the setting is remembered and
+ * takes effect again the moment another material is chosen, so the lock is a
+ * suspension rather than a silent write.
+ */
 @Composable
 private fun AppearanceCard(
+    material: AppMaterial,
+    onMaterial: (AppMaterial) -> Unit,
     brightness: AppBrightness,
     onBrightness: (AppBrightness) -> Unit,
     skin: AppSkin,
     onSkin: (AppSkin) -> Unit,
 ) {
+    val brightnessIsDark = brightness.isDark(isSystemInDarkTheme())
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {
+            SettingLabel("Material")
+            MaterialPicker(
+                selected = material,
+                skin = skin,
+                brightnessIsDark = brightnessIsDark,
+                onSelect = onMaterial,
+                modifier = Modifier.testTag(TAG_MATERIAL_PICKER),
+            )
+            // §4.9's table: Material's consequence line states "that dark neo is
+            // brightness-locked". Live, so it reads as a fact about the current
+            // choice rather than a warning about someone else's.
+            ConsequenceLine(
+                text = materialConsequence(material),
+                modifier = Modifier.testTag(TAG_MATERIAL_CONSEQUENCE),
+            )
+
+            Spacer(Modifier.height(20.dp))
+
             SettingLabel("Brightness")
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 AppBrightness.entries.forEachIndexed { index, option ->
                     SegmentedButton(
                         selected = option == brightness,
                         onClick = { onBrightness(option) },
+                        enabled = !material.isBrightnessLocked,
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
                             count = AppBrightness.entries.size,
                         ),
                     ) {
-                        Text(brightnessLabel(option))
+                        Text(
+                            text = brightnessLabel(option),
+                            textDecoration = if (material.isBrightnessLocked) {
+                                TextDecoration.LineThrough
+                            } else {
+                                null
+                            },
+                        )
                     }
                 }
+            }
+            if (material.isBrightnessLocked) {
+                ConsequenceLine(
+                    text = brightnessLockConsequence(material),
+                    modifier = Modifier.testTag(TAG_BRIGHTNESS_LOCK),
+                )
             }
 
             Spacer(Modifier.height(20.dp))
@@ -308,6 +391,35 @@ private fun AppearanceCard(
         }
     }
 }
+
+/**
+ * What choosing this material costs, in the app's own words.
+ *
+ * Two sentences and not one: the first is true of the *current* selection, the
+ * second names the material that is about to take a control away. A line that
+ * only fired once dark neo was already selected would be a report, not a
+ * consequence.
+ */
+@Composable
+private fun materialConsequence(material: AppMaterial): String {
+    val locked = AppMaterial.entries.filter { it.isBrightnessLocked }
+    if (locked.isEmpty()) return "Every material renders in light and dark."
+    // map, not joinToString: joinToString's transform is not inline, and a
+    // @Composable call cannot cross a non-inline lambda boundary.
+    val names = locked.map { it.label() }.joinToString(" and ")
+    return if (material.isBrightnessLocked) {
+        names + " has no light scheme, so brightness below is fixed to dark."
+    } else {
+        material.label() + " renders in light and dark. " + names +
+            " has no light scheme, so choosing it fixes brightness to dark."
+    }
+}
+
+/** The struck-through control's caption — why it is inert, and what happens to the value. */
+@Composable
+private fun brightnessLockConsequence(material: AppMaterial): String =
+    material.label() + " is dark only, so this has no effect right now. " +
+        "Your choice is remembered and applies again as soon as you pick another material."
 
 private fun brightnessLabel(brightness: AppBrightness): String = when (brightness) {
     AppBrightness.SYSTEM -> "Device"
@@ -681,6 +793,9 @@ private sealed interface TimeField {
 }
 
 const val TAG_SCOPE_LINE = "settings_scope_line"
+const val TAG_MATERIAL_PICKER = "settings_material_picker"
+const val TAG_MATERIAL_CONSEQUENCE = "settings_material_consequence"
+const val TAG_BRIGHTNESS_LOCK = "settings_brightness_lock"
 const val TAG_REGION_ROW = "settings_region_row"
 const val TAG_REGION_SHEET = "settings_region_sheet"
 const val TAG_REGION_CONSEQUENCE = "settings_region_consequence"

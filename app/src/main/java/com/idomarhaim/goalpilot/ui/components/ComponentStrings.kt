@@ -6,6 +6,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.res.stringResource
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 
@@ -61,6 +62,16 @@ fun AppSkin.label(): String = stringResource(labelRes)
 @ReadOnlyComposable
 fun AppSkin.tagline(): String = stringResource(taglineRes)
 
+/** The material's name, e.g. *Soft* — spec §4.1's four surfaces. */
+@Composable
+@ReadOnlyComposable
+fun AppMaterial.label(): String = stringResource(labelRes)
+
+/** The one-line description under the material's tile. */
+@Composable
+@ReadOnlyComposable
+fun AppMaterial.tagline(): String = stringResource(taglineRes)
+
 /**
  * A percentage, isolated.
  *
@@ -106,4 +117,22 @@ private val AppSkin.taglineRes: Int
     get() = when (this) {
         AppSkin.AURORA -> R.string.components_skin_aurora_tagline
         AppSkin.BLOSSOM -> R.string.components_skin_blossom_tagline
+    }
+
+@get:StringRes
+private val AppMaterial.labelRes: Int
+    get() = when (this) {
+        AppMaterial.GLASS -> R.string.components_material_glass
+        AppMaterial.LIQUID_GLASS -> R.string.components_material_liquid
+        AppMaterial.NEO -> R.string.components_material_neo
+        AppMaterial.DARK_NEO -> R.string.components_material_darkneo
+    }
+
+@get:StringRes
+private val AppMaterial.taglineRes: Int
+    get() = when (this) {
+        AppMaterial.GLASS -> R.string.components_material_glass_tagline
+        AppMaterial.LIQUID_GLASS -> R.string.components_material_liquid_tagline
+        AppMaterial.NEO -> R.string.components_material_neo_tagline
+        AppMaterial.DARK_NEO -> R.string.components_material_darkneo_tagline
     }

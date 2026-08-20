@@ -101,4 +101,19 @@
     <string name="components_skin_blossom">Blossom</string>
     <string name="components_skin_blossom_tagline">Sunset pink &amp; orange</string>
 
+    <!-- Spec §4.1's four materials. The material is a SURFACE; the skin above it
+         is a PALETTE. Names are product nouns, not CSS terms — a user picking a
+         look does not need to know what a backdrop filter is. -->
+    <string name="components_material_glass">Glass</string>
+    <string name="components_material_glass_tagline">Frosted panels, colour showing through</string>
+    <string name="components_material_liquid">Liquid glass</string>
+    <string name="components_material_liquid_tagline">Glossy, lit along the edge</string>
+    <string name="components_material_neo">Soft</string>
+    <string name="components_material_neo_tagline">One flat surface, gently raised</string>
+    <string name="components_material_darkneo">Soft dark</string>
+    <string name="components_material_darkneo_tagline">Charcoal, with one bright accent</string>
+    <!-- §4.1: a material may declare itself brightness-locked, and the picker has
+         to SAY so. This is that word, on the tile itself. -->
+    <string name="components_material_dark_only">Dark only</string>
+
 </resources>

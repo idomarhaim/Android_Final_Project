@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.domain.repository
 
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
@@ -49,6 +50,23 @@ interface AppPreferencesRepository {
     val brightness: StateFlow<AppBrightness>
 
     fun setBrightness(brightness: AppBrightness)
+
+    /**
+     * The surface the app is drawn out of, per spec §4.1 — the second axis
+     * above [skin].
+     *
+     * A [StateFlow] for the same reason [skin] and [brightness] are, and it
+     * inherits one extra duty from being *above* brightness: the material
+     * decides whether the brightness setting can move at all
+     * ([AppMaterial.resolveDark]), so a cold flow here would render the first
+     * frame in a brightness the material forbids and then repaint the window.
+     *
+     * Device-local, like everything else here. §4.9's sign-out test puts
+     * material in the left column beside skin and brightness.
+     */
+    val material: StateFlow<AppMaterial>
+
+    fun setMaterial(material: AppMaterial)
 
     /**
      * Where the user is, for week start and date order — spec §5.1's **Region**,

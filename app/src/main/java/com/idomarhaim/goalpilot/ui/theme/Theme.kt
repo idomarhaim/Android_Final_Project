@@ -17,13 +17,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 
 /** The skin currently in force. Read it to draw skin-aware chrome; set it via preferences. */
 val LocalAppSkin = staticCompositionLocalOf { AppSkin.DEFAULT }
 
+/**
+ * The material currently in force — spec §4.1's second axis.
+ *
+ * Read this only to answer *"which material is this?"* for the **one** control
+ * allowed to ask: the material picker, which must paint each tile in its own
+ * material rather than the current one. Everything else reads
+ * [LocalGpMaterial], because a `when (material)` on a screen is the
+ * draw-it-four-times cost the contract exists to avoid.
+ */
+val LocalAppMaterial = staticCompositionLocalOf { AppMaterial.DEFAULT }
+
+/** The four answers — `surface · groove · elevation · accent`. See [GpMaterialSpec]. */
+val LocalGpMaterial = staticCompositionLocalOf {
+    materialSpecFor(
+        material = AppMaterial.DEFAULT,
+        scheme = colorSchemeFor(AppSkin.DEFAULT, AppMaterial.DEFAULT, dark = false),
+        dark = false,
+    )
+}
+
 /** Brand colours with no Material 3 role — see [GpAccents]. */
-val LocalGpAccents = staticCompositionLocalOf { accentsFor(AppSkin.DEFAULT, darkTheme = false) }
+val LocalGpAccents = staticCompositionLocalOf {
+    accentsFor(AppSkin.DEFAULT, AppMaterial.DEFAULT, dark = false)
+}
 
 /**
  * `null` = follow the theme's brightness; `false` = the window is filled with a
@@ -45,22 +68,43 @@ private val LocalSystemBarsOverride =
 @Composable
 fun GoalPilotTheme(
     skin: AppSkin = AppSkin.DEFAULT,
+    material: AppMaterial = AppMaterial.DEFAULT,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = colorSchemeFor(skin, darkTheme)
-    val accents = accentsFor(skin, darkTheme)
+    // §4.1: "a material must be able to declare itself brightness-locked".
+    // Resolved through the material rather than beside it, so the theme cannot
+    // render a brightness the picker has told the user is impossible.
+    val resolvedDark = material.resolveDark(darkTheme)
+    // remember-ed on the three inputs, and that is not micro-optimisation:
+    // MaterialTheme's LocalColorScheme, LocalGpAccents and LocalGpMaterial are
+    // all `staticCompositionLocalOf`, which invalidates the ENTIRE subtree
+    // whenever the provided value is a different instance. Recomputing these
+    // three on every composition of this function would rebuild the whole app
+    // each time -- and the generated schemes below make them more expensive
+    // than the hand-authored ones they replaced.
+    val colorScheme = remember(skin, material, darkTheme) {
+        colorSchemeFor(skin, material, darkTheme)
+    }
+    val accents = remember(skin, material, darkTheme) {
+        accentsFor(skin, material, darkTheme)
+    }
+    val materialSpec = remember(material, colorScheme, resolvedDark) {
+        materialSpecFor(material, colorScheme, resolvedDark)
+    }
     val barsOverride = remember { mutableStateOf<Boolean?>(null) }
 
     CompositionLocalProvider(
         LocalAppSkin provides skin,
+        LocalAppMaterial provides material,
+        LocalGpMaterial provides materialSpec,
         LocalGpAccents provides accents,
         LocalSystemBarsOverride provides barsOverride,
     ) {
         // A sibling leaf, not an effect in this function's body: it re-reads the
         // override on its own, so a screen flipping the system bars recomposes
         // one empty node instead of the whole app.
-        SystemBarIcons(lightBackground = barsOverride.value ?: !darkTheme)
+        SystemBarIcons(lightBackground = barsOverride.value ?: !resolvedDark)
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
@@ -104,6 +148,12 @@ val MaterialTheme.gpAccents: GpAccents
     @Composable
     @ReadOnlyComposable
     get() = LocalGpAccents.current
+
+/** The material contract for the active material: `MaterialTheme.gpMaterial.groove`. */
+val MaterialTheme.gpMaterial: GpMaterialSpec
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalGpMaterial.current
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this

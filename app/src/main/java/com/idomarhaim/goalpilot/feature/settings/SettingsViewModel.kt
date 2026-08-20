@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.feature.settings
 import androidx.lifecycle.ViewModel
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
@@ -40,6 +41,10 @@ class SettingsViewModel @Inject constructor(
     val brightness: StateFlow<AppBrightness> = appPreferences.brightness
 
     fun setBrightness(brightness: AppBrightness) = appPreferences.setBrightness(brightness)
+
+    val material: StateFlow<AppMaterial> = appPreferences.material
+
+    fun setMaterial(material: AppMaterial) = appPreferences.setMaterial(material)
 
     val language: StateFlow<AppLanguage> = appPreferences.language
 

@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -18,6 +19,8 @@ import com.idomarhaim.goalpilot.notifications.NotificationDeepLink
 import com.idomarhaim.goalpilot.ui.locale.AppLocale
 import com.idomarhaim.goalpilot.ui.root.GoalPilotRoot
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
+import com.idomarhaim.goalpilot.ui.theme.gpMaterial
+import com.idomarhaim.goalpilot.ui.theme.gpPage
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -50,6 +53,7 @@ class MainActivity : ComponentActivity() {
             val skin by appPreferences.skin.collectAsStateWithLifecycle()
             val language by appPreferences.language.collectAsStateWithLifecycle()
             val brightness by appPreferences.brightness.collectAsStateWithLifecycle()
+            val material by appPreferences.material.collectAsStateWithLifecycle()
 
             // Outside the theme, because it redirects every `stringResource`
             // below it and sets the layout direction the theme's own surfaces
@@ -58,15 +62,33 @@ class MainActivity : ComponentActivity() {
                 // Read here rather than inside GoalPilotTheme's default
                 // argument: the app's own setting is the authority now, and the
                 // device only answers when the setting says SYSTEM.
+                // The material is passed in beside the skin rather than being
+                // read inside the theme: §4.1 makes it the SECOND axis, and the
+                // brightness the window actually renders in is the material's
+                // answer, not the setting's -- dark neo has no light scheme.
                 GoalPilotTheme(
                     skin = skin,
+                    material = material,
                     darkTheme = brightness.isDark(isSystemInDarkTheme()),
                 ) {
+                    // gpPage, not a flat colour: glass and liquid glass are
+                    // translucent panels, and a translucent panel over a flat
+                    // ground is not translucent -- it is grey. Neo and dark neo
+                    // ask for nothing here and get the flat background.
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background,
                     ) {
-                        GoalPilotRoot()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .gpPage(
+                                    spec = MaterialTheme.gpMaterial,
+                                    background = MaterialTheme.colorScheme.background,
+                                ),
+                        ) {
+                            GoalPilotRoot()
+                        }
                     }
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
@@ -62,6 +63,7 @@ class SettingsScreenTest {
      */
     private fun setContent(
         initialRegion: AppRegion = AppRegion.SYSTEM,
+        initialMaterial: AppMaterial = AppMaterial.DEFAULT,
         initialSchedule: DaySchedule = DaySchedule.DEFAULT,
         signedIn: Boolean = true,
         onOpenProfile: () -> Unit = {},
@@ -71,14 +73,17 @@ class SettingsScreenTest {
             var schedule by remember { mutableStateOf(initialSchedule) }
             var skin by remember { mutableStateOf(AppSkin.DEFAULT) }
             var brightness by remember { mutableStateOf(AppBrightness.DEFAULT) }
+            var material by remember { mutableStateOf(initialMaterial) }
             var language by remember { mutableStateOf(AppLanguage.ENGLISH) }
 
-            GoalPilotTheme(skin = skin) {
+            GoalPilotTheme(skin = skin, material = material) {
                 SettingsContent(
                     skin = skin,
                     onSkin = { skin = it },
                     brightness = brightness,
                     onBrightness = { brightness = it },
+                    material = material,
+                    onMaterial = { material = it },
                     language = language,
                     onLanguage = { language = it },
                     region = region,

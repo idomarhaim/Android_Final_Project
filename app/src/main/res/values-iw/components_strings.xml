@@ -70,4 +70,14 @@
     <string name="components_skin_blossom">פריחה</string>
     <string name="components_skin_blossom_tagline">ורוד שקיעה וכתום</string>
 
+    <string name="components_material_glass">זכוכית</string>
+    <string name="components_material_glass_tagline">משטחים מעורפלים, הצבע נראה מבעד</string>
+    <string name="components_material_liquid">זכוכית נוזלית</string>
+    <string name="components_material_liquid_tagline">מבריק, מואר בקצה</string>
+    <string name="components_material_neo">רך</string>
+    <string name="components_material_neo_tagline">משטח אחד שטוח, מורם קלות</string>
+    <string name="components_material_darkneo">רך כהה</string>
+    <string name="components_material_darkneo_tagline">פחם, עם הדגשה בהירה אחת</string>
+    <string name="components_material_dark_only">כהה בלבד</string>
+
 </resources>

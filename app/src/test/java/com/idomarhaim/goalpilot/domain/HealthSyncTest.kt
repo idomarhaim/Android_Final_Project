@@ -6,6 +6,7 @@ import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DailySteps
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
@@ -375,6 +376,8 @@ class HealthSyncTest {
         override fun setBrightness(brightness: AppBrightness) {
             this.brightness.value = brightness
         }
+        override val material = MutableStateFlow(AppMaterial.DEFAULT)
+        override fun setMaterial(material: AppMaterial) { this.material.value = material }
         override val region = MutableStateFlow(AppRegion.DEFAULT)
         override fun setRegion(region: AppRegion) { this.region.value = region }
         override val daySchedule = MutableStateFlow(DaySchedule.DEFAULT)
