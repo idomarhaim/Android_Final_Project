@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.feature.goals
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -26,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -160,34 +163,59 @@ internal fun GoalListRow(
  */
 @Composable
 private fun SuggestedGoalBanner(onKeep: () -> Unit, onDemote: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 4.dp, top = 2.dp)
-            .testTag(GoalsTestTags.SUGGESTED_BANNER),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = Icons.Filled.AutoAwesome,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.tertiary,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text = "Suggested — not yet one of your goals",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+    // ⚠️ **Welded to the card above it, and that is a correctness requirement rather than
+    // polish.** The first version was a bare row with 2.dp of top padding, sitting in a list
+    // whose `Arrangement.spacedBy(12.dp)` puts 12.dp below it. On a device those two gaps read
+    // as **near-equal** — the buttons carry Material's 48.dp minimum touch height, so the text
+    // floats in the middle of a tall row and the 2-versus-12 difference all but disappears.
+    // A banner that could belong to either neighbour is not a cosmetic problem here: *Not a
+    // goal* changes a goal's status, so misreading which card it belongs to demotes the wrong
+    // one. Found by looking at it on `Pixel_10_Pro_XL`, which is the only instrument that could
+    // have: every assertion in `SilentFilingUiTest` passes either way, because they ask whether
+    // the banner exists and never where it appears to point.
+    //
+    // So it is inset, tinted, and its top corners are square where they meet the card — one
+    // object with a drawer pulled out from under it, rather than two objects with a gap.
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp),
-        )
-        TextButton(onClick = onDemote, modifier = Modifier.testTag(GoalsTestTags.DEMOTE)) {
-            Text("Not a goal")
-        }
-        TextButton(onClick = onKeep, modifier = Modifier.testTag(GoalsTestTags.KEEP)) {
-            Text("Keep")
+                // Inset from the card above, which is what makes it read as subordinate to it
+                // rather than as a row of its own. `Observed:` the label wraps to two lines at
+                // this width and did at 24.dp too — two buttons plus a sentence do not fit one
+                // line on a phone, and 16.dp is simply the widest inset that still reads as an
+                // inset. Two lines is legible and `maxLines = 2` is deliberate; the earlier
+                // comment here claimed 16.dp fixed the wrap, and looking at the render says it
+                // does not.
+                .padding(start = 16.dp, end = 16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f))
+                .padding(start = 12.dp, end = 4.dp)
+                .testTag(GoalsTestTags.SUGGESTED_BANNER),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.AutoAwesome,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = "Suggested — not yet one of your goals",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
+            )
+            TextButton(onClick = onDemote, modifier = Modifier.testTag(GoalsTestTags.DEMOTE)) {
+                Text("Not a goal")
+            }
+            TextButton(onClick = onKeep, modifier = Modifier.testTag(GoalsTestTags.KEEP)) {
+                Text("Keep")
+            }
         }
     }
 }

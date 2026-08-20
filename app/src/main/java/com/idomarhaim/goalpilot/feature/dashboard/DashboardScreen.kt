@@ -125,20 +125,12 @@ fun DashboardScreen(
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
     }
-    // #6's witness. The receipt is consumed BEFORE the snackbar is awaited, because
-    // `showSnackbar` suspends until it is dismissed — leaving it in the flow would make a
-    // second quick-add during those seconds either queue behind this one or be swallowed.
-    LaunchedEffect(filed) {
-        val receipt = filed ?: return@LaunchedEffect
-        viewModel.consumeFiled()
-        val result = snackbarHost.showSnackbar(
-            message = receipt.sentence(),
-            actionLabel = "Undo",
-            withDismissAction = true,
-            duration = SnackbarDuration.Long,
-        )
-        if (result == SnackbarResult.ActionPerformed) viewModel.undoFiling(receipt)
-    }
+    SmartAddReceiptSnackbar(
+        receipt = filed,
+        hostState = snackbarHost,
+        onUndo = viewModel::undoFiling,
+        onConsume = viewModel::consumeFiled,
+    )
 
     val sharePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -707,6 +699,45 @@ object SmartAddTestTags {
 }
 
 /**
+ * Shows `#6`'s receipt as a snackbar with **Undo**, and clears it afterwards.
+ *
+ * ⚠️ **The order of the two calls is the whole of this function, and getting it wrong ships a
+ * silent filing with no witness at all.** The first version consumed the receipt *before*
+ * awaiting the snackbar, reasoning that `showSnackbar` suspends for the full duration and a
+ * second quick-add during those seconds would otherwise queue behind it. Every layer was green
+ * and **nothing was ever shown**: `consumeFiled()` nulls the very state this effect is keyed on,
+ * so `LaunchedEffect` restarts and cancels the coroutine before it can reach `showSnackbar`.
+ * Found by looking at a device, which is the only instrument that could have found it.
+ *
+ * So: **await first, consume after.** The concern that motivated the wrong order is answered by
+ * the key rather than by the ordering — a *new* receipt changes `receipt`, restarting the effect,
+ * which dismisses the stale snackbar and shows the current one. That is the behaviour wanted, and
+ * it is why the consume is **not** in a `finally`: on cancellation the flow already holds the next
+ * receipt, and clearing it there would swallow exactly the quick-add this was trying to protect.
+ *
+ * Split out of [DashboardScreen] rather than inlined so `SmartAddReceiptUiTest` can drive the real
+ * wiring. Testing a copy of these six lines would have re-tested the copy and not the defect.
+ */
+@Composable
+internal fun SmartAddReceiptSnackbar(
+    receipt: SmartAddReceipt?,
+    hostState: SnackbarHostState,
+    onUndo: (SmartAddReceipt) -> Unit,
+    onConsume: () -> Unit,
+) {
+    LaunchedEffect(receipt) {
+        if (receipt == null) return@LaunchedEffect
+        val result = hostState.showSnackbar(
+            message = receipt.sentence(),
+            actionLabel = "Undo",
+            withDismissAction = true,
+            duration = SnackbarDuration.Long,
+        )
+        if (result == SnackbarResult.ActionPerformed) onUndo(receipt) else onConsume()
+    }
+}
+
+/**
  * What the app says after it has filed something without asking — `#6`'s witness (§0.7).
  *
  * *"Silent" is not "invisible".* Two sentences, decided by [FilingDecision.speaks]:
@@ -718,7 +749,7 @@ object SmartAddTestTags {
  *    not degrade the outcome, it changes it. It **tells**; it does not ask. A proposed goal is
  *    named as a suggestion, and an unfiled task says so plainly.
  */
-private fun SmartAddReceipt.sentence(): String = when (val d = decision) {
+internal fun SmartAddReceipt.sentence(): String = when (val d = decision) {
     is FilingDecision.ExistingGoal -> "Added to “${d.goalTitle}”"
     is FilingDecision.NewGoal -> "No goal fitted — suggested “${d.title}”"
     is FilingDecision.NoGoal -> "Added “$taskTitle” — no goal fits it yet"

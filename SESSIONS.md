@@ -39,7 +39,43 @@ before your first write. Normative rule:
 >
 > 📌 **`kb-candidates/2026-08-20-9-duration-box.md` STAYS** — 4a drained, 4b parked. A partly-drained
 > file is rewritten down to its survivors, never deleted.
-| `6-silent-filing` | **`#6`** — silent filing under an existing goal (no dialog), and the one branch that speaks: an absent `suggestedGoalId` creates an `AI_SUGGESTED` **pending** goal with a lossless demotion. Validation moves into the Cloud Function, singly (spec §3.4). | `functions/src/index.ts` · `functions/src/classify.ts` *(new)* · `functions/test/classify.test.mjs` *(new)* · `domain/model/Goal.kt` · `domain/model/Recommendation.kt` · `data/firestore/dto/Dtos.kt` · `data/firestore/Mappers.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `feature/goals/` · `domain/usecase/SyncHealthDataUseCase.kt` · new suites under `app/src/test/` and `app/src/androidTest/` · `CHANGELOG/2026-08-20/6-silent-filing.md` · ~~`kb-candidates/2026-08-20-6-silent-filing.md`~~ **drained in full and deleted, `13338dc` in JARVIS** · `SESSIONS.md` · `sessions/6-silent-filing.md` · **`sessions/7-quickadd-complete.md` and `sessions/8-notifications.md`** — both name this ticket and both went stale when it shipped; corrected in the ship commit, nobody else held them | **Gradle daemon** · **Firebase emulator** (functions, released) · ~~**`Pixel_10_Pro_XL_B`**~~ **RELEASED and shut down 2026-08-20** — it is signed **out** (`9-duration-box` r2's `connectedDebugAndroidTest` took `rachil751@gmail.com` with it) · **`Pixel_10_Pro_XL`** — claimed 2026-08-20 in its place, before the first device command against it. ⚠️ **It is signed in as עידו with 8 real goals** (`CHANGELOG/2026-08-20/48-settings-surface.md`), which is what the seen pass needs — the silent branch only fires for a user who HAS goals. So on this AVD: `adb install -r` + `am instrument` only, **never `connectedDebugAndroidTest`**, which uninstalls the app and would take that account too (`kb/dev/android-device-verification.md` §8). Only one AVD runs at a time here — 1.8 GB of 15.7 GB free. | 2026-08-20 |
+> 🏁 **`6-silent-filing` RELEASED 2026-08-20 — `7d60e90` (claim) → `b4f4980` (`#6` ships)
+> → `0e2eb49` (AVD swap) → **this commit** (r2, the device pass). `#6` SHIPPED.**
+> **`Pixel_10_Pro_XL`, the Gradle daemon and the Firebase emulator are all released.**
+> ⚠️ **`Pixel_10_Pro_XL` is SIGNED IN as `name.iddo@gmail.com`** and this session did nothing
+> to endanger it — the whole instrumented suite ran through `adb install -r` + `am instrument`.
+> `Pixel_10_Pro_XL_B` is shut down and still signed **out**.
+>
+> ✅ **The dialog is DELETED, not made optional.** `R3` asked for a setting; §0.7 makes silence the
+> rule, so a toggle would contradict it. Three branches, one pure function (`SmartFiling.kt`):
+> existing goal → **silent**; no goal id → an `AI_SUGGESTED` goal that sits **pending** with
+> *Keep* / *Not a goal*; low confidence → the task is filed with **no goal at all**, because §3.5
+> says the sorter must never invent one.
+>
+> 🐞 **A DEFECT ONLY THE DEVICE COULD FIND, and it removed the witness.** `consumeFiled()` ran
+> **inside** a `LaunchedEffect` keyed on the state it nulls, so the effect restarted and cancelled
+> itself before `showSnackbar` — every task filed correctly and **no confirmation ever rendered**,
+> with JVM 506/0, instrumented 114/0, functions 37/0 and emulator 10/0 all green. §0.7 permits
+> silence only in exchange for an after-the-fact witness, so this was the ticket failing on the
+> screen while satisfying its spec on paper.
+>
+> 📌 **AND THE REGRESSION TEST'S FIRST VERSION WAS BLIND TOO.** With `onConsume` stubbed as an
+> inert counter the headline case **passed against the broken order**; only once the harness nulled
+> the state did it go red. Measured: 2/7 red → **5/7 red** → 7/7 green. A stub must reproduce every
+> effect of the real collaborator that the code under test can observe.
+>
+> 🎨 **The pending banner was re-rendered once, for a correctness reason not a cosmetic one:**
+> at 2.dp above and 12.dp below it read as belonging to either neighbouring card, and *Not a goal*
+> changes a goal's status.
+>
+> ⚠️ **NOT DEPLOYED and NOT CLEANED UP — both Ido's call.** `firebase deploy --only functions`
+> was not run, so §3.4's validation is not live (behaviour is still correct: the client resolves
+> ids rather than trusting them). And the seen pass left **4 tasks and 1 demoted goal** in
+> `goalpilot-56e30`; deletions are always-ask, so they stand — named in
+> [`CHANGELOG/2026-08-20/6-silent-filing.md`](CHANGELOG/2026-08-20/6-silent-filing.md).
+>
+> 📥 **Ingested (r1):** three sections into `C:\Dev\JARVIS` at `13338dc`. **r2's two candidates
+> are in `kb-candidates/2026-08-20-6-silent-filing-r2.md`.**
 > 🏁 **`9-duration-box` r3 RELEASED 2026-08-20 — `4ba1119` (claim) → this commit.** No
 > singletons: docs only, no build beyond a compile check, no device.
 >

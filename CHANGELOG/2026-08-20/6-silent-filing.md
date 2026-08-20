@@ -281,3 +281,125 @@ this commit`), which is a positive signal that session wrote about itself and se
 without a transcript check; the working tree was clean at the same moment; and no path of theirs
 overlaps anything here. Nothing of theirs was staged by this session — every commit above used an
 explicit pathspec.
+
+---
+
+# Round 2 — the seen pass, and the defect only a device could find
+
+Ido asked whether the account mattered for the sign-in. It did — but not the way the question
+assumed, and the answer moved the **device** rather than the account: `#6`'s silent branch fires
+only when `classify` resolves an **existing** goal, so on a fresh account every task falls through
+to the new-goal branch and the thing this ticket is about never happens.
+
+**And it needed nothing from Ido at all.** `CHANGELOG/2026-08-20/48-settings-surface.md` already
+recorded both AVDs' state: `Pixel_10_Pro_XL` is signed in as **name.iddo@gmail.com** with 8 real
+goals, and `Pixel_10_Pro_XL_B` was `rachil751@gmail.com` until `9-duration-box` r2's
+`connectedDebugAndroidTest` took it. So the swap was **read out of the changelog**, then confirmed
+on the device by reading the app's own persisted `FIREBASE_USER` before installing anything. The
+sign-in request in round 1's reply was correct at the time and was withdrawn rather than paid.
+
+## 🐞 The defect: the witness never rendered
+
+**Found by looking. Every layer was green and nothing was shown.**
+
+```kotlin
+LaunchedEffect(filed) {
+    val receipt = filed ?: return@LaunchedEffect
+    viewModel.consumeFiled()          // ← nulls the state this effect is KEYED on
+    val result = snackbarHost.showSnackbar(…)
+```
+
+`consumeFiled()` sets `_filed.value = null`, which changes `filed`, which **restarts the
+`LaunchedEffect`** — cancelling the coroutine before it can reach `showSnackbar`. The task filed
+correctly every time; the snackbar never appeared once.
+
+**This is not a cosmetic failure.** §0.7 permits acting without asking *only because* the act is
+visible afterwards and undoable. A receipt that never renders does not degrade the feature — it
+removes the thing that made the silence legitimate. The unit would have shipped satisfying its own
+spec on paper and violating it on the screen.
+
+**The comment above it argued for the wrong order**, which is the part worth keeping: consuming
+early was meant to stop a second quick-add queueing behind a ten-second snackbar. That concern is
+real and is answered by the **key**, not by the ordering — a new receipt restarts the effect, which
+dismisses the stale snackbar and shows the current one. So: **await first, consume after**, and
+deliberately **not** in a `finally`, because on cancellation the flow already holds the next
+receipt and clearing it there would swallow exactly the quick-add the wrong order was protecting.
+
+### The regression test, verified in both directions — and the instrument needed fixing first
+
+The effect is now `SmartAddReceiptSnackbar`, split out of `DashboardScreen` so
+`SmartAddReceiptUiTest` drives the **real** wiring. Testing a copy of those six lines would have
+re-tested the copy: the copy would have been written from the same wrong understanding and passed.
+
+**Then the instrument itself was checked on the input it exists for, and failed it.** With the
+harness's `onConsume` as an inert counter, the headline case `aFilingIsAnnouncedAtAll` **passed
+against the broken order** — because nothing nulled the receipt, so the effect never restarted. An
+instrument that does not model the callback cannot see a bug whose cause *is* the callback. Once
+`onConsume` was made to null the state, the measurement was:
+
+| Version | Result |
+|---|---|
+| broken order, inert-counter harness | 2 of 7 red — and **not** the headline case |
+| broken order, harness that models the consume | **5 of 7 red**, headline case included |
+| fixed order | **7 of 7 green** |
+
+`Observed:` all three runs on `Pixel_10_Pro_XL`, 2026-08-20.
+
+**Why the existing suites were blind to it.** `SilentFilingUiTest` drives `SmartAddCard` and
+`GoalListRow` in isolation — every assertion in it passes either way, because none of them can see
+a `ViewModel` flow reaching a `Scaffold`'s snackbar host. Isolated-component coverage cannot fail
+on a wiring defect, and the bug lives in a **coroutine's lifetime**, not in any value, so no unit
+test at any layer could have held it either.
+
+## 🎨 The banner's attribution, revised after looking
+
+First render: a bare row 2.dp under its card, in a list whose `Arrangement.spacedBy(12.dp)` puts
+12.dp below it. On the device those gaps read as **near-equal** — the buttons carry Material's
+48.dp minimum touch height, so the label floats in the middle of a tall row and the 2-versus-12
+difference disappears. **Also not cosmetic:** *Not a goal* changes a goal's status, so a banner
+that could belong to either neighbour demotes the wrong goal.
+
+Revised to a tinted, inset row with square top corners and rounded bottom ones — a drawer pulled
+out from under the card, welded to it. Re-rendered and looked at again: unambiguous.
+
+⚠️ **A claim in the new code was then disproved by the next render and corrected.** The comment
+said 16.dp was chosen because 24.dp wrapped the label; at 16.dp it wraps too — two buttons plus a
+sentence do not fit one line on a phone. `maxLines = 2` is deliberate, the wrap is legible, and the
+comment now says what the render actually shows.
+
+## 👀 What was watched, in order
+
+| # | Screenshot | What it shows |
+|---|---|---|
+| 1 | `seen-01-dashboard` | signed in as **עידו**, 8 goals, 70 pts — a real account with real goals |
+| 2 | `seen-04-sorting` | *"Filing «Bench press 30 minutes at the gym»…"* **in place**, field already cleared for the next task. **No dialog.** |
+| 3 | `seen-06-snackbar` | **`Added to "Strength Training"` · Undo** — the silent branch, with its witness |
+| 4 | `seen-07-speaks` | **`No goal fitted — suggested "Learn to play the saxophone"`** — §3.4's one speaking row, telling rather than asking |
+| 5 | `seen-11-banner-v3` | the pending goal on the list, `Suggested — not yet one of your goals` · *Not a goal* · *Keep* — **and no banner on any of the 8 legacy goals**, which is `UNKNOWN` reading correctly |
+| 6 | `seen-12-demoted` | after *Not a goal*: the banner is gone and **the goal survives**, in its life area, with its task. §1.1's lossless demotion, on a real account. |
+
+## 🧪 Tests — round 2
+
+| Layer | Result |
+|---|---|
+| **JVM unit** | **506 / 0** (unchanged — the defect is unreachable from the JVM) |
+| **Instrumented** | **121 / 0** — +7 (`SmartAddReceiptUiTest`), `OK (121 tests)` in 193.0 s |
+| **Functions unit** | **37 / 0** |
+| **Functions emulator** | **10 / 0** (round 1) |
+| **Seen on a device** | ✅ six captures above, on `Pixel_10_Pro_XL`, signed in as Ido |
+
+## ⚠️ Test data left on Ido's live account — his call, not this session's
+
+The seen pass ran against **real data in `goalpilot-56e30`**, so it left real rows behind. Deletions
+are always-ask, so nothing was removed:
+
+- **3 tasks** — *"Bench press 30 minutes at the gym"* and *"Do 20 push ups and squats at the gym"*
+  under **Strength Training**, *"Drink 2 liters of water today"* under **Drink 4 Liters of Water
+  Daily**.
+- **1 task** — *"Learn to play the saxophone"*, under the goal below.
+- **1 goal** — *"Learn to play the saxophone"* in **לימודים**, created `AI_SUGGESTED` and then
+  **demoted** by tapping *Not a goal*, so it now carries the `NONE` sentinel. It is the only object
+  in the live project exercising that state, which makes it evidence as well as clutter.
+
+The dashboard's *Overall progress* moved 25% → 22% as a result, which is the ninth goal averaging
+in and not a defect.
