@@ -52,8 +52,28 @@ import java.io.File
  * is the state #11 is responsible for and the only one in which fill buttons
  * exist at all. Rendering the unanswered goal would be a picture of #44.
  *
- * The PNG lands in the app's external files dir; `adb pull` fetches it. The
- * assertions are a floor, not the point: a green test that produced a blank
+ * **Getting the PNG off the device is not `adb pull` on its own, and this sentence
+ * used to say it was.** `./gradlew :app:connectedDebugAndroidTest` **uninstalls the
+ * app when it finishes**, and the app's external files dir goes with it — so the
+ * capture is deleted before anyone can fetch it, and `adb pull` then reports a path
+ * that does not exist. Run the instrumentation directly instead, which uninstalls
+ * nothing:
+ *
+ * ```bash
+ * adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk
+ * adb -s <serial> install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+ * adb -s <serial> shell am instrument -w -e class <thisClass> \
+ *     com.idomarhaim.goalpilot.debug.test/com.idomarhaim.goalpilot.HiltTestRunner
+ * adb -s <serial> pull /storage/emulated/0/Android/data/com.idomarhaim.goalpilot.debug/files/<name>.png
+ * ```
+ *
+ * Note `.debug` — the debug build carries an `applicationIdSuffix`, so the directory
+ * is **not** the one `applicationId` would suggest, and `pm list instrumentation`
+ * gives the runner rather than guessing at `AndroidJUnitRunner`. Full reasoning:
+ * `kb/dev/android-device-verification.md` §8, which had all of this before #9 and was
+ * not consulted.
+ *
+ * The assertions are a floor, not the point: a green test that produced a blank
  * bitmap would satisfy them and fail the criterion, which is why the file is
  * pulled and **looked at**.
  */

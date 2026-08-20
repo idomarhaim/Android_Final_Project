@@ -15,7 +15,23 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `9-duration-box` (r3) | Fix a **wrong instruction** the render tests give: *"`adb pull` fetches it"* does not work after `connectedDebugAndroidTest`, which uninstalls the app and deletes the file. | `app/src/androidTest/.../DurationBoxRenderTest.kt` · `app/src/androidTest/.../WaterGoalRenderTest.kt` · `AGENTS.md` · `CHANGELOG/2026-08-20/9-duration-box.md` · `SESSIONS.md` | none — docs only, no build, no device | 2026-08-20 |
+> 🏁 **`9-duration-box` r3 RELEASED 2026-08-20 — `4ba1119` (claim) → this commit.** No
+> singletons: docs only, no build beyond a compile check, no device.
+>
+> ⚠️ **BOTH RENDER TESTS WERE GIVING AN INSTRUCTION THAT DOES NOT WORK.** *"The PNG lands in the
+> app's external files dir; `adb pull` fetches it"* — but `connectedDebugAndroidTest` **uninstalls the
+> app**, taking that directory and the capture with it, so the pull reports a missing path and reads
+> as *the test wrote nothing*. It is the sentence the next render-test author reads, because they open
+> the last one. Fixed in both KDocs and in `AGENTS.md`'s command block, with the `.debug`
+> `applicationIdSuffix` trap and `pm list instrumentation` named.
+>
+> 🧠 **`kb/dev/android-device-verification.md` §8 had all of it since 2026-08-19 and was not
+> consulted.** Nothing there is changed — it is correct. A **retrieval** gap is answered by a pointer
+> at the point of use, not by rewriting the page.
+>
+> 📝 `WaterGoalRenderTest.kt` is `11-fill-buttons`'s file, released on the board; the sentence
+> is identically wrong in both, so it is corrected rather than left to mislead. A doc correction, not
+> an adoption of their ticket.
 > 🏁 **`9-duration-box` RELEASED 2026-08-20 — `48e94bc` (r1) → `1e42b5d` (r2 claim) →
 > **this commit** (r2, the ticket). `#9` SHIPPED.**
 > **`Pixel_10_Pro_XL_B` and the Gradle daemon both released.** ⚠️ The emulator is **signed out** — the

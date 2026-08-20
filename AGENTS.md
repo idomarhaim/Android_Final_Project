@@ -122,6 +122,10 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
 .\gradlew :app:testDebugUnitTest        # JVM unit tests
 .\gradlew :app:installDebug             # install on device/emulator
 .\gradlew :app:connectedDebugAndroidTest # instrumented tests (needs emulator)
+# ^ UNINSTALLS THE APP WHEN IT FINISHES. That takes the signed-in Google account and
+#   anything the tests wrote to the app's files dir (e.g. a render-pass PNG) with it.
+#   To keep either, skip the Gradle task: adb install -r both APKs, then
+#   `adb shell am instrument -w <appId>.test/<runner>`. See kb/dev/android-device-verification.md S8.
 
 # Cloud Functions
 cd functions; npm install; npm run build

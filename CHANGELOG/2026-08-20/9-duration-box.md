@@ -320,3 +320,56 @@ A **retrieval** failure, not a knowledge gap, so nothing in §8 changed.
   `SESSIONS.md` · `sessions/9-duration-box.md`
 - **In `C:\Dev\JARVIS`:** `kb/dev/look-at-your-own-output.md`, `kb/dev/android-device-verification.md`,
   `kb/index.md`, `kb/log/2026-08-20.md`, `SESSIONS.md`
+
+---
+
+# Round 3 — the retrieval failure had left a *wrong instruction* behind, and that is fixable
+
+Ido asked what round 2's closing ⚠️ note meant and whether it needed fixing. Restating it did not
+answer the question, so the note was re-read as a **finding** rather than as an apology — and it turns
+out something concrete was broken after all.
+
+**What the note actually said.** `./gradlew :app:connectedDebugAndroidTest` **uninstalls the app when
+it finishes**, which deletes the app's external files dir — where the render test had just written its
+PNG. So the capture was gone before `adb pull` could fetch it. The workaround (install both APKs with
+`install -r`, then `adb shell am instrument` directly, which uninstalls nothing) was re-derived from
+scratch, and `kb/dev/android-device-verification.md` **§8 already documented it** from
+`48-settings-surface` on 2026-08-19. Nothing was broken in the KB and nothing in the code; the failure
+was that the page was not consulted.
+
+**But the failure left residue, and the residue is a defect.** Both render tests carried this KDoc:
+
+> *The PNG lands in the app's external files dir; `adb pull` fetches it.*
+
+**That instruction does not work**, and it is the one the next author reads: whoever writes render test
+#3 opens render test #2. Following it after the Gradle task reports a path that does not exist, which
+reads as *the test did not write anything* rather than *the task deleted it*. `AGENTS.md`'s command
+block listed `connectedDebugAndroidTest` with no warning either.
+
+Fixed in three places — both render tests' KDoc and the `AGENTS.md` command block — each carrying the
+working sequence, the `.debug` `applicationIdSuffix` trap (the directory is not the one `applicationId`
+suggests), `pm list instrumentation` for the runner rather than guessing at `AndroidJUnitRunner`, and a
+pointer to §8.
+
+`WaterGoalRenderTest.kt` is `11-fill-buttons`'s file. It is released on the board and the sentence is
+identically wrong in both, so it is corrected here rather than left to mislead — a doc correction, not
+an adoption of their ticket.
+
+**Verified by execution, not by reading.** All four commands in the new KDoc are the ones this session
+actually ran to recover the PNG: the two `install -r` calls, the `am instrument` line with
+`com.idomarhaim.goalpilot.debug.test/com.idomarhaim.goalpilot.HiltTestRunner` as `pm list
+instrumentation` reported it, and the pull from
+`/storage/emulated/0/Android/data/com.idomarhaim.goalpilot.debug/files/`.
+
+**No KB change.** §8 is correct as written and gains nothing from this; the gap was retrieval, and the
+remedy that fits a retrieval gap is a pointer at the point of use, which is what shipped.
+
+## 🧪 Tests — round 3
+
+`:app:compileDebugAndroidTestKotlin` green. **No behaviour changed** — three comment blocks and one
+markdown block — so no suite was re-run, stated rather than skipped silently.
+
+## Files — round 3
+
+`app/src/androidTest/.../DurationBoxRenderTest.kt` · `app/src/androidTest/.../WaterGoalRenderTest.kt` ·
+`AGENTS.md` · this file · `SESSIONS.md`
