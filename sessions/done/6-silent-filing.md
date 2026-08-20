@@ -2,9 +2,10 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 6
 created: 2026-08-20
+done: 2026-08-20 by `6-silent-filing` — `7d60e90` (claim) → `b4f4980` (#6 ships) → r2, the device pass
 ---
 
 # `#6` — silent filing, and the one branch that is allowed to speak
