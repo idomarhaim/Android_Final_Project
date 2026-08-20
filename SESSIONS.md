@@ -15,7 +15,37 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c20-eventarc-fix` | **Verify the Eventarc redeploy actually wired the trigger — Ido ran the deploy, `Deploy complete!` is NOT the answer.** Tick a task, read the function log for `{uid, points, factCount}`, check the dashboard. | `sessions/c20-eventarc-fix.md` · `CHANGELOG/2026-08-20/c20-eventarc-fix.md` · `SESSIONS.md` | **`Pixel_10_Pro_XL_B` (emulator-5554)** — signed in, no uninstall | 2026-08-20 |
+> 🏁 **`c20-eventarc-fix` *(round 1)* RELEASED 2026-08-20 — `23e8734` (claim) → `8201d70` (the
+> finding) → this note. `Pixel_10_Pro_XL_B` RELEASED**, sign-in intact, no uninstall. The brief
+> stays **`status: ready`** — the work is not finished. Account:
+> [`CHANGELOG/2026-08-20/c20-eventarc-fix.md`](CHANGELOG/2026-08-20/c20-eventarc-fix.md).
+>
+> ❌ **THE REDEPLOY DID NOT FIX IT, AND `Deploy complete!` LIED FOR THE SECOND TIME ON THIS DEFECT.**
+> Ido granted `Bash(firebase:*)` and ran it; both functions reported *Successful update operation*.
+> Toggled the task twice at `02:56Z` (writes landed, ring 1%) — `functions:log` at `02:58Z` and
+> `02:59Z` shows **no invocation and no error**, and the dashboard still reads **`0 pts`** against
+> **1** task done after a cold relaunch.
+>
+> 🔬 **The audit log pins the cause exactly:** the deploy issued **`UpdateFunction`**, not
+> `CreateFunction`, and the trigger is **`projectpoints-956857` — the SAME id the `01:08` deploy
+> created**, minutes after `01:01:31Z` failed on the Eventarc Service Agent. `firebase deploy` on an
+> existing function updates the function and **leaves the trigger in place**; generating the service
+> identities does not retro-fix a trigger born before them. **`state: ACTIVE` is the *function's*
+> state and says nothing about delivery** — which is why this read healthy three separate times.
+>
+> ⛔ **NEXT STEP IS A DELETION, SO IT IS IDO'S:** `firebase functions:delete projectPoints
+> projectChallengeScore --force`, then redeploy — which forces `CreateFunction` and a **fresh
+> trigger**. Low risk (both functions are already non-functional, source is in git, ~2 min to
+> recreate) but a deletion of live infrastructure is always-ask in both modes. Exact commands in the
+> brief and the changelog.
+>
+> ✅ **Two more hypotheses killed, so nobody re-treads them:** it is **not** a silently-zero
+> computation (`TaskFact{done,points}` matches `TaskDto` exactly, and the task renders `+30`, so a
+> firing function would have written 30), and it is **not** fire-then-throw (no error entry either).
+>
+> 📌 **gcloud still deliberately NOT installed.** Every question so far was answerable from the audit
+> log. It earns its install if a *fresh create* still fails to deliver — that is the first question
+> the log cannot answer.
 > 🏁 **`50-finish` *(round 3)* RELEASED 2026-08-20 — `bee5628` (claim) → `310b6f8` (the diagnosis)
 > → this note.** **No singletons held and NOTHING WAS DEPLOYED.** `functions/` released untouched;
 > `functions/lib/` was rebuilt (git-ignored) and `functions/.env` read, not written.

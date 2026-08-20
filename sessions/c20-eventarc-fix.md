@@ -87,6 +87,44 @@ confirmed only by redeploying now that the identities exist — which is this se
 > never ran. **Worth a KB candidate of its own:** *an emulator suite's coverage boundary is a
 > claim about the instrument, and it belongs next to the green it produces.*
 
+## ⚠️ ROUND 1 HAPPENED, AND IT FAILED — read this before re-running the deploy
+
+*(2026-08-20. Ido granted `Bash(firebase:*)` and ran the deploy himself. Both functions reported
+`Successful update operation` / `Deploy complete!`. **The defect reproduced.**)*
+
+**A plain redeploy does NOT fix it, and the audit log says why:**
+
+```
+methodName : google.cloud.functions.v2.FunctionService.UpdateFunction   ← not CreateFunction
+trigger    : .../triggers/projectpoints-956857                          ← SAME id as the 01:08 deploy
+state      : ACTIVE                                                     ← the FUNCTION's state, not the trigger's
+```
+
+`firebase deploy` on an **existing** function issues `UpdateFunction`, which refreshes code and
+config and **leaves the existing Eventarc trigger in place**. The service identities the deploy
+generates do not retro-fix a trigger created before they existed.
+
+**So the remaining step is delete-then-create**, which mints a new trigger:
+
+```powershell
+cd C:\Dev\Android_Final_Project
+firebase functions:delete projectPoints projectChallengeScore --project goalpilot-56e30 --force
+$env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+firebase deploy --only functions:projectPoints,functions:projectChallengeScore --project goalpilot-56e30
+```
+
+⛔ **That is a DELETION of live infrastructure — always-ask in both modes, and Ido has not been
+asked-and-answered yet.** Risk is low (both functions are already non-functional, source is in git,
+recreation takes ~2 min) but low is not zero and it is not an agent's call.
+
+**Two more hypotheses died in round 1** — do not re-tread them either:
+- **A silently-zero computation.** `derived.ts`'s `TaskFact` is `{done?: boolean, points?: number}`,
+  `pointsFromTasks` sums `points` where `done === true`, and `TaskDto` stores exactly `done: Boolean`
+  / `points: Int`. The task renders `+30`, so a *firing* function would have written 30, not 0.
+- **Fire-then-throw.** There is no error entry in the log either. It does not run at all.
+
+Account: [`CHANGELOG/2026-08-20/c20-eventarc-fix.md`](../CHANGELOG/2026-08-20/c20-eventarc-fix.md).
+
 ## Task
 
 1. Get past the precondition (Ido).
