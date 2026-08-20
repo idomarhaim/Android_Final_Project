@@ -294,3 +294,51 @@ never photographs anything**, which is why run #5 carried only a test report.
    line, which is the only thing that would have caught it.
 
 Both are the same class as `kb/dev/escapes-die-in-transit.md`: the transformation, not the text.
+
+---
+
+## Round 5 — the open issue closed by the session that found it
+
+Rounds 3–4 closed with one open issue: `docs/PRODUCT_v0.3.md` §5.2 asserting *"two client
+transactions **already write** `goal.currentValue`"* with two line numbers, when #49 had removed
+both. It was handed on because `docs/` was in nobody's claim.
+
+**Ido asked whether I would take it or a kickoff would. Taking it here** — `c20-build-half`'s Owns
+column is `functions/**`, `firestore.rules`, `firestore-tests/**`, `firebase.json`, four
+`data/firestore` files, `app/src/test/**` and its own changelog, with **no `docs/` path** (the
+`docs/PRODUCT_v0.3.md` in its row is in the *description*, as its design of record). Adding work to
+a running session is worse than taking it, and leaving a false sentence in the design of record
+after a session spent on *stale claims propagate by copying* would be incoherent.
+
+**Annotated, not rewritten** — §5.3's precedent, for a reason that survives inspection: *"the pattern
+was never three sites converging on a server"* is the **argument** that killed the ticket's
+trichotomy, and it is still correct. Only the count and the tense are stale, so deleting the sentence
+would remove reasoning a reader needs.
+
+**One difference from §5.3, stated in the annotation because the two look alike.** That sentence
+becomes true the day `C20` ships. **This one never becomes true again** — the work already happened,
+so it is marked superseded rather than pending, and nothing downstream should wait on it.
+
+### The date was wrong on the first pass, and checking it made the finding sharper
+
+The annotation first said the sentence expired **2026-08-16**, asserted from memory. Verified before
+committing:
+
+```
+git log -S '"currentValue"' -- GoalRepositoryImpl.kt TaskRepositoryImpl.kt
+  9c95ee5  2026-08-15  49-derive-currentvalue: #49 -- goal.currentValue becomes a sum over facts
+  80ba07f  2026-07-01  Implement GoalPilot: Core MVP + full architecture
+```
+
+**2026-08-15**, both files, one commit — and `C20` (#42) closed **2026-08-14**. So the paragraph was
+accurate for roughly **one day**. That is a better statement of the hazard than the one I was about
+to ship: *a sentence does not have to be old to be wrong, and nothing in a spec ages visibly.*
+
+### A sloppy check of my own, caught by reading the output
+
+The claim *"`docs/` is not in the live session's Owns column"* was first checked by grepping the
+**whole board row**, which returned a hit — from the description column — and a `|| echo` that
+masked it. Re-run against field 4 alone: **zero**. The conclusion held; the method did not, and it
+would have failed silently in the other direction.
+
+**No tests run in this round** — one annotated Markdown paragraph, no code path touched.

@@ -1501,6 +1501,37 @@ also why `FieldValue.increment` stays rejected: **`increment` *is* the accumulat
 `TaskRepositoryImpl.kt:135`), so the pattern was never three sites converging on a server — it was
 **two client writers of one field**.
 
+> ⚠️ **The present tense above expired on 2026-08-15 — the day after this section was written.**
+> Both writers are gone and the line numbers point at code that no longer exists. *(Added 2026-08-20
+> by `50b-transaction-guard`, which hit it while writing `C20`'s build brief.)*
+> [#49](https://github.com/idomarhaim/Android_Final_Project/issues/49) removed **both in one commit**
+> — `9c95ee5`, *"`49-derive-currentvalue`: #49 — `goal.currentValue` becomes a sum over facts"*, and
+> `git log -S '"currentValue"'` on each file returns that commit and then nothing until the repo's
+> first. `C20` ([#42](https://github.com/idomarhaim/Android_Final_Project/issues/42)) closed
+> **2026-08-14**, so this paragraph was accurate for roughly one day. That is the whole hazard: a
+> sentence does not have to be old to be wrong, and nothing in a spec ages visibly.
+> `TaskRepositoryImpl.kt` records it in its own KDoc — *"it no longer advances the linked goal. That
+> was the second of the two client writers of `goal.currentValue`"*. `Observed:` at `HEAD`,
+> `grep -n '"currentValue"'` returns **nothing** in either file, and `GoalRepositoryImpl.kt:87` /
+> `TaskRepositoryImpl.kt:135` hold no write at all.
+>
+> **What survives is the argument, which is why this is annotated and not deleted.** *"The pattern was
+> never three sites converging on a server"* is the reasoning that killed the ticket's trichotomy, and
+> it is still correct — a reader needs it to understand why §5.2 concludes what it does. Only the
+> *count* and the *tense* are stale.
+>
+> **This differs from §5.3's annotation in one way worth stating**, because the two look alike: that
+> sentence becomes true the day `C20` ships. **This one never becomes true again** — the work already
+> happened, so it is superseded rather than pending, and nothing downstream should wait for it.
+>
+> **The client-side remainder at `HEAD` is one function, not two writers.** `TaskRepositoryImpl.setDone`
+> holds three writes in one transaction: `taskRef` (a **fact** — stays), `userRef.points` and
+> `publicDoc(uid)` (both **derived** — the projection function's). Reduce it to the first and the
+> transaction has nothing left to be atomic about, which is what §5.3 needs. Scope, verified against
+> `HEAD` rather than against this paragraph:
+> [#52](https://github.com/idomarhaim/Android_Final_Project/issues/52) and
+> [`sessions/c20-build-half.md`](../sessions/c20-build-half.md).
+
 **The honest residual, not buried:** the arithmetic now exists in **Kotlin and TypeScript** — a second
 *implementation* that can disagree. Accepted, because avoiding it costs the offline win entirely, and
 **pinned by a shared `facts → expected numbers` fixture both test layers run**.
