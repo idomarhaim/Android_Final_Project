@@ -307,11 +307,10 @@ not run in production until `firebase deploy --only functions` has been run agai
 is already on the tier that allows them. Until that deploy:
 
 - completing a task still works, offline and on — the fact is written and the tick is instant;
-- the owner's own screens are still right, because they read facts;
-- **the leaderboard row and challenge standings freeze** at their last value.
+- **every points total freezes, the owner's included** — see the correction below;
+- the leaderboard row and challenge standings freeze with them.
 
-That is the trade §5.2 made deliberately. It is called out here because it is the one consequence
-that is invisible in a green build.
+It is called out here because it is the one consequence that is invisible in a green build.
 
 ---
 
@@ -343,3 +342,111 @@ to their **`rules/` halves** by `50b-transaction-guard` r2 and both stay always-
 (2) *an instrumented run and a render pass are not mutually exclusive on one device*. Listed here
 because every session owes a report of a non-empty `kb-candidates/`, not because this one touched
 them.
+
+---
+
+# Round 2 — Ido: *"run the emulator, and you do the deploy"*
+
+Both of round 1's open issues were handed back to this session rather than deferred. Round 2 closes
+them, and in checking its own claims it found **a defect round 1 had introduced in its own KDoc**.
+
+## ⚠️ The correction — round 1 asserted something false about the owner's own points
+
+Round 1's new `TaskRepositoryImpl` KDoc said:
+
+> *"On a device with no functions deployed, the tick still works and the owner's own totals —
+> **which are summed from these facts on the device** — are still right."*
+
+**They are not summed on the device. Nothing in this app has ever summed them.** `Observed:`
+2026-08-20, by reading the call sites rather than by reasoning about them:
+
+- `AuthRepositoryImpl.authState()` reads `usersCol.document(uid).snapshotsFlow()`;
+- `UserDto.toDomain()` passes `points` straight through into `User.points`;
+- `DashboardViewModel:101`, `ProfileScreen:97` and `BuildWidgetSnapshotUseCase:69` all render that
+  **stored** number;
+- `grep -rn 'sumOf'` across the owner's view models returns nothing that sums task points.
+
+That claim was written in the same sentence-shape the `claim-provenance` rule exists to catch: a
+consequence stated in the present tense that nobody had observed. It is corrected in the KDoc, in
+the deployment note above, and — additively — in `docs/PRODUCT_v0.3.md` §5.2 itself.
+
+**And it resolves round 1's open design question rather than leaving it for Ido.** §5.2's table row
+*"`points` — a sum over completion facts — no writer"* is the right reading of §5.2's own rule
+**only if the owner's screens compute the sum**. They do not, so the projection **must** write
+`users/{uid}.points`, exactly as the brief and #52 specify. Had it not, completing a task would
+have frozen every owner-facing total under a green build — invisible to every test layer here,
+because no test asserts what a screen reads. Making the table row true is a real and separate unit
+(sum at the four call sites, then drop the private write) and it buys the owner's totals working
+offline. It is not scheduled, and §5.2 now says so in place.
+
+## 🧪 The triggers, executed as triggers
+
+`functions/test/projection.test.mjs` only ever proved the *arithmetic*. New:
+`functions/test/triggers.emulator.mjs`, run by `npm run test:emulator` against the **Firestore and
+Functions emulators** on `demo-goalpilot`.
+
+**9 / 9 pass, 0 fail** (14.8 s). What it proves that a unit test cannot:
+
+| Case | What would otherwise be unverified |
+|---|---|
+| a task write projects onto **both** the private doc and the public row | the path pattern matches and `event.params.uid` is spelled as the handler reads it |
+| un-ticking takes the points back | the projection is a re-read, not an accumulator |
+| **deleting** a done task lowers the total | `onDocumentWritten` covers deletes — a create/update trigger would silently miss this |
+| the public row gets `updatedAt` and **no** `level` | #50's stamp rides the write; §5.2's deletion actually took effect on the wire |
+| identity fields survive a projection | `{ merge: true }` — a plain `set()` would blank a user's display name on every tick |
+| a report projects onto the row its reporter may not write | the whole point of the field-level rule |
+| a negative report is clamped | `scoreFromReport`, through the real event shape |
+| reporting into a challenge you never joined writes **nothing** | `update()`'s `NOT_FOUND` really is the silent no-op the design leans on — the log line shows the caught error |
+| deleting the report leaves the standing alone | `null` means *write nothing*, not *write zero* |
+
+Deliberately named `*.emulator.mjs`, not `*.test.mjs`, so `npm test` stays emulator-free and fast.
+
+**One tooling note worth keeping:** the first emulator run was backgrounded and returned **exit 0
+with a zero-byte output file** — `stdio: 'inherit'` through a detached shell loses the stream. An
+exit code is not a result. Re-run with `> log 2>&1` and read the log; that is where the 9/9 came
+from.
+
+## 🚀 Deployed to `goalpilot-56e30` — on Ido's explicit instruction
+
+> *"מה הכוונה שהDEPLOY הוא שלי — תעשה אותו אתה."*
+
+An outward-facing action, always-ask in both modes; the ask was answered, so it was performed.
+`firebase login:list` reported the CLI already authenticated as `name.iddo@gmail.com`, so the
+"gate is Ido's" half of round 1's note was **two-thirds wrong**: the binary was there, the auth was
+there, and only the permission was missing.
+
+**`firebase deploy --only functions --dry-run` first**, which is why the real deploy's failure was
+diagnosable rather than alarming.
+
+**The first attempt half-failed, and the message was right about why.** The three callables updated;
+both new triggers failed with
+
+```
+Validation failed for trigger …/projectpoints-764090: Invalid resource state for "":
+Permission denied while using the Eventarc Service Agent.
+…Since this is your first time using 2nd gen functions, we need a little bit longer
+to finish setting everything up. Retry the deployment in a few minutes.
+```
+
+This project had never deployed an **event-triggered** function — the three existing ones are all
+`onCall`, which needs no Eventarc — so the Eventarc service agent was created *by this deploy* and
+its IAM grant had not propagated. Waited five minutes and retried; **`Deploy complete!`**, both
+`Successful create operation`, the three callables `Skipped (No changes detected)`.
+
+Verified afterwards rather than assumed — `firebase functions:list`:
+
+```
+│ projectChallengeScore │ v2 │ google.cloud.firestore.document.v1.written │ us-central1 │
+│ projectPoints         │ v2 │ google.cloud.firestore.document.v1.written │ us-central1 │
+```
+
+**`firestore.rules` deployed too, and that was not optional.** The field-level conditions are the
+enforcing half of this unit; until released they were a file on disk while production still ran the
+rule that let any client write `points` and `score`. `firebase deploy --only firestore:rules` →
+*rules file compiled successfully* → *released rules to cloud.firestore*.
+
+**What this changes for a real account, stated plainly.** `projectPoints` recomputes from the whole
+task collection, so the first time Ido completes or edits a task, `users/{uid}.points` and the
+public row are **rewritten to the sum of his done tasks' points**. If the stored value has drifted
+from that sum — from any earlier code path — it will move. That is the intended behaviour of
+projecting from facts, and it is the first moment it becomes visible on real data.

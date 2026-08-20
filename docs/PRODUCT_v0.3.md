@@ -1489,6 +1489,14 @@ Of the map's **seven** derived quantities:
 | `publicProfiles.level` | **deleted outright** — a stored function of `points` **in the same document**, whose `resolvedLevel()` fallback **can never fire** because both writers write ≥ 1 |
 | `challengeParticipant.score` | **survives** — it crosses the ownership boundary |
 
+> ⚠️ **The `points` row describes an end-state nobody has built, and `C20`'s build half did not build it either.** *(Added 2026-08-20 by `c20-build-half`, which shipped that build half at `731961b` and hit this while checking its own claims.)*
+>
+> *"A sum over completion facts — no writer"* is the correct reading of this section's own rule **only if the owner's screens compute that sum**. They do not, and nothing in the app ever has. `Observed:` at `HEAD`, `AuthRepositoryImpl.authState()` reads the stored `users/{uid}.points` through `usersCol.document(uid).snapshotsFlow()`, `UserDto.toDomain()` passes the field straight into `User.points`, and all four owner-facing readers — `DashboardViewModel:101`, `ProfileScreen:97`, `BuildWidgetSnapshotUseCase:69` and the leaderboard's own row — render that **stored** number. `grep -rn 'sumOf'` over the owner's view models returns nothing that sums task points.
+>
+> **So the projection writes `users/{uid}.points` as well as the public copy**, exactly as [#52](https://github.com/idomarhaim/Android_Final_Project/issues/52) and the build brief specify. Had it not, completing a task would have left every owner-facing total frozen at its last value — a regression, delivered under a green build, invisible to every test layer this repo has, because no test asserts what a screen reads.
+>
+> **The rule at the head of this section is untouched and still decides the case.** *Somebody who cannot read its inputs has to read it* is a claim about **readers**, and the reader that matters here is a screen, not a person: the private copy needs a writer for as long as the client does not compute the total. Making the row true is a real and separate unit — sum the task collection at the four call sites, then drop the private write — and it buys the owner's totals working offline. It is not scheduled, and it should not be inferred from this table that it has happened.
+
 **So: one projection function, two trigger registrations, and zero client writers of derived state.**
 Neither *"one Function"* nor *"three triggers"* is literally what ships.
 

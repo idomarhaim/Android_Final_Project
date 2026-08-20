@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "test": "npm run build && node --test \"test/*.test.mjs\"",
+    "test:emulator": "npm run build && node test/run-emulator-tests.mjs",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",

@@ -42,10 +42,18 @@ import javax.inject.Singleton
  *    is instant. `runTransaction` could not be served from the cache and took a measured
  *    7.9 s to fail (closed #3). `app/src/test/.../guards/OfflineWriteGuardTest.kt` is
  *    watching for exactly this and reports **skipped** from the moment it is true.
- * 2. Points do not move until the projection function runs. On a device with no functions
- *    deployed, the tick still works and the owner's own totals — which are summed from
- *    these facts on the device — are still right; the public leaderboard row is what
- *    goes stale. That is the trade §5.2 made deliberately, not a regression.
+ * 2. **Points do not move until the projection function runs — including the owner's own.**
+ *    Nothing in this app sums these facts on the device: `AuthRepositoryImpl.authState()` reads
+ *    the stored `users/{uid}.points` and `UserDto.toDomain()` passes it straight through, so
+ *    Dashboard, Profile and the widget all render the **stored** number. The tick itself still
+ *    works offline and instantly, because it is a fact; the totals derived from it wait for the
+ *    server.
+ *
+ *    That is why the projection writes `users/{uid}.points` as well as the public row, and why
+ *    spec §5.2's table row *"points — a sum over completion facts — no writer"* describes an
+ *    end-state nobody has built: it would be true only once every owner-facing reader computed
+ *    the total from the task collection. **`Observed:` 2026-08-20**, by reading the four call
+ *    sites; an earlier revision of this KDoc claimed the opposite and was wrong.
  *
  * It also does not advance the linked goal (#49, spec §5.2): the goal sums
  * `progressContribution` over its completed tasks, so the tick alone carries the progress
