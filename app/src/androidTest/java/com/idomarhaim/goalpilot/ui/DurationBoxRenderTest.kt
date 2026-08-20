@@ -118,7 +118,7 @@ class DurationBoxRenderTest {
                     // the estimate, so the picture would have been of nothing.
                     onSuggestPoints = { points = 20; minutes = suggest },
                     onSuggestionApplied = { points = null; minutes = null },
-                    onAdd = { _, _, _, _ -> },
+                    onAdd = { _, _, _, _, _ -> },
                 )
             }
         }

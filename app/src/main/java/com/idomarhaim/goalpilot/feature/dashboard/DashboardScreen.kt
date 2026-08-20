@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
@@ -32,6 +33,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -621,8 +623,11 @@ private fun GoogleTasksImportDialog(
  * to — or proposes a new one — and estimates its point value.
  */
 @Composable
-internal fun SmartAddCard(state: SmartAddState, onClassify: (String) -> Unit) {
+internal fun SmartAddCard(state: SmartAddState, onClassify: (String, Boolean) -> Unit) {
     var title by remember { mutableStateOf("") }
+    // `#7`/`R6`. Held here rather than in the ViewModel because it is a property of what is
+    // being typed, not of the app: it belongs to this half-finished sentence and dies with it.
+    var alreadyDone by remember { mutableStateOf(false) }
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -661,10 +666,40 @@ internal fun SmartAddCard(state: SmartAddState, onClassify: (String) -> Unit) {
                     modifier = Modifier.weight(1f),
                 )
                 FilledTonalButton(
-                    onClick = { onClassify(title); title = "" },
+                    onClick = { onClassify(title, alreadyDone); title = ""; alreadyDone = false },
                     enabled = title.isNotBlank(),
                     modifier = Modifier.padding(start = 8.dp),
                 ) { Text("Sort") }
+            }
+            // `#7`, `R6`: *"there should be a way to complete the task from within quick add"*.
+            // The four navigations it removes are add-on-dashboard, find-the-goal, open it, tick
+            // the row — for a task typed in precisely because it is already finished.
+            //
+            // A CHIP UNDER THE ROW, NOT A THIRD CONTROL INSIDE IT. The row is already a text
+            // field that must stay wide enough to read, a button, and their padding; a third
+            // item makes the field too narrow on a phone to see what you are typing. And §0.8's
+            // surviving sub-rule is *form and words before iconography*, so this cannot shrink
+            // to a bare tick mark to fit.
+            //
+            // IT RESETS ON EVERY ADD, deliberately, and that is one extra tap when logging
+            // several finished things in a row. A toggle that stayed on would be a mode that
+            // silently completes the NEXT task typed — the app doing something unasked and
+            // unannounced, which is the one thing §0.7 does not permit even for filing.
+            Row(
+                modifier = Modifier.padding(top = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FilterChip(
+                    selected = alreadyDone,
+                    onClick = { alreadyDone = !alreadyDone },
+                    label = { Text(SmartAddTestTags.ALREADY_DONE_LABEL) },
+                    leadingIcon = if (alreadyDone) {
+                        { Icon(Icons.Filled.Done, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.testTag(SmartAddTestTags.ALREADY_DONE),
+                )
             }
             // The only thing left of the old dialog: while a task is in flight the card says
             // so, in place, without taking the screen. #6 removed the confirmation, not the
@@ -680,7 +715,15 @@ internal fun SmartAddCard(state: SmartAddState, onClassify: (String) -> Unit) {
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                     Text(
-                        "Filing “${state.taskTitle}”…",
+                        // Says "as done" while it is in flight, because the chip that said so
+                        // has already cleared on the tap that started this. Without it there is
+                        // a round trip's worth of seconds in which nothing on screen agrees
+                        // that a completion is being written.
+                        if (state.alreadyDone) {
+                            "Filing “${state.taskTitle}” as done…"
+                        } else {
+                            "Filing “${state.taskTitle}”…"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -696,6 +739,18 @@ internal fun SmartAddCard(state: SmartAddState, onClassify: (String) -> Unit) {
 /** Test handles for the surfaces `#6` replaced the confirmation dialog with. */
 object SmartAddTestTags {
     const val SORTING = "smartAdd:sorting"
+
+    /** `#7`'s create-and-complete toggle. */
+    const val ALREADY_DONE = "smartAdd:alreadyDone"
+
+    /**
+     * The chip's own words, shared with the tests.
+     *
+     * Named rather than duplicated because a test asserting a *copy* of a label passes
+     * against a screen whose label was changed — it re-tests the copy, which is the same
+     * mistake `SmartAddReceiptUiTest`'s header records about copying a composable.
+     */
+    const val ALREADY_DONE_LABEL = "Already done"
 }
 
 /**
@@ -748,11 +803,37 @@ internal fun SmartAddReceiptSnackbar(
  *  - **no existing goal fit** — §3.4's one row that *speaks*, because an absent goal id does
  *    not degrade the outcome, it changes it. It **tells**; it does not ask. A proposed goal is
  *    named as a suggestion, and an unfiled task says so plainly.
+ *
+ * **`#7` doubles the table rather than prefixing it.** Completion is independent of filing —
+ * any of the three outcomes can happen to a task typed in as already finished — so it could
+ * have been a `"Done — "` prefix over the three sentences above. Written out instead, because
+ * two of the three then read wrong: *"Done — No goal fitted"* capitalises mid-sentence, and
+ * *"Done — Added “x” — no goal fits it yet"* carries two dashes and says *added* about a thing
+ * whose news is that it is **finished**. Six short strings cost less than a rule with two
+ * exceptions.
+ *
+ * **Why it has to be said at all.** The filed task is under a goal the user is not looking at,
+ * so its tick is not on screen either; the receipt is the only place this screen can show that
+ * the completion took. Undo needs no second offer — deleting the task takes the completion
+ * with it.
  */
 internal fun SmartAddReceipt.sentence(): String = when (val d = decision) {
-    is FilingDecision.ExistingGoal -> "Added to “${d.goalTitle}”"
-    is FilingDecision.NewGoal -> "No goal fitted — suggested “${d.title}”"
-    is FilingDecision.NoGoal -> "Added “$taskTitle” — no goal fits it yet"
+    is FilingDecision.ExistingGoal ->
+        if (completed) "Done — added to “${d.goalTitle}”" else "Added to “${d.goalTitle}”"
+
+    is FilingDecision.NewGoal ->
+        if (completed) {
+            "Done — no goal fitted, suggested “${d.title}”"
+        } else {
+            "No goal fitted — suggested “${d.title}”"
+        }
+
+    is FilingDecision.NoGoal ->
+        if (completed) {
+            "Done — “$taskTitle” fits no goal yet"
+        } else {
+            "Added “$taskTitle” — no goal fits it yet"
+        }
 }
 
 /**

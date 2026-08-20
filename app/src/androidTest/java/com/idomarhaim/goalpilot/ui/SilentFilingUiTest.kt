@@ -133,7 +133,7 @@ class SilentFilingUiTest {
             GoalPilotTheme {
                 SmartAddCard(
                     state = SmartAddState(isClassifying = true, taskTitle = "Run 5 km on Friday"),
-                    onClassify = {},
+                    onClassify = { _, _ -> },
                 )
             }
         }
@@ -149,7 +149,7 @@ class SilentFilingUiTest {
     @Test
     fun anIdleCardSaysNothingAboutSorting() {
         composeRule.setContent {
-            GoalPilotTheme { SmartAddCard(state = SmartAddState(), onClassify = {}) }
+            GoalPilotTheme { SmartAddCard(state = SmartAddState(), onClassify = { _, _ -> }) }
         }
 
         composeRule.onNodeWithTag(SmartAddTestTags.SORTING).assertDoesNotExist()
@@ -160,7 +160,9 @@ class SilentFilingUiTest {
         var sorted: String? = null
         composeRule.setContent {
             GoalPilotTheme {
-                SmartAddCard(state = SmartAddState(), onClassify = { sorted = it })
+                // `#7` added the second parameter; this case is `#6`'s no-confirmation
+                // path, so it reads only the title.
+                SmartAddCard(state = SmartAddState(), onClassify = { t, _ -> sorted = t })
             }
         }
 

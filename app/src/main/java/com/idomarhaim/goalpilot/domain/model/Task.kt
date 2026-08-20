@@ -40,6 +40,17 @@ data class Task(
      */
     val durationSource: DurationSource = DurationSource.UNKNOWN,
     val createdAtEpochMillis: Long = 0L,
+    /**
+     * When the completion happened — **one fact with [isDone], never one without the
+     * other** ([TaskCompletion]).
+     *
+     * Four readers disagree about which of the two fields *is* the fact (the projection
+     * function counts `done`; the weekly summary, the dashboard's done-this-week count and
+     * the time-allocation chart all require this stamp), so a task carrying one and not the
+     * other awards points while being invisible everywhere it could be checked against.
+     * `TaskRepositoryImpl.upsertTask` runs `TaskCompletion.stamp` over every write for that
+     * reason; `setDone` has always written both together.
+     */
     val completedAtEpochMillis: Long? = null,
 )
 

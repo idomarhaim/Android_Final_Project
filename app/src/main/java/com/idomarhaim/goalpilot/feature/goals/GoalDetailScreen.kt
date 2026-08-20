@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Checkbox
@@ -32,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -359,11 +361,13 @@ internal fun AddTaskRow(
     suggestedMinutes: Int?,
     onSuggestPoints: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Int, Int, DurationSource) -> Unit,
+    onAdd: (String, Int, Int, DurationSource, Boolean) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var points by remember { mutableStateOf("10") }
     var duration by remember { mutableStateOf(DurationEntry()) }
+    // `#7`. Belongs to the sentence being typed, so it lives with `title` and dies with it.
+    var alreadyDone by remember { mutableStateOf(false) }
 
     LaunchedEffect(suggestedPoints, suggestedMinutes) {
         suggestedPoints?.let {
@@ -419,10 +423,14 @@ internal fun AddTaskRow(
             IconButton(
                 onClick = {
                     val (storedMinutes, storedSource) = duration.resolve()
-                    onAdd(title, points.toIntOrNull() ?: 10, storedMinutes, storedSource)
+                    onAdd(title, points.toIntOrNull() ?: 10, storedMinutes, storedSource, alreadyDone)
                     title = ""
                     points = "10"
                     duration = DurationEntry()
+                    // Cleared with everything else, for the reason SmartAddCard's copy of this
+                    // chip records: a "done" that survived the add would be a mode that
+                    // silently completes whatever is typed next.
+                    alreadyDone = false
                 },
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add task")
@@ -477,6 +485,31 @@ internal fun AddTaskRow(
                 modifier = Modifier.padding(start = 8.dp, top = 4.dp),
             )
         }
+
+        // `#7`'s create-and-complete, the same control the dashboard's quick-add card carries.
+        // See `GoalDetailViewModel.addTask` for why this surface has it at all, `R6` naming
+        // only quick add.
+        //
+        // ITS OWN ROW, not squeezed in beside the duration box. The row above is a 140dp box
+        // plus a caption that already runs to "no estimate · counts as 30m"; a chip there
+        // leaves the caption about fifty pixels on a phone, which ellipsises away the half of
+        // it that says what will be stored — and that caption is the whole of `#9`.
+        Row(
+            modifier = Modifier.padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FilterChip(
+                selected = alreadyDone,
+                onClick = { alreadyDone = !alreadyDone },
+                label = { Text(ALREADY_DONE_LABEL) },
+                leadingIcon = if (alreadyDone) {
+                    { Icon(Icons.Filled.Done, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                } else {
+                    null
+                },
+                modifier = Modifier.testTag(ALREADY_DONE_TAG),
+            )
+        }
     }
 }
 
@@ -504,6 +537,12 @@ private fun durationCaption(duration: DurationEntry): String {
 
 /** Stable handles for the instrumented test; the icon's label is also its a11y text. */
 internal const val DURATION_BOX_TAG = "add-task-duration-box"
+
+/** `#7`'s create-and-complete toggle on this surface. */
+internal const val ALREADY_DONE_TAG = "add-task-already-done"
+
+/** Its words, shared with the tests so an assertion cannot pass against a stale copy. */
+internal const val ALREADY_DONE_LABEL = "Already done"
 internal const val AI_ESTIMATE_ICON_LABEL = "Duration estimated by AI"
 
 @Composable

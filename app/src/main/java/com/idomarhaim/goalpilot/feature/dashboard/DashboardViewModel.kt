@@ -189,12 +189,20 @@ class DashboardViewModel @Inject constructor(
      * **One write when the goal exists, two when it does not** — and the second case creates
      * the goal *before* the task, so a failure leaves nothing rather than a task pointing at a
      * goal that was never written.
+     *
+     * [alreadyDone] is `#7`/`R6` — *"there should be a way to complete the task from within
+     * quick add"*. It **adds no write**: the count above is unchanged, because the completion
+     * rides the task's own `set()` rather than a `setDone` after it (§1.4's *"that same fact,
+     * not a second pipe"*). It does not touch the filing decision either — where a task goes
+     * and whether it is finished are independent questions, and a done task still belongs
+     * under the goal it serves.
      */
-    fun classifyForSmartAdd(rawTitle: String) {
+    fun classifyForSmartAdd(rawTitle: String, alreadyDone: Boolean = false) {
         val title = rawTitle.trim()
         if (title.isBlank()) return
         viewModelScope.launch {
-            _smartAdd.value = SmartAddState(isClassifying = true, taskTitle = title)
+            _smartAdd.value =
+                SmartAddState(isClassifying = true, taskTitle = title, alreadyDone = alreadyDone)
             val goals = lastGoals
             val areas = lastLifeAreas
             val classification =
@@ -241,6 +249,12 @@ class DashboardViewModel @Inject constructor(
                     goalId = goalId,
                     title = title,
                     points = classification.estimatedPoints,
+                    // `#7`/`R6`: a task typed in because it is already finished is created
+                    // done, in THIS write. Not upsert-then-tick — see TaskCompletion, which
+                    // stamps `completedAtEpochMillis` inside `upsertTask` so the fact leaves
+                    // here whole. Nothing else on this path changes: the same classify, the
+                    // same filing decision, the same single `set()`.
+                    isDone = alreadyDone,
                     estimatedMinutes = classification.estimatedMinutes ?: TaskDuration.DEFAULT_MINUTES,
                     // §3.4: a duration nobody supplied is recorded as unsupplied. It still counts
                     // as DEFAULT_MINUTES so the task keeps its slice of the pie, but it is not
@@ -266,6 +280,12 @@ class DashboardViewModel @Inject constructor(
                 // goal is Ido's and predates the quick-add; undoing a filing must never delete
                 // something the filing did not make.
                 createdGoalId = if (decision is FilingDecision.NewGoal) goalId else null,
+                // §0.7's witness has to say what the app DID, and "and recorded it as done"
+                // is half of what it did. A receipt that omitted it would leave the one thing
+                // the user cannot otherwise see from this screen unsaid — the task is filed
+                // under a goal they are not looking at, so its tick is not on screen either.
+                // Undo already covers it: deleting the task removes the completion with it.
+                completed = alreadyDone,
             )
         }
     }
@@ -770,6 +790,16 @@ data class RecommendationsState(
 data class SmartAddState(
     val isClassifying: Boolean = false,
     val taskTitle: String = "",
+    /**
+     * Whether the task in flight was typed in as **already finished** (`#7`).
+     *
+     * It is here, and not only in the card's own `remember`, so that the in-flight row can
+     * say so. The card clears its toggle on the tap that starts the classify — a sticky
+     * "done" mode would silently complete the *next* task somebody types — which would
+     * otherwise leave a second or two of a round trip during which nothing on screen agrees
+     * that a completion is being written.
+     */
+    val alreadyDone: Boolean = false,
 )
 
 /**
@@ -790,6 +820,14 @@ data class SmartAddReceipt(
      * app just made and deleting something of Ido's.
      */
     val createdGoalId: String? = null,
+    /**
+     * Whether the filing also **completed** the task — `#7`'s half of the witness.
+     *
+     * Separate from [decision] on purpose: filing and completing are independent, and every
+     * one of the three filing outcomes can happen to a task that is already done. Folding it
+     * into the sealed hierarchy would double it for a fact that no branch of it decides.
+     */
+    val completed: Boolean = false,
 )
 
 /** Review sheet for a Google Tasks import, before anything is written. */

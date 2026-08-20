@@ -112,8 +112,23 @@ class GoalDetailViewModel @Inject constructor(
      * place that knows whether the number in the box was typed or estimated, and
      * §1.4 makes that difference permanent — a `USER` duration is never re-estimated
      * again for the life of the task.
+     *
+     * [alreadyDone] is `#7`. **Why this surface has it too, since `R6` names quick add:** an
+     * add affordance that exists on one of two add rows and not the other reads as a bug
+     * rather than as a decision. The narrower argument against it is real — here the task list
+     * is on screen, so the new row's checkbox is one tap away and `R6`'s four navigations do
+     * not arise — but this is also the surface where somebody logs three runs they have
+     * already done into one goal, and the tap it saves is per task. It is the *same* control
+     * writing through the *same* seam, so it is one feature with two doors rather than two
+     * features that must be kept in step.
      */
-    fun addTask(title: String, points: Int, minutes: Int, durationSource: DurationSource) {
+    fun addTask(
+        title: String,
+        points: Int,
+        minutes: Int,
+        durationSource: DurationSource,
+        alreadyDone: Boolean = false,
+    ) {
         if (title.isBlank()) return
         viewModelScope.launch {
             val result = taskRepository.upsertTask(
@@ -121,6 +136,10 @@ class GoalDetailViewModel @Inject constructor(
                     goalId = goalId,
                     title = title.trim(),
                     points = points.coerceIn(1, 1000),
+                    // `#7`/`R6`, the same create-and-complete the dashboard's quick add makes,
+                    // through the same one `set()`: `TaskCompletion.stamp` inside `upsertTask`
+                    // pairs `completedAtEpochMillis` with this flag. Never upsert-then-setDone.
+                    isDone = alreadyDone,
                     estimatedMinutes = TaskDuration.sanitize(minutes),
                     durationSource = durationSource,
                 ),

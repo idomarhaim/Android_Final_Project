@@ -75,7 +75,9 @@ class DurationBoxUiTest {
                         minutes = pendingMinutes
                     },
                     onSuggestionApplied = { points = null; minutes = null },
-                    onAdd = { t, p, m, s -> added += Added(t, p, m, s) },
+                    // `#7` added the fifth parameter. This suite is about `#9`'s duration
+                    // precedence, so it ignores the flag; `AlreadyDoneUiTest` owns it.
+                    onAdd = { t, p, m, s, _ -> added += Added(t, p, m, s) },
                 )
             }
         }

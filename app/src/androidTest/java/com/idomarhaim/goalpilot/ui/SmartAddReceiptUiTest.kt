@@ -167,4 +167,76 @@ class SmartAddReceiptUiTest {
         composeRule.onNodeWithText("No goal fitted — suggested “Sailing”").assertIsDisplayed()
         composeRule.onNodeWithText("Add this task?").assertDoesNotExist()
     }
+
+    // ── `#7` — the receipt for a task that was also completed ─────────
+
+    /**
+     * Drives the same real composable with a receipt whose `completed` flag is set.
+     *
+     * **Why the witness has to carry this at all.** §0.7 permits filing without asking only
+     * because the app says afterwards what it did, and with `#7` it did two things: it filed
+     * the task, and it recorded the task as finished. The filed task sits under a goal the
+     * user is not looking at, so its tick is not on screen either — this snackbar is the only
+     * place the dashboard can show that the completion took. A receipt that said only
+     * *"Added to X"* would be silent about the half the user pressed the chip for.
+     */
+    private fun setDoneReceipt(decision: FilingDecision, taskTitle: String = "Bench press") {
+        composeRule.setContent {
+            GoalPilotTheme {
+                val host = remember { SnackbarHostState() }
+                Scaffold(snackbarHost = { SnackbarHost(host) }) {
+                    SmartAddReceiptSnackbar(
+                        receipt = SmartAddReceipt(
+                            taskId = "t",
+                            taskTitle = taskTitle,
+                            decision = decision,
+                            completed = true,
+                        ),
+                        hostState = host,
+                        onUndo = { undone = it },
+                        onConsume = { consumed++ },
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun aTaskFiledAndCompletedLeadsWithTheCompletion() {
+        setDoneReceipt(FilingDecision.ExistingGoal("g1", "Strength Training"))
+
+        // "Done" first, because that is the news — the user typed this in BECAUSE it was
+        // already finished, and where it was filed is the secondary fact.
+        composeRule.onNodeWithText("Done — added to “Strength Training”").assertIsDisplayed()
+        composeRule.onNodeWithText("Added to “Strength Training”").assertDoesNotExist()
+    }
+
+    @Test
+    fun aCompletedTaskThatFittedNoGoalSaysBothThings() {
+        setDoneReceipt(
+            FilingDecision.NewGoal(title = "Sailing", category = GoalCategory.OTHER, lifeAreaId = null),
+        )
+
+        composeRule.onNodeWithText("Done — no goal fitted, suggested “Sailing”").assertIsDisplayed()
+    }
+
+    @Test
+    fun aCompletedTaskWithNoGoalAtAllSaysSo() {
+        setDoneReceipt(FilingDecision.NoGoal(suggestedLifeAreaId = null), taskTitle = "Tidy the shed")
+
+        composeRule.onNodeWithText("Done — “Tidy the shed” fits no goal yet").assertIsDisplayed()
+    }
+
+    @Test
+    fun aCompletedFilingIsStillUndoableInOneTap() {
+        // Undo needs no second offer for the completion: deleting the task takes its
+        // `done`/`completedAt` pair with it, which is the whole reason `#7` writes the fact
+        // onto the task rather than into a second place.
+        setDoneReceipt(FilingDecision.ExistingGoal("g1", "Strength Training"))
+
+        composeRule.onNodeWithText("Undo").performClick()
+
+        assertThat(undone?.taskId).isEqualTo("t")
+        assertThat(undone?.completed).isTrue()
+    }
 }

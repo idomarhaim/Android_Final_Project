@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.data.firestore.dto.TaskDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.dto.toDto
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -100,14 +101,31 @@ class TaskRepositoryImpl @Inject constructor(
         try {
             val col = tasksCol(uid)
             val ref = if (task.id.isBlank()) col.document() else col.document(task.id)
-            val toSave = task.copy(
-                id = ref.id,
-                createdAtEpochMillis = if (task.createdAtEpochMillis == 0L) {
-                    System.currentTimeMillis()
-                } else {
-                    task.createdAtEpochMillis
-                },
+            val now = System.currentTimeMillis()
+            val toSave = TaskCompletion.stamp(
+                task.copy(
+                    id = ref.id,
+                    createdAtEpochMillis = if (task.createdAtEpochMillis == 0L) {
+                        now
+                    } else {
+                        task.createdAtEpochMillis
+                    },
+                ),
+                nowMillis = now,
             )
+            // ONE WRITE, AND IT CARRIES THE COMPLETION IF THERE IS ONE (`#7`, §1.4).
+            //
+            // `TaskCompletion.stamp` is what makes a task **born done** legal: the create
+            // carries `done` and `completedAt` together, so there is no `setDone` after this
+            // and therefore no window in which the task exists un-completed. The tempting
+            // shape — upsert, then tick — is two writes and two failure modes, and its second
+            // write is the one that has to succeed for the fact to be whole.
+            //
+            // Enforced here rather than at the add surfaces because this is the one function
+            // every task write goes through. See TaskCompletion's KDoc for what a half-written
+            // fact does: the points move and the task is invisible in the summary, the "done
+            // this week" count and the time chart, because those three read `completedAt` and
+            // the projection reads `done`.
             ref.set(toSave.toDto()).await()
             Resource.Success(ref.id)
         } catch (e: Exception) {
