@@ -381,12 +381,9 @@ That one sentence is only reachable if **every** link worked:
 - **The key is gone from the device** — removed through the app's own *Remove*; the encrypted file
   is back to two entries (Tink's own keysets), and a `grep -rl` over the whole app data directory
   finds nothing.
-- **Cloud logs — `Inferred:`, not `Observed:`.** The claim that no provider error body reaches
-  Google's logs is structural: `ProviderError` has no body field and `callUserProvider` never reads
-  the response body, which `providers.test.mjs` asserts by flipping a flag if anything calls
-  `.text()`/`.json()` on a failed response. `Untested:` the live log was **not** confirmed — the
-  `functions:log` window ended before the test call and a full fetch failed outright with *"Failed
-  to list log entries"*.
+- **No provider error body reaches a logger — `Observed:` in round 4 below.** This bullet said
+  `Inferred:` / `Untested:` when r2 shipped, on the grounds that `functions:log` could not be made
+  to show the call. That was the wrong instrument, not a dead end; see *Round 4*.
 
 ⚠️ **The first version of that last check was reported as three clean zero-counts, and all three
 were vacuous** — they were greps over a file containing only the fetch error. Caught by asking for
@@ -397,3 +394,68 @@ KB an hour earlier. Recorded because the same session wrote the rule and then br
 
 `#54`'s held item is gone: the capability is **live**, not merely written. Both `#54` and `#48` are
 closed on this round. `#53` remains open on `C12` §4.4's `.tag` collapse, which `#48` never owned.
+
+---
+
+# Round 4 — 2026-08-21: the one `unverified` item is closed, by observing it
+
+r2 shipped with one open item — *no provider error body reaches Google's logs* was `Inferred:` from
+the code shape plus a unit test, never watched. Ido asked why it was still open. **The honest answer
+is that two failed log fetches were treated as a dead end after one attempt each**, which is not the
+same thing as *no way to verify it*.
+
+## Why the log route genuinely does not work here — and why that was never the blocker
+
+`firebase functions:log` is unreliable on this project, and it fails in a way that invites the wrong
+conclusion: it returns **15 lines whatever you ask for**, and the slice **moves**. `--only
+getRecommendations` gave entries ending `2026-08-20T09:11Z`; the same command with `-n 200` came
+back with entries from **`2026-08-06`**, older still. A bare `firebase functions:log` returns
+`Error: Failed to list log entries`. `gcloud` is not installed here, so there is no second reader.
+
+**The claim never needed the log.** It is a claim about *what a logger is handed*, and that is
+observable directly — run the **deployed artifact** against the real endpoint and serialise the
+error with **every own property**, next to the thing that would have leaked, as a control:
+
+```
+--- what the provider actually says on a bad key (status 401) ---
+{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+--- what callUserProvider throws for the same call ---
+{"stack":"ProviderError: groq HTTP 401 (dead)
+    at callUserProvider (.../functions/lib/providers.js:301:15)...",
+ "message":"groq HTTP 401 (dead)","provider":"groq","status":401,"failureClass":"dead","name":"ProviderError"}
+
+contains the KEY?             : false
+contains the provider's BODY? : false
+contains "invalid_api_key"?   : false
+```
+
+`Observed:` 2026-08-21 — real network call to `api.groq.com`, real `401`. **It is the deployed
+artifact and not the source**: the stack trace names `functions/lib/providers.js`, the compiled file
+that was uploaded.
+
+## Why this is better evidence than the log would have been
+
+A clean log line proves *this one call logged nothing bad*. This proves **there is nothing bad to
+log**: that error object is the only value any logger on the path receives, and it carries four
+fields, none of which is the body. `index.ts` narrows it further — `logger.warn` is handed a
+hand-built `{provider, status, class}`, not the error at all.
+
+**What still reaches a log, deliberately:** `callGroqJson`'s error, which does interpolate a body —
+GoalPilot's **own** key's error text on GoalPilot's own project. A user's key never reaches that
+function, and `LadderError` carries the user-side failure as a class and a status while its `cause`
+is always the proxy's error. #32's spec line is scoped to user-key calls, and it holds.
+
+## The method, stated so it is reusable
+
+To verify *"X never reaches the log"*: **serialise what the logger actually receives, with all own
+properties, and put the real X beside it as a control.** Without the control the check is
+unfalsifiable — an empty dump proves nothing if you never established what a leak would look like.
+
+## And the process point, which is the part worth keeping
+
+The item should not have been reported open. Two failed fetches of **one** tool is a fact about that
+tool, not about the claim — and a better instrument was available the whole time.
+`open because: no way to verify it here` was simply false; the accurate line would have been
+`not attempted yet`. The status block's `open because:` field is meant to be the thing that stops
+this, and it only works if the reason is the real one.

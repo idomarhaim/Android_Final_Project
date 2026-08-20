@@ -161,3 +161,24 @@ message still fires, one surface later.
 Both remainders have now landed as code: `C12` #53's material contract in `05ec6aa`, and this.
 `#53` stays open on `C12` §4.4's `.tag` collapse, which is a different §4.1 item that `#48` never
 owned — so it does not hold `#48`.
+
+### ✅ r4, 2026-08-21 — the last `unverified` item is closed
+
+*No provider error body reaches a logger* was reported `Inferred:` at r2 because `firebase
+functions:log` could not be made to show the call. **That was the wrong instrument, not a dead
+end.** The claim is about *what a logger is handed*, so it was observed directly: the **deployed**
+`lib/providers.js` was run against `api.groq.com` with an invalid key, and the resulting error
+serialised with every own property, next to the real `401` body as a control.
+
+```
+provider says : {"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+adapter throws: {"message":"groq HTTP 401 (dead)","provider":"groq","status":401,"failureClass":"dead", ...}
+key? false · body? false · "invalid_api_key"? false
+```
+
+Stronger than a clean log line, which would only prove *this call* logged nothing: this proves there
+is **nothing to log**. The method is in `kb/dev/look-at-your-own-output.md` §5.3a.
+
+**The process lesson, recorded because it is the reusable half:** two failed fetches of one tool is
+a fact about that tool. `open because: no way to verify it here` was false — `not attempted yet`
+was the truth.
