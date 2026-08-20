@@ -316,7 +316,38 @@ It is also the one hole the pathspec remedy cannot close, exactly as the rule pr
 pathspec **and** theirs. `SESSIONS.md` is that file by construction. Both sessions did the right
 thing; the board is simply not coverable by the mechanism that covers everything else.
 
-**Singletons:** `51-freeze-verify` holds the **Gradle daemon**, **adb** and AVD
-`Pixel_10_Pro_XL`. Liveness read per §5.3(c): their transcript's last turn was **12:22:53Z**,
-about one minute before I looked — live, not stale. All code for this ticket was therefore
-written first and verification deferred rather than the daemon taken.
+
+### What this push carried that was not mine
+
+`git log @{u}..HEAD` held **three foreign commits**, and they go up with this push because
+`git push` is branch-scoped, not commit-scoped. Named here because a reply scrolls away and this
+does not:
+
+| Commit | Session | What it is |
+|---|---|---|
+| `0f7dadd` | `51-freeze-verify` | their board claim — **and my claim row, which rode along** |
+| `835b3cd` | the KB drain | 4 candidate entries promoted; `2026-08-20-11-fill-buttons.md` deleted, fully drained |
+| `95580af` | `51-freeze-verify` | *the freeze is SEEN* — their ship + close-out |
+
+**Adjudicated on the board, not on git state.** Zero live rows at push time;
+`51-freeze-verify` left an explicit release note and closed its brief to `sessions/done/` with
+`status: done`, which is a positive signal that session wrote about itself and settles the
+question without a transcript read. The KB drain carries no row and is a completed unit.
+
+**Two push-precondition carve-outs apply, and both are checked rather than assumed.** The single
+deletion in the range is a `kb-candidates/` file **fully drained in the same commit** that
+promoted its entries. Both renames are `sessions/<slug>.md` → `sessions/done/<slug>.md` **with
+`status: done` set in the same commit** — verified on each, because a brief moved without its
+status is the half-done state the carve-out deliberately still stops on.
+
+**Singletons:** `51-freeze-verify` held the **Gradle daemon**, **adb** and AVD
+`Pixel_10_Pro_XL` while this session was writing code. Liveness read per §5.3(c): their
+transcript's last turn was **12:22:53Z**, about one minute before I looked — live, not stale. So
+all the code was written first and verification deferred rather than the daemon taken; a watch on
+their board row woke this session about a minute after they released, and every test in this
+entry ran after that.
+
+**Device state left behind:** the signed-in Google account on `Pixel_10_Pro_XL` is **intact** —
+instrumented tests ran through `adb shell am instrument`, never `connectedDebugAndroidTest`,
+which uninstalls the app. `POST_NOTIFICATIONS` is left **granted** on the debug build, so the
+nightly prompt can actually fire there.
