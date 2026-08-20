@@ -289,3 +289,34 @@ the one place it is opened.
 and were updated for its four new parameters. Those parameters were deliberately given **no
 defaults**: a default would let a real screen forget them and render an AI section that silently
 does nothing, which is the one thing that section must not be.
+
+---
+
+## KB — 5 candidates, drained in full
+
+Ingested into the central bundle (`C:/Dev/JARVIS/kb`) in `0045b86`; released there in `e3fa2c5`.
+The journal entry `kb/log/2026-08-21.md` names this repo and its candidate file, which is the only
+tie that survives a cross-repo drain — the pages and the candidate cannot ride one commit.
+
+- **Ingested:** a Bash heredoc collapses a doubled backslash before Python sees it →
+  `kb/dev/escapes-die-in-transit.md` §7
+- **Ingested:** a bottom sheet's primary action can open below the fold, and the miss lands on the
+  scrim → `kb/dev/sheet-action-below-the-fold.md` *(new page)*
+- **Ingested:** a tree sweep that reads one window, and a `git diff` sweep that reads two-thirds of
+  the files → `kb/dev/look-at-your-own-output.md` §4k
+- **Ingested:** `install -r` + `am instrument`, fifth run — plus the `applicationIdSuffix` on the
+  instrumentation component and the build-exit-code gate →
+  `kb/dev/android-device-verification.md` §8c
+
+**One of the five was already a page, and the bundle check is the only reason it did not become a
+second one.** The candidate proposed a new page for the heredoc collapse;
+`escapes-die-in-transit.md` has existed since **2026-08-10**, from **this repo**, on the same
+mechanism — a JavaScript template literal that time. What this instance genuinely added is the
+worse failure mode: there the corruption hit the *subject*, here it hit the **check**, and a gutted
+matcher in a guard reports *success*.
+
+`Check-KbLinks`: **CLEAN** — 100 pages, no broken links, no orphans, no wikilinks.
+
+The candidate file was fully promoted and is therefore deleted rather than rewritten down to
+survivors (`rules/derivable-decision.md` §1). It had not yet been committed, so this entry is where
+that record lives.
