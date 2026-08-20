@@ -15,6 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `8-notifications` | `#8` — notification substrate: channel, POST_NOTIFICATIONS, local scheduling | `app/src/main/java/com/idomarhaim/goalpilot/notifications/` (new) · `GoalPilotApp.kt` · `MainActivity.kt` · `AndroidManifest.xml` · `app/src/main/res/values/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/notifications/` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/notifications/` (new) · `sessions/8-notifications.md` · `CHANGELOG/2026-08-20/8-notifications.md` · `kb-candidates/2026-08-20-8-notifications.md` | Gradle daemon (from first build) | 2026-08-20 |
+| `51-freeze-verify` | Hebrew render pass on device + the three owed `#51` writes | `sessions/51-freeze-verify.md`, `CHANGELOG/2026-08-20/51-freeze-verify.md`, `kb-candidates/2026-08-20-51-freeze-verify.md`, `CHANGELOG/CHANGELOG_README.md` | AVD `Pixel_10_Pro_XL`, adb, Gradle daemon | 2026-08-20 |
 > 🏁 **`7-quickadd-complete` r2 RELEASED 2026-08-20 — `279bd2e` (claim) → this commit.** No singletons.
 >
 > 🤝 **Ido delegated the `#19` question** (*תעשה מה שאתה חושב שיהיה הכי נכון*), so the decision below is
