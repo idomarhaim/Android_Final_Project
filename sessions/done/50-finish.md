@@ -2,10 +2,20 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 50
 created: 2026-08-20
+closed: 2026-08-20 by `50-finish` — `941d6a8` (the deletion), `3bf280a` (claim)
+kb: `1fe963f` in `C:\Dev\JARVIS` — §12a-i, §12b, §4d
 ---
+
+> **Closed.** The precondition returned `<skipped/>` (GO) and all four deletions shipped. Two
+> corrections to this brief, for anyone reading it as a record: its deletion list named **one**
+> obsolete test case and there were **two**, and it did not anticipate that three committed texts
+> would be falsified by the deletion itself (two KDocs, one comment) plus a dated spec annotation
+> that this unit's landing closes. `Untested:` an offline tap was **not** observed succeeding —
+> see `CHANGELOG/2026-08-20/50-finish.md` §Tests. The **#50 close comment is NOT posted**: it is an
+> outward action and Ido's permission was not given.
 
 # `#50` item 5 — delete `ConnectivityMonitor`, and let the guard tell you it is allowed
 
