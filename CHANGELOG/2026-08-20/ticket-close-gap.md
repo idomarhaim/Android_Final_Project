@@ -157,3 +157,65 @@ assert on it, and only then open the destination file.**
 | **`Check-KbLinks.ps1`** (JARVIS bundle) | **CLEAN** — 94 pages, no broken links, no orphans, no wikilinks |
 | **App layers** | **none apply** — round 2 touched only Markdown, in two repos |
 | **Truncation check** | line counts diffed before/after on every touched file; that is what caught the regression above |
+
+---
+
+# Round 3 — `#7` closed, and the audit that says nothing else can be
+
+Ido: *"if `#7` is complete then update it on GitHub — same for any other tickets like it."*
+
+## ✅ `#7` closed
+
+`R6` shipped in `153620b`: a task is created **and** completed in one action, the create carrying the
+completion through the one write everything else already uses. Closed with an evidence comment.
+
+**The closing comment carries the orphan, deliberately.** `#7`'s body describes §1.4's points
+inversion and §1.5's `goalEdges`; the session **deliberately did not build** either, on the reading
+that §1.4's clause on *this* ticket is a **plumbing** constraint (*emit that same fact, not a second
+pipe*) rather than the arithmetic. That reading is right, and the deferral points at **`C1`, which is
+closed**. A search of every open issue for `goalEdges` / points inversion / `difficulty` /
+`completionFacts` / `progressContribution` returned **only `#7` itself** — so the close would have
+made the work invisible. The comment is the record until Ido rules on a carrier ticket.
+
+## 🔍 Nothing else is closeable — all five checked against `/kickoff` §5 step 4
+
+| # | Verdict | Which clause decided it |
+|---|---|---|
+| `#53` `#54` | open | sibling brief still `ready` — step 4's mechanical test |
+| `#48` | open | the **unmechanisable** case: `result:` says Material + AI **HELD**, spun off as `#53`/`#54` |
+| `#51` | open | **deliberately parked** by `hebrew-defer-freeze` — *"Park `#51` as OPEN"* |
+| `#8` | open | substrate 6/6 shipped, §2.5's scheduled half held on an **occurrence model that does not exist** |
+
+Step 4's mechanical half would have said **CLOSE** on `#48` and `#51`. Both were caught by the read
+the rule prescribes for exactly that residue — the second live instance of §4h's finding, one day
+after it shipped.
+
+## ⚠️ A correction to round 2's reply
+
+Round 2 told Ido `#7` had *"nothing held"*. **That was too confident.** `#7`'s **body** names §1.4 and
+§1.5 work that does not exist; what is true is narrower — the session made an explicit, reasoned
+call that the clause binding *this* ticket is about plumbing, and satisfied it. The close is still
+right; the justification is not *"nothing was deferred"* but *"what was deferred was never this
+ticket's to build"*. The distinction is the whole difference between a close and a silent scope cut,
+and the closing comment states it rather than the changelog alone.
+
+## 📋 `#8` is not a scope cut, and round 2 framed it badly
+
+Round 2 recommended *"declare it out of scope and close `#8`"*. Reading the ticket body changes the
+recommendation: §2.5's backward-computed deadline reminder is the spec's own stated
+differentiator — *"the one thing this app knows that Google Calendar does not"*. Cutting it is not
+trimming a tail.
+
+**The ticket boundary is what is wrong, not the scope.** `#8` was widened by triage to carry the
+whole notification substrate **and** §2.5's scheduled behaviours; the substrate is done, and the
+behaviours need §2.2's occurrence model — due dates and the four rungs — which is a **different
+subsystem** and belongs to a different ticket. Correcting the boundary closes `#8` honestly and keeps
+the differentiator tracked. Ido's call; nothing done here.
+
+## 🧪 Tests — round 3
+
+| Layer | Result |
+|---|---|
+| **App layers** | **none apply** — no code changed; one GitHub close and this account |
+| **Close verification** | re-read from the API: `#7` `closed`, `closed_at 2026-08-20T17:24:42Z`, 3 comments. The **list** endpoint served a stale copy showing it open — the single-issue endpoint is the one to trust |
+| **Orphan search** | every open issue's title + body grepped for the five symbols above before closing |
