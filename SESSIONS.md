@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c20-eventarc-fix` *(round 2)* | **Delete + recreate the two projection triggers so Eventarc mints fresh ones.** Ido authorised the deletion explicitly. ⚠️ ONLY `projectPoints` + `projectChallengeScore` — the three callables (`classifyTask`, `getRecommendations`, `scoreTask`) must survive untouched. | `sessions/c20-eventarc-fix.md` · `CHANGELOG/2026-08-20/c20-eventarc-fix.md` · `SESSIONS.md` | **live `goalpilot-56e30` functions** · **`Pixel_10_Pro_XL_B`** (signed in, no uninstall) | 2026-08-20 |
 > 🏁 **`c20-eventarc-fix` *(round 1)* RELEASED 2026-08-20 — `23e8734` (claim) → `8201d70` (the
 > finding) → this note. `Pixel_10_Pro_XL_B` RELEASED**, sign-in intact, no uninstall. The brief
 > stays **`status: ready`** — the work is not finished. Account:
