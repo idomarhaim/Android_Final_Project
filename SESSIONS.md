@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r2) | `C13` deploy + end-to-end verification, then the #54/#48 ticket writes | `CHANGELOG/2026-08-20/c13-key-store.md` · `sessions/done/c13-key-store.md` | **live Firebase env `goalpilot-56e30` · adb + emulator-5554** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
