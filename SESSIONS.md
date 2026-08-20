@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `7-quickadd-complete` | `#7` — complete a task from inside the add flow | `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailViewModel.kt`, `app/src/main/java/com/idomarhaim/goalpilot/domain/`, `app/src/test/java/com/idomarhaim/goalpilot/`, `app/src/androidTest/java/com/idomarhaim/goalpilot/`, `sessions/7-quickadd-complete.md`, `CHANGELOG/2026-08-20/7-quickadd-complete.md`, `kb-candidates/2026-08-20-7-quickadd-complete.md` | Gradle daemon; a device later for the render pass (not yet claimed) | 2026-08-20 |
 > 🏁 **`9-duration-box` r4 RELEASED 2026-08-20 — `bc66295` (claim) → this commit.** No
 > singletons.
 >
