@@ -459,3 +459,70 @@ tool, not about the claim — and a better instrument was available the whole ti
 `open because: no way to verify it here` was simply false; the accurate line would have been
 `not attempted yet`. The status block's `open because:` field is meant to be the thing that stops
 this, and it only works if the reason is the real one.
+
+---
+
+# Round 5 — 2026-08-21: cutting `v0.3.0`, so the build reaches Ido's phone
+
+Ido asked for the app on his phone. No phone is attached to this machine (only
+`emulator-5554`), so the route is Firebase App Distribution — which this repo already has,
+end to end, from `5316782` on 2026-08-06.
+
+## ⚠️ The release signing key is GONE from this machine — and it does not matter
+
+`app/goalpilot-release.jks` does not exist, `local.properties` carries no `RELEASE_*`, and a
+`find` over the whole user profile turns up **no `.jks` at all**. It was created on the machine
+that was replaced, and it did not come across. That is exactly the loss `docs/RELEASING.md` §2.1
+warns is *"painful to undo"* — every future update must carry the same signature or testers must
+uninstall and lose their local state.
+
+**It survives in GitHub Actions secrets.** `gh secret list` shows all six from 2026-08-06,
+including `RELEASE_KEYSTORE_BASE64`. So CI can still produce correctly-signed builds even though
+no human on this machine can. **The tag route is not merely convenient here, it is the only route**
+— a local `assembleRelease` falls back to the *debug* key, and `app/build.gradle.kts` refuses to
+distribute that on purpose.
+
+> 📌 **Worth Ido's attention regardless:** the key now exists in exactly **one** place, a GitHub
+> secret that cannot be read back. If that repo or that secret goes, no future update can ever
+> install over the current one. Backing it up is a decision only he can take, and it is not
+> something this session could do for him — the secret is write-only.
+
+## The last release attempt failed, and it was not the code
+
+`v0.2.2`'s run failed after 15 m with *"The job was not acquired by Runner of type hosted even
+after multiple attempts"* — a runner-allocation failure, nothing to do with the build. `v0.2.1`
+had succeeded in 6 m 49 s. So **`versionCode = 4` was never distributed**, and the newest build
+any tester has is `v0.2.1`.
+
+## R8 was the real risk, and it was tested rather than assumed
+
+The release build runs `isMinifyEnabled = true` + `isShrinkResources = true`, and **none of
+`C13`'s code had ever been through it**. `EncryptedSharedPreferences` is Tink underneath, which is
+reflection- and protobuf-heavy and a classic R8 casualty — and `app/proguard-rules.pro` carries
+**no Tink or `androidx.security` keep rules at all**.
+
+That failure would have been invisible in the worst way: `EncryptedAiCredentialStore.openOrNull()`
+catches and returns `null`, so a stripped Tink shows up as *"you have not added a key"* — the app
+looks fine and the feature is silently dead in exactly the builds real users get.
+
+`Observed:` built `assembleRelease`, installed the minified APK, stored a key, **force-stopped the
+process**, relaunched, and the row still read `••••••••5555` with the provider and model intact.
+Zero Tink or `GeneralSecurityException` lines in logcat across the whole cycle. `security-crypto`
+ships its own consumer ProGuard rules, so no keep rules were needed — **but that is now a
+measurement rather than a hope**, and it is the kind of thing that changes silently on a
+dependency bump.
+
+The release build also confirmed §4.9's signed-out entry point: Settings opens from the sign-in
+screen with no account, the AI section renders, and Account reads *"Not signed in"*.
+
+## What shipped
+
+| | |
+|---|---|
+| `versionCode` | **4 → 5** (4 was never distributed) |
+| `versionName` | `0.2.2` → **`0.3.0`** — this carries #48's whole Settings surface, #53's material contract and #54's AI section |
+| `release-notes.txt` | **created** — it did not exist, and `app/build.gradle.kts` names it as `releaseNotesFile`. Written for a tester, not a developer: what changed on screen, and that nothing needs an API key |
+| tag | `v0.3.0`, which is what `.github/workflows/release.yml` triggers on |
+
+The local release APK was uninstalled from the emulator afterwards so nothing debug-signed under
+the release `applicationId` is left lying around.

@@ -1,0 +1,37 @@
+v0.3.0 — Settings, and a whole new Appearance
+
+This is the release that gives GoalPilot a real Settings screen. Open it from the
+avatar at the top of the home screen.
+
+APPEARANCE
+- Four materials to draw the app out of: glass, liquid glass, neo and dark neo.
+  Every screen re-renders in the one you pick.
+- Dark neo is dark-only, and the app says so on the tile rather than just
+  greying the brightness control. Your brightness choice is remembered and comes
+  back the moment you pick another material.
+- Colour themes and light/dark as before, now in one place.
+
+LANGUAGE & REGION
+- Choose the language GoalPilot speaks. Your own goals, tasks and life-area
+  names stay exactly as you wrote them.
+- Region sets which day your week starts on and how a date reads. The screen
+  shows you the answer for the region you picked, not a description of it.
+
+YOUR DAY
+- Set the hours you are awake, and when GoalPilot plans tomorrow. The planning
+  time follows your waking hours until you override it.
+
+AI — bring your own API key (optional)
+- GoalPilot answers with its own free model, and always will. You can now add
+  your own GROQ, OpenAI, Anthropic or Google Gemini key instead.
+- Same features, same screens, just a better answerer. Nothing needs a key.
+- The key is encrypted on this phone. It is never saved to your account and
+  never included in a backup, so it does not follow you to a new device.
+- A status line always says which model actually answered. If your key is
+  rejected or out of quota, the free model answers and the screen tells you so
+  rather than going quiet.
+- Remove the key any time and everything carries on.
+
+EVERYTHING HERE BELONGS TO THIS PHONE
+Nothing on the Settings screen is tied to your account, and none of it changes
+when you sign out.
