@@ -262,3 +262,22 @@ sign-in for this run to preserve. The order was chosen for it anyway: the statel
    nobody asked to change. The reason is written at the site.
 5. **`C16` [#37] owes a real backfill** when milestones become creatable, plus §1.1's
    intrinsic-only filter on the goals list.
+
+---
+
+## What this push carried that is not mine
+
+`git log @{u}..HEAD` at push time held **five** commits, and **two are `9-duration-box` r4's**:
+
+| Commit | Session | What |
+|---|---|---|
+| `bc66295` | `9-duration-box` r4 | claim before giving the KB a withdrawal path (`SESSIONS.md`) |
+| `ad7dd4f` | `9-duration-box` r4 | *the KB has a triggered deposit path and no withdrawal path at all* — `AGENTS.md`, `CHANGELOG/2026-08-20/9-duration-box.md`, `SESSIONS.md`, `kb-candidates/2026-08-20-9-duration-box.md` |
+
+`git push` is **branch-scoped, not commit-scoped**, so they go up with this one whether or not
+this session wants them to. They were adjudicated rather than assumed: r4 wrote an **explicit
+release note** into `SESSIONS.md` (`> 🏁 9-duration-box r4 RELEASED 2026-08-20 — bc66295 (claim) →
+this commit`), which is a positive signal that session wrote about itself and settles the question
+without a transcript check; the working tree was clean at the same moment; and no path of theirs
+overlaps anything here. Nothing of theirs was staged by this session — every commit above used an
+explicit pathspec.
