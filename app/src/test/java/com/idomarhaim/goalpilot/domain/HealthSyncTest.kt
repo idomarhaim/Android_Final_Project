@@ -7,6 +7,8 @@ import com.idomarhaim.goalpilot.domain.model.DailySteps
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppRegion
@@ -74,7 +76,7 @@ class HealthSyncTest {
         steps: Long = 8_000,
         sleep: SleepNight? = null,
         existingGoals: List<Goal> = listOf(
-            Goal(id = "g-fit", title = "Move more", category = GoalCategory.FITNESS, unit = "steps"),
+            Goal(id = "g-fit", title = "Move more", category = GoalCategory.FITNESS, measure = Measure(MeasureKind.COUNT, "steps")),
         ),
         logged: List<ProgressEntry> = emptyList(),
     ) {
@@ -266,7 +268,7 @@ class HealthSyncTest {
                     id = "g-fit",
                     title = "Move more",
                     category = GoalCategory.FITNESS,
-                    unit = "steps",
+                    measure = Measure(MeasureKind.COUNT, "steps"),
                     healthSourceKey = HealthMetric.STEPS.goalSourceKey,
                 ),
             ),

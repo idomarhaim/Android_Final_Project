@@ -13,6 +13,8 @@ import com.idomarhaim.goalpilot.core.util.Bidi
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.SkinPicker
@@ -58,7 +60,9 @@ class ComponentsLocaleTest {
         category = GoalCategory.LEARNING,
         currentValue = 5.0,
         targetValue = 10.0,
-        unit = "hours",                   // user-authored (§8): never translated
+        // User-authored (§8): never translated. Since #11 the word lives on the
+        // measure, and DURATION is the kind the app would compute with.
+        measure = Measure(MeasureKind.DURATION, "hours"),
     )
 
     // ------------------------------------------------------------------ Hebrew

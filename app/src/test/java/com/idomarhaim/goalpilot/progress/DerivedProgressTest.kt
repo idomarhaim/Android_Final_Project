@@ -2,6 +2,8 @@ package com.idomarhaim.goalpilot.progress
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -176,7 +178,7 @@ class DerivedProgressTest {
 
     @Test
     fun `withDerivedProgress leaves every other field alone`() {
-        val goal = Goal(id = "g1", title = "Read 12 books", targetValue = 12.0, unit = "books")
+        val goal = Goal(id = "g1", title = "Read 12 books", targetValue = 12.0, measure = Measure(MeasureKind.COUNT, "books"))
         val derived = goal.withDerivedProgress(listOf(entry("g1", 3.0)), emptyList())
         assertThat(derived).isEqualTo(goal.copy(currentValue = 3.0))
     }

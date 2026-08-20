@@ -273,8 +273,8 @@ private fun AreaGoalCard(
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Text(
-                    text = "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()} " +
-                        goal.unit,
+                    text = ("${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()} " +
+                        goal.measureWord).trim(),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

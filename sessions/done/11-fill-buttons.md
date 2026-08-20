@@ -2,21 +2,40 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 11
 created: 2026-08-20
+done: 2026-08-20
 ---
 
 # `#11` — repeat-tappable fill buttons, and the measure that makes them possible
 
-**Independent of `C20` and of #9 — verified 2026-08-20: no file touching `Goal.unit` also touches
-`TaskEstimate`.** Can run in parallel with #9, #8 or #6.
+> ~~**Independent of `C20` and of #9 — verified 2026-08-20: no file touching `Goal.unit` also~~
+> ~~touches `TaskEstimate`.** Can run in parallel with #9, #8 or #6.~~
+>
+> ⛔ **STRUCK 2026-08-20 by this brief's own session, on `9-duration-box`'s finding (`48e94bc`).**
+> The line is **true as stated and useless as a conflict test.** It asks *does one file mention both
+> symbols today* — a question about the code as it stands — while a conflict is about the **edits a
+> ticket is about to make**. `#11` added a per-goal input mode to `GoalDetailScreen.kt`; `#9`'s
+> duration box lives in the same file; neither symbol ever had to appear beside the other. Run at
+> **symbol** granularity, the check was silent about a **file**-level collision, and it fails in the
+> flattering direction: the grep returns empty and nothing in its output says the width was wrong.
+>
+> `9-duration-box` opened while this session held its claim, found five contested files plus the
+> Gradle daemon, and **built nothing**. `TODO/TODO_MUST/Completion-Roadmap.TODO.must.md` Wave 3 was
+> right — `#6 → #7 → #9 → #11`, **one working set, strictly sequential** — and `505f083` overturned
+> it on this grep. **The roadmap stands.** General finding:
+> `kb/dev/agent-topology-and-routing.md` § *The disjointness check has to be run at the granularity
+> the claim is made in*.
+
+**Independent of `C20`** — nothing here waited on the Eventarc work, and that half held.
 
 Needs the **Gradle daemon**; a device or the cloud emulator for the render pass.
 
 > ⚠️ **Conflicts with `c20-build-half` on `data/firestore/dto/Dtos.kt`** — `unit` at `:48`, `level`
-> at `:109`. Same file; do not overlap. **Independent of `9-duration-box`**, verified 2026-08-20:
-> no file mentions both `unit` and `looksLikeFallback`.
+> at `:109`. Same file; do not overlap. *(In the event: `c20-build-half` had released by the time
+> this ran, so `Dtos.kt` was free.)* ~~**Independent of `9-duration-box`**, verified 2026-08-20: no
+> file mentions both `unit` and `looksLikeFallback`.~~ — **struck, see above.**
 
 ## Why it exists — and it is not hypothetical
 
@@ -84,3 +103,24 @@ Write the decision down.
 
 Seven conditions, one heading. Name whichever of `/kickoff 9-duration-box`, `/kickoff
 8-notifications`, `/kickoff 6-silent-filing` is still unrun.
+
+---
+
+## ✅ Done — 2026-08-20
+
+Shipped in full. JVM unit **459/0** (+37), instrumented **91/0** (+9) on `Pixel_10_Pro_XL_B`, render
+pass looked at and committed to
+[`docs/render-passes/2026-08-20-11-fill-buttons/water-goal.png`](../docs/render-passes/2026-08-20-11-fill-buttons/water-goal.png).
+
+Account: [`CHANGELOG/2026-08-20/11-fill-buttons.md`](../CHANGELOG/2026-08-20/11-fill-buttons.md).
+
+Two things this brief asked for that the session did **not** do, both named rather than dropped:
+
+- **`ml` prefixes.** The ladder returns `0.25 · 0.5 · 0.75 · 1` in the goal's own word, not
+  `250 ml · 500 ml · 750 ml · 1 L`. Same amounts; the spelling needs the app to know the user's word
+  means litres, which §1.3 forbids. Flagged as a deviation, with the reasoning in `FillLadder`'s
+  KDoc and a KB candidate.
+- **The entry edit history / soft delete** the brief describes under *"Where the row lives"* is
+  `C6` [#22](https://github.com/idomarhaim/Android_Final_Project/issues/22), not this ticket. It was
+  read as context and the brief's warning was obeyed: nothing here re-simplifies it, and nothing here
+  makes it harder to build.

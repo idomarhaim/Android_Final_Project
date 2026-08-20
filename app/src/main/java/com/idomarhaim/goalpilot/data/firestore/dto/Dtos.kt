@@ -45,7 +45,28 @@ data class GoalDto(
     // document fields a DTO has no property for, so documents written before this
     // still deserialize; their orphaned `currentValue` is dropped the next time the
     // goal is saved and read by nobody in the meantime.
-    var unit: String = "%",
+    /**
+     * §1.3's measure, as §7.1's two fields: the closed kind by name, and the
+     * user's free word. Both absent means the goal measures nothing, which is
+     * §1.3's default; a word with no kind is the migration's half-way state
+     * (`resolvedMeasure` has the whole rule).
+     */
+    var measureKind: String? = null,
+    var measureWord: String? = null,
+    /** §1.3's per-goal input mode by name; absent reads as `NUMBER`. */
+    var inputMode: String? = null,
+    /**
+     * ⚠️ **Legacy free-text unit — read on migration, never written** (§7.1:
+     * *`measureKind` + `measureWord` replaces free-text `unit`*).
+     *
+     * **Nullable, and the default moved from `"%"` to `null` on purpose.** With
+     * the old default, a document written *after* this change — which carries no
+     * `unit` field at all — would deserialize to `"%"` and be indistinguishable
+     * from a real pre-migration percent goal, so every new goal would arrive
+     * looking like something the migration had to rescue. Null is the only value
+     * that means *this document predates nothing*.
+     */
+    var unit: String? = null,
     var colorHex: String = "",
     var deadline: Long? = null,
     var archived: Boolean = false,

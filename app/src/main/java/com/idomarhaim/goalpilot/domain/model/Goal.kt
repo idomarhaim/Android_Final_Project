@@ -3,9 +3,9 @@ package com.idomarhaim.goalpilot.domain.model
 /**
  * A life goal the user is working toward (spec §1, §6 Core).
  *
- * Progress is tracked as a numeric [currentValue] moving toward [targetValue]
- * in a [unit] (e.g. "workouts", "hours", "books"). For simple habit-style goals
- * the target can be left at a nominal value and progress logged manually.
+ * Progress is tracked as a numeric [currentValue] moving toward [targetValue],
+ * counted in the goal's [measure] — spec §1.3's *closed kind plus a free word*.
+ * A goal may carry no measure at all, and that is the default (`E6`).
  */
 data class Goal(
     val id: String = "",
@@ -60,7 +60,29 @@ data class Goal(
      * honest: nothing has been logged against it.
      */
     val currentValue: Double = 0.0,
-    val unit: String = "%",
+    /**
+     * What this goal counts, or `null` when it counts nothing — spec §1.3 (`C7`
+     * #14), replacing the free-text `unit: String = "%"` this field grew out of.
+     *
+     * **Absence is the default and is a legal state**, not a gap to fill: `E6`
+     * and §1.3 both say so, and the old `"%"` default is precisely what the map
+     * recorded as *the most-repeated finding* — it labelled the log dialog's box
+     * *Amount (%)*, which made a whole feature read as *"changing the percentage
+     * myself"* (§4.6, `R14`), and it is why a live goal called *"Drink 4 Liters
+     * of Water Daily"* reads `1/100 %` on Ido's own screen (#11).
+     *
+     * Unmeasured is legal but **never silent**: `C22` #44 offers a concrete
+     * measure on the goal's own screen. That offer is not this ticket.
+     */
+    val measure: Measure? = null,
+    /**
+     * How progress is put in — spec §1.3, per goal.
+     *
+     * [InputMode.NUMBER] is the default because it is what every goal did before
+     * this field existed, so a document written without it reads identically
+     * (§7.1's *additive with a readable half-way state*).
+     */
+    val inputMode: InputMode = InputMode.NUMBER,
     val colorHex: String = category.defaultColorHex,
     val deadlineEpochMillis: Long? = null,
     val isArchived: Boolean = false,
@@ -86,6 +108,26 @@ data class Goal(
     val isComplete: Boolean get() = progressFraction >= 1f
 
     val progressPercent: Int get() = (progressFraction * 100).toInt()
+
+    /**
+     * The goal's own word for what it counts, or blank when it counts nothing.
+     *
+     * The one accessor every *display* site needs, so that showing a measure
+     * never requires reasoning about whether its kind was recorded — a word with
+     * no kind still reads perfectly, it just cannot be computed with. Sites that
+     * need the arithmetic ask for `measure?.kind` instead, which is null exactly
+     * where guessing would start.
+     */
+    val measureWord: String get() = measure?.word.orEmpty()
+
+    /**
+     * Whether this goal is counting something in the world.
+     *
+     * A zero or negative target is the other way to have nothing to measure
+     * against: [progressFraction] already returns `0f` there, which is a number
+     * that means nothing rather than a number that means zero.
+     */
+    val hasMeasure: Boolean get() = targetValue > 0.0 && measureWord.isNotBlank()
 }
 
 /**

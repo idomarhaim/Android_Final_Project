@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.DailySteps
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
 import com.idomarhaim.goalpilot.domain.model.SleepNight
 import com.idomarhaim.goalpilot.domain.usecase.BuildHealthProposalsUseCase
@@ -44,14 +45,16 @@ class HealthProposalsTest {
         id: String,
         title: String,
         category: GoalCategory,
-        unit: String = "%",
+        unit: String = "",
         archived: Boolean = false,
         healthSourceKey: String? = null,
     ) = Goal(
         id = id,
         title = title,
         category = category,
-        unit = unit,
+        // An unclassified word is exactly what a user-made goal carries after the
+        // #11 migration, and `match`'s unit heuristic reads the word alone.
+        measure = Measure.of(kind = null, word = unit),
         isArchived = archived,
         healthSourceKey = healthSourceKey,
     )

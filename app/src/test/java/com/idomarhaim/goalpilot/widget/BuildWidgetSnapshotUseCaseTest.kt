@@ -3,6 +3,8 @@ package com.idomarhaim.goalpilot.widget
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.Bidi
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.usecase.BuildWidgetSnapshotUseCase
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
@@ -22,6 +24,9 @@ class BuildWidgetSnapshotUseCaseTest {
     private val build = BuildWidgetSnapshotUseCase()
 
     private val user = User(uid = "u1", displayName = "Ido", points = 1_240L)
+
+    /** The measure most fixtures here use; the word is the user's, the kind is not. */
+    private val km = Measure(MeasureKind.DISTANCE, "km")
 
     private fun allocation(vararg slices: TimeSlice) = TimeAllocation(
         slices = slices.toList(),
@@ -44,7 +49,7 @@ class BuildWidgetSnapshotUseCaseTest {
         val snapshot = build(
             capturedAtEpochMillis = 1_000L,
             user = null,
-            goals = listOf(Goal(id = "g", title = "Run", targetValue = 4.0, unit = "km")),
+            goals = listOf(Goal(id = "g", title = "Run", targetValue = 4.0, measure = km)),
             allocation = allocation(slice("a", "Health", 60, 60)),
             trend = TimeTrend(),
         )
@@ -63,17 +68,20 @@ class BuildWidgetSnapshotUseCaseTest {
     }
 
     @Test
-    fun `the percent placeholder unit is not a measure`() {
-        // Goal.unit defaults to "%", which §4.6 records as the map's most-repeated
-        // finding at its first site — it labelled the log dialog "Amount (%)" and
-        // made a whole feature read as "changing the percentage myself". A goal
-        // still carrying it is a goal with nothing counted, so it gets no ring.
+    fun `a goal that measures nothing gets no ring`() {
+        // The placeholder this used to test is gone: `Goal.unit` defaulted to
+        // "%", which §4.6 records as the map's most-repeated finding at its first
+        // site — it labelled the log dialog "Amount (%)" and made a whole feature
+        // read as "changing the percentage myself". #11 deleted the default
+        // outright, so what used to arrive as a bogus "%" now arrives as the
+        // absence §1.3 makes legal, and the outcome here is unchanged: a goal
+        // with nothing counted gets no ring.
         val snapshot = build(
             capturedAtEpochMillis = 1_000L,
             user = user,
             goals = listOf(
-                Goal(id = "a", title = "Finish the project", targetValue = 100.0, unit = "%"),
-                Goal(id = "b", title = "Run 4 km", targetValue = 4.0, currentValue = 3.2, unit = "km"),
+                Goal(id = "a", title = "Finish the project", targetValue = 100.0),
+                Goal(id = "b", title = "Run 4 km", targetValue = 4.0, currentValue = 3.2, measure = km),
             ),
             allocation = TimeAllocation(),
             trend = TimeTrend(),
@@ -91,7 +99,7 @@ class BuildWidgetSnapshotUseCaseTest {
         val snapshot = build(
             1_000L,
             user,
-            listOf(Goal(id = "a", title = "Read", targetValue = 0.0, unit = "books")),
+            listOf(Goal(id = "a", title = "Read", targetValue = 0.0, measure = Measure(MeasureKind.COUNT, "books"))),
             TimeAllocation(),
             TimeTrend(),
         )
@@ -104,7 +112,7 @@ class BuildWidgetSnapshotUseCaseTest {
         val snapshot = build(
             1_000L,
             user,
-            listOf(Goal(id = "a", title = "Old", targetValue = 4.0, unit = "km", isArchived = true)),
+            listOf(Goal(id = "a", title = "Old", targetValue = 4.0, measure = km, isArchived = true)),
             TimeAllocation(),
             TimeTrend(),
         )
@@ -117,7 +125,7 @@ class BuildWidgetSnapshotUseCaseTest {
         val snapshot = build(
             1_000L,
             user,
-            listOf(Goal(id = "a", title = "Run", targetValue = 4.0, currentValue = 3.25, unit = "km")),
+            listOf(Goal(id = "a", title = "Run", targetValue = 4.0, currentValue = 3.25, measure = km)),
             TimeAllocation(),
             TimeTrend(),
         )
@@ -133,8 +141,8 @@ class BuildWidgetSnapshotUseCaseTest {
             1_000L,
             user,
             listOf(
-                Goal(id = "low", title = "A", targetValue = 10.0, currentValue = 1.0, unit = "km"),
-                Goal(id = "high", title = "B", targetValue = 10.0, currentValue = 8.0, unit = "km"),
+                Goal(id = "low", title = "A", targetValue = 10.0, currentValue = 1.0, measure = km),
+                Goal(id = "high", title = "B", targetValue = 10.0, currentValue = 8.0, measure = km),
             ),
             TimeAllocation(),
             TimeTrend(),

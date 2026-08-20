@@ -34,6 +34,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.InputMode
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.ui.components.icon
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
@@ -152,6 +154,31 @@ fun AddEditGoalScreen(
                 }
             }
 
+            // §1.3's measure: a closed kind the app computes with, and a free
+            // word it only ever displays. The two are drawn as two controls on
+            // purpose — a single "Unit" text box is what made every goal a
+            // percentage, and it is the field this pair replaces.
+            //
+            // "None" first, and it is not a placeholder: §1.3 makes an unmeasured
+            // goal legal and the default (`E6`).
+            Text("What does this goal count?", style = MaterialTheme.typography.labelLarge)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
+                    FilterChip(
+                        selected = form.measureKind == null,
+                        onClick = { viewModel.onMeasureKindChange(null) },
+                        label = { Text("Nothing yet") },
+                    )
+                }
+                items(MeasureKind.entries) { kind ->
+                    FilterChip(
+                        selected = form.measureKind == kind,
+                        onClick = { viewModel.onMeasureKindChange(kind) },
+                        label = { Text(kind.label()) },
+                    )
+                }
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = form.target,
@@ -165,8 +192,35 @@ fun AddEditGoalScreen(
                     value = form.unit,
                     onValueChange = viewModel::onUnitChange,
                     label = { Text("Unit") },
+                    // The user's own word, in their own language, never
+                    // translated (§1.3, §5.1 `C15b`). The hint is an example of
+                    // the *kind*, not a value the app will fill in.
+                    placeholder = { form.measureKind?.let { Text(it.wordHint()) } },
                     singleLine = true,
+                    enabled = form.measureKind != null,
                     modifier = Modifier.weight(1f),
+                )
+            }
+
+            // §1.3's per-goal input mode. Offered only where it can do anything:
+            // a goal that counts nothing has no amount for a button to log, so
+            // the picker is hidden rather than shown disabled — an empty choice
+            // is worse than no choice.
+            if (form.measureKind != null) {
+                Text("How do you log it?", style = MaterialTheme.typography.labelLarge)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(InputMode.OFFERED) { mode ->
+                        FilterChip(
+                            selected = form.inputMode == mode,
+                            onClick = { viewModel.onInputModeChange(mode) },
+                            label = { Text(mode.label()) },
+                        )
+                    }
+                }
+                Text(
+                    form.inputMode.explanation(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

@@ -214,6 +214,45 @@ class GoalDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * One tap of a fill button — `R25`, #11.
+     *
+     * It is [logProgress] with no note, no photo and no dialog, and that is the
+     * whole feature: the amount comes from
+     * [FillLadder][com.idomarhaim.goalpilot.domain.model.FillLadder] rather than
+     * from a keyboard, so a repeat tap costs one gesture instead of five.
+     *
+     * **No optimistic overlay, unlike [toggleTask].** `logProgress` is an ordinary
+     * `add()`, so Firestore writes it to the offline cache synchronously and the
+     * snapshot listener redraws the tally on the next frame whether the radio is
+     * on or not — the same reason [addTask] needs none. What the tally shows is
+     * the sum over entries every other screen shows (§4.6), so there is no second
+     * counter that could disagree with it.
+     *
+     * **The snackbar is deliberately not fired on success**, unlike the dialog's
+     * *"Progress logged"*. A button meant to be tapped four times in a row would
+     * otherwise queue four identical snackbars over the row being tapped. The
+     * tally moving **is** the confirmation; only a failure needs words.
+     *
+     * **And [GoalDetailActionState.isSubmitting] is deliberately not touched.**
+     * It gates the dialog's confirm button, which is right there — the dialog can
+     * upload an image and must not be double-submitted. A fill tap is the
+     * opposite case: `logProgress` resolves on **server ack** while the cached
+     * write and the tally are immediate, so raising the flag here would disable
+     * the row until the network answered, on the one control whose premise is
+     * that it is tapped repeatedly. [FillButtonRow] carries the full reasoning.
+     */
+    fun logFill(amount: Double) {
+        if (amount <= 0.0) return
+        viewModelScope.launch {
+            val entry = ProgressEntry(goalId = goalId, value = amount)
+            val result = progressRepository.logProgress(entry, imageUri = null)
+            if (result is Resource.Error) {
+                _action.update { it.copy(message = result.message) }
+            }
+        }
+    }
+
     fun archiveGoal() {
         viewModelScope.launch {
             when (goalRepository.setArchived(goalId, true)) {

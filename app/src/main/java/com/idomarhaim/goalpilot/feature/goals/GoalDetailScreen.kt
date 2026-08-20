@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.FillLadder
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
@@ -157,8 +158,15 @@ fun GoalDetailScreen(
                             lifeAreaNames = state.lifeAreas.map { it.name },
                             current = goal.currentValue.trimNumber(),
                             target = goal.targetValue.trimNumber(),
-                            unit = goal.unit,
+                            unit = goal.measureWord,
                             description = goal.description,
+                            // §1.3's row, and it is empty for every goal that is
+                            // not in BUTTONS mode with a classified measure — the
+                            // ladder decides, so the screen never has to.
+                            fillAmounts = FillLadder.forGoal(goal),
+                            currentValue = goal.currentValue,
+                            targetValue = goal.targetValue,
+                            onFill = viewModel::logFill,
                             onLogProgress = { showLogDialog = true },
                         )
                     }
@@ -201,7 +209,7 @@ fun GoalDetailScreen(
                         }
                     } else {
                         items(state.entries, key = { it.id }) { entry ->
-                            ProgressEntryRow(entry = entry, unit = goal.unit)
+                            ProgressEntryRow(entry = entry, unit = goal.measureWord)
                         }
                     }
                 }
@@ -211,7 +219,7 @@ fun GoalDetailScreen(
 
     if (showLogDialog) {
         LogProgressDialog(
-            unit = state.goal?.unit ?: "",
+            unit = state.goal?.measureWord.orEmpty(),
             isSubmitting = action.isSubmitting,
             onDismiss = { showLogDialog = false },
             onConfirm = { value, note, uri ->
@@ -250,6 +258,10 @@ private fun GoalHeaderCard(
     target: String,
     unit: String,
     description: String,
+    fillAmounts: List<Double>,
+    currentValue: Double,
+    targetValue: Double,
+    onFill: (Double) -> Unit,
     onLogProgress: () -> Unit,
 ) {
     val accent = accentHex.toGoalAccent()
@@ -297,6 +309,17 @@ private fun GoalHeaderCard(
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
+            // Above "Log progress", not instead of it: §4.6 keeps the dialog
+            // reachable so an amount the ladder does not offer — and a note, and
+            // a photo — is still loggable on a buttons goal.
+            FillButtonRow(
+                amounts = fillAmounts,
+                word = unit,
+                current = currentValue,
+                target = targetValue,
+                onLog = onFill,
+                modifier = Modifier.padding(top = 16.dp),
+            )
             FilledTonalButton(
                 onClick = onLogProgress,
                 modifier = Modifier
@@ -515,7 +538,11 @@ private fun LogProgressDialog(
                 OutlinedTextField(
                     value = value,
                     onValueChange = { value = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Amount ($unit)") },
+                    // "Amount (%)" on a goal that never chose percent is the
+                    // map's most-repeated finding at its first site (§4.6, `R14`).
+                    // With the placeholder gone the unmeasured goal has no word,
+                    // and the honest label is the bare one.
+                    label = { Text(if (unit.isBlank()) "Amount" else "Amount ($unit)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),

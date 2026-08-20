@@ -115,7 +115,7 @@ fun GoalCard(
                         goal.category.localizedLabel(),
                         "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()}"
                             .bidiIsolated(),
-                        goal.unit.bidiIsolated(),
+                        goal.measureWord.bidiIsolated(),
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -126,6 +126,25 @@ fun GoalCard(
     }
 }
 
-/** Renders 5.0 as "5" but keeps 5.5 as "5.5". */
-fun Double.trimNumber(): String =
-    if (this % 1.0 == 0.0) toLong().toString() else "%.1f".format(this)
+/**
+ * Renders `5.0` as `"5"`, `5.5` as `"5.5"`, and `0.25` as `"0.25"`.
+ *
+ * **It used to be `"%.1f"`, and that was wrong twice over** — found by #11, whose
+ * fill-button ladder produces `0.25` on §1.3's own worked example. One decimal
+ * renders that as `0.3`, so the water goal would have read `0.3 / 4 L` after a
+ * 250 ml tap: a number the app made up, on the one screen the ticket exists to
+ * fix. And `String.format` without an explicit `Locale` follows the *default*
+ * locale, so the separator and even the digits move with the device — a display
+ * rule has no business varying by device language.
+ *
+ * Three decimals is above anything the ladder can produce and below anything a
+ * person types, and rounding there is also what absorbs binary-representation
+ * noise: `currentValue` is a **sum** over entries (§4.6), and a sum of thirds
+ * arrives as `0.30000000000000004` without it.
+ */
+fun Double.trimNumber(): String {
+    if (!isFinite()) return toString()
+    val rounded = Math.round(this * 1000.0) / 1000.0
+    if (rounded == Math.floor(rounded)) return rounded.toLong().toString()
+    return rounded.toString().trimEnd('0').trimEnd('.')
+}

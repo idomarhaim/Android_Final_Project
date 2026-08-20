@@ -15,7 +15,27 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `11-fill-buttons` | **#11 — repeat-tappable fill buttons, and the measure (`kind` + `word`) that makes them possible.** §1.3 ladder `target/16` at `1x 2x 3x 4x`; per-goal input mode; migration off free-text `Goal.unit`. | `domain/model/Goal.kt` · `domain/model/Measure.kt` *(new)* · `data/firestore/dto/Dtos.kt` · `data/firestore/dto/Mappers.kt` · `feature/goals/` · `domain/usecase/BuildWidgetSnapshotUseCase.kt` · `domain/usecase/BuildHealthProposalsUseCase.kt` · `domain/usecase/SyncHealthDataUseCase.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `app/src/test/` + `app/src/androidTest/` (new suites) · `sessions/11-fill-buttons.md` · `CHANGELOG/2026-08-20/11-fill-buttons.md` · `SESSIONS.md` | **Gradle daemon**; **`Pixel_10_Pro_XL_B` (emulator-5554)** — claimed 2026-08-20 for `connectedDebugAndroidTest`. ⚠️ **That run reinstalls the app, so the in-app sign-in as `rachil751@gmail.com` may be dropped** — the *device* Google account survives, so recovery is one tap. **DO NOT SIGN IN while this row is live.** | 2026-08-20 |
+> 🏁 **`11-fill-buttons` RELEASED 2026-08-20 — `8eb37b9` (claim) → `d832eac` (emulator) → this note.**
+> **`#11` SHIPPED.** `Pixel_10_Pro_XL_B` and the Gradle daemon both released; the emulator is left
+> **running and idle**, app installed, and the *device* Google account `rachil751@gmail.com`
+> survived every reinstall (`Observed:` `dumpsys account`, after the last run). Account:
+> [`CHANGELOG/2026-08-20/11-fill-buttons.md`](CHANGELOG/2026-08-20/11-fill-buttons.md).
+>
+> ✅ **JVM unit 459/0 (+37) · instrumented 91/0 (+9) · render pass looked at and committed.**
+>
+> ⚠️ **THIS BRIEF'S "verified independent of #9" LINE WAS FALSE, and the roadmap was right.**
+> `9-duration-box` (`48e94bc`) opened while this row was live, found five contested files plus the
+> daemon, and built nothing. The disjointness check had been run at **symbol** granularity
+> (`unit` vs `looksLikeFallback`) while the two tickets collide at **file** level in
+> `feature/goals/GoalDetailScreen.kt`. `TODO/TODO_MUST/Completion-Roadmap.TODO.must.md` Wave 3 —
+> `#6 → #7 → #9 → #11`, one working set, strictly sequential — **stands**, and `505f083`'s
+> overturning of it is withdrawn. The brief is struck and corrected in `sessions/done/`.
+>
+> 📥 **KB: nothing ingested; one candidate written and left pending** —
+> `kb-candidates/2026-08-20-11-fill-buttons.md` (a write resolving on server ack must not gate a
+> repeat-tappable control). It wants merging into an existing page rather than appending blind.
+> The two pre-existing candidate files were **not touched**: both are partly drained and what
+> remains in each is `rules/`-destined, which is always-ask in both modes.
 > 🏁 **`c20-eventarc-fix` RELEASED 2026-08-20 — `2cfd90d` (claim) → `57afd55` → this note. RESOLVED.**
 > `Pixel_10_Pro_XL_B` and the live-functions claim both released. Account:
 > [`CHANGELOG/2026-08-20/c20-eventarc-fix.md`](CHANGELOG/2026-08-20/c20-eventarc-fix.md).

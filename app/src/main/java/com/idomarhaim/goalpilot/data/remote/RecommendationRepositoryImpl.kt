@@ -45,7 +45,10 @@ class RecommendationRepositoryImpl @Inject constructor(
                         "title" to it.title,
                         "category" to it.category.name,
                         "progressPercent" to it.progressPercent,
-                        "unit" to it.unit,
+                        // The wire key stays `unit` — the Cloud Function reads
+                        // it — but what travels is §1.3's *word*, which is the
+                        // only half of a measure the prompt was ever using.
+                        "unit" to it.measureWord,
                     )
                 },
                 "completedTasksLast7d" to completedTasksLast7d,

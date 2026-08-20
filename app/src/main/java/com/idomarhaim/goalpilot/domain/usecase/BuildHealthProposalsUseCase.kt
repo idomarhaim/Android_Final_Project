@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.domain.usecase
 import com.idomarhaim.goalpilot.core.util.AppDateFormatters
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -13,6 +14,18 @@ import javax.inject.Inject
 enum class HealthMetric(
     val label: String,
     val unit: String,
+    /**
+     * What this metric counts, in §1.3's closed list — the [MeasureKind] stamped
+     * on the goal the sync creates, and the one the #11 migration reads back off
+     * `healthSourceKey` for a goal created before the field existed.
+     *
+     * **Declared here rather than derived from [unit], and that is the point of
+     * the whole measure model:** `"steps"` is a *word*, and classifying a word is
+     * a string match — forbidden for user content, and unnecessary here, because
+     * these two goals are written by the app and it has always known what they
+     * count.
+     */
+    val measureKind: MeasureKind,
     val category: GoalCategory,
     /** Title for the goal proposed when the user has nothing suitable yet. */
     val defaultGoalTitle: String,
@@ -28,6 +41,7 @@ enum class HealthMetric(
     STEPS(
         label = "Steps",
         unit = "steps",
+        measureKind = MeasureKind.COUNT,
         category = GoalCategory.FITNESS,
         defaultGoalTitle = "Weekly steps",
         defaultGoalTarget = 70_000.0,
@@ -36,6 +50,7 @@ enum class HealthMetric(
     SLEEP(
         label = "Sleep",
         unit = "hours",
+        measureKind = MeasureKind.DURATION,
         category = GoalCategory.SLEEP,
         defaultGoalTitle = "Weekly sleep",
         defaultGoalTarget = 56.0,
@@ -194,7 +209,7 @@ class BuildHealthProposalsUseCase @Inject constructor() {
         active.firstOrNull { it.healthSourceKey == metric.goalSourceKey }?.let { return it }
 
         val candidates = active.filter { it.healthSourceKey == null && it.category == metric.category }
-        return candidates.firstOrNull { it.unit.equals(metric.unit, ignoreCase = true) }
+        return candidates.firstOrNull { it.measureWord.equals(metric.unit, ignoreCase = true) }
             ?: candidates.firstOrNull()
     }
 

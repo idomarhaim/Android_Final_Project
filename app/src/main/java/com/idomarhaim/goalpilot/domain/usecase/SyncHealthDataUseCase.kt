@@ -2,6 +2,8 @@ package com.idomarhaim.goalpilot.domain.usecase
 
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.InputMode
+import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
@@ -241,7 +243,15 @@ class SyncHealthDataUseCase @Inject constructor(
                             // Pinned at birth, so this goal is never matched by a
                             // category the user is free to edit (#47).
                             healthSourceKey = proposal.metric.goalSourceKey,
-                            unit = proposal.metric.unit,
+                            // The kind comes off the metric, never off the word
+                            // (§1.3) — the app authored this goal, so it knows
+                            // what it counts without reading any text.
+                            measure = Measure(proposal.metric.measureKind, proposal.metric.unit),
+                            // Stated rather than left to default: a goal the sync
+                            // owns is filled in by the sync, and `GoalDto.toDomain`
+                            // derives the same thing from `healthSourceKey` on the
+                            // way back, so the two agree instead of disagreeing.
+                            inputMode = InputMode.AUTO,
                             targetValue = proposal.metric.defaultGoalTarget,
                         ),
                     )

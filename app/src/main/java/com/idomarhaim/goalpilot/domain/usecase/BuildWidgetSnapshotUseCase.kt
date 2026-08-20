@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.domain.usecase
 
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.model.WidgetArea
 import com.idomarhaim.goalpilot.domain.model.WidgetDay
@@ -101,35 +102,30 @@ class BuildWidgetSnapshotUseCase @Inject constructor() {
     /**
      * The goal's own words for where it stands, or blank.
      *
-     * Blank when the unit is the `"%"` placeholder, because then the ring's own
-     * percentage already carries it and printing `45%` beside a ring reading 45
-     * is §0.3's *second number that quietly disagrees* in miniature — here it
-     * would not even disagree, which is worse: it would train the eye to read two
-     * numbers as two facts.
+     * Blank when the goal has no measure — which, since #11, is what a goal that
+     * merely *defaulted* to `"%"` reads as. It used to be blank on the literal
+     * string `"%"`, for the same reason and one layer lower down: printing `45%`
+     * beside a ring reading 45 is §0.3's *second number that quietly disagrees*
+     * in miniature — here it would not even disagree, which is worse, because it
+     * trains the eye to read two numbers as two facts.
      *
-     * Isolated (§4.8) because it mixes Latin digits with a unit the user may have
+     * A goal that *chose* `PERCENT` still gets a label, and that is the point of
+     * §7.1 keeping chosen and defaulted apart.
+     *
+     * Isolated (§4.8) because it mixes Latin digits with a word the user may have
      * typed in Hebrew, and `3.2 / 4 ק״מ` is exactly the run the bidi algorithm
      * reverses inside an RTL paragraph.
      */
     private fun Goal.measureLabel(): String {
         if (!hasMeasure) return ""
-        return "${currentValue.trim()} / ${targetValue.trim()} $unit".trim().bidiIsolated()
+        // A goal that genuinely chose PERCENT still belongs on the tile, but its
+        // label would restate the ring digit for digit — so the goal stays and
+        // the label goes. This is the surviving half of the old `unit != "%"`
+        // rule, kept at the site the reasoning was always about: the ring.
+        if (measure?.kind == MeasureKind.PERCENT) return ""
+        return "${currentValue.trim()} / ${targetValue.trim()} $measureWord".trim().bidiIsolated()
     }
 }
-
-/**
- * A goal has a measure when it is counting something in the world.
- *
- * `C7` permits a goal with none, and today that shows up as the `"%"` default
- * `Goal.unit` — the placeholder §4.6 records as the map's most-repeated finding
- * at its first site, where it labelled the log dialog's box *Amount (%)* and made
- * a whole feature read as "changing the percentage myself". A zero or negative
- * target is the other way to have nothing to measure against: `progressFraction`
- * already returns `0f` there, which is a number that means nothing rather than
- * a number that means zero.
- */
-private val Goal.hasMeasure: Boolean
-    get() = targetValue > 0.0 && unit.isNotBlank() && unit.trim() != "%"
 
 /** `4.0` → `"4"`, `3.25` → `"3.25"` — a trailing `.0` is noise on a tile this size. */
 private fun Double.trim(): String =

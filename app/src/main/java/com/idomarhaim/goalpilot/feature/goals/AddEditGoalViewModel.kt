@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.InputMode
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.ui.navigation.Routes
@@ -49,7 +52,9 @@ class AddEditGoalViewModel @Inject constructor(
                             category = g.category,
                             lifeAreaIds = g.lifeAreaIds,
                             target = g.targetValue.toTrimmedString(),
-                            unit = g.unit,
+                            measureKind = g.measure?.kind,
+                            unit = g.measureWord,
+                            inputMode = g.inputMode,
                             createdAt = g.createdAtEpochMillis,
                         )
                     }
@@ -82,6 +87,29 @@ class AddEditGoalViewModel @Inject constructor(
         _form.update { it.copy(target = value.filter { c -> c.isDigit() || c == '.' }, error = null) }
     fun onUnitChange(value: String) = _form.update { it.copy(unit = value) }
 
+    /**
+     * Picks what the goal counts, or clears it back to *no measure* — §1.3 makes
+     * absence legal and the default, so "none" has to be reachable from the form
+     * rather than only from never having chosen.
+     *
+     * Choosing [MeasureKind.PERCENT] here is what §7.1 means by `"%"` surviving
+     * as a **chosen** measure: the choice is recorded in `measureKind`, which is
+     * the thing a defaulted `"%"` never had.
+     */
+    fun onMeasureKindChange(value: MeasureKind?) = _form.update {
+        it.copy(
+            measureKind = value,
+            // A kind picked onto a goal with no word yet gets that kind's example
+            // word, so the commonest path — pick VOLUME, type 4, save — produces
+            // a usable measure without a second decision. Anything the user has
+            // already typed is left alone: the word is theirs (§1.3).
+            unit = it.unit.ifBlank { value?.wordHint().orEmpty() },
+        )
+    }
+
+    /** Which of §1.3's input modes this goal uses. */
+    fun onInputModeChange(value: InputMode) = _form.update { it.copy(inputMode = value) }
+
     fun save() {
         val current = _form.value
         if (current.title.isBlank()) {
@@ -107,7 +135,13 @@ class AddEditGoalViewModel @Inject constructor(
                 // edit screen has nothing to preserve and no target to clamp it to
                 // — editing a goal's title cannot move its progress, which is what
                 // the round-trip through this form could previously do.
-                unit = current.unit.ifBlank { "%" },
+                // No `"%"` fallback any more, and that deletion is the ticket.
+                // The old one turned "I did not say" into "percent", which is how
+                // a live goal called "Drink 4 Liters of Water Daily" came to read
+                // `1/100 %`. `Measure.of` collapses *nothing chosen and nothing
+                // typed* back to a single absent state (§1.3, `E6`).
+                measure = Measure.of(current.measureKind, current.unit),
+                inputMode = current.inputMode,
                 colorHex = current.category.defaultColorHex,
                 createdAtEpochMillis = current.createdAt,
             )
@@ -128,7 +162,11 @@ data class GoalForm(
     /** Which life areas the goal serves; the empty list = unfiled (§1.2). */
     val lifeAreaIds: List<String> = emptyList(),
     val target: String = "100",
-    val unit: String = "%",
+    /** §1.3's kind, or null for a goal that measures nothing — the default. */
+    val measureKind: MeasureKind? = null,
+    /** §1.3's free word. Named `unit` still because the text field is. */
+    val unit: String = "",
+    val inputMode: InputMode = InputMode.NUMBER,
     val createdAt: Long = 0L,
     val isEdit: Boolean = false,
     val isSaving: Boolean = false,
