@@ -373,3 +373,98 @@ markdown block — so no suite was re-run, stated rather than skipped silently.
 
 `app/src/androidTest/.../DurationBoxRenderTest.kt` · `app/src/androidTest/.../WaterGoalRenderTest.kt` ·
 `AGENTS.md` · this file · `SESSIONS.md`
+
+---
+
+# Round 4 — why the page was not read, and what actually changes
+
+Ido asked the question round 3 did not answer: *why didn't you read the relevant file, and what can
+you do so it doesn't repeat?*
+
+## The answer is structural, and it is measurable
+
+**There is no rule, skill or checklist anywhere that fires a KB *read*.**
+
+`grep -rniE "consult the kb|read the kb|search the kb|retriev" rules/ user-rules/` in `C:\Dev\JARVIS`
+returns **nothing about reading**. The single `retriev` hit, `derivable-decision.md:195`, is about
+*deleting* a drained candidate file — the write side again.
+
+Compare the other direction, which is specified to the point of redundancy: `/kb-flag` →
+`kb-candidates/<date>-<session>.md` → `/kb-ingest`, firing at the commit trigger, on any 🔀 split
+signal, on `/handoff`, on `/kickoff`, and backstopped by *"every session lists this folder before its
+first unit of work"* so a forgotten drain is caught by the **next** session with nobody having to
+remember.
+
+**The pipeline is a funnel with no outlet.** And the second measurement makes the cost concrete:
+**65 of 76** `kb/dev/` pages name GoalPilot, while this repo's `AGENTS.md` — the file every session is
+*required* to read first — pointed at that bundle **once**, to cite graphify's *policy*. Nothing in it
+pointed at `kb/index.md`, which is the lookup surface.
+
+## The part that is actually damning, and it is not "I forgot to search"
+
+**The KB was searched twice this session.** Once in round 1 (`grep` over `kb/dev/` for *conflict* and
+*wrong width*) and once in round 2 (section headings of `android-device-verification.md`). **Both were
+searches for a destination to write to** — *where does this candidate belong?* — and neither was a
+search for an answer to read.
+
+So the habit is not missing. It is **wired to the wrong verb**. That matters for the remedy: *be more
+thorough* addresses a lapse that did not occur, and only a **trigger** addresses this.
+
+## Why it survived five days and would have survived longer
+
+Every other gap in this methodology announces itself. An unclaimed path collides. An undrained
+`kb-candidates/` file is found by the next session's mandatory listing. A rotted brief fails its
+`/kickoff` checks. **A page that is never read emits no signal at all** — the session solves the
+problem anyway, slightly slower, and reports success, exactly as round 2 did.
+
+That makes the failure rate **unobservable in principle**. This instance surfaced only because Ido
+asked what a one-line footnote in a wrap-up meant.
+
+## What shipped, and what deliberately did not
+
+**Shipped — `AGENTS.md` now has a retrieval pointer.** In *Authoritative docs*, which every session
+reads first by rule: `kb/index.md`, described as a **lookup surface rather than a reading list**, with
+**three named moments** — before the first device/emulator/deploy/Firebase command, when something
+surprises you, and before spending more than a few minutes working around anything — plus the six
+pages this repo trips over most. The *why* is written into the entry, because a pointer whose reason
+is invisible is the first thing a later editor trims.
+
+**Not shipped — the `rules/` half, and that is Ido's call.** Giving retrieval a trigger the way
+deposit has one is a change to how the agent behaves, so the 🎬 walkthrough rule owns it and it is
+**parked**, not written, not synced. Candidate wording and rationale:
+[`kb-candidates/2026-08-20-9-duration-box.md`](../../kb-candidates/2026-08-20-9-duration-box.md) entry
+**4b**.
+
+**Stated plainly: what shipped is weaker than what is parked.** `AGENTS.md` covers **one repo** and is
+a **pointer, not a gate** — it works only if the file is read attentively, which is the same
+assumption that just failed. The parked rule would attach to an **action** rather than to a document.
+The only genuinely mechanical version is a `PreToolUse` hook on `adb` / `gradlew connected*` /
+`firebase deploy` that prints the matching page, and that is a larger decision than the ticket which
+found it.
+
+## A correction caught before it shipped
+
+The first draft of the `AGENTS.md` entry said **64 of 76**. Recounting mechanically
+(`grep -rln … | wc -l` rather than eyeballing the space-separated list) gave **65**. Corrected before
+the commit — the same *recompute, don't read* duty that this whole round is about.
+
+## 🧪 Tests — round 4
+
+**Not applicable and stated rather than skipped:** no code changed. One Markdown block in `AGENTS.md`,
+one KB section, one candidate file.
+
+## 📥 KB — round 4
+
+📥 **Ingested:** *the funnel has no outlet* → `kb/dev/learning-pipeline.md` § *The funnel has no
+outlet*, in `C:\Dev\JARVIS` (`73c81f5` claim → `2db56de` content). Index row and
+`kb/log/2026-08-20.md` updated, board row released, `Check-KbLinks` **CLEAN** (94 pages). That page's
+existing scope is *external sources → KB* — the funnel **in** — so the observation that it has no
+outlet extends it rather than needing a page of its own.
+
+⏸️ **Parked, always-ask:** the `rules/` half, per above.
+
+## Files — round 4
+
+`AGENTS.md` · `kb-candidates/2026-08-20-9-duration-box.md` *(new; entry 4a drained, 4b parked, so the
+file **stays**)* · this file · `SESSIONS.md` · in `C:\Dev\JARVIS`: `kb/dev/learning-pipeline.md`,
+`kb/index.md`, `kb/log/2026-08-20.md`, `SESSIONS.md`
