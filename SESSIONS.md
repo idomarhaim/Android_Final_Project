@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `7-quickadd-complete` r2 | Record §1.4/§1.5 as **decided, unbuilt, unowned** where the four false deferrals point — Ido’s delegation, follow-on to `#7` | `docs/PRODUCT_v0.3.md` (§1.4 only), `TODO/TODO_FUTURE/ProductModel.TODO.future.md`, `docs/OPERATIONS.md` (§3 only), `app/src/main/java/com/idomarhaim/goalpilot/domain/model/TaskEstimate.kt` (KDoc only), `CHANGELOG/2026-08-20/7-quickadd-complete-r2.md` | none — no build, no device | 2026-08-20 |
 > 🏁 **`7-quickadd-complete` RELEASED 2026-08-20 — `e573404` (claim) → `153620b` (`#7` ships).**
 > Singletons released: Gradle daemon, AVD `Pixel_10_Pro_XL`.
 >
