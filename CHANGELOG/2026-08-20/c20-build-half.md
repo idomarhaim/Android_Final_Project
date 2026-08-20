@@ -312,3 +312,34 @@ is already on the tier that allows them. Until that deploy:
 
 That is the trade §5.2 made deliberately. It is called out here because it is the one consequence
 that is invisible in a green build.
+
+---
+
+## 📥 Ingested
+
+📥 **Instrument failure #4** → [`kb/dev/look-at-your-own-output.md`](file:///C:/Dev/JARVIS/kb/dev/look-at-your-own-output.md)
+**§4c**, in `C:\Dev\JARVIS` at **`65d0a99`** (claim `d1baead`, board row released in the same
+commit, `kb-lint` clean in the pre-commit hook).
+
+*An up-to-date check is an instrument too, and it answers **nothing** while printing a pass.* A
+shared cross-language fixture works only because neither module owns it — which is exactly what
+makes it an **undeclared build input**. The reason it earns a section beside §4 / §4a / §4b rather
+than a line inside one: **this page's standing remedy runs and passes.** The broken fixture
+genuinely went red in both languages; the defect is in the **restore** half of the control, the
+half that is expected to be boring and so is not read. Written **additively** — §4's text is
+untouched, nothing is superseded or contradicted, so the always-ask gate for overwriting committed
+knowledge does not fire.
+
+⛔ **No `rules/` half, and that is recorded rather than assumed.** The behaviour it asks for is
+already committed as *check the instrument itself on the hardest input it exists for*. Only the
+**mechanism** is new, and a mechanism is knowledge, so **no 🎬 walkthrough is owed**.
+
+Its candidate file was drained in full and removed, per `derivable-decision.md` §1.
+
+⚠️ **Two candidate files in `kb-candidates/` are NOT mine and are still parked** —
+`2026-08-19-50-offline-stamps.md` and `2026-08-20-48-settings-surface.md`. Both were rewritten down
+to their **`rules/` halves** by `50b-transaction-guard` r2 and both stay always-ask in either mode:
+(1) *an agent may not execute a ticket-granted deletion without re-verifying the stated premise*,
+(2) *an instrumented run and a render pass are not mutually exclusive on one device*. Listed here
+because every session owes a report of a non-empty `kb-candidates/`, not because this one touched
+them.
