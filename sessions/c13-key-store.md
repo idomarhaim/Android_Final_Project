@@ -67,8 +67,27 @@ derivable decision.
 
 ## The relationship to `C12`
 
-None technically — different files, different concerns. They are both #48's remainders and can run
-in **either order or in parallel**. #48 does not close until both have.
+They are both #48's remainders, and **#48 does not close until both have landed.**
+
+> ⛔ **CORRECTED 2026-08-20 — this section said *"None technically — different files, different
+> concerns … can run in either order or in parallel."* That is FALSE, and it is false in the
+> flattering direction.**
+>
+> **They collide on `feature/settings/SettingsScreen.kt`.** `c12-material-contract` claims that
+> exact path on the board; this brief's own *What ships* section ends *"then the AI section's three
+> controls in `SettingsScreen.kt`"*. Both write the same file.
+>
+> Two further reasons, either of which alone would settle it:
+> - This unit edits **`gradle/libs.versions.toml` and `app/build.gradle.kts`** to add
+>   `androidx.security:security-crypto`. A dependency change invalidates the build for **any**
+>   concurrent session.
+> - Both need the **Gradle daemon** and a **device**, which are singletons on this board.
+>
+> **Either order is still fine. In parallel is not.** The original claim was made at the wrong
+> granularity — *different concerns* is not *different files* — which is the same failure
+> `9-duration-box` and `11-fill-buttons` hit on 2026-08-20, costing a whole round that built
+> nothing. General finding: `kb/dev/agent-topology-and-routing.md` § *The disjointness check has to
+> be run at the granularity the claim is made in*.
 
 ## Exit
 
