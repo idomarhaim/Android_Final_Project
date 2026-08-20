@@ -15,8 +15,24 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `8-notifications` | `#8` — notification substrate: channel, POST_NOTIFICATIONS, local scheduling | `app/src/main/java/com/idomarhaim/goalpilot/notifications/` (new) · `GoalPilotApp.kt` · `MainActivity.kt` · `AndroidManifest.xml` · `app/src/main/res/values/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/notifications/` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/notifications/` (new) · `sessions/8-notifications.md` · `CHANGELOG/2026-08-20/8-notifications.md` · `kb-candidates/2026-08-20-8-notifications.md` | Gradle daemon (from first build) | 2026-08-20 |
-| `51-freeze-verify` | Hebrew render pass on device + the three owed `#51` writes | `sessions/51-freeze-verify.md`, `CHANGELOG/2026-08-20/51-freeze-verify.md`, `kb-candidates/2026-08-20-51-freeze-verify.md`, `CHANGELOG/CHANGELOG_README.md` | AVD `Pixel_10_Pro_XL`, adb, Gradle daemon | 2026-08-20 |
+| `8-notifications` | `#8` — notification substrate: channel, POST_NOTIFICATIONS, local scheduling | `app/src/main/java/com/idomarhaim/goalpilot/notifications/` (new) · `domain/model/ReminderTiming.kt` (new) · `GoalPilotApp.kt` · `MainActivity.kt` · `feature/dashboard/DashboardScreen.kt` (1-line wiring) · `AndroidManifest.xml` · `app/src/main/res/values/strings.xml` · `app/build.gradle.kts` · `gradle/libs.versions.toml` · `app/src/test/java/com/idomarhaim/goalpilot/notifications/` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/notifications/` (new) · `sessions/8-notifications.md` · `CHANGELOG/2026-08-20/8-notifications.md` · `kb-candidates/2026-08-20-8-notifications.md` | Gradle daemon (from first build) | 2026-08-20 |
+> 🏁 **`51-freeze-verify` RELEASED 2026-08-20 — `0f7dadd` (claim) → this commit.**
+> Singletons released: AVD `Pixel_10_Pro_XL`, adb, Gradle daemon.
+>
+> 👁️ **The freeze is seen, not asserted.** Home, Profile and Analytics all render in English
+> with `persist.sys.locale=iw-IL` as the **primary** device locale — the channel
+> `hebrew-defer-freeze` recorded as `Untested:`. Door 3 tested on a **constructed** stored
+> `"he"` (this device held none — 51e's uninstall destroyed it), with a `dark` co-probe in the
+> same file proving the read was live. Device restored to `en-US,iw-IL`, sign-in intact.
+>
+> ✅ **The brief's three owed `#51` writes had already landed on 2026-08-17** — checked before
+> writing, which cost one `curl`. This session posted **one** comment (the render pass) and
+> made **one** body edit: the 2026-08-17 edit fixed the top of `#51` and left the same
+> re-blocking claim standing in `## Sequencing` 57 lines lower. `#51` **stays OPEN**.
+>
+> ⚠️ **Unowned defect seen in passing:** Analytics *Progress by goal* renders
+> `Strength Training 224415%` and `Sleep 7 hours 149%` — goal progress is not clamped to 100%.
+> Not investigated, not filed.
 > 🏁 **`7-quickadd-complete` r2 RELEASED 2026-08-20 — `279bd2e` (claim) → this commit.** No singletons.
 >
 > 🤝 **Ido delegated the `#19` question** (*תעשה מה שאתה חושב שיהיה הכי נכון*), so the decision below is

@@ -2,9 +2,22 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 51
 created: 2026-08-17
+done: 2026-08-20 by `51-freeze-verify` — `0f7dadd` (claim) → this commit (render pass seen; the three
+  owed `#51` writes had already landed 2026-08-17, so one new comment + one body edit were made instead)
+result: |
+  ✅ Render pass DONE and stronger than briefed — Home, Profile, Analytics all English + LTR with
+     Hebrew as the PRIMARY device locale, plus door 3 on a constructed stored "he" with a live-read probe.
+  ⚠️ Two brief premises were FALSE by the time it ran: the device was SIGNED IN, and it held NO
+     stored app_language — 51e's uninstall destroyed that evidence before the brief was written.
+  ✅ The three owed #51 writes were ALREADY POSTED on 2026-08-17. Verified, not redone.
+  📝 Item 3 was half-done: the body edit missed the same claim in `## Sequencing`. Annotated (not
+     deleted), recorded as my decision.
+  ⏳ OWED: `kb-candidates/2026-08-20-51-freeze-verify.md` (4 entries) is written but NOT ingested —
+     a cross-repo ingest into C:\Dev\JARVIS\kb needs its own claim and is not in this brief's Exit.
+  ⚠️ UNOWNED: Analytics goal progress is not clamped to 100% (224415%). Seen, not investigated.
 ---
 
 # Finish `hebrew-defer-freeze`'s last two steps: look at the freeze, and post the three #51 writes
