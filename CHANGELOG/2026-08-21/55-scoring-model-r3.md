@@ -137,3 +137,35 @@ this file
 
 **Not touched:** `AGENTS.md` — its pointer bullet is still accurate and the detail belongs on
 one page. `C:\Dev\JARVIS\rules\` — nothing there needed changing, which §4 is the argument for.
+
+
+---
+
+## ⚠️ Appended after the push — this commit carried a sibling's board row
+
+**`091334a` published `56-occurrence-model`'s Active-claims row under a commit message that
+does not mention it.** Naming it here because that is the only repair available.
+
+`SESSIONS.md` is the one file a pathspec commit cannot protect: `git commit -- <paths>` takes
+the **working-tree** content of the paths it names, and the board is a path this session and
+that one both write. The sibling claimed between `a9f0f32` (r2) and `091334a` (r3) — verified
+by `git show 091334a -- SESSIONS.md`, where their row appears as an addition. Subtracting it is
+not an option: staging only my own hunk would commit the **index** instead of the tree, which
+is the other half of the same hazard.
+
+`C:\Dev\JARVISulesgent-topology-and-model-routing.md` §5 prescribes exactly this —
+*"you cannot subtract it, so name it in the commit message"* — and the message was already
+written and pushed, so the naming lands here instead. It is the durable half anyway: a commit
+message is read once, a changelog is what is still findable in a month.
+
+**No content collision.** `56-occurrence-model` claims `domain/model/Task.kt`,
+`TaskEstimate.kt`, `Dtos.kt`, `Mappers.kt`, `app/src/test/**` and **`docs/PRODUCT_v0.3.md`**.
+Round 3 touched none of them — only `docs/OPERATIONS.md`, `CLAUDE.md`, `SESSIONS.md` and this
+changelog. Round **2** did edit `docs/PRODUCT_v0.3.md` §1.4, but that landed in `a9f0f32`,
+**before** their row existed.
+
+**Singletons are clear for them:** the Gradle daemon, `adb` and AVD `Pixel_10_Pro_XL` were
+released in r2's board note and nothing in r3 took them back.
+
+**Nothing further is owed to that session by this one.** Its row stands untouched; this session
+does not release, edit or reason about it beyond this paragraph.
