@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r13) | port the control-character gate to THIS repo — a sibling already tripped it here | `scripts/Assert-NoControlChars.ps1` (new) · `scripts/git-hooks/pre-commit` · `CHANGELOG/2026-08-20/c13-key-store.md` · `CHANGELOG/2026-08-21/55-scoring-model-r3.md` (one-byte repair) | _none_ | 2026-08-21 |
 > 🏁 **`55-scoring-model` r3 RELEASED 2026-08-21 — this commit.** No singletons held.
 >
 > 🎬 **Ido answered the walkthrough offer with `waive`.** That settles the judgment half and
