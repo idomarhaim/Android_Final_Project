@@ -15,6 +15,22 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`55-scoring-model` r5 RELEASED 2026-08-21 — this commit.** No singletons held. Final round.
+>
+> ⚠️ **`#58`'s option 4 was WRONG and is withdrawn.** I suggested `cancelAll()` in `@Before`,
+> which would destroy the very property `NotificationObservedFireTest` exists to provide: it
+> **deliberately** leaves notifications posted so a human can read the shade with `dumpsys`
+> afterwards. That is in the file's own KDoc, committed in `99d3e31` **25 hours before I opened
+> the ticket**, and I had not read it. Corrected on the ticket; the brief points there.
+>
+> 🔎 **Two causes, not one.** The neighbouring test already documents a **second**
+> order-dependence — the system's own `AUTOGROUP_SUMMARY` record, which *"fails only in the run
+> orders that leave both posted"* — unrelated to the IME hypothesis this ticket offers for
+> `AiSectionUiTest`. `#58`'s exit now requires an explanation **per failing test**, and forbids
+> trading away the posted-notifications property.
+>
+> 📌 **The generalisable bit:** the ticket was written from two *runs* and never from the
+> *source* of the tests that failed. The file had already diagnosed itself a day earlier.
 > 🏁 **`55-scoring-model` r3 RELEASED 2026-08-21 — this commit.** No singletons held.
 >
 > 🎬 **Ido answered the walkthrough offer with `waive`.** That settles the judgment half and

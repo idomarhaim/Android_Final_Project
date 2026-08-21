@@ -66,9 +66,15 @@ the timing by accident.
   **unrepresentable** rather than handled, which is the stronger shape — at the cost of an AVD
   setting that persists and affects every other session on that device. **If you take option 3,
   say so loudly in the changelog and the board note**, because the next session inherits it.
-- **`NotificationObservedFireTest` has no evidence behind it yet.** `Untested:` whether the same
-  IME explanation covers it; a shade left populated or cleared by a neighbour is the analogous
-  leak but nobody has looked. Do not assume one cause because one cause was found.
+- ⚠️ **`NotificationObservedFireTest` almost certainly has a DIFFERENT cause, and the ticket's
+  option 4 is withdrawn.** Both facts come from that file's own KDoc, committed in `99d3e31`
+  25 hours before the ticket was opened and not read when it was written. See the correction
+  comment on `#58`; in short: the suite **deliberately** leaves notifications posted so a human
+  can read the shade with `dumpsys` afterwards, so `cancelAll()` in `@Before` would destroy the
+  property it exists to provide — and the neighbouring test already documents a **second**
+  order-dependence, the system's own `AUTOGROUP_SUMMARY` record, which *"fails only in the run
+  orders that leave both posted."* **Two causes, not one.** Read that KDoc before reproducing
+  anything.
 - **The GitHub Actions emulator workflow inherits this.**
   `.github/workflows/instrumented-tests.yml` runs the same suite, so whatever fixes it locally
   has to hold there — and CI is the surface where *"just re-run it"* is not available.
@@ -87,7 +93,10 @@ the timing by accident.
 ## Exit
 
 - **The cause is named and evidenced**, not inferred — a log, a screenshot, or a deterministic
-  reproduction showing the click was swallowed (or showing it was something else).
+  reproduction showing the click was swallowed (or showing it was something else). **Two causes
+  are expected**, one per failing test; a fix that explains only one is not finished.
+- **The notification suite still leaves its notifications posted** at the end of a run. That is
+  the property `dumpsys` evidence collection depends on, and no ordering fix may trade it away.
 - **The full suite runs green N consecutive times**, N ≥ 3, via `install -r` +
   `am instrument`. *One* green run is exactly the weak experiment that produced this ticket, so
   it is not an exit.
