@@ -15,6 +15,36 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`55-scoring-model` r3 RELEASED 2026-08-21 — this commit.** No singletons held.
+>
+> 🎬 **Ido answered the walkthrough offer with `waive`.** That settles the judgment half and
+> leaves the **mechanical** half owed — run the wording against every recorded instance, and
+> check it stays silent where it should. **It did not: three gaps, none visible from the draft.**
+>
+> ❌ **Gap A — it fired where it should not.** `challenges-ui` (2026-08-05) held a rules deploy
+> **deliberately**, to pair it with the session that could *prove* it. A grant that only removes
+> the asking would have deployed and lost the verification. Clause added: *permitted is not the
+> same as now*, and an explicit hold still wins.
+>
+> ❌ **Gap B — the fix reintroduced the failure it fixes.** `deploy --only functions` prints
+> *"ensuring required API … is enabled"* four times, and the always-ask list said *"enables a
+> paid API"* — so a careful reader stops at exactly the command the grant exists to permit.
+> Narrowed to *deliberately* enables, with the log quoted inline.
+>
+> 🔁 **Gap C — `/adversarial-review` §1 reframed the page.** `outward-action-governance.md` says
+> outward autonomy never persists, which reads as a contradiction — until its own discriminator:
+> *"autonomy may persist where the blast radius is a repo; where it reaches people, it is
+> re-granted per task or not at all."* **A deploy to Ido's own project reaches nobody.** So this
+> is that rule applied correctly, not an exception to it — and the five sessions that stopped
+> here were applying a people-reaching rule to an action that does not reach people.
+>
+> ⚠️ **What the fallback could NOT test, named rather than skipped:** the judgment half (by
+> construction); a corpus I did not author (the fresh-context agent that would fix it is 🧩-gated
+> and `waive` does not grant it); the always-ask list in the firing direction (no recorded
+> instance exists); and Gap B's fix, which the next deploy is the first run of.
+>
+> 🚥 **`56-occurrence-model` may start.**
+| `56-occurrence-model` | `#56` — §2.2 occurrence model (four rungs, due dates) and the §2.5 reminders it unlocks | `domain/model/Task.kt`, `domain/model/Occurrence.kt`, `domain/model/ReminderTiming.kt`, `domain/model/TaskEstimate.kt`, `domain/usecase/OccurrenceReminders*.kt`, `data/firestore/dto/Dtos.kt`, `data/firestore/dto/Mappers.kt`, `notifications/*`, `feature/dashboard/*`, `feature/goals/GoalDetailScreen.kt`, `app/src/test/**`, `app/src/androidTest/**`, `docs/PRODUCT_v0.3.md`, `CHANGELOG/2026-08-21/56-occurrence-model.md`, `sessions/56-occurrence-model.md` | Gradle daemon, `adb`, AVD `Pixel_10_Pro_XL` | 2026-08-21 |
 > 🏁 **`55-scoring-model` r2 RELEASED 2026-08-21 — this commit.** Live Firebase env released;
 > emulator sign-in intact.
 >

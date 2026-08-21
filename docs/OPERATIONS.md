@@ -57,9 +57,23 @@ Debug SHA-1              F1:D0:96:4D:54:41:D5:99:86:7D:AE:83:0F:77:16:23:BB:64:D
 **Ido, 2026-08-21:** *"I already gave you authorisation to do any Firebase action that does not
 require me to pay money — I want that written where it needs to be."*
 
-This is the canonical record of that grant. It is **project-scoped**: it says nothing about
-outward actions in general, which stay draft-then-ask
-(`C:\Dev\JARVIS\rules\outward-action-governance.md`).
+This is the canonical record of that grant.
+
+**And it is not an exception to the outward-action rule — it is that rule's own test, applied.**
+`C:\Dev\JARVIS\rules\outward-action-governance.md` says outward autonomy is granted per task
+and *"does not persist"*. Read carelessly, the grant below contradicts it. It does not, because
+that rule states its own discriminator:
+
+> *"Autonomy may persist where the blast radius is a repo; where it **reaches people**, it is
+> re-granted per task or not at all."*
+
+A deploy to **Ido's own Firebase project** reaches nobody. It is the same class as a push to
+his own remote, which the global commit rule already says *"does not need `OUTWARD AUTO` and
+never grants it"*. So the five sessions that stopped at this gate were not being careful — they
+were applying a rule about **reaching people** to an action that does not, and `CLAUDE.md` said
+in so many words that `outward-action-governance.md` *"is the gate"*. It was never the right
+gate for a deploy. It remains exactly the right gate for the Firebase actions that **do** reach
+people, which is why those are on the always-ask list below and not covered by anything here.
 
 **Permitted without asking, in either mode:**
 
@@ -72,14 +86,40 @@ outward actions in general, which stay draft-then-ask
 
 **Still always-ask, and none of these is a judgement call:**
 
-- **anything that changes the billing plan or enables a paid API** — that is the boundary the
-  grant is drawn around, so a command that moves it cannot be covered by it;
+- **anything that changes the billing plan, or *deliberately* enables a paid API** — that is
+  the boundary the grant is drawn around, so a command that moves it cannot be covered by it.
+  ⚠️ **Read that word `deliberately`, because without it this line cancels the grant.**
+  `firebase deploy --only functions` prints, every single time:
+
+  ```
+  i  functions: ensuring required API run.googleapis.com is enabled...
+  i  functions: ensuring required API eventarc.googleapis.com is enabled...
+  i  functions: ensuring required API pubsub.googleapis.com is enabled...
+  i  functions: ensuring required API storage.googleapis.com is enabled...
+  ```
+
+  A session reading the always-ask list literally would stop **at exactly the action this grant
+  exists to permit** — a false stop, which is the failure being removed, arriving through the
+  fix for it. `Observed:` in this project's own deploy log, 2026-08-21. Those four are the APIs
+  v2 functions already run on; ensuring them is part of deploying, not a decision. What is
+  always-ask is **turning on a paid service as the point of the command** — `gcloud services
+  enable`, a console toggle, a new product;
 - **creating a resource that bills by existing** rather than by use (a new region, a
   provisioned instance, a scheduled function that runs regardless of traffic);
 - **deleting anything** — data, a function, a bucket, a rules ruleset. Deletions are
   always-ask on their own account, everywhere, and this grant does not touch that;
 - **project settings, IAM, visibility, adding members**;
 - **writing to production *data*** as an act rather than as a side effect of using the app.
+
+**Permitted is not the same as *now*, and this grant does not decide sequencing.**
+`Observed:` `CHANGELOG/2026-08-05/challenges-ui.md` — a `firestore.rules` deploy was held
+**deliberately**, and the reason was not permission: *"it is paired with the two-account session
+on purpose: that is the only sitting in which the deploy can actually be **proven** rather than
+merely performed."* Under this grant alone a session would deploy immediately and lose the
+verification. So: the grant removes the **asking**; it does not remove the judgement about
+**when**, and it never overrides an explicit hold — Ido's, or a previous session's written one.
+If a changelog or a brief says an action is being held for a reason, that reason still stands
+and this page does not answer it.
 
 **Honest limit, stated rather than smoothed over.** The project is on **Blaze** (v2 functions
 require it), so *"costs nothing"* means *"inside the free allowance at this project's size"*,
@@ -92,6 +132,14 @@ table says.
 ones that only re-published code he had already approved — which is how `#55` shipped a client
 that the deployed functions could not read (see that session's changelog §4.2). Capability was
 never the gate; the asking was.
+
+**How this wording was tested, since Ido waived the walkthrough.** It was run against **all five
+recorded instances** of the failure it addresses — `challenges` (2026-08-04), `challenges-ui`
+(2026-08-05), `social-share-bugs` (2026-08-15), `c13-key-store` (2026-08-20) and `#55`
+(2026-08-21). It fires correctly on four. **On the fifth it fired where it should not have**,
+which is what produced the sequencing clause above; the API-enablement clause came from the
+same pass, reading a permitted command's own output. Neither was visible from the draft alone.
+Account: `CHANGELOG/2026-08-21/55-scoring-model-r3.md`.
 
 ### OAuth consent screen — current state
 
