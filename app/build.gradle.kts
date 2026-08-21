@@ -135,6 +135,23 @@ android {
     }
 }
 
+// ImeSettleSweepTest (issue #58) is a JVM test that READS the instrumented
+// sources as text. Gradle has no way to know that: `testDebugUnitTest`'s tracked
+// inputs are the main and unit-test source sets, so a commit that touches only
+// `src/androidTest/` leaves the task UP-TO-DATE and the sweep reports its
+// PREVIOUS result — green — without running.
+//
+// That is the one case the guard exists for, so it would have been silent
+// exactly when it mattered. `Observed:` 2026-08-21 — a raw `performTextInput`
+// deliberately reintroduced into SilentFilingUiTest.kt passed with no output,
+// and failed correctly only under `--rerun-tasks`. Declaring the directory as an
+// input costs one re-run per androidTest commit and closes it.
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/androidTest"))
+        .withPropertyName("androidTestSourcesReadByImeSettleSweepTest")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 dependencies {
     // ── Compose ────────────────────────────────────────────────────
     val composeBom = platform(libs.androidx.compose.bom)

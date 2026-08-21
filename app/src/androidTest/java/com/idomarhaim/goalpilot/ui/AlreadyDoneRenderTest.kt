@@ -23,8 +23,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -166,9 +164,9 @@ class AlreadyDoneRenderTest {
         }
 
         // Driven, not constructed: the picture then shows what a person's own taps produce.
-        composeRule.onAllNodesWithText("e.g. Run 5 km on Friday")[0].performTextInput("Run 5 km")
+        composeRule.onAllNodesWithText("e.g. Run 5 km on Friday")[0].performTextInputAndSettle("Run 5 km")
         composeRule.onAllNodesWithText("e.g. Run 5 km on Friday")[1]
-            .performTextInput("Ran 5 km before work")
+            .performTextInputAndSettle("Ran 5 km before work")
         composeRule.onAllNodesWithTag(SmartAddTestTags.ALREADY_DONE)[1].performClick()
 
         // The floor that actually holds: the state the frame exists to show is really in it,
@@ -196,8 +194,8 @@ class AlreadyDoneRenderTest {
             }
         }
 
-        composeRule.onAllNodesWithText("Add a task")[0].performTextReplacement("Stretch 10 minutes")
-        composeRule.onAllNodesWithText("Add a task")[1].performTextReplacement("Stretched already")
+        composeRule.onAllNodesWithText("Add a task")[0].performTextReplacementAndSettle("Stretch 10 minutes")
+        composeRule.onAllNodesWithText("Add a task")[1].performTextReplacementAndSettle("Stretched already")
         composeRule.onAllNodesWithTag(ALREADY_DONE_TAG)[1].performClick()
 
         composeRule.onAllNodesWithTag(ALREADY_DONE_TAG)[0].assertIsNotSelected()

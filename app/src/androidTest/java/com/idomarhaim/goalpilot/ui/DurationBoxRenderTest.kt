@@ -22,8 +22,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -135,12 +133,12 @@ class DurationBoxRenderTest {
         // Titles first, then the estimate — the real order, and the order that
         // matters: an estimate asked for BEFORE the title is written is cleared by
         // writing it, which is #9's own retitle rule doing its job.
-        composeRule.onAllNodesWithText("Add a task")[1].performTextReplacement("Run 5km before work")
-        composeRule.onAllNodesWithText("Add a task")[2].performTextReplacement("Write the report")
+        composeRule.onAllNodesWithText("Add a task")[1].performTextReplacementAndSettle("Run 5km before work")
+        composeRule.onAllNodesWithText("Add a task")[2].performTextReplacementAndSettle("Write the report")
         composeRule.onAllNodesWithContentDescription(
             "Estimate difficulty and duration with AI",
         )[1].performClick()
-        composeRule.onAllNodesWithTag(DURATION_BOX_TAG)[2].performTextInput("45")
+        composeRule.onAllNodesWithTag(DURATION_BOX_TAG)[2].performTextInputAndSettle("45")
 
         // A floor under the capture: the second row must really be carrying the
         // model's 90, or the picture is of three empty boxes and proves nothing.

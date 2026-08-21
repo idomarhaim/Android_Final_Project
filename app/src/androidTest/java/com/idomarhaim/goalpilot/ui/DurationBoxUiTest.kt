@@ -14,9 +14,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.feature.goals.POINTS_PREVIEW_TAG
@@ -95,7 +92,7 @@ class DurationBoxUiTest {
     )
 
     private fun typeTitle(text: String) =
-        composeRule.onNodeWithText("Add a task").performTextReplacement(text)
+        composeRule.onNodeWithText("Add a task").performTextReplacementAndSettle(text)
 
     private fun pressEstimate() =
         composeRule.onNodeWithContentDescription("Estimate difficulty and duration with AI")
@@ -150,7 +147,7 @@ class DurationBoxUiTest {
     fun theIconGoesTheMomentThePersonTypesANumber() {
         setRow()
 
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
 
         icon().assertDoesNotExist()
     }
@@ -158,9 +155,9 @@ class DurationBoxUiTest {
     @Test
     fun clearingTheBoxBringsTheIconBack() {
         setRow()
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
 
-        box().performTextClearance()
+        box().performTextClearanceAndSettle()
 
         icon().assertIsDisplayed()
     }
@@ -171,7 +168,7 @@ class DurationBoxUiTest {
     fun anEstimateDoesNotOverwriteATypedDuration() {
         setRow()
         typeTitle("Run five kilometres before work")
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
 
         pressEstimate()
 
@@ -194,7 +191,7 @@ class DurationBoxUiTest {
     @Test
     fun aTypedDurationSurvivesARetitle() {
         setRow()
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
 
         typeTitle("An entirely different task")
 
@@ -219,7 +216,7 @@ class DurationBoxUiTest {
     fun aTypedDurationIsHandedBackStampedAsTheUsers() {
         setRow()
         typeTitle("Swim")
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
 
         pressAdd()
 
@@ -333,7 +330,7 @@ class DurationBoxUiTest {
     fun addingClearsTheBoxSoTheNextTaskDoesNotInheritTheLastOnesDuration() {
         setRow()
         typeTitle("Swim")
-        box().performTextInput("45")
+        box().performTextInputAndSettle("45")
         pressAdd()
 
         assertBoxIsEmpty()

@@ -12,7 +12,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.semantics.SemanticsProperties
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
@@ -147,7 +146,7 @@ class AiSectionUiTest {
         composeRule.onNodeWithTag(TAG_AI_ADD).performClick()
         composeRule.onNodeWithTag(TAG_AI_EDITOR).assertIsDisplayed()
         composeRule.onNodeWithTag(providerTag(AiProvider.ANTHROPIC)).performClick()
-        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInput(fakeKey)
+        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInputAndSettle(fakeKey)
         composeRule.onNodeWithTag(TAG_AI_SAVE).performClick()
 
         composeRule.onNodeWithTag(TAG_AI_KEY_MASK).assertIsDisplayed()
@@ -165,7 +164,7 @@ class AiSectionUiTest {
 
         composeRule.onNodeWithTag(TAG_AI_ADD).performClick()
         composeRule.onNodeWithTag(providerTag(AiProvider.GEMINI)).performClick()
-        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInput(fakeKey)
+        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInputAndSettle(fakeKey)
         composeRule.onNodeWithTag(TAG_AI_SAVE).performClick()
 
         assertThat(textOf(TAG_AI_MODEL)).isEqualTo(AiProvider.GEMINI.defaultModel)
@@ -222,7 +221,7 @@ class AiSectionUiTest {
         assertThat(textOf(TAG_AI_KEY_MASK)).endsWith("9876")
 
         composeRule.onNodeWithTag(TAG_AI_REPLACE).performClick()
-        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInput("FAKE-KEY-NOT-A-REAL-KEY-1111")
+        composeRule.onNodeWithTag(TAG_AI_KEY_FIELD).performTextInputAndSettle("FAKE-KEY-NOT-A-REAL-KEY-1111")
         composeRule.onNodeWithTag(TAG_AI_SAVE).performClick()
 
         // The tail is the whole reason four characters survive the mask: it is
@@ -235,7 +234,7 @@ class AiSectionUiTest {
         setContent(AiCredential(AiProvider.OPENAI, "gpt-4o-mini", fakeKey))
 
         composeRule.onNodeWithTag(TAG_AI_REPLACE).performClick()
-        composeRule.onNodeWithTag(TAG_AI_MODEL_FIELD).performTextInput("gpt-4o")
+        composeRule.onNodeWithTag(TAG_AI_MODEL_FIELD).performTextInputAndSettle("gpt-4o")
         composeRule.onNodeWithTag(TAG_AI_SAVE).performClick()
 
         assertThat(textOf(TAG_AI_MODEL)).contains("gpt-4o")

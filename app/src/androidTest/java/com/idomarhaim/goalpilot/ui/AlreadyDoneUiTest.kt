@@ -12,8 +12,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
@@ -67,7 +65,7 @@ class AlreadyDoneUiTest {
     }
 
     private fun typeQuickAdd(text: String) =
-        composeRule.onNodeWithText("e.g. Run 5 km on Friday").performTextInput(text)
+        composeRule.onNodeWithText("e.g. Run 5 km on Friday").performTextInputAndSettle(text)
 
     private fun quickAddChip() = composeRule.onNodeWithTag(SmartAddTestTags.ALREADY_DONE)
 
@@ -186,7 +184,7 @@ class AlreadyDoneUiTest {
     private fun rowChip() = composeRule.onNodeWithTag(ALREADY_DONE_TAG)
 
     private fun typeRowTitle(text: String) =
-        composeRule.onNodeWithText("Add a task").performTextReplacement(text)
+        composeRule.onNodeWithText("Add a task").performTextReplacementAndSettle(text)
 
     private fun pressAdd() =
         composeRule.onNodeWithContentDescription("Add task").performClick()

@@ -5,7 +5,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
@@ -166,7 +165,7 @@ class SilentFilingUiTest {
             }
         }
 
-        composeRule.onNodeWithText("e.g. Run 5 km on Friday").performTextInput("Run 5 km")
+        composeRule.onNodeWithText("e.g. Run 5 km on Friday").performTextInputAndSettle("Run 5 km")
         composeRule.onNodeWithText("Sort").performClick()
 
         // One tap, one call out, and nothing in between: the classification goes straight to

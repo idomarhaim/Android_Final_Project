@@ -427,6 +427,38 @@ with `{"location":"us-central1"}` — the call the console's "Get started" makes
 - `adb push` to `/sdcard/...` from Git Bash needs `MSYS_NO_PATHCONV=1`, or the
   path is rewritten to `C:/Program Files/Git/sdcard/...`.
 
+### The keyboard moves the layout, and the instrumented tests care too
+
+The two IME bullets above are written for a **human** driving the emulator by
+hand. The same physics reaches Compose tests, in a shape that produces no error
+message at all, and that was issue
+[#58](https://github.com/idomarhaim/Android_Final_Project/issues/58).
+
+Focusing a text field raises the soft keyboard. On Android 11+ the keyboard
+arrives as a **window inset animation**: the window is resized and everything in
+it slides upward over a few hundred milliseconds. Compose's idling resource
+tracks recompositions, its frame clock and pending measure/layout passes — a
+*system* inset animation is none of those, so `waitForIdle()` returns while the
+layout is still travelling. A `performClick` issued then reads its target's
+bounds, injects a touch at their centre, and the target has moved by the time the
+event lands. **The click is silently lost.**
+
+- **In tests:** never call `performTextInput`, `performTextReplacement` or
+  `performTextClearance` directly. Call the `…AndSettle` wrapper in
+  `app/src/androidTest/.../ui/ImeSettling.kt`, which waits for the bounds to stop
+  moving. `ImeSettleSweepTest` (JVM layer, free) fails the build if a raw one
+  reappears.
+- **Driving by hand:** nothing changed. The "tap twice" bullet above is a
+  *different* mechanism — there the IME **window** consumes your tap; here the
+  **layout** moves out from under an injected one. Same cause upstream (the
+  keyboard), two distinct effects; don't reason from one to the other.
+
+**No device or AVD setting is involved, deliberately.** Disabling the emulator's
+soft keyboard was `#58`'s option 3 — `Untested:` never tried here, so whether it
+works is unmeasured, and it persists on the AVD and silently changes the ground
+under every other session sharing it. The wait needs nothing from the device, so
+it holds on CI and for a human running `adb shell am instrument` by hand.
+
 ### Windows / Gradle
 
 - Pipe Gradle through `tail` only with `${PIPESTATUS[0]}` — the pipe's exit code
