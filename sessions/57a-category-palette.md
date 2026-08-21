@@ -2,14 +2,18 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 57
 owns:
-  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/GoalCategory.kt
+  # CORRECTED at /kickoff 2026-08-21: there is no GoalCategory.kt -- the enum is
+  # declared inside Goal.kt. And the dark variant has to be wired at the seam that
+  # already lifts stored hexes for dark surfaces, which is ColorExt.kt, not Theme.kt.
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ColorExt.kt
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/Theme.kt
   - app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt
-  - CHANGELOG/<today>/57a-category-palette.md
+  - CHANGELOG/2026-08-21/57a-category-palette.md
   - sessions/57a-category-palette.md
 created: 2026-08-21
 ---

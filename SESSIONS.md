@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57a-category-palette` | `#57` a — harmonised category palette (light + authored dark variant) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/ColorExt.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/Theme.kt` · `app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt` · `CHANGELOG/2026-08-21/57a-category-palette.md` · `sessions/57a-category-palette.md` | none yet — will take the AVD for the render pass | 2026-08-21 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >
