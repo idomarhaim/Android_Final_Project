@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r6) | green main again — #8's notification test breaks CI; plus answering Ido on the key, the prototypes and auto-delivery | `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/NotificationObservedFireTest.kt` · `CHANGELOG/2026-08-20/c13-key-store.md` | **Gradle daemon · emulator-5554** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
@@ -4096,6 +4095,28 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r6) RELEASED 2026-08-21 — this commit.** Singletons released: Gradle daemon,
+> `emulator-5554`.
+>
+> ✅ **`main` IS GREEN AGAIN.** *Instrumented tests (cloud emulator)* had failed on **every** push
+> since **12:57 on 2026-08-20** — four runs, three sessions' commits, last green at 12:03. **Not
+> `C13`:** 172/174 passed and both failures were `#8`'s `NotificationObservedFireTest` at
+> `requirePermission()`. `POST_NOTIFICATIONS` is a runtime permission from API 33, CI's emulator is
+> API 34, and `instrumented-tests.yml` has no grant step. The suite's KDoc said the grant comes
+> *"from outside, by `adb shell pm grant`"* — true of a human, false of CI, and nothing connected
+> the two, which is why it passed locally forever.
+>
+> **Fixed with a real grant, not `assumeTrue`.** A skip turns *"nothing was posted"* into a green
+> run, which is the exact failure that suite exists to catch. `requirePermission()`'s assertion is
+> untouched. Verified by **revoking** the permission locally first — 174/174 under CI's own
+> condition — because a plain local run on this machine proves nothing.
+>
+> 🔑 **The signing key now has a way out.** `.github/workflows/backup-signing-key.yml` +
+> `docs/RELEASING.md` §2.1a. `workflow_dispatch` only, GPG/AES256 under a second secret, refuses to
+> run without a ≥20-char passphrase, one-day retention. **Never upload the raw `.jks`** — artifacts
+> on this public repo are public. Running it is Ido's step, and step 0 is *look for the original
+> first*.
 
 > 🏁 **`c13-key-store` (r5) RELEASED 2026-08-21 — this commit.** Singletons released: **release
 > keystore (CI-held), Gradle daemon, `emulator-5554`.** The session is finished.
