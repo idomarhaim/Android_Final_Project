@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57b-backgrounds-and-combinations` | [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57) b — backgrounds as an axis, and combining them with the materials | `domain/model/AppBackground.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `ui/theme/MaterialSpec.kt` · `ui/theme/Theme.kt` · `ui/components/MaterialPicker.kt` · `MainActivity.kt` · `feature/settings/SettingsScreen.kt` · `feature/settings/SettingsViewModel.kt` · `app/src/test/java/.../ThemePaletteTest.kt` · `CHANGELOG/2026-08-22/57b-backgrounds-and-combinations.md` · `sessions/57b-backgrounds-and-combinations.md` | Gradle daemon + git index at build/commit time; **no device claimed yet** | 2026-08-22 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >

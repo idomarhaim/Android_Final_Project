@@ -2,18 +2,20 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 57
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialSpec.kt
-  - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/Theme.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/AppBackground.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt
   - app/src/main/java/com/idomarhaim/goalpilot/data/prefs/AppPreferencesRepositoryImpl.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/MaterialPicker.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/MainActivity.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsViewModel.kt
   - app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt
-  - CHANGELOG/<today>/57b-backgrounds-and-combinations.md
+  - CHANGELOG/2026-08-22/57b-backgrounds-and-combinations.md
   - sessions/57b-backgrounds-and-combinations.md
 created: 2026-08-21
 ---
