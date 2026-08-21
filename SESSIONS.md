@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57a-category-palette` | correcting a false claim about dark neo, and filing the real finding on `#53` | `CHANGELOG/2026-08-21/57a-category-palette.md` · `SESSIONS.md` · `sessions/done/57a-category-palette.md` | none | 2026-08-22 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >
