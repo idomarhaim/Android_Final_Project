@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r13) | port the control-character gate to THIS repo — a sibling already tripped it here | `scripts/Assert-NoControlChars.ps1` (new) · `scripts/git-hooks/pre-commit` · `CHANGELOG/2026-08-20/c13-key-store.md` · `CHANGELOG/2026-08-21/55-scoring-model-r3.md` (one-byte repair) | _none_ | 2026-08-21 |
 > 🏁 **`55-scoring-model` r3 RELEASED 2026-08-21 — this commit.** No singletons held.
 >
 > 🎬 **Ido answered the walkthrough offer with `waive`.** That settles the judgment half and
@@ -4185,6 +4184,26 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r13) RELEASED 2026-08-21 — this commit. Session finished.** No singletons.
+>
+> 🔒 **THIS REPO NOW HAS THE CONTROL-CHARACTER GATE TOO** — `scripts/Assert-NoControlChars.ps1` in
+> `pre-commit`. **Run `powershell -File scripts\Install-GitHooks.ps1` after pulling**, or you have
+> the source and not the hook. It was JARVIS-only until now, and this is the repo that needed it: a
+> final sweep of 970 files across both repos found exactly one corrupted file, **here**, committed by
+> `55-scoring-model` r3 twenty minutes earlier. Repaired, both halves.
+>
+> ⚠️ **KNOW ITS BLIND SPOT BEFORE TRUSTING A PASS.** The three characters the gate must permit —
+> TAB, LF, CR — are exactly what the three **commonest** escapes collapse into. That sibling's path
+> had **two** eaten escapes: one became a BEL (**caught**) and one became a **newline** (**invisible
+> to any scan** — nothing distinguishes a wanted line break from an eaten escape). *A pass is not
+> "the escapes survived."*
+>
+> 📌 Eleven instances today, **four of them in prose about the failure**, two caught by the gate
+> mid-write. It is a property of the transport, not of attention.
+>
+> 🧭 Fully disjoint from the live `56-occurrence-model` throughout — it owns the app sources and the
+> spec; this round touched `scripts/` and two changelog files.
 
 > 🏁 **`c13-key-store` (r8) RELEASED 2026-08-21 — this commit.** No singletons held. **The session
 > is finished.**
