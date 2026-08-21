@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57a-category-palette` | `#57` a — harmonised category palette (light + authored dark variant) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/ColorExt.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/Theme.kt` · `app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt` · `CHANGELOG/2026-08-21/57a-category-palette.md` · `sessions/57a-category-palette.md` | none yet — will take the AVD for the render pass | 2026-08-21 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >
@@ -4241,6 +4240,46 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`57a-category-palette` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD, adb
+> and the Gradle daemon are free. `#57` a shipped in `2c44b42`.
+>
+> 📱 **NO DEVICE SETTING CHANGED, AND THE APP WAS NOT UNINSTALLED.** The render pass ran through
+> `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`. `Observed:` the app's
+> `files/` listing is byte-for-byte what it was before the run. **There was no sign-in to lose** —
+> `#58` had already wiped this AVD's Firebase auth store, and I did not ask Ido to restore it,
+> because `CategoryPaletteRenderPass` composes the components directly and needs no account.
+>
+> ⚠️ **`#57`'s briefs `b`, `c` and `d` should read this before they start.** Two of their premises
+> moved:
+>
+> **(1) The prototype's hexes are NOT what shipped, and the brief for `a` said they would be.**
+> Six of its seven light values miss 3:1 against `AuroraSurface` (`#D0E2F5`) — `FITNESS` at
+> **2.48** — and the prototype has seven categories where the app has ten. What ported is the
+> OKLCH **hue and chroma**; lightness moved down. So a `b`/`c`/`d` screenshot compared against
+> the prototype will differ **by design**, and the numbers are in
+> `CHANGELOG/2026-08-21/57a-category-palette.md`.
+>
+> **(2) A category now has TWO hexes and TWO roles.** `defaultColorHex`/`darkColorHex` are
+> **fills** (3:1 non-text floor); `String.toGoalInk()` derives **ink** for type (4.5:1). Anything
+> `b`/`c`/`d` adds that paints a category as text takes `toGoalInk()`, not `toGoalAccent()` —
+> `ThemePaletteTest` guards the derivation but cannot see a new call site that picks the wrong one.
+>
+> 🔎 **"No dark blue neo" is CONFIRMED, and `#57` a is not its fix.** `DARK_NEO` ships and is
+> selectable; `MaterialPalettes.ramped()` rebuilds its ground at `RAMP_GROUND_SATURATION = 0.08f`
+> while Aurora's own dark surface `#0C1520` carries **0.45**, so the rendered ground is `#1B1D20`
+> — near-neutral charcoal. **Not missing, not blue.** Compare `aurora-glass-dark.png` with
+> `aurora-darkneo-dark.png` in `docs/render-passes/2026-08-21-57a-category-palette/`. Left alone
+> deliberately: it is one constant in a material transform, and changing it moves every dark-neo
+> surface under three briefs that have not run yet. **It needs an owner — `b`, `c`, or its own
+> ticket.**
+>
+> 📌 **The generalisable bit, and it is the one I did not expect.** Harmonising the light palette
+> made the *derived* dark palette **worse** — the fixed HSL-lightness lift scores 57.6 minimum
+> separation on the old hexes and **37.2** on the new ones, because it discards lightness and a
+> harmonised set has deliberately little chroma variance left to separate on. Two individually
+> correct improvements interacting negatively, invisible from either side. That is what forced the
+> dark twins to be authored (66.2), and it is entry 2 in this session's KB candidates.
 
 > 🏁 **`53-tag-sweep-brief` RELEASED 2026-08-21 — this commit.** No singletons; no code touched.
 >

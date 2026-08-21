@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 57
 owns:
   # CORRECTED at /kickoff 2026-08-21: there is no GoalCategory.kt -- the enum is
@@ -16,6 +16,18 @@ owns:
   - CHANGELOG/2026-08-21/57a-category-palette.md
   - sessions/57a-category-palette.md
 created: 2026-08-21
+result: |
+  Shipped 2026-08-21 in 2c44b42 (claim 4a8c512).
+  Everything under "What ships" landed, with one substitution the brief did not
+  anticipate: the prototype's hexes could NOT be copied verbatim -- six of its seven
+  miss 3:1 against AuroraSurface (#D0E2F5) and it has seven categories to the app's
+  ten -- so its OKLCH hue and chroma ported and lightness moved down. A fill/ink split
+  (String.toGoalInk) was added because that is what made a ten-colour harmonised set
+  possible at all.
+  NOT fixed, and answered as the brief asked: "no dark blue neo" is a DIFFERENT defect
+  -- MaterialPalettes.ramped() clamps the ground to saturation 0.08 against the skin's
+  own 0.45, so dark neo renders neutral charcoal. It has no owner yet.
+  Tests: JVM 712/712; instrumented render pass 2/2, 16 frames.
 ---
 
 # `#57` a — the harmonised category palette, first, because everything else renders it
