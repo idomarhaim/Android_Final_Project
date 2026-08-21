@@ -1,7 +1,12 @@
 package com.idomarhaim.goalpilot.ui
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -10,12 +15,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.feature.settings.SettingsContent
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
+import com.idomarhaim.goalpilot.ui.theme.gpMaterial
+import com.idomarhaim.goalpilot.ui.theme.gpPage
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -60,11 +68,21 @@ import java.io.File
  * hang that looks exactly like a slow render and needs the AVD killed.
  * `Observed:` 2026-08-20, first attempt at this pass.
  *
- * ## Two methods, not one
+ * ## Two methods, then two more (`#57` b)
  *
  * One skin each, so a hang in the second leaves the first skin's frames on the
  * device instead of nothing at all — the same reason the assertions are about
  * files existing rather than about pixels.
+ *
+ * `#57` b added the **ground** as a third axis, and it is a visual change by
+ * construction, so it gets the same treatment: [aurora_everyGroundUnderEveryMaterial]
+ * and [blossom_everyGroundUnderEveryMaterial] walk 4 materials × 4 grounds ×
+ * 2 brightnesses. The frame that has to be looked at hardest is
+ * **`*-neo-glow-*`**: `AppBackground` promises in words that neumorphism cannot
+ * survive a lit ground and becomes a translucent plate with an edge, and this is
+ * the only place that promise can be checked. `*-glass-plain-*` is the same
+ * claim in the other direction — a glass panel with nothing to be transparent
+ * about.
  *
  * ## What the frames do and do not prove
  *
@@ -74,6 +92,22 @@ import java.io.File
  * rest of the app: this is one screen, chosen because it is the screen the
  * material contract was built to make possible and the one that shows all four
  * materials at once in its own tiles.
+ *
+ * ⚠️ **The sentence above claimed "the page backdrop" for two days and was
+ * false, and `#57` b's first pass is what caught it.** This harness used to put
+ * `SettingsContent` straight under `GoalPilotTheme`, while the real app wraps it
+ * in `MainActivity`'s `Surface` + `Box.gpPage(...)` — and `gpPage` is the *only*
+ * thing that draws a ground. So every frame this pass had ever produced showed
+ * glass and liquid glass panels floating on a flat colour the app never renders,
+ * which is the one look those two materials are defined against. The wrapper
+ * below is a copy of `MainActivity`'s, and it is the reason the ground is
+ * visible at all.
+ *
+ * **How it went unnoticed is the useful half:** a render pass is checked by
+ * *looking*, and a frame that is missing a background still looks like a
+ * perfectly good screenshot of a settings screen. Nothing in it says a layer is
+ * absent. The gap only became obvious once a control existed whose entire
+ * subject was that layer.
  */
 class MaterialRenderPass {
 
@@ -86,8 +120,27 @@ class MaterialRenderPass {
     @Test
     fun blossom_everyMaterialInBothBrightnesses() = capture(AppSkin.BLOSSOM)
 
-    private fun capture(skin: AppSkin) {
+    /** `#57` b — the combination grid, one skin per method for the reason above. */
+    @Test
+    fun aurora_everyGroundUnderEveryMaterial() =
+        capture(AppSkin.AURORA, grounds = AppBackground.entries.toList())
+
+    @Test
+    fun blossom_everyGroundUnderEveryMaterial() =
+        capture(AppSkin.BLOSSOM, grounds = AppBackground.entries.toList())
+
+    /**
+     * @param grounds which backgrounds to walk. The default is [AppBackground.MATCH]
+     *   alone — i.e. the per-material grounds these frames showed before `#57` b —
+     *   so the original two methods keep producing the original eight filenames and
+     *   a diff against the previous pass stays readable.
+     */
+    private fun capture(
+        skin: AppSkin,
+        grounds: List<AppBackground> = listOf(AppBackground.MATCH),
+    ) {
         val material = mutableStateOf(AppMaterial.NEO)
+        val background = mutableStateOf(AppBackground.MATCH)
         val brightness = mutableStateOf(AppBrightness.LIGHT)
         val region = mutableStateOf(AppRegion.SYSTEM)
         val schedule = mutableStateOf(DaySchedule.DEFAULT)
@@ -96,11 +149,28 @@ class MaterialRenderPass {
             GoalPilotTheme(
                 skin = skin,
                 material = material.value,
+                background = background.value,
                 // LIGHT/DARK explicitly rather than SYSTEM: the matrix has to be
                 // the one this file names, not the one the emulator happens to
                 // be in -- and dark neo overriding it is the thing being shown.
                 darkTheme = brightness.value == AppBrightness.DARK,
             ) {
+                // A COPY of MainActivity's wrapper, and it has to be: `gpPage`
+                // is what draws the ground, it is called in exactly two places
+                // in the app, and neither of them is a screen. Without this the
+                // pass photographs the screen and not the page it sits on.
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .gpPage(
+                                spec = MaterialTheme.gpMaterial,
+                                background = MaterialTheme.colorScheme.background,
+                            ),
+                    ) {
                 SettingsContent(
                     skin = skin,
                     onSkin = {},
@@ -108,6 +178,11 @@ class MaterialRenderPass {
                     onBrightness = { brightness.value = it },
                     material = material.value,
                     onMaterial = { material.value = it },
+                    // #57 b's third axis. Explicit rather than defaulted, for the
+                    // same reason the AI state is: a default lets a real screen
+                    // forget the control and render one that silently does nothing.
+                    background = background.value,
+                    onBackground = { background.value = it },
                     language = AppLanguage.ENGLISH,
                     onLanguage = {},
                     region = region.value,
@@ -130,6 +205,8 @@ class MaterialRenderPass {
                     onBack = {},
                     onOpenProfile = {},
                 )
+                    }
+                }
             }
         }
 
@@ -141,31 +218,46 @@ class MaterialRenderPass {
 
         val written = mutableListOf<File>()
         AppMaterial.entries.forEach { m ->
-            listOf(AppBrightness.LIGHT, AppBrightness.DARK).forEach { b ->
-                material.value = m
-                brightness.value = b
-                composeRule.waitForIdle()
+            grounds.forEach { g ->
+                listOf(AppBrightness.LIGHT, AppBrightness.DARK).forEach { b ->
+                    material.value = m
+                    background.value = g
+                    brightness.value = b
+                    composeRule.waitForIdle()
 
-                val full = composeRule.onRoot().captureToImage().asAndroidBitmap()
-                // Downscaled before encoding: a full-resolution PNG of this AVD
-                // is ~4 Mpx, and 16 of them is both slow to encode and too heavy
-                // to commit. Half size still shows a shadow pair and a rim.
-                val small = Bitmap.createScaledBitmap(
-                    full,
-                    full.width / 2,
-                    full.height / 2,
-                    true,
-                )
-                val file = File(outDir, "${skin.id}-${m.id}-${b.id}.png")
-                file.outputStream().use { small.compress(Bitmap.CompressFormat.PNG, 90, it) }
-                small.recycle()
-                written += file
+                    val full = composeRule.onRoot().captureToImage().asAndroidBitmap()
+                    // Downscaled before encoding: a full-resolution PNG of this AVD
+                    // is ~4 Mpx, and 16 of them is both slow to encode and too heavy
+                    // to commit. Half size still shows a shadow pair and a rim.
+                    val small = Bitmap.createScaledBitmap(
+                        full,
+                        full.width / 2,
+                        full.height / 2,
+                        true,
+                    )
+                    // The ground goes in the filename only when there is more than
+                    // one of them, so the original eight keep their original names
+                    // and a before/after comparison is a plain `diff` of two pulls.
+                    val stem = if (grounds.size > 1) {
+                        skin.id + "-" + m.id + "-" + g.id + "-" + b.id
+                    } else {
+                        skin.id + "-" + m.id + "-" + b.id
+                    }
+                    val file = File(outDir, "$stem.png")
+                    file.outputStream().use { small.compress(Bitmap.CompressFormat.PNG, 90, it) }
+                    small.recycle()
+                    written += file
+                }
             }
         }
 
-        // 4 materials x 2 brightnesses. Dark neo's two frames are expected to be
-        // IDENTICAL -- that pair is the brightness lock, seen.
-        assertWithMessage("$skin — the matrix is 8 frames").that(written).hasSize(8)
+        // materials x grounds x brightnesses. Dark neo's brightness pairs are
+        // expected to be IDENTICAL -- that pair is the brightness lock, seen --
+        // and so are its MATCH and PLAIN columns, because PLAIN is what MATCH
+        // resolves to for it.
+        val expected = AppMaterial.entries.size * grounds.size * 2
+        assertWithMessage("$skin — the matrix is $expected frames")
+            .that(written).hasSize(expected)
         written.forEach { file ->
             assertWithMessage("${file.name} was written").that(file.isFile).isTrue()
             assertWithMessage("${file.name} is not empty").that(file.length()).isGreaterThan(1_000L)

@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 
@@ -34,10 +35,23 @@ val LocalAppSkin = staticCompositionLocalOf { AppSkin.DEFAULT }
  */
 val LocalAppMaterial = staticCompositionLocalOf { AppMaterial.DEFAULT }
 
+/**
+ * The ground currently in force — spec §4.1's third axis, `#57` b.
+ *
+ * Read this only to answer *"which ground is selected?"* for the **one**
+ * control allowed to ask: the background picker, which paints each of its
+ * tiles in a ground that is not the current one. Everything else reads
+ * [LocalGpMaterial], whose `backdrop` already carries the answer — the ground
+ * is inside the material contract precisely so that no screen has to branch on
+ * it.
+ */
+val LocalAppBackground = staticCompositionLocalOf { AppBackground.DEFAULT }
+
 /** The four answers — `surface · groove · elevation · accent`. See [GpMaterialSpec]. */
 val LocalGpMaterial = staticCompositionLocalOf {
     materialSpecFor(
         material = AppMaterial.DEFAULT,
+        background = AppBackground.DEFAULT,
         scheme = colorSchemeFor(AppSkin.DEFAULT, AppMaterial.DEFAULT, dark = false),
         dark = false,
     )
@@ -69,6 +83,7 @@ private val LocalSystemBarsOverride =
 fun GoalPilotTheme(
     skin: AppSkin = AppSkin.DEFAULT,
     material: AppMaterial = AppMaterial.DEFAULT,
+    background: AppBackground = AppBackground.DEFAULT,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
@@ -89,14 +104,18 @@ fun GoalPilotTheme(
     val accents = remember(skin, material, darkTheme) {
         accentsFor(skin, material, darkTheme)
     }
-    val materialSpec = remember(material, colorScheme, resolvedDark) {
-        materialSpecFor(material, colorScheme, resolvedDark)
+    // `background` joins the key list rather than being read inside: the spec is
+    // provided through a staticCompositionLocalOf, so a value recomputed on every
+    // composition would invalidate the entire app subtree each time.
+    val materialSpec = remember(material, background, colorScheme, resolvedDark) {
+        materialSpecFor(material, background, colorScheme, resolvedDark)
     }
     val barsOverride = remember { mutableStateOf<Boolean?>(null) }
 
     CompositionLocalProvider(
         LocalAppSkin provides skin,
         LocalAppMaterial provides material,
+        LocalAppBackground provides background,
         LocalGpMaterial provides materialSpec,
         LocalGpAccents provides accents,
         LocalSystemBarsOverride provides barsOverride,

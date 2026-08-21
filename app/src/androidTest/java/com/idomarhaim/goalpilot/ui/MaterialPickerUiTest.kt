@@ -22,6 +22,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
@@ -90,6 +91,10 @@ class MaterialPickerUiTest {
                     selected = AppMaterial.DEFAULT,
                     skin = AppSkin.DEFAULT,
                     brightnessIsDark = false,
+                    // #57 b made the ground a third axis. MATCH is the default
+                    // and reproduces the per-material grounds these tiles were
+                    // written against, so every assertion below is unchanged.
+                    background = AppBackground.DEFAULT,
                     onSelect = {},
                 )
             }
@@ -110,6 +115,7 @@ class MaterialPickerUiTest {
                     selected = selected,
                     skin = AppSkin.DEFAULT,
                     brightnessIsDark = false,
+                    background = AppBackground.DEFAULT,
                     onSelect = {
                         chosen = it
                         selected = it
@@ -139,6 +145,10 @@ class MaterialPickerUiTest {
                     selected = AppMaterial.DEFAULT,
                     skin = AppSkin.DEFAULT,
                     brightnessIsDark = false,
+                    // #57 b made the ground a third axis. MATCH is the default
+                    // and reproduces the per-material grounds these tiles were
+                    // written against, so every assertion below is unchanged.
+                    background = AppBackground.DEFAULT,
                     onSelect = {},
                 )
             }
@@ -247,6 +257,11 @@ class MaterialPickerUiTest {
                     onBrightness = { brightness = it },
                     material = material,
                     onMaterial = { material = it },
+                    // #57 b's third axis. Explicit rather than defaulted, for the
+                    // same reason the AI state is: a default lets a real screen
+                    // forget the control and render one that silently does nothing.
+                    background = AppBackground.DEFAULT,
+                    onBackground = {},
                     language = language,
                     onLanguage = { language = it },
                     region = region,

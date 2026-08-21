@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.ui.theme.colorSchemeFor
@@ -54,6 +55,9 @@ import com.idomarhaim.goalpilot.ui.theme.materialSpecFor
  * So this is the only file in the app allowed to call [materialSpecFor] with a
  * material that is not the current one. Everywhere else that would be the
  * `when (material)` the contract exists to forbid; here it *is* the control.
+ * (`feature/settings/BackgroundPicker.kt` calls it too, and does not break the
+ * rule: it varies the **ground** and holds the material at the current one, so
+ * it is the same exception one axis over rather than a second one.)
  *
  * ## And each tile paints itself in the current SKIN
  *
@@ -77,15 +81,27 @@ import com.idomarhaim.goalpilot.ui.theme.materialSpecFor
  * The other half of the same disclosure lives on the brightness control, which
  * strikes its segments through and captions why.
  *
+ * ## And on the currently chosen GROUND (`#57` b)
+ *
+ * The same argument a third time. `#57` b made the background its own axis, so
+ * a tile previewing every material on that material's *native* ground would
+ * show a combination the user has not chosen and cannot get to from here — and
+ * the tile that changes most under a foreign ground is the one whose whole
+ * definition depends on it (`AppBackground`'s note on neo). The honest preview
+ * is *this material, on the ground you are actually running*.
+ *
  * @param brightnessIsDark what the *brightness setting* resolved to. Each tile
  *   previews itself at this brightness unless its own lock overrides it — which
  *   is exactly the thing the badge is announcing.
+ * @param background the selected ground. [AppBackground.MATCH] resolves per
+ *   tile, which is what makes the default row show four *different* grounds.
  */
 @Composable
 fun MaterialPicker(
     selected: AppMaterial,
     skin: AppSkin,
     brightnessIsDark: Boolean,
+    background: AppBackground,
     onSelect: (AppMaterial) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,6 +119,7 @@ fun MaterialPicker(
                         material = material,
                         skin = skin,
                         brightnessIsDark = brightnessIsDark,
+                        background = background,
                         isSelected = material == selected,
                         onSelect = { onSelect(material) },
                         modifier = Modifier.weight(1f),
@@ -118,6 +135,7 @@ private fun MaterialTile(
     material: AppMaterial,
     skin: AppSkin,
     brightnessIsDark: Boolean,
+    background: AppBackground,
     isSelected: Boolean,
     onSelect: () -> Unit,
     modifier: Modifier = Modifier,
@@ -127,7 +145,7 @@ private fun MaterialTile(
     // the rest of the screen is light, which is the whole claim of the badge.
     val previewDark = material.resolveDark(brightnessIsDark)
     val previewScheme = colorSchemeFor(skin, material, brightnessIsDark)
-    val previewSpec = materialSpecFor(material, previewScheme, previewDark)
+    val previewSpec = materialSpecFor(material, background, previewScheme, previewDark)
 
     // The selection ring is the ONE thing drawn in the current material, not the
     // tile's: it says "this is the chosen one" to the screen around it, so it

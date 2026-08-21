@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
             val language by appPreferences.language.collectAsStateWithLifecycle()
             val brightness by appPreferences.brightness.collectAsStateWithLifecycle()
             val material by appPreferences.material.collectAsStateWithLifecycle()
+            val background by appPreferences.background.collectAsStateWithLifecycle()
 
             // Outside the theme, because it redirects every `stringResource`
             // below it and sets the layout direction the theme's own surfaces
@@ -69,12 +70,18 @@ class MainActivity : ComponentActivity() {
                 GoalPilotTheme(
                     skin = skin,
                     material = material,
+                    background = background,
                     darkTheme = brightness.isDark(isSystemInDarkTheme()),
                 ) {
                     // gpPage, not a flat colour: glass and liquid glass are
                     // translucent panels, and a translucent panel over a flat
-                    // ground is not translucent -- it is grey. Neo and dark neo
-                    // ask for nothing here and get the flat background.
+                    // ground is not translucent -- it is grey.
+                    //
+                    // WHICH ground is no longer the material's answer (#57 b):
+                    // `background` is a third axis the user sets, and MATCH --
+                    // the default -- is what reproduces the per-material
+                    // grounds this comment used to describe. Nothing else here
+                    // changes, because the answer arrives inside the spec.
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background,

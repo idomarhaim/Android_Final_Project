@@ -34,6 +34,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -131,6 +133,7 @@ fun SettingsScreen(
     val skin by viewModel.skin.collectAsStateWithLifecycle()
     val brightness by viewModel.brightness.collectAsStateWithLifecycle()
     val material by viewModel.material.collectAsStateWithLifecycle()
+    val background by viewModel.background.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val region by viewModel.region.collectAsStateWithLifecycle()
     val schedule by viewModel.daySchedule.collectAsStateWithLifecycle()
@@ -144,6 +147,8 @@ fun SettingsScreen(
         onBrightness = viewModel::setBrightness,
         material = material,
         onMaterial = viewModel::setMaterial,
+        background = background,
+        onBackground = viewModel::setBackground,
         language = language,
         onLanguage = viewModel::setLanguage,
         region = region,
@@ -179,6 +184,8 @@ fun SettingsContent(
     onBrightness: (AppBrightness) -> Unit,
     material: AppMaterial,
     onMaterial: (AppMaterial) -> Unit,
+    background: AppBackground,
+    onBackground: (AppBackground) -> Unit,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
     region: AppRegion,
@@ -204,8 +211,10 @@ fun SettingsContent(
     var editingTime by remember { mutableStateOf<TimeField?>(null) }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -229,6 +238,8 @@ fun SettingsContent(
             AppearanceCard(
                 material = material,
                 onMaterial = onMaterial,
+                background = background,
+                onBackground = onBackground,
                 brightness = brightness,
                 onBrightness = onBrightness,
                 skin = skin,
@@ -358,6 +369,8 @@ private fun ScopeLine() {
 private fun AppearanceCard(
     material: AppMaterial,
     onMaterial: (AppMaterial) -> Unit,
+    background: AppBackground,
+    onBackground: (AppBackground) -> Unit,
     brightness: AppBrightness,
     onBrightness: (AppBrightness) -> Unit,
     skin: AppSkin,
@@ -371,6 +384,7 @@ private fun AppearanceCard(
                 selected = material,
                 skin = skin,
                 brightnessIsDark = brightnessIsDark,
+                background = background,
                 onSelect = onMaterial,
                 modifier = Modifier.testTag(TAG_MATERIAL_PICKER),
             )
@@ -380,6 +394,31 @@ private fun AppearanceCard(
             ConsequenceLine(
                 text = materialConsequence(material),
                 modifier = Modifier.testTag(TAG_MATERIAL_CONSEQUENCE),
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // #57 b. Directly under Material and above Brightness, because it is
+            // the axis that COMBINES with the one above it -- Ido's own words
+            // were "combinations between the backgrounds and the blocks", and a
+            // combination read as one thing is what puts the two controls
+            // adjacent. It is the fourth control in a card that already had
+            // three, which is a real cost; the alternative shape (AiCard's
+            // summary row opening an editor) was rejected because a background
+            // is judged by LOOKING at it, and a control you must open to see is
+            // one that cannot be compared against the material tiles above it.
+            SettingLabel("Background")
+            BackgroundPicker(
+                selected = background,
+                material = material,
+                skin = skin,
+                brightnessIsDark = brightnessIsDark,
+                onSelect = onBackground,
+                modifier = Modifier.testTag(TAG_BACKGROUND_PICKER),
+            )
+            ConsequenceLine(
+                text = backgroundConsequence(background, material),
+                modifier = Modifier.testTag(TAG_BACKGROUND_CONSEQUENCE),
             )
 
             Spacer(Modifier.height(20.dp))
@@ -830,6 +869,8 @@ private sealed interface TimeField {
 const val TAG_SCOPE_LINE = "settings_scope_line"
 const val TAG_MATERIAL_PICKER = "settings_material_picker"
 const val TAG_MATERIAL_CONSEQUENCE = "settings_material_consequence"
+const val TAG_BACKGROUND_PICKER = "settings_background_picker"
+const val TAG_BACKGROUND_CONSEQUENCE = "settings_background_consequence"
 const val TAG_BRIGHTNESS_LOCK = "settings_brightness_lock"
 const val TAG_REGION_ROW = "settings_region_row"
 const val TAG_REGION_SHEET = "settings_region_sheet"

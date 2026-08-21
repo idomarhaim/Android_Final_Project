@@ -45,6 +45,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
@@ -118,8 +119,38 @@ fun AnalyticsScreen(
     }
 
     Scaffold(
+        // #57 b -- TRANSPARENT, and this is the fix for "the same backgrounds
+        // aren't there" rather than a tidy-up.
+        //
+        // `Modifier.gpPage` draws the ground, and it is called in exactly one
+        // place that matters: `MainActivity`, under `GoalPilotRoot`. Every screen
+        // then puts a `Scaffold` on top of it, and `Scaffold`'s containerColor
+        // defaults to `colorScheme.background` -- an OPAQUE fill over the whole
+        // window. So the ground was drawn and then painted over, on every screen,
+        // since the day `gpPage` was written: glass and liquid glass have been
+        // rendering translucent panels against a flat colour, which is the exact
+        // look `MaterialSpec.kt` says they are defined against ("a translucent
+        // panel over a flat ground is not translucent, it is grey").
+        //
+        // `Observed:` on the Settings screen, 2026-08-22 -- the same render pass
+        // frame before and after this one line, with and without the ground.
+        // `Inferred:` for the other ten screens, from the same mechanism: none of
+        // the twelve `Scaffold(` call sites in `app/src/main` passed a
+        // `containerColor` before this commit (checked mechanically, not by eye),
+        // so they all took the same opaque default. Not separately rendered --
+        // `MaterialRenderPass` photographs one screen.
+        //
+        // It survived a render pass because `MaterialRenderPass` did not apply
+        // `gpPage` either, so its frames agreed with the app -- two instruments
+        // wrong in the same direction. Both are fixed together.
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
+                // #57 b -- the ground has to run behind the bar too, or the
+                // Scaffold fix above just moves the seam up by one bar height.
+                // `DashboardScreen` already did this; the other ten did not,
+                // which is why it never looked like a rule.
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = { Text(stringResource(R.string.analytics_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

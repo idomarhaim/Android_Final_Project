@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.feature.settings
 import androidx.lifecycle.ViewModel
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -49,6 +50,10 @@ class SettingsViewModel @Inject constructor(
     val material: StateFlow<AppMaterial> = appPreferences.material
 
     fun setMaterial(material: AppMaterial) = appPreferences.setMaterial(material)
+
+    val background: StateFlow<AppBackground> = appPreferences.background
+
+    fun setBackground(background: AppBackground) = appPreferences.setBackground(background)
 
     val language: StateFlow<AppLanguage> = appPreferences.language
 

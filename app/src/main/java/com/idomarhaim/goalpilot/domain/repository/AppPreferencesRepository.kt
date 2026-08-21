@@ -1,5 +1,6 @@
 package com.idomarhaim.goalpilot.domain.repository
 
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -67,6 +68,30 @@ interface AppPreferencesRepository {
     val material: StateFlow<AppMaterial>
 
     fun setMaterial(material: AppMaterial)
+
+    /**
+     * The **ground** the app is drawn on, per spec §4.1's third axis — `#57` b,
+     * and the half of Ido's complaint that asked for *"combinations between the
+     * backgrounds and the blocks"*.
+     *
+     * A [StateFlow] beside [material] and for the same reason: the two are read
+     * together to build `GpMaterialSpec` before the first frame, so a cold flow
+     * here would render one frame on the wrong ground and then visibly repaint
+     * the whole window.
+     *
+     * **Stored unresolved.** [AppBackground.MATCH] is persisted as itself and
+     * resolved against the material at draw time, never flattened to the ground
+     * it currently means. Storing the resolved value would silently pin a user
+     * who never chose a ground to whichever one their material had when they
+     * last changed materials — and the next material change would then not move
+     * the page, which is the bug the default exists to avoid.
+     *
+     * Device-local like everything else here; §4.9's sign-out test puts every
+     * appearance axis in the left column.
+     */
+    val background: StateFlow<AppBackground>
+
+    fun setBackground(background: AppBackground)
 
     /**
      * Where the user is, for week start and date order — spec §5.1's **Region**,

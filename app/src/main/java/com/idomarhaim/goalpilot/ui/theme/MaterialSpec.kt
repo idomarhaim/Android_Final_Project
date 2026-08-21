@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.sqrt
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 
 /**
@@ -116,12 +118,21 @@ data class GpMaterialSpec(
     // ── shape and ground ───────────────────────────────────────────────────
     val corner: Dp,
     /**
-     * The page behind everything. `null` means *the scheme's flat background* —
-     * which is neo and dark neo, whose ground is flat by definition. Glass and
-     * liquid glass supply hues here, because a translucent panel over a flat
-     * ground is not translucent, it is grey.
+     * The page behind everything — **the third axis**, [AppBackground],
+     * resolved into something drawable.
+     *
+     * It used to be `List<Color>?`, a hue list owned by the material, with
+     * `null` meaning *flat*. `#57` b made the ground a **user choice**, so it
+     * is no longer a property of the material at all: [materialSpecFor] takes
+     * the selected [AppBackground] and puts the answer here.
+     *
+     * It stays **inside the spec** rather than being handed to screens
+     * separately, and that is the contract holding: `Modifier.gpPage` is the
+     * only reader, at its two call sites. A background a screen had to know
+     * about individually would re-open the draw-it-four-times cost — now
+     * draw-it-twelve-times.
      */
-    val backdrop: List<Color>?,
+    val backdrop: GpBackdrop,
 ) {
     /** Whether this material's panels let the page through — glass and liquid only. */
     val isTranslucent: Boolean get() = surface.alpha < 1f
@@ -162,23 +173,169 @@ data class GpGloss(
 )
 
 /**
- * The four answers, for [material] against an already-transformed [scheme].
+ * One radial light on the page, positioned and sized as a **fraction** of the
+ * page rather than in `dp`.
+ *
+ * Fractions and not pixels because the ground has to read the same on a phone,
+ * a foldable and an 86 dp picker tile — the prototype's `700px 460px at 8% -6%`
+ * is authored against one 392 px frame, and pasting those numbers would put the
+ * whole ground off-screen inside a tile. The proportions survive the port; the
+ * units do not.
+ */
+@Immutable
+data class GpGlow(
+    val hue: Color,
+    /** Centre, as a fraction of page width. May sit outside `0..1`. */
+    val x: Float,
+    /** Centre, as a fraction of page height. May sit outside `0..1`. */
+    val y: Float,
+    /** Radius at which the light reaches transparent, as a fraction of the page's min dimension. */
+    val radius: Float,
+)
+
+/**
+ * A ground — [AppBackground] resolved into a base wash plus its lights.
+ *
+ * ## What was lost in the port, said rather than hidden
+ *
+ * The prototype's grounds are **web primitives**: layered CSS
+ * `radial-gradient`s over a `linear-gradient`, under panels carrying
+ * `backdrop-filter: blur(22px) saturate(1.7)`. Three things did not survive,
+ * and each is a deliberate choice rather than an omission:
+ *
+ * 1. **No backdrop blur**, as [GpMaterialSpec]'s header already records —
+ *    Compose has no backdrop filter and `Modifier.blur` blurs a composable's
+ *    *own* content. Panels are translucent over this ground, not blurred over
+ *    it. The *reading* survives; the softness does not.
+ * 2. **The lights are circles, not ellipses.** CSS gives each radial an x and
+ *    a y radius (`700px 460px`); `DrawScope.drawCircle` takes one. Matching
+ *    would mean a scaled layer per light, six draws instead of three, for a
+ *    difference visible only where two lights overlap.
+ * 3. **The prototype's own hexes are not here at all**, and that is `#57` a's
+ *    finding one axis down: every hue is read off the [ColorScheme], so the
+ *    ground tracks the skin *and* the material's palette transform. Concretely
+ *    — under neo the lights are muted with everything else, and under dark neo
+ *    they collapse onto the accent ramp, so *"exactly one saturated gradient"*
+ *    survives a lit ground. Hard-coded `#4E6BFF` would have broken both.
+ *
+ * The one place that costs something real is [AppBackground.SPECTRUM]: liquid
+ * glass's ground has a **fourth, warm** light (`#FFB25C`) and the scheme has no
+ * warm role to take it from. Inventing one would be either a hard-coded hex
+ * (rejected above) or a hue rotation that puts a second saturated colour on
+ * dark neo's page and kills the one thing that material is. So the fourth light
+ * repeats `primary`, smaller and dimmer, and what distinguishes SPECTRUM from
+ * [AppBackground.GLOW] is **density — four tight lights against three wide
+ * ones — not an extra hue.**
+ */
+@Immutable
+data class GpBackdrop(
+    /**
+     * The diagonal wash under the lights. **Empty** means *the scheme's own
+     * flat background*, which is what [AppBackground.PLAIN] is.
+     */
+    val base: List<Color>,
+    /** The lights over [base]. **Empty** for a plain ground. */
+    val glows: List<GpGlow>,
+) {
+    /** Whether this ground is a single flat tone — `true` only for [AppBackground.PLAIN]. */
+    val isPlain: Boolean get() = base.isEmpty() && glows.isEmpty()
+
+    /**
+     * The colour this ground actually paints at `(x, y)`, both fractions of the
+     * page, over an opaque [background].
+     *
+     * ## Why this exists rather than the test reading pixels
+     *
+     * A lit ground is the one thing in the theme whose **contrast is a property
+     * of the page rather than of the component** — `GpGloss.tintFloor`'s doc
+     * already names that as a defect class, and `#57` b makes it reachable for
+     * two more materials by letting soft surfaces sit on a lit ground at all. So
+     * it has to be assertable, and `ThemePaletteTest` runs on the JVM where
+     * there is no canvas.
+     *
+     * ⚠️ **This is a MODEL of [gpPage], not [gpPage] itself, and the distinction
+     * is the honest limit of the guard built on it.** The arithmetic is exact
+     * — a two-stop `Brush.radialGradient` interpolates linearly from the hue to
+     * transparent across its radius, and a two-stop `Brush.linearGradient` does
+     * the same along its axis, which is what the two loops below compute — but
+     * it is *restated* here rather than shared, because [gpPage] hands brushes
+     * to Compose and never evaluates a colour itself. **What would make the two
+     * drift:** a third gradient stop, a non-linear tile mode, a blend mode other
+     * than the default `SrcOver`, or a change to the wash's start/end offsets.
+     * Any of those has to be made in both places, and the test would keep
+     * passing while the page changed. Same shape as `ThemePaletteTest`'s note
+     * that it runs the *real* `asInkOn` — this one cannot, and says so.
+     *
+     * @param aspect page height ÷ width, so the radial falloff is measured in
+     *   real distance rather than in fractions of two different axes.
+     */
+    fun colorAt(x: Float, y: Float, background: Color, aspect: Float): Color {
+        if (isPlain) return background
+        // 1 · the diagonal wash, which is opaque and covers everything.
+        var current = when {
+            base.isEmpty() -> background
+            base.size == 1 -> base.first()
+            else -> {
+                // gpPage runs the wash from (0.18w, 0) to (0.82w, h); project
+                // the sample onto that axis and clamp, exactly as a linear
+                // gradient's default `TileMode.Clamp` does.
+                val dx = 0.64f
+                val dy = aspect
+                val t = (((x - 0.18f) * dx + y * aspect * dy) / (dx * dx + dy * dy))
+                    .coerceIn(0f, 1f)
+                lerpColor(base.first(), base.last(), t)
+            }
+        }
+        // 2 · each light in turn, source-over, nearest-first is not a thing --
+        // gpPage draws them in list order and so does this.
+        glows.forEach { glow ->
+            val dx = x - glow.x
+            val dy = (y - glow.y) * aspect
+            val distance = sqrt(dx * dx + dy * dy)
+            if (distance >= glow.radius) return@forEach
+            val alpha = glow.hue.alpha * (1f - distance / glow.radius)
+            current = glow.hue.copy(alpha = alpha).over(current)
+        }
+        return current
+    }
+
+    companion object {
+        /** One flat tone: the ground neo and dark neo were designed for. */
+        val Plain = GpBackdrop(base = emptyList(), glows = emptyList())
+    }
+}
+
+/**
+ * The four answers, for [material] on [background] against an
+ * already-transformed [scheme].
  *
  * Reads the scheme rather than the raw palette, so the material's *surface*
- * decisions sit on top of its own *palette* transform — the two axes compose
- * here and nowhere else.
+ * decisions sit on top of its own *palette* transform — the axes compose here
+ * and nowhere else.
+ *
+ * [background] arrives resolved-or-not: [AppBackground.MATCH] is resolved
+ * against [material] inside, through [AppBackground.resolve], so no caller has
+ * to know the mapping.
  */
-fun materialSpecFor(material: AppMaterial, scheme: ColorScheme, dark: Boolean): GpMaterialSpec =
-    when (material) {
-        AppMaterial.GLASS -> glassSpec(scheme, dark)
-        AppMaterial.LIQUID_GLASS -> liquidSpec(scheme, dark)
-        AppMaterial.NEO -> neoSpec(scheme, dark)
-        AppMaterial.DARK_NEO -> darkNeoSpec(scheme)
+fun materialSpecFor(
+    material: AppMaterial,
+    background: AppBackground,
+    scheme: ColorScheme,
+    dark: Boolean,
+): GpMaterialSpec {
+    val ground = background.resolve(material)
+    val backdrop = backdropFor(ground, scheme, dark)
+    return when (material) {
+        AppMaterial.GLASS -> glassSpec(scheme, dark, backdrop)
+        AppMaterial.LIQUID_GLASS -> liquidSpec(scheme, dark, backdrop)
+        AppMaterial.NEO -> neoSpec(scheme, dark, backdrop)
+        AppMaterial.DARK_NEO -> darkNeoSpec(scheme, backdrop)
     }
+}
 
 // ─────────────────────────── 1 · glassmorphism ─────────────────────────────
 
-private fun glassSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
+private fun glassSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
     val panel = if (dark) Color.White.copy(alpha = 0.13f) else Color.White.copy(alpha = 0.62f)
     return GpMaterialSpec(
         material = AppMaterial.GLASS,
@@ -199,7 +356,34 @@ private fun glassSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
             specular = Color.Transparent,
             // A coloured bloom instead of a bevel — §4.1's arc description for
             // this material, and the only place its accent touches the panel.
-            tintFloor = scheme.primary.copy(alpha = if (dark) 0.06f else 0.03f),
+            //
+            // ⚠️ **The dark branch was a real WCAG failure and is fixed here
+            // (`#57` b).** `GpGloss` says what this layer is for: a dark-theme
+            // glass panel built from white layers alone can only LIGHTEN what
+            // is behind it, so wherever a background hue peaks the panel's own
+            // white type goes illegible — its contrast becomes a property of
+            // the wallpaper rather than of the component. `primary` at 0.06 is
+            // a bloom and not a floor, so it did not do that job: `Observed:`
+            // body text at **2.55–2.78:1** against `onSurface` at page point
+            // (0.91, 0.08) — under glow 2, inside a card, on the material's own
+            // native ground — across both skins, i.e. reachable today by
+            // picking Glass and dark. Measured 2026-08-22 by `GpBackdrop.colorAt`
+            // over a 41x27 grid of the text region.
+            //
+            // The fix keeps the bloom's HUE and gives it a floor's LIGHTNESS:
+            // `atLightness(0.05f)` is the accent as a near-black, so the accent
+            // still touches the panel and the panel now owns its own contrast
+            // on ANY ground -- which is what `#57` b needs, since the ground is
+            // a user choice from now on. 0.34 rather than the 0.28 that first
+            // clears 4.5: the model's aspect ratio and sample grid are
+            // approximations, so the threshold is cleared with margin (5.12)
+            // rather than sat on. The light branch is untouched -- it measures
+            // 10.3-16.0 and never needed a floor.
+            tintFloor = if (dark) {
+                scheme.primary.atLightness(0.05f).copy(alpha = 0.34f)
+            } else {
+                scheme.primary.copy(alpha = 0.03f)
+            },
         ),
         accent = scheme.primary,
         onAccent = scheme.onPrimary,
@@ -208,13 +392,13 @@ private fun glassSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
         edgeWidth = 1.dp,
         overlay = panel.over(scheme.background),
         corner = 26.dp,
-        backdrop = scheme.backdropHues(dark),
+        backdrop = backdrop,
     )
 }
 
 // ─────────────────────────── 2 · liquid glass ──────────────────────────────
 
-private fun liquidSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
+private fun liquidSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
     val panel = if (dark) Color.White.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.66f)
     return GpMaterialSpec(
         material = AppMaterial.LIQUID_GLASS,
@@ -234,7 +418,19 @@ private fun liquidSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
             topRim = Color.White.copy(alpha = if (dark) 0.92f else 1f),
             bottomRim = Color.White.copy(alpha = if (dark) 0.26f else 0.60f),
             specular = Color.White.copy(alpha = if (dark) 0.36f else 0.72f),
-            tintFloor = if (dark) Color(0xFF080A14).copy(alpha = 0.26f) else Color.Transparent,
+            // Liquid already had a real floor -- which is exactly why it
+            // measured 4.12-4.28 where glass measured 2.55-2.78, the two
+            // materials differing in nothing else that touches this. Two
+            // changes, both small (`#57` b): 0.26 -> 0.34, because 4.12 does
+            // not clear 4.5 either; and the fixed `#080A14` becomes the accent
+            // as a near-black, so the floor tracks the skin like every other
+            // colour in this file rather than being one hardcoded hex
+            // (`#57` a's finding, applied to the last place it had not reached).
+            tintFloor = if (dark) {
+                scheme.primary.atLightness(0.04f).copy(alpha = 0.34f)
+            } else {
+                Color.Transparent
+            },
         ),
         accent = scheme.primary,
         onAccent = scheme.onPrimary,
@@ -243,18 +439,50 @@ private fun liquidSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec {
         edgeWidth = 1.dp,
         overlay = panel.over(scheme.background),
         corner = 32.dp,
-        backdrop = scheme.backdropHues(dark),
+        backdrop = backdrop,
     )
 }
 
 // ───────────────────────────────── 3 · neo ─────────────────────────────────
 
-private fun neoSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec = GpMaterialSpec(
+private fun neoSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
+    // ── the definitional case, and it is the whole reason this parameter exists ──
+    //
+    // Neumorphism IS the surface being the same colour as what is behind it --
+    // that is what makes the shadow pair read as an extrusion rather than as a
+    // floating card. A lit ground has no single such colour, so on one, neo
+    // CANNOT be neo. `AppBackground` says this to the user in words; here is
+    // where the pixels answer for it.
+    //
+    // Two answers were available and only one is honest. Painting the opaque
+    // page colour anyway gives an opaque grey slab sitting on a gradient -- the
+    // shadow pair then reads as a drop shadow under a card, which is the exact
+    // look neumorphism is defined against. The prototype's answer, ported here,
+    // is a NEUTRAL PLATE: the page tone kept but made slightly translucent, so
+    // the ground reads through it and the pair still reads as depth. The card
+    // gains an EDGE it would not otherwise have. That is a real difference, not
+    // a rendering shortcut -- it is soft UI on a canvas, not neumorphism, and
+    // `AppBackground`'s doc says so before the user picks it.
+    //
+    // Alphas are the prototype's own (.76 dark / .80 light,
+    // `.st-neo.shared .card`), which is the one number in this file that WAS
+    // copyable from it: an alpha is a ratio, not a hue, so `#57` a's finding
+    // that the prototype's hexes could not be ported does not reach it.
+    val plate = when {
+        backdrop.isPlain -> scheme.surface
+        dark -> scheme.surface.copy(alpha = 0.76f)
+        else -> scheme.surface.copy(alpha = 0.80f)
+    }
+    return GpMaterialSpec(
     material = AppMaterial.NEO,
     // Opaque, and the SAME colour as the page: neo's whole claim is that the
-    // panel is not a different tone, it is the same tone extruded.
-    surface = scheme.surface,
-    surfaceEnd = scheme.surface,
+    // panel is not a different tone, it is the same tone extruded. On a lit
+    // ground that claim is unavailable and `plate` is translucent instead.
+    surface = plate,
+    surfaceEnd = plate,
+    // The groove stays OPAQUE even on a lit ground. A recess is a hole cut into
+    // the plate, and a hole you can see the wallpaper through is not a recess --
+    // it is a window, and the inset pair then reads as a frame around it.
     groove = scheme.surface,
     elevation = 0.dp,
     shadow = GpShadowPair(
@@ -274,17 +502,36 @@ private fun neoSpec(scheme: ColorScheme, dark: Boolean): GpMaterialSpec = GpMate
     edgeWidth = 1.dp,
     // C22: neo's surface IS the page colour, so an overlay that inherited it
     // would be transparent and the dimmed screen would read straight through.
+    // Built off `scheme.surface` and never off `plate`, which on a lit ground
+    // is translucent -- an overlay is the one token that may never be.
     overlay = scheme.surface.shiftedLightness(if (dark) 0.055f else -0.045f),
     corner = 22.dp,
-    backdrop = null,
-)
+    backdrop = backdrop,
+    )
+}
 
 // ─────────────────────────────── 4 · dark neo ──────────────────────────────
 
-private fun darkNeoSpec(scheme: ColorScheme): GpMaterialSpec = GpMaterialSpec(
+private fun darkNeoSpec(scheme: ColorScheme, backdrop: GpBackdrop): GpMaterialSpec {
+    // The same problem as neo, one shade darker: dark neo's shadows need a
+    // charcoal to sit on, and a lit ground is not charcoal. The prototype's
+    // answer is the same plate one shade down (`.st-darkneo.shared`, .88/.90),
+    // and it keeps the two-stop gradient rather than flattening it -- the
+    // gradient is what the very large radii are read against.
+    val top = if (backdrop.isPlain) {
+        scheme.surfaceContainerHighest
+    } else {
+        scheme.surfaceContainerHighest.copy(alpha = 0.88f)
+    }
+    val bottom = if (backdrop.isPlain) {
+        scheme.surfaceContainerLow
+    } else {
+        scheme.surfaceContainerLow.copy(alpha = 0.90f)
+    }
+    return GpMaterialSpec(
     material = AppMaterial.DARK_NEO,
-    surface = scheme.surfaceContainerHighest,
-    surfaceEnd = scheme.surfaceContainerLow,
+    surface = top,
+    surfaceEnd = bottom,
     groove = scheme.surfaceContainerLow,
     elevation = 0.dp,
     shadow = GpShadowPair(
@@ -307,10 +554,12 @@ private fun darkNeoSpec(scheme: ColorScheme): GpMaterialSpec = GpMaterialSpec(
     accentStops = listOf(scheme.inversePrimary, scheme.primary),
     edge = scheme.onSurface.copy(alpha = 0.22f),
     edgeWidth = 1.dp,
+    // Opaque by C22, and therefore off the scheme rather than off `top`.
     overlay = scheme.surfaceContainerHighest,
     corner = 28.dp,
-    backdrop = null,
-)
+    backdrop = backdrop,
+    )
+}
 
 // ───────────────────────────── draw modifiers ──────────────────────────────
 
@@ -349,31 +598,48 @@ fun Modifier.gpGroove(spec: GpMaterialSpec, shape: Shape): Modifier = this
     .border(spec.edgeWidth, spec.edge, shape)
 
 /**
- * The page the whole app sits on.
+ * The page the whole app sits on — the **only** reader of
+ * [GpMaterialSpec.backdrop], and one of exactly two call sites in the app
+ * (`MainActivity` and the pickers in `ui/components/MaterialPicker.kt`).
  *
- * Flat for neo and dark neo — their ground is flat by definition. For the two
- * translucent materials it is the skin's hues as soft radials, because a
- * translucent panel over a flat ground has nothing to be translucent *about*.
+ * Which ground gets drawn is [AppBackground]'s answer now, not the material's:
+ * a flat tone for [AppBackground.PLAIN], a diagonal wash carrying soft radial
+ * lights for the other two. [background] stays a parameter rather than being
+ * folded into the spec because it is the *scheme's* background — what a plain
+ * ground is made of, and what the wash is anchored to.
  */
 fun Modifier.gpPage(spec: GpMaterialSpec, background: Color): Modifier {
-    val hues = spec.backdrop ?: return this.background(background)
+    val backdrop = spec.backdrop
+    if (backdrop.isPlain) return this.background(background)
     return this
+        // Painted first and always, even under the wash: the wash's stops are
+        // derived from this colour but a gradient is not guaranteed opaque
+        // everywhere, and a page that is transparent anywhere shows the window.
         .background(background)
         .drawBehind {
-            val anchors = listOf(
-                Offset(size.width * 0.08f, -size.height * 0.06f),
-                Offset(size.width * 1.04f, size.height * 0.10f),
-                Offset(size.width * 0.44f, size.height * 1.06f),
-            )
-            hues.forEachIndexed { index, hue ->
+            if (backdrop.base.isNotEmpty()) {
+                drawRect(
+                    // 170deg in CSS, i.e. very nearly straight down with a lean
+                    // to the left -- the lean is what stops the wash reading as
+                    // a horizon line behind the radial lights.
+                    brush = Brush.linearGradient(
+                        colors = backdrop.base,
+                        start = Offset(size.width * 0.18f, 0f),
+                        end = Offset(size.width * 0.82f, size.height),
+                    ),
+                )
+            }
+            backdrop.glows.forEach { glow ->
+                val centre = Offset(size.width * glow.x, size.height * glow.y)
+                val radius = size.minDimension * glow.radius
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(hue, Color.Transparent),
-                        center = anchors[index % anchors.size],
-                        radius = size.minDimension * 1.15f,
+                        colors = listOf(glow.hue, Color.Transparent),
+                        center = centre,
+                        radius = radius,
                     ),
-                    radius = size.minDimension * 1.15f,
-                    center = anchors[index % anchors.size],
+                    radius = radius,
+                    center = centre,
                 )
             }
         }
@@ -469,19 +735,102 @@ internal fun Color.over(background: Color): Color = Color(
 private fun Color.shiftedLightness(delta: Float): Color =
     atLightness((hsl()[2] + delta).coerceIn(0f, 1f))
 
+// ─────────────────────────── the three grounds ─────────────────────────────
+
 /**
- * The three radial hues a translucent material's page is built from.
+ * [background] — already resolved past [AppBackground.MATCH] — as something
+ * drawable.
  *
- * Taken off the scheme rather than the raw skin, so the backdrop tracks the
- * palette transform like everything else — and kept low-alpha, because the page
- * has to stay a *ground*: it is the thing the panel is translucent about, not a
- * second subject.
+ * Every hue is taken off the [ColorScheme] rather than the raw skin, so a
+ * ground tracks the palette transform like everything else. That is what makes
+ * a lit ground survivable under the two materials that were never designed for
+ * one: under neo the lights arrive muted with the rest of the palette, and
+ * under dark neo they have already collapsed onto the accent ramp, so a lit
+ * page does not put a second saturated colour on the one material whose whole
+ * claim is that there is exactly one.
+ *
+ * Kept low-alpha for the same reason it always was: the page has to stay a
+ * **ground**. It is the thing a panel is translucent about, not a second
+ * subject.
+ *
+ * ## Where the anchors and radii come from
+ *
+ * The prototype, converted from its 392 px frame to fractions (see [GpGlow]).
+ * A CSS `radial-gradient(700px 460px at 8% -6%, C 0%, transparent 62%)` reaches
+ * transparent at `0.62 × 700 px = 434 px`, which on a 392 px-wide frame is
+ * `1.11` — so the radii below are `stop × px / 392`, rounded to two places, and
+ * the anchors are the percentages unchanged.
  */
-private fun ColorScheme.backdropHues(dark: Boolean): List<Color> {
-    val alpha = if (dark) 0.55f else 0.42f
-    return listOf(
-        primary.copy(alpha = alpha),
-        tertiary.copy(alpha = alpha),
-        secondary.copy(alpha = alpha),
+private fun backdropFor(
+    background: AppBackground,
+    scheme: ColorScheme,
+    dark: Boolean,
+): GpBackdrop {
+    if (background == AppBackground.PLAIN) return GpBackdrop.Plain
+    // One alpha for both schemes, and the dark branch used to be 0.55f.
+    //
+    // ⚠️ **The port took the prototype's HUE SELECTION but not its luminance,
+    // and in dark mode that doubled the ground's brightness.** The prototype's
+    // dark canvas is built from *saturated mid* hues -- `#4E6BFF`, `#00C8B4`,
+    // `#A65CF5`, relative luminance **0.194 / 0.446 / 0.224** -- while a dark
+    // Material 3 scheme's `primary`/`secondary`/`tertiary` are *pastels*, and
+    // this app's measure **0.564-0.572** on both skins. Same hues, roughly twice
+    // the light. At 0.55 that is not a ground any more; `backdropHues` (this
+    // function's ancestor) already said the page "has to stay a **ground**: it
+    // is the thing the panel is translucent about, not a second subject", and
+    // the number had drifted away from its own doc.
+    //
+    // 0.42 is where `onBackground` clears WCAG's 3:1 non-text floor on the
+    // worst lit page (**3.96**, against **2.94** at 0.55) with the panel floors
+    // above in place. It is deliberately NOT pushed to 4.5:1 -- doing so needs
+    // roughly 0.30, which is dimmer than the prototype's own hues and would be
+    // a taste change rather than a correction. Nothing in the app paints body
+    // text straight onto the page; `onBackground` reaches it only through
+    // Material 3's default content colour under `MainActivity`'s `Surface`,
+    // which carries section headings rather than paragraphs.
+    val alpha = 0.42f
+    // The diagonal wash the lights sit on. The prototype authors it as two
+    // hexes per scheme (`#131A34 -> #0C1120`); here it is the scheme's own
+    // background nudged in both directions, so it tracks the skin and cannot
+    // drift from the flat ground PLAIN draws.
+    val base = listOf(
+        scheme.background.shiftedLightness(if (dark) 0.02f else 0.012f),
+        scheme.background.shiftedLightness(if (dark) -0.03f else -0.022f),
     )
+    return when (background) {
+        // Glassmorphism's ground -- and the prototype's SHARED CANVAS, which is
+        // why this value is what `#57`'s "combinations" mostly means. Three
+        // wide lights: top-left, off the right edge, and one rising from below.
+        AppBackground.GLOW -> GpBackdrop(
+            base = base,
+            glows = listOf(
+                GpGlow(scheme.primary.copy(alpha = alpha), x = 0.08f, y = -0.06f, radius = 1.11f),
+                GpGlow(scheme.tertiary.copy(alpha = alpha), x = 1.04f, y = 0.08f, radius = 0.98f),
+                GpGlow(scheme.secondary.copy(alpha = alpha), x = 0.44f, y = 1.08f, radius = 1.20f),
+            ),
+        )
+
+        // Liquid glass's ground. Four lights instead of three and every one of
+        // them smaller, which is the whole difference -- see [GpBackdrop] for
+        // why the fourth is not the prototype's warm `#FFB25C`. It is dimmer
+        // (x0.8) as well as smaller so that repeating `primary` reads as a
+        // fill-light rather than as a second copy of the first one.
+        AppBackground.SPECTRUM -> GpBackdrop(
+            base = base,
+            glows = listOf(
+                GpGlow(scheme.primary.copy(alpha = alpha), x = 0.12f, y = 0.00f, radius = 0.89f),
+                GpGlow(scheme.tertiary.copy(alpha = alpha), x = 0.96f, y = 0.14f, radius = 0.80f),
+                GpGlow(scheme.secondary.copy(alpha = alpha), x = 0.40f, y = 1.04f, radius = 1.01f),
+                GpGlow(
+                    scheme.primary.copy(alpha = alpha * 0.8f),
+                    x = 0.88f,
+                    y = 0.74f,
+                    radius = 0.77f,
+                ),
+            ),
+        )
+
+        // Unreachable: PLAIN returned above, MATCH is resolved before the call.
+        AppBackground.PLAIN, AppBackground.MATCH -> GpBackdrop.Plain
+    }
 }

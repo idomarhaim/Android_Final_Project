@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.data.prefs
 
 import android.content.Context
 import androidx.core.content.edit
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
@@ -78,6 +79,16 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _material.value = material
     }
 
+    private val _background =
+        MutableStateFlow(AppBackground.fromId(prefs.getString(KEY_BACKGROUND, null)))
+    override val background: StateFlow<AppBackground> = _background.asStateFlow()
+
+    override fun setBackground(background: AppBackground) {
+        if (_background.value == background) return
+        prefs.edit { putString(KEY_BACKGROUND, background.id) }
+        _background.value = background
+    }
+
     private val _region = MutableStateFlow(AppRegion.fromId(prefs.getString(KEY_REGION, null)))
     override val region: StateFlow<AppRegion> = _region.asStateFlow()
 
@@ -137,6 +148,7 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         const val KEY_LANGUAGE = "app_language"
         const val KEY_BRIGHTNESS = "app_brightness"
         const val KEY_MATERIAL = "app_material"
+        const val KEY_BACKGROUND = "app_background"
         const val KEY_REGION = "app_region"
         const val KEY_WAKING_START = "day_waking_start_minutes"
         const val KEY_WAKING_END = "day_waking_end_minutes"

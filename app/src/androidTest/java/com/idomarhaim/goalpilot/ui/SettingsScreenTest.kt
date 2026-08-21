@@ -15,6 +15,7 @@ import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.AppSkin
@@ -90,6 +91,11 @@ class SettingsScreenTest {
                     onBrightness = { brightness = it },
                     material = material,
                     onMaterial = { material = it },
+                    // #57 b's third axis. Explicit rather than defaulted, for the
+                    // same reason the AI state is: a default lets a real screen
+                    // forget the control and render one that silently does nothing.
+                    background = AppBackground.DEFAULT,
+                    onBackground = {},
                     language = language,
                     onLanguage = { language = it },
                     region = region,

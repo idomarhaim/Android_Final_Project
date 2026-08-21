@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
@@ -13,6 +14,8 @@ import com.idomarhaim.goalpilot.ui.components.asInkOn
 import com.idomarhaim.goalpilot.ui.components.cardTonesOf
 import com.idomarhaim.goalpilot.ui.theme.accentsFor
 import com.idomarhaim.goalpilot.ui.theme.colorSchemeFor
+import com.idomarhaim.goalpilot.ui.theme.materialSpecFor
+import com.idomarhaim.goalpilot.ui.theme.over
 import org.junit.Test
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -43,6 +46,21 @@ import kotlin.math.sqrt
  * `AppMaterial.resolveDark` collapses dark neo's two cases into one, so the
  * matrix is **fourteen** distinct schemes rather than sixteen. That is §4.1's
  * *"the product is ragged, not rectangular"*, arriving in a test.
+ *
+ * ## `#57` b's third axis widens the GROUND cases, not the scheme cases
+ *
+ * The brief expected the matrix to multiply again. **It does not, and that is a
+ * fact about the code rather than a reprieve:** `colorSchemeFor(skin, material,
+ * dark)` does not take an `AppBackground`, so every scheme assertion above is
+ * unchanged at fourteen. What the background changes is what gets painted
+ * *behind* a panel, which no scheme role describes.
+ *
+ * So the widening is a **new pair of properties** rather than more of the old
+ * ones, and they live in their own section at the bottom of this file. Both
+ * exist because `#57` b lets a user put a lit ground under a material designed
+ * for a flat one, and vice versa — twelve reachable combinations after
+ * `resolveDark` collapses dark neo's pair, none of which any assertion here
+ * previously reached.
  */
 class ThemePaletteTest {
 
@@ -264,6 +282,218 @@ class ThemePaletteTest {
         }
     }
 
+    // ───────────── the ground, and what sits on it (`#57` b) ─────────────
+    //
+    // `#57` b made the background a user-chosen third axis, so a material can now
+    // be asked to render on a ground it was not designed for. Two properties
+    // follow, and neither is reachable from any scheme role: what a PANEL looks
+    // like once the ground shows through it, and what the PAGE itself does to
+    // text that inherits `onBackground`.
+    //
+    // Both run over the full 4 x 4 x 2 product -- every skin, every material,
+    // every background, both brightnesses -- rather than over `cases`, because
+    // the background is exactly the dimension `cases` does not have.
+
+    /**
+     * Every (skin, material, background, brightness) the picker can produce.
+     *
+     * Not deduplicated by `resolveDark` the way `cases` is: dark neo's two
+     * brightnesses genuinely collapse and asserting both costs microseconds,
+     * whereas leaving the loop rectangular is what makes it obvious that no
+     * combination was skipped.
+     */
+    private data class Ground(
+        val skin: AppSkin,
+        val material: AppMaterial,
+        val background: AppBackground,
+        val dark: Boolean,
+    ) {
+        val scheme: ColorScheme get() = colorSchemeFor(skin, material, dark)
+        val spec get() = materialSpecFor(material, background, scheme, material.resolveDark(dark))
+        override fun toString() =
+            skin.name + "/" + material.name + "/" + background.name +
+                "/" + (if (dark) "dark" else "light")
+    }
+
+    private val grounds = AppSkin.entries.flatMap { skin ->
+        AppMaterial.entries.flatMap { material ->
+            AppBackground.entries.flatMap { background ->
+                listOf(
+                    Ground(skin, material, background, dark = false),
+                    Ground(skin, material, background, dark = true),
+                )
+            }
+        }
+    }
+
+    /**
+     * A phone's page, sampled where TEXT actually is.
+     *
+     * The horizontal window is not `0f..1f`: the page carries 16 dp of padding
+     * and a card adds roughly 18 more, on a page about 392 dp wide, so nothing
+     * is ever drawn in the outer 9%. Sampling the full width would measure the
+     * page's brightest corner and report a failure at a pixel no glyph can
+     * occupy — which is the shape of a guard that gets weakened later because it
+     * cried wolf. `Observed:` it makes almost no difference here (2.66 at the
+     * corner against 2.78 inside the window, on the pre-fix values), and that is
+     * itself the useful finding: the hot spot is **inside** the card area.
+     */
+    private val textWindow = (0..40).flatMap { i ->
+        (0..26).map { j -> Pair(0.09f + 0.82f * i / 40f, j / 26f) }
+    }
+
+    @Test
+    fun `body text on a panel survives every ground the picker offers`() {
+        // THE assertion `#57` b owes. A translucent panel's contrast is a
+        // property of what is behind it unless the material puts a floor under
+        // it -- `GpGloss.tintFloor`'s own doc says so -- and until this session
+        // the background was fixed per material, so "what is behind it" was
+        // never a variable. It is one now, and a user can put the brightest
+        // ground under the most transparent material in two taps.
+        //
+        // `Observed:` this caught a REAL, PRE-EXISTING failure rather than a
+        // hypothetical one. Glass in dark mode measured **2.55-2.78:1** on its
+        // OWN native ground -- shipped, and reachable before this session
+        // existed -- because its `tintFloor` was `primary` at 0.06 alpha, a
+        // bloom rather than a floor. The two fixes are in `MaterialSpec.kt`:
+        // real floors for glass and liquid, and a ground alpha that had stopped
+        // being "low".
+        //
+        // Worst cell after both: **5.83** (BLOSSOM/LIQUID_GLASS/MATCH/dark).
+        grounds.forEach { ground ->
+            val scheme = ground.scheme
+            val spec = ground.spec
+            val floor = spec.gloss?.tintFloor
+            textWindow.forEach { (x, y) ->
+                val page = spec.backdrop.colorAt(x, y, scheme.background, PAGE_ASPECT)
+                // gpSurface paints the fill over the page, then drawGloss paints
+                // tintFloor over the fill. The rims and the specular streak are
+                // deliberately NOT modelled: both LIGHTEN, so including them
+                // could only flatter a dark-on-light case and cannot rescue a
+                // light-on-bright one, which is the failure this is looking for.
+                listOf(spec.surface, spec.surfaceEnd).forEach { fill ->
+                    var body = fill.over(page)
+                    if (floor != null && floor != Color.Transparent) body = floor.over(body)
+                    val ratio = contrastRatio(scheme.onSurface, body)
+                    assertWithMessage("$ground — onSurface on panel at ($x, $y)")
+                        .that(ratio).isAtLeast(4.5)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `the page itself stays a ground rather than becoming a subject`() {
+        // 3.0 and not 4.5, and the reason is a fact about the app rather than a
+        // concession: NOTHING paints body text straight onto the page.
+        // `colorScheme.onBackground` is read nowhere in `app/src/main` outside
+        // `Palettes.kt` itself -- it reaches the page only through Material 3's
+        // default content colour under `MainActivity`'s `Surface`, which carries
+        // section headings, not paragraphs. WCAG's 3:1 is the floor for exactly
+        // that: large text and non-text.
+        //
+        // What this therefore guards is not the legibility of prose but the
+        // ground staying a GROUND. `backdropFor`'s doc records the drift it
+        // caught: the port took the prototype's hue SELECTION and not its
+        // luminance, so the dark canvas ran at roughly twice the design's
+        // brightness (scheme pastels at 0.564-0.572 against the prototype's
+        // 0.194-0.446).
+        //
+        // Worst cell: **3.96** (BLOSSOM/NEO/SPECTRUM/dark) -- a soft material on
+        // the busiest lit ground, which is the combination `#57` b invented.
+        grounds.forEach { ground ->
+            val scheme = ground.scheme
+            val backdrop = ground.spec.backdrop
+            textWindow.forEach { (x, y) ->
+                val page = backdrop.colorAt(x, y, scheme.background, PAGE_ASPECT)
+                val ratio = contrastRatio(scheme.onBackground, page)
+                assertWithMessage("$ground — onBackground on page at ($x, $y)")
+                    .that(ratio).isAtLeast(3.0)
+            }
+        }
+    }
+
+    @Test
+    fun `MATCH reproduces exactly the ground each material used to own`() {
+        // The default has one job: an install that never opens Settings must
+        // render what it rendered before this axis existed. That is a claim
+        // about EQUALITY, not about contrast, so it is asserted as equality --
+        // and it is what fails if someone later "tidies" the material-to-ground
+        // mapping in `AppBackground.resolve`.
+        //
+        // Written against GLOW / SPECTRUM / PLAIN by name rather than against a
+        // second copy of the mapping, so the two cannot agree by both being
+        // wrong.
+        val expected = mapOf(
+            AppMaterial.GLASS to AppBackground.GLOW,
+            AppMaterial.LIQUID_GLASS to AppBackground.SPECTRUM,
+            AppMaterial.NEO to AppBackground.PLAIN,
+            AppMaterial.DARK_NEO to AppBackground.PLAIN,
+        )
+        AppSkin.entries.forEach { skin ->
+            listOf(false, true).forEach { dark ->
+                AppMaterial.entries.forEach { material ->
+                    val scheme = colorSchemeFor(skin, material, dark)
+                    val resolvedDark = material.resolveDark(dark)
+                    val match = materialSpecFor(
+                        material, AppBackground.MATCH, scheme, resolvedDark,
+                    )
+                    val native = materialSpecFor(
+                        material, expected.getValue(material), scheme, resolvedDark,
+                    )
+                    assertWithMessage(skin.name + "/" + material.name)
+                        .that(match).isEqualTo(native)
+                }
+            }
+        }
+    }
+
+    /**
+     * A lit ground under a soft material must not silently stay opaque.
+     *
+     * `AppBackground`'s doc tells the user that neumorphism *cannot* survive a
+     * lit ground and that the panel becomes a translucent plate instead. That
+     * sentence is a promise about pixels, and what would break it is an
+     * ordinary-looking edit to `neoSpec` — so it is asserted rather than
+     * trusted. The converse half is asserted too: on a plain ground the soft
+     * surface must go back to being **exactly** the page colour, which is what
+     * neumorphism *is*.
+     */
+    @Test
+    fun `soft materials go translucent on a lit ground and opaque on a plain one`() {
+        val soft = listOf(AppMaterial.NEO, AppMaterial.DARK_NEO)
+        AppSkin.entries.forEach { skin ->
+            soft.forEach { material ->
+                listOf(false, true).forEach { dark ->
+                    val scheme = colorSchemeFor(skin, material, dark)
+                    val resolvedDark = material.resolveDark(dark)
+                    AppBackground.entries.forEach { background ->
+                        val spec = materialSpecFor(material, background, scheme, resolvedDark)
+                        val lit = background.isLit(material)
+                        assertWithMessage(skin.name + "/" + material.name + "/" + background.name)
+                            .that(spec.isTranslucent).isEqualTo(lit)
+                        if (!lit && material == AppMaterial.NEO) {
+                            assertWithMessage("neo on a plain ground IS the page colour")
+                                .that(spec.surface).isEqualTo(scheme.surface)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `an overlay is opaque in every material on every ground`() {
+        // The same C22 rule the spec has always carried, now over the whole
+        // product: the plate treatment is what made it newly breakable, because
+        // an overlay built off a translucent `surface` would inherit the
+        // transparency and the dimmed screen would read straight through it.
+        grounds.forEach { ground ->
+            assertWithMessage("$ground — overlay opacity")
+                .that(ground.spec.overlay.alpha).isEqualTo(1f)
+        }
+    }
+
     private fun assertPair(
         case: Case,
         label: String,
@@ -317,6 +547,11 @@ class ThemePaletteTest {
         val aStar = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s
         val bStar = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
         return (Math.toDegrees(atan2(bStar, aStar)) + 360.0) % 360.0
+    }
+
+    private companion object {
+        /** A tall phone: 2.17 is roughly 19.5:9, which every device this ships to is near. */
+        const val PAGE_ASPECT = 2.17f
     }
 
     /** Weighted RGB distance — plain Euclidean over-rates blue differences. */

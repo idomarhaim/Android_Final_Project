@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppRegion
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
@@ -378,6 +379,11 @@ class HealthSyncTest {
         }
         override val material = MutableStateFlow(AppMaterial.DEFAULT)
         override fun setMaterial(material: AppMaterial) { this.material.value = material }
+        // #57 b. Unread by anything this suite exercises; here because the interface has it.
+        override val background = MutableStateFlow(AppBackground.DEFAULT)
+        override fun setBackground(background: AppBackground) {
+            this.background.value = background
+        }
         override val region = MutableStateFlow(AppRegion.DEFAULT)
         override fun setRegion(region: AppRegion) { this.region.value = region }
         override val daySchedule = MutableStateFlow(DaySchedule.DEFAULT)
