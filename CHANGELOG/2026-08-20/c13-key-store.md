@@ -526,3 +526,60 @@ screen with no account, the AI section renders, and Account reads *"Not signed i
 
 The local release APK was uninstalled from the emulator afterwards so nothing debug-signed under
 the release `applicationId` is left lying around.
+
+---
+
+# Round 6 — 2026-08-21: main's CI had been red for ten hours, and it was not `C13`
+
+Ido forwarded a *"Run failed: Instrumented tests (cloud emulator)"* email for `20f3b7e` — this
+session's version bump. **The commit is innocent and so is `C13`.** `gh run list` shows the same
+workflow failing on **every** push since **12:57**, across three sessions' commits
+(`8-notifications`, `c12-material-contract`, and both of this session's), with the last green run
+at **12:03**.
+
+## The cause: two tests, one ungranted permission
+
+172 of 174 pass. The two that do not are both `NotificationObservedFireTest`, failing at
+`requirePermission()` — `POST_NOTIFICATIONS` is a **runtime** permission from API 33, the CI
+emulator is API 34, and `.github/workflows/instrumented-tests.yml` has **no grant step**.
+
+The suite's own KDoc said why, and it is worth quoting because it is what made the break
+invisible to the session that caused it:
+
+> *The permission is granted from **outside**, by `adb shell pm grant` … it must be run through
+> `adb shell am instrument` rather than `connectedDebugAndroidTest`.*
+
+That is a **correct description of a human's run and a false one of CI's**, and nothing connects
+the two: the suite passes locally forever, because a developer's emulator was granted the
+permission once, months ago, and never revoked.
+
+## The fix, and why it is a grant rather than a skip
+
+An `@Before` that calls `uiAutomation.grantRuntimePermission`, guarded on `SDK_INT >= 33`.
+
+**`assumeTrue` was the tempting one-liner and it is the wrong fix.** A skip turns *"nothing was
+posted"* into a **green** run, which is the exact failure this suite was written to catch — its
+first line is *"a notification you cannot see is a notification you have not built"*. Granting
+keeps `requirePermission()`'s assertion untouched: the grant is real, and if it does not take, the
+suite still fails as loudly as it did this morning.
+
+The other half of the original note is left standing, because it is still true: a **human**
+collecting evidence should use `am instrument`, since `connectedDebugAndroidTest` uninstalls the
+app and takes the posted notifications with it. CI never reads the shade, so that concern does not
+reach it.
+
+## Verified by reproducing CI's condition, not by hoping
+
+A local run proves nothing here — this machine's emulator has had the permission since `#8` was
+built. So it was **revoked first**:
+
+```
+adb shell pm revoke com.idomarhaim.goalpilot.debug android.permission.POST_NOTIFICATIONS
+```
+
+`Observed:` with the permission revoked, `NotificationObservedFireTest` **6/6**, and the full
+suite **174/174**. Before the fix that same state is what CI failed on, four times.
+
+**Scope note:** this is `#8`'s file and `#8` is closed. It is touched anyway because a red `main`
+is nobody's ticket and everybody's problem, and because the change is confined to making the
+suite's own stated precondition true rather than altering what it asserts.

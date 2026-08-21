@@ -14,6 +14,7 @@ import com.idomarhaim.goalpilot.notifications.GoalPilotNotifier
 import com.idomarhaim.goalpilot.notifications.NotificationDeepLink
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -29,14 +30,46 @@ import org.junit.Test
  * evidence would be gone before anyone could read it (`AGENTS.md`,
  * `kb/dev/android-device-verification.md` §8).
  *
- * The permission is granted from **outside**, by `adb shell pm grant`, and asserted here rather
- * than assumed: an ungranted run must fail loudly, because the failure mode this exists to
- * prevent is a green suite that posted nothing.
+ * The permission is asserted here rather than assumed: an ungranted run must fail loudly, because
+ * the failure mode this exists to prevent is a green suite that posted nothing.
+ *
+ * ⚠️ **It is also granted here, from `@Before`, and that is a change to this file's original
+ * procedure — made 2026-08-21 by `c13-key-store`, not by `#8`.** The KDoc used to say the grant
+ * came from **outside**, by `adb shell pm grant`. That is true of a human running it, and it is
+ * **false of CI**: `.github/workflows/instrumented-tests.yml` has no grant step, so from the
+ * moment this suite landed (2026-08-20 12:57) **every push to `main` went red** — four runs,
+ * across three sessions' commits, none of which had anything to do with notifications.
+ *
+ * **Granting does not weaken the assertion, and that is why this is the fix rather than an
+ * `assumeTrue`.** `uiAutomation.grantRuntimePermission` performs the real grant; if it does not
+ * take, `requirePermission()` still fails exactly as loudly as before. What changes is only that
+ * the common CI case stops being a false red. A skip would have been the weakening move — it
+ * turns *"nothing was posted"* into a green run, which is the precise failure this suite exists
+ * to catch.
+ *
+ * The other half of the original note still stands and is untouched: for a **human** collecting
+ * evidence, run it through `adb shell am instrument`, because `connectedDebugAndroidTest`
+ * uninstalls the app at the end and takes the posted notifications with it. CI does not read the
+ * shade afterwards, so that concern does not reach it — the assertions here are what CI checks.
  */
 class NotificationObservedFireTest {
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private val notifier = GoalPilotNotifier(context)
+
+    /**
+     * POST_NOTIFICATIONS is a runtime permission from API 33, and nothing in CI grants it.
+     * Guarded on the API level because the permission does not exist below 33 and the grant
+     * would fail on a device where none was ever needed.
+     */
+    @Before
+    fun grantPostNotifications() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(
+            context.packageName,
+            android.Manifest.permission.POST_NOTIFICATIONS,
+        )
+    }
 
     @Test
     fun theFilingNotificationReallyAppearsInTheShade() {
