@@ -32,4 +32,25 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Control characters, added 2026-08-21. A heredoc collapses a doubled backslash before
+# the interpreter sees it, so an escape becomes BACKSPACE or BEL -- inside a regex, a
+# path, or a sentence. NINE instances across two sessions that day; the one that put the
+# gate in THIS repo was committed here by a sibling: "rules<BEL>gent-topology-...", the
+# escaped 'a' of the path eaten, in a changelog nobody would ever compile.
+# See C:\Dev\JARVIS\kb\dev\escapes-die-in-transit.md.
+#
+# -Staged like the checks above: a pre-commit gate answers "is THIS COMMIT sound", never
+# "is the working tree tidy" -- a sibling's uncommitted corruption must not freeze anyone
+# else's commit stream, and corruption can only enter history through a commit.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Assert-NoControlChars.ps1 -Staged
+if [ $? -ne 0 ]; then
+  echo "pre-commit BLOCKED: invisible control characters IN THIS COMMIT (listed above)."
+  echo "  cause: a heredoc ate an escape -- a doubled backslash collapsed into BACKSPACE or BEL."
+  echo "  fix:   build the character from a codepoint, never an escape: chr(92) + 'b'"
+  echo "  note:  READ what the byte replaced before deleting it -- a BEL standing in for"
+  echo "         an escaped 'a' inside a path leaves the path broken once the byte is stripped."
+  echo "         Whole-tree answer: powershell -File scripts\Assert-NoControlChars.ps1"
+  exit 1
+fi
+
 exit 0

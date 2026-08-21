@@ -153,7 +153,7 @@ by `git show 091334a -- SESSIONS.md`, where their row appears as an addition. Su
 not an option: staging only my own hunk would commit the **index** instead of the tree, which
 is the other half of the same hazard.
 
-`C:\Dev\JARVISulesgent-topology-and-model-routing.md` §5 prescribes exactly this —
+`C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md` §5 prescribes exactly this —
 *"you cannot subtract it, so name it in the commit message"* — and the message was already
 written and pushed, so the naming lands here instead. It is the durable half anyway: a commit
 message is read once, a changelog is what is still findable in a month.

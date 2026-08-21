@@ -14,8 +14,8 @@
 | 2 | **A provider abstraction**, proxy stays the default | ✅ `domain/model/AiCallEnvelope.kt` (wire), `data/security/DefaultAiProviderRepository.kt` (decisions), `functions/src/providers.ts` (four adapters) |
 | 3 | **A status line naming which provider answered** | ✅ `feature/settings/AiStatusLine.kt`, rendered permanently by `AiCard` |
 | 4 | The AI section's three controls in `SettingsScreen.kt` | ✅ `feature/settings/AiCard.kt` — provider · model · key |
-| — | **The Cloud Function deploy** | ⛔ **NOT done — outward action, Ido's to run.** See *What is owed* |
-| — | Test-call the key once on entry (#32 *Also settled*) | ⛔ **Not built** — out of #54's scope; see *What is owed* |
+| — | **The Cloud Function deploy** | ✅ **DONE in round 2** — Ido authorised it; deployed and verified end to end. *(This row read "NOT done" when r1 shipped; corrected here so the table does not contradict its own later rounds.)* |
+| — | Test-call the key once on entry (#32 *Also settled*) | ⛔ **Still not built** — outside `#54`'s scope list and exit criteria; needs a fifth callable. Unchanged through r7. |
 
 **All three exit directions are tested**, against the shipping repository rather than a fake:
 `no key → proxy` · `key set → provider` · `key deleted → proxy again`.
@@ -725,3 +725,66 @@ is recorded in the TODO meanwhile.
 shared working tree was entirely theirs, a pathspec commit takes the working tree, and it cannot be
 subtracted without committing the index instead. Named in that commit message, which is the repair
 the rule prescribes.
+
+---
+
+# Round 13 — 2026-08-21: the gate was in the wrong repo, and it has a blind spot
+
+Ido asked, a second time, whether the session was finished. The audit that followed found **two**
+things, and one of them was another session's.
+
+## The gate was JARVIS-only, and this is the repo that needed it
+
+A final sweep of **970 tracked text files across both repos** found exactly one corrupted file — and
+it was **here**, committed twenty minutes earlier by `55-scoring-model` r3. Ninth instance of the
+day, **first by a different session**, and it landed because the hook built that afternoon was
+installed in `C:\Dev\JARVIS` only.
+
+`scripts/Assert-NoControlChars.ps1` + the `pre-commit` line are now in this repo too.
+**Run `powershell -File scripts\Install-GitHooks.ps1` after pulling**, or you have the source and
+not the hook.
+
+## One path, two eaten escapes — and the gate can only see one of them
+
+The sibling's line was meant to read `C:\Dev\JARVIS\rules\agent-topology-and-model-routing.md`.
+It landed as:
+
+```
+C:\Dev\JARVIS
+ules<BEL>gent-topology-and-model-routing.md
+```
+
+**Both** halves were eaten: the `r`-escape of `rules` became a **newline**, and the `a`-escape of
+`agent` became a **BEL**. The gate found the BEL. **It could not have found the newline** — LF is a
+legal character in a Markdown file, and nothing can distinguish a wanted line break from an eaten
+escape.
+
+⚠️ **That is a real hole and it is now written into the script's own header**, because the three
+characters the gate must permit — TAB, LF, CR — are exactly what the three **commonest** escapes
+collapse into. So: *a pass here is not "the escapes survived"*. The half it does cover is the half
+that is otherwise invisible; the newline half at least shows up as a line breaking in a strange
+place, which is how this one was caught — by eye, while repairing the other half.
+
+## And it caught its own author, twice more
+
+Writing the hook comment *describing* the sibling's corruption collapsed the same escape a **tenth**
+time. Then **this very section** — the sentence stating what the path was *meant* to read —
+collapsed it an **eleventh**, and the gate refused that commit too.
+
+**The pattern is no longer anecdotal: text that quotes this bug reliably becomes the bug.** Four of
+the eleven instances today were in prose *about* the failure, written by someone who had just
+documented it. That is the strongest available argument that it is a property of the transport and
+not of attention — and the reason the fix had to be a gate rather than a warning. Both repairs used
+`chr(92)`; every path in this section is now built from codepoints rather than typed.
+
+## Two stale rows in this file's own summary table
+
+`r1`'s *What shipped* table still read **"The Cloud Function deploy — ⛔ NOT done"**, which `r2`
+made false and never went back to correct. A reader landing on the table saw a contradiction of the
+rounds below it. Fixed, with the correction stated rather than silently overwritten. The
+*test-call-on-entry* row was re-checked and **is** still accurate.
+
+**How it was found:** the pre-commit self-review's second question — *which of my own arguments does
+my output contradict* — applied to the whole file rather than to the round being written. Worth
+doing at the end of a long multi-round session, where the summary at the top was written by a much
+earlier version of the work.
