@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `c13-key-store` (r8) | open the presentation ticket Ido approved + write its briefs; record his raised-3D overturn | `TODO/TODO_OPTIONAL/Presentation.TODO.optional.md` · `sessions/<new briefs>` · `CHANGELOG/2026-08-20/c13-key-store.md` | _none_ | 2026-08-21 |
 | `55-scoring-model` | `#55` — §1.4 points inversion + §1.5 `goalEdges` (model migration) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt`, `TaskEstimate.kt`, `ProgressSummary.kt`, `DerivedProgress.kt`, `Goal.kt`, `data/firestore/TaskRepositoryImpl.kt`, `data/firestore/dto/Dtos.kt`, `data/firestore/dto/Mappers.kt`, `data/remote/RecommendationRepositoryImpl.kt`, `domain/usecase/SummaryUseCase.kt`, `feature/goals/GoalDetailViewModel.kt`, `functions/src/projection.ts`, `firestore.rules`, `app/src/test/**`, `app/src/androidTest/**`, `docs/PRODUCT_v0.3.md`, `sessions/55-scoring-model.md`, `CHANGELOG/2026-08-21/55-scoring-model.md` | Gradle daemon, adb, device | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
@@ -4097,6 +4096,29 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`c13-key-store` (r8) RELEASED 2026-08-21 — this commit.** No singletons held. **The session
+> is finished.**
+>
+> 🎫 **[#57](https://github.com/idomarhaim/Android_Final_Project/issues/57) opened with four briefs,
+> nothing built** — Ido's condition. `57a-category-palette` → `57b-backgrounds-and-combinations` →
+> `57c-chart-volume-and-raised`, with `57d-entrance-animation` independent. The prototype gap had
+> never been in a ticket, only in `TODO/TODO_OPTIONAL/Presentation.TODO.optional.md`.
+>
+> ⛔ **A RECORDED DECISION WAS OVERTURNED — read before touching raised-3D.** The TODO said raised is
+> *"a property of the two soft-UI materials … not a separate user setting"*. Ido, 2026-08-21:
+> *"neo, dark-neo both. 3d graphs is an option that can be implemented in addition on each of the
+> design types (not only the two mentioned)."* It is now an **axis on all four materials**. The old
+> argument is preserved verbatim in the TODO, the ticket and `57c` because it is a good one and will
+> be re-derived; it is overruled as a **product call**, and coherently so — the same answer asked for
+> background × block combinations. **Composable, not more presets.**
+>
+> ⚠️ **`docs/PRODUCT_v0.3.md` §4.1 is owed that overturn and did NOT get it** — `55-scoring-model`
+> holds the spec. Whoever holds it next should write it in; the TODO carries it meanwhile.
+>
+> 📦 **Delivery convention, Ido's choice:** a build reaches his phone **at the end of each session
+> that finishes something worth seeing** — bump `versionCode`, tag `v*`, and CI does the rest. Not
+> every push; he declined that as too noisy.
 
 > 🏁 **`c13-key-store` (r7) RELEASED 2026-08-21 — this commit.** Singletons released: release
 > keystore, repo secrets.
