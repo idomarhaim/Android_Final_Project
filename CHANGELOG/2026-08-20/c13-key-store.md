@@ -653,3 +653,75 @@ gains **§2.1b — what actually needs backing up**: exactly three files
 backup-repo question directly: **a private repo is fine and secrets go in encrypted**, since git
 never forgets a key committed in the clear — and *"this machine plus a GitHub secret"* is not two
 places, because losing the laptop is the scenario that already happened.
+
+---
+
+# Round 8 — 2026-08-21: Ido's three answers, and the one that overturned a decision
+
+He picked from the picker. Two answers were straightforward; the third was not on the menu.
+
+## 1 · Delivery — end of each session
+
+**No CI change.** A tag per finished session, which is how `v0.3.0` reached him. The alternative
+(distribute on every push, with `versionCode` derived in CI) was offered and declined: it is several
+notifications per session, most of them describing half-finished work. The convention is now *the
+session that finishes something worth seeing bumps and tags before it releases its row.*
+
+## 2 · The prototype gap — [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57), then briefs
+
+Opened, with four briefs written and **nothing built** — that was his condition. Ordered
+`57a → 57b → 57c`, with `57d` independent:
+
+| brief | why there |
+|---|---|
+| `57a-category-palette` | a **value** change; everything else renders those values |
+| `57b-backgrounds-and-combinations` | the new user-facing surface; carries one open product question |
+| `57c-chart-volume-and-raised` | largest; after `b` because both widen the same contrast matrix |
+| `57d-entrance-animation` | motion only, independent, can run any time |
+
+**One item in his report was wrong and it is said so plainly:** *"no dark blue neo."* `DARK_NEO`
+ships and is selectable. The likely truth is that it looks wrong rather than being absent, because
+the prototype's dark variant is built against `#0C1520` and the app never got that palette — which
+makes it `57a`'s, and `57a`'s exit asks for an explicit answer either way rather than a quiet fix.
+
+## 3 · ⛔ Raised-3D — the answer was not one of the four options
+
+The picker offered *both raised · both flat · two picker entries · decide when I see it*, all of
+them quantifying over **neo and dark neo**, because that is the set the TODO had already fixed:
+
+> *raised is a **property of the two soft-UI materials** … so it is **not** a separate user setting —
+> a global toggle that does nothing on half the materials is one control carrying two axes.*
+
+Ido answered outside the set:
+
+> *"neo, dark-neo both. 3d graphs is an option that can be implemented **in addition on each of the
+> design types** (not only the two mentioned)."*
+
+That is the **enumeration** tell exactly: the options quantified over a set *I* enumerated, from a
+document, and the answer added a member the set could not contain. The right response is not to
+re-ask but to take what he named — so raised-3D is now an **axis on all four materials**.
+
+**The overturned argument is preserved verbatim in three places** — the TODO item, `#57`'s body and
+`57c`'s opening — because it is a *good* argument (*height contradicts what glass is*) and somebody
+will re-derive it. It is overruled as a **product call**, and the reason it is coherent rather than
+arbitrary is in the same answer: he also asked for **background × block combinations**. He is asking
+for presentation to be **composable**, not for more preset bundles. `57c` states that raised glass
+looking wrong is a note for Ido, not a licence to restrict the picker.
+
+**It is not free.** The material picker gains an orthogonal axis, so `ThemePaletteTest` — already 14
+cells after `C12`, where widening it caught a real WCAG failure at 3.54:1 — multiplies again, on top
+of whatever `57b` adds. That cost is named in the ticket rather than discovered in the session.
+
+## Working beside a live sibling
+
+`55-scoring-model` started mid-round and claimed first. Its paths are the data model
+(`Task.kt`, `Dtos.kt`, `Mappers.kt`, `projection.ts`, `firestore.rules`, both test trees) plus
+`docs/PRODUCT_v0.3.md`. This round is docs, `sessions/` and the TODO — **disjoint**, and
+deliberately **did not** touch `docs/PRODUCT_v0.3.md` even though the raised-3D overturn arguably
+belongs in §4.1, because they hold it. That spec line is owed by whoever holds the spec next, and it
+is recorded in the TODO meanwhile.
+
+⚠️ The claim commit `af58262` **carries their row**: the uncommitted `SESSIONS.md` change in this
+shared working tree was entirely theirs, a pathspec commit takes the working tree, and it cannot be
+subtracted without committing the index instead. Named in that commit message, which is the repair
+the rule prescribes.

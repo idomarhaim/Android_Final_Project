@@ -1,5 +1,11 @@
 # 🎨 Presentation — open items after `C12`
 
+> 🎫 **Most of this file is now [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57), filed 2026-08-21.**
+> Ido installed `v0.3.0`, compared it against the prototypes, and asked why the backgrounds, the
+> chart volume, the palette and the entrance animation are missing. They were never in a ticket —
+> they were only ever in this file, which is why the honest answer to *"is it in another kickoff?"*
+> was **no**. Section 1's items are tracked there now; this file stays as the detail behind them.
+
 Area file for the visual language decided on
 [#31 · `C12`](https://github.com/idomarhaim/Android_Final_Project/issues/31) (map
 [#12](https://github.com/idomarhaim/Android_Final_Project/issues/12)), resolved 2026-08-12.
@@ -43,12 +49,24 @@ left here is a defect that gets built.
   `.ltr` class (`unicode-bidi:isolate`) for HTML; the `<tspan>` carrying the percentage inside
   SVG `<text>` does not use it. **Carries to Compose**, where the same string is built the same
   way — so this is a spec line for the build session, not only a prototype fix.
-- [ ] **Whether the raised-3D arc ships, and for which materials.** Ido asked for the toggle to
-  be **kept**, which keeps the instrument rather than settling the question. What is decided:
-  raised is a **property of the two soft-UI materials** (it is a no-op on glass and liquid,
-  where height would contradict what the material is), so it is *not* a separate user setting —
-  a global toggle that does nothing on half the materials is one control carrying two axes. What
-  is open: whether `neo` and `dark neo` ship raised, flat, or as two entries in the picker.
+- [x] ~~**Whether the raised-3D arc ships, and for which materials.**~~ **SETTLED 2026-08-21 by
+  Ido, and the earlier reasoning is OVERTURNED.** Now tracked on
+  [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57).
+
+  **His answer, asked directly:** *"neo, dark-neo both. 3d graphs is an option that can be
+  implemented in addition on each of the design types (not only the two mentioned)."* So: **neo and
+  dark neo ship raised**, and **raised-3D becomes a separate user-selectable axis available on all
+  four materials**, glass and liquid glass included.
+
+  ⛔ **What that overturns, kept verbatim because somebody will re-derive it:** this item used to
+  read *"raised is a **property of the two soft-UI materials** (it is a no-op on glass and liquid,
+  where height would contradict what the material is), so it is **not** a separate user setting — a
+  global toggle that does nothing on half the materials is one control carrying two axes."* That is
+  a real design argument and it is **overruled as a product call**: the user may combine them, and
+  the app does not get to refuse a combination on aesthetic grounds. It is also consistent with
+  Ido's separate request in the same answer for **background × block combinations** — he is asking
+  for presentation to be **composable**, not for more preset bundles. Do not re-collapse this into
+  a soft-UI property without reading that sentence.
   Twelve revisions of geometry are behind it (`CHANGELOG/2026-08-10/c12-charts-presentation.md`,
   revisions 9–12); it needs one look, not more building.
 - [ ] **`Relationships` truncates at 310 dp.** Stated at revision 12 as a **width fact, not a
