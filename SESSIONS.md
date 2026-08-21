@@ -4201,6 +4201,19 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+> 🏁 **`53-tag-sweep-brief` RELEASED 2026-08-21 — this commit.** No singletons; no code touched.
+>
+> 📝 **`#53`'s one held item now has a brief** — `sessions/53-tag-sweep.md`, `/kickoff 53-tag-sweep`.
+> `c12-material-contract` left `#53` open **deliberately** and named the item; nothing has owned it
+> since. `Observed:` 2026-08-21 — `rampTint` has **zero call sites** at HEAD, no `TODO/` entry
+> names it, and none of `#57`'s four briefs carries it (`57a` is the palette **values**, not the
+> words). That is the *decided-read-as-built* shape again, and this closes it for `#53`.
+>
+> 🚥 **Order: after `57a-category-palette`, before `57c-chart-volume-and-raised`.** `57a` changes
+> the values this renders; `57c` redraws the same charts, so running the sweep first means `57c`'s
+> render pass photographs the finished thing instead of one that has to be revisited.
+
+
 > 🏁 **`56-occurrence-model` RELEASED 2026-08-21 — this commit. Session finished.** Singletons
 > released: Gradle daemon, `adb`, AVD `Pixel_10_Pro_XL` (`emulator-5554`). **The signed-in Google
 > account on that emulator is INTACT** — `FIREBASE_USER` verified present before and after, via the
