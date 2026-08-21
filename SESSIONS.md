@@ -15,7 +15,38 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `58-instrumented-order` | `#58` — make the instrumented suite trustworthy as a gate (order/state dependence between tests) | `app/src/androidTest/**` · `.github/workflows/instrumented-tests.yml` · `docs/OPERATIONS.md` · `sessions/58-instrumented-order.md` · `CHANGELOG/2026-08-21/58-instrumented-order.md` | **Gradle daemon · adb · AVD** — held for repeated full-suite runs | 2026-08-21 |
+> 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
+> adb and the Gradle daemon are free.
+>
+> 📱 **NO AVD OR DEVICE SETTING WAS CHANGED — the `#57` briefs inherit nothing.** `#58` offered
+> disabling the emulator's soft keyboard (its option 3); I did not take it, precisely because it
+> persists and changes the ground under whoever runs next. Animation scales are still `1.0`, the
+> IME is still enabled, and all 13 green runs were done that way.
+>
+> ⚠️ **But the AVD's app data is gone, and the in-app sign-in with it.** Recovering a wedged
+> `Pixel_10_Pro_XL` needed a hard kill and a `-no-snapshot-load` cold boot; the system Google
+> account (`name.iddo@gmail.com`) survived, the `com.idomarhaim.goalpilot.debug` package and its
+> Firebase auth store did not. A `#57` render pass that needs a signed-in dashboard must ask Ido
+> to sign in again. Instrumented tests need no sign-in and are unaffected.
+>
+> 🔎 **The suite is now trustworthy as a gate.** `190/190` green ×3 consecutive on the final code,
+> 13 green full runs across the day, and `20/20` on a two-class harness targeting the exact
+> boundary that failed — against a measured control of **4 failures in 18 cycles**.
+>
+> ⚠️ **Two operational findings that are NOT `#58`, for whoever drives this AVD next.**
+> **(1)** Killing the `adb shell am instrument` **client** does not stop the run on the **device**;
+> a second run started on top of the first drove `emulator-5554` to `offline` while `adb devices`
+> still listed it. Force-stop the instrumentation first and launch runs with `nohup`.
+> **(2)** The AVD died **three times** under back-to-back instrumented runs, always in
+> `AppLocaleDialogTest`/`ComponentsLocaleTest` — the two suites that create the most dialog
+> windows. `Inferred:` host memory pressure (~4 GB free; `AGENTS.md` puts an AVD at 2–4 GB on top
+> of the daemon's 2.5 GB). `./gradlew --stop` before device work made runs stable. Not proven, and
+> worth its own ticket if it recurs.
+>
+> 📌 **The generalisable bit:** the ticket was written from two *runs*, and reading runs could
+> never have found this — the answer was in the **geometry of one frame**. A dump of the semantics
+> tree at the moment of failure showed the text landed, the button was live and enabled, and the
+> click simply never arrived.
 > 🏁 **`55-scoring-model` r5 RELEASED 2026-08-21 — this commit.** No singletons held. Final round.
 >
 > ⚠️ **`#58`'s option 4 was WRONG and is withdrawn.** I suggested `cancelAll()` in `@Before`,
