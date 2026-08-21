@@ -71,9 +71,19 @@ warns, because that mistake is only discoverable months later.
 
 ### 2.1a Recovering the signing key — read this before you need it
 
-**Status, 2026-08-21: `app/goalpilot-release.jks` does not exist on this machine.** It was created
-on 2026-08-06 on the laptop that has since been replaced, and it did not come across — there is no
-`.jks` anywhere under the user profile and no `RELEASE_*` in `local.properties`.
+**Status, 2026-08-21: RECOVERED. `app/goalpilot-release.jks` is back on this machine**, restored
+from the GitHub secret by the procedure below, with `local.properties` carrying its four
+credentials again. A local `assembleRelease` is once more signed with the **real** key —
+`apksigner verify --print-certs` reports `CN=Ido Marhaim, OU=GoalPilot` and SHA-1
+`e7d5534c…9062`, which is the certificate registered with Firebase and **not** the debug key.
+
+⚠️ **It is still in only two places** — this machine and the GitHub secret — **and both are one
+machine failure apart from where it was yesterday.** Copy it somewhere else; see §2.1b.
+
+*The history, kept because it is the reason this section exists:* the keystore was created on
+2026-08-06 on the laptop that has since been replaced. It was kept in the Dev folder but **outside
+the repository**, so git never carried it, and a search of `C:\Dev` and the whole user profile on
+2026-08-21 found no `.jks` at all. Nothing about that was noticed until a release was needed.
 
 **Nothing is broken.** The key survives as the repository secret `RELEASE_KEYSTORE_BASE64`, and
 [`release.yml`](../.github/workflows/release.yml) restores it on every tagged run — `v0.3.0` shipped
@@ -86,6 +96,8 @@ API. If this repository or that secret is lost, no future build can ever install
 already have. Every one of them would have to uninstall and lose their local data.
 
 #### Step 0 — look for the original first, it is free
+
+*(Done on 2026-08-21 and it came up empty; the steps below are what actually recovered it.)*
 
 If the old laptop, a disk image or any backup still has `app/goalpilot-release.jks`, that is the
 whole answer. Copy it to `app/` and append its four credentials to `local.properties`
@@ -124,6 +136,46 @@ rather than quietly producing a plaintext artifact.
 > ⚠️ **Do not "simplify" this by uploading the raw `.jks` as an artifact.** This repository is
 > public; artifacts on a public repo are downloadable by anyone, and that would hand your signing
 > identity to the internet.
+
+### 2.1b What actually needs backing up — three files, and that is all
+
+Everything else in this project is either in git or regenerable. The irreplaceable set is exactly
+what git **ignores**, minus the noise:
+
+| File | If you lose it | Recoverable? |
+|---|---|---|
+| `app/goalpilot-release.jks` | **no future build can ever install over an existing one** — every tester must uninstall and lose their data | only from the GitHub secret, by §2.1a |
+| `local.properties` | the four `RELEASE_*` credentials, `GOOGLE_WEB_CLIENT_ID`, `sdk.dir` | credentials from the same secrets; the rest is quick to rebuild |
+| `functions/.env` | `GROQ_API_KEY` — the free tier every AI call in the app runs on | yes, mint a new one at console.groq.com, but every deployed function is down until you do |
+
+`app/google-services.json` is **tracked**, so it needs nothing.
+
+#### Can you keep these in a separate backup repository?
+
+**Yes — with one hard condition: it must be private, and secrets go in encrypted.**
+
+The reason is not paranoia about the repo being private today. It is that **git never forgets**: a
+key committed in the clear is in the history permanently, and stays there through every later
+"remove the file" commit. If that repository is ever made public, forked, or reached with a leaked
+token, the key is out and the only fix is the one this whole section exists to avoid — a new key,
+and every tester uninstalling.
+
+So:
+
+- ✅ **A private repo holding the `.gpg` bundle** that §2.1a produces. That is AES256 under a
+  passphrase you keep elsewhere, so the repo never holds anything usable on its own. You get
+  versioning and an off-machine copy for free.
+- ✅ **A password manager attachment** (`.jks` plus the four credentials). Simplest, and the one
+  most likely to still be there in two years.
+- ✅ **OneDrive**, which is already installed on this machine — but put the **encrypted** bundle
+  there, not the bare `.jks`.
+- ❌ **A repo holding the raw `.jks` or a plaintext `local.properties`**, private or not.
+- ❌ **This repository**, under any circumstances. It is public, and `.gitignore` is the only thing
+  standing between the key and the internet.
+
+**Two copies in two different places is the target**, and they should fail independently: this
+machine plus a GitHub secret is *not* two places in any meaningful sense, because losing the laptop
+is exactly the scenario, and it is what happened.
 
 ### 2.2 Register the key's SHA-1 with Firebase
 

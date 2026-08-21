@@ -583,3 +583,73 @@ suite **174/174**. Before the fix that same state is what CI failed on, four tim
 **Scope note:** this is `#8`'s file and `#8` is closed. It is touched anyway because a red `main`
 is nobody's ticket and everybody's problem, and because the change is confined to making the
 suite's own stated precondition true rather than altering what it asserts.
+
+---
+
+# Round 7 — 2026-08-21: the signing key is recovered, verified and back on the machine
+
+Ido asked for §2.1a's procedure to be *run*, not just written. It was, end to end.
+
+## First, the search r2 got wrong
+
+r2 reported the keystore missing after `find /c/Users/namei …`. **That search never looked at
+`C:\Dev`**, which is precisely where Ido said he kept it — the conclusion was right and the
+evidence for it was not. Re-run across `C:\Dev` **and** the profile: no `.jks` anywhere but
+Android's own `debug.keystore` and some unrelated OneDrive logs. Ido's account is confirmed: it sat
+in the Dev folder **outside the repository**, so git never carried it.
+
+That is the second wrong-width search in this session, after `git diff HEAD`. Both passed.
+
+## The workflow had to grow before it was useful
+
+`backup-signing-key.yml` as written at r6 recovered **the `.jks` alone** — and that is not enough
+to use it. `signingConfigs` needs the store password, the alias and the key password, and those are
+three more unreadable secrets. Recovering the file without them leaves you exactly as stuck, one
+step later. It now bundles a ready-to-paste `local.properties` fragment beside the keystore, and
+**proves the stored password opens it** before shipping, so a corrupted secret is caught while a
+second copy still exists.
+
+## What was actually run
+
+| Step | Result |
+|---|---|
+| 48-char random passphrase, set as `BACKUP_PASSPHRASE` | never printed, never written to the repo |
+| `gh workflow run "Back up the signing key"` | success in **11 s** |
+| the job's own report | `Alias name: goalpilot` · valid to **2053** · SHA-1 `E7:D5:53:4C:…:90:62` |
+| downloaded, `gpg --decrypt`, untarred | keystore + credentials + `keytool -list -v` output |
+| installed to `app/goalpilot-release.jks` + `local.properties` | both confirmed **git-ignored** before anything else |
+| `assembleRelease`, then `apksigner verify --print-certs` | `CN=Ido Marhaim, OU=GoalPilot` · SHA-1 `e7d5534c…9062` |
+| `BACKUP_PASSPHRASE` deleted, scratchpad wiped | the passphrase was transient by design and never needed saving |
+
+**The APK check is the one that matters.** The whole failure mode here is that `build.gradle.kts`
+silently falls back to the **debug** key when credentials are absent, so a build that "succeeds"
+proves nothing. This machine's debug SHA-1 is `44:8D:0D:94:…:B3:EC`; the APK's is
+`e7d5534c…9062`, matching both the restored keystore and the certificate registered with Firebase.
+Three independent sources, one fingerprint.
+
+## Two `keytool` runs printed nothing, and the pipe hid why
+
+`keytool -list …| grep …` produced empty output twice and was very nearly read as *"the keystore is
+odd"*. It was `keytool: command not found` — `JAVA_HOME` was exported in **Windows form**
+(`C:/Program Files/…`) and prepended to a Git Bash `PATH`, which wants `/c/Program Files/…`.
+**`CLAUDE.md` documents this exact trap**, and it still cost two cycles because `grep` swallowed the
+error. Gradle was unaffected throughout — it reads `org.gradle.java.home` from `gradle.properties`
+— which is what made the failure look selective rather than environmental.
+
+## A false alarm, checked before it was raised
+
+This machine's debug key (`44:8D:…`) is not the one `OPERATIONS.md` records (`F1:D0:96:…`), which
+looked like *"fresh Google Sign-In is broken in debug builds here"*. It is not:
+`apps:android:sha:list` on the **debug** app id returns both `f1d0964d…` and `448d0d94…`. Someone
+already registered this machine's key. Recorded because the near-miss is the point — the
+observation was real and the conclusion would have been wrong.
+
+## What is now written down
+
+`docs/RELEASING.md` §2.1a is updated from *"missing"* to *"recovered"*, with the history kept, and
+gains **§2.1b — what actually needs backing up**: exactly three files
+(`app/goalpilot-release.jks`, `local.properties`, `functions/.env`), because
+`app/google-services.json` is tracked and everything else is regenerable. It answers Ido's
+backup-repo question directly: **a private repo is fine and secrets go in encrypted**, since git
+never forgets a key committed in the clear — and *"this machine plus a GitHub secret"* is not two
+places, because losing the laptop is the scenario that already happened.
