@@ -4209,9 +4209,13 @@ Currently unclaimed and ready:
 > names it, and none of `#57`'s four briefs carries it (`57a` is the palette **values**, not the
 > words). That is the *decided-read-as-built* shape again, and this closes it for `#53`.
 >
-> 🚥 **Order: after `57a-category-palette`, before `57c-chart-volume-and-raised`.** `57a` changes
-> the values this renders; `57c` redraws the same charts, so running the sweep first means `57c`'s
-> render pass photographs the finished thing instead of one that has to be revisited.
+> 🚥 **Order: LAST of the chart work — after `#57` a, b and c.** ⚠️ **Corrected within the hour**,
+> having first been filed as *before* `57c`: `57c` owns `DonutChart` · `SimpleBarChart` ·
+> `StackedColumnChart` · `ProgressRing`, which are **exactly the four files this sweep writes words
+> into**, and it rewrites them for volume and raised-3D. Sweeping first is work that rewrite must
+> then carry; sweeping after is a finishing pass over stable code. Nothing requires the other
+> order — §4.1's *words before collapse* rule is **internal to that brief**, since both halves ship
+> in it.
 
 
 > 🏁 **`56-occurrence-model` RELEASED 2026-08-21 — this commit. Session finished.** Singletons

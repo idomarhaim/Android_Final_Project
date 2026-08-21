@@ -9,7 +9,8 @@ owns:
   - app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt
   - app/src/test/java/com/idomarhaim/goalpilot/ui/
-  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/
+  # androidTest is `58-instrumented-order`'s in full while that session is live -- see the
+  # board note at the top of this brief before claiming it.
   - CHANGELOG/<today>/53-tag-sweep.md
   - sessions/53-tag-sweep.md
 created: 2026-08-21
@@ -24,6 +25,19 @@ bottom of its own comment. Read that comment first — it is the contract.
 
 > 🔒 **Singletons.** Needs the **Gradle daemon** and a **device**. This is a visual rule; it cannot
 > be signed off from source.
+
+> 🚥 **RUNS AFTER `57c-chart-volume-and-raised`, and after all of `#57` a–c.** Corrected
+> 2026-08-21, having first been filed as *before* `57c`. The reason is file churn, and it is
+> decisive: `57c` owns `DonutChart.kt`, `SimpleBarChart.kt`, `StackedColumnChart.kt` and
+> `ProgressRing.kt` — **exactly the four files this sweep writes words into** — and it rewrites
+> them for volume and raised-3D. A label sweep before that rewrite is work the rewrite then has to
+> carry; after it, this is a finishing pass over stable code. There is no correctness argument the
+> other way: the *words before collapse* ordering §4.1 requires is **internal to this brief**,
+> since both halves ship here.
+>
+> ⛔ **`58-instrumented-order` owns `app/src/androidTest/**` in full while it is live.** Check the
+> board before your first write. If it is still active, either wait or drop the instrumented file
+> from `owns:` and take the *Seen* half through `am instrument` on the existing suite.
 
 ## Read first
 
@@ -73,7 +87,9 @@ that is a finding about the design, not a licence to fall back on a legend.
 ## Carries over
 
 - **`57a-category-palette` changes the values this renders**, including the dark variant built
-  against `#0C1520`. Run **after** it (see ordering below) or every frame here is of the old set.
+  against `#0C1520`. Run after it, or every frame here is of the old set.
+- **`57c-chart-volume-and-raised` rewrites the four chart composables this writes into.** Run after
+  it too — see the ordering note at the top.
 - **`c12-material-contract` widened `ThemePaletteTest` from 4 schemes to 14 cells and it caught a
   real WCAG failure at 3.54:1 on its first run.** Expect it to have an opinion about anything you
   change here.
