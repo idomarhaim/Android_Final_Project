@@ -181,3 +181,52 @@ which the brief's `owns:` listed. Nothing in the palette change needed them; the
 seam that adapts a stored hex for a dark surface is `ColorExt.kt`, which the brief
 did not list. `owns:` was corrected before claiming (`4a8c512`), along with
 `domain/model/GoalCategory.kt`, a path that does not exist.
+
+---
+
+## ⚠️ Correction, 2026-08-22 — the dark-neo section above is WRONG, and this replaces it
+
+**The section titled *"No dark blue neo — confirmed, and this brief does not fix it"* named a
+defect that does not exist. It is retracted.** Left standing above rather than deleted, because
+this file is a record; read this section instead of that one.
+
+**What was right and stays right — the measurements.** Dark neo's ground *is*
+`#1B1D20` under Aurora and `#201B1C` under Blossom, near-neutral charcoal, because
+`MaterialPalettes.ramped()` rebuilds it at `RAMP_GROUND_SATURATION = 0.08f` while Aurora's own
+dark surface `#0C1520` carries a saturation of 0.45. Every number in that section is correct.
+
+**What was wrong — calling it a defect.** `docs/PRODUCT_v0.3.md` §4.1's material table, line 1181,
+specifies dark neo as:
+
+> **a deep shadow pair + one saturated gradient** · **charcoal groove**, softly extruded arc, one
+> cyan→blue accent
+
+**Charcoal is the design of record.** The saturation clamp is that specification being
+implemented, not a bug in it. And the cyan→blue accent it prescribes is present and working —
+visible in the *already committed* render
+[`docs/render-passes/2026-08-20-c12-material-contract/aurora-darkneo-dark.png`](../../docs/render-passes/2026-08-20-c12-material-contract/aurora-darkneo-dark.png):
+the selected tile's ring, its check, the accent bar and the "Aurora" label are all cyan-blue, and
+the tile's own subtitle reads **"Charcoal, with one bright accent."**
+
+**How the error was made, since that is the transferable part.** I measured the *implementation*
+and stopped. I never opened the design of record, and I never looked at the render pass that had
+been sitting in this repo since 2026-08-20 showing the material working as specified — the two
+artefacts that would each have refuted it in under a minute. A measurement that explains an
+observation is not the same as a defect, and the step that tells them apart is *check what the
+thing was specified to do* — which is exactly the check my own brief's flow prescribes and I
+skipped, having found a satisfying-looking cause.
+
+**The likelier reading of Ido's report, and it is actionable.** §4.1's names for the materials are
+*Glassmorphism · Liquid glass · Neo · Dark neo*. The picker's labels are **Glass · Liquid glass ·
+Soft · Soft dark** (`components_material_neo`, `components_material_darkneo`). The word "neo"
+appears nowhere in the UI, so a report phrased *"no dark blue neo"* cannot be matched to a control
+by name — by Ido, or by the next session trying to reproduce it. Filed as a comment on
+[`#53`](https://github.com/idomarhaim/Android_Final_Project/issues/53), which owns the material
+contract and the picker, rather than as a new ticket: it is a gap in that ticket's own deliverable,
+not new work in a new area.
+
+**Still genuinely unresolved:** whether *"no dark blue neo"* meant the name or the charcoal ground.
+Only Ido can say, and no ticket can specify it until he does.
+
+**Unchanged by this correction:** everything about the palette. `#57` a touched nothing in
+`MaterialPalettes.kt`, and no test, value or frame above depends on the retracted claim.

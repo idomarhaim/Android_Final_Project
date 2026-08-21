@@ -24,9 +24,15 @@ result: |
   ten -- so its OKLCH hue and chroma ported and lightness moved down. A fill/ink split
   (String.toGoalInk) was added because that is what made a ten-colour harmonised set
   possible at all.
-  NOT fixed, and answered as the brief asked: "no dark blue neo" is a DIFFERENT defect
-  -- MaterialPalettes.ramped() clamps the ground to saturation 0.08 against the skin's
-  own 0.45, so dark neo renders neutral charcoal. It has no owner yet.
+  Answered as the brief asked, then CORRECTED 2026-08-22: "no dark blue neo" is NOT a
+  defect. ramped() does clamp the ground to saturation 0.08 against the skin's own 0.45,
+  and dark neo does render charcoal -- but PRODUCT_v0.3.md 4.1 line 1181 SPECIFIES
+  "charcoal groove ... one cyan-to-blue accent", so that is the design of record being
+  implemented, and the blue accent works (see the c12 render pass, committed 2026-08-20).
+  The first answer measured the implementation without reading the spec or the render
+  that was already in the repo. The real finding -- 4.1 says "Dark neo" while the picker
+  says "Soft dark", so the report cannot be matched to a control by name -- is filed on
+  #53. Whether the report meant the name or the ground is still Ido's to say.
   Tests: JVM 712/712; instrumented render pass 2/2, 16 frames.
 ---
 

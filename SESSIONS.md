@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57a-category-palette` | correcting a false claim about dark neo, and filing the real finding on `#53` | `CHANGELOG/2026-08-21/57a-category-palette.md` · `SESSIONS.md` · `sessions/done/57a-category-palette.md` | none | 2026-08-22 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >
@@ -4241,6 +4240,33 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> ⚠️ **`57a-category-palette` CORRECTION 2026-08-22 — this commit.** The release note below says
+> *"no dark blue neo is CONFIRMED"* and names `RAMP_GROUND_SATURATION = 0.08f` as its cause,
+> **ending in "it needs an owner — `b`, `c`, or its own ticket."** That is retracted: it is not a
+> defect and it needs no owner.
+>
+> `docs/PRODUCT_v0.3.md` §4.1 line 1181 specifies dark neo as **"charcoal groove … one cyan→blue
+> accent"**. Charcoal is the **design of record**, the clamp implements it, and the blue accent is
+> present and working — see `docs/render-passes/2026-08-20-c12-material-contract/aurora-darkneo-dark.png`,
+> committed here since 2026-08-20, whose own tile subtitle reads *"Charcoal, with one bright
+> accent."* The measurements in that note are all correct; the word **defect** was not.
+>
+> 📌 **The generalisable bit, and it is about me rather than the code.** I measured the
+> implementation, found a number that explained the observation, and filed it — without opening
+> the **design of record** or the **render pass already in this repo**, either of which refutes it
+> in under a minute. *A measurement that explains an observation is not a defect*; what separates
+> them is one question — **what was this specified to do?** — and a satisfying cause is exactly
+> when it stops getting asked.
+>
+> 🎫 **The real finding went to `#53`, not to a new ticket.** §4.1 calls the materials *Neo* and
+> *Dark neo*; the picker says **"Soft"** and **"Soft dark"**, and the word "neo" appears nowhere in
+> the UI. So a report phrased *"no dark blue neo"* cannot be matched to a control by name. That is
+> a gap in `#53`'s own deliverable (it owns `AppMaterial` and the picker, and is still open), not
+> new work in a new area.
+>
+> ❓ **Still open, and only Ido can close it:** whether the report meant the **name** or the
+> **charcoal ground**.
 
 > 🏁 **`57a-category-palette` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD, adb
 > and the Gradle daemon are free. `#57` a shipped in `2c44b42`.
