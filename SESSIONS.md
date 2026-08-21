@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r7) | recover the signing key out of GitHub secrets and restore it locally | `.github/workflows/backup-signing-key.yml` · `docs/RELEASING.md` · `local.properties` (untracked) · `CHANGELOG/2026-08-20/c13-key-store.md` | **release keystore · repo secrets** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
