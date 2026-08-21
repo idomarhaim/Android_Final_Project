@@ -175,7 +175,9 @@ class AlreadyDoneUiTest {
                     suggestedMinutes = null,
                     onSuggestEstimate = { difficulty = null },
                     onSuggestionApplied = { difficulty = null },
-                    onAdd = { t, _: Difficulty, _, _: DurationSource, done -> addedDone += t to done },
+                    // `#56` added the sixth parameter, the occurrence. This suite is about
+                    // `#7`'s already-done flag, so it ignores it; `WhenPickerUiTest` owns it.
+                    onAdd = { t, _: Difficulty, _, _: DurationSource, done, _ -> addedDone += t to done },
                 )
             }
         }

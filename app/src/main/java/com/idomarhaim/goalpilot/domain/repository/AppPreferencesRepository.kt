@@ -111,4 +111,35 @@ interface AppPreferencesRepository {
     fun healthLastSyncAt(uid: String): Long
 
     fun setHealthLastSyncAt(uid: String, epochMillis: Long)
+
+    /**
+     * When §2.5's **daily miss review** was last put in front of the user, or `null` if it
+     * never has been (`#56`).
+     *
+     * ### This is the one thing about the review that cannot be derived
+     *
+     * §2.5: *"Misses meet Ido **once**, in a daily review on app open."* Everything else about
+     * a miss is a function of its occurrence and the clock (§2.3) — but *whether he has
+     * already seen it* is a fact about what happened on a screen, and no amount of arithmetic
+     * over the tasks can recover it. So it is stored, and it is the only stored thing this
+     * feature has.
+     *
+     * ### A moment, not a date, and the two jobs it does
+     *
+     * `DailyMissReview` reads it twice: as a **calendar day** to decide whether today's review
+     * is due at all, and as a **boundary** to leave out misses that closed before the last
+     * one. A stored date could do the first and not the second — two reviews on the same day
+     * would each show everything again.
+     *
+     * ### Device-local, and per-install rather than per-account
+     *
+     * Unlike [healthLastSyncAt], which is keyed by uid because it gates a *network sync* whose
+     * cost belongs to one account, this gates a *screen*. The misses it shows are recomputed
+     * from whoever is signed in, so the worst a shared stamp can do is defer one review by a
+     * day on the same day a second account signs in on the same phone — against which a
+     * per-uid key would be a second thing to migrate for a case this app has never had.
+     */
+    fun missReviewLastShownAt(): Long
+
+    fun setMissReviewLastShownAt(epochMillis: Long)
 }

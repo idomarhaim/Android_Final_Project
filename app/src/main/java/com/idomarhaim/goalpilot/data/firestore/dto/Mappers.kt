@@ -1,11 +1,15 @@
 package com.idomarhaim.goalpilot.data.firestore.dto
 
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
+import com.idomarhaim.goalpilot.domain.model.AllDay
+import com.idomarhaim.goalpilot.domain.model.Block
+import com.idomarhaim.goalpilot.domain.model.BlockPlacement
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
+import com.idomarhaim.goalpilot.domain.model.Deadline
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
@@ -16,14 +20,19 @@ import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.Occurrence
+import com.idomarhaim.goalpilot.domain.model.OccurrenceRung
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
+import com.idomarhaim.goalpilot.domain.model.Span
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 // ── Goal ───────────────────────────────────────────────────────────
 
@@ -208,6 +217,80 @@ private fun TaskDto.legacyCompletion(): CompletionFact? {
     )
 }
 
+/**
+ * §2.2's occurrence, from the four wire fields — or `null`, which is what **every task written
+ * before `#56`** reads as and is the honest answer for a task nobody gave a *when* (`#56`).
+ *
+ * ### Nothing here guesses, and each `return null` is the same decision
+ *
+ * A rung this build does not recognise, a start that will not parse, a `BLOCK` or `SPAN` with
+ * no end — all read as *no occurrence*. The alternative in every case is to invent a rung, and
+ * §2.2 discriminates rungs by **what a miss means**, so an invented one puts a task into a
+ * failure state nobody chose. Half a window is not a window.
+ *
+ * None of those states is reachable from this app: [Task.toDto] writes a rung with its start
+ * always, and an end exactly for the two rungs that have one. They are here because the
+ * document is public to any future writer, and because a `DateTimeParseException` between a
+ * snapshot and a frame would take down the task list over one bad string.
+ *
+ * ### Local text, parsed as local text
+ *
+ * [TaskDto.occurrenceStart] carries `2026-08-22` or `2026-08-22T06:00` and never an instant —
+ * see that field for why a *day* stored as millis moves between time zones. `LocalDate.parse`
+ * and `LocalDateTime.parse` read exactly the ISO-8601 forms `toDto` writes.
+ */
+private fun TaskDto.occurrence(): Occurrence? {
+    val start = occurrenceStart?.takeIf { it.isNotBlank() } ?: return null
+    return when (OccurrenceRung.fromName(occurrenceRung)) {
+        null -> null
+        OccurrenceRung.ALL_DAY -> parseLocalDate(start)?.let { AllDay(it) }
+        OccurrenceRung.DEADLINE -> parseLocalDateTime(start)?.let { Deadline(it) }
+        OccurrenceRung.BLOCK -> {
+            val from = parseLocalDateTime(start) ?: return null
+            val to = parseLocalDateTime(occurrenceEnd) ?: return null
+            Block(start = from, end = to, placement = BlockPlacement.fromName(occurrencePlacement))
+        }
+        OccurrenceRung.SPAN -> {
+            val from = parseLocalDate(start) ?: return null
+            val to = parseLocalDate(occurrenceEnd) ?: return null
+            Span(from = from, to = to)
+        }
+    }
+}
+
+/**
+ * What [TaskDto.occurrenceStart] holds for this occurrence — a **date** for the two rungs that
+ * are about days, a **local date-time** for the two that are about instants.
+ *
+ * `LocalDate.toString()` and `LocalDateTime.toString()` are ISO-8601 by contract, which is
+ * exactly what [parseLocalDate] and [parseLocalDateTime] read back, so the round trip is the
+ * platform's rather than a format string kept in step in two places.
+ */
+private fun wireStart(occurrence: Occurrence): String = when (occurrence) {
+    is AllDay -> occurrence.date.toString()
+    is Deadline -> occurrence.at.toString()
+    is Block -> occurrence.start.toString()
+    is Span -> occurrence.from.toString()
+}
+
+/**
+ * What [TaskDto.occurrenceEnd] holds — `null` for [AllDay] and [Deadline], whose ends are
+ * implied by their starts and would be a second stored value with nothing to keep it true.
+ */
+private fun wireEnd(occurrence: Occurrence): String? = when (occurrence) {
+    is AllDay, is Deadline -> null
+    is Block -> occurrence.end.toString()
+    is Span -> occurrence.to.toString()
+}
+
+/** ISO-8601 `2026-08-22`, or `null` for anything else. Never throws — see [occurrence]. */
+private fun parseLocalDate(text: String?): LocalDate? =
+    text?.takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+/** ISO-8601 `2026-08-22T06:00`, or `null` for anything else. Never throws. */
+private fun parseLocalDateTime(text: String?): LocalDateTime? =
+    text?.takeIf { it.isNotBlank() }?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
+
 fun TaskDto.toDomain(): Task = Task(
     id = id,
     title = title,
@@ -218,6 +301,7 @@ fun TaskDto.toDomain(): Task = Task(
     // Absent, unknown and misspelled all read as UNKNOWN — see TaskDto.durationSource
     // for why a legacy row is left absent rather than back-filled.
     durationSource = DurationSource.fromName(durationSource),
+    occurrence = occurrence(),
     createdAtEpochMillis = createdAt,
     // The legacy shape only. A real fact document, when there is one, is overlaid by
     // `TaskRepositoryImpl.observeTasks` and wins — a task that has been ticked since the
@@ -236,6 +320,17 @@ fun Task.toDto(): TaskDto = TaskDto(
     source = source.name,
     estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
     durationSource = durationSource.name,
+    // §2.2's occurrence, as the four fields TaskDto documents (`#56`). All four are null for a
+    // task with no *when*, which is most of them — and a task whose occurrence was **removed**
+    // writes four nulls over whatever was there, because `upsertTask` is a whole-document
+    // `set()` and a retained start beside an absent rung is the second answer §0.3 keeps
+    // naming. `occurrence()` reads a rung with no start as no occurrence, so a half-cleared
+    // document would be silently un-schedulable rather than loudly wrong.
+    occurrenceRung = occurrence?.rung?.name,
+    occurrenceStart = occurrence?.let { wireStart(it) },
+    occurrenceEnd = occurrence?.let { wireEnd(it) },
+    // Written for BLOCK alone, so a stored placement can never sit on a rung that has none.
+    occurrencePlacement = (occurrence as? Block)?.placement?.name,
     createdAt = createdAtEpochMillis,
     // ── The four legacy fields, nulled on every write (`#55`) ──────────────
     //

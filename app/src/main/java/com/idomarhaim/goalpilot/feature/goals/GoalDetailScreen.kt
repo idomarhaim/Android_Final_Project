@@ -67,6 +67,8 @@ import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationEntry
+import com.idomarhaim.goalpilot.domain.model.Occurrence
+import com.idomarhaim.goalpilot.domain.model.OccurrenceDraft
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.FillLadder
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
@@ -371,11 +373,15 @@ internal fun AddTaskRow(
     suggestedMinutes: Int?,
     onSuggestEstimate: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Difficulty, Int, DurationSource, Boolean) -> Unit,
+    onAdd: (String, Difficulty, Int, DurationSource, Boolean, Occurrence?) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var difficulty by remember { mutableStateOf(Difficulty.ROUTINE) }
     var duration by remember { mutableStateOf(DurationEntry()) }
+    // §2.2's *when*, held as domain data for the reason `duration` is (`#56`): the rule that
+    // turns a date and an optional time into a rung decides which miss semantics the task
+    // gets, and it is tested on the JVM rather than only through this row.
+    var whenDraft by remember { mutableStateOf(OccurrenceDraft()) }
     // `#7`. Belongs to the sentence being typed, so it lives with `title` and dies with it.
     var alreadyDone by remember { mutableStateOf(false) }
 
@@ -427,10 +433,21 @@ internal fun AddTaskRow(
             IconButton(
                 onClick = {
                     val (storedMinutes, storedSource) = duration.resolve()
-                    onAdd(title, difficulty, storedMinutes, storedSource, alreadyDone)
+                    onAdd(
+                        title,
+                        difficulty,
+                        storedMinutes,
+                        storedSource,
+                        alreadyDone,
+                        whenDraft.toOccurrence(),
+                    )
                     title = ""
                     difficulty = Difficulty.ROUTINE
                     duration = DurationEntry()
+                    // Cleared with the rest of the sentence being typed. A *when* that survived
+                    // the add would silently schedule whatever is typed next, which is the same
+                    // sticky-mode defect the `alreadyDone` chip below records.
+                    whenDraft = OccurrenceDraft()
                     // Cleared with everything else, for the reason SmartAddCard's copy of this
                     // chip records: a "done" that survived the add would be a mode that
                     // silently completes whatever is typed next.
@@ -440,6 +457,16 @@ internal fun AddTaskRow(
                 Icon(Icons.Filled.Add, contentDescription = "Add task")
             }
         }
+
+        // §2.5's differentiator needs a *when* to compute against, and this is the only place
+        // in the app that can give it one. Beside the duration box on purpose: the deadline's
+        // reminder is a function of BOTH -- how long the work takes and when it is owed -- and
+        // the two controls that feed it should be read together.
+        WhenPicker(
+            draft = whenDraft,
+            onChange = { whenDraft = it },
+            modifier = Modifier.padding(top = 4.dp),
+        )
 
         // R8's box. Optional by design: empty is a legitimate state and is stored as
         // DEFAULT_MINUTES with UNKNOWN provenance (§3.4) rather than as a guess

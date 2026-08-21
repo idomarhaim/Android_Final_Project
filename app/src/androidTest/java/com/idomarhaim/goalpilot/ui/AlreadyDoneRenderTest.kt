@@ -120,7 +120,7 @@ class AlreadyDoneRenderTest {
                     suggestedMinutes = null,
                     onSuggestEstimate = { difficulty = null },
                     onSuggestionApplied = { difficulty = null },
-                    onAdd = { _, _: Difficulty, _, _: DurationSource, _ -> },
+                    onAdd = { _, _: Difficulty, _, _: DurationSource, _, _ -> },
                 )
             }
         }

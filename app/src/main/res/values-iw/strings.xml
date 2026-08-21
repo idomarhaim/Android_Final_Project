@@ -75,4 +75,11 @@
 
     <string name="gp_notif_plan_tomorrow_title">תכנון המחר</string>
     <string name="gp_notif_plan_tomorrow_body">כמה דקות עכשיו חוסכות את הבוקר. הקישו כדי לראות מה פתוח.</string>
+
+    <!-- §2.5 occurrence reminders (#56). -->
+    <string name="gp_notif_reminder_deadline_tonight">היעד הוא %1$s והמשימה לוקחת בערך %2$s — כדאי להתחיל הערב.</string>
+    <string name="gp_notif_reminder_deadline_now">היעד הוא %1$s והמשימה לוקחת בערך %2$s — כדאי להתחיל עכשיו.</string>
+    <string name="gp_notif_reminder_all_day">משימה ליום שלם, להיום.</string>
+    <string name="gp_notif_reminder_block">המקטע שלכם רץ מ-%1$s עד %2$s.</string>
+    <string name="gp_notif_reminder_span">החלון שלכם פתוח, עד %1$s.</string>
 </resources>

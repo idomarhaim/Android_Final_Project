@@ -79,4 +79,11 @@
 
     <string name="gp_notif_plan_tomorrow_title">Plan tomorrow</string>
     <string name="gp_notif_plan_tomorrow_body">A few minutes now saves the morning. Tap to look at what is open.</string>
+
+    <!-- §2.5 occurrence reminders (#56). One per rung; the deadline's says why it moved. -->
+    <string name="gp_notif_reminder_deadline_tonight">Due at %1$s and it takes about %2$s — worth starting tonight.</string>
+    <string name="gp_notif_reminder_deadline_now">Due at %1$s and it takes about %2$s — worth starting now.</string>
+    <string name="gp_notif_reminder_all_day">An all-day task for today.</string>
+    <string name="gp_notif_reminder_block">Your slot runs %1$s to %2$s.</string>
+    <string name="gp_notif_reminder_span">Your window is open, through %1$s.</string>
 </resources>

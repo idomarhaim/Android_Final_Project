@@ -79,6 +79,8 @@ import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.notifications.FilingNotificationEffect
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
+import com.idomarhaim.goalpilot.domain.model.OccurrenceState
+import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.ui.components.Avatar
@@ -116,6 +118,7 @@ fun DashboardScreen(
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
     val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val missReview by viewModel.missReview.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -219,6 +222,18 @@ fun DashboardScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            // §2.5's daily review, ABOVE the points card and nowhere else: it is the first
+            // thing the app has to say when it has something to say, and burying it under a
+            // level-up animation is how a miss goes unread. Absent entirely on the great
+            // majority of opens, which is the point -- an empty review is not an empty card.
+            if (missReview.isVisible && missReview.misses.isNotEmpty()) {
+                item {
+                    DailyMissReviewCard(
+                        misses = missReview.misses,
+                        onDismiss = viewModel::dismissMissReview,
+                    )
+                }
+            }
             item {
                 PointsLevelCard(
                     userName = state.userName,
@@ -644,6 +659,113 @@ private fun GoogleTasksImportDialog(
  * plain language; the `classifyTask` Cloud Function decides which goal it belongs
  * to — or proposes a new one — and estimates its point value.
  */
+/**
+ * §2.5's **daily miss review**: *"Misses meet Ido once, in a daily review on app open — never
+ * as a push saying he failed"* (`#56`).
+ *
+ * ## The tone is the requirement, not a preference
+ *
+ * That sentence rules out two designs that would otherwise be obvious: a notification, and a
+ * running tally of failures. So this card **states what lapsed and what each lapse means**, in
+ * §2.2's own words, and offers no judgement of any kind — no count of failures, no streak
+ * broken, no red. `MISSED` is the only state §2.3 marks a failure and even it gets the same
+ * neutral row here; the distinction lives in the model, for §4.7's per-area surface to use, not
+ * in a colour on a card the user cannot act on.
+ *
+ * ## Why an overdue row reads differently
+ *
+ * §2.3: a passed deadline is *"late, and still owed"*, and it is the one state that keeps
+ * reminding. So it is the one row that says something is still **open**, and it is also the
+ * one that comes back tomorrow — see `DailyMissReview`. Everything else has genuinely gone and
+ * is shown once.
+ */
+@Composable
+internal fun DailyMissReviewCard(misses: List<MissedOccurrence>, onDismiss: () -> Unit) {
+    GpCard(modifier = Modifier
+        .fillMaxWidth()
+        .testTag(MISS_REVIEW_TAG)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(MISS_REVIEW_TITLE, style = MaterialTheme.typography.titleMedium)
+            Text(
+                MISS_REVIEW_SUBTITLE,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            misses.forEach { miss ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = miss.task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = missLabel(miss.state),
+                        style = MaterialTheme.typography.labelMedium,
+                        // ⚠️ The one row that is STILL OPEN does not look like history, and
+                        // this was found by looking at the render pass: all four rows read
+                        // identically, so §2.3's whole OVERDUE/MISSED split -- the thing that
+                        // "earns its keep twice" -- was invisible on the one surface a person
+                        // actually reads. `stillOwed` existed on the model and nothing used it.
+                        //
+                        // PRIMARY, never an error colour: this marks a thing the user can still
+                        // do, not a thing they got wrong. Red here would be the "push saying he
+                        // failed" §2.5 forbids, arriving as a swatch.
+                        color = if (miss.stillOwed) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.testTag(MISS_REVIEW_DISMISS_TAG),
+            ) {
+                Text(MISS_REVIEW_DISMISS_LABEL)
+            }
+        }
+    }
+}
+
+/**
+ * §2.2's table, as the four sentences it actually is.
+ *
+ * A `when` over the state and not a property on the enum: these are **speech**, and §5.1 keeps
+ * speech out of `domain/` — the same rule that moved `AnalyticsRange`'s labels into
+ * `AnalyticsStrings`. The two silent states never reach here, because
+ * `OccurrenceState.meetsUserInDailyReview` filtered them out before the list was built.
+ */
+// `internal`, with `DailyMissReviewCard`, so `DailyMissReviewUiTest` drives the REAL card and
+// the real labels. A test that re-implemented either would have been written from the same
+// understanding as the code and would pass on the same mistake -- the reasoning
+// `SmartAddReceiptUiTest` records after exactly that shipped.
+internal fun missLabel(state: OccurrenceState): String = when (state) {
+    OccurrenceState.OVERDUE -> "late, still owed"
+    OccurrenceState.MISSED -> "the slot is gone"
+    OccurrenceState.DAY_PASSED -> "the day passed"
+    OccurrenceState.WINDOW_CLOSED -> "the window closed"
+    // Unreachable: `meetsUserInDailyReview` excludes all three. Spelled out rather than
+    // collapsed into an `else`, so adding a fifth rung makes this a compile error instead of a
+    // row that silently reads "".
+    OccurrenceState.SCHEDULED, OccurrenceState.UNDERWAY, OccurrenceState.EXPIRED -> ""
+}
+
+internal const val MISS_REVIEW_TAG = "daily-miss-review"
+internal const val MISS_REVIEW_DISMISS_TAG = "daily-miss-review-dismiss"
+
+/** Shared with the tests, so an assertion cannot pass against a stale copy of the wording. */
+internal const val MISS_REVIEW_TITLE = "What went by"
+internal const val MISS_REVIEW_SUBTITLE = "Shown once. Nothing here counts against you."
+internal const val MISS_REVIEW_DISMISS_LABEL = "Got it"
+
 @Composable
 internal fun SmartAddCard(state: SmartAddState, onClassify: (String, Boolean) -> Unit) {
     var title by remember { mutableStateOf("") }

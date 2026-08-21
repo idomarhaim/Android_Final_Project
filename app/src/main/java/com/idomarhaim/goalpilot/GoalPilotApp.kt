@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot
 
 import android.app.Application
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
+import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.notifications.GoalPilotChannels
 import com.idomarhaim.goalpilot.notifications.ReminderScheduler
 import dagger.hilt.android.HiltAndroidApp
@@ -9,6 +10,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -27,6 +29,15 @@ class GoalPilotApp : Application() {
      */
     @Inject
     lateinit var appPreferences: AppPreferencesRepository
+
+    /**
+     * The task list §2.5's per-occurrence reminders are armed from (`#56`).
+     *
+     * Field-injected beside [appPreferences] and for the same reason: the reminders have to
+     * track the tasks whether or not a screen that would observe them is ever opened.
+     */
+    @Inject
+    lateinit var taskRepository: TaskRepository
 
     /**
      * Lives as long as the process, which is the honest scope for *"keep the nightly reminder
@@ -54,6 +65,33 @@ class GoalPilotApp : Application() {
                 .distinctUntilChanged()
                 .collect { minute ->
                     ReminderScheduler.schedulePlanTomorrow(this@GoalPilotApp, minute)
+                }
+        }
+
+        // §2.5's *one reminder per occurrence, timed per rung* (`#56`), kept in step with both
+        // of its inputs: the tasks themselves, and §4.9's *Your day* (which moves the waking
+        // clamp every reminder is computed against).
+        //
+        // Here rather than in a ViewModel, for the reason the block above is here: a reminder
+        // must be armed whether or not the user reaches a screen, and `observeTasks` is a
+        // cache-served snapshot listener, so this costs no round trip on start.
+        //
+        // `distinctUntilChanged` over the (tasks, schedule) pair and not inside the combine:
+        // Firestore re-emits the same list on every unrelated document write, and each
+        // re-emission would otherwise replace every pending reminder in the queue. The
+        // comparison is a data-class equality over a list the app already holds in memory.
+        appScope.launch {
+            combine(
+                taskRepository.observeTasks(),
+                appPreferences.daySchedule,
+            ) { tasks, schedule -> tasks to schedule }
+                .distinctUntilChanged()
+                .collect { (tasks, schedule) ->
+                    ReminderScheduler.syncOccurrenceReminders(
+                        context = this@GoalPilotApp,
+                        tasks = tasks,
+                        schedule = schedule,
+                    )
                 }
         }
     }

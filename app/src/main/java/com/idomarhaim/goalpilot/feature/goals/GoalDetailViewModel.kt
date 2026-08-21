@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.Difficulty
+import com.idomarhaim.goalpilot.domain.model.Occurrence
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -132,6 +133,7 @@ class GoalDetailViewModel @Inject constructor(
         minutes: Int,
         durationSource: DurationSource,
         alreadyDone: Boolean = false,
+        occurrence: Occurrence? = null,
     ) {
         if (title.isBlank()) return
         viewModelScope.launch {
@@ -153,6 +155,12 @@ class GoalDetailViewModel @Inject constructor(
                     completion = if (alreadyDone) CompletionFact() else null,
                     estimatedMinutes = TaskDuration.sanitize(minutes),
                     durationSource = durationSource,
+                    // §2.2, `#56`. Null for the great majority of tasks, which have no *when*
+                    // at all -- nothing here invents one from the creation date. Arming the
+                    // reminder is not this call's job: `GoalPilotApp` observes the task list
+                    // and re-derives the whole schedule, so a task created on another device
+                    // is armed here too.
+                    occurrence = occurrence,
                 ),
             )
             // No optimistic row is needed here, unlike toggleTask: upsertTask is an

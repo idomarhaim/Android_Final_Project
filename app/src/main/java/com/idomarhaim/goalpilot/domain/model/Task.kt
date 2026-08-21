@@ -150,6 +150,26 @@ data class Task(
      * `UNKNOWN` is therefore safe to re-estimate.
      */
     val durationSource: DurationSource = DurationSource.UNKNOWN,
+    /**
+     * **When** the task is due, as one of §2.2's four rungs — or `null` for a task that is
+     * simply on the list ([#56](https://github.com/idomarhaim/Android_Final_Project/issues/56)).
+     *
+     * `null` is the common case and a legitimate one: most tasks have no *when* at all, and
+     * §2.2's rungs are for the ones that do. Nothing derives a due date from a creation date
+     * or from anything else — an absent occurrence means nobody said, exactly as an absent
+     * [estimatedMinutes] does.
+     *
+     * **Its temporal state is not here, and cannot be** (§2.3): ask
+     * [Occurrence.stateAt] with the clock you have. There is no `isOverdue` on this class,
+     * no `missedAt`, and no field a sweep would have to keep true — which is what makes
+     * *"the reminder re-checks at fire time"* free rather than a second schedule to maintain.
+     *
+     * **At most one**, and §2.1 wants more: a *rule* on the task plus occurrence documents, so
+     * that *"this occurrence, or all future ones?"* is askable. `#56` builds the occurrence
+     * half; recurrence is the other half and is not here. See [Occurrence] for why arriving at
+     * it is additive rather than a rewrite.
+     */
+    val occurrence: Occurrence? = null,
     val createdAtEpochMillis: Long = 0L,
     /**
      * The completion fact, or `null` when the task is not done (§1.4, `#55`).

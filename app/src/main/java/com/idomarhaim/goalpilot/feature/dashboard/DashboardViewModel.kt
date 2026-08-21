@@ -28,6 +28,7 @@ import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
+import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
@@ -37,6 +38,8 @@ import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
+import com.idomarhaim.goalpilot.domain.usecase.DailyMissReview
+import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncOutcome
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncResult
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncTrigger
@@ -55,6 +58,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 @HiltViewModel
@@ -70,6 +76,7 @@ class DashboardViewModel @Inject constructor(
     private val lifeAreaRepository: LifeAreaRepository,
     private val buildSummary: BuildSummaryUseCase,
     private val syncHealthData: SyncHealthDataUseCase,
+    private val appPreferences: AppPreferencesRepository,
 ) : ViewModel() {
 
     @Volatile private var lastGoals: List<Goal> = emptyList()
@@ -87,6 +94,83 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             lifeAreaRepository.observeLifeAreas().collect { lastLifeAreas = it }
         }
+    }
+
+    private val _missReview = MutableStateFlow(MissReviewState())
+
+    /**
+     * §2.5's **daily miss review** — *"Misses meet Ido once, in a daily review on app open,
+     * never as a push saying he failed"* (`#56`).
+     *
+     * The dashboard is *"on app open"*: it is the start destination, so its first composition
+     * is the event. There is no worker, no notification and nothing armed — which is not an
+     * economy, it is the clause. A push about a miss is the one thing §2.5 rules out by name.
+     */
+    val missReview: StateFlow<MissReviewState> = _missReview.asStateFlow()
+
+    /**
+     * True once the review has been evaluated for this ViewModel.
+     *
+     * The task list arrives asynchronously and then **re-emits** on every unrelated write, so
+     * without this the review would be recomputed after each one; and since showing it stamps
+     * the preference, the second pass would find its own stamp and conclude the misses had
+     * already been met. One evaluation per app open, which is what the sentence says.
+     */
+    @Volatile private var missReviewEvaluated: Boolean = false
+
+    init {
+        viewModelScope.launch {
+            // `first()` and not `collect`: the review is a snapshot of the moment the app
+            // opened, and a live one would appear mid-session the instant a deadline passed --
+            // which is the push §2.5 forbids, wearing a card instead of a notification.
+            val tasks = taskRepository.observeTasks(null).first()
+            openDailyMissReview(tasks)
+        }
+    }
+
+    /**
+     * Works out today's review and shows it, or does nothing.
+     *
+     * Everything decidable is decided in [DailyMissReview], which takes its clock as an
+     * argument; this method's whole job is to read the stamp, hand over three values, and
+     * write the stamp back.
+     *
+     * The stamp moves **when the review is shown**, not when it is dismissed. §2.5 says the
+     * misses *meet* him once; a stamp that waited for a tap would re-show everything to
+     * somebody who opened the app, read the card and switched away, which is the commonest way
+     * anybody actually reads it.
+     */
+    internal fun openDailyMissReview(
+        tasks: List<Task>,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
+        if (missReviewEvaluated) return
+        missReviewEvaluated = true
+
+        val lastShownAt = appPreferences.missReviewLastShownAt()
+            .takeIf { it > 0L }
+            ?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime() }
+        if (!DailyMissReview.isDue(lastShownAt?.toLocalDate(), now.toLocalDate())) return
+
+        val misses = DailyMissReview.of(tasks = tasks, now = now, since = lastShownAt)
+        // Nothing missed is not a review worth showing, and it must not move the stamp either:
+        // stamping today would make tomorrow's review skip everything that lapsed today.
+        if (misses.isEmpty()) return
+
+        _missReview.value = MissReviewState(misses = misses, isVisible = true)
+        appPreferences.setMissReviewLastShownAt(
+            now.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+        )
+    }
+
+    /**
+     * Takes the review down.
+     *
+     * It does not touch the stamp — that moved when the card appeared — so this is presentation
+     * only, and dismissing it cannot re-arm anything.
+     */
+    fun dismissMissReview() {
+        _missReview.update { it.copy(isVisible = false) }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(
@@ -778,6 +862,18 @@ data class DashboardUiState(
     val doneTasks: Int = 0,
     val totalTasks: Int = 0,
     val error: String? = null,
+)
+
+/**
+ * §2.5's daily review, as the dashboard holds it (`#56`).
+ *
+ * [misses] is kept when [isVisible] goes false rather than cleared, so dismissing the card
+ * cannot be mistaken for *there was nothing to review* by anything reading this later in the
+ * session — including a test asserting that the review happened.
+ */
+data class MissReviewState(
+    val misses: List<MissedOccurrence> = emptyList(),
+    val isVisible: Boolean = false,
 )
 
 data class RecommendationsState(

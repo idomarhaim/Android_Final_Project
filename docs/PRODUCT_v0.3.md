@@ -617,6 +617,18 @@ container becomes a **milestone**, not a third mechanism.
 life area. (The 480-minute ceiling governs `estimatedMinutes` — *effort* — so it never touches a
 span's elapsed dates.)
 
+> ✅ **Built in [`#56`](https://github.com/idomarhaim/Android_Final_Project/issues/56)**, as
+> `domain/model/Occurrence.kt` — a sealed type per rung, so each carries exactly the fields its
+> miss semantics need and an `ALL_DAY` with an end time is unrepresentable rather than normalised.
+>
+> ⚠️ **This table needs four names for a miss and [§2.3](#23-temporal-state-is-derived-never-stored-c9a-5)
+> supplies two.** `MISSED` is defined there as *a block whose slot has gone* and is marked **a
+> failure**; `OVERDUE` is the deadline's. Neither fits *the day passed* or *the window closed*, and
+> folding those into `MISSED` would mark them failures the spec never called failures. So `#56`
+> named them **`DAY_PASSED`** and **`WINDOW_CLOSED`**, resolving toward this table because this is
+> the one that says what a miss *means*. `Observed:` the gap was found by writing the four cases
+> out, not by reading either section.
+
 ### 2.3 Temporal state is derived, never stored *(`C9a` §5)*
 
 Following `Challenge.phaseAt(now)`: no sweep, nothing deployed, nothing to go stale, no cost against
@@ -677,6 +689,16 @@ stored.
 here needs local scheduling and the nightly one rides it. This widens
 [#8](https://github.com/idomarhaim/Android_Final_Project/issues/8) to **scheduled**, not only
 immediate, notifications.
+
+> ✅ **Built in [`#56`](https://github.com/idomarhaim/Android_Final_Project/issues/56)**, on `#8`'s
+> substrate. Every rung goes through `#8`'s `ReminderTiming.plan` — three of the four are the
+> deadline's arithmetic with a **zero lead-in**, so the waking clamp cannot be skipped for any of
+> them. The daily review is a card on the dashboard and posts nothing;
+> `DailyMissReviewUiTest` asserts the shade stays empty **while a control notification is
+> demonstrably in it**, so *"never as a push"* is checked rather than assumed.
+>
+> ⚠️ **A reminder whose moment has already gone is never armed.** It would be a push about a
+> failure, which this section forbids; what has lapsed meets the user once, in the review.
 
 **Both settings now exist** — [§4.9](#49-the-settings-surface-c24-46), `C24` #46. **Awake between
 07:00 – 23:00** is the clamp: a reminder is never moved outside it, and the same span is `C9b`'s
@@ -938,7 +960,7 @@ check. `rationale` and `confidence` are **speech** and are kept.
 **There is no number in the response, and that is the whole design.** `targetSource` is a
 prompt-declared enum naming **which arithmetic the app runs** — `SCHEDULE` → the occurrences already
 on the goal, `STEPS` → the count of its open sub-tasks, `USER` → ask him. This is
-[§0.5](#05--the-ai-judges-the-app-computes-c7-reused-by-c1-c3-c10-c2-c8) at full strength and it is
+[§0.5](#05-the-ai-judges-the-app-computes-c7-reused-by-c1-c3-c10-c2-c8) at full strength and it is
 **forced rather than chosen**: `C11a` measured free numbers swinging **2× run-to-run** and **1.8×
 between languages**, and the target is the one field the feature would be judged on.
 
@@ -1839,6 +1861,7 @@ permitted to write**, and the Function applies it when every row agrees.
 | `…/tasks/…/repeatRule` | the rule | **new** | — |
 | | `pausedUntil: Long?` | **new** | backfill `null` |
 | `…/occurrences` | the whole entity | **new** — flat, one per *when*, holding `googleEventId`, the confirmation state and the outcome | — |
+| `…/tasks` | `occurrenceRung` + `occurrenceStart` + `occurrenceEnd` + `occurrencePlacement` | **new in `#56`**, four fields on the **task** — see the deviation note below | backfill **none**: absent means *this task has no when*, which every existing task is |
 | `…/progressEntries` | edit history, soft delete, optional duration | **extended** | one nullable field, backfilled `null` |
 | `…/completionFacts` | `minutes` + `difficulty` + `completedAt` | **new** — the sum the points total is taken over | derived from the `completedAt` already stored |
 | `…/planDrafts` | one per goal, no expiry | **new** | — |
@@ -1862,6 +1885,25 @@ new fields on `Goal`** for endless and maintenance goals.
 the participant row gains the rules file's **first field-level condition**; and **a subcollection is
 not covered by its parent's `match`** — `challenges/{id}/participants/{uid}` needs its own block, and
 that is exactly what lets a non-owner join something they cannot edit.
+
+> ⚠️ **DEVIATION, declared — `#56` put its single occurrence on the task, not in `…/occurrences`.**
+>
+> **What shipped:** four fields on the task document, holding **at most one** occurrence.
+> **What this table specifies:** a subcollection, one document per *when*.
+>
+> **Why.** The subcollection's whole reason for existing is the things `#56` does not build:
+> **many** occurrences per task ([§2.1](#21-a-schedule-is-a-set-of-occurrences-the-task-carries-only-the-rule-c9a-25)'s
+> recurrence rule), a **`googleEventId`** ([§2.6](#26-google-calendar--scope-and-consent-c9d-17-c9f-33),
+> unbuilt), and a **per-occurrence outcome** ([§2.8](#28-event-lifecycle-c9e-28), unbuilt). With
+> one occurrence, no rule and no Google, it would have bought a second collection, a second
+> snapshot listener joined into `TaskStream`, and a `firestore.rules` change — for a shape nothing
+> yet reads. `#56`'s brief directs the task-field form in as many words (*"`Task` … carries no due
+> date and no rung. Add them"*), and the migration when recurrence lands is additive: the
+> collection is created, and the four task fields become the first occurrence in it.
+>
+> **The cost, stated rather than hidden.** Until that migration, this app cannot express a moved
+> instance, a skip, or a recurring task, and `isDone`'s three-way split two rows above stays
+> two-way. Nothing in `#56` pretends otherwise — `Occurrence`'s KDoc says it in the same words.
 
 ### 7.2 Code sites this spec changes or deletes
 

@@ -391,5 +391,11 @@ class HealthSyncTest {
         override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
             stamps[uid] = epochMillis
         }
+        // #56. Unread by anything this suite exercises; here because the interface has it.
+        private var missReviewShownAt: Long = 0L
+        override fun missReviewLastShownAt(): Long = missReviewShownAt
+        override fun setMissReviewLastShownAt(epochMillis: Long) {
+            missReviewShownAt = epochMillis
+        }
     }
 }

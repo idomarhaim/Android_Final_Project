@@ -78,9 +78,10 @@ class DurationBoxUiTest {
                         minutes = pendingMinutes
                     },
                     onSuggestionApplied = { difficulty = null; minutes = null },
-                    // `#7` added the fifth parameter. This suite is about `#9`'s duration
-                    // precedence, so it ignores the flag; `AlreadyDoneUiTest` owns it.
-                    onAdd = { t, d, m, s, _ -> added += Added(t, d, m, s) },
+                    // `#7` added the fifth parameter and `#56` the sixth. This suite is about
+                    // `#9`'s duration precedence, so it ignores both; `AlreadyDoneUiTest` and
+                    // `WhenPickerUiTest` own them.
+                    onAdd = { t, d, m, s, _, _ -> added += Added(t, d, m, s) },
                 )
             }
         }

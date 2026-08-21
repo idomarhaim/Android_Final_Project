@@ -124,6 +124,13 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         prefs.edit { putLong(healthSyncKey(uid), epochMillis) }
     }
 
+    /** `0` reads as *never shown*, which is what a fresh install honestly is. */
+    override fun missReviewLastShownAt(): Long = prefs.getLong(KEY_MISS_REVIEW_SHOWN_AT, 0L)
+
+    override fun setMissReviewLastShownAt(epochMillis: Long) {
+        prefs.edit { putLong(KEY_MISS_REVIEW_SHOWN_AT, epochMillis) }
+    }
+
     private companion object {
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
@@ -134,6 +141,7 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         const val KEY_WAKING_START = "day_waking_start_minutes"
         const val KEY_WAKING_END = "day_waking_end_minutes"
         const val KEY_PLANNING_OVERRIDE = "day_planning_override_minutes"
+        const val KEY_MISS_REVIEW_SHOWN_AT = "miss_review_last_shown_at"
 
         /** Outside `0..1439`, so it cannot collide with a real minute-of-day. */
         const val NO_OVERRIDE = -1

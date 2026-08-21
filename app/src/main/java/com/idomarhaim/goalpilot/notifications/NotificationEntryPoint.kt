@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.notifications
 
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
+import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -21,4 +22,14 @@ import dagger.hilt.components.SingletonComponent
 interface NotificationEntryPoint {
     fun notifier(): GoalPilotNotifier
     fun preferences(): AppPreferencesRepository
+
+    /**
+     * The tasks, for §2.5's fire-time re-check (`#56`).
+     *
+     * [OccurrenceReminderWorker] must read the task **as it stands when the reminder wakes**,
+     * not as it stood when the reminder was armed — a task ticked in between must say nothing.
+     * That is why the worker reaches the repository at all rather than carrying the task's
+     * state in its input data, which would be the stored schedule §2.5 says it does not need.
+     */
+    fun taskRepository(): TaskRepository
 }

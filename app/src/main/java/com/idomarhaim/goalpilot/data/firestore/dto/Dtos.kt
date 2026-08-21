@@ -198,6 +198,55 @@ data class TaskDto(
      * stored value can be a sticky one.
      */
     var durationSource: String? = null,
+    /**
+     * `ALL_DAY` | `DEADLINE` | `BLOCK` | `SPAN` — §2.2's rung, and the **discriminator** for
+     * the three fields below (`#56`).
+     *
+     * Absent on every document written before `#56`, and absent means *this task has no
+     * occurrence* — which is what every existing task genuinely is, so there is **no backfill
+     * and nothing to migrate**. An unrecognised value reads as absent too: a rung this build
+     * does not know is a rung whose miss semantics it cannot honour, and guessing one would
+     * put a task into a state §2.2 does not define.
+     */
+    var occurrenceRung: String? = null,
+    /**
+     * When the occurrence starts — **ISO-8601 local text, not epoch millis**, and that is the
+     * decision worth reading before changing it.
+     *
+     * §2.2's `ALL_DAY` is *"a day with no slot"* and `SPAN` is *"days, not hours"*. A day is
+     * not an instant: stored as millis it becomes one, and then *which day it is* depends on
+     * the zone of whichever device reads it back. A user who files an all-day task in Tel Aviv
+     * and opens the app after a flight would find it on the previous day, and §2.3 derives
+     * every temporal state from exactly this value — so the miss would move with the reader.
+     *
+     * So the two date rungs store `2026-08-22` and the two instant rungs store
+     * `2026-08-22T06:00`. Both parse back to the same wall-clock the user typed, on any
+     * device, which is what a commitment about *your* day has to mean.
+     *
+     * The rest of this DTO is epoch millis and stays that way: `createdAt` and `completedAt`
+     * are records of **when something happened**, which genuinely is an instant. The
+     * difference is real, not stylistic.
+     */
+    var occurrenceStart: String? = null,
+    /**
+     * When it ends — the last day for a `SPAN`, the slot's end for a `BLOCK`, and **absent for
+     * `ALL_DAY` and `DEADLINE`**, whose ends are implied by their starts.
+     *
+     * Absent where the rung has no end rather than duplicated from the start: the domain's
+     * `AllDay` and `Deadline` carry no end field at all, so writing one would create a stored
+     * value with nothing to read it and nothing to keep it true.
+     */
+    var occurrenceEnd: String? = null,
+    /**
+     * `PROVISIONAL` | `SILENT` | `CONFIRMED` — §2.3's placement, **meaningful for `BLOCK`
+     * alone** (§2.4: the other three rungs occupy no slot and cannot collide).
+     *
+     * Absent reads as `CONFIRMED`, which is honest for everything the app can create today: a
+     * block a person typed is one they endorsed by typing it, and the agent that would write
+     * `PROVISIONAL` is §3.7's proposed plan (`#24`) and does not exist. Written only when the
+     * rung is `BLOCK`, so a stored value can never contradict a rung that has no placement.
+     */
+    var occurrencePlacement: String? = null,
     var createdAt: Long = 0L,
     /** ⚠️ **Legacy — the pre-`#55` completion stamp.** See [done]. */
     var completedAt: Long? = null,

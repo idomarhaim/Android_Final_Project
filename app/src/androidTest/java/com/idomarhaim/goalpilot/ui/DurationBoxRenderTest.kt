@@ -119,7 +119,7 @@ class DurationBoxRenderTest {
                     // the estimate, so the picture would have been of nothing.
                     onSuggestEstimate = { difficulty = Difficulty.ROUTINE; minutes = suggest },
                     onSuggestionApplied = { difficulty = null; minutes = null },
-                    onAdd = { _, _, _, _, _ -> },
+                    onAdd = { _, _, _, _, _, _ -> },
                 )
             }
         }
