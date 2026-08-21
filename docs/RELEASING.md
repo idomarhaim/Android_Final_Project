@@ -69,6 +69,62 @@ are absent, so a fresh clone builds. **Distributing** a debug-signed APK is
 blocked by a check in `app/build.gradle.kts` — the upload task fails rather than
 warns, because that mistake is only discoverable months later.
 
+### 2.1a Recovering the signing key — read this before you need it
+
+**Status, 2026-08-21: `app/goalpilot-release.jks` does not exist on this machine.** It was created
+on 2026-08-06 on the laptop that has since been replaced, and it did not come across — there is no
+`.jks` anywhere under the user profile and no `RELEASE_*` in `local.properties`.
+
+**Nothing is broken.** The key survives as the repository secret `RELEASE_KEYSTORE_BASE64`, and
+[`release.yml`](../.github/workflows/release.yml) restores it on every tagged run — `v0.3.0` shipped
+that way. **But it means the tag route is the only one that can produce an installable update**: a
+local `assembleRelease` silently falls back to the *debug* key, and `app/build.gradle.kts` refuses
+to distribute that on purpose.
+
+**The risk, stated plainly:** the key is now in **one** place, and that place cannot be read by any
+API. If this repository or that secret is lost, no future build can ever install over what testers
+already have. Every one of them would have to uninstall and lose their local data.
+
+#### Step 0 — look for the original first, it is free
+
+If the old laptop, a disk image or any backup still has `app/goalpilot-release.jks`, that is the
+whole answer. Copy it to `app/` and append its four credentials to `local.properties`
+(`RELEASE_STORE_FILE=app/goalpilot-release.jks`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS=goalpilot`,
+`RELEASE_KEY_PASSWORD`). Verify with `keytool -list -v -keystore app/goalpilot-release.jks -alias goalpilot`
+and check the SHA-1 matches `e7:d5:53:4c:...:90:62`, the one registered with Firebase.
+
+#### Step 1 — otherwise, pull it out of the secret, encrypted
+
+[`backup-signing-key.yml`](../.github/workflows/backup-signing-key.yml) exists for exactly this. It
+never uploads the keystore in the clear: it GPG/AES256-encrypts it under a passphrase that lives in
+a second secret, so the artifact — which on a **public** repo anyone can download — is useless
+without it. The job refuses to run if that passphrase is missing or shorter than 20 characters,
+rather than quietly producing a plaintext artifact.
+
+1. Generate a long random passphrase and **store it in your password manager first**. If you lose
+   it the artifact is scrap.
+2. GitHub → **Settings → Secrets and variables → Actions → New repository secret**, named
+   **`BACKUP_PASSPHRASE`**, value = that passphrase.
+3. **Actions → Back up the signing key → Run workflow.**
+4. Download the artifact **`goalpilot-release-keystore-encrypted`** from the finished run. It
+   expires after one day.
+5. Decrypt it:
+   ```powershell
+   gpg --output app\goalpilot-release.jks --decrypt goalpilot-release.jks.gpg
+   ```
+6. Verify it is the right key — the run's log prints the alias and SHA-1, and this must match:
+   ```powershell
+   keytool -list -v -keystore app\goalpilot-release.jks -alias goalpilot
+   ```
+7. **Delete the `BACKUP_PASSPHRASE` secret.** It has done its job and every day it stays is a day
+   it can leak.
+8. Put the `.jks` somewhere that is not this machine and not this repository — a password manager
+   attachment or an encrypted drive. It is git-ignored, and it must stay that way.
+
+> ⚠️ **Do not "simplify" this by uploading the raw `.jks` as an artifact.** This repository is
+> public; artifacts on a public repo are downloadable by anyone, and that would hand your signing
+> identity to the internet.
+
 ### 2.2 Register the key's SHA-1 with Firebase
 
 Google Sign-In is restricted by package name **+ signing certificate**. The

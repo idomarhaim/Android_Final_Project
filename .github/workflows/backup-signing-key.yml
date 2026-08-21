@@ -1,0 +1,98 @@
+# Get the release signing key back out of GitHub secrets, encrypted, once.
+#
+# WHY THIS EXISTS
+# ---------------
+# The keystore that signs every GoalPilot release lives in exactly one place:
+# the repository secret RELEASE_KEYSTORE_BASE64. The local app/goalpilot-release.jks
+# did not survive the 2026-08 machine replacement. A GitHub secret cannot be read
+# back by any API, so there is no way to copy it out without a job that has it.
+#
+# The stake: Android identifies an app by its signing certificate. Lose this key
+# and NO future build can ever install over the one testers already have — the
+# only recovery is asking every one of them to uninstall and lose their data.
+#
+# WHY IT IS SAFE TO HAVE THIS FILE IN A PUBLIC REPO
+# -------------------------------------------------
+# 1. `workflow_dispatch` only. It never runs on a push, and only somebody with
+#    write access to this repository can start it.
+# 2. The keystore is NEVER uploaded in the clear. It is symmetrically encrypted
+#    with GPG/AES256 under a passphrase that exists only as another secret, so
+#    the artifact — which on a public repo anyone can download — is useless
+#    without it.
+# 3. The job refuses to run if that passphrase secret is missing, rather than
+#    quietly producing a plaintext artifact.
+# 4. Retention is one day. Download it, then delete the BACKUP_PASSPHRASE secret.
+#
+# ⚠️ The passphrase is the whole of the protection. Use a long random one, and do
+#    not reuse a password you have used anywhere else.
+#
+# HOW TO USE IT — see docs/RELEASING.md § "Recovering the signing key".
+name: Back up the signing key
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse to run without a passphrase
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Secret BACKUP_PASSPHRASE is not set. Add it under" \
+                 "Settings -> Secrets and variables -> Actions, run this workflow," \
+                 "then DELETE it again. Refusing to produce an unencrypted artifact."
+            exit 1
+          fi
+          # A short passphrase makes the artifact effectively public, since anyone
+          # can download it from a public repo. 20 characters is not a guess: it is
+          # the point past which an offline attack on AES256 stops being the cheap
+          # way in.
+          if [ "${#BACKUP_PASSPHRASE}" -lt 20 ]; then
+            echo "::error::BACKUP_PASSPHRASE is shorter than 20 characters." \
+                 "The artifact is downloadable by anyone, so the passphrase is the" \
+                 "only thing protecting the key. Use a long random one."
+            exit 1
+          fi
+
+      - name: Encrypt the keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 is empty. There is nothing to back up," \
+                 "which is itself the emergency this workflow exists for."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > goalpilot-release.jks
+          # Sanity-check that what came out is really a keystore before shipping it,
+          # so a corrupted secret is caught here rather than in six months.
+          keytool -list -keystore goalpilot-release.jks \
+                  -storepass "${{ secrets.RELEASE_STORE_PASSWORD }}" > keystore-contents.txt
+          cat keystore-contents.txt
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+              --passphrase "$BACKUP_PASSPHRASE" \
+              --output goalpilot-release.jks.gpg goalpilot-release.jks
+          rm -f goalpilot-release.jks
+          ls -la goalpilot-release.jks.gpg
+
+      - name: Report the alias and fingerprint in the log
+        run: |
+          # These are NOT secret -- the SHA-1 is already registered with Firebase and
+          # is public in any released APK. Printing them here is what lets you verify
+          # the file you decrypt later is the right key.
+          grep -iE "alias|SHA1|Certificate fingerprint" keystore-contents.txt || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: goalpilot-release-keystore-encrypted
+          path: goalpilot-release.jks.gpg
+          retention-days: 1
+          if-no-files-found: error
