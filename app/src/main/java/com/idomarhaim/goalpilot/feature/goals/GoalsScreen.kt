@@ -43,6 +43,7 @@ import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import com.idomarhaim.goalpilot.ui.components.toGoalInk
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,6 +238,8 @@ object GoalsTestTags {
 @Composable
 private fun LifeAreaGroupHeader(area: LifeArea?, goalCount: Int) {
     val accent = area?.colorHex?.toGoalAccent() ?: MaterialTheme.colorScheme.onSurfaceVariant
+    // The icon takes the fill, the name takes the ink -- see `String.toGoalInk`.
+    val ink = area?.colorHex?.toGoalInk() ?: MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,7 +256,7 @@ private fun LifeAreaGroupHeader(area: LifeArea?, goalCount: Int) {
             text = area?.name ?: "No life area",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = accent,
+            color = ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier

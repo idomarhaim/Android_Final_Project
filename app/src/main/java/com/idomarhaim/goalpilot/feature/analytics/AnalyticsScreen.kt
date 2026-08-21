@@ -82,6 +82,7 @@ import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 import com.idomarhaim.goalpilot.ui.components.rememberChartProgress
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import com.idomarhaim.goalpilot.ui.components.toGoalInk
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -624,7 +625,9 @@ private fun DonutCenter(allocation: TimeAllocation, selected: TimeSlice?) {
                 text = percentText(selected.percent),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = selected.colorHex.toGoalAccent(),
+                // Ink, not the slice fill: `#57` a's palette is authored for fills
+                // and clears 3:1, and this is type on the card behind the donut.
+                color = selected.colorHex.toGoalInk(),
             )
             Text(
                 text = selected.name,
@@ -650,6 +653,7 @@ private fun LegendRow(
     onClick: () -> Unit,
 ) {
     val accent = slice.colorHex.toGoalAccent()
+    val ink = slice.colorHex.toGoalInk()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -694,7 +698,7 @@ private fun LegendRow(
             text = percentText(slice.percent),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = accent,
+            color = ink,
             modifier = Modifier.padding(start = 12.dp),
         )
     }

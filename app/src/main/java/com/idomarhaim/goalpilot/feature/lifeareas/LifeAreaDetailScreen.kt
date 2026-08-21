@@ -56,6 +56,7 @@ import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
+import com.idomarhaim.goalpilot.ui.components.toGoalInk
 import com.idomarhaim.goalpilot.ui.components.trimNumber
 import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
 
@@ -97,6 +98,7 @@ fun LifeAreaDetailScreen(
     }
 
     val accent = state.area?.colorHex?.toGoalAccent() ?: MaterialTheme.colorScheme.primary
+    val ink = state.area?.colorHex?.toGoalInk() ?: MaterialTheme.colorScheme.primary
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHost) },
@@ -158,6 +160,7 @@ fun LifeAreaDetailScreen(
                     AreaGoalCard(
                         goal = goal,
                         accent = accent,
+                        ink = ink,
                         onClick = { onOpenGoal(goal.id) },
                         onRemove = { viewModel.removeGoalFromArea(goal) },
                     )
@@ -239,6 +242,8 @@ private fun AreaHeaderCard(state: LifeAreaDetailUiState, accent: Color) {
 private fun AreaGoalCard(
     goal: Goal,
     accent: Color,
+    /** The readable twin of [accent] -- `#57` a split fill from ink; see `String.toGoalInk`. */
+    ink: Color,
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -263,7 +268,7 @@ private fun AreaGoalCard(
                         text = "${goal.progressPercent}%".bidiIsolated(),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = accent,
+                        color = ink,
                     )
                 }
                 GpLinearProgress(

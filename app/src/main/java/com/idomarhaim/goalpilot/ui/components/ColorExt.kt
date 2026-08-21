@@ -1,42 +1,158 @@
 package com.idomarhaim.goalpilot.ui.components
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.toColorInt
+import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.ui.theme.atLightness
+import com.idomarhaim.goalpilot.ui.theme.hsl
 
 /** Parses a "#RRGGBB" / "#AARRGGBB" hex string into a Compose [Color], or [fallback]. */
 fun String.toComposeColor(fallback: Color = Color(0xFF718096)): Color =
     runCatching { Color(this.toColorInt()) }.getOrDefault(fallback)
 
 /**
- * A goal's stored accent, adapted to the surface it will be drawn on.
+ * A goal's stored accent as a **fill** — the donut slice, the bar, the legend
+ * dot, the icon tint, the progress ring.
  *
- * Goal colours are persisted hex chosen for a *light* background and then used as
- * a text colour ("72 %", the bar fill, the category icon). On a dark surface a
- * tone-40 hex like `#5145CD` lands around 2.8:1 — unreadable. Raising lightness
- * to a fixed tone keeps the hue (so a goal is still recognisably "the purple
- * one") while restoring contrast.
+ * Goal colours are persisted hex chosen for a *light* background. On a dark
+ * surface a tone-40 hex like `#5145CD` lands around 2.8:1 and stops reading as
+ * an object at all, so dark mode needs a lighter twin of the same category.
+ *
+ * ## Two ways to get that twin, and the authored one wins
+ *
+ * `#57` a gave every [GoalCategory] a hand-authored [GoalCategory.darkColorHex],
+ * built as a set against `#0C1520`. When the stored hex is one of ours, that is
+ * what comes back — a category then keeps its *identity* across schemes instead
+ * of becoming whatever a per-colour transform happens to produce.
+ *
+ * Everything else — a life area's colour, a hex the user picked, a goal created
+ * before `#57` a and never re-saved — still goes through the fixed-lightness
+ * lift below. It is the weaker of the two (measured over the ten categories it
+ * gave a minimum pairwise separation of **57.6** against the authored set's
+ * **66.2**, because HSL lightness is blind to how differently hues carry it),
+ * but it is total, and a persisted column needs a total function.
  *
  * Light mode returns the stored colour untouched.
+ *
+ * For the places that paint a category as **type** rather than as a shape, use
+ * [toGoalInk] — these fills clear the 3:1 non-text floor and deliberately not
+ * 4.5:1.
  */
 @Composable
 @ReadOnlyComposable
 fun String.toGoalAccent(fallback: Color = MaterialTheme.colorScheme.primary): Color {
-    val base = toComposeColor(fallback)
     val isDarkSurface = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    return if (isDarkSurface) base.atLightness(DARK_SURFACE_LIGHTNESS) else base
+    if (!isDarkSurface) return toComposeColor(fallback)
+    val authored = GoalCategory.darkTwinOf(this)
+    return if (authored != null) {
+        authored.toComposeColor(fallback)
+    } else {
+        toComposeColor(fallback).atLightness(DARK_SURFACE_LIGHTNESS)
+    }
 }
 
+/**
+ * The same accent as **ink** — readable 14 sp text on whatever card it lands on.
+ *
+ * ## Why this is not just [toGoalAccent]
+ *
+ * A categorical palette has two jobs and they pull in opposite directions. As a
+ * *fill* it wants chroma and an even lightness across the set, so ten slices in
+ * one donut hold together; as *type* it wants 4.5:1 against the card, which for
+ * ten hues at one lightness forces the whole set so dark it reads as mud. Before
+ * `#57` a the app resolved that by making every category dark enough to be text,
+ * and paid for it in the chart — the complaint the ticket opens with.
+ *
+ * So the fill is authored and the ink is **derived**: same hue, same saturation,
+ * lightness walked until the contrast clears. Deriving rather than authoring a
+ * second table is what keeps it working for life-area colours and user-picked
+ * hexes, which have no table.
+ *
+ * ## It is checked against every tone, not against `surface`
+ *
+ * The five `surfaceContainer*` steps straddle `surface` in *both* directions, and
+ * in dark mode the highest of them (`#48353B` under Blossom) is far lighter than
+ * the ground. An ink solved against `surface` alone is therefore too dim exactly
+ * where a card is raised, which is where the percentages live. [cardTonesOf]
+ * hands the solver the whole ladder and it satisfies the hardest rung.
+ */
+@Composable
+@ReadOnlyComposable
+fun String.toGoalInk(fallback: Color = MaterialTheme.colorScheme.primary): Color =
+    toGoalAccent(fallback).asInkOn(cardTonesOf(MaterialTheme.colorScheme))
+
+/** The card tones a category accent can be painted on. Public for the palette guard. */
+fun cardTonesOf(scheme: ColorScheme): List<Color> = listOf(
+    scheme.surface,
+    scheme.surfaceContainerLowest,
+    scheme.surfaceContainerLow,
+    scheme.surfaceContainer,
+    scheme.surfaceContainerHigh,
+    scheme.surfaceContainerHighest,
+)
+
+/**
+ * This colour, moved along HSL lightness until it clears [min] against **every**
+ * background in [backgrounds].
+ *
+ * Hue and saturation are held, so the category stays recognisable; only the
+ * lightness moves, and only in the one direction the grounds allow. Pure Kotlin
+ * and non-composable on purpose — `ThemePaletteTest` runs the real function over
+ * the real fourteen schemes on the JVM rather than asserting a copy of it.
+ *
+ * Falls back to plain black or white if even the endpoint cannot clear [min],
+ * which no scheme in this app needs but a future one might.
+ */
+fun Color.asInkOn(backgrounds: List<Color>, min: Double = MIN_INK_CONTRAST): Color {
+    if (backgrounds.isEmpty()) return this
+    if (backgrounds.all { contrastRatio(this, it) >= min }) return this
+
+    // Which way to walk is a property of the grounds, not of this colour: on a
+    // dark card only a lighter ink can clear, on a light card only a darker one.
+    // Averaging the ladder rather than reading `surface` keeps a single outlier
+    // rung from flipping the direction for the whole set.
+    val towardsWhite = backgrounds.map { it.luminance().toDouble() }.average() < 0.5
+
+    val start = hsl()[2]
+    var lo = if (towardsWhite) start else 0f
+    var hi = if (towardsWhite) 1f else start
+    // 24 halvings resolve HSL lightness far below one 8-bit step; the loop is
+    // bounded rather than convergence-tested so it cannot spin on a flat region.
+    repeat(INK_SEARCH_STEPS) {
+        val mid = (lo + hi) / 2f
+        val candidate = atLightness(mid)
+        val clears = backgrounds.all { contrastRatio(candidate, it) >= min }
+        if (towardsWhite) {
+            if (clears) hi = mid else lo = mid
+        } else {
+            if (clears) lo = mid else hi = mid
+        }
+    }
+    val solved = atLightness(if (towardsWhite) hi else lo)
+    if (backgrounds.all { contrastRatio(solved, it) >= min }) return solved
+    return if (towardsWhite) Color.White else Color.Black
+}
+
+/** WCAG 2.1 relative-luminance contrast, the same arithmetic `ThemePaletteTest` asserts with. */
+private fun contrastRatio(a: Color, b: Color): Double {
+    val la = a.luminance().toDouble()
+    val lb = b.luminance().toDouble()
+    return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
+}
+
+/** WCAG 2.1 for normal-size text. The category percentages are 14 sp, so 3:1 does not apply. */
+const val MIN_INK_CONTRAST: Double = 4.5
+
+private const val INK_SEARCH_STEPS = 24
 private const val DARK_SURFACE_LIGHTNESS = 0.72f
 
-private fun Color.atLightness(lightness: Float): Color {
-    val hsl = FloatArray(3)
-    ColorUtils.colorToHSL(toArgb(), hsl)
-    hsl[2] = lightness
-    return Color(ColorUtils.HSLToColor(hsl))
-}
+// `hsl()` and `atLightness()` are the pure-Kotlin pair in `ui/theme/MaterialPalettes.kt`.
+// androidx.core.graphics.ColorUtils would do the same arithmetic through
+// android.graphics.Color, which throws under a JVM unit test -- and the whole point
+// of deriving ink rather than authoring it is that ThemePaletteTest can run the real
+// function over the real fourteen schemes without an emulator.

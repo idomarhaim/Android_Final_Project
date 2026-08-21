@@ -8,9 +8,16 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.ui.components.MIN_INK_CONTRAST
+import com.idomarhaim.goalpilot.ui.components.asInkOn
+import com.idomarhaim.goalpilot.ui.components.cardTonesOf
 import com.idomarhaim.goalpilot.ui.theme.accentsFor
 import com.idomarhaim.goalpilot.ui.theme.colorSchemeFor
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
@@ -131,11 +138,24 @@ class ThemePaletteTest {
         }
     }
 
+    // ─────────────── the category palette (`#57` a) ───────────────
+    //
+    // Five properties, and they are deliberately five rather than one "looks
+    // right": the set is authored once and then rendered by every chart, chip and
+    // widget in the app, so the only thing that can catch a later ad-hoc edit is
+    // an assertion on the property that edit would break.
+
     @Test
-    fun `category colours are distinguishable from each other`() {
+    fun `category fills are distinguishable from each other`() {
         // The analytics chart draws one bar per category; two categories closer
         // than this read as the same bar. The pre-2026-07-31 palette had three
         // greens that failed exactly this check.
+        //
+        // `#57` a's harmonised set does NOT weaken this: it measures **99.4** at
+        // its worst pair (FITNESS/PROJECTS) against the previous set's 97.1, and
+        // it does so on half the lightness scatter. The threshold is unchanged --
+        // holding it is what forced the palette search to give up perfectly even
+        // hue spacing, because ten colours at ONE lightness cannot clear it.
         val entries = GoalCategory.entries.toList()
         for (i in entries.indices) {
             for (j in i + 1 until entries.size) {
@@ -148,11 +168,99 @@ class ThemePaletteTest {
     }
 
     @Test
-    fun `category colours are readable as text on a light surface`() {
-        // They are used as the percentage label and the icon tint, not only as fills.
+    fun `category dark twins are distinguishable from each other`() {
+        // The dark set is pastel by construction -- it has to clear a dark ground,
+        // which caps how far apart ten hues can sit in RGB terms -- so it cannot
+        // meet the light set's 90, and this floor is lower ON PURPOSE.
+        //
+        // The number is not tuned to the values it guards. Dark mode before
+        // `#57` a ran the light hexes through a fixed HSL-lightness lift; measured
+        // over all forty-five pairs, that lift produces **37.2** on this light set
+        // (and 57.6 on the one it replaced), while the authored twins produce
+        // **66.2**. 62 sits above both, so this fails for anyone who reverts to the
+        // derived set and passes for anything at least as separable as what
+        // shipped.
+        val entries = GoalCategory.entries.toList()
+        for (i in entries.indices) {
+            for (j in i + 1 until entries.size) {
+                val a = entries[i]
+                val b = entries[j]
+                val distance = rgbDistance(a.darkColorHex.parseHex(), b.darkColorHex.parseHex())
+                assertWithMessage("dark ${a.name} vs ${b.name}").that(distance).isGreaterThan(62.0)
+            }
+        }
+    }
+
+    @Test
+    fun `a category keeps its identity across schemes`() {
+        // The point of authoring the dark twin rather than computing it is that a
+        // category stays recognisably itself. That is a claim about HUE, and hue is
+        // the one thing a lightness transform cannot promise -- so assert it here
+        // rather than trusting that two hand-picked hexes look related.
+        //
+        // The widest gap in the shipped set is FITNESS at 8.7 degrees, where the
+        // prototype's own light and dark values disagree; 12 leaves that alone and
+        // still catches a twin pasted into the wrong row.
         GoalCategory.entries.forEach { category ->
-            val ratio = contrastRatio(category.defaultColorHex.parseHex(), Color.White)
-            assertWithMessage("${category.name} on white").that(ratio).isAtLeast(4.5)
+            val light = category.defaultColorHex.parseHex().hueDegrees()
+            val dark = category.darkColorHex.parseHex().hueDegrees()
+            val gap = abs(light - dark).let { min(it, 360.0 - it) }
+            assertWithMessage(
+                "${category.name}: light hue $light vs dark hue $dark",
+            ).that(gap).isLessThan(12.0)
+        }
+    }
+
+    @Test
+    fun `category fills are visible as shapes on every card tone`() {
+        // A FILL -- slice, bar, dot, icon tint -- is non-text, so WCAG 2.1 asks
+        // 3:1 and not 4.5:1. This set is authored at that floor deliberately: ten
+        // hues held at one lightness AND forced to 4.5:1 come out so dark they read
+        // as mud, which is the failure one over from `#57`'s crayons.
+        //
+        // The ink that IS text is derived, and the next test guards it.
+        cases.forEach { case ->
+            val tones = cardTonesOf(case.scheme)
+            GoalCategory.entries.forEach { category ->
+                val fill = category.fillFor(case.scheme)
+                tones.forEach { tone ->
+                    assertPair(case, "${category.name} fill on tone", fill, tone, min = 3.0)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `derived category ink is readable on every card tone`() {
+        // Runs the REAL `asInkOn` -- not a copy of its arithmetic -- over all
+        // fourteen schemes. That is why the solver is pure Kotlin and sits beside a
+        // composable wrapper rather than inside one: the thing shipped is the thing
+        // asserted.
+        cases.forEach { case ->
+            val tones = cardTonesOf(case.scheme)
+            GoalCategory.entries.forEach { category ->
+                val ink = category.fillFor(case.scheme).asInkOn(tones)
+                tones.forEach { tone ->
+                    assertPair(case, "${category.name} ink on tone", ink, tone, min = MIN_INK_CONTRAST)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `derived ink still handles a colour that is not one of ours`() {
+        // Life-area colours and user-picked hexes reach the same seam and have no
+        // authored twin, so the solver has to be total. Both endpoints of the
+        // lightness range are the interesting inputs: pure black cannot be darkened
+        // and pure white cannot be lightened.
+        cases.forEach { case ->
+            val tones = cardTonesOf(case.scheme)
+            listOf(Color.Black, Color.White, Color(0xFF5145CD), Color(0xFF00FF00)).forEach { odd ->
+                val ink = odd.asInkOn(tones)
+                tones.forEach { tone ->
+                    assertPair(case, "arbitrary ink on tone", ink, tone, min = MIN_INK_CONTRAST)
+                }
+            }
         }
     }
 
@@ -175,6 +283,41 @@ class ThemePaletteTest {
 
     private fun String.parseHex(): Color =
         Color(0xFF000000L or removePrefix("#").toLong(16))
+
+    /**
+     * The fill this category renders as under [scheme] — chosen the way the app
+     * chooses it, off the **rendered** surface.
+     *
+     * Not off `Case.dark`, which is a different question and gives a different
+     * answer: `AppMaterial.resolveDark` forces dark neo dark in both brightnesses,
+     * so the AURORA / DARK_NEO / **light** case carries an all-dark tone ladder. Reading
+     * the requested brightness there would test the light hex against a charcoal
+     * card and pass something the app never draws.
+     */
+    private fun GoalCategory.fillFor(scheme: ColorScheme) =
+        if (scheme.surface.luminance() < 0.5f) darkColorHex.parseHex()
+        else defaultColorHex.parseHex()
+
+    /**
+     * OKLab hue angle in degrees — the perceptual hue, not HSL's, because HSL hue
+     * shifts visibly when lightness moves, and the whole point of the twin check is
+     * that it survives a lightness move.
+     */
+    private fun Color.hueDegrees(): Double {
+        fun lin(c: Float): Double {
+            val v = c.toDouble()
+            return if (v <= 0.04045) v / 12.92 else ((v + 0.055) / 1.055).pow(2.4)
+        }
+        val r = lin(red)
+        val g = lin(green)
+        val b = lin(blue)
+        val l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b).pow(1.0 / 3.0)
+        val m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b).pow(1.0 / 3.0)
+        val s = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b).pow(1.0 / 3.0)
+        val aStar = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s
+        val bStar = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s
+        return (Math.toDegrees(atan2(bStar, aStar)) + 360.0) % 360.0
+    }
 
     /** Weighted RGB distance — plain Euclidean over-rates blue differences. */
     private fun rgbDistance(a: Color, b: Color): Double {

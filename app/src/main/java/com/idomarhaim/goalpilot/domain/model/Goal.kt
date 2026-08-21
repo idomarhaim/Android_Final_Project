@@ -163,14 +163,64 @@ data class Goal(
  * color and an [iconKey] the UI maps to a Material icon, so the domain layer
  * stays free of any Compose/Android types.
  *
- * The colours are a **categorical** palette: ten hues spread around the wheel so
- * no two categories can be confused when they sit next to each other as bars in
- * the analytics chart. The previous set had three greens (Fitness, Nutrition,
- * Finance) that were indistinguishable at bar width. Every value clears 4.5:1
- * against a light surface — they are used as text, not just fills — and
- * `String.toGoalAccent()` lifts them for dark surfaces.
+ * ## The palette is a **set**, not ten colours that happen to be listed together
  *
- * [Goal.colorHex] is persisted per goal, so changing a default here does not
+ * `#57` a. Ido's charts review of the `C12` prototype, on the set this replaces:
+ *
+ * > seven **primaries at full chroma with unevenly spaced hues** — individually
+ * > fine, but side by side in one donut nothing holds them together, which is why
+ * > they read as crayons.
+ *
+ * Measured, so the complaint is not impressionistic. What actually made the old
+ * set incoherent was **lightness scatter**, not hue: its OKLCH lightness ranged
+ * over **0.155** while this set ranges over **0.057**, and its hue gaps ran from
+ * **3.8° to 95.6°** against this set's **15.8° to 64.6°**.
+ *
+ * ## What came from the prototype, and what could not
+ *
+ * The source of truth is `docs/prototypes/2026-08-10-charts-presentation/index.html`,
+ * and **its hexes are not what shipped** — which is worth stating plainly, because
+ * the brief asked for them verbatim. Two things stopped that, and both are facts
+ * about this app rather than judgements about the design:
+ *
+ *  1. **It has seven categories and this app has ten.** `PROJECTS`, `NUTRITION` and
+ *     `SLEEP` have no counterpart there at all.
+ *  2. **Six of its seven miss 3:1 against `AuroraSurface` (`#D0E2F5`)**, the app's own
+ *     light ground — `FITNESS` lands at **2.48**. The prototype was drawn on a
+ *     browser page, not on this scheme, so nothing there had to clear it.
+ *
+ * So what ports is everything **except** lightness: each of the seven holds the
+ * prototype's OKLCH **hue to within 0.7°** and its **chroma to within 0.007** (six
+ * of them to within 0.002; `FITNESS` is the outlier at 0.0064, where sRGB simply
+ * offers less chroma at the lower lightness), and only its lightness
+ * moves — down, far enough to clear the floor, and by a *uniform* amount that
+ * happens to leave the set tighter than the prototype's own (0.057 against 0.105).
+ * The other three are synthesised numerically on hues that fill its widest gaps.
+ * Nothing here was picked by eye, and nothing was copied that would have failed.
+ *
+ * ## [defaultColorHex] is a FILL, and [darkColorHex] is its twin
+ *
+ * The old set cleared 4.5:1 on white because every one of its values was painted
+ * both as a slice and as 14 sp bold text. **This set does not**, and that is
+ * deliberate: ten hues held at one lightness *and* forced to 4.5:1 come out so
+ * dark they read as mud, which is the failure one over from crayons. So the roles
+ * are split — these hexes are the **fill** (slice, bar, dot, icon tint, gradient)
+ * and clear the 3:1 non-text floor on every card tone, while
+ * `String.toGoalInk()` derives the readable **ink** for the six places that paint
+ * a category as type. `ThemePaletteTest` guards both, and the fill guard is the
+ * repo's own existing standard for non-text — the same 3:1 it already asks of
+ * `outline`.
+ *
+ * [darkColorHex] is the same category on a dark ground, **authored** rather than
+ * computed, and that is the half with the most surprising measurement behind it.
+ * Before `#57` a, dark mode ran every hex through a fixed HSL-lightness lift. Over
+ * the old set that lift gave a minimum pairwise separation of **57.6**; over
+ * *this* set it gives **37.2**, because the lift's damage grows with how uniform
+ * its input is — flatten `#516AA6` to one lightness and it lands on top of the
+ * neutral. **Harmonising the light set makes the derived dark set worse.** The
+ * authored twins measure **66.2**, at a lightness spread of 0.084.
+ *
+  * [Goal.colorHex] is persisted per goal, so changing a default here does not
  * rewrite existing documents — an untouched goal keeps the colour it was created
  * with. Note that `AddEditGoalViewModel.save()` re-derives `colorHex` from the
  * category on *every* save, so an old goal picks the new default up the next time
@@ -194,21 +244,47 @@ enum class GoalCategory(
      */
     val label: String,
     val iconKey: String,
+    /** The category's **fill** on a light ground — slice, bar, dot, icon tint. */
     val defaultColorHex: String,
+    /** The same category on a dark ground. Authored, not derived; see the class KDoc. */
+    val darkColorHex: String,
 ) {
-    HEALTH("Health", "favorite", "#CF3636"),
-    FITNESS("Fitness", "fitness", "#B85107"),
-    SLEEP("Sleep", "sleep", "#3B3BA8"),
-    NUTRITION("Nutrition", "nutrition", "#26804A"),
-    RELATIONSHIPS("Relationships", "people", "#D6246E"),
-    CAREER("Career", "work", "#0F6FCB"),
-    PROJECTS("Projects", "project", "#7C4A21"),
-    LEARNING("Learning", "school", "#8B39C4"),
-    FINANCE("Finance", "finance", "#0B7285"),
-    OTHER("Other", "flag", "#64748B");
+    // Declaration order is the ORIGINAL one and is deliberately NOT the hue order:
+    // `AddEditGoalScreen` renders the category picker straight off `entries`, so
+    // sorting this list by hue would silently reorder a control nobody asked to
+    // change. The hue column is what makes the set readable as a set.
+    //
+    //                                   ── light fill ──  ── dark twin ──   hue
+    HEALTH("Health", "favorite", "#AA2925", "#F5A196"), //             27.2°
+    FITNESS("Fitness", "fitness", "#985D00", "#E7BE82"), //            67.8°
+    SLEEP("Sleep", "sleep", "#516AA6", "#84A8FD"), //                 266.0°
+    NUTRITION("Nutrition", "nutrition", "#347B47", "#8BCB98"), //     149.9°
+    RELATIONSHIPS("Relationships", "people", "#AC2F73", "#EEA0C6"), // 351.6°
+    CAREER("Career", "work", "#0861A7", "#95C4EE"), //                250.2°
+    PROJECTS("Projects", "project", "#73712B", "#BEBD65"), //         107.6°
+    LEARNING("Learning", "school", "#6B52D4", "#B6A6F5"), //          286.9°
+    FINANCE("Finance", "finance", "#007C76", "#7FCFC7"), //           188.9°
+    OTHER("Other", "flag", "#545E6E", "#AEB9C7"); //                 neutral
 
     companion object {
         fun fromName(name: String?): GoalCategory =
             entries.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: OTHER
+
+        /**
+         * The dark twin of a stored hex, or `null` when the hex is not one of ours.
+         *
+         * The seam that needs this is `String.toGoalAccent()`, which sees a
+         * **persisted hex** and not a category — [Goal.colorHex] is a column, and a
+         * life area's colour arrives through the same extension. So the twin is
+         * looked up rather than passed down, and anything unrecognised (a life-area
+         * colour, a hex a user picked, a goal created before `#57` a) falls back to
+         * the algorithmic lift that has always handled it.
+         */
+        fun darkTwinOf(lightHex: String): String? {
+            val key = lightHex.trim().removePrefix("#").uppercase()
+            return entries.firstOrNull {
+                it.defaultColorHex.removePrefix("#").uppercase() == key
+            }?.darkColorHex
+        }
     }
 }

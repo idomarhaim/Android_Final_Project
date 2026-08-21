@@ -37,6 +37,7 @@ fun GoalCard(
     modifier: Modifier = Modifier,
 ) {
     val accent = goal.colorHex.toGoalAccent()
+    val ink = goal.colorHex.toGoalInk()
     GpCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -94,7 +95,7 @@ fun GoalCard(
                         text = percentText(goal.progressPercent),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = accent,
+                        color = ink,
                     )
                 }
                 GpLinearProgress(
