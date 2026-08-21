@@ -79,12 +79,17 @@ only `performTextInput`: `performTextReplacement` and `performTextClearance` cal
 `getNodeAndFocus` too, so they raise the keyboard identically, and clearance is
 the one least likely to be *expected* to.
 
-**No AVD or device setting was changed.** `#58`'s option 3 (disable the
+**The fix needs no AVD or device setting.** `#58`'s option 3 (disable the
 emulator's soft keyboard) would also plausibly work, but it persists on the AVD
 and silently changes the ground under every other session sharing it. The wait
 needs nothing from the device, so it holds on CI and for a human running
 `adb shell am instrument` by hand. `--no-window-animation` was measured as an
 alternative and abandoned — see *Not done*, below.
+
+⚠️ **That is a statement about the fix, not about how tidily this session behaved.**
+I *did* leave the animation scales at `0.0` for about 90 minutes — see the
+correction at the end of this file. They are restored, and the AVD is back where
+the session found it.
 
 ### A test that would have caught it
 
@@ -172,8 +177,8 @@ Verified after the fix: the shade holds all four observed notifications
 | Layer | Result |
 |---|---|
 | **JVM unit** | **708 tests, 0 failures, 0 errors** (`:app:testDebugUnitTest --rerun-tasks`, so not a cached result) |
-| **Instrumented** | **190/190 green ×3 consecutive** on the final code, via `install -r` + `am instrument`; **13 green full runs** in total across the day's three builds |
-| **Targeted repro harness** | **20/20 green** on the exact two-class boundary that failed — against a measured control of **4 failures in 18 cycles**, so 20 clean cycles is ~0.7% likely by chance |
+| **Instrumented** | **190/190 green ×3 consecutive** at animation scale `1.0` (219–226 s each), via `install -r` + `am instrument`. A further 13 green full runs ran earlier with the scales at `0.0` — see the correction below |
+| **Targeted repro harness** | **20/20 green** at scale `1.0` on the exact two-class boundary that failed — against a measured control of **4 failures in 18 cycles**, so 20 clean cycles is ~0.7% likely by chance |
 | **Guard, negative control** | red for each of `performTextInput`, `performTextReplacement`, `performTextClearance` reintroduced one at a time, each naming the right file and line; green on a clean tree; both **without** `--rerun-tasks` |
 | **`dumpsys` evidence property** | 10 GoalPilot records still in the shade after the final run (4 observed + system summaries) |
 | Security rules (`firestore-tests`) | not touched by this change — no rules, DTO or function was modified |
@@ -214,8 +219,58 @@ emulator/host failure, not a test failure. Worth its own ticket if it recurs.
   making the animation instant, the repo already tells people not to use
   `connectedDebugAndroidTest` locally, and CI's emulator action already sets
   `disable-animations: true` — which is why CI never saw this. The wait works with
-  animation scales at `1.0`, which is how all 13 green runs were done.
+  animation scales at `1.0` — verified by a re-run at `1.0` after the correction below,
+  **not** by the 13 runs first reported here, which turned out to have animations off.
 - **The two failing tests' assertions** — out of scope by the brief, and they were
   never wrong. They are unchanged.
 - **A broader flake audit** — out of scope by the brief. The two recorded
   instances have their causes.
+
+---
+
+## ⚠️ Correction, same session, appended after the end-of-session device check
+
+**The claim *"all 13 green runs were done with animation scales at `1.0`"* was FALSE when
+written, and the sentences carrying it are corrected in place above rather than left to
+propagate by copying.** What is true is now true by *re-measurement*, not by those runs.
+
+**What happened.** The `--no-window-animation` arm (measured as a rival fix and rejected) works by
+setting `window_animation_scale`, `transition_animation_scale` and `animator_duration_scale` to
+`0`, and **restoring them when the run ends**. Two cycles of that arm hung and were killed by my
+own `timeout`, so they never reached the restore. The scales stayed at `0.0` for the rest of the
+evening, and **every verification run after ~19:55 inherited them** — including the 13 I then
+reported as evidence that the fix works with animations on.
+
+`Observed:` the end-of-session check printed `window_animation_scale=0.0`, and the wall-clock
+corroborates it independently — those runs took **140–171 s**, while a run at `1.0` takes
+**219–226 s**. The suite was ~35% faster because the animations it was supposedly waiting through
+were not running.
+
+**Why it matters rather than being a footnote.** It is the load-bearing claim of the whole fix.
+*"The wait works with animations on"* is the entire argument for rejecting `--no-window-animation`,
+and for the board note telling the `#57` briefs they inherit no device setting. Both were being
+asserted from runs that had animations **off** — i.e. from runs the rejected fix was silently
+applying.
+
+**Re-verified after restoring the scales to `1.0`:**
+
+| Check | Result |
+|---|---|
+| Boundary harness (`ComponentsLocaleTest` + `AiSectionUiTest`) | **20/20 green** at `1.0` |
+| Full suite | **190/190 green ×3 consecutive** at `1.0` (219 s, 223 s, 226 s) |
+| Scales after the run | `1.0` / `1.0` / `1.0` — the AVD is back where the session found it |
+| `dumpsys` evidence property | 10 GoalPilot records still posted |
+
+So the fix does hold with animations on; the earlier evidence for it simply was not evidence.
+
+**The generalisable bit, and it is nastier than this one instance.** *A control run that
+temporarily changes global state, killed before its restore, leaves every later measurement
+silently inside the arm you thought you had finished.* The rejected arm goes on running, unlabelled
+and unnoticed — and it makes the thing under test **pass**, so nothing goes red to tell you. Two
+cheap habits: **re-read the state you borrowed after any killed run**, not just at the end; and
+treat a **sudden speed-up** in a suite you did not make faster as a signal about the environment,
+not a reward.
+
+`Untested:` whether any of the earlier 13 runs would have failed at `1.0`. They were not re-run at
+their own builds, and the three builds differ — so the honest reading is that those runs measured
+something other than what they claimed, not that they were wrong about the outcome.

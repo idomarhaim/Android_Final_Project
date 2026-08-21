@@ -21,7 +21,16 @@ before your first write. Normative rule:
 > 📱 **NO AVD OR DEVICE SETTING WAS CHANGED — the `#57` briefs inherit nothing.** `#58` offered
 > disabling the emulator's soft keyboard (its option 3); I did not take it, precisely because it
 > persists and changes the ground under whoever runs next. Animation scales are still `1.0`, the
-> IME is still enabled, and all 13 green runs were done that way.
+> IME is still enabled — **but read the next line before trusting the first.**
+>
+> ⚠️ **I DID leave the animation scales at `0.0` for about 90 minutes, and did not notice until
+> the end-of-session check.** `--no-window-animation` (measured as a rival fix and rejected)
+> sets the three scales to `0` and restores them at the end of a run; two cycles were killed by
+> my own timeout and never reached the restore, so every run after ~19:55 inherited `0.0` —
+> including the ones I reported as proof the fix works with animations **on**. **Restored to
+> `1.0` and re-verified: 20/20 on the boundary harness and 190/190 ×3 on the full suite, at
+> `1.0`.** The AVD is back where this session found it; verify with
+> `adb shell settings get global window_animation_scale` rather than taking my word for it.
 >
 > ⚠️ **But the AVD's app data is gone, and the in-app sign-in with it.** Recovering a wedged
 > `Pixel_10_Pro_XL` needed a hard kill and a `-no-snapshot-load` cold boot; the system Google
