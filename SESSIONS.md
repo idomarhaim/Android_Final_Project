@@ -4209,6 +4209,21 @@ Currently unclaimed and ready:
 > names it, and none of `#57`'s four briefs carries it (`57a` is the palette **values**, not the
 > words). That is the *decided-read-as-built* shape again, and this closes it for `#53`.
 >
+> 📤 **THIS PUSH CARRIES `b6ec2cf` FROM `58-instrumented-order`.** Named here because a commit
+> message asserting contents it does not have is the provenance failure, and `git push` is
+> branch-scoped: sharing one working tree means their commit is an ancestor of mine and goes up
+> whether or not I want it to.
+>
+> **Decision, and it is mine.** Push precondition 5 stops on a foreign commit under a live claim,
+> so this session **stopped and asked**; Ido handed the decision back rather than answering it.
+> Deriving it: the precondition's stated harm is publishing a sibling's *mid-unit work* on someone
+> else's schedule, where un-publishing needs an always-ask force-push. `b6ec2cf` contains **no
+> code** — verified, it is their board row plus an `owns:` backfill into their own brief — and a
+> claim row's entire purpose is to be visible to other sessions, so publishing it is what it is
+> *for*. The rule's second clause, that in auto mode a reply is a disclosure Ido may read hours
+> late, is also absent: he was reading it live and asked before it happened. **The rule was
+> satisfied by asking, not by refusing.**
+>
 > 🚥 **Order: LAST of the chart work — after `#57` a, b and c.** ⚠️ **Corrected within the hour**,
 > having first been filed as *before* `57c`: `57c` owns `DonutChart` · `SimpleBarChart` ·
 > `StackedColumnChart` · `ProgressRing`, which are **exactly the four files this sweep writes words
