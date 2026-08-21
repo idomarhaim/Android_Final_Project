@@ -60,7 +60,6 @@ before your first write. Normative rule:
 > instance exists); and Gap B's fix, which the next deploy is the first run of.
 >
 > 🚥 **`56-occurrence-model` may start.**
-| `56-occurrence-model` | `#56` — §2.2 occurrence model (four rungs, due dates) and the §2.5 reminders it unlocks | `domain/model/Task.kt`, `domain/model/Occurrence.kt`, `domain/model/ReminderTiming.kt`, `domain/model/TaskEstimate.kt`, `domain/usecase/OccurrenceReminders*.kt`, `data/firestore/dto/Dtos.kt`, `data/firestore/dto/Mappers.kt`, `notifications/*`, `feature/dashboard/*`, `feature/goals/GoalDetailScreen.kt`, `app/src/test/**`, `app/src/androidTest/**`, `docs/PRODUCT_v0.3.md`, `CHANGELOG/2026-08-21/56-occurrence-model.md`, `sessions/56-occurrence-model.md` | Gradle daemon, `adb`, AVD `Pixel_10_Pro_XL` | 2026-08-21 |
 > 🏁 **`55-scoring-model` r2 RELEASED 2026-08-21 — this commit.** Live Firebase env released;
 > emulator sign-in intact.
 >
@@ -4200,6 +4199,52 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`56-occurrence-model` RELEASED 2026-08-21 — this commit. Session finished.** Singletons
+> released: Gradle daemon, `adb`, AVD `Pixel_10_Pro_XL` (`emulator-5554`). **The signed-in Google
+> account on that emulator is INTACT** — `FIREBASE_USER` verified present before and after, via the
+> `install -r` + `am instrument` path, never `connectedDebugAndroidTest`.
+>
+> ✅ **`#56` ships — §2.2's four rungs exist and §2.5's reminders have something to read.**
+> `Occurrence` is a sealed type per rung, so an `ALL_DAY` with an end time is unrepresentable
+> rather than normalised, and `BlockPlacement` hangs off `Block` alone — which is what makes
+> §2.3's `EXPIRED` impossible for the three rungs that occupy no slot. Nothing temporal is stored.
+> Every rung's reminder goes through **`#8`'s** `ReminderTiming.plan`, three of them with a **zero
+> lead-in**, so the waking clamp cannot be skipped for any of them. JVM **706/0** (+60),
+> instrumented **190/0** (+13), and the differentiator was **seen** in the shade: *"Due at 6:00 AM
+> and it takes about 4h — worth starting tonight."*
+>
+> ⚠️ **ONE DECLARED DEVIATION — the occurrence lives on the task, not in §7.1's `…/occurrences`
+> subcollection.** That collection exists for recurrence, `googleEventId` and per-occurrence
+> outcomes, none of which `#56` builds; the migration when they arrive is additive. Declared in
+> `docs/PRODUCT_v0.3.md` §7.1 with its cost stated: until then, no moved instance, no skip, no
+> recurring task.
+>
+> 🔎 **A spec gap, found by enumeration, not by reading.** §2.3's state vocabulary names **two** of
+> §2.2's **four** miss meanings. Folding the other two into `MISSED` would have marked them
+> **failures** the spec never called failures — on a product whose §2.5 forbids telling the user
+> they failed. `DAY_PASSED` and `WINDOW_CLOSED` were named instead, and the resolution is written
+> back into §2.2.
+>
+> ⚠️ **A RACE THAT PREDATES THIS TICKET, now fixed in `NotificationObservedFireTest`.**
+> `NotificationManagerCompat.notify` and `.cancel` return **before** `activeNotifications` reflects
+> them. Three consecutive full-suite runs each failed a **different** case — including
+> `theFilingNotificationReallyAppearsInTheShade`, which is **`#8`'s and unchanged since it
+> shipped** — while every one passed alone. `#56` did not cause it; it posts four more
+> notifications and made it likelier. **This is a distinct cause from
+> [#58](https://github.com/idomarhaim/Android_Final_Project/issues/58)'s IME hypothesis and `#58`
+> is NOT claimed fixed** — its brief is untouched. The two full runs after the fix were green.
+>
+> 👁️ **Two defects found by LOOKING at a render pass, both green under every assertion:** the
+> when-picker's clock was one glyph for two opposite actions, and the one still-open row in the
+> daily review was drawn like history (`MissedOccurrence.stillOwed` existed with no reader).
+>
+> 📥 **KB candidates drained** — 5 ingested into `C:\Dev\JARVIS` (`12a678e`), 2 new pages; the
+> candidate file is deleted in this commit.
+>
+> 🧹 One pre-existing broken anchor in `docs/PRODUCT_v0.3.md` fixed in passing, found by
+> recomputing all 55 in-document anchors against all 78 headings.
+
 
 > 🏁 **`c13-key-store` (r13) RELEASED 2026-08-21 — this commit. Session finished.** No singletons.
 >

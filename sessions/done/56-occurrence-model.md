@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 issue: 56
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt
@@ -19,6 +19,8 @@ owns:
   - CHANGELOG/<today>/56-occurrence-model.md
   - sessions/56-occurrence-model.md
 created: 2026-08-20
+completed: 2026-08-21
+commit: c2c9171
 ---
 
 # `#56` — the occurrence model: §2.2's four rungs and the §2.5 reminders they unlock
