@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r6) | green main again — #8's notification test breaks CI; plus answering Ido on the key, the prototypes and auto-delivery | `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/NotificationObservedFireTest.kt` · `CHANGELOG/2026-08-20/c13-key-store.md` | **Gradle daemon · emulator-5554** | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
