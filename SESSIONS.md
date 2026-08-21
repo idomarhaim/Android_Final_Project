@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `58-instrumented-order` | `#58` — make the instrumented suite trustworthy as a gate (order/state dependence between tests) | `app/src/androidTest/**` · `.github/workflows/instrumented-tests.yml` · `docs/OPERATIONS.md` · `sessions/58-instrumented-order.md` · `CHANGELOG/2026-08-21/58-instrumented-order.md` | **Gradle daemon · adb · AVD** — held for repeated full-suite runs | 2026-08-21 |
 > 🏁 **`55-scoring-model` r5 RELEASED 2026-08-21 — this commit.** No singletons held. Final round.
 >
 > ⚠️ **`#58`'s option 4 was WRONG and is withdrawn.** I suggested `cancelAll()` in `@Before`,

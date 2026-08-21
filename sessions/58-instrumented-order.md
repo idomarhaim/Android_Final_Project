@@ -2,8 +2,14 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 58
+owns:
+  - app/src/androidTest/**
+  - .github/workflows/instrumented-tests.yml
+  - docs/OPERATIONS.md
+  - sessions/58-instrumented-order.md
+  - CHANGELOG/2026-08-21/58-instrumented-order.md
 created: 2026-08-21
 ---
 
