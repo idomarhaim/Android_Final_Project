@@ -52,6 +52,47 @@ Region (everything)      us-central1
 Debug SHA-1              F1:D0:96:4D:54:41:D5:99:86:7D:AE:83:0F:77:16:23:BB:64:DB:3F
 ```
 
+### ✅ Standing authorisation — Firebase actions that cost nothing
+
+**Ido, 2026-08-21:** *"I already gave you authorisation to do any Firebase action that does not
+require me to pay money — I want that written where it needs to be."*
+
+This is the canonical record of that grant. It is **project-scoped**: it says nothing about
+outward actions in general, which stay draft-then-ask
+(`C:\Dev\JARVIS\rules\outward-action-governance.md`).
+
+**Permitted without asking, in either mode:**
+
+| Action | Why it is free |
+|---|---|
+| `firebase deploy --only functions` | deploying is not billed; Cloud Build and Artifact Registry usage for a project this size sits inside the free allowances |
+| `firebase deploy --only firestore:rules` · `--only storage` | rules deploys are free outright |
+| `firebase emulators:start`, `firestore-tests`, any local emulator run | never leaves the machine |
+| `firebase functions:log`, `projects:list`, `functions:list`, any read | reads |
+
+**Still always-ask, and none of these is a judgement call:**
+
+- **anything that changes the billing plan or enables a paid API** — that is the boundary the
+  grant is drawn around, so a command that moves it cannot be covered by it;
+- **creating a resource that bills by existing** rather than by use (a new region, a
+  provisioned instance, a scheduled function that runs regardless of traffic);
+- **deleting anything** — data, a function, a bucket, a rules ruleset. Deletions are
+  always-ask on their own account, everywhere, and this grant does not touch that;
+- **project settings, IAM, visibility, adding members**;
+- **writing to production *data*** as an act rather than as a side effect of using the app.
+
+**Honest limit, stated rather than smoothed over.** The project is on **Blaze** (v2 functions
+require it), so *"costs nothing"* means *"inside the free allowance at this project's size"*,
+not *"cannot be billed"*. A deploy pushes a container build; at one developer's cadence that is
+free, and at a thousand deploys a day it would not be. If a session ever has reason to think a
+Firebase action would leave the free tier, that is the always-ask list above, whatever this
+table says.
+
+**What this changed.** Before 2026-08-21 every deploy stopped and waited for Ido, including the
+ones that only re-published code he had already approved — which is how `#55` shipped a client
+that the deployed functions could not read (see that session's changelog §4.2). Capability was
+never the gate; the asking was.
+
 ### OAuth consent screen — current state
 
 ```

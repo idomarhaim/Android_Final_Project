@@ -53,6 +53,13 @@ with per-session briefs in `sessions/`. Account of the freeze itself:
 
 - **[docs/OPERATIONS.md](docs/OPERATIONS.md) — start here if you are a new session.**
   Live project ids, environment traps, what's left, and how to verify it.
+  - ✅ **Firebase actions that cost nothing are standing-authorised** (Ido, 2026-08-21) —
+    `deploy --only functions` / `--only firestore:rules` / `--only storage`, emulators, logs
+    and reads, in either mode. Anything that **moves the billing plan, provisions a resource
+    that bills by existing, deletes anything, or touches project settings or IAM** stays
+    always-ask. The grant, its boundary and its honest limit:
+    [OPERATIONS.md § *Standing authorisation*](docs/OPERATIONS.md#-standing-authorisation--firebase-actions-that-cost-nothing).
+    It is **project-scoped** and changes nothing about outward actions in general.
 - **[SESSIONS.md](SESSIONS.md) — session claim board. If this file exists, read it
   before your first edit.** Not "if someone else may be working here": whether
   they are is what the board tells you. Claim before your first write.

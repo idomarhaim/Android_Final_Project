@@ -326,9 +326,21 @@ Buttons are **repeat-tappable with a running tally**.
 > the new client writes neither field. So an app build that reaches a device ahead of the
 > functions makes every user's total **fall** as they tick tasks.
 > `Observed:` 2026-08-21 on `emulator-5554` against the live project — completing one task
-> took the stored total from **70 → 40** instead of 70 → 115. The new `pointsFromFacts` reads
-> the union of banked facts and un-migrated legacy tasks, so it is correct for both shapes,
-> and the projection is idempotent — deploying it repairs the number on the next write.
+> took the stored total from **70 → 40**. The new `pointsFromFacts` reads the union of banked
+> facts and un-migrated legacy tasks, so it is correct for both shapes, and the projection is
+> idempotent — deploying it repairs the number on the next write.
+>
+> ✅ **DEPLOYED 2026-08-21**, under the standing Firebase grant
+> (`docs/OPERATIONS.md` § *Standing authorisation*). The total recovered to **75**, and the
+> five-point difference from the original 70 is the point of the ticket rather than a defect:
+> the one migrated task is now priced from its **105 recorded minutes** (`round(105/3) = 35`)
+> instead of the **30** a word-count heuristic gave it.
+>
+> ⚠️ **So "nothing already stored is re-priced" is too strong, and this is the correction.**
+> A legacy task with **no** stored duration round-trips exactly (`p → 3p minutes → p`) and is
+> untouched — that identity is what licenses the no-backfill decision and it holds. A legacy
+> task **with** a stored duration re-prices to what its minutes are actually worth, which is
+> §1.4 doing what it says. Expect a user's total to drift as their old tasks are next ticked.
 >
 > **One claim here is stale in the *other* direction and is corrected below:** §1.4 cites
 > `TaskRepositoryImpl.kt:120-127` as a **live defect** — a running accumulator over `task.points`

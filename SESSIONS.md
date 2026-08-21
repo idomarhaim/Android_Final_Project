@@ -15,6 +15,29 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`55-scoring-model` r2 RELEASED 2026-08-21 — this commit.** Live Firebase env released;
+> emulator sign-in intact.
+>
+> ✅ **Standing Firebase grant is written down** — canonical text in `docs/OPERATIONS.md` §2,
+> pointer in `AGENTS.md`, and `CLAUDE.md`'s now-false *"the deploy is gated by Ido's
+> authorisation"* **deleted rather than hedged**. It is **project-scoped**;
+> `outward-action-governance.md` is untouched. Always-ask survives for the billing plan, paid
+> APIs, resources that bill by existing, **deletions**, project settings and IAM.
+>
+> 🚀 **Functions DEPLOYED** — 6/6, one created. **`projectPointsOnTaskWrite` was never exported
+> from `index.ts`** and would have deployed as nothing at all: `tsc` green, tests green,
+> function absent. Caught by printing the built module's export list instead of reading the
+> source. Ido's total **40 → 75**.
+>
+> ⚠️ **75, not 70, and r1's *"nothing already stored was re-priced"* is CORRECTED.** A legacy
+> task with **no** duration round-trips exactly; one **with** a duration re-prices to its real
+> minutes — the inversion working. Expect totals to drift as old tasks are next ticked.
+>
+> 🎫 **[#58](https://github.com/idomarhaim/Android_Final_Project/issues/58) opened** — the
+> instrumented suite is order-dependent (a different test fails each full run, each passes
+> alone), with a concrete IME hypothesis. **Not fixed here:** its own unit of work.
+>
+> 🚥 **`56-occurrence-model` may start.**
 > 🏁 **`55-scoring-model` RELEASED 2026-08-21 — this commit.** Singletons released: Gradle
 > daemon, `adb`, AVD `Pixel_10_Pro_XL` (`emulator-5554`). **The signed-in Google account on
 > that emulator is INTACT** — the instrumented run took the `install -r` + `am instrument`

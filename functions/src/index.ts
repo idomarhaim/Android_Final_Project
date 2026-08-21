@@ -29,7 +29,11 @@ initializeApp();
  * These are the first Firestore triggers in this file; everything above is an HTTPS
  * callable the client invokes directly.
  */
-export { projectPoints, projectChallengeScore } from "./projection";
+// `projectPointsOnTaskWrite` is #55's second registration and is NOT optional: a task
+// DELETED while done removes its fact in the same batch, but a task completed BEFORE #55
+// has no fact to delete -- only its own legacy `done` field, which the completionFacts
+// trigger never sees. Omit it and those totals stop tracking their own deletions.
+export { projectPoints, projectPointsOnTaskWrite, projectChallengeScore } from "./projection";
 
 // `classify`'s validator (spec §3.4), in its own Firebase-free module so
 // `test/classify.test.mjs` can run it with no emulator — same arrangement as
