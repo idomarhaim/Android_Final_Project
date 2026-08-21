@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 57
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialSpec.kt
@@ -18,6 +18,26 @@ owns:
   - CHANGELOG/2026-08-22/57b-backgrounds-and-combinations.md
   - sessions/57b-backgrounds-and-combinations.md
 created: 2026-08-21
+closed: 2026-08-22
+commit: 9e9fdff
+result: |
+  Shipped as A -- a background x material grid -- because the A/B fork COLLAPSED under the
+  derivation-closure check rather than being adjudicated: both designs write one quantity
+  (`GpMaterialSpec.backdrop`), so B's two states are two VALUES of A's enum. MATCH is native
+  canvas, GLOW is shared canvas. Decision taken by the session per derivable-decision.md and
+  recorded as the session's, Ido's to overturn.
+
+  Neo does NOT survive a lit ground -- by design, stated in AppBackground's KDoc and in a live
+  consequence line, and seen on device. The converse (glass on a plain ground) ships too and was
+  not in the brief.
+
+  TWO PRE-EXISTING DEFECTS found and fixed, neither in the brief:
+   1. every screen's Scaffold painted an opaque containerColor over gpPage, so no ground had
+      ever been visible app-wide -- the literal cause of "the same backgrounds aren't there".
+      MaterialRenderPass had the same gap, so the two instruments agreed with each other.
+   2. glass in dark mode: body text at 2.55-2.78:1 on its own native ground.
+
+  JVM 717/0, instrumented 194/0, 80 render frames. #57 stays OPEN -- 57c and 57d are still ready.
 ---
 
 # `#57` b — backgrounds, and letting the user combine them with the blocks

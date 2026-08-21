@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57b-backgrounds-and-combinations` | [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57) b — backgrounds as an axis, and combining them with the materials | `domain/model/AppBackground.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `ui/theme/MaterialSpec.kt` · `ui/theme/Theme.kt` · `ui/components/MaterialPicker.kt` · `MainActivity.kt` · `feature/settings/SettingsScreen.kt` · `feature/settings/SettingsViewModel.kt` · `app/src/test/java/.../ThemePaletteTest.kt` · `CHANGELOG/2026-08-22/57b-backgrounds-and-combinations.md` · `sessions/57b-backgrounds-and-combinations.md` | Gradle daemon + git index; **AVD `Pixel_10_Pro_XL` (`emulator-5554`) HELD from 2026-08-22 for the render pass** — board had zero live rows when taken | 2026-08-22 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >
@@ -4241,6 +4240,47 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`57b-backgrounds-and-combinations` RELEASED 2026-08-22 — `9e9fdff`.** No singletons held:
+> AVD `Pixel_10_Pro_XL` is free, adb and the Gradle daemon are free.
+>
+> 📱 **NO AVD OR DEVICE SETTING WAS CHANGED, and no sign-in was destroyed.** The render pass ran
+> via `adb install -r` + `am instrument`, **not** `connectedDebugAndroidTest`, so the app was
+> never uninstalled. Animation scales checked at `1.0` before starting and left there
+> (`adb shell settings get global window_animation_scale` — verify rather than take my word).
+> One leftover: the app and its androidTest APK are installed on `emulator-5554`, and
+> `/sdcard/Android/data/com.idomarhaim.goalpilot.debug/files/render-pass` holds **80 PNGs** the
+> next session may delete freely.
+>
+> ⚠️ **TWO PRE-EXISTING DEFECTS WERE FIXED HERE, and both change how the app LOOKS — read this
+> before blaming your own ticket for a visual change.**
+>
+> 1. **Every screen's `Scaffold` was painting an opaque fill over `Modifier.gpPage`**, so the
+>    per-material grounds had never been visible on any screen since `gpPage` was written. All
+>    twelve `Scaffold(` call sites and ten `TopAppBar`s are now `Color.Transparent`
+>    (`DashboardScreen` already was — that was the tell). **Every screen in the app now has a
+>    visible ground under glass and liquid glass where it had a flat colour before.**
+> 2. **Glass and liquid glass in DARK mode have deeper panels on a quieter ground.** Their
+>    `tintFloor` was a bloom rather than a floor and body text measured **2.55–2.78:1**; the dark
+>    ground alpha went `0.55 → 0.42` because the port took the prototype's hue *selection* and not
+>    its *luminance*. **Light schemes, neo and dark neo are all untouched.**
+>
+> 🔬 **`ThemePaletteTest` gained a `Ground` matrix (4 skins × 4 materials × 4 backgrounds × 2
+> brightnesses).** If you change a `tintFloor`, a `surface` alpha or anything in `backdropFor`,
+> that suite is what tells you. `GpBackdrop.colorAt` is the JVM model it runs on — it is a
+> **model** of `gpPage`, not `gpPage`, and its KDoc names the four changes that would make the two
+> drift silently.
+>
+> ⚠️ **`#57` c and `#57` d render everything this changed.** `57c-chart-volume-and-raised` adds a
+> raised-3D axis on top of the material; the plate treatment in `neoSpec` is the code it will sit
+> beside, and `AppBackground.isLit(material)` is the predicate it probably wants rather than a
+> second `when`.
+>
+> 🧾 **A trap that cost three runs, recorded so the next session does not pay it:** three render
+> passes came back **byte-identical** (21 157 477 bytes) because only the *androidTest* APK was
+> being reinstalled while the change under test lived in the *main* one. It looks exactly like
+> "the fix did nothing". Reinstall **both**, and read the byte count, not the images.
+
 
 > ⚠️ **`57a-category-palette` CORRECTION 2026-08-22 — this commit.** The release note below says
 > *"no dark blue neo is CONFIRMED"* and names `RAMP_GROUND_SATURATION = 0.08f` as its cause,
