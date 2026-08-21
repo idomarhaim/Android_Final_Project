@@ -595,7 +595,12 @@ private fun GoogleTasksImportDialog(
                                                     ?.let { "→ $it" }
                                                     ?: "→ new goal “${proposal.newGoalTitle}”",
                                             )
-                                            append(" · ${proposal.points} pts")
+                                            // `#55`: the row says what the model JUDGED, not
+                                            // a currency it never emitted. Points are
+                                            // computed from this and the duration beside it
+                                            // at the write, so printing them here would be a
+                                            // third number to keep in step.
+                                            append(" · ${proposal.difficulty.name.lowercase()}")
                                             append(" · ${durationLabel(proposal.minutes)}")
                                             proposal.lifeAreaName?.let {
                                                 append(

@@ -8,6 +8,7 @@ import com.idomarhaim.goalpilot.data.security.AiCredentialStore
 import com.idomarhaim.goalpilot.data.security.DefaultAiProviderRepository
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
@@ -107,34 +108,40 @@ class RecommendationRepositoryFallbackTest {
     }
 
     @Test
-    fun `scoreTask falls back to a local POINT estimate, and reports no duration`() = runTest {
+    fun `scoreTask offline reports no judgement and no duration`() = runTest {
         every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
 
         val result = repo.scoreTask("Run five kilometres before work")
 
         assertThat(result).isInstanceOf(Resource.Success::class.java)
         val estimate = (result as Resource.Success).data
-        // 5 words → 5 + 5*3 = 20, inside the 5..50 range the function is prompted for.
-        // Points still fall back (spec §8); #9 does not touch scoring.
-        assertThat(estimate.points).isEqualTo(20)
-        // The duration does NOT. This asserted 60 before #9 — 20 points × 3 — which is
-        // the app deriving how long your life took from a word count and storing it as
-        // though a model had said so. Absence is what the caller can act on: the box
-        // asks, and a skipped answer is stored as DurationSource.UNKNOWN (§3.4).
+        // `#55`. This used to assert 20 — `5 + 3×words`, the offline point heuristic — and
+        // §1.4 retired it outright: a title's word count is not evidence about the work.
+        // ROUTINE is ×1.0, so what comes back here is the ABSENCE of a judgement rather
+        // than a guess at one, and the task is priced on whatever minutes the user gives.
+        assertThat(estimate.difficulty).isEqualTo(Difficulty.ROUTINE)
+        // The duration is absent for the same reason it has been since #9: nobody spoke.
+        // The box asks, and a skipped answer is stored as DurationSource.UNKNOWN (§3.4).
         assertThat(estimate.minutes).isNull()
     }
 
     @Test
-    fun `scoreTask fallback stays within the 5 to 50 point range`() = runTest {
-        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+    fun `the offline answer does not vary with the title, because it is not an estimate`() =
+        runTest {
+            every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
 
-        val long = repo.scoreTask(List(40) { "word" }.joinToString(" "))
-        val short = repo.scoreTask("Stretch")
+            val long = repo.scoreTask(List(40) { "word" }.joinToString(" "))
+            val short = repo.scoreTask("Stretch")
 
-        // 40 words → 5 + 120 clamped to 50; 1 word → 5 + 3 = 8.
-        assertThat((long as Resource.Success).data.points).isEqualTo(50)
-        assertThat((short as Resource.Success).data.points).isEqualTo(8)
-    }
+            // The old heuristic gave these 50 and 8 — two different "estimates" of work it
+            // had no information about. That divergence WAS the defect: it made a fabricated
+            // number look like a considered one. Now they are identical, and identical is
+            // what "nothing was measured" should look like.
+            assertThat((long as Resource.Success).data.difficulty).isEqualTo(Difficulty.ROUTINE)
+            assertThat((short as Resource.Success).data.difficulty).isEqualTo(Difficulty.ROUTINE)
+            assertThat(long.data.minutes).isNull()
+            assertThat((short as Resource.Success).data.minutes).isNull()
+        }
 
     @Test
     fun `a call that never reaches a provider is reported as the local rung`() = runTest {

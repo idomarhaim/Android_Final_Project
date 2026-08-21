@@ -25,10 +25,45 @@
  * disagree; that fixture is what stops them.
  */
 
-/** One task, as the projection needs to see it. Extra Firestore fields are ignored. */
-export interface TaskFact {
+/** §1.4's difficulty multipliers, mirroring `domain/model/Difficulty` — one table, two languages. */
+const MULTIPLIERS: Record<string, number> = {
+  LIGHT: 0.75,
+  ROUTINE: 1.0,
+  DEMANDING: 1.5,
+};
+
+/**
+ * A banked completion, as stored at `users/{uid}/completionFacts/{taskId}` (#55, §1.4).
+ *
+ * It carries the **inputs**, never the number. `pointsOf` below is the whole of the
+ * arithmetic, and it mirrors `TaskScoring.pointsFor` on the client byte for byte in
+ * behaviour; `shared-fixtures/derived-state.json` is what holds the two together.
+ */
+export interface CompletionFact {
+  minutes?: number | null;
+  difficulty?: string | null;
+}
+
+/**
+ * A task, as the projection needs to see it **when it has no fact document**.
+ *
+ * This is the pre-#55 shape and it is a **migration** reader, not the live one: a task
+ * completed before the fact collection existed carries `done` + `points` on its own document
+ * and has never been re-ticked. Counting it here is what stops every user's lifetime total
+ * collapsing the moment this function deploys — the alternative is a backfill write over
+ * every task in every account, for a number that is already correct.
+ */
+export interface LegacyTaskFact {
   done?: boolean;
   points?: number | null;
+}
+
+/** `round(minutes / 3) × difficulty`, rounded to an integer currency (§1.4). */
+export function pointsOf(fact: CompletionFact): number {
+  const minutes = Number(fact?.minutes);
+  if (!Number.isFinite(minutes)) return 0;
+  const multiplier = MULTIPLIERS[String(fact?.difficulty ?? "ROUTINE").toUpperCase()] ?? 1.0;
+  return Math.round(Math.round(minutes / 3) * multiplier);
 }
 
 /** A participant's self-reported measurement for one challenge. */
@@ -37,18 +72,37 @@ export interface ReportFact {
 }
 
 /**
- * Total points = the sum of `points` over the **done** tasks, floored at zero.
+ * Total points = the sum over **banked completion facts**, plus the pre-#55 tasks that have
+ * no fact yet, floored at zero.
  *
- * Mirrors what the Kotlin client shows the owner, who reads the same facts directly out of
- * the offline cache and never waits for this function. The floor is not defensive tidiness:
- * task point values are editable, so a fact set whose sum is negative is reachable, and a
- * negative total would run `levelForPoints` below level 1.
+ * ### Why the second argument exists, and when it will stop mattering
+ *
+ * §1.4 moved the completion into its own document and banked its **inputs** there, so the
+ * live sum is over [facts] alone. A task completed *before* that change carries `done` and
+ * `points` on the task document and no fact — and it stays that way until something writes
+ * it, because #55 deliberately performs no backfill. So the total is the union of the two,
+ * keyed by task id: [legacyTasks] is a map so that a task which HAS been re-ticked since the
+ * migration is counted once, from its fact, and never twice.
+ *
+ * As accounts migrate through ordinary use the legacy half empties by itself, and this
+ * argument becomes a list of zeroes. It is not a permanent second source of truth; it is the
+ * old one, draining.
+ *
+ * The floor is not defensive tidiness: durations are editable, so a fact set whose sum is
+ * somehow negative is reachable, and a negative total would run `levelForPoints` below 1.
  */
-export function pointsFromTasks(tasks: readonly TaskFact[]): number {
-  const total = tasks.reduce(
-    (sum, t) => (t?.done === true ? sum + (Number(t.points) || 0) : sum),
-    0,
-  );
+export function pointsFromFacts(
+  facts: Readonly<Record<string, CompletionFact>>,
+  legacyTasks: Readonly<Record<string, LegacyTaskFact>> = {},
+): number {
+  let total = 0;
+  for (const fact of Object.values(facts)) total += pointsOf(fact);
+  for (const [taskId, task] of Object.entries(legacyTasks)) {
+    // A fact wins over the legacy fields on the same task -- the fact is what was actually
+    // banked, and the legacy fields are what the migrating write is about to clear.
+    if (taskId in facts) continue;
+    if (task?.done === true) total += Number(task.points) || 0;
+  }
   return Math.max(0, total);
 }
 

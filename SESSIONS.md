@@ -15,7 +15,42 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `55-scoring-model` | `#55` — §1.4 points inversion + §1.5 `goalEdges` (model migration) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt`, `TaskEstimate.kt`, `ProgressSummary.kt`, `DerivedProgress.kt`, `Goal.kt`, `data/firestore/TaskRepositoryImpl.kt`, `data/firestore/dto/Dtos.kt`, `data/firestore/dto/Mappers.kt`, `data/remote/RecommendationRepositoryImpl.kt`, `domain/usecase/SummaryUseCase.kt`, `feature/goals/GoalDetailViewModel.kt`, `functions/src/projection.ts`, `firestore.rules`, `app/src/test/**`, `app/src/androidTest/**`, `docs/PRODUCT_v0.3.md`, `sessions/55-scoring-model.md`, `CHANGELOG/2026-08-21/55-scoring-model.md` | Gradle daemon, adb, device | 2026-08-21 |
+> 🏁 **`55-scoring-model` RELEASED 2026-08-21 — this commit.** Singletons released: Gradle
+> daemon, `adb`, AVD `Pixel_10_Pro_XL` (`emulator-5554`). **The signed-in Google account on
+> that emulator is INTACT** — the instrumented run took the `install -r` + `am instrument`
+> path, never `connectedDebugAndroidTest`.
+>
+> ✅ **`#55` ships — §1.4 and §1.5 as one migration.** Points became a **view of effort**
+> (`round(minutes / 3) × difficulty`), the `5..50` cap is deleted at both ends,
+> `heuristicPoints` is retired with no offline substitute, a completion is its own document
+> banking its **inputs**, and `goalEdges` replaced `Task.progressContribution`. The model can
+> no longer emit a point value — four sites closed across the prompt, the validator and both
+> client parsers. **No backfill:** a legacy point value round-trips through minutes to itself
+> exactly, so nothing already stored was re-priced.
+>
+> ⚠️ **DEPLOY THE CLOUD FUNCTIONS BEFORE THIS APP BUILD REACHES A DEVICE.** The deployed
+> projection reads `done` + `points`, which the new client no longer writes. `Observed:`
+> 2026-08-21 on the live project — one completion took the stored total **70 → 40** instead of
+> 70 → 115. It repairs itself on deploy (the projection is idempotent and reads both shapes);
+> **not deployed — outward-facing, Ido's word.**
+>
+> 🔎 **One defect found by LOOKING, not by a test.** `GoalRepositoryImpl` reads the tasks
+> collection too and had no fact join, so a migrated task was **done on one screen and open on
+> another**. Both suites were green and neither could have caught it. Fixed with one shared
+> seam (`data/firestore/TaskStream.kt`), re-verified on the device.
+>
+> 📱 **Live data touched, and restored:** one existing task under *Submit Android final
+> project* was unticked and re-ticked by a mis-aimed tap during the device pass. It is complete
+> again, worth the same `+35`, its goal reads 1% as before — and it is now migrated (`done`
+> cleared, a `completionFacts` document in its place). The probe task was deleted.
+>
+> 📥 **`kb-candidates/2026-08-21-55-scoring-model.md`** — 5 entries. 1–4 are `kb/dev/` and are
+> drained under AUTO; **entry 5 is `rules/`-destined and stays parked** (always-ask in both
+> modes).
+>
+> 🚥 **[`56-occurrence-model`](sessions/56-occurrence-model.md) MAY NOW START.** The migration
+> has landed, so `#56` adds to a settled shape. The document shape now in the database is in
+> the release note above and in §4.2 of this session's changelog.
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*

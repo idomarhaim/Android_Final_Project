@@ -7,6 +7,7 @@ import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCallEnvelope
 import com.idomarhaim.goalpilot.domain.model.AiCredential
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.LifeArea
@@ -15,7 +16,6 @@ import com.idomarhaim.goalpilot.domain.model.RecommendationType
 import com.idomarhaim.goalpilot.domain.model.TaskClassification
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
-import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -143,25 +143,29 @@ class RecommendationRepositoryImpl @Inject constructor(
                 .call(payload).await()
             aiProvider.recordAnswer(AiCallEnvelope.answeredBy(result.getData(), credential))
             val data = result.getData() as? Map<*, *>
-            val points = (data?.get("points") as? Number)?.toInt()
-                ?.coerceIn(TaskScoring.MIN_POINTS, TaskScoring.MAX_POINTS)
-                ?: TaskScoring.heuristicPoints(taskTitle)
-            // #9, spec §3.4: a model that answered with points but no duration has
-            // NOT answered about the duration, and the honest value is absent. This
-            // used to read `?: fallbackMinutes(points)`, which manufactured a
-            // duration out of a point score that is itself `5 + 3×words` when the
-            // call never left the device — the app deriving how long your life took
-            // from a word count. The caller asks instead (§3.4), and a skipped
-            // answer is stored as DurationSource.UNKNOWN, never as an estimate.
+            // `#55`, §3.3 A: **there is no `points` field**. The model names one of three
+            // difficulties and the app computes the currency from it and the minutes
+            // (§0.5). What used to stand here read `data["points"]` and fell back to
+            // `heuristicPoints` — a score derived from the title's WORD COUNT, which the
+            // duration was then derived back out of. Both are gone.
+            //
+            // An unparseable or absent difficulty is ROUTINE, which is ×1.0: the task is
+            // priced on its minutes alone, which is what a task nobody judged is worth.
+            val difficulty = Difficulty.fromName(data?.get("difficulty") as? String)
+            // #9, spec §3.4: a model that answered about difficulty but not duration has
+            // NOT answered about the duration, and the honest value is absent. The caller
+            // asks instead, and a skipped answer is stored as DurationSource.UNKNOWN.
             val minutes = TaskDuration.sanitize((data?.get("minutes") as? Number)?.toInt())
-            Resource.Success(TaskEstimate(points = points, minutes = minutes))
+            Resource.Success(TaskEstimate(difficulty = difficulty, minutes = minutes))
         } catch (e: Exception) {
             aiProvider.recordAnswer(AiAnswer.Local())
-            // Points still fall back — spec §8, and #9 does not touch scoring. The
-            // duration does not: no model spoke, so there is no duration to report.
-            Resource.Success(
-                TaskEstimate(points = TaskScoring.heuristicPoints(taskTitle), minutes = null),
-            )
+            // Nothing spoke, so nothing is reported: no difficulty judgement and no
+            // duration. `#55` deleted the offline point heuristic outright, and there is
+            // no offline substitute for it — a difficulty is a judgement about the work,
+            // and the app has no way to make one. ROUTINE here is the ABSENCE of a
+            // judgement (×1.0), not a guess at one, which is the same shape as `null`
+            // minutes meaning "not said" rather than "zero".
+            Resource.Success(TaskEstimate(difficulty = Difficulty.ROUTINE, minutes = null))
         }
     }
 
@@ -197,7 +201,6 @@ class RecommendationRepositoryImpl @Inject constructor(
 
     private fun parseClassification(data: Any?): TaskClassification? {
         val m = data as? Map<*, *> ?: return null
-        val points = (m["estimatedPoints"] as? Number)?.toInt() ?: 10
         return TaskClassification(
             suggestedGoalId = m["suggestedGoalId"] as? String,
             suggestedNewGoalTitle = m["suggestedNewGoalTitle"] as? String,
@@ -210,7 +213,10 @@ class RecommendationRepositoryImpl @Inject constructor(
             // user has finds nothing and the task lands unfiled, which cannot disagree with
             // anything because it is a lookup rather than a rule.
             suggestedLifeAreaId = m["suggestedLifeAreaId"] as? String,
-            estimatedPoints = points,
+            // `#55`: `estimatedPoints` is deleted from the model's vocabulary (§3.3 A/D) and
+            // replaced by the same three-word judgement `scoreTask` returns. Absent or
+            // unparseable reads as ROUTINE, which is ×1.0.
+            difficulty = Difficulty.fromName(m["difficulty"] as? String),
             // Absent when the model did not say — same rule as `scoreTask` above.
             estimatedMinutes = TaskDuration.sanitize((m["estimatedMinutes"] as? Number)?.toInt()),
             confidence = (m["confidence"] as? Number)?.toFloat() ?: 0f,
@@ -278,7 +284,8 @@ class RecommendationRepositoryImpl @Inject constructor(
                 // of several, because the classification carries one suggestion
                 // and a task the user then files is filed by hand anyway.
                 suggestedLifeAreaId = match.lifeAreaIds.firstOrNull(),
-                estimatedPoints = 10,
+                // No judgement offline (`#55`). ROUTINE is ×1.0 — the absence of one.
+                difficulty = Difficulty.ROUTINE,
                 estimatedMinutes = null,
                 confidence = 0.4f,
                 rationale = "Matched by keyword to \"${match.title}\" (offline heuristic).",
@@ -291,7 +298,7 @@ class RecommendationRepositoryImpl @Inject constructor(
                 suggestedNewGoalTitle = taskTitle.take(40),
                 suggestedCategory = GoalCategory.OTHER,
                 suggestedLifeAreaId = areaMatch?.id,
-                estimatedPoints = 10,
+                difficulty = Difficulty.ROUTINE,
                 estimatedMinutes = null,
                 confidence = 0.2f,
                 rationale = "No matching goal found (offline heuristic).",

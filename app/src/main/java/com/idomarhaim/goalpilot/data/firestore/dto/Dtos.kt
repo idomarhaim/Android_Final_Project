@@ -118,14 +118,74 @@ data class GoalDto(
     }
 }
 
+/**
+ * One edge from a task to an objective, on the wire — §1.5, `#55`.
+ *
+ * A nested POJO rather than a raw `Map`, so Firestore's reflective (de)serialization
+ * produces the same `var`-with-defaults shape the rest of this file uses and a missing
+ * `contribution` arrives as `null` rather than as an absent key the caller has to probe for.
+ */
+data class GoalEdgeDto(
+    var goalId: String = "",
+    /** `null` means *undeclared*, which contributes nothing to the measure (§1.5). */
+    var contribution: Double? = null,
+)
+
 data class TaskDto(
     @DocumentId var id: String = "",
+    /**
+     * **A stored projection of `goalEdges[0].goalId`, kept only so Firestore can index it.**
+     *
+     * `observeTasks` filters with `whereEqualTo("goalId", …)`, and an array of maps cannot be
+     * queried on one of its members' fields. So this is written from the edge list on every
+     * write and is never the truth — `Task.goalId` reads the edge, not this. It is also what
+     * a **pre-`#55` document** carries instead of an edge list, which is the other half of
+     * why it stays: see [toDomain].
+     */
     var goalId: String? = null,
     var title: String = "",
-    var points: Int = 10,
-    var done: Boolean = false,
+    /**
+     * The objectives this task serves, each with its own contribution (§1.5).
+     *
+     * Absent on every document written before `#55`; such a document is read into a
+     * one-element edge list built from [goalId] and [progressContribution], with **no
+     * migrating write required to see it**.
+     */
+    var goalEdges: List<GoalEdgeDto> = emptyList(),
+    /** `LIGHT` | `ROUTINE` | `DEMANDING` (§1.4, `#55`). Absent reads as `ROUTINE`, which is ×1.0. */
+    var difficulty: String? = null,
+    /**
+     * ⚠️ **Legacy — read on the way in, written as `null` on the way out.**
+     *
+     * The stored point value of a task written before `#55`. Points are now derived from
+     * `minutes × difficulty` (§1.4), so nothing computes from this any more except the
+     * migration read path: a *completed* legacy task has no other record of the effort it
+     * banked, and [toDomain] reconstructs one from it losslessly
+     * (`TaskDuration.legacyMinutesFromPoints`).
+     *
+     * Nulled by every write, following the same migrating-write rule `GoalDto.lifeAreaId` and
+     * `GoalDto.unit` already follow: leaving a superseded field populated beside the thing
+     * that replaced it is §0.3's *second number that quietly disagrees*.
+     */
+    var points: Int? = null,
+    /**
+     * ⚠️ **Legacy — the pre-`#55` completion flag.** The fact now lives in its own document at
+     * `users/{uid}/completionFacts/{taskId}` ([CompletionFactDto]); see [toDomain] for how a
+     * document carrying this instead is read, and `TaskRepositoryImpl.setDone` for why the
+     * tick clears it in the same batch that writes the fact.
+     */
+    var done: Boolean? = null,
     var source: String = "MANUAL",
-    var progressContribution: Double = 1.0,
+    /**
+     * ⚠️ **Legacy — the pre-`#55` contribution, which lived on the task instead of on the
+     * edge** (§1.5).
+     *
+     * Nullable **and defaulting to null**, which is load-bearing: it is the only way to tell
+     * a document that stored `1.0` from one that never had the field. Everything written by
+     * this app before `#55` stored it, so every such document keeps its number verbatim and
+     * no goal's progress moves on upgrade. A new task's edge declares nothing instead.
+     */
+    var progressContribution: Double? = null,
     /** Duration in minutes; absent on tasks created before it existed. */
     var estimatedMinutes: Int? = null,
     /**
@@ -139,7 +199,27 @@ data class TaskDto(
      */
     var durationSource: String? = null,
     var createdAt: Long = 0L,
+    /** ⚠️ **Legacy — the pre-`#55` completion stamp.** See [done]. */
     var completedAt: Long? = null,
+)
+
+/**
+ * A banked completion — `users/{uid}/completionFacts/{taskId}`, §1.4, `#55`.
+ *
+ * The document id **is** the task id, which is what makes the tick and the untick a `set` and
+ * a `delete` of one known path rather than a query: no read-then-write, nothing to
+ * accumulate, and *"an untick removes exactly the fact it added"* holds by construction.
+ *
+ * It carries its own [minutes] and [difficulty] rather than pointing at the task's, because
+ * §1.4 banks the **inputs**: correcting an estimate afterwards must not re-price what was
+ * already earned. It is also what lets `functions/src/projection.ts` total a user's points by
+ * reading this collection alone.
+ */
+data class CompletionFactDto(
+    @DocumentId var id: String = "",
+    var completedAt: Long = 0L,
+    var minutes: Int = 30,
+    var difficulty: String = "ROUTINE",
 )
 
 data class LifeAreaDto(

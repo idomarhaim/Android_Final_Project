@@ -171,3 +171,23 @@ merely convenient. The migration is a **read**, not a write.
 
 Seven conditions, one heading. Name whichever of `/kickoff 11-fill-buttons`, `/kickoff
 8-notifications`, `/kickoff 6-silent-filing` is still unrun.
+
+
+---
+
+## 📌 Pointer repair — `#55` built it *(appended 2026-08-21 by session `55-scoring-model`)*
+
+**Appended, not edited.** Everything above is this session's own account of what it did and
+is left exactly as it was written; what follows is the one fact a later reader needs and
+cannot get from it.
+
+Where this file defers §1.4's points inversion to **`C1` [#19]**, that pointer was already
+stale when it was written: #19 is a **decision** ticket, `state_reason: completed`, closed
+2026-08-10, and it was never going to build anything. `7-quickadd-complete` found that on
+2026-08-20 and [#55](https://github.com/idomarhaim/Android_Final_Project/issues/55) was
+opened as the carrier.
+
+**`#55` is now built** — the inversion, the difficulty enum, the deleted `5..50` cap, the
+retired `heuristicPoints`, the completion facts and §1.5's `goalEdges`. So the correct
+forward pointer from every sentence above that says *"that is #19's"* is **`#55`**, and the
+account of the work is `CHANGELOG/2026-08-21/55-scoring-model.md`.

@@ -36,7 +36,7 @@ export { projectPoints, projectChallengeScore } from "./projection";
 // `derived.ts`. `CATEGORIES` lives there too: the list the prompt offers and the
 // list the response is checked against must be one list, or the prompt can drift
 // into offering a value the validator then silently drops.
-import { CATEGORIES, listsFromRequest, validateClassification } from "./classify";
+import { CATEGORIES, listsFromRequest, validateClassification, asDifficulty } from "./classify";
 
 // `C13`'s four provider adapters (#54, decided in #32). Firebase-free for the same
 // reason `classify.ts` is: `test/providers.test.mjs` runs them under plain
@@ -267,13 +267,14 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
     "{\"suggestedGoalId\":string|null,\"suggestedNewGoalTitle\":string|null," +
     `\"suggestedCategory\":\"${CATEGORIES.join("|")}\",` +
     "\"suggestedLifeAreaId\":string|null," +
-    "\"estimatedPoints\":number,\"estimatedMinutes\":number," +
+    "\"difficulty\":string,\"estimatedMinutes\":number," +
     "\"confidence\":number,\"rationale\":string}. " +
     "suggestedGoalId MUST be one of the given goal ids, or null if no existing goal fits — " +
     "never invent an id and never adapt one. " +
     "suggestedLifeAreaId MUST be one of the given life area ids, or null if none fits. " +
     "suggestedNewGoalTitle is only meaningful when suggestedGoalId is null. " +
-    "estimatedPoints is 5-50 by difficulty. " +
+    "difficulty is exactly one of LIGHT, ROUTINE or DEMANDING -- how demanding the " +
+    "work is, never how long it takes (#55, §3.3 A: there is no points field). " +
     "estimatedMinutes is how long the task realistically takes to do, 5-480, " +
     "for one sitting of it (a 30-minute run is 30, not the whole training plan). " +
     "confidence is 0..1. The task title may be in any language, including Hebrew.";
@@ -309,35 +310,51 @@ export const classifyTask = onCall(async (request: CallableRequest) => {
 });
 
 /**
- * Estimate what a task costs (spec §6 Core: point scoring) — difficulty in points
- * and duration in minutes.
+ * Estimate what a task costs — **how demanding it is** and how long it takes
+ * (spec §3.3 A, §1.4, #55).
  *
  * One call returns both because the free GROQ tier allows 30 requests/minute and
  * the Google Tasks import already spends one per imported row; asking twice about
  * the same sentence would halve what a single import can cover.
+ *
+ * ### There is no `points` field, and there never will be (§3.3 A)
+ *
+ * This used to prompt for `points` as an integer 5-50 and return one. §1.4 computes points
+ * as `round(minutes / 3) × difficulty` **in the app**, with the multipliers in Kotlin and
+ * never in a prompt, because a model that can emit a number can move a currency by phrasing.
+ * `C11a` measured this model's free numbers swinging 2x run-to-run and 1.8x between
+ * languages; a prompt-declared enum is the one thing it was measured perfect at.
+ *
+ * So the contract narrowed from *a number in a range* to *one of three words*, and the
+ * failure mode narrowed with it: an unparseable answer is `ROUTINE`, which is x1.0 and prices
+ * the task on its minutes alone -- the absence of a judgement rather than a guess at one.
  */
 export const scoreTask = onCall(async (request: CallableRequest) => {
   const { taskTitle = "" } = request.data ?? {};
   const system =
-    "Estimate difficulty points (integer 5-50) and duration in minutes (integer 5-480) " +
-    "for one sitting of a personal task. The title may be in any language, including Hebrew. " +
-    "Reply ONLY with JSON: {\"points\":number,\"minutes\":number}.";
+    "Judge how demanding a personal task is and how long one sitting of it takes. " +
+    "difficulty is exactly one of LIGHT, ROUTINE or DEMANDING: LIGHT for waiting, " +
+    "idling or half-attended work; ROUTINE for ordinary focused work; DEMANDING for " +
+    "concentrated, unpleasant or draining work. minutes is an integer 5-480. " +
+    "The title may be in any language, including Hebrew. " +
+    "Reply ONLY with JSON: {\"difficulty\":string,\"minutes\":number}.";
   try {
     const a = await answer(request, system, `Task: "${taskTitle}"`);
-    const points = Number(a.json?.points);
     const minutes = Number(a.json?.minutes);
-    const safePoints = Number.isFinite(points)
-      ? Math.min(50, Math.max(5, Math.round(points)))
-      : 10;
     return {
-      points: safePoints,
-      minutes: Number.isFinite(minutes)
-        ? Math.min(480, Math.max(5, Math.round(minutes)))
-        : safePoints * 3,
+      difficulty: asDifficulty(a.json?.difficulty),
+      // Absent when the model did not say (#9, §3.4). It used to fall back to
+      // `points * 3` -- a duration manufactured out of a score, which is the inversion
+      // #55 deleted. The client asks the user instead.
+      ...(Number.isFinite(minutes)
+        ? { minutes: Math.min(480, Math.max(5, Math.round(minutes))) }
+        : {}),
       ...provenance(a),
     };
   } catch (e) {
     logger.error("scoreTask failed", e);
-    return { points: 10, minutes: 30, ...nothingAnswered(e) };
+    // No judgement and no duration: nothing spoke. ROUTINE is x1.0, so the client prices
+    // the task on whatever minutes the user supplies and nothing has been invented.
+    return { difficulty: "ROUTINE", ...nothingAnswered(e) };
   }
 });

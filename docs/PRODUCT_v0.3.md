@@ -290,25 +290,45 @@ Buttons are **repeat-tappable with a running tally**.
 
 ### 1.4 Effort and outcome are two quantities, and points are neither *(`C3` #18, `C1` #19)*
 
-> ## ⛔ DECIDED — **NOT BUILT**. **[#55](https://github.com/idomarhaim/Android_Final_Project/issues/55) owns building it**, and it is **in v0.3** *(audited 2026-08-20; ticket opened and scoped the same day)*
+> ## ✅ BUILT — **`#55`, 2026-08-21.** Every ❌ in the audit below is now ✅
 >
-> ✅ **RESOLVED 2026-08-20, later the same day this box was written.** The audit below stands — every ❌ is still ❌ — but its closing recommendation has been acted on. `#55` now owns §1.4 **and** §1.5, and Ido put it **in scope for v0.3**: *"if they're not related to Hebrew, I do want them done now."* The four artifacts that deferred to closed `C1` now have somewhere real to point.
+> **This section describes the app.** It used to be a decision written in the present tense
+> with none of it built, and the box here said so at length. That is over: session
+> `55-scoring-model` shipped §1.4 and §1.5 together as one migration.
+> Account: `CHANGELOG/2026-08-21/55-scoring-model.md`.
 >
-> **Everything below this box is a decision, not a description.** It is written in the present
-> tense — *"the `5..50` cap **is deleted**"*, *"it **retires** `heuristicPoints`"*,
-> *"`GoalProgress.points` **is deleted**"* — and **none of those has happened.** Read it as
-> *what we decided to build*, never as *how the app works*.
+> **The same clause-by-clause table, re-checked at `HEAD` after the change:**
 >
-> **Checked clause by clause at `HEAD`, by grep, not by assumption:**
+> | §1.4 says | At `HEAD` (2026-08-20) | Now |
+> |---|---|---|
+> | `points = round(minutes / 3) × difficulty` | ❌ no `difficulty` enum anywhere | ✅ `domain/model/Difficulty.kt`, `TaskScoring.pointsFor` |
+> | the `5..50` cap is deleted; ceiling rises 50 → 240 | ❌ `MIN_POINTS`/`MAX_POINTS` alive | ✅ both deleted; 240 is what the formula *yields* at 480 min × `DEMANDING`, not a constant |
+> | `heuristicPoints` (`5 + 3×words`) is retired | ❌ alive, two call sites | ✅ deleted; there is no offline point estimate at all |
+> | points banked as a **timestamped completion fact** | ❌ no `completionFacts` collection | ✅ `users/{uid}/completionFacts/{taskId}`, banking `minutes` + `difficulty` |
+> | `GoalProgress.points` is deleted | ❌ still on `ProgressSummary.kt:40` | ✅ deleted; replaced by `effortMinutes` |
+> | §1.5's `goalEdges: [{ goalId, contribution }]` | ❌ absent | ✅ on `Task`; `progressContribution` deleted |
 >
-> | §1.4 says | At `HEAD` |
-> |---|---|
-> | `points = round(minutes / 3) × difficulty` | ❌ no `difficulty` enum exists anywhere in `app/src/main` |
-> | the `5..50` cap is deleted; ceiling rises 50 → 240 | ❌ `TaskScoring.MIN_POINTS = 5`, `MAX_POINTS = 50`, alive |
-> | `heuristicPoints` (`5 + 3×words`) is retired | ❌ alive, with **two** live call sites in `RecommendationRepositoryImpl` |
-> | points banked as a **timestamped completion fact** | ❌ no `completionFacts` collection; the fact is still `done` + `completedAt` on the task document |
-> | `GoalProgress.points` is deleted | ❌ still on `ProgressSummary.kt:40` |
-> | §1.5's `goalEdges: [{ goalId, contribution }]` | ❌ absent; `Task.progressContribution` still carries it |
+> ### Two things a reader of this section now needs, which the prose above does not say
+>
+> **1 · The model may not emit a point value, and that is enforced rather than asked for.**
+> §3.3 A's *"there is no `points` field, and there never will be"* was **false at `HEAD`** in
+> four places, all now closed: `functions/src/index.ts` prompted `scoreTask` for
+> *"difficulty points (integer 5-50)"* and returned one; the `classify` prompt declared
+> `estimatedPoints`; `functions/src/classify.ts` validated it in `5..50`; and
+> `RecommendationRepositoryImpl` read `data["points"]` and `m["estimatedPoints"]`. All four
+> now carry **`difficulty`** — one of three prompt-declared words — and the app computes the
+> currency. `functions/test/classify.test.mjs` asserts that a response smuggling
+> `estimatedPoints` or `points` back in does not survive validation.
+>
+> **2 · ⚠️ THE CLOUD FUNCTIONS MUST DEPLOY BEFORE THE APP SHIPS.** The lifetime total is
+> written by `functions/src/projection.ts`, not by the device. The **old** deployed projection
+> triggers on `users/{uid}/tasks` and sums `points` over documents where `done === true` — and
+> the new client writes neither field. So an app build that reaches a device ahead of the
+> functions makes every user's total **fall** as they tick tasks.
+> `Observed:` 2026-08-21 on `emulator-5554` against the live project — completing one task
+> took the stored total from **70 → 40** instead of 70 → 115. The new `pointsFromFacts` reads
+> the union of banked facts and un-migrated legacy tasks, so it is correct for both shapes,
+> and the projection is idempotent — deploying it repairs the number on the next write.
 >
 > **One claim here is stale in the *other* direction and is corrected below:** §1.4 cites
 > `TaskRepositoryImpl.kt:120-127` as a **live defect** — a running accumulator over `task.points`
@@ -388,6 +408,24 @@ Instead: **recognition at the tick**, counting only edges with a **declared cont
 compute from the **whole** duration, since `C17`'s division never leaves the pie.
 
 ### 1.5 Progress arithmetic *(`C3`, `C16` §4, `C17`, `C18`)*
+
+> ## ✅ `goalEdges` IS BUILT — **`#55`, 2026-08-21.** The four clamps were `#49`'s and are still deleted
+>
+> `Task.progressContribution` is gone; contribution lives on a [`GoalEdge`](../app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt) and defaults to **undeclared**, and
+> `DerivedProgress` adds nothing for an edge that declares nothing.
+>
+> **One decision this section does not make, taken by `#55` and open to being overturned:**
+> a task written **before** the change reads its stored `progressContribution` onto its edge
+> **verbatim**, rather than as the silence §1.5 calls it. The `1.0` default was a silence when
+> nobody was ever asked — but it is a *stored* number, and re-reading it as `null` would zero
+> the task half of every existing goal's progress with no user action and no way back. So the
+> undeclared default governs **new** edges, and nothing already written changed value.
+> `app/src/test/.../data/TaskScoringMigrationTest.kt` pins both directions.
+>
+> The visible consequence, which is the spec's answer and not a defect: **a task created after
+> `#55` moves no measure when it is ticked**, because nothing has declared what it is worth in
+> the objective's own word. §1.5's shortfall disclosure — *"everything you have planned adds up
+> to 3 of 10"* — is the other half of that sentence and is **not built**; no ticket owns it yet.
 
 ```
 progress = (current − start) / (target − start)

@@ -1,22 +1,35 @@
 package com.idomarhaim.goalpilot.domain.model
 
 /**
- * What the LLM thinks a task is worth and how long it takes
+ * What the LLM says about a task: **how demanding it is and how long it takes**
  * (spec §6 Core "point scoring", extended with the duration the
  * time-allocation chart is built on).
  *
  * The two travel together because they come from one `scoreTask` call: GROQ's
  * free tier allows 30 requests/minute, and asking twice for facts about the same
  * sentence would halve the number of tasks the Google Tasks import can process.
+ *
+ * ⚠️ **There is no `points` field, and there never will be** — §3.3 A, enforced here since
+ * `#55`. The model judges (*which of three words fits this work?*) and the app computes
+ * (`round(minutes / 3) × difficulty`), which is §0.5 at full strength. A `points` field
+ * would let the model move a currency by phrasing, and `C11a` measured free numbers from
+ * this model swinging **2× run-to-run** and **1.8× between languages**.
  */
 data class TaskEstimate(
-    val points: Int = 10,
+    /**
+     * Which of §1.4's three words the model chose, defaulting to the neutral one.
+     *
+     * `ROUTINE` is `×1.0`, so a call that said nothing about difficulty prices the task on
+     * its minutes alone — the same shape as a missing duration reading as absent rather than
+     * as a guess.
+     */
+    val difficulty: Difficulty = Difficulty.ROUTINE,
     /**
      * How long the model said the task takes, or **null when it did not say**.
      *
      * Nullable since #9. Spec §3.4: *a field that fails validation is absent* — no
      * null sentinel meaning "I tried", no default, no substitute. It used to be a
-     * non-null `Int` filled in by [TaskDuration.fallbackMinutes], which made every
+     * non-null `Int` filled in by a point-derived fallback, which made every
      * silent failure indistinguishable from an answer and forced
      * `TaskScoring.looksLikeFallback` to exist to guess the difference back out
      * again. Absence is the honest value, and it is the one the caller can act on.
@@ -75,7 +88,7 @@ enum class DurationSource {
  * box, and a rule that can only be exercised on a running device is a rule whose
  * two directions do not both get tested. Here every transition is a pure function
  * and the composable holds one of these instead of reconstructing a duration from
- * the points field.
+ * the points field. (Since `#55` nothing could: the derivation runs the other way.)
  */
 data class DurationEntry(
     val minutes: Int? = null,
@@ -179,27 +192,41 @@ object TaskDuration {
     const val DEFAULT_MINUTES = 30
 
     /**
-     * Offline estimate from a task's point value, **for the chart only**.
+     * How long a **task written before `#55`** must have been, reconstructed from the point
+     * value that is the only record of effort it carries.
      *
-     * Points are scored 5..50 by difficulty, so ×3 spans 15..150 minutes, which is
-     * the right shape for personal tasks: deterministic, monotonic in difficulty,
-     * and never zero.
+     * ### This is the old `fallbackMinutes`, narrowed from a live path to a migration
      *
-     * **Narrowed by #9 to exactly one caller, [minutesOf].** It used to stand in
-     * for a missing model answer at the two `scoreTask` sites and in
-     * `parseClassification`, which is how a *stored* duration could be a word-count
-     * derivative wearing an estimate's clothes. Nothing stores its output any more:
-     * a task with no duration keeps `estimatedMinutes = null`, and this only decides
-     * what such a task is worth to the pie so that it is not dropped from it. The
-     * inversion §1.4 wants — points computed *from* minutes rather than the reverse —
-     * is `C1` #19 and deletes this function outright.
+     * It used to be what [minutesOf] fell back to for *every* task with no duration — which
+     * is the inversion §1.4 names: the app invented a reward number from a word count
+     * (`5 + 3×words`) and then derived *how long your life took* from it, putting the
+     * time-allocation chart downstream of a gamification currency. `#55` inverted the
+     * constant, so nothing computes minutes from points any more.
+     *
+     * What survives is exactly one use, and it is **lossless by arithmetic**: a legacy point
+     * value `p` reconstructs to `3p` minutes, which prices back at
+     * `round(3p / 3) × 1.0 = p`. So a task completed before `#55` is worth precisely what it
+     * was worth then — the migration moves where the fact lives without re-pricing a single
+     * historical completion. See `TaskDto.legacyCompletion`.
+     *
+     * Not clamped to [MIN_MINUTES]/[MAX_MINUTES], deliberately: clamping would break that
+     * identity at both ends and silently re-price the oldest and largest tasks, which is the
+     * one thing this function exists to avoid. Its input is a stored point value, not user
+     * input, so there is nothing here to defend against.
      */
-    fun fallbackMinutes(points: Int): Int = (points * 3).coerceIn(MIN_MINUTES, MAX_MINUTES)
+    fun legacyMinutesFromPoints(points: Int): Int = (points * 3).coerceAtLeast(1)
 
-    /** The stored estimate when there is one, otherwise the point-based fallback. */
+    /**
+     * How long the task counts for: its stored estimate, or [DEFAULT_MINUTES].
+     *
+     * **No longer derived from points** (`#55`, §1.4). A task with no duration is a
+     * half-hour chore — the same answer `DurationEntry.resolve` gives a skipped box — rather
+     * than a number reconstructed from what the task was scored, which is the direction the
+     * inversion runs in now.
+     */
     fun minutesOf(task: Task): Int =
         task.estimatedMinutes?.takeIf { it > 0 }?.coerceAtMost(MAX_MINUTES)
-            ?: fallbackMinutes(task.points)
+            ?: DEFAULT_MINUTES
 
     /** Clamps whatever the model returned into the range the UI can render. */
     fun sanitize(minutes: Int?): Int? =
@@ -207,41 +234,63 @@ object TaskDuration {
 }
 
 /**
- * The offline half of task *scoring*, in the domain rather than in the repository
- * that calls the model.
+ * **Points, as a view of effort** — `docs/PRODUCT_v0.3.md` §1.4,
+ * [#55](https://github.com/idomarhaim/Android_Final_Project/issues/55).
  *
- * **Durations left this object in #9.** It used to carry [looksLikeFallback] and a
- * `SERVER_FALLBACK` sentinel, whose job was to recognise an estimate that no model
- * had produced by recomputing both fallbacks and comparing — *"evidence, not
- * proof"* by its own KDoc, since a model is free to land on the same numbers by
- * agreement rather than by failure. [DurationSource] records the answer at the
- * point of production instead, so there is nothing left to reconstruct and both
- * are deleted.
+ * ```
+ * points = round(minutes / 3) × difficulty
+ * ```
  *
- * What remains is points, which #9 deliberately does not touch: the inversion that
- * retires [heuristicPoints] is §1.4's.
+ * ### What `#55` deleted here, and what it inverted
  *
- * ⚠️ **It does NOT "belong to `C1` #19", and this KDoc said so until 2026-08-20.** #19 is a
- * **decision** ticket and it is **closed** — correctly, because the decision was made; it was
- * never going to build anything. Nothing open owns the inversion, so [heuristicPoints] survives
- * with no scheduled retirement, and a reader who takes that sentence at face value concludes
- * this code has an owner waiting to delete it. It does not. See the box at the top of
- * `docs/PRODUCT_v0.3.md` §1.4 for the clause-by-clause audit, and
- * `C:\Dev\JARVIS\kb\dev\decision-map-charting.md` §12d for why this misreading is systematic
- * rather than a one-off slip.
+ * - **`heuristicPoints` (`5 + 3×words`) is gone.** It priced a task by counting the words in
+ *   its title, and `TaskDuration.fallbackMinutes` then derived the *duration* from that
+ *   score — so an offline task's contribution to the time-allocation chart was a function of
+ *   how verbosely it had been typed. §1.4: *"the fix inverts a constant rather than adding
+ *   one, and it retires `heuristicPoints` outright."*
+ * - **The `5..50` cap is gone.** It priced an eight-hour task like a ninety-minute one. The
+ *   floor went with it: a 15-minute `LIGHT` task is worth **4**, and is not raised to 5.
+ * - **The ceiling is 240**, and it is not a constant — it is what the formula *yields* at the
+ *   storable maximum (`480` minutes `× DEMANDING`). Nothing clamps to it; delete the
+ *   duration ceiling and this moves with it, which is the property a written-down `MAX` would
+ *   not have. §1.4's *"the levelling ceiling rises 50 → 240"* is that arithmetic, and
+ *   `Leveling`'s thresholds are untouched.
+ *
+ * ### Today's anchor survives exactly
+ *
+ * A 30-minute `ROUTINE` task is `round(30 / 3) × 1.0` = **10 points**, which is what it has
+ * always been worth. That is deliberate: the inversion is about *which quantity is derived
+ * from which*, not about re-pricing the user's history.
+ *
+ * ### The multipliers are here and not in the prompt
+ *
+ * See [Difficulty]. The model chooses a word; this object turns words into numbers, so the
+ * currency cannot be moved by phrasing (§0.5).
  */
 object TaskScoring {
 
-    /** Matches the 5..50 range the `scoreTask` Cloud Function is prompted for. */
-    const val MIN_POINTS = 5
-    const val MAX_POINTS = 50
+    /**
+     * The divisor: **three minutes to the point**, at `ROUTINE`.
+     *
+     * The one constant `#55` kept, and it is the same `3` that used to run the other way in
+     * `fallbackMinutes`. Inverting a constant rather than introducing one is why today's
+     * anchor lands unchanged.
+     */
+    const val MINUTES_PER_POINT = 3
 
     /**
-     * Offline point estimate: a longer, more specific task title generally
-     * describes more work. Deterministic so the UI never jumps around.
+     * What [minutes] of work at [difficulty] is worth.
+     *
+     * Rounded twice, and the order matters: `round(minutes / 3)` first, so the *effort* half
+     * is a whole number of points before the judgement is applied, then rounded again to
+     * land on an integer currency. §1.4 writes the formula that way and it is what makes
+     * `30 → 10` exact instead of subject to floating point.
+     *
+     * Never clamped. A cap is a second opinion about how long the day was, and deleting the
+     * `5..50` one is half of what this ticket is.
      */
-    fun heuristicPoints(taskTitle: String): Int {
-        val words = taskTitle.trim().split(Regex("\\s+")).count { it.isNotBlank() }
-        return (MIN_POINTS + words * 3).coerceIn(MIN_POINTS, MAX_POINTS)
+    fun pointsFor(minutes: Int, difficulty: Difficulty): Int {
+        val effortPoints = Math.round(minutes.toDouble() / MINUTES_PER_POINT)
+        return Math.round(effortPoints * difficulty.multiplier).toInt()
     }
 }

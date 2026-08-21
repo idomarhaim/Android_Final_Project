@@ -4,9 +4,13 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.GoalEdge
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.model.InputMode
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
@@ -160,34 +164,107 @@ fun Goal.toDto(): GoalDto = GoalDto(
 )
 
 // ── Task ───────────────────────────────────────────────────────────
+
+/**
+ * The task's edges, from whichever of the two shapes the document is in (§1.5, `#55`).
+ *
+ * A document written **after** `#55` carries `goalEdges` and is read straight off it. One
+ * written **before** carries `goalId` plus `progressContribution`, and is read into the one
+ * edge it describes — **with its stored contribution verbatim**. That last word is the whole
+ * migration decision: `progressContribution`'s `1.0` was a silence rather than a value
+ * (§1.5), but it is a *stored* silence, and re-reading stored numbers as `null` would zero
+ * the task half of every existing goal's progress with no user action. So the undeclared
+ * default governs **new** edges, and nothing already written changes value.
+ *
+ * `progressContribution` is nullable with a null default for exactly this: it tells a
+ * document that stored `1.0` apart from one that never had the field.
+ */
+private fun TaskDto.edges(): List<GoalEdge> =
+    goalEdges
+        .filter { it.goalId.isNotBlank() }
+        .map { GoalEdge(goalId = it.goalId, contribution = it.contribution) }
+        .ifEmpty { goalEdgesOf(goalId, contribution = progressContribution) }
+
+/**
+ * The completion a **pre-`#55`** document describes, or `null`.
+ *
+ * The fact now lives in its own document, and `TaskRepositoryImpl` overlays it. This is what
+ * a task that has never been re-ticked since the migration reads as, and it is **lossless**:
+ * a legacy point value `p` reconstructs to `3p` minutes at `ROUTINE`, which prices back at
+ * exactly `p`. So the migration moves where the fact lives without re-pricing one historical
+ * completion — see `TaskDuration.legacyMinutesFromPoints`.
+ *
+ * A stored duration wins over the reconstruction when there is one, because it is a better
+ * record of the same thing; the two can differ, and where they do the task *was* re-priced
+ * by the inversion, which is what §1.4 asks for.
+ */
+private fun TaskDto.legacyCompletion(): CompletionFact? {
+    if (done != true) return null
+    return CompletionFact(
+        completedAtEpochMillis = completedAt ?: createdAt,
+        minutes = TaskDuration.sanitize(estimatedMinutes)
+            ?: TaskDuration.legacyMinutesFromPoints(points ?: 10),
+        difficulty = Difficulty.fromName(difficulty),
+    )
+}
+
 fun TaskDto.toDomain(): Task = Task(
     id = id,
-    goalId = goalId,
     title = title,
-    points = points,
-    isDone = done,
+    goalEdges = edges(),
+    difficulty = Difficulty.fromName(difficulty),
     source = TaskSource.fromName(source),
-    progressContribution = progressContribution,
     estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
     // Absent, unknown and misspelled all read as UNKNOWN — see TaskDto.durationSource
     // for why a legacy row is left absent rather than back-filled.
     durationSource = DurationSource.fromName(durationSource),
     createdAtEpochMillis = createdAt,
-    completedAtEpochMillis = completedAt,
+    // The legacy shape only. A real fact document, when there is one, is overlaid by
+    // `TaskRepositoryImpl.observeTasks` and wins — a task that has been ticked since the
+    // migration has both, and the fact is the one that was actually banked.
+    completion = legacyCompletion(),
 )
 
 fun Task.toDto(): TaskDto = TaskDto(
     id = id,
-    goalId = goalId,
+    // Written from the edge list, never from `Task.goalId` directly -- same value, but this
+    // says out loud which of the two is derived from which.
+    goalId = goalEdges.firstOrNull()?.goalId,
     title = title,
-    points = points,
-    done = isDone,
+    goalEdges = goalEdges.map { GoalEdgeDto(goalId = it.goalId, contribution = it.contribution) },
+    difficulty = difficulty.name,
     source = source.name,
-    progressContribution = progressContribution,
     estimatedMinutes = TaskDuration.sanitize(estimatedMinutes),
     durationSource = durationSource.name,
     createdAt = createdAtEpochMillis,
+    // ── The four legacy fields, nulled on every write (`#55`) ──────────────
+    //
+    // Same migrating-write rule `GoalDto.lifeAreaId` and `GoalDto.unit` already follow: a
+    // write migrates the document, and leaving a superseded field populated beside the thing
+    // that replaced it is exactly the "second number that quietly disagrees" the map names
+    // three times over.
+    //
+    // `done`/`completedAt` matter most here. The fact is its own document now, so a leftover
+    // `done: true` on the task would be re-synthesised by `legacyCompletion()` after an
+    // untick had already deleted the fact -- a task that cannot be un-ticked. Nulling them
+    // is what closes that, and `setDone` clears them in its own batch for the same reason.
+    points = null,
+    done = null,
+    progressContribution = null,
+    completedAt = null,
+)
+
+fun CompletionFactDto.toDomain(): CompletionFact = CompletionFact(
+    completedAtEpochMillis = completedAt,
+    minutes = minutes,
+    difficulty = Difficulty.fromName(difficulty),
+)
+
+fun CompletionFact.toDto(taskId: String): CompletionFactDto = CompletionFactDto(
+    id = taskId,
     completedAt = completedAtEpochMillis,
+    minutes = minutes,
+    difficulty = difficulty.name,
 )
 
 // ── LifeArea ───────────────────────────────────────────────────────

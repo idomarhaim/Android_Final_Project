@@ -1,33 +1,46 @@
 package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
-import com.idomarhaim.goalpilot.domain.model.DurationSource
-import com.idomarhaim.goalpilot.domain.model.Task
-import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
+import com.idomarhaim.goalpilot.domain.model.Difficulty
+import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskCompletion
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocationUseCase
 import org.junit.Test
 
 /**
- * `#7`'s invariant — a completion is **one fact**, and `isDone` without
- * `completedAtEpochMillis` is not half of it but a different, worse thing.
+ * `#7`'s invariant and `#55`'s answer to it.
  *
- * The rule exists because `#7` is the first ticket in which a task can be **created done**.
- * Before it, the only writer of `done` was `setDone`, which has always written both fields in
- * one `update` and nulled the stamp on an untick — so the invariant held by having exactly one
- * writer, and nothing stated it. A second writer that did not know the rule would produce a
- * task that **awards points and is invisible in every place the user could go and check**:
- * `pointsFromTasks` counts `done`, while the weekly summary, the dashboard's done-this-week
- * count and the time chart all require the stamp.
+ * ### What this suite used to be, and why it is shorter now
  *
- * That is why the last cases here assert against the **real consumers** rather than only
- * against the normaliser. A test that only checked `stamp` would be checking that a function
- * does what its own branches say; these check that what it produces is what the readers
- * downstream actually need, which is the claim the ticket is making.
+ * A completion was two fields, `isDone` and `completedAtEpochMillis`, and half of them was a
+ * real and dangerous state: `pointsFromTasks` counted `done`, while the weekly summary, the
+ * dashboard's done-this-week count and the time chart all required the stamp — so a done task
+ * with no stamp **awarded points and was invisible everywhere the user could go and check**.
+ * `TaskCompletion.stamp` existed to normalise the four states into the two that are legal,
+ * and most of this file asserted that it did.
+ *
+ * §1.4 moved the completion into [CompletionFact], one object that either exists or does not.
+ * `isDone` is `completion != null`. **The malformed state has no representation**, so there is
+ * nothing left to normalise and the cases that asserted the repair have been deleted rather
+ * than rewritten — they now assert a property of the Kotlin type system.
+ *
+ * ### What is left, and why each of the three is still worth running
+ *
+ * 1. **Minting** — [TaskCompletion.of] is the one place a fact is created, called by the tick
+ *    and by the born-done create alike (§1.4's *"emit that same fact, not a second pipe"*).
+ *    What it banks, and what it refuses to re-bank, is the whole of §1.4's re-pricing defence.
+ * 2. **The unrepresentability itself**, asserted through the constructor rather than assumed.
+ * 3. **The readers downstream**, driven as the REAL use cases rather than as re-typed filters
+ *    — the same argument the old suite made, and the one part of it that did not depend on
+ *    the two-field shape.
  */
 class TaskCompletionTest {
 
@@ -37,97 +50,125 @@ class TaskCompletionTest {
         done: Boolean = false,
         completedAt: Long? = null,
         minutes: Int? = 45,
+        difficulty: Difficulty = Difficulty.ROUTINE,
     ) = Task(
         id = "t-1",
-        goalId = "g-1",
+        goalEdges = goalEdgesOf("g-1", contribution = 1.0),
         title = "Run 5 km",
-        points = 15,
-        isDone = done,
+        difficulty = difficulty,
         estimatedMinutes = minutes,
         durationSource = DurationSource.USER,
         createdAtEpochMillis = now - 10_000L,
-        completedAtEpochMillis = completedAt,
+        completion = if (done) {
+            CompletionFact(
+                completedAtEpochMillis = completedAt ?: now,
+                minutes = minutes ?: 30,
+                difficulty = difficulty,
+            )
+        } else {
+            null
+        },
     )
 
-    // ── The three cases ──────────────────────────────────────────────
+    // ── 1 · Minting ──────────────────────────────────────────────────
 
     @Test
     fun `a task created done gets its stamp from the write that created it`() {
-        // `#7` itself: the quick-add "Already done" chip produces exactly this input.
-        val stamped = TaskCompletion.stamp(task(done = true), now)
+        // `#7` itself: the quick-add "Already done" chip produces exactly this input — a task
+        // carrying a placeholder fact with no timestamp, because only the write knows `now`.
+        val fact = TaskCompletion.of(task().copy(completion = CompletionFact()), now)
 
-        assertThat(stamped.completedAtEpochMillis).isEqualTo(now)
-        assertThat(stamped.isDone).isTrue()
+        assertThat(fact.completedAtEpochMillis).isEqualTo(now)
     }
 
     @Test
-    fun `a completion that already happened is never re-dated`() {
+    fun `the fact banks the inputs as they stand at the tick`() {
+        // §1.4's "points are banked as their inputs". The fact has to be complete on its own:
+        // `functions/src/projection.ts` totals the collection without reading a single task.
+        val fact = TaskCompletion.of(
+            task(minutes = 90, difficulty = Difficulty.DEMANDING),
+            now,
+        )
+
+        assertThat(fact.minutes).isEqualTo(90)
+        assertThat(fact.difficulty).isEqualTo(Difficulty.DEMANDING)
+        assertThat(fact.points).isEqualTo(45) // round(90/3) = 30, ×1.5
+    }
+
+    @Test
+    fun `a task with no duration banks the resolved fallback, not a null`() {
+        // `TaskDuration.minutesOf` rather than `estimatedMinutes`, so a reader of
+        // `completionFacts` never has to go and find the task to know what it was worth.
+        val fact = TaskCompletion.of(task(minutes = null), now)
+
+        assertThat(fact.minutes).isEqualTo(30)
+        assertThat(fact.points).isEqualTo(10)
+    }
+
+    @Test
+    fun `a completion that already happened is never re-dated or re-priced`() {
         // AnalyticsViewModel's duration backfill re-saves completed tasks routinely. Moving
-        // the timestamp would rewrite history in the time chart every time somebody corrected
-        // a duration — the task would hop into whichever week the correction was made.
+        // the timestamp would hop the task into whichever week the correction was made; and
+        // re-banking today's estimate is the re-pricing §1.4 banks the inputs to prevent —
+        // tick at 10, correct the duration, and the completion must still be worth 10.
         val yesterday = now - 86_400_000L
-        val stamped = TaskCompletion.stamp(task(done = true, completedAt = yesterday), now)
+        val banked = CompletionFact(
+            completedAtEpochMillis = yesterday,
+            minutes = 30,
+            difficulty = Difficulty.ROUTINE,
+        )
+        val corrected = task(minutes = 300).copy(completion = banked)
 
-        assertThat(stamped.completedAtEpochMillis).isEqualTo(yesterday)
+        val fact = TaskCompletion.of(corrected, now)
+
+        assertThat(fact).isEqualTo(banked)
+        assertThat(fact.points).isEqualTo(10)
     }
 
     @Test
-    fun `a task that is not done carries no completion time, even if one was handed in`() {
-        // The invariant in the other direction. `setDone(false)` has always nulled the stamp,
-        // so after this the create path and the tick path produce the same shape — which is
-        // what makes the four readers safe to trust.
-        val stamped = TaskCompletion.stamp(task(done = false, completedAt = now - 5_000L), now)
-
-        assertThat(stamped.completedAtEpochMillis).isNull()
-    }
-
-    @Test
-    fun `an ordinary open task is returned untouched`() {
-        val open = task(done = false)
-
-        assertThat(TaskCompletion.stamp(open, now)).isSameInstanceAs(open)
-    }
-
-    @Test
-    fun `stamping is idempotent`() {
-        // Every write goes through `upsertTask`, so a task is stamped again on every save.
-        // A rule that moved anything on the second pass would drift a task's completion time
-        // forward once per edit.
-        val once = TaskCompletion.stamp(task(done = true), now)
-        val twice = TaskCompletion.stamp(once, now + 60_000L)
+    fun `minting is idempotent`() {
+        // Every write goes through `upsertTask`, so a done task is minted again on every save.
+        // A rule that moved anything on the second pass would drift a completion forward once
+        // per edit — which is the defect the case above describes, arriving by repetition.
+        val once = TaskCompletion.of(task().copy(completion = CompletionFact()), now)
+        val twice = TaskCompletion.of(task().copy(completion = once), now + 60_000L)
 
         assertThat(twice).isEqualTo(once)
     }
 
+    // ── 2 · The malformed state has no representation ────────────────
+
     @Test
-    fun `every output is well formed, from every input shape`() {
-        val inputs = listOf(
-            task(done = false, completedAt = null),
-            task(done = false, completedAt = now),
-            task(done = true, completedAt = null),
-            task(done = true, completedAt = now - 1),
-        )
+    fun `isDone and the stamp cannot disagree, because they are one field`() {
+        // The invariant the deleted half of this suite used to repair. There is no way to
+        // construct the state it repaired: `isDone` READS `completion`, so a done task with
+        // no stamp would require a fact with no fact in it.
+        val open = task(done = false)
+        val done = task(done = true, completedAt = now)
 
-        val outputs = inputs.map { TaskCompletion.stamp(it, now) }
+        assertThat(open.isDone).isFalse()
+        assertThat(open.completedAtEpochMillis).isNull()
+        assertThat(done.isDone).isTrue()
+        assertThat(done.completedAtEpochMillis).isEqualTo(now)
 
-        assertThat(outputs.map { TaskCompletion.isWellFormed(it) })
-            .containsExactly(true, true, true, true)
-        // And the predicate is not vacuous — two of those four inputs were malformed going in.
-        assertThat(inputs.map { TaskCompletion.isWellFormed(it) })
-            .containsExactly(true, false, false, true)
-            .inOrder()
+        // And clearing one clears the other, in one assignment rather than by convention.
+        assertThat(done.copy(completion = null).isDone).isFalse()
+        assertThat(done.copy(completion = null).completedAtEpochMillis).isNull()
     }
 
     @Test
-    fun `nothing but the completion pair is touched`() {
-        val before = task(done = true)
+    fun `an open task is priced live and a done task is priced from what it banked`() {
+        val open = task(done = false, minutes = 60)
+        val done = task(done = true, minutes = 60)
 
-        val after = TaskCompletion.stamp(before, now)
-
-        assertThat(after).isEqualTo(before.copy(completedAtEpochMillis = now))
+        assertThat(open.points).isEqualTo(20)
+        assertThat(done.points).isEqualTo(20)
+        // Correct the estimate afterwards: the open task re-prices, the completed one does not.
+        assertThat(open.copy(estimatedMinutes = 300).points).isEqualTo(100)
+        assertThat(done.copy(estimatedMinutes = 300).points).isEqualTo(20)
     }
 
-    // ── What the readers downstream actually do with it ──────────────
+    // ── 3 · What the readers downstream actually do with it ──────────
     //
     // These drive the REAL use cases rather than re-typing their filters. Both are pure and
     // take a no-arg constructor, so there is no reason to test a copy — and a copy is exactly
@@ -137,32 +178,33 @@ class TaskCompletionTest {
     private val area = LifeArea(id = "a-1", name = "Health")
 
     @Test
-    fun `the weekly summary counts a born-done task, and misses it unstamped`() {
+    fun `the weekly summary counts a completed task and ignores an open one`() {
         val windowStart = now - 7 * 86_400_000L
-        val unstamped = task(done = true)
-        val stamped = TaskCompletion.stamp(unstamped, now)
         val summarise = BuildSummaryUseCase()
 
-        val missed = summarise(SummaryPeriod.WEEKLY, listOf(goal), listOf(unstamped), windowStart, now)
-        val counted = summarise(SummaryPeriod.WEEKLY, listOf(goal), listOf(stamped), windowStart, now)
+        val open = summarise(SummaryPeriod.WEEKLY, listOf(goal), listOf(task()), windowStart, now)
+        val counted =
+            summarise(SummaryPeriod.WEEKLY, listOf(goal), listOf(task(done = true)), windowStart, now)
 
-        // The failure is not that a field is missing — it is that the summary reports ZERO
-        // tasks and ZERO points for work the projection function has already paid for.
-        assertThat(missed.completedTasks).isEqualTo(0)
-        assertThat(missed.totalPoints).isEqualTo(0L)
+        assertThat(open.completedTasks).isEqualTo(0)
+        assertThat(open.totalPoints).isEqualTo(0L)
         assertThat(counted.completedTasks).isEqualTo(1)
+        // 45 minutes at ROUTINE: round(45/3) = 15.
         assertThat(counted.totalPoints).isEqualTo(15L)
+        // §1.4: the per-goal companion number is EFFORT, and points are not a property of an
+        // objective at all. `GoalProgress.points` was deleted with this ticket.
+        assertThat(counted.goals.single { it.goalId == "g-1" }.effortMinutes).isEqualTo(45)
     }
 
     @Test
-    fun `the time-allocation chart sees a born-done task, and drops it unstamped`() {
+    fun `the time-allocation chart sees a completed task and drops an open one`() {
         val window = TimeWindow(startMillis = now - 1_000L, endMillisExclusive = now + 1_000L)
         val allocate = TimeAllocationUseCase()
 
-        val missed = allocate(window, listOf(area), listOf(goal), listOf(task(done = true)))
-        val seen = allocate(window, listOf(area), listOf(goal), listOf(TaskCompletion.stamp(task(done = true), now)))
+        val open = allocate(window, listOf(area), listOf(goal), listOf(task()))
+        val seen = allocate(window, listOf(area), listOf(goal), listOf(task(done = true)))
 
-        assertThat(missed.isEmpty).isTrue()
+        assertThat(open.isEmpty).isTrue()
         assertThat(seen.isEmpty).isFalse()
         assertThat(seen.totalMinutes).isEqualTo(45)
     }

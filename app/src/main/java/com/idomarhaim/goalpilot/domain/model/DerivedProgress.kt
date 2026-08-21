@@ -27,8 +27,20 @@ package com.idomarhaim.goalpilot.domain.model
  * Two, and both are already stored for their own reasons:
  *
  * - every [ProgressEntry] logged against the goal contributes its `value`;
- * - every completed [Task] linked to the goal contributes its
- *   `progressContribution`.
+ * - every completed [Task] with an edge to the goal contributes **that edge's declared
+ *   contribution** ([GoalEdge.contribution]), and nothing at all when the edge declares
+ *   none.
+ *
+ * That second bullet is §1.5 as of `#55`: *"an edge declares its contribution in the
+ * objective's own word, or contributes nothing to the measure."* It was
+ * `Task.progressContribution`, a number on the task rather than on the pair — which cannot
+ * be right, because a 30-minute run is `1` to *"run 20 times"* and `5` to *"run 100 km"*.
+ * Its `1.0` default was a silence rather than a value, and a silence now adds nothing.
+ *
+ * **Nothing already stored changed value.** A task written before `#55` reads its stored
+ * `progressContribution` onto its edge verbatim (`TaskDto.toDomain`), so every existing goal
+ * sums to exactly what it summed to yesterday. Only tasks created *after* the change arrive
+ * with an undeclared contribution.
  *
  * The task half is not an embellishment. `TaskRepositoryImpl.setDone`'s write was
  * the *only* thing crediting a ticked task to its goal, so deleting that writer
@@ -74,8 +86,15 @@ object DerivedProgress {
         }
         for (task in tasks) {
             if (!task.isDone) continue
-            val goalId = task.goalId?.takeIf { it.isNotBlank() } ?: continue
-            sums[goalId] = (sums[goalId] ?: 0.0) + task.progressContribution
+            for (edge in task.goalEdges) {
+                val goalId = edge.goalId.takeIf { it.isNotBlank() } ?: continue
+                // An undeclared contribution adds nothing (§1.5). Skipping rather than
+                // adding 0.0 keeps a goal that is named only by silent edges **absent**
+                // from the map, which is the state `currentValues` already documents as
+                // "no facts" -- one meaning, one representation.
+                val contribution = edge.contribution ?: continue
+                sums[goalId] = (sums[goalId] ?: 0.0) + contribution
+            }
         }
         return sums
     }

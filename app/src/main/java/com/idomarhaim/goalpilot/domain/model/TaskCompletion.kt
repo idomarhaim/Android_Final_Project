@@ -2,7 +2,7 @@ package com.idomarhaim.goalpilot.domain.model
 
 /**
  * The shape a **completion fact** has to have, wherever it is written — `#7`, `R6`,
- * `docs/PRODUCT_v0.3.md` §1.4 / §4.6.
+ * `#55`, `docs/PRODUCT_v0.3.md` §1.4 / §4.6.
  *
  * `R6` is *"there should be a way to complete the task from within 'quick add'"*, and §1.4's
  * answer to *what does completing award* ends on a constraint about **plumbing**, not about
@@ -11,80 +11,83 @@ package com.idomarhaim.goalpilot.domain.model
  * a second pipe"*.
  *
  * A task created already-done therefore cannot be `upsertTask()` followed by `setDone()`. That
- * is two writes, two failure modes, and a window in which the task exists un-completed — and
- * the second write is the one on a path that has just been shown to work, so the failure it
- * guards against is the one it cannot handle. The create carries the completion instead, and
- * this is the rule that says what "carrying it" means.
+ * is two round trips, two failure modes, and a window in which the task exists un-completed —
+ * and the second write is the one on a path that has just been shown to work, so the failure
+ * it guards against is the one it cannot handle. The create carries the completion instead,
+ * and this object is what "carrying it" means.
  *
- * ### The invariant, and why a half-written fact is worse than a missing one
+ * ### `#55` moved the fact, and the invariant went from *upheld* to *unrepresentable*
  *
- * > **`isDone` and `completedAtEpochMillis` are one fact, and they are written together or
- * > not at all.**
+ * Until `#55` the fact was two fields on the task document, `done` and `completedAt`, and
+ * this object existed to normalise the four states they can be in into the two that are
+ * legal. That was a real hazard, because the two fields were read by **different consumers
+ * that disagreed about which one was the fact** — the projection function counted `done`
+ * while the weekly summary, the dashboard's done-this-week count and the time chart all
+ * required the stamp. A done task with no stamp moved the points and was invisible
+ * everywhere the user could go looking for them.
  *
- * `setDone` has always upheld it — it writes `done` and `completedAt` in the same `update`,
- * nulling the stamp on an untick. Nothing upheld it on the **create** path, because until
- * `#7` no create path could produce a done task. One that could, and did not, would be far
- * more dangerous than it looks, because the two fields are read by **different consumers that
- * disagree about which one is the fact**:
+ * There is now **one** field, [Task.completion], and it is an object that either exists or
+ * does not. `isDone` is `completion != null`. The half-written state has no representation,
+ * so nothing has to normalise it and no reader can pick the wrong half — which is §0.2 and
+ * §0.3 arriving at the same place from different directions.
  *
- * | Reader | Reads | A done task with no stamp |
- * |---|---|---|
- * | `functions/src/derived.ts` `pointsFromTasks` | `done` only | **counts** — points are awarded |
- * | `SummaryUseCase` | `isDone && (completedAt ?: 0) >= windowStart` | silently **dropped** |
- * | `DashboardViewModel` "done this week" | same shape | silently **dropped** |
- * | `TimeAllocationUseCase` | `isDone && completedAt != null` | silently **dropped** |
+ * ### What is left here
  *
- * So the failure is not *"a field is missing"*. It is that **the points move and the task
- * that moved them is invisible everywhere the user could go looking for it** — a total that
- * cannot be reconciled against anything on screen, with no error and nothing red. `Observed:`
- * by reading those four call sites at `HEAD`, 2026-08-20; not by hitting it, because `#7` is
- * the first ticket that could.
- *
- * ### Why it lives here and is applied in the repository
- *
- * In the **domain**, because it is a statement about what a completion fact *is*, and because
- * a rule reachable without Firebase is a rule the JVM suite can pin — the same reason `#9` put
- * `DurationEntry` here rather than in the add row.
- *
- * Applied in `TaskRepositoryImpl.upsertTask`, because that is the single choke point every
- * task write passes through. Applying it at the two add surfaces instead would be correct
- * today and quietly wrong at the third one somebody adds later: the invariant would then live
- * in the call sites, which is where invariants go to be forgotten. `upsertTask` already
- * normalises `createdAtEpochMillis` this way, so this is the existing habit of that function
- * and not a new responsibility for it.
+ * [of], which is the single place a completion fact is **minted**. Both callers are in
+ * `TaskRepositoryImpl` — the tick (`setDone`) and the born-done create (`upsertTask`) — and
+ * they call the same function with the same arguments, which is what *"not a second pipe"*
+ * means once the fact has its own document. If a third completion surface ever appears, it
+ * gets this function, not a copy of its body.
  */
 object TaskCompletion {
 
     /**
-     * Returns [task] with its completion fact made whole, as of [nowMillis].
+     * The fact a completion of [task] emits, as of [nowMillis].
      *
-     * Three cases, and the third is the one that has to be spelled out:
+     * ### It banks what is true **now**, and never re-reads it
      *
-     *  - **done, no stamp** → stamped with [nowMillis]. This is `#7`'s born-done task.
-     *  - **done, already stamped** → left exactly as it is. A re-save must never move the
-     *    time at which something happened; `AnalyticsViewModel`'s duration backfill saves
-     *    completed tasks routinely, and re-dating them would rewrite history in the time
-     *    chart every time a duration was corrected.
-     *  - **not done** → the stamp is **cleared**, not preserved. There is no completion, so
-     *    there is no time at which it happened; keeping a leftover stamp is exactly the
-     *    half-written fact above with the fields the other way round. This mirrors
-     *    `setDone(false)`, which has always nulled `completedAt` — after this, the create
-     *    path and the tick path produce the same shape, which is what makes the readers
-     *    above safe to trust.
+     * [CompletionFact.minutes] and [CompletionFact.difficulty] are copied off the task at the
+     * moment of the tick and are then frozen. Correcting a duration afterwards changes what
+     * the task is *estimated* at and leaves what it *earned* alone — that is §1.4's *"points
+     * are banked as their inputs"*, and it is what makes an untick give back exactly what the
+     * tick gave.
+     *
+     * [TaskDuration.minutesOf] rather than `task.estimatedMinutes` on purpose: a task with no
+     * duration is worth `DEFAULT_MINUTES`, and banking the resolved number means the fact is
+     * complete on its own. A reader of `completionFacts` never has to go and find the task to
+     * know what the completion was worth — which is the property the projection function is
+     * built on.
+     *
+     * ### Re-completing an already-done task keeps the original stamp
+     *
+     * A re-save must never move the time at which something happened;
+     * `AnalyticsViewModel`'s duration backfill saves completed tasks routinely, and re-dating
+     * them would rewrite history in the time chart every time a duration was corrected. So
+     * a **banked** [Task.completion] is returned whole — its inputs included, since re-banking
+     * today's estimate is the same re-pricing the freeze exists to prevent.
+     *
+     * ### An unstamped fact is a request, not a record — and this is the case that bit
+     *
+     * `#7`'s born-done surfaces cannot supply a timestamp: only the write knows `now`. They
+     * therefore hand in a **placeholder** `CompletionFact()`, whose `completedAtEpochMillis`
+     * is `0L`, meaning *complete this at the write*. A plain `?:` treats that placeholder as
+     * an existing fact and returns it untouched — banking a completion stamped at the epoch,
+     * with `DEFAULT_MINUTES` it was never asked about.
+     *
+     * That is the **exact** failure this object was created for, arriving through the new
+     * shape: a task that awards points and is invisible in every window-based reader, because
+     * the weekly summary, the dashboard's done-this-week count and the time chart all filter
+     * on a stamp that reads as 1970. `Observed:` 2026-08-21 — `TaskCompletionTest`'s first
+     * case went red on the `?:` version, which is why the check below is on the timestamp
+     * rather than on nullness.
      */
-    fun stamp(task: Task, nowMillis: Long): Task = when {
-        !task.isDone -> if (task.completedAtEpochMillis == null) task else task.copy(completedAtEpochMillis = null)
-        task.completedAtEpochMillis != null -> task
-        else -> task.copy(completedAtEpochMillis = nowMillis)
+    fun of(task: Task, nowMillis: Long): CompletionFact {
+        val banked = task.completion
+        if (banked != null && banked.completedAtEpochMillis > 0L) return banked
+        return CompletionFact(
+            completedAtEpochMillis = nowMillis,
+            minutes = TaskDuration.minutesOf(task),
+            difficulty = task.difficulty,
+        )
     }
-
-    /**
-     * Whether [task] holds a completion fact every reader agrees on.
-     *
-     * Exposed for the tests rather than for production: it is the predicate
-     * [stamp] establishes, and asserting a normaliser against a separately-written
-     * predicate is worth more than asserting it against a copy of its own branches.
-     */
-    fun isWellFormed(task: Task): Boolean =
-        if (task.isDone) task.completedAtEpochMillis != null else task.completedAtEpochMillis == null
 }

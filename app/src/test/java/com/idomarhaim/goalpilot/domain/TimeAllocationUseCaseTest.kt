@@ -3,10 +3,13 @@ package com.idomarhaim.goalpilot.domain
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.TimeBucket
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
+import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocationUseCase
 import org.junit.Test
 
@@ -37,17 +40,17 @@ class TimeAllocationUseCaseTest {
         goalId: String?,
         at: Long,
         minutes: Int? = null,
-        points: Int = 10,
         source: DurationSource = DurationSource.UNKNOWN,
     ) =
         Task(
             id = id,
-            goalId = goalId,
-            isDone = true,
-            points = points,
+            goalEdges = goalEdgesOf(goalId),
             estimatedMinutes = minutes,
             durationSource = source,
-            completedAtEpochMillis = at,
+            completion = CompletionFact(
+                completedAtEpochMillis = at,
+                minutes = minutes ?: TaskDuration.DEFAULT_MINUTES,
+            ),
         )
 
     @Test
@@ -76,15 +79,11 @@ class TimeAllocationUseCaseTest {
             done("inside", "g-run", at = 1_000L, minutes = 60), // inclusive start
             done("before", "g-run", at = 999L, minutes = 60),
             done("after", "g-run", at = 9_000L, minutes = 60), // exclusive end
-            Task(
-                id = "open",
-                goalId = "g-run",
-                isDone = false,
-                estimatedMinutes = 60,
-                completedAtEpochMillis = 2_000L,
-            ),
-            // Flagged done but never stamped — nothing to place it in a window with.
-            Task(id = "stampless", goalId = "g-run", isDone = true, estimatedMinutes = 60),
+            Task(id = "open", goalEdges = goalEdgesOf("g-run"), estimatedMinutes = 60),
+            // `#55` deleted the third case that used to sit here — a task "flagged done but
+            // never stamped". `isDone` is now `completion != null` and the stamp lives on the
+            // completion, so a done task with no time cannot be constructed. What was a
+            // filter to get right is a state that no longer exists.
         )
 
         val result = useCase(window, areas, goals, tasks)
@@ -114,17 +113,21 @@ class TimeAllocationUseCaseTest {
     }
 
     @Test
-    fun `a task with no stored estimate still counts, using its points`() {
+    fun `a task with no stored estimate still counts, as a half-hour chore`() {
         val tasks = listOf(
             done("estimated", "g-run", at = 2_000L, minutes = 45, source = DurationSource.AI),
-            done("guessed", "g-thesis", at = 2_000L, minutes = null, points = 20),
+            done("guessed", "g-thesis", at = 2_000L, minutes = null),
         )
 
         val result = useCase(window, areas, goals, tasks)
 
-        // 20 points × 3 = 60 minutes from the fallback.
-        assertThat(result.slices.first { it.name == "Studies" }.minutes).isEqualTo(60)
-        assertThat(result.totalMinutes).isEqualTo(105)
+        // `#55`: DEFAULT_MINUTES, not `points × 3`. The point of this case is unchanged —
+        // every completed task must contribute SOMETHING, or the pie silently under-reports
+        // whole areas of a life — but what it contributes is no longer read out of a reward
+        // number, which is the direction §1.4 inverted.
+        assertThat(result.slices.first { it.name == "Studies" }.minutes)
+            .isEqualTo(TaskDuration.DEFAULT_MINUTES)
+        assertThat(result.totalMinutes).isEqualTo(75)
         assertThat(result.estimatedTaskCount).isEqualTo(1)
         assertThat(result.completedTasks).isEqualTo(2)
     }

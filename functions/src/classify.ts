@@ -64,7 +64,13 @@ export interface ValidatedClassification {
   suggestedCategory?: string;
   confidence?: number;
   rationale?: string;
-  estimatedPoints?: number;
+  /**
+   * `LIGHT` | `ROUTINE` | `DEMANDING` — §3.3 D's estimate group, `#55`.
+   *
+   * Replaced `estimatedPoints?: number`. §3.3 A: *"There is no `points` field, and there
+   * never will be"* — the model judges and the app computes (§0.5, §1.4).
+   */
+  difficulty?: string;
   estimatedMinutes?: number;
 }
 
@@ -88,17 +94,34 @@ const MIN_MINUTES = 5;
 const MAX_MINUTES = 480;
 
 /**
- * `estimatedPoints`' surviving range.
+ * §1.4's three difficulties, as the wire spells them.
  *
- * ⚠️ **This field is on borrowed time and is deliberately left alone here.** §3.3 A deletes
- * `points` from the model's vocabulary outright — *"There is no `points` field, and there
- * never will be"* — because §1.4 computes it as `round(minutes / 3) × difficulty`. That
- * inversion is `C1` [#19](https://github.com/idomarhaim/Android_Final_Project/issues/19)'s
- * ticket, not this one, and removing the field here would leave the client with no points at
- * all in the interim. So `#6` validates it and `#19` deletes it.
+ * **This replaced `estimatedPoints`**, which `#6` validated in the range 5-50 and left a
+ * note here saying it was on borrowed time. `#55` spent it: §3.3 A deletes `points` from the
+ * model's vocabulary outright — *"There is no `points` field, and there never will be"* —
+ * because §1.4 computes it as `round(minutes / 3) × difficulty` with the multipliers in the
+ * app. The note pointed at `C1` #19, which was a **closed decision ticket** that was never
+ * going to build anything; `#55` is the carrier that did.
+ *
+ * Mirrors `domain/model/Difficulty` on the client — one enum, two languages.
  */
-const MIN_POINTS = 5;
-const MAX_POINTS = 50;
+const DIFFICULTIES = ["LIGHT", "ROUTINE", "DEMANDING"] as const;
+
+/**
+ * One of §1.4's three difficulties, or `ROUTINE` when the answer is unusable.
+ *
+ * Unlike [validateClassification]'s fields this one **substitutes** rather than omitting,
+ * because `scoreTask`'s whole response is the estimate group: a response with no difficulty
+ * at all would leave the client nothing to read, and `ROUTINE` is x1.0 — the neutral value,
+ * which prices the task on its minutes alone. That is the same reason `Difficulty.fromName`
+ * resolves an unknown name to `ROUTINE` on the Kotlin side.
+ */
+export function asDifficulty(value: unknown): string {
+  return typeof value === "string" &&
+    (DIFFICULTIES as readonly string[]).includes(value.toUpperCase())
+    ? value.toUpperCase()
+    : "ROUTINE";
+}
 
 /** A finite integer, or `undefined`. Rejects `NaN`, `Infinity`, `"30"` and `30.5` alike. */
 function asInt(value: unknown): number | undefined {
@@ -171,10 +194,12 @@ export function validateClassification(
   const rationale = asText(m.rationale, MAX_RATIONALE);
   if (rationale !== undefined) out.rationale = rationale;
 
-  const points = asInt(m.estimatedPoints);
-  if (points !== undefined && points >= MIN_POINTS && points <= MAX_POINTS) {
-    out.estimatedPoints = points;
-  }
+  // Absent rather than defaulted, like every other field here (§3.4): the CLIENT reads a
+  // missing difficulty as ROUTINE, which is x1.0 and therefore the absence of a judgement.
+  // Writing ROUTINE here instead would make "the model said routine" and "the model said
+  // nothing" the same answer, which is the distinction this whole validator exists to keep.
+  const difficulty = asMember(m.difficulty, [...DIFFICULTIES]);
+  if (difficulty !== undefined) out.difficulty = difficulty;
 
   const minutes = asInt(m.estimatedMinutes);
   if (minutes !== undefined && minutes >= MIN_MINUTES && minutes <= MAX_MINUTES) {

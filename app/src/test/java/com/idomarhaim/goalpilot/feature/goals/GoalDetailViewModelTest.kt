@@ -4,8 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.DurationSource
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
@@ -56,7 +59,17 @@ class GoalDetailViewModelTest {
         Goal(id = goalId, title = "Get fit", targetValue = 100.0, currentValue = 2.0),
     )
     private val observedTasks = MutableStateFlow(
-        listOf(Task(id = "t1", goalId = goalId, title = "Run 5k", points = 10, isDone = false)),
+        listOf(
+            Task(
+                id = "t1",
+                // §1.5, `#55`: the edge declares what the task is worth to THIS goal. It has
+                // to be declared for the optimistic ring to move at all — an undeclared edge
+                // contributes nothing, which is the spec's answer and not a dropped write.
+                goalEdges = goalEdgesOf(goalId, contribution = 1.0),
+                title = "Run 5k",
+                estimatedMinutes = 30,
+            ),
+        ),
     )
 
     private fun task() = observedTasks.value.single()
@@ -110,7 +123,7 @@ class GoalDetailViewModelTest {
 
         vm.toggleTask(task())
 
-        // 2.0 + progressContribution(1.0) — the same arithmetic `GoalProgress`
+        // 2.0 + the edge's declared contribution (1.0) — the same arithmetic `GoalProgress`
         // performs once the tick lands, so the ring shows the number the repository
         // is about to derive.
         assertThat(vm.uiState.value.goal!!.currentValue).isEqualTo(3.0)
@@ -118,7 +131,7 @@ class GoalDetailViewModelTest {
 
     @Test
     fun `un-ticking a completed task moves the progress back down`() = runTest {
-        observedTasks.value = listOf(task().copy(isDone = true))
+        observedTasks.value = listOf(task().copy(completion = CompletionFact()))
         observedGoal.value = observedGoal.value!!.copy(currentValue = 3.0)
         val neverReturns = CompletableDeferred<Resource<Unit>>()
         coEvery { taskRepository.setDone(any(), any()) } coAnswers { neverReturns.await() }
@@ -214,7 +227,7 @@ class GoalDetailViewModelTest {
 
         vm.toggleTask(task())
         // The server confirms: the task is done and the goal moved 2.0 -> 3.0.
-        observedTasks.value = listOf(task().copy(isDone = true))
+        observedTasks.value = listOf(task().copy(completion = CompletionFact()))
         observedGoal.value = observedGoal.value!!.copy(currentValue = 3.0)
 
         assertThat(vm.uiState.value.tasks.single().isDone).isTrue()
@@ -226,8 +239,8 @@ class GoalDetailViewModelTest {
     @Test
     fun `a completed task sorts below an open one, as the repository would return it`() = runTest {
         observedTasks.value = listOf(
-            Task(id = "t1", goalId = goalId, title = "Run 5k", createdAtEpochMillis = 200),
-            Task(id = "t2", goalId = goalId, title = "Stretch", createdAtEpochMillis = 100),
+            Task(id = "t1", goalEdges = goalEdgesOf(goalId), title = "Run 5k", createdAtEpochMillis = 200),
+            Task(id = "t2", goalEdges = goalEdgesOf(goalId), title = "Stretch", createdAtEpochMillis = 100),
         )
         val neverReturns = CompletableDeferred<Resource<Unit>>()
         coEvery { taskRepository.setDone(any(), any()) } coAnswers { neverReturns.await() }
@@ -257,7 +270,7 @@ class GoalDetailViewModelTest {
         coEvery { taskRepository.upsertTask(any()) } returns Resource.Error("Could not save task")
         val vm = subscribedViewModel()
 
-        vm.addTask("Swim", 10, 30, DurationSource.UNKNOWN)
+        vm.addTask("Swim", Difficulty.ROUTINE, 30, DurationSource.UNKNOWN)
 
         assertThat(vm.action.value.message).isEqualTo("Could not save task")
     }

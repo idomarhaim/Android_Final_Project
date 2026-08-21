@@ -1,12 +1,15 @@
 package com.idomarhaim.goalpilot.progress
 
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.GoalEdge
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.model.withDerivedProgress
 import org.junit.Test
 
@@ -24,8 +27,31 @@ class DerivedProgressTest {
     private fun entry(goalId: String, value: Double, id: String = "") =
         ProgressEntry(id = id, goalId = goalId, value = value)
 
-    private fun task(goalId: String?, contribution: Double, done: Boolean, id: String = "") =
-        Task(id = id, goalId = goalId, progressContribution = contribution, isDone = done)
+    /**
+     * A task with one edge, declaring [contribution] (§1.5, `#55`).
+     *
+     * `contribution` is nullable here because *undeclared* is now a state the arithmetic has
+     * to have an answer for, and it is not `0.0`: `0.0` says this work is worth nothing,
+     * `null` says nobody said. See `an edge that declares nothing adds nothing` below.
+     */
+    private fun task(
+        goalId: String?,
+        contribution: Double?,
+        done: Boolean,
+        id: String = "",
+    ) = Task(
+        id = id,
+        goalEdges = goalEdgesOf(goalId, contribution),
+        completion = if (done) CompletionFact() else null,
+    )
+
+    /** A task serving more than one objective, each edge with its own worth (§1.5). */
+    private fun multiEdgeTask(vararg edges: Pair<String, Double?>, done: Boolean, id: String = "") =
+        Task(
+            id = id,
+            goalEdges = edges.map { (goalId, contribution) -> GoalEdge(goalId, contribution) },
+            completion = if (done) CompletionFact() else null,
+        )
 
     // ── The sum itself ────────────────────────────────────────────────────────
 
@@ -72,6 +98,56 @@ class DerivedProgressTest {
     fun `an unlinked task belongs to no goal`() {
         val tasks = listOf(task(null, 9.0, done = true), task("", 9.0, done = true))
         assertThat(DerivedProgress.currentValues(emptyList(), tasks)).isEmpty()
+    }
+
+    // ── §1.5's edges, and the silence that used to be a 1.0 ───────────────────
+
+    @Test
+    fun `an edge that declares nothing adds nothing`() {
+        // §1.5: "an edge declares its contribution in the objective's own word, or
+        // contributes nothing to the measure". `progressContribution`'s 1.0 default was a
+        // SILENCE, not a value — nobody was ever asked what a task is worth to a goal, and
+        // the app answered "one" on their behalf, in whatever unit the goal happened to use.
+        val tasks = listOf(task("g1", contribution = null, done = true))
+        assertThat(DerivedProgress.currentValues(emptyList(), tasks)).isEmpty()
+    }
+
+    @Test
+    fun `zero is a declaration and is not the same as saying nothing`() {
+        // Both sum to 0.0, and they are still different: a declared 0.0 makes the goal
+        // PRESENT in the map at zero, which is what "this work does not move that measure"
+        // looks like. Silence leaves it absent — the state `currentValues` documents as
+        // "no facts". One meaning, one representation, in both directions.
+        val declared = listOf(task("g1", contribution = 0.0, done = true))
+        val silent = listOf(task("g1", contribution = null, done = true))
+
+        assertThat(DerivedProgress.currentValues(emptyList(), declared)).containsKey("g1")
+        assertThat(DerivedProgress.currentValues(emptyList(), silent)).doesNotContainKey("g1")
+    }
+
+    @Test
+    fun `every edge advances its own objective fully, and they are not divided`() {
+        // §1.5's many-to-many table: goal progress is OWNED by each objective, so it
+        // duplicates across edges — unlike minutes, which are pooled and get divided,
+        // because one afternoon happened once. Dividing progress would make a goal's number
+        // depend on how many OTHER goals the same task happens to serve.
+        val tasks = listOf(multiEdgeTask("g1" to 1.0, "g2" to 5.0, done = true))
+        val sums = DerivedProgress.currentValues(emptyList(), tasks)
+
+        assertThat(sums["g1"]).isWithin(1e-9).of(1.0)
+        assertThat(sums["g2"]).isWithin(1e-9).of(5.0)
+    }
+
+    @Test
+    fun `one task can declare to one objective and stay silent to another`() {
+        // The shape that made a per-TASK number wrong in the first place: a 30-minute run is
+        // "1" to "run 20 times" and has no expressible worth at all to "lose 5 kg". The old
+        // field forced one answer to serve both.
+        val tasks = listOf(multiEdgeTask("runs" to 1.0, "weight" to null, done = true))
+        val sums = DerivedProgress.currentValues(emptyList(), tasks)
+
+        assertThat(sums["runs"]).isWithin(1e-9).of(1.0)
+        assertThat(sums).doesNotContainKey("weight")
     }
 
     @Test

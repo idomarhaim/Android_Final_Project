@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +18,8 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.domain.model.Difficulty
+import com.idomarhaim.goalpilot.feature.goals.POINTS_PREVIEW_TAG
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.feature.goals.AI_ESTIMATE_ICON_LABEL
 import com.idomarhaim.goalpilot.feature.goals.AddTaskRow
@@ -47,7 +50,7 @@ class DurationBoxUiTest {
 
     private data class Added(
         val title: String,
-        val points: Int,
+        val difficulty: Difficulty,
         val minutes: Int,
         val source: DurationSource,
     )
@@ -62,35 +65,40 @@ class DurationBoxUiTest {
      */
     private fun setRow() {
         composeRule.setContent {
-            var points by remember { mutableStateOf<Int?>(null) }
+            var difficulty by remember { mutableStateOf<Difficulty?>(null) }
             var minutes by remember { mutableStateOf<Int?>(null) }
             GoalPilotTheme {
                 AddTaskRow(
                     isScoring = false,
-                    suggestedPoints = points,
+                    suggestedDifficulty = difficulty,
                     suggestedMinutes = minutes,
-                    onSuggestPoints = { title ->
+                    onSuggestEstimate = { title ->
                         suggestRequestedFor = title
-                        points = pendingPoints
+                        difficulty = pendingDifficulty
                         minutes = pendingMinutes
                     },
-                    onSuggestionApplied = { points = null; minutes = null },
+                    onSuggestionApplied = { difficulty = null; minutes = null },
                     // `#7` added the fifth parameter. This suite is about `#9`'s duration
                     // precedence, so it ignores the flag; `AlreadyDoneUiTest` owns it.
-                    onAdd = { t, p, m, s, _ -> added += Added(t, p, m, s) },
+                    onAdd = { t, d, m, s, _ -> added += Added(t, d, m, s) },
                 )
             }
         }
     }
 
-    private var pendingPoints: Int? = 20
+    private var pendingDifficulty: Difficulty? = Difficulty.DEMANDING
     private var pendingMinutes: Int? = 90
+
+    private fun chip(difficulty: Difficulty) = composeRule.onNodeWithTag(
+        "add-task-difficulty-" + difficulty.name.lowercase(),
+    )
 
     private fun typeTitle(text: String) =
         composeRule.onNodeWithText("Add a task").performTextReplacement(text)
 
     private fun pressEstimate() =
-        composeRule.onNodeWithContentDescription("Estimate points with AI").performClick()
+        composeRule.onNodeWithContentDescription("Estimate difficulty and duration with AI")
+            .performClick()
 
     private fun pressAdd() =
         composeRule.onNodeWithContentDescription("Add task").performClick()
@@ -257,6 +265,67 @@ class DurationBoxUiTest {
         assertBoxIsEmpty()
         pressAdd()
         assertThat(added.single().source).isEqualTo(DurationSource.UNKNOWN)
+    }
+
+    // ── `#55`: the row's other input, and the number it implies ─────────
+
+    @Test
+    fun theModelsJudgementLandsOnTheChipsAndIsWrittenWithTheTask() {
+        // §1.4's other half. The model names one of three words; the app turns it into a
+        // currency. There is no points box to seed any more — this is what replaced it.
+        setRow()
+        typeTitle("Rewrite the whole chapter")
+
+        pressEstimate()
+
+        chip(Difficulty.DEMANDING).assertIsSelected()
+        pressAdd()
+        assertThat(added.single().difficulty).isEqualTo(Difficulty.DEMANDING)
+    }
+
+    @Test
+    fun aTappedChipOverridesTheModel() {
+        // The reason difficulty is assigned outright while a TYPED DURATION is sticky:
+        // §1.4 makes only the number about the user's own day untouchable. A judgement
+        // about the work is the model's to offer and the user's to overrule, right here.
+        setRow()
+        typeTitle("Rewrite the whole chapter")
+        pressEstimate()
+
+        chip(Difficulty.LIGHT).performClick()
+
+        pressAdd()
+        assertThat(added.single().difficulty).isEqualTo(Difficulty.LIGHT)
+    }
+
+    @Test
+    fun theRowSaysWhatTheTaskWillBeWorthBeforeItIsAdded() {
+        // A view nobody can see is indistinguishable from a stored number that might
+        // disagree. 90 minutes at DEMANDING is round(90/3) × 1.5 = 45.
+        setRow()
+        typeTitle("Rewrite the whole chapter")
+
+        pressEstimate()
+
+        composeRule.onNodeWithTag(POINTS_PREVIEW_TAG).assertTextContains(
+            "Worth 45 pts",
+            substring = true,
+        )
+    }
+
+    @Test
+    fun theDefaultIsRoutineAndAddingReturnsToIt() {
+        // ROUTINE is ×1.0 — the ABSENCE of a judgement, not a guess at one. And it has to
+        // reset with everything else, for the reason the "already done" chip records: a
+        // judgement that survived the add would silently re-price whatever is typed next.
+        setRow()
+        typeTitle("Rewrite the whole chapter")
+        pressEstimate()
+        chip(Difficulty.LIGHT).performClick()
+
+        pressAdd()
+
+        chip(Difficulty.ROUTINE).assertIsSelected()
     }
 
     @Test

@@ -2,14 +2,17 @@ package com.idomarhaim.goalpilot.data.firestore
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.data.auth.uidFlow
+import com.idomarhaim.goalpilot.data.firestore.dto.CompletionFactDto
 import com.idomarhaim.goalpilot.data.firestore.dto.TaskDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.data.firestore.dto.toDto
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
@@ -25,42 +28,47 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Tasks live under users/{uid}/tasks. **Completing one writes exactly one document, and
- * what it writes is a fact.**
+ * Tasks live under `users/{uid}/tasks`, and **a completion is its own document** under
+ * `users/{uid}/completionFacts/{taskId}` (`#55`, spec §1.4).
  *
- * This class used to be the last client writer of derived state. `setDone` held three
- * writes in one `firestore.runTransaction`: the tick, `users/{uid}.points`, and the
- * `publicProfiles/{uid}` leaderboard row including its `level`. `C20` (#42, spec §5.2)
- * moved the last two to `functions/src/projection.ts` under one rule — *a derived number
- * gets a stored writer if and only if somebody who cannot read its inputs has to read it*
- * — and deleted `publicProfiles.level` outright, because a stored function of `points`
- * in the same document is readable by everyone who can read the thing it is computed from.
+ * ### What `#55` moved, and why the tick is still one commit
  *
- * **Two consequences worth knowing before editing this file.**
+ * The completion used to be two fields on the task document, `done` + `completedAt`. §1.4
+ * banks its **inputs** instead — the minutes and the difficulty as they stood at the tick —
+ * so that correcting an estimate afterwards cannot re-price what was already earned. Those
+ * inputs cannot live on the task, because `upsertTask` is a whole-document `set()` and an
+ * ordinary retitle would overwrite them; they get their own document, keyed by the task id.
  *
- * 1. There is no transaction here any more, which is the offline win (spec §5.3): one
- *    single-document write lands in the Firestore cache with the radio off, and the tick
- *    is instant. `runTransaction` could not be served from the cache and took a measured
- *    7.9 s to fail (closed #3). `app/src/test/.../guards/OfflineWriteGuardTest.kt` watched for
- *    exactly this and went **skipped** the moment it became true; `50-finish` then read that skip,
- *    deleted `core/net/ConnectivityMonitor.kt` and the `GoalDetailViewModel` pre-check it guarded,
- *    and retired the guard itself (2026-08-20). **The guard no longer exists — do not go looking.**
- * 2. **Points do not move until the projection function runs — including the owner's own.**
- *    Nothing in this app sums these facts on the device: `AuthRepositoryImpl.authState()` reads
- *    the stored `users/{uid}.points` and `UserDto.toDomain()` passes it straight through, so
- *    Dashboard, Profile and the widget all render the **stored** number. The tick itself still
- *    works offline and instantly, because it is a fact; the totals derived from it wait for the
- *    server.
+ * That is two documents, and §1.4 is explicit that a create-and-complete must *"emit that
+ * same fact, not a second pipe"*. Both are satisfied by a **`WriteBatch`**: one commit, one
+ * failure mode, no window in which half the fact exists. A batch is applied to the Firestore
+ * cache synchronously exactly as a single write is — the offline win `C20` bought by deleting
+ * `runTransaction` (a transaction cannot reach the cache at all and failed after a measured
+ * 7.9 s, closed #3) is untouched, because a batch is not a transaction. And there is one
+ * minting function, [TaskCompletion.of], called by the tick and by the born-done create with
+ * the same arguments; the pipe is single because the *fact* has one author, not because the
+ * write has one document.
  *
- *    That is why the projection writes `users/{uid}.points` as well as the public row, and why
- *    spec §5.2's table row *"points — a sum over completion facts — no writer"* describes an
- *    end-state nobody has built: it would be true only once every owner-facing reader computed
- *    the total from the task collection. **`Observed:` 2026-08-20**, by reading the four call
- *    sites; an earlier revision of this KDoc claimed the opposite and was wrong.
+ * ### Three consequences worth knowing before editing this file
  *
- * It also does not advance the linked goal (#49, spec §5.2): the goal sums
- * `progressContribution` over its completed tasks, so the tick alone carries the progress
- * and there is no derived number stored anywhere to fall out of step.
+ * 1. **`observeTasks` is a join.** The tasks collection carries no completion any more, so
+ *    the flow combines it with `completionFacts`. Both are cache-served snapshot listeners,
+ *    so this costs a second listener and no round trip.
+ * 2. **A pre-`#55` document still reads correctly, with no backfill.** `TaskDto.toDomain`
+ *    reconstructs a fact from `done`/`completedAt`/`points`, losslessly — a legacy point
+ *    value `p` becomes `3p` minutes at `ROUTINE`, which prices back at `p`. The fact
+ *    document, when one exists, wins over that reconstruction.
+ * 3. **Points do not move until the projection function runs — including the owner's own.**
+ *    Nothing in this app sums these facts on the device: `AuthRepositoryImpl.authState()`
+ *    reads the stored `users/{uid}.points` and `UserDto.toDomain()` passes it straight
+ *    through, so Dashboard, Profile and the widget all render the **stored** number. The tick
+ *    itself still works offline and instantly, because it is a fact; the totals derived from
+ *    it wait for the server. That is why the projection writes `users/{uid}.points` as well
+ *    as the public row. **`Observed:` 2026-08-20**, by reading the four call sites.
+ *
+ * It also does not advance the linked goal (#49, spec §5.2): the goal sums the **declared
+ * contribution of each edge** its completed tasks point at it with (§1.5), so the tick alone
+ * carries the progress and there is no derived number stored anywhere to fall out of step.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -76,23 +84,37 @@ class TaskRepositoryImpl @Inject constructor(
     private fun tasksCol(uid: String): CollectionReference =
         userDoc(uid).collection(FirestorePaths.TASKS)
 
+    private fun factsCol(uid: String): CollectionReference =
+        userDoc(uid).collection(FirestorePaths.COMPLETION_FACTS)
+
+    /**
+     * The task as the database currently holds it, completion joined on.
+     *
+     * Two `get()`s rather than one, and both are cache-served on the path that matters: the
+     * row was just rendered from that cache. Reading the fact as well is what makes
+     * `TaskCompletion.of` able to see an ALREADY-BANKED completion and leave it alone --
+     * without it, re-saving a completed task would re-date and re-price it, which is the one
+     * thing §1.4 banks the inputs to prevent.
+     */
+    private suspend fun readTask(uid: String, taskId: String): Task? {
+        val dto = tasksCol(uid).document(taskId).get().await()
+            .toObject(TaskDto::class.java) ?: return null
+        val fact = factsCol(uid).document(taskId).get().await()
+            .toObject(CompletionFactDto::class.java)
+        return dto.toDomain().copy(id = taskId, completion = fact?.toDomain() ?: dto.toDomain().completion)
+    }
 
     override fun observeTasks(goalId: String?): Flow<List<Task>> =
         auth.uidFlow().flatMapLatest { uid ->
             if (uid == null) {
                 flowOf(emptyList())
             } else {
-                val query = if (goalId != null) {
-                    tasksCol(uid).whereEqualTo("goalId", goalId)
-                } else {
-                    tasksCol(uid)
-                }
-                // Sort client-side to avoid requiring a composite Firestore index.
-                query.snapshotsFlow().map { snap ->
-                    snap.toObjects(TaskDto::class.java)
-                        .map { it.toDomain() }
-                        .sortedWith(compareBy({ it.isDone }, { -it.createdAtEpochMillis }))
-                }
+                // The join lives in `TaskStream` and not here, because `GoalRepositoryImpl`
+                // needs the same one and a copy of it is two things to keep in step -- see
+                // that file for the device-observed defect that moved it.
+                TaskStream.observe(userDoc(uid), goalId)
+                    // Sort client-side to avoid requiring a composite Firestore index.
+                    .map { it.sortedWith(compareBy({ t -> t.isDone }, { t -> -t.createdAtEpochMillis })) }
             }
         }
 
@@ -102,31 +124,39 @@ class TaskRepositoryImpl @Inject constructor(
             val col = tasksCol(uid)
             val ref = if (task.id.isBlank()) col.document() else col.document(task.id)
             val now = System.currentTimeMillis()
-            val toSave = TaskCompletion.stamp(
-                task.copy(
-                    id = ref.id,
-                    createdAtEpochMillis = if (task.createdAtEpochMillis == 0L) {
-                        now
-                    } else {
-                        task.createdAtEpochMillis
-                    },
-                ),
-                nowMillis = now,
+            val toSave = task.copy(
+                id = ref.id,
+                createdAtEpochMillis = if (task.createdAtEpochMillis == 0L) {
+                    now
+                } else {
+                    task.createdAtEpochMillis
+                },
             )
-            // ONE WRITE, AND IT CARRIES THE COMPLETION IF THERE IS ONE (`#7`, §1.4).
+            // ONE COMMIT, AND IT CARRIES THE COMPLETION IF THERE IS ONE (`#7`, `#55`, §1.4).
             //
-            // `TaskCompletion.stamp` is what makes a task **born done** legal: the create
-            // carries `done` and `completedAt` together, so there is no `setDone` after this
-            // and therefore no window in which the task exists un-completed. The tempting
-            // shape — upsert, then tick — is two writes and two failure modes, and its second
-            // write is the one that has to succeed for the fact to be whole.
+            // This is what makes a task **born done** legal: the create carries its fact, so
+            // there is no `setDone` after this and therefore no window in which the task
+            // exists un-completed. The tempting shape -- upsert, then tick -- is two commits
+            // and two failure modes, and its second one is the write that has to succeed for
+            // the fact to be whole.
             //
-            // Enforced here rather than at the add surfaces because this is the one function
-            // every task write goes through. See TaskCompletion's KDoc for what a half-written
-            // fact does: the points move and the task is invisible in the summary, the "done
-            // this week" count and the time chart, because those three read `completedAt` and
-            // the projection reads `done`.
-            ref.set(toSave.toDto()).await()
+            // Note which function mints the fact: `TaskCompletion.of`, the same one `setDone`
+            // calls. That is §1.4's "emit that same fact, not a second pipe" -- one author,
+            // whatever surface the completion came from.
+            //
+            // An already-banked fact is re-written unchanged rather than skipped, because a
+            // batch must describe the whole intended state: `TaskCompletion.of` returns the
+            // existing fact untouched, so `AnalyticsViewModel`'s duration backfill re-saving a
+            // completed task cannot move its stamp or re-price it.
+            val batch = firestore.batch()
+            batch.set(ref, toSave.toDto())
+            val factRef = factsCol(uid).document(ref.id)
+            if (toSave.isDone) {
+                batch.set(factRef, TaskCompletion.of(toSave, now).toDto(ref.id))
+            } else {
+                batch.delete(factRef)
+            }
+            batch.commit().await()
             Resource.Success(ref.id)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Could not save task", e)
@@ -137,34 +167,34 @@ class TaskRepositoryImpl @Inject constructor(
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
             try {
-                // ONE WRITE, TO ONE DOCUMENT, AND IT IS A FACT (`C20` #42, spec §5.2).
-                //
-                // `done` and `completedAt` are the only things here that record something
-                // the user *did*. The two writes that used to sit beside them —
-                // `users/{uid}.points` and the `publicProfiles/{uid}` row — were derived
-                // numbers, and a derived number gets a stored writer only when somebody
-                // who cannot read its inputs has to read it. The owner can read their own
-                // tasks, so their own total is summed on the device; a leaderboard reader
-                // cannot, so the public copy is written by the projection function
-                // (`functions/src/projection.ts`) from this very fact.
-                //
-                // With those gone there is nothing left for a transaction to be atomic
-                // about, and dropping it is the whole offline win (spec §5.3): a single
-                // document write goes straight into the Firestore cache and completes
-                // immediately with the radio off, where `runTransaction` cannot touch the
-                // cache at all and failed after a measured 7.9 s (closed #3).
-                //
-                // No read-then-write, so the idempotent no-op that used to guard against
-                // double-crediting is not needed either: setting `done` to the value it
-                // already holds writes the same document twice, which is the same state.
-                // Nothing accumulates anywhere, which is exactly what §5.2 bought.
-                tasksCol(uid).document(taskId)
-                    .update(
-                        mapOf(
-                            "done" to done,
-                            "completedAt" to if (done) System.currentTimeMillis() else null,
-                        ),
-                    ).await()
+                val taskRef = tasksCol(uid).document(taskId)
+                val factRef = factsCol(uid).document(taskId)
+                if (done) {
+                    // The fact has to be minted from the task, and the task is not in hand:
+                    // `toggleTask` passes an id.
+                    val task = readTask(uid, taskId)
+                        ?: return@withContext Resource.Error("Task no longer exists")
+                    val batch = firestore.batch()
+                    batch.set(factRef, TaskCompletion.of(task, System.currentTimeMillis()).toDto(taskId))
+                    batch.update(taskRef, LEGACY_COMPLETION_CLEARED)
+                    batch.commit().await()
+                } else {
+                    // AN UNTICK REMOVES EXACTLY THE FACT THE TICK ADDED (§1.4).
+                    //
+                    // A delete of a known path -- no read, no arithmetic, nothing to
+                    // double-subtract. The defect `C20` fixed (tick at 10, re-score to 30,
+                    // untick, lose 30) cannot return by this route: nothing here reads a
+                    // point value at all, and the fact it removes is the one that was banked.
+                    //
+                    // The legacy clear is not optional. A pre-`#55` document still carries
+                    // `done: true`, which `TaskDto.legacyCompletion()` reads as a completion;
+                    // deleting the fact without clearing it would leave a task that ticks
+                    // back on by itself.
+                    val batch = firestore.batch()
+                    batch.delete(factRef)
+                    batch.update(taskRef, LEGACY_COMPLETION_CLEARED)
+                    batch.commit().await()
+                }
                 Resource.Success(Unit)
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Could not update task", e)
@@ -174,10 +204,34 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun deleteTask(taskId: String): Resource<Unit> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
         try {
-            tasksCol(uid).document(taskId).delete().await()
+            // The fact goes with the task. It is tempting to keep it -- §1.4 wants a level
+            // that can never fall -- but that clause is about **re-pricing**, which banking
+            // the inputs already settles. Deleting a task is a deliberate act about a thing
+            // that should not have been counted, and an orphan fact would add points the user
+            // cannot see, find or remove.
+            val batch = firestore.batch()
+            batch.delete(tasksCol(uid).document(taskId))
+            batch.delete(factsCol(uid).document(taskId))
+            batch.commit().await()
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Could not delete task", e)
         }
+    }
+
+    private companion object {
+        /**
+         * The pre-`#55` completion fields, removed rather than nulled.
+         *
+         * `FieldValue.delete()` and not `null` because `TaskDto.done` is `Boolean?`: a stored
+         * `null` and an absent key both read as "not done", so either would work — but the
+         * document is being migrated, and leaving a superseded key present is the shape
+         * §0.3 keeps naming. `toDto()` writes them as `null` for a different reason: a
+         * whole-document `set()` cannot express a deletion.
+         */
+        val LEGACY_COMPLETION_CLEARED = mapOf(
+            "done" to FieldValue.delete(),
+            "completedAt" to FieldValue.delete(),
+        )
     }
 }

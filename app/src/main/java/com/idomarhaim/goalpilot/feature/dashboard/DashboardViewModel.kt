@@ -10,7 +10,9 @@ import com.idomarhaim.goalpilot.core.util.StoragePaths
 import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
 import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.FilingDecision
@@ -24,6 +26,7 @@ import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
@@ -246,15 +249,19 @@ class DashboardViewModel @Inject constructor(
 
             val saved = taskRepository.upsertTask(
                 Task(
-                    goalId = goalId,
+                    // §1.5, `#55`: the link and what it contributes are one edge. A quick-add
+                    // declares no contribution — nobody was asked what this task is worth in
+                    // the goal's own word — so the edge is silent and adds nothing to the
+                    // measure until something declares it.
+                    goalEdges = goalEdgesOf(goalId),
                     title = title,
-                    points = classification.estimatedPoints,
+                    difficulty = classification.difficulty,
                     // `#7`/`R6`: a task typed in because it is already finished is created
-                    // done, in THIS write. Not upsert-then-tick — see TaskCompletion, which
-                    // stamps `completedAtEpochMillis` inside `upsertTask` so the fact leaves
-                    // here whole. Nothing else on this path changes: the same classify, the
-                    // same filing decision, the same single `set()`.
-                    isDone = alreadyDone,
+                    // done, in THIS write. Not upsert-then-tick — `upsertTask` mints the
+                    // completion fact through `TaskCompletion.of` and commits it in the same
+                    // batch as the task, so the fact leaves here whole. Nothing else on this
+                    // path changes: the same classify, the same filing decision, one commit.
+                    completion = if (alreadyDone) CompletionFact() else null,
                     estimatedMinutes = classification.estimatedMinutes ?: TaskDuration.DEFAULT_MINUTES,
                     // §3.4: a duration nobody supplied is recorded as unsupplied. It still counts
                     // as DEFAULT_MINUTES so the task keeps its slice of the pie, but it is not
@@ -456,8 +463,8 @@ class DashboardViewModel @Inject constructor(
                                         ?: imported.listTitle.trim().takeIf { it.isNotBlank() },
                                     createsLifeArea = area == null &&
                                         imported.listTitle.isNotBlank(),
-                                    points = (classification?.estimatedPoints ?: 10)
-                                        .coerceIn(1, 1000),
+                                    difficulty = classification?.difficulty
+                                        ?: Difficulty.ROUTINE,
                                     // Not `?: DEFAULT_MINUTES` any more (#9): the
                                     // substitution happens once, at the write, where
                                     // the provenance is recorded beside it.
@@ -553,9 +560,11 @@ class DashboardViewModel @Inject constructor(
                 if (goalId == null) continue
                 val result = taskRepository.upsertTask(
                     Task(
-                        goalId = goalId,
+                        // The import's review sheet asks which goal, never what the task is
+                        // worth to it — so the edge declares nothing (§1.5).
+                        goalEdges = goalEdgesOf(goalId),
                         title = proposal.title,
-                        points = proposal.points,
+                        difficulty = proposal.difficulty,
                         source = TaskSource.GOOGLE_TASKS,
                         estimatedMinutes = proposal.minutes ?: TaskDuration.DEFAULT_MINUTES,
                         durationSource = proposal.minutes.durationSource(),
@@ -926,7 +935,8 @@ data class ImportProposal(
     val lifeAreaName: String? = null,
     /** True when confirming will also create a life area for this task's list. */
     val createsLifeArea: Boolean = false,
-    val points: Int = 10,
+    /** How demanding the model judged the row (§1.4, `#55`). Was `points: Int`. */
+    val difficulty: Difficulty = Difficulty.ROUTINE,
     /**
      * What the model said the task takes, or **null when it did not say** (#9,
      * §3.4). Null is stored as [TaskDuration.DEFAULT_MINUTES] with

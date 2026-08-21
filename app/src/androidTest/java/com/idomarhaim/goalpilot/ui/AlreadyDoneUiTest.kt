@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.feature.dashboard.SmartAddCard
 import com.idomarhaim.goalpilot.feature.dashboard.SmartAddState
@@ -166,15 +167,15 @@ class AlreadyDoneUiTest {
 
     private fun setRow() {
         composeRule.setContent {
-            var points by remember { mutableStateOf<Int?>(null) }
+            var difficulty by remember { mutableStateOf<Difficulty?>(null) }
             GoalPilotTheme {
                 AddTaskRow(
                     isScoring = false,
-                    suggestedPoints = points,
+                    suggestedDifficulty = difficulty,
                     suggestedMinutes = null,
-                    onSuggestPoints = { points = null },
-                    onSuggestionApplied = { points = null },
-                    onAdd = { t, _, _, _: DurationSource, done -> addedDone += t to done },
+                    onSuggestEstimate = { difficulty = null },
+                    onSuggestionApplied = { difficulty = null },
+                    onAdd = { t, _: Difficulty, _, _: DurationSource, done -> addedDone += t to done },
                 )
             }
         }

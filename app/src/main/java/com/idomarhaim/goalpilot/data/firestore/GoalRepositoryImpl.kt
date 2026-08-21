@@ -95,16 +95,19 @@ class GoalRepositoryImpl @Inject constructor(
      * to one goal — the detail screen needs no others, and the query is the same
      * one `TaskRepositoryImpl.observeTasks` already runs, so Firestore serves both
      * from a single listen target.
+     *
+     * ⚠️ **It goes through [TaskStream], and that is the whole of a `#55` defect.** Since the
+     * completion moved into its own document (§1.4), reading the tasks collection alone gives
+     * back tasks that are all **open** — so this sum, which counts only completed ones, read
+     * zero for every migrated task. `Observed:` on a device, 2026-08-21, as a goal ring
+     * dropping to 0% while the task list above it showed the task ticked. Never read
+     * `TaskDto` here directly; the seam is what stops the two screens disagreeing.
      */
-    private fun tasksFlow(uid: String, goalId: String? = null): Flow<List<Task>> {
-        val query = if (goalId != null) {
-            tasksCol(uid).whereEqualTo("goalId", goalId)
-        } else {
-            tasksCol(uid)
-        }
-        return query.snapshotsFlow()
-            .map { snap -> snap.toObjects(TaskDto::class.java).map { it.toDomain() } }
-    }
+    private fun tasksFlow(uid: String, goalId: String? = null): Flow<List<Task>> =
+        TaskStream.observe(
+            firestore.collection(FirestorePaths.USERS).document(uid),
+            goalId,
+        )
 
     /**
      * Every progress entry belonging to [goalIds], flattened.

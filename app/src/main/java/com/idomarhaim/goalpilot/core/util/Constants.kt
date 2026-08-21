@@ -6,6 +6,16 @@ object FirestorePaths {
     const val GOALS = "goals"
     const val TASKS = "tasks"
 
+    /**
+     * Banked completions: `users/{uid}/completionFacts/{taskId}` (`#55`, spec §1.4).
+     *
+     * The document id **is** the task id, so a tick is a `set` and an untick a `delete`
+     * of one known path — no query, no read-then-write, nothing to accumulate. Mirrored in
+     * `functions/src/projection.ts`, which totals a user's points by reading this
+     * collection: one name, two languages.
+     */
+    const val COMPLETION_FACTS = "completionFacts"
+
     /** User-defined life areas: users/{uid}/lifeAreas/{id}. */
     const val LIFE_AREAS = "lifeAreas"
     const val PROGRESS = "progress"

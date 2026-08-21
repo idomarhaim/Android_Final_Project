@@ -61,8 +61,9 @@ data class Goal(
     /**
      * How far the goal has come — **derived, never stored** (spec §5.2, #49).
      *
-     * It is the sum of the goal's progress entries and the `progressContribution`
-     * of its completed tasks, computed by
+     * It is the sum of the goal's progress entries and the **declared contribution of
+     * every edge** its completed tasks point at it with (§1.5, `#55` — an edge that declares
+     * nothing adds nothing), computed by
      * [DerivedProgress][com.idomarhaim.goalpilot.domain.model.DerivedProgress] and put
      * here by `withDerivedProgress` at the repository boundary. The field survives
      * as a **view** so every screen can keep reading it; what changed is that

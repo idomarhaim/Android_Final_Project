@@ -28,6 +28,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.feature.dashboard.SmartAddCard
 import com.idomarhaim.goalpilot.feature.dashboard.SmartAddState
@@ -112,14 +113,14 @@ class AlreadyDoneRenderTest {
     private fun RowCard() {
         GpCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp)) {
-                var points by remember { mutableStateOf<Int?>(null) }
+                var difficulty by remember { mutableStateOf<Difficulty?>(null) }
                 AddTaskRow(
                     isScoring = false,
-                    suggestedPoints = points,
+                    suggestedDifficulty = difficulty,
                     suggestedMinutes = null,
-                    onSuggestPoints = { points = null },
-                    onSuggestionApplied = { points = null },
-                    onAdd = { _, _, _, _: DurationSource, _ -> },
+                    onSuggestEstimate = { difficulty = null },
+                    onSuggestionApplied = { difficulty = null },
+                    onAdd = { _, _: Difficulty, _, _: DurationSource, _ -> },
                 )
             }
         }

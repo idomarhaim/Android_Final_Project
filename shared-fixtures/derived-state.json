@@ -22,16 +22,27 @@
     "SHAPE. Every case gives the FACTS and the EXPECTED PROJECTION. Facts are what the user did;",
     "the projection is what the server stores. Nothing here stores a level: publicProfiles.level",
     "was deleted by C20 (a stored function of points in the same document), so `level` below is",
-    "asserted as a COMPUTED value on both sides and never as a written field."
+    "asserted as a COMPUTED value on both sides and never as a written field.",
+    "",
+    "#55 SPLIT `facts` IN TWO, AND BOTH HALVES ARE REAL.",
+    "  - `completionFacts` is the LIVE shape (§1.4): a banked completion at",
+    "    users/{uid}/completionFacts/{taskId}, carrying the INPUTS -- minutes and difficulty --",
+    "    from which points are computed as round(minutes / 3) x difficulty. Never a number.",
+    "  - `tasks` is the PRE-#55 shape: `done` + a stored `points` on the task document. #55",
+    "    writes no backfill, so a task completed before it keeps that shape until something",
+    "    writes it, and the projection must keep counting it or every lifetime total collapses",
+    "    on deploy. It is the old source, draining -- not a second source of truth.",
+    "A task id appearing in BOTH is counted once, from its fact: that is the task that has been",
+    "re-ticked since the migration, and the fact is what was actually banked."
   ],
   "pointsCases": [
     {
-      "name": "no tasks at all",
+      "name": "no facts at all",
       "facts": { "tasks": [] },
       "expected": { "points": 0, "level": 1 }
     },
     {
-      "name": "tasks exist but none are done — an undone task contributes nothing",
+      "name": "legacy: tasks exist but none are done — an undone task contributes nothing",
       "facts": {
         "tasks": [
           { "id": "t1", "done": false, "points": 40 },
@@ -41,7 +52,7 @@
       "expected": { "points": 0, "level": 1 }
     },
     {
-      "name": "only the done ones are summed",
+      "name": "legacy: only the done ones are summed",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true, "points": 40 },
@@ -52,17 +63,17 @@
       "expected": { "points": 75, "level": 1 }
     },
     {
-      "name": "exactly on a level boundary — L2 begins at 100, inclusive",
+      "name": "legacy: exactly on a level boundary — L2 begins at 100, inclusive",
       "facts": { "tasks": [{ "id": "t1", "done": true, "points": 100 }] },
       "expected": { "points": 100, "level": 2 }
     },
     {
-      "name": "one point below a boundary stays on the lower level",
+      "name": "legacy: one point below a boundary stays on the lower level",
       "facts": { "tasks": [{ "id": "t1", "done": true, "points": 99 }] },
       "expected": { "points": 99, "level": 1 }
     },
     {
-      "name": "L3 begins at 300",
+      "name": "legacy: L3 begins at 300",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true, "points": 250 },
@@ -72,7 +83,7 @@
       "expected": { "points": 300, "level": 3 }
     },
     {
-      "name": "L4 begins at 600, and a big pile does not skip past it",
+      "name": "legacy: L4 begins at 600, and a big pile does not skip past it",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true, "points": 599 },
@@ -82,7 +93,7 @@
       "expected": { "points": 600, "level": 4 }
     },
     {
-      "name": "a negative task value cannot drag the total below zero",
+      "name": "legacy: a negative task value cannot drag the total below zero",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true, "points": 10 },
@@ -92,7 +103,7 @@
       "expected": { "points": 0, "level": 1 }
     },
     {
-      "name": "a task with no points field counts as zero, not as a crash",
+      "name": "legacy: a task with no points field counts as zero, not as a crash",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true },
@@ -102,21 +113,128 @@
       "expected": { "points": 20, "level": 1 }
     },
     {
-      "name": "idempotence, stated as data — the same fact set always gives the same number",
+      "name": "legacy: idempotence, stated as data — the same fact set gives the same number",
       "facts": {
         "tasks": [
           { "id": "t1", "done": true, "points": 120 },
-          { "id": "t1", "done": true, "points": 120 }
+          { "id": "t2", "done": true, "points": 120 }
         ]
       },
       "expected": { "points": 240, "level": 2 },
       "$note": [
-        "Two ROWS with the same id cannot exist in Firestore, so this case does not model a",
-        "duplicate document. It models the only way projection could double-credit — two facts",
-        "of equal weight — and pins that the answer is arithmetic over whatever the fact set",
-        "holds, never an accumulator. Run the projection twice on the real set and you get 240",
-        "both times; that is what 'structurally idempotent' means and why FieldValue.increment",
-        "stays rejected (§5.2)."
+        "It models the only way projection could double-credit — two facts of equal weight —",
+        "and pins that the answer is arithmetic over whatever the fact set holds, never an",
+        "accumulator. Run the projection twice on the real set and you get 240 both times;",
+        "that is what 'structurally idempotent' means and why FieldValue.increment stays",
+        "rejected (§5.2).",
+        "",
+        "THE TWO IDS WERE BOTH `t1` UNTIL #55, with a note explaining that two rows with one id",
+        "cannot exist in Firestore and that the case therefore modelled nothing real. It is",
+        "`t1`/`t2` now because the projection is KEYED BY TASK ID -- that is how it counts a",
+        "re-ticked task once rather than twice -- so the old shape collapsed to 120 and the",
+        "case would have been asserting the de-duplication instead of the arithmetic. The",
+        "de-duplication has its own case below, where it is the point."
+      ]
+    },
+    {
+      "name": "#55 the anchor survives: 30 routine minutes are still worth 10",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }]
+      },
+      "expected": { "points": 10, "level": 1 },
+      "$note": [
+        "§1.4 inverts a constant rather than adding one, precisely so this number does not",
+        "move. If this case ever goes red, the inversion has re-priced the user's history."
+      ]
+    },
+    {
+      "name": "#55 the three multipliers, on one duration",
+      "facts": {
+        "completionFacts": [
+          { "taskId": "t1", "minutes": 60, "difficulty": "LIGHT" },
+          { "taskId": "t2", "minutes": 60, "difficulty": "ROUTINE" },
+          { "taskId": "t3", "minutes": 60, "difficulty": "DEMANDING" }
+        ]
+      },
+      "expected": { "points": 65, "level": 1 },
+      "$note": ["round(60/3) = 20, so 20 x 0.75 = 15, 20 x 1.0 = 20, 20 x 1.5 = 30 -> 65."]
+    },
+    {
+      "name": "#55 the ceiling is 240 and nothing clamps to it",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 480, "difficulty": "DEMANDING" }]
+      },
+      "expected": { "points": 240, "level": 2 },
+      "$note": [
+        "480 is the storable duration maximum and DEMANDING is x1.5, so 240 is what the",
+        "formula YIELDS rather than a constant anybody wrote down. §1.4's 'the levelling",
+        "ceiling rises 50 to 240' is this arithmetic, and the old 5..50 cap would have made it",
+        "unreachable."
+      ]
+    },
+    {
+      "name": "#55 the floor is gone: a 15-minute light task is worth 4, not 5",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 15, "difficulty": "LIGHT" }]
+      },
+      "expected": { "points": 4, "level": 1 },
+      "$note": [
+        "round(15/3) = 5, x0.75 = 3.75, rounded = 4. The old MIN_POINTS = 5 would have raised",
+        "it, which is half of what 'the 5..50 cap is deleted' means."
+      ]
+    },
+    {
+      "name": "#55 an unknown difficulty is ROUTINE — the neutral value, not an error",
+      "facts": {
+        "completionFacts": [
+          { "taskId": "t1", "minutes": 30, "difficulty": "IMPOSSIBLE" },
+          { "taskId": "t2", "minutes": 30 }
+        ]
+      },
+      "expected": { "points": 20, "level": 1 },
+      "$note": [
+        "ROUTINE is x1.0, so an unreadable judgement prices the task on its minutes alone —",
+        "which is what a task nobody judged is worth. Mirrors Difficulty.fromName."
+      ]
+    },
+    {
+      "name": "#55 migration: banked facts and un-migrated legacy tasks are summed together",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }],
+        "tasks": [{ "id": "t2", "done": true, "points": 40 }]
+      },
+      "expected": { "points": 50, "level": 1 },
+      "$note": [
+        "The case the deploy turns on. #55 writes no backfill, so on the day it ships every",
+        "account is exactly this: some completions banked, most not. Reading only the new",
+        "collection would have silently zeroed the older half of everybody's lifetime total."
+      ]
+    },
+    {
+      "name": "#55 migration: a re-ticked task is counted once, from its fact",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }],
+        "tasks": [{ "id": "t1", "done": true, "points": 40 }]
+      },
+      "expected": { "points": 10, "level": 1 },
+      "$note": [
+        "Same task id in both halves. The FACT wins — it is what was actually banked at the",
+        "tick, and the legacy fields are what the migrating write is about to clear. Summing",
+        "both would double-credit exactly the tasks a user touches most."
+      ]
+    },
+    {
+      "name": "#55 migration: a legacy point value round-trips to itself, losslessly",
+      "facts": {
+        "completionFacts": [{ "taskId": "t1", "minutes": 120, "difficulty": "ROUTINE" }],
+        "tasks": [{ "id": "t2", "done": true, "points": 40 }]
+      },
+      "expected": { "points": 80, "level": 1 },
+      "$note": [
+        "40 legacy points reconstruct to 40 x 3 = 120 minutes at ROUTINE (see",
+        "TaskDuration.legacyMinutesFromPoints), which prices back at round(120/3) x 1.0 = 40.",
+        "So the two rows here are the SAME completion read on either side of the migration,",
+        "and they are worth the same. That identity is why #55 needs no backfill write."
       ]
     }
   ],

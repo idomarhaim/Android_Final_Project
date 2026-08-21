@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.util.TimeWindow
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
@@ -32,17 +33,18 @@ class BackfillDurationsUseCaseTest {
         done: Boolean = false,
         completedAt: Long? = null,
         createdAt: Long = 0L,
-        points: Int = 10,
         durationSource: DurationSource = DurationSource.UNKNOWN,
     ) = Task(
         id = id,
         title = title,
-        points = points,
-        isDone = done,
         estimatedMinutes = minutes,
         durationSource = durationSource,
         createdAtEpochMillis = createdAt,
-        completedAtEpochMillis = completedAt,
+        completion = if (done) {
+            CompletionFact(completedAtEpochMillis = completedAt ?: createdAt, minutes = minutes ?: 30)
+        } else {
+            null
+        },
     )
 
     @Test
@@ -62,11 +64,14 @@ class BackfillDurationsUseCaseTest {
 
     @Test
     fun `a candidate carries the duration the chart is currently inferring`() {
-        val candidates = useCase(listOf(task("t", points = 20)), window)
+        val candidates = useCase(listOf(task("t")), window)
 
-        // 20 points × 3 = 60 minutes, exactly what TaskDuration.minutesOf would give.
+        // `#55`: what the chart infers for a task with no duration is DEFAULT_MINUTES, full
+        // stop. This asserted `fallbackMinutes(20)` — 20 points × 3 — which is the app
+        // deriving how long your life took from a score that was itself a word count. The
+        // inversion runs the other way now and that function is gone from the live path.
         assertThat(candidates.single().inferredMinutes)
-            .isEqualTo(TaskDuration.fallbackMinutes(20))
+            .isEqualTo(TaskDuration.DEFAULT_MINUTES)
     }
 
     @Test
@@ -108,7 +113,6 @@ class BackfillDurationsUseCaseTest {
 
     private val candidate = DurationCandidate(
         taskId = "t",
-        // Five words: the offline heuristic scores this 5 + 5×3 = 20 points → 60 min.
         title = "Run five kilometres before work",
         inferredMinutes = 30,
         inWindow = true,
@@ -116,7 +120,7 @@ class BackfillDurationsUseCaseTest {
 
     @Test
     fun `a real answer is selected and shown as a change`() {
-        val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 75))
+        val proposal = useCase.propose(candidate, TaskEstimate(minutes = 75))
 
         assertThat(proposal.proposedMinutes).isEqualTo(75)
         assertThat(proposal.noModelAnswer).isFalse()
@@ -132,7 +136,11 @@ class BackfillDurationsUseCaseTest {
         // model is free to land on those numbers by agreement rather than by failure.
         // The repository now reports absence directly, so a real 60-minute answer is
         // a real answer and the false positive is gone rather than tolerated.
-        val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 60))
+        //
+        // `#55` removed the heuristic itself, so the coincidence this case is named for
+        // can no longer be manufactured at all. Kept because what it asserts — that a
+        // real answer is believed — is the behaviour, not the coincidence.
+        val proposal = useCase.propose(candidate, TaskEstimate(minutes = 60))
 
         assertThat(proposal.noModelAnswer).isFalse()
         assertThat(proposal.selected).isTrue()
@@ -140,12 +148,13 @@ class BackfillDurationsUseCaseTest {
 
     @Test
     fun `the server's flat ten-and-thirty is no longer special-cased, because it cannot arrive`() {
-        // `functions/src/index.ts` returns 10 points / 30 minutes when the call
-        // reached the function but GROQ did not answer, and the client used to
-        // pattern-match that pair. It no longer needs to: whatever the transport
-        // does, a duration the model did not produce arrives as null. A genuine
-        // thirty-minute answer is therefore believed.
-        val proposal = useCase.propose(candidate, TaskEstimate(points = 10, minutes = 30))
+        // `functions/src/index.ts` USED to return 10 points / 30 minutes when the call
+        // reached the function but GROQ did not answer, and the client pattern-matched
+        // that pair. It no longer needs to: whatever the transport does, a duration the
+        // model did not produce arrives as null. A genuine thirty-minute answer is
+        // therefore believed. (`#55` went one further and deleted the fabricated pair at
+        // the source — the function now returns a difficulty and no minutes at all.)
+        val proposal = useCase.propose(candidate, TaskEstimate(minutes = 30))
 
         assertThat(proposal.noModelAnswer).isFalse()
         assertThat(proposal.selected).isTrue()
@@ -163,7 +172,7 @@ class BackfillDurationsUseCaseTest {
 
     @Test
     fun `an out-of-range answer is clamped rather than written raw`() {
-        val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 5_000))
+        val proposal = useCase.propose(candidate, TaskEstimate(minutes = 5_000))
 
         assertThat(proposal.proposedMinutes).isEqualTo(TaskDuration.MAX_MINUTES)
         assertThat(proposal.noModelAnswer).isFalse()
@@ -234,7 +243,7 @@ class BackfillDurationsUseCaseTest {
 
     @Test
     fun `a nonsense answer of zero minutes falls back instead of erasing the task`() {
-        val proposal = useCase.propose(candidate, TaskEstimate(points = 20, minutes = 0))
+        val proposal = useCase.propose(candidate, TaskEstimate(minutes = 0))
 
         assertThat(proposal.proposedMinutes).isEqualTo(candidate.inferredMinutes)
         assertThat(proposal.selected).isFalse()

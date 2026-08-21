@@ -20,7 +20,7 @@ import assert from "node:assert/strict";
 
 // The compiled output, not the source: `npm test` runs `tsc` first (package.json), so these
 // tests exercise the exact JavaScript that gets deployed.
-import { validateClassification, listsFromRequest, CATEGORIES } from "../lib/classify.js";
+import { validateClassification, listsFromRequest, CATEGORIES, asDifficulty } from "../lib/classify.js";
 
 const LISTS = { goalIds: ["g1", "g2"], lifeAreaIds: ["a1"] };
 
@@ -32,7 +32,7 @@ const GOOD = {
   suggestedCategory: "FITNESS",
   confidence: 0.82,
   rationale: "Matches your running goal.",
-  estimatedPoints: 20,
+  difficulty: "ROUTINE",
   estimatedMinutes: 45,
 };
 
@@ -78,7 +78,7 @@ test("no field is ever emitted as null", () => {
     suggestedCategory: "SPORTS",
     confidence: "high",
     rationale: 12,
-    estimatedPoints: "20",
+    difficulty: "IMPOSSIBLE",
     estimatedMinutes: NaN,
   };
   const out = validateClassification(junk, LISTS);
@@ -121,11 +121,41 @@ test("minutes are kept at the boundaries and dropped outside them — never clam
   assert.equal(validateClassification({ estimatedMinutes: 481 }, LISTS).estimatedMinutes, undefined);
 });
 
-test("points are kept at the boundaries and dropped outside them", () => {
-  assert.equal(validateClassification({ estimatedPoints: 5 }, LISTS).estimatedPoints, 5);
-  assert.equal(validateClassification({ estimatedPoints: 50 }, LISTS).estimatedPoints, 50);
-  assert.equal("estimatedPoints" in validateClassification({ estimatedPoints: 51 }, LISTS), false);
-  assert.equal("estimatedPoints" in validateClassification({ estimatedPoints: 0 }, LISTS), false);
+test("every declared difficulty survives, and nothing else does (#55)", () => {
+  for (const d of ["LIGHT", "ROUTINE", "DEMANDING"]) {
+    assert.equal(validateClassification({ difficulty: d }, LISTS).difficulty, d);
+  }
+  assert.equal("difficulty" in validateClassification({ difficulty: "HARD" }, LISTS), false);
+  assert.equal("difficulty" in validateClassification({ difficulty: "light" }, LISTS), false);
+  assert.equal("difficulty" in validateClassification({ difficulty: 40 }, LISTS), false);
+});
+
+test("an absent difficulty stays absent — it is not defaulted to ROUTINE here (#55)", () => {
+  // The distinction this validator exists to keep. ROUTINE is x1.0 on the client, so a
+  // missing difficulty already prices the task on its minutes alone; writing ROUTINE here
+  // would make "the model said routine" and "the model said nothing" the same answer, and
+  // §3.4's whole shape is that a field which fails validation is ABSENT.
+  assert.equal("difficulty" in validateClassification({}, LISTS), false);
+});
+
+test("estimatedPoints is gone from the model's vocabulary and is not smuggled back (#55)", () => {
+  // §3.3 A: "There is no `points` field, and there never will be." A model that answers
+  // with one anyway must not have it survive validation — the currency is computed from
+  // minutes and difficulty in the app (§1.4), and a second source for it is the defect.
+  const out = validateClassification({ estimatedPoints: 40, points: 40 }, LISTS);
+  assert.equal("estimatedPoints" in out, false);
+  assert.equal("points" in out, false);
+});
+
+test("asDifficulty substitutes ROUTINE, where the validator omits (#55)", () => {
+  // The two are deliberately different. `scoreTask`'s WHOLE response is the estimate group,
+  // so an omitted difficulty would leave the client nothing to read; ROUTINE is x1.0, the
+  // neutral value. `classify` returns many fields, so an omission there is legible.
+  assert.equal(asDifficulty("DEMANDING"), "DEMANDING");
+  assert.equal(asDifficulty("demanding"), "DEMANDING", "case-folded, unlike the validator");
+  assert.equal(asDifficulty("HARD"), "ROUTINE");
+  assert.equal(asDifficulty(undefined), "ROUTINE");
+  assert.equal(asDifficulty(40), "ROUTINE");
 });
 
 test("a fractional number is rounded, not rejected — the range is the contract, not the type", () => {

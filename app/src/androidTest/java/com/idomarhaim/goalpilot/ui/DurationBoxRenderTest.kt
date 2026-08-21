@@ -30,6 +30,7 @@ import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.feature.goals.AddTaskRow
 import com.idomarhaim.goalpilot.feature.goals.DURATION_BOX_TAG
 import com.idomarhaim.goalpilot.ui.components.GpCard
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import org.junit.Rule
 import org.junit.Test
@@ -105,19 +106,19 @@ class DurationBoxRenderTest {
         GpCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
             Column(Modifier.padding(12.dp)) {
                 Text(caption, style = MaterialTheme.typography.labelMedium)
-                var points by remember { mutableStateOf<Int?>(null) }
+                var difficulty by remember { mutableStateOf<Difficulty?>(null) }
                 var minutes by remember { mutableStateOf<Int?>(null) }
                 AddTaskRow(
                     isScoring = false,
-                    suggestedPoints = points,
+                    suggestedDifficulty = difficulty,
                     suggestedMinutes = minutes,
                     // The estimate arrives when the AI button is pressed, exactly as
                     // on the real screen. Seeding it at composition instead would
                     // have produced a row estimated for an EMPTY title, and — found
                     // by running this — typing the title afterwards correctly clears
                     // the estimate, so the picture would have been of nothing.
-                    onSuggestPoints = { points = 20; minutes = suggest },
-                    onSuggestionApplied = { points = null; minutes = null },
+                    onSuggestEstimate = { difficulty = Difficulty.ROUTINE; minutes = suggest },
+                    onSuggestionApplied = { difficulty = null; minutes = null },
                     onAdd = { _, _, _, _, _ -> },
                 )
             }
@@ -136,7 +137,9 @@ class DurationBoxRenderTest {
         // writing it, which is #9's own retitle rule doing its job.
         composeRule.onAllNodesWithText("Add a task")[1].performTextReplacement("Run 5km before work")
         composeRule.onAllNodesWithText("Add a task")[2].performTextReplacement("Write the report")
-        composeRule.onAllNodesWithContentDescription("Estimate points with AI")[1].performClick()
+        composeRule.onAllNodesWithContentDescription(
+            "Estimate difficulty and duration with AI",
+        )[1].performClick()
         composeRule.onAllNodesWithTag(DURATION_BOX_TAG)[2].performTextInput("45")
 
         // A floor under the capture: the second row must really be carrying the

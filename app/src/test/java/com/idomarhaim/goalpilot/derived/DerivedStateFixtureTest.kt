@@ -1,7 +1,9 @@
 package com.idomarhaim.goalpilot.derived
 
 import com.google.common.truth.Truth.assertWithMessage
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Leveling
+import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -38,9 +40,21 @@ import java.io.File
  * `setDone` to a single write of a fact. What has to agree is the **rule**: given a set of
  * completion facts, what total do they imply, and what level does that total sit at. The
  * server implements it in `functions/src/derived.ts` to write `publicProfiles.points`; the
- * client implements it wherever it sums the owner's own tasks, and in [Leveling] wherever a
- * level is rendered. If the two drift, a user's own screen and the leaderboard everybody
- * else sees disagree about the same person, silently and in production.
+ * client implements it in [TaskScoring] and [Leveling] wherever a number is rendered. If the
+ * two drift, a user's own screen and the leaderboard everybody else sees disagree about the
+ * same person, silently and in production.
+ *
+ * ### `#55` gave this suite considerably more to hold
+ *
+ * The rule used to be *sum a stored number over the done tasks* — arithmetic so thin that
+ * both implementations were one `reduce`. §1.4 replaced it with
+ * `round(minutes / 3) × difficulty` over **banked inputs**, which is a formula, a rounding
+ * order and a multiplier table, in two languages. The fixture's `completionFacts` cases pin
+ * all three; its `tasks` cases now pin the **migration** reader, which is the half that
+ * decides whether every user's lifetime total survives the deploy.
+ *
+ * This side deliberately calls the production [TaskScoring.pointsFor]. A suite that
+ * reimplemented the formula would agree with itself no matter what the app did.
  *
  * ### The failure this is built to avoid
  *
@@ -79,12 +93,41 @@ class DerivedStateFixtureTest {
 
     private fun JsonObject.name(): String = getValue("name").jsonPrimitive.content
 
-    /** The projection, in Kotlin: the sum of `points` over the done facts, floored at zero. */
-    private fun pointsFromTasks(tasks: JsonArray): Long =
-        tasks.map { it.jsonObject }
-            .filter { it["done"]?.jsonPrimitive?.boolean == true }
-            .sumOf { it["points"]?.jsonPrimitive?.long ?: 0L }
-            .coerceAtLeast(0L)
+    /**
+     * The projection, in Kotlin — the union of banked completion facts and the pre-`#55`
+     * tasks that have none, keyed by task id, floored at zero.
+     *
+     * The banked half goes through the **production** [TaskScoring.pointsFor], not through a
+     * copy of the formula written here. That is the whole point of this suite: the number
+     * `functions/src/derived.ts` computes has to be the number this app computes, and a test
+     * that reimplements the rule can only ever agree with itself.
+     *
+     * The legacy half sums the stored `points` verbatim, mirroring
+     * `pointsFromFacts`' second argument. It is the old source draining, not a second rule.
+     */
+    private fun pointsFromFacts(facts: JsonObject): Long {
+        val banked = (facts["completionFacts"] as? JsonArray).orEmpty()
+            .map { it.jsonObject }
+            .associateBy { it.getValue("taskId").jsonPrimitive.content }
+        var total = 0L
+        for (fact in banked.values) {
+            total += TaskScoring.pointsFor(
+                minutes = fact.getValue("minutes").jsonPrimitive.int,
+                difficulty = Difficulty.fromName(fact["difficulty"]?.jsonPrimitive?.content),
+            ).toLong()
+        }
+        for (task in (facts["tasks"] as? JsonArray).orEmpty().map { it.jsonObject }) {
+            // A fact wins over the legacy fields on the same task — it is what was actually
+            // banked. Summing both would double-credit the tasks a user touches most.
+            if (task.getValue("id").jsonPrimitive.content in banked) continue
+            if (task["done"]?.jsonPrimitive?.boolean != true) continue
+            total += task["points"]?.jsonPrimitive?.long ?: 0L
+        }
+        return total.coerceAtLeast(0L)
+    }
+
+    private fun JsonArray?.orEmpty(): List<kotlinx.serialization.json.JsonElement> =
+        this ?: emptyList()
 
     @Test
     fun `the fixture is present and non-empty`() {
@@ -101,11 +144,11 @@ class DerivedStateFixtureTest {
     fun `every fixture case projects to the same points on this side`() {
         for (element in pointsCases) {
             val case = element.jsonObject
-            val facts = case.getValue("facts").jsonObject.getValue("tasks").jsonArray
+            val facts = case.getValue("facts").jsonObject
             val expected = case.getValue("expected").jsonObject
 
             assertWithMessage("points — ${case.name()}")
-                .that(pointsFromTasks(facts))
+                .that(pointsFromFacts(facts))
                 .isEqualTo(expected.getValue("points").jsonPrimitive.long)
         }
     }

@@ -5,12 +5,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.CompletionFact
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
+import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
+import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
@@ -124,7 +128,7 @@ class GoalDetailViewModel @Inject constructor(
      */
     fun addTask(
         title: String,
-        points: Int,
+        difficulty: Difficulty,
         minutes: Int,
         durationSource: DurationSource,
         alreadyDone: Boolean = false,
@@ -133,13 +137,20 @@ class GoalDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = taskRepository.upsertTask(
                 Task(
-                    goalId = goalId,
+                    // §1.5, `#55`: one edge to this goal, declaring no contribution. The row
+                    // asks how long and how hard, never what the task is worth **in the
+                    // goal's own word** — and `1.0` in place of that silence is exactly the
+                    // default §1.5 deleted.
+                    goalEdges = goalEdgesOf(goalId),
                     title = title.trim(),
-                    points = points.coerceIn(1, 1000),
+                    difficulty = difficulty,
                     // `#7`/`R6`, the same create-and-complete the dashboard's quick add makes,
-                    // through the same one `set()`: `TaskCompletion.stamp` inside `upsertTask`
-                    // pairs `completedAtEpochMillis` with this flag. Never upsert-then-setDone.
-                    isDone = alreadyDone,
+                    // through the same one commit: `upsertTask` mints the fact with
+                    // `TaskCompletion.of` and batches it with the task write. Never
+                    // upsert-then-setDone. The placeholder below carries no timestamp on
+                    // purpose — `TaskCompletion.of` supplies `now` at the write, which is the
+                    // only place that knows it.
+                    completion = if (alreadyDone) CompletionFact() else null,
                     estimatedMinutes = TaskDuration.sanitize(minutes),
                     durationSource = durationSource,
                 ),
@@ -155,20 +166,26 @@ class GoalDetailViewModel @Inject constructor(
     }
 
     /**
-     * Asks the LLM (via the `scoreTask` Cloud Function) what a task is worth and
-     * how long it takes — spec §6 Core "point scoring for tasks", plus the duration
-     * the time-allocation chart is built from. The result lands in
-     * [GoalDetailActionState.suggestedPoints] / [GoalDetailActionState.suggestedMinutes]
-     * for the add-task row to pick up; on any failure the repository returns a
-     * local estimate instead.
+     * Asks the LLM (via the `scoreTask` Cloud Function) **how demanding** a task is and how
+     * long it takes — spec §3.3 A's estimate group, plus the duration the time-allocation
+     * chart is built from. The result lands in [GoalDetailActionState.suggestedDifficulty] /
+     * [GoalDetailActionState.suggestedMinutes] for the add-task row to pick up.
+     *
+     * It used to be called `suggestPoints` and to carry a number. §3.3 A: *"There is no
+     * `points` field, and there never will be"* — the model judges, the app computes (§0.5,
+     * §1.4). On failure the repository returns `ROUTINE` with no minutes, which is the
+     * **absence** of a judgement rather than a guess at one; there is no offline substitute,
+     * because difficulty is a judgement about the work and the app cannot make one.
      */
-    fun suggestPoints(title: String) {
+    fun suggestEstimate(title: String) {
         if (title.isBlank()) {
             _action.update { it.copy(message = "Type the task first") }
             return
         }
         viewModelScope.launch {
-            _action.update { it.copy(isScoring = true, suggestedPoints = null, suggestedMinutes = null) }
+            _action.update {
+                it.copy(isScoring = true, suggestedDifficulty = null, suggestedMinutes = null)
+            }
             val estimate = when (val result = recommendationRepository.scoreTask(title.trim())) {
                 is Resource.Success -> result.data
                 else -> null
@@ -176,15 +193,15 @@ class GoalDetailViewModel @Inject constructor(
             _action.update {
                 it.copy(
                     isScoring = false,
-                    suggestedPoints = estimate?.points,
+                    suggestedDifficulty = estimate?.difficulty,
                     suggestedMinutes = estimate?.minutes,
                 )
             }
         }
     }
 
-    fun consumeSuggestedPoints() =
-        _action.update { it.copy(suggestedPoints = null, suggestedMinutes = null) }
+    fun consumeSuggestedEstimate() =
+        _action.update { it.copy(suggestedDifficulty = null, suggestedMinutes = null) }
 
     /**
      * Ticks the task on screen straight away, then asks Firestore to make it true —
@@ -317,7 +334,15 @@ class GoalDetailViewModel @Inject constructor(
  */
 private fun List<Task>.withOptimisticDone(inFlight: Map<String, Boolean>): List<Task> {
     if (inFlight.isEmpty()) return this
-    return map { task -> inFlight[task.id]?.let { task.copy(isDone = it) } ?: task }
+    return map { task ->
+        // `isDone` is `completion != null` since `#55`, so an optimistic tick has to produce
+        // a fact rather than flip a flag. `TaskCompletion.of` is the one minting function, so
+        // the preview is priced by exactly the arithmetic the write is about to bank.
+        inFlight[task.id]?.let { done ->
+            if (done) task.copy(completion = TaskCompletion.of(task, System.currentTimeMillis()))
+            else task.copy(completion = null)
+        } ?: task
+    }
         .sortedWith(compareBy({ it.isDone }, { -it.createdAtEpochMillis }))
 }
 
@@ -326,9 +351,12 @@ private fun List<Task>.withOptimisticDone(inFlight: Map<String, Boolean>): List<
  * ring and the "3 / 100 %" caption travel with the checkbox instead of lagging it.
  *
  * The arithmetic mirrors what the goal is about to read once the write lands —
- * `DerivedProgress` sums `progressContribution` over completed tasks, so an in-flight
- * tick is worth exactly that — because anything else shows the user a number the
- * repository is not about to agree with.
+ * `DerivedProgress` sums **the declared contribution of each edge** over completed tasks
+ * (§1.5, `#55`), so an in-flight tick is worth exactly the edges pointing at this goal, and
+ * **nothing at all** when they declare nothing — because anything else shows the user a
+ * number the repository is not about to agree with. A task created after `#55` declares no
+ * contribution, so ticking it moves the ring by zero; that is the spec's answer, not a
+ * dropped write, and §1.5 puts the shortfall in words instead.
  *
  * **No clamp**, and that is the third of the four §1.5 deletes. It used to pin the
  * preview to `0..targetValue` to match a write-site clamp that no longer exists;
@@ -341,8 +369,11 @@ private fun Goal.withOptimisticProgress(tasks: List<Task>, inFlight: Map<String,
     val byId = tasks.associateBy { it.id }
     val delta = inFlight.entries.sumOf { (taskId, done) ->
         val task = byId[taskId] ?: return@sumOf 0.0
-        if (task.isDone == done) 0.0
-        else if (done) task.progressContribution else -task.progressContribution
+        if (task.isDone == done) return@sumOf 0.0
+        val worth = task.goalEdges
+            .filter { it.goalId == id }
+            .sumOf { it.contribution ?: 0.0 }
+        if (done) worth else -worth
     }
     if (delta == 0.0) return this
     return copy(currentValue = currentValue + delta)
@@ -365,8 +396,8 @@ data class GoalDetailUiState(
 data class GoalDetailActionState(
     val isSubmitting: Boolean = false,
     val isScoring: Boolean = false,
-    /** One-shot LLM point estimate; the add-task row consumes and clears it. */
-    val suggestedPoints: Int? = null,
+    /** One-shot LLM difficulty judgement; the add-task row consumes and clears it. */
+    val suggestedDifficulty: Difficulty? = null,
     /** Duration estimate from the same call, in minutes. */
     val suggestedMinutes: Int? = null,
     val message: String? = null,

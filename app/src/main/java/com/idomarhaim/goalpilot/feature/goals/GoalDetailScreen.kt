@@ -65,12 +65,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationEntry
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.FillLadder
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
+import com.idomarhaim.goalpilot.domain.model.TaskScoring
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -180,10 +182,10 @@ fun GoalDetailScreen(
                     item {
                         AddTaskRow(
                             isScoring = action.isScoring,
-                            suggestedPoints = action.suggestedPoints,
+                            suggestedDifficulty = action.suggestedDifficulty,
                             suggestedMinutes = action.suggestedMinutes,
-                            onSuggestPoints = viewModel::suggestPoints,
-                            onSuggestionApplied = viewModel::consumeSuggestedPoints,
+                            onSuggestEstimate = viewModel::suggestEstimate,
+                            onSuggestionApplied = viewModel::consumeSuggestedEstimate,
                             onAdd = viewModel::addTask,
                         )
                     }
@@ -340,38 +342,50 @@ private fun GoalHeaderCard(
 }
 
 /**
- * Add-task row with an LLM point estimate and `R8`'s **duration box** (spec §6
- * Core "point scoring for tasks", §1.4, #9).
+ * Add-task row: `R8`'s **duration box** and §1.4's **difficulty**, with the LLM filling in
+ * both (spec §3.3 A, §1.4, #9, `#55`).
  *
- * The estimate arrives asynchronously via [suggestedPoints]/[suggestedMinutes]; the
- * row writes it into the editable fields so the user stays in control. The duration
- * half is held as a [DurationEntry] rather than reconstructed here — every
- * transition it makes is §1.4's precedence rule, and that rule is tested on the JVM
- * instead of only on a device.
+ * ### There is no points field here any more, and that is the ticket
  *
- * What replaced what: the row used to carry an `aiMinutes` variable that was *"the
- * AI's answer while the title still matches, and a function of the points the moment
+ * The row used to carry a `Pts` text box the user typed a number into, seeded from what the
+ * model returned. §1.4 makes points a **view of effort** — `round(minutes / 3) × difficulty`
+ * — so there is nothing left for anybody to type: the two inputs are on screen, and the
+ * currency falls out of them. Keeping the box would have made it a third input that has to
+ * agree with the other two, which is §0.3's *second number that quietly disagrees* in its
+ * purest form.
+ *
+ * The estimate arrives asynchronously via [suggestedDifficulty]/[suggestedMinutes]; the row
+ * writes it into the editable controls so the user stays in control. The duration half is
+ * held as a [DurationEntry] rather than reconstructed here — every transition it makes is
+ * §1.4's precedence rule, and that rule is tested on the JVM instead of only on a device.
+ *
+ * What replaced what, one layer back: the row used to carry an `aiMinutes` variable that was
+ * *"the AI's answer while the title still matches, and a function of the points the moment
  * the user types something new"*. There was no way to type a duration at all, and a
  * point-derived number was written to the task as though it were an estimate.
  */
 @Composable
 internal fun AddTaskRow(
     isScoring: Boolean,
-    suggestedPoints: Int?,
+    suggestedDifficulty: Difficulty?,
     suggestedMinutes: Int?,
-    onSuggestPoints: (String) -> Unit,
+    onSuggestEstimate: (String) -> Unit,
     onSuggestionApplied: () -> Unit,
-    onAdd: (String, Int, Int, DurationSource, Boolean) -> Unit,
+    onAdd: (String, Difficulty, Int, DurationSource, Boolean) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
-    var points by remember { mutableStateOf("10") }
+    var difficulty by remember { mutableStateOf(Difficulty.ROUTINE) }
     var duration by remember { mutableStateOf(DurationEntry()) }
     // `#7`. Belongs to the sentence being typed, so it lives with `title` and dies with it.
     var alreadyDone by remember { mutableStateOf(false) }
 
-    LaunchedEffect(suggestedPoints, suggestedMinutes) {
-        suggestedPoints?.let {
-            points = it.toString()
+    LaunchedEffect(suggestedDifficulty, suggestedMinutes) {
+        suggestedDifficulty?.let {
+            // Assigned outright, unlike the duration below. There is no sticky-difficulty
+            // rule: §1.4 makes only the **typed number** sticky, because it is a fact about
+            // the user's own day. Difficulty is a judgement about the work, which is the one
+            // §0.5 lets the model make — and the chips are right there to overrule it.
+            difficulty = it
             // Not an assignment: withEstimate is where §1.4 lives, and a duration the
             // user typed comes back out of it unchanged. Re-estimating is exactly the
             // event the rule is about, so the rule is applied at the event.
@@ -395,18 +409,8 @@ internal fun AddTaskRow(
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
-            OutlinedTextField(
-                value = points,
-                onValueChange = { points = it.filter { c -> c.isDigit() } },
-                label = { Text("Pts") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .width(72.dp),
-            )
             IconButton(
-                onClick = { onSuggestPoints(title) },
+                onClick = { onSuggestEstimate(title) },
                 enabled = !isScoring,
                 modifier = Modifier.padding(start = 2.dp),
             ) {
@@ -415,7 +419,7 @@ internal fun AddTaskRow(
                 } else {
                     Icon(
                         Icons.Filled.AutoAwesome,
-                        contentDescription = "Estimate points with AI",
+                        contentDescription = "Estimate difficulty and duration with AI",
                         tint = MaterialTheme.colorScheme.tertiary,
                     )
                 }
@@ -423,9 +427,9 @@ internal fun AddTaskRow(
             IconButton(
                 onClick = {
                     val (storedMinutes, storedSource) = duration.resolve()
-                    onAdd(title, points.toIntOrNull() ?: 10, storedMinutes, storedSource, alreadyDone)
+                    onAdd(title, difficulty, storedMinutes, storedSource, alreadyDone)
                     title = ""
-                    points = "10"
+                    difficulty = Difficulty.ROUTINE
                     duration = DurationEntry()
                     // Cleared with everything else, for the reason SmartAddCard's copy of this
                     // chip records: a "done" that survived the add would be a mode that
@@ -486,6 +490,44 @@ internal fun AddTaskRow(
             )
         }
 
+        // §1.4's difficulty, and the other half of what used to be the `Pts` box.
+        //
+        // ITS OWN ROW, for the reason the `#7` chip below records about itself: the duration
+        // row is already a 140dp box plus a caption that runs to "no estimate · counts as
+        // 30m", and three chips beside it would ellipsise the half of that caption which says
+        // what will be stored.
+        //
+        // Chips rather than a dropdown: three values, all visible, one tap to change — and
+        // §0.8's surviving sub-rule (one chip may not carry two axes) is satisfied because
+        // these three are one axis, exclusive, and carry no icon. The row also states what
+        // the choice is worth, because a currency the user cannot predict is one they cannot
+        // trust: `AppDropdownMenu` would have hidden two of the three options behind a tap.
+        Row(
+            modifier = Modifier.padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Difficulty.entries.forEach { option ->
+                FilterChip(
+                    selected = difficulty == option,
+                    onClick = { difficulty = option },
+                    label = { Text(difficultyLabel(option)) },
+                    modifier = Modifier
+                        .padding(end = 6.dp)
+                        .testTag(difficultyTag(option)),
+                )
+            }
+        }
+        // What the two inputs above add up to, said before the task is created rather than
+        // discovered afterwards -- the same argument as the duration caption. Points are a
+        // VIEW of effort (§1.4), and a view nobody can see is indistinguishable from a
+        // stored number that might disagree.
+        Text(
+            text = "Worth ${TaskScoring.pointsFor(duration.resolve().first, difficulty)} pts",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp).testTag(POINTS_PREVIEW_TAG),
+        )
+
         // `#7`'s create-and-complete, the same control the dashboard's quick-add card carries.
         // See `GoalDetailViewModel.addTask` for why this surface has it at all, `R6` naming
         // only quick add.
@@ -535,8 +577,30 @@ private fun durationCaption(duration: DurationEntry): String {
     }
 }
 
+/**
+ * The word on a difficulty chip (§1.4, `#55`).
+ *
+ * The **multiplier is not on the label**, deliberately. §1.4 keeps the multipliers in the app
+ * so the currency cannot be moved by phrasing; putting `×1.5` on a chip would invite the user
+ * to shop for a number rather than describe the work, which is the same failure one layer up.
+ * The points preview beside the row says what the choice is worth, once, for the task
+ * actually being typed.
+ */
+private fun difficultyLabel(difficulty: Difficulty): String = when (difficulty) {
+    Difficulty.LIGHT -> "Light"
+    Difficulty.ROUTINE -> "Routine"
+    Difficulty.DEMANDING -> "Demanding"
+}
+
+/** Stable per-chip handle, so an assertion names one chip rather than a position. */
+private fun difficultyTag(difficulty: Difficulty): String =
+    "add-task-difficulty-${difficulty.name.lowercase()}"
+
 /** Stable handles for the instrumented test; the icon's label is also its a11y text. */
 internal const val DURATION_BOX_TAG = "add-task-duration-box"
+
+/** What the two inputs above it add up to — §1.4's points, as a view. */
+internal const val POINTS_PREVIEW_TAG = "add-task-points-preview"
 
 /** `#7`'s create-and-complete toggle on this surface. */
 internal const val ALREADY_DONE_TAG = "add-task-already-done"
@@ -569,7 +633,14 @@ private fun TaskRow(task: Task, onToggle: () -> Unit, onDelete: () -> Unit) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = DateTimeUtils.formatMinutes(TaskDuration.minutesOf(task)),
+                // The BANKED minutes for a completed task, not today's estimate (`#55`). The
+                // number beside it is `task.points`, which for a done task comes from the
+                // completion fact -- so reading the current estimate here would print a
+                // duration and a price that do not compute against each other, which is
+                // exactly the disagreement §1.4 banks the inputs to prevent.
+                text = DateTimeUtils.formatMinutes(
+                    task.completion?.minutes ?: TaskDuration.minutesOf(task),
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 8.dp),

@@ -281,6 +281,53 @@ test('any signed-in user can read the standings', async () => {
   )
 })
 
+// -- #55: completion facts are private, like everything else under users/{uid} --
+//
+// §1.4 moved the completion out of the task document and into
+// `users/{uid}/completionFacts/{taskId}`, banking the minutes and difficulty it was worth.
+// That is a NEW COLLECTION holding a record of what somebody did and when, and the only
+// thing standing between it and the world is the recursive `{document=**}` wildcard under
+// `users/{uid}` -- a rule written years before this collection existed.
+//
+// Which is exactly why it is worth a case. The wildcard is correct today and a future
+// narrowing of it (per-collection rules, a carve-out for one subcollection) would expose
+// these silently: no client error, no failing Kotlin test, and this is the ONLY layer that
+// can see `firestore.rules` at all.
+
+test('#55: the owner can write and read their own completion facts', async () => {
+  const ref = doc(asUser(OWNER), 'users', OWNER, 'completionFacts', 'task_1')
+  await assertSucceeds(
+    setDoc(ref, { completedAt: 1_755_000_000_000, minutes: 30, difficulty: 'ROUTINE' }),
+  )
+  await assertSucceeds(getDoc(ref))
+  // An untick is a delete of this same path -- "removes exactly the fact it added".
+  await assertSucceeds(deleteDoc(ref))
+})
+
+test('#55: nobody else can read a completion fact, signed in or not', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', OWNER, 'completionFacts', 'task_1'), {
+      completedAt: 1_755_000_000_000,
+      minutes: 30,
+      difficulty: 'ROUTINE',
+    })
+  })
+  await assertFails(getDoc(doc(asUser(JOINER), 'users', OWNER, 'completionFacts', 'task_1')))
+  await assertFails(getDoc(doc(asVisitor(), 'users', OWNER, 'completionFacts', 'task_1')))
+})
+
+test('#55: nobody else can bank a fact into someone else’s account', async () => {
+  // The write direction matters as much as the read: a fact IS points, so a writable
+  // collection here would be a leaderboard anybody could inflate for anybody.
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'users', OWNER, 'completionFacts', 'task_1'), {
+      completedAt: 1_755_000_000_000,
+      minutes: 480,
+      difficulty: 'DEMANDING',
+    }),
+  )
+})
+
 // -- C20: the leaderboard projection ---------------------------------
 //
 // `publicProfiles` had no coverage in this file before 2026-08-20, because until then

@@ -27,11 +27,32 @@ import { dirname, resolve } from "node:path";
 // lib/ rather than transpiling here means these tests exercise the exact JavaScript that
 // gets deployed, which is the only version that can actually disagree with Kotlin.
 import {
-  pointsFromTasks,
+  pointsFromFacts,
   levelForPoints,
   pointsForLevel,
   scoreFromReport,
 } from "../lib/derived.js";
+
+/**
+ * The fixture gives arrays; the projection takes maps keyed by task id, because that is how
+ * it tells a re-ticked task from two different ones (#55). Converting here rather than in the
+ * fixture keeps the fixture readable as *what the user did*.
+ */
+function factsOf(facts) {
+  const out = {};
+  for (const f of facts.completionFacts ?? []) out[f.taskId] = f;
+  return out;
+}
+
+function legacyOf(facts) {
+  const out = {};
+  for (const t of facts.tasks ?? []) out[t.id] = t;
+  return out;
+}
+
+function project(facts) {
+  return pointsFromFacts(factsOf(facts), legacyOf(facts));
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = resolve(here, "..", "..", "shared-fixtures", "derived-state.json");
@@ -46,7 +67,7 @@ test("the shared fixture is where both suites expect it", () => {
 
 for (const testCase of fixture.pointsCases) {
   test(`points: ${testCase.name}`, () => {
-    const points = pointsFromTasks(testCase.facts.tasks);
+    const points = project(testCase.facts);
     assert.equal(points, testCase.expected.points, "points projected from the fact set");
     assert.equal(
       levelForPoints(points),
@@ -67,8 +88,8 @@ test("projecting twice writes the same number — idempotence, not carefulness",
   // rejected. Asserted as a property rather than as a fixture row because it is about
   // running the function twice, which a facts -> expected table cannot express.
   for (const testCase of fixture.pointsCases) {
-    const once = pointsFromTasks(testCase.facts.tasks);
-    const twice = pointsFromTasks(testCase.facts.tasks);
+    const once = project(testCase.facts);
+    const twice = project(testCase.facts);
     assert.equal(once, twice, testCase.name);
   }
 });
