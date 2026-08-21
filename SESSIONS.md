@@ -15,6 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `c13-key-store` (r8) | open the presentation ticket Ido approved + write its briefs; record his raised-3D overturn | `TODO/TODO_OPTIONAL/Presentation.TODO.optional.md` · `sessions/<new briefs>` · `CHANGELOG/2026-08-20/c13-key-store.md` | _none_ | 2026-08-21 |
+| `55-scoring-model` | `#55` — §1.4 points inversion + §1.5 `goalEdges` (model migration) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt`, `TaskEstimate.kt`, `ProgressSummary.kt`, `DerivedProgress.kt`, `Goal.kt`, `data/firestore/TaskRepositoryImpl.kt`, `data/firestore/dto/Dtos.kt`, `data/firestore/dto/Mappers.kt`, `data/remote/RecommendationRepositoryImpl.kt`, `domain/usecase/SummaryUseCase.kt`, `feature/goals/GoalDetailViewModel.kt`, `functions/src/projection.ts`, `firestore.rules`, `app/src/test/**`, `app/src/androidTest/**`, `docs/PRODUCT_v0.3.md`, `sessions/55-scoring-model.md`, `CHANGELOG/2026-08-21/55-scoring-model.md` | Gradle daemon, adb, device | 2026-08-21 |
 > 🏁 **`ticket-close-gap` RELEASED 2026-08-20 — this commit.** No singletons held.
 >
 > ⚠️ **Round 4's framing was WRONG and Ido caught it.** `#55` and `#56` were called *post-v0.3*
