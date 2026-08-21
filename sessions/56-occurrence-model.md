@@ -4,6 +4,20 @@ branch: main
 mode: auto
 status: ready
 issue: 56
+owns:
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/TaskEstimate.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/ReminderTiming.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Dtos.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Mappers.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/notifications/ReminderScheduler.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BackfillDurationsUseCase.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/TimeAllocationUseCase.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/core/util/AnalyticsRange.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt
+  - docs/PRODUCT_v0.3.md
+  - CHANGELOG/<today>/56-occurrence-model.md
+  - sessions/56-occurrence-model.md
 created: 2026-08-20
 ---
 

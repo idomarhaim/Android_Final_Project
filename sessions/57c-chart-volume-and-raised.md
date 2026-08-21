@@ -4,6 +4,18 @@ branch: main
 mode: auto
 status: ready
 issue: 57
+owns:
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/DonutChart.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/SimpleBarChart.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/StackedColumnChart.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ProgressRing.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialSpec.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/data/prefs/AppPreferencesRepositoryImpl.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/settings/SettingsScreen.kt
+  - app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt
+  - CHANGELOG/<today>/57c-chart-volume-and-raised.md
+  - sessions/57c-chart-volume-and-raised.md
 created: 2026-08-21
 ---
 

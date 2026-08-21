@@ -4,6 +4,13 @@ branch: main
 mode: auto
 status: ready
 issue: 57
+owns:
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/GoalCategory.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/Theme.kt
+  - app/src/test/java/com/idomarhaim/goalpilot/ui/ThemePaletteTest.kt
+  - CHANGELOG/<today>/57a-category-palette.md
+  - sessions/57a-category-palette.md
 created: 2026-08-21
 ---
 

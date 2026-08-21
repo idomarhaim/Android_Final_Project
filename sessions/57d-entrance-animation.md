@@ -4,6 +4,13 @@ branch: main
 mode: auto
 status: ready
 issue: 57
+owns:
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/GpCard.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ChartAnimation.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
+  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceAnimationUiTest.kt
+  - CHANGELOG/<today>/57d-entrance-animation.md
+  - sessions/57d-entrance-animation.md
 created: 2026-08-21
 ---
 
