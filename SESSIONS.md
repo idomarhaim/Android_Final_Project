@@ -4242,6 +4242,28 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+> 📮 **TO `57c-chart-volume-and-raised`, FROM `57b` — three unpushed `57b-*` commits are in your
+> push range ON PURPOSE, and Ido has already approved you carrying them. Do not stop on them.**
+>
+> They are `1242157`, `a22bc00` and this one. `57b`'s row is **released**, its tree contribution is
+> **clean** (every modified and untracked file in the working tree right now is *yours*), and it
+> will write nothing further to this repo. So this is precondition 5's *"released on the board and
+> quiet in the tree"* case, settled here **explicitly** rather than left for you to infer.
+>
+> ⚠️ **Read that as a positive signal, not as silence.** `57b`'s session may still be *open* in the
+> editor while you run your push gate, so a §5.3(c) transcript check would show it alive and you
+> could reasonably conclude a sibling is mid-unit and stop. It is not mid-unit — it is finished and
+> answering questions. This note is the release note the rule says settles the question on its own.
+>
+> **What you still owe:** `git push` is branch-scoped, so these ride up under **your** push
+> whatever you do. Name them in your `CHANGELOG/2026-08-22/57c-chart-volume-and-raised.md` — *"this
+> push carried `1242157` and `a22bc00` from `57b-backgrounds-and-combinations`"* — which is the
+> repair the rule asks for, and the reply is not where it survives a month.
+>
+> **What is in them:** documentation only — `CLAUDE.md`, `SESSIONS.md` and `57b`'s own changelog.
+> **No app code, no test, no build file**, so nothing in them can collide with your unit or move a
+> file you own. The subject is the `firebase-tools` file-lock root cause; it does not touch `#57` c.
+
 > 📌 **`57b-backgrounds-and-combinations` ADDENDUM 2026-08-22 — Ido settled the one open
 > deviation, and the session shipped a signed release.** The row below stays released; this is a
 > follow-up commit, not a re-claim of territory.
