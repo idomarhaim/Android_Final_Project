@@ -4375,6 +4375,35 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+> 🏁 **`tutorial-onboarding` (release pass) RELEASED 2026-08-22 — this commit.** Ido asked for the
+> tutorial build to reach his phone and `rachil751@gmail.com`. **v0.3.2** (`versionCode` 7) is
+> uploaded and distributed: release `7h0a9hvjt1p18` on `goalpilot-56e30`. Singletons free — the
+> Gradle daemon, and App Distribution.
+>
+> 📌 **Nothing outward was created.** Both addresses were **already** in the `testers` group
+> (`rachil751@gmail.com` since 2026-08-06), so there was no invitation to send, no tester to add and
+> no group to change — the upload notifies the group that already exists. Checked with
+> `firebase appdistribution:testers:list` **before** touching anything, which is the only reason
+> that is a statement rather than an assumption.
+>
+> 📌 **No tag was pushed, deliberately.** `docs/RELEASING.md` §3's primary route is a tag push, which
+> is always-ask in both modes and picks its commit by whatever `HEAD` is at that instant. §3's own
+> "no CI" path — local `assembleRelease` + `appDistributionUploadRelease` — does the same job off a
+> SHA already in hand. Cutting `v0.3.2` is Ido's if he wants the tag on the record.
+>
+> ✅ **The signature was verified before the upload, not after.** `apksigner verify --print-certs`
+> reports `CN=Ido Marhaim, OU=GoalPilot`, SHA-1 `e7d5534c…9062` — the real key, not the debug one.
+>
+> ⚠️ **`release-notes.txt` EXISTS TWICE and the wrong one has been edited twice.** The plugin reads
+> **`app/release-notes.txt`** (`releaseNotesFile` is set inside the `app` module, and that file's own
+> body says so); the **root** `release-notes.txt` is what `20f3b7e` and `67c21e5` edited. `Inferred:`
+> both of those releases showed testers the placeholder *"see the repository CHANGELOG"* instead of
+> the notes written for them. `Untested:` — the CLI has no `releases:list`, so it cannot be read back
+> from here; the Firebase console answers it in a click. **This release is right either way** (both
+> files written identically). Neither was deleted: that is always-ask, and picking the wrong one
+> would silently break the CI path, which overwrites the file the *workflow* names.
+
+
 > 🏁 **`tutorial-onboarding` RELEASED 2026-08-22 — this commit.** Ido's ask — *a tutorial inside the
 > app, pop-up boxes explaining each part, guiding the user to do things the first time, skippable,
 > with a button to bring it back* — shipped as a **seven-step guided tour** over the real app

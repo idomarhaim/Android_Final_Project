@@ -1,24 +1,22 @@
-GoalPilot — #57 b: backgrounds are a setting now
+GoalPilot 0.3.2 — the app now shows you how it works
 
-Settings > Appearance gains a Background control: Match / Glow / Spectrum /
-Plain, combinable with all four materials. Each tile previews the current
-material sitting on that ground, and the material tiles above preview on the
-ground you have selected.
+The first time you open this build, a short guided tour starts by itself. It
+dims the screen, puts a spotlight on one thing at a time, and explains it in a
+sentence — your points card, the quick-add box, the Goals tab, the new-goal
+button, the rest of the bottom bar, and where your account and settings live.
 
-Two older defects are fixed in the same build, and both change how the app
-looks:
+Seven steps, about half a minute.
 
-1. Every screen was painting an opaque panel over the app's background, so the
-   per-material grounds have never actually been visible. They are now, on
-   every screen.
-2. Glass in dark mode failed the accessibility contrast standard on its own
-   background (body text at 2.6:1, where 4.5:1 is required). Glass and liquid
-   glass in dark mode now have slightly deeper panels on a slightly quieter
-   ground. Light mode, Soft and Soft dark are untouched.
+- You can skip it at any point. Tap "Skip tour", or just press Back.
+- One step waits for you: it asks you to tap the Goals tab yourself, and then
+  follows you there.
+- Tapping anywhere on the dimmed area moves to the next step.
+- It only opens once. To see it again — Settings > Help > Replay tutorial.
+  Replaying changes nothing in your data.
 
-Note: choosing a lit ground under Soft or Soft dark deliberately stops it being
-neumorphism — the panel becomes a translucent plate and gains an edge. The app
-tells you so under the picker before you pick. The same happens in reverse:
-glass on a Plain ground has nothing to be transparent about.
+If you turn animations off in Android's accessibility settings, the tour is
+still there, without the pulsing highlight.
 
-717 unit tests and 194 instrumented tests green.
+Nothing else changed in this build: no goals, tasks or settings are touched.
+
+782 unit tests and 223 instrumented tests green.

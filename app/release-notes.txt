@@ -1,5 +1,22 @@
-GoalPilot — see the repository CHANGELOG for what changed in this build.
+GoalPilot 0.3.2 — the app now shows you how it works
 
-This file is the default release note shown to testers in Firebase App
-Distribution. The release workflow overwrites it with the tag message before
-uploading; edit it by hand for a manual `./gradlew appDistributionUploadRelease`.
+The first time you open this build, a short guided tour starts by itself. It
+dims the screen, puts a spotlight on one thing at a time, and explains it in a
+sentence — your points card, the quick-add box, the Goals tab, the new-goal
+button, the rest of the bottom bar, and where your account and settings live.
+
+Seven steps, about half a minute.
+
+- You can skip it at any point. Tap "Skip tour", or just press Back.
+- One step waits for you: it asks you to tap the Goals tab yourself, and then
+  follows you there.
+- Tapping anywhere on the dimmed area moves to the next step.
+- It only opens once. To see it again — Settings > Help > Replay tutorial.
+  Replaying changes nothing in your data.
+
+If you turn animations off in Android's accessibility settings, the tour is
+still there, without the pulsing highlight.
+
+Nothing else changed in this build: no goals, tasks or settings are touched.
+
+782 unit tests and 223 instrumented tests green.

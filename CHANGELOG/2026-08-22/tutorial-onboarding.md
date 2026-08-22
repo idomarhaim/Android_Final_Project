@@ -20,6 +20,10 @@
 > `TutorialOverlayUiTest` **10 / 0** (new), `TutorialNavigationUiTest` **4 / 0** (new),
 > `SettingsScreenTest` **17 / 0** (+2), full suite **223 / 0**. Seven steps, the replay path and the
 > stored preference all verified by hand on the device.
+>
+> 🚀 **Shipped to testers as v0.3.2** (`versionCode` 7, release `7h0a9hvjt1p18`) — §10, which also
+> records that `release-notes.txt` exists twice and the last two releases probably shipped the
+> placeholder copy rather than the notes written for them.
 
 ---
 
@@ -272,4 +276,41 @@ over 111 pages:
 
 Two repos, so no single commit holds both ends of the candidate↔page tie; the tie is the journal entry
 at `kb/log/2026-08-22.md`.
+
+---
+
+## 10. The release pass — v0.3.2 is on testers' phones
+
+Ido asked for the build to reach his phone and `rachil751@gmail.com`. Both were **already** in the
+`testers` group (Rachil since 2026-08-06), so nothing outward was created — no invitation, no new
+tester, no group change. The upload notifies the existing group, which is what the ask was.
+
+| | |
+|---|---|
+| Version | `versionCode` **6 → 7**, `versionName` **0.3.1 → 0.3.2** |
+| Route | local `:app:assembleRelease` + `:app:appDistributionUploadRelease`, per RELEASING.md §3's "no CI" path |
+| Release | `7h0a9hvjt1p18` on `goalpilot-56e30` |
+| Signature | `CN=Ido Marhaim, OU=GoalPilot`, SHA-1 `e7d5534c…9062` — verified with `apksigner` **before** the upload, not after |
+
+**No tag was pushed.** RELEASING.md §3's primary route is `git tag -a vX.Y.Z && git push origin
+<tag>`, and a tag push is always-ask in both modes — it is an outward action on the remote, and it
+drives a signed build to real phones off whatever `HEAD` happens to be at that instant. §3's own "no
+CI" path does the same job with the SHA already in hand, so it is the one taken. Cutting `v0.3.2` is
+Ido's to run if he wants the tag on the record.
+
+### ⚠️ `release-notes.txt` exists twice, and the last two releases probably shipped the wrong one
+
+`app/build.gradle.kts` sets `releaseNotesFile = "release-notes.txt"` **inside the `app` module**, so
+the plugin reads `app/release-notes.txt`. That file's own body says so: *"edit it by hand for a
+manual `./gradlew appDistributionUploadRelease`"*. But it still holds the placeholder text, and the
+**root** `release-notes.txt` is the one the last two release commits (`20f3b7e`, `67c21e5`) edited.
+
+`Inferred:` those two releases therefore showed testers *"GoalPilot — see the repository CHANGELOG
+for what changed in this build"* rather than the notes that were written for them. `Untested:` the
+CLI has no `appdistribution:releases:list`, so what testers actually saw cannot be read back from
+here — the Firebase console can answer it in a click.
+
+**This release is right either way**: both files were written with identical content. The duplicate
+is left standing rather than deleted, because deleting one is always-ask and picking the wrong one to
+delete would silently break the CI path, which overwrites the file the *workflow* names.
 
