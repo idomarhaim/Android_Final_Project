@@ -20,6 +20,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.core.util.Bidi
+import com.idomarhaim.goalpilot.core.util.bidiIsolated
 import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
@@ -34,6 +36,8 @@ import com.idomarhaim.goalpilot.feature.settings.TAG_MATERIAL_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.TAG_MATERIAL_PICKER
 import com.idomarhaim.goalpilot.ui.components.MaterialPicker
 import com.idomarhaim.goalpilot.ui.components.materialLockTag
+import com.idomarhaim.goalpilot.ui.components.materialSpecTag
+import com.idomarhaim.goalpilot.ui.locale.AppLocale
 import com.idomarhaim.goalpilot.ui.components.materialTileTag
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import org.junit.Rule
@@ -81,6 +85,36 @@ class MaterialPickerUiTest {
     )
 
     private val darkOnly: String get() = context.getString(R.string.components_material_dark_only)
+
+    /**
+     * The caption a tile is supposed to render — §4.1's own name for the
+     * material, inside the translated frame, with the same isolate the call site
+     * adds. Built through `res/` for the same reason [materialName] is, and
+     * assembled the same way `ComponentStrings.specName` assembles it: an
+     * expectation spelled without the isolate marks passes on output that never
+     * had them, which is the defect (`ComponentsLocaleTest` pinned that shape).
+     */
+    private fun specName(material: AppMaterial): String = context.getString(
+        R.string.components_material_spec_name,
+        context.getString(
+            when (material) {
+                AppMaterial.GLASS -> R.string.components_material_glass_spec
+                AppMaterial.LIQUID_GLASS -> R.string.components_material_liquid_spec
+                AppMaterial.NEO -> R.string.components_material_neo_spec
+                AppMaterial.DARK_NEO -> R.string.components_material_darkneo_spec
+            },
+        ).bidiIsolated(),
+    )
+
+    /** §4.1's word alone, without the frame — what must be identical in both locales. */
+    private fun specNameOnly(material: AppMaterial): String = context.getString(
+        when (material) {
+            AppMaterial.GLASS -> R.string.components_material_glass_spec
+            AppMaterial.LIQUID_GLASS -> R.string.components_material_liquid_spec
+            AppMaterial.NEO -> R.string.components_material_neo_spec
+            AppMaterial.DARK_NEO -> R.string.components_material_darkneo_spec
+        },
+    )
 
     // ------------------------------------------------------ the picker alone
 
@@ -133,6 +167,109 @@ class MaterialPickerUiTest {
         assertThat(chosen).isEqualTo(AppMaterial.GLASS)
         composeRule.onNodeWithTag(materialTileTag(AppMaterial.GLASS)).assertIsSelected()
         composeRule.onNodeWithTag(materialTileTag(AppMaterial.NEO)).assertIsNotSelected()
+    }
+
+    @Test
+    fun everyTileNamesItselfInTheSpecsVocabulary() {
+        // `#53`, 2026-08-21: §4.1 calls these materials neo and dark neo, the
+        // picker calls two of them Soft and Soft dark, and the word "neo"
+        // appeared nowhere in the UI -- so a user who had read the spec could
+        // not find the control and a bug report could not be matched to a tile.
+        //
+        // Asserted on the TILE's merged text rather than by tag, for the reason
+        // the lock test below records: a tile is `Modifier.selectable`, so its
+        // descendants are merged and the caption is not a separate node in the
+        // merged tree. That form is the better claim anyway -- it says dark
+        // neo's OWN tile carries "Dark neo", which a swapped pair would fail and
+        // a screen-wide search would not.
+        composeRule.setContent {
+            GoalPilotTheme {
+                MaterialPicker(
+                    selected = AppMaterial.DEFAULT,
+                    skin = AppSkin.DEFAULT,
+                    brightnessIsDark = false,
+                    background = AppBackground.DEFAULT,
+                    onSelect = {},
+                )
+            }
+        }
+        AppMaterial.entries.forEach { material ->
+            assertWithMessage("${material.name} must carry §4.1's own name for it")
+                .that(tileTexts(material)).contains(specName(material))
+            // And it is reachable by tag through the unmerged tree, so a later
+            // test can point at the caption itself.
+            composeRule.onNodeWithTag(materialSpecTag(material), useUnmergedTree = true)
+                .assertExists()
+        }
+    }
+
+    @Test
+    fun theSpecNameIsVisible_notOnlySpoken() {
+        // The half a contentDescription would not fix. #53's failure is that a
+        // reader of the spec cannot FIND the control; a description nobody sees
+        // answers only the screen-reader case. `assertIsDisplayed` on the
+        // caption node is what separates the two.
+        composeRule.setContent {
+            GoalPilotTheme {
+                MaterialPicker(
+                    selected = AppMaterial.DEFAULT,
+                    skin = AppSkin.DEFAULT,
+                    brightnessIsDark = false,
+                    background = AppBackground.DEFAULT,
+                    onSelect = {},
+                )
+            }
+        }
+        AppMaterial.entries.forEach { material ->
+            composeRule.onNodeWithTag(materialSpecTag(material), useUnmergedTree = true)
+                .assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun theSpecNameSurvivesTheLanguageSwitch_andItsLatinRunIsIsolated() {
+        // The other locale, and the one decision in this unit that could only be
+        // wrong there. The NAME is translatable="false" on purpose -- its job is
+        // to be the same token as the design of record, which is English, so a
+        // Hebrew rendering would name the control after a word appearing in no
+        // document. The FRAME around it is translated.
+        //
+        // That leaves a Latin run inside an RTL paragraph, which the bidi
+        // algorithm reorders exactly as it reorders `5/10` into `10/5` -- so the
+        // call site isolates it, and the isolate is asserted here rather than in
+        // the resource, because the resource cannot carry it (the same argument
+        // ComponentsLocaleTest.theMeasureRunIsIsolated makes for the measure).
+        composeRule.setContent {
+            AppLocale(language = AppLanguage.HEBREW) {
+                GoalPilotTheme {
+                    MaterialPicker(
+                        selected = AppMaterial.DEFAULT,
+                        skin = AppSkin.DEFAULT,
+                        brightnessIsDark = false,
+                        background = AppBackground.DEFAULT,
+                        onSelect = {},
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        AppMaterial.entries.forEach { material ->
+            val texts = tileTexts(material)
+            val caption = texts.firstOrNull { it.contains(Bidi.FSI) }
+            assertWithMessage("${material.name} rendered no isolated caption at all")
+                .that(caption).isNotNull()
+            // The spec's own word, unchanged by the language switch...
+            assertWithMessage("${material.name}: §4.1's word must survive into Hebrew")
+                .that(caption).contains("${Bidi.FSI}${specNameOnly(material)}${Bidi.PDI}")
+            // ...and the frame around it must NOT be the English one.
+            assertWithMessage("${material.name}: the frame is language-dependent and must translate")
+                .that(HEBREW.containsMatchIn(caption.orEmpty())).isTrue()
+        }
+        // And the label itself still translates -- otherwise this unit could
+        // have "fixed" the naming gap by freezing the whole tile in English.
+        assertWithMessage("the plain-English label is still the translated one")
+            .that(tileTexts(AppMaterial.NEO).none { it == "Soft" }).isTrue()
     }
 
     @Test
@@ -326,4 +463,8 @@ class MaterialPickerUiTest {
             .first { it.key.name == "Text" }
             .value
             .toString()
+
+    private companion object {
+        val HEBREW = Regex("""\p{IsHebrew}""")
+    }
 }

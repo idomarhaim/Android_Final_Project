@@ -78,6 +78,13 @@
     <string name="components_material_neo_tagline">משטח אחד שטוח, מורם קלות</string>
     <string name="components_material_darkneo">רך כהה</string>
     <string name="components_material_darkneo_tagline">פחם, עם הדגשה בהירה אחת</string>
+    <!-- §4.1's own name for the material, framed. The NAME itself is
+         translatable="false" in values/ and deliberately stays Latin: its job is
+         to be the same token as the design of record, so a Hebrew rendering of
+         it would name the control after a word that appears in no document.
+         Only the frame is Hebrew, and the call site isolates the Latin run — the
+         same treatment the user-authored measure unit gets in GoalCard. -->
+    <string name="components_material_spec_name">במפרט: %1$s</string>
     <string name="components_material_dark_only">כהה בלבד</string>
 
 </resources>

@@ -217,6 +217,23 @@ private fun MaterialTile(
 
         Spacer(Modifier.height(8.dp))
         Text(material.label(), style = MaterialTheme.typography.titleSmall)
+        // §4.1's own word for this material, under the word a user reads.
+        // VISIBLE, not a contentDescription: the failure #53 filed is that a
+        // reader of the spec cannot FIND the control, and a description nobody
+        // sees fixes only the screen-reader half of that. Being a Text it lands
+        // in the semantics tree anyway, so the one line covers both.
+        //
+        // Unconditional, including liquid glass, where the two vocabularies
+        // happen to coincide and the line therefore repeats the label. A line
+        // that appeared only where the words differ would be unlearnable -- a
+        // reader could not tell "the same" from "not stated" -- and the
+        // repetition is the honest report of a genuine coincidence.
+        Text(
+            text = material.specName(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag(materialSpecTag(material)),
+        )
         if (material.isBrightnessLocked) {
             // §4.9: the word, on the tile. Not a hue, not a dimming.
             Text(
@@ -267,3 +284,9 @@ fun materialTileTag(material: AppMaterial): String = "materialTile_" + material.
 
 /** The `Dark only` badge — present only where [AppMaterial.isBrightnessLocked]. */
 fun materialLockTag(material: AppMaterial): String = "materialLock_" + material.id
+
+/**
+ * The spec-name caption — present on **every** tile, which is what makes its
+ * absence assertable. Same camelCase constraint as [materialTileTag] above.
+ */
+fun materialSpecTag(material: AppMaterial): String = "materialSpec_" + material.id

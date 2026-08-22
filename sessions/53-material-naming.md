@@ -11,6 +11,8 @@ owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ComponentStrings.kt
   - docs/PRODUCT_v0.3.md
   - app/src/test/java/com/idomarhaim/goalpilot/resources/
+  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MaterialPickerUiTest.kt
+  - docs/render-passes/2026-08-22-53-material-naming/
   - CHANGELOG/<today>/53-material-naming.md
   - sessions/53-material-naming.md
 created: 2026-08-22 by 53-tag-sweep

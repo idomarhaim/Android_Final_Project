@@ -112,6 +112,32 @@
     <string name="components_material_neo_tagline">One flat surface, gently raised</string>
     <string name="components_material_darkneo">Soft dark</string>
     <string name="components_material_darkneo_tagline">Charcoal, with one bright accent</string>
+
+    <!-- §4.1's OWN name for each material, carried on the tile so the two
+         vocabularies are reachable from one another. The labels above are the
+         plain-English words a user reads; these are the words the design of
+         record, the issues and the changelogs use, and until #53 they appeared
+         nowhere in the UI at all — so a user who had read the spec could not
+         find the control, and a session receiving "no dark blue neo" could not
+         match the report to a tile. The join now exists in both directions:
+         here, and in the mapping table beside §4.1's material table.
+
+         translatable="false" on the four names, and that is a decision rather
+         than an omission. Their job is to be the SAME TOKEN as the design of
+         record, which is written in English — ניאו would be a Hebrew word
+         appearing in no document, which is the failure this fixes rather than
+         a translation of it. The frame around them IS translated, and the name
+         is bidi-isolated at the call site because its script differs from the
+         paragraph's (core/util/Bidi.kt, the same treatment a user-authored
+         measure unit gets). Contrast the skin names above, which are deliberately
+         translated: those are evocative product words whose job is to read well,
+         not designations whose job is to match a document. -->
+    <string name="components_material_spec_name">Spec: %1$s</string>
+    <string name="components_material_glass_spec" translatable="false">Glassmorphism</string>
+    <string name="components_material_liquid_spec" translatable="false">Liquid glass</string>
+    <string name="components_material_neo_spec" translatable="false">Neo</string>
+    <string name="components_material_darkneo_spec" translatable="false">Dark neo</string>
+
     <!-- §4.1: a material may declare itself brightness-locked, and the picker has
          to SAY so. This is that word, on the tile itself. -->
     <string name="components_material_dark_only">Dark only</string>

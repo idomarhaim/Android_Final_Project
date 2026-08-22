@@ -1180,6 +1180,30 @@ unaffordable.
 | **Neo** | **a shadow pair** on one flat surface | inset track, softly extruded arc, muted hues, no rim, no gloss |
 | **Dark neo** | **a deep shadow pair + one saturated gradient** | charcoal groove, softly extruded arc, one cyan→blue accent |
 
+**This document's words are not the picker's words, and the join belongs here** *(`#53`, 2026-08-21)*.
+The tiles read *Glass · Liquid glass · Soft · Soft dark* — plain English, and deliberately so: a user
+choosing a look should not have to learn a design vocabulary. But until this table existed the word
+**neo appeared nowhere in the UI at all**, so the two vocabularies had nothing linking them. A user
+who had read this section could not find the control, and a session receiving *"no dark blue neo"*
+could not match the report to a tile. **Both halves happened on `#53` itself**, which is what makes
+this a defect in the contract rather than a cosmetic wish: §4.9's rule is that a picker has to *say*
+things, and a control that cannot be **named** is unreportable however well it works.
+
+| This section calls it | `AppMaterial` | The picker's label | The picker's spec line |
+|---|---|---|---|
+| Glassmorphism | `GLASS` | **Glass** | `Spec: Glassmorphism` |
+| Liquid glass | `LIQUID_GLASS` | **Liquid glass** | `Spec: Liquid glass` |
+| Neo | `NEO` | **Soft** | `Spec: Neo` |
+| Dark neo | `DARK_NEO` | **Soft dark** | `Spec: Dark neo` |
+
+**The join runs both ways, and only one of the two directions is a document.** This table is the
+half a reader can follow; the other half is a caption line on every tile, carrying that material's
+spec name under its label, so the vocabulary is reachable **from the UI** and not only from here.
+Renaming the tiles to this section's words was the rejected alternative — the failure was never that
+the wrong vocabulary won, it was that neither reached the other. The fourth column is
+`ui/components/ComponentStrings.kt`'s `specName()`, and `MaterialVocabularyTest` reads **this table**
+and fails the build when the two drift apart again.
+
 **The material is a *second axis*, not the `AppSkin` the app already has.** `AppSkin`
 (`AURORA`, `BLOSSOM`) is a **palette**; the material is a **surface**. They do **not** multiply
 freely, so each material declares a **palette transform** — `identity · mute · single-accent ramp` —
