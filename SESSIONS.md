@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57d-entrance-animation` | `#57` d - blocks arrive with a staggered rise+fade instead of being already there | `ui/components/Entrance.kt` (new), `ui/components/GpCard.kt`, `ui/components/Common.kt`, `feature/dashboard/DashboardScreen.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/GpEntranceTest.kt` (new), `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceAnimationUiTest.kt` (new), `CHANGELOG/2026-08-22/57d-entrance-animation.md`, `sessions/57d-entrance-animation.md` | Gradle daemon + `Pixel_10_Pro_XL` (from the first build; not yet held) | 2026-08-22 |
 > 🏁 **`57c-chart-volume-and-raised` RELEASED 2026-08-22 — this commit.** No singletons held; the
 > AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle daemon are free.
 >

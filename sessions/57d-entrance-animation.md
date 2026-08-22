@@ -2,14 +2,21 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 57
 owns:
+  # Corrected at /kickoff 2026-08-22: the entrance vocabulary is its own file rather than
+  # an addition to ChartAnimation.kt (that one is about *chart* progress and is keyed on
+  # data; this one is keyed on screen arrival), Common.kt carries SectionHeader which sits
+  # inside the same dashboard column, and the "does not re-run" assertion is cheapest at
+  # the JVM layer. ChartAnimation.kt is read, not written.
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/Entrance.kt
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/GpCard.kt
-  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ChartAnimation.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/Common.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
+  - app/src/test/java/com/idomarhaim/goalpilot/ui/GpEntranceTest.kt
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceAnimationUiTest.kt
-  - CHANGELOG/<today>/57d-entrance-animation.md
+  - CHANGELOG/2026-08-22/57d-entrance-animation.md
   - sessions/57d-entrance-animation.md
 created: 2026-08-21
 ---
