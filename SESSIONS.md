@@ -16,7 +16,6 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
-| `tour-video` | Record a full-app tutorial screen recording on the AVD, download it for Ido, and write the Google Flow / OpenArt prompt that turns it into a narrated explainer | `docs/marketing/**`, `CHANGELOG/2026-08-22/tour-video.md`, `kb-candidates/2026-08-22-tour-video.md` — video artifacts land OUTSIDE the repo, under `C:/Users/namei/Videos/GoalPilot-Tour/` | **AVD `emulator-5554` + adb — HELD** (screen recording only; no install, no uninstall, no Gradle) | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
@@ -4376,6 +4375,42 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `tour-video` — released 2026-08-23, this commit
+
+Two units: yesterday's 6:41 full-app screen recording plus its narration brief (`1ad9770`), and
+today's four kickoffs — [`#59`](https://github.com/idomarhaim/Android_Final_Project/issues/59)
+the Health Connect mismatch, [`#60`](https://github.com/idomarhaim/Android_Final_Project/issues/60)
+the in-app calendar surface, [`#61`](https://github.com/idomarhaim/Android_Final_Project/issues/61)
+the dedicated Google calendar, [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62)
+re-record and assemble — each with a brief in `sessions/`. **`#62` is `status: blocked` on the
+other three; check them before claiming it.**
+
+📱 **Singletons free.** The AVD (`emulator-5554`), adb and the Gradle daemon are all released.
+**No sign-in was needed and none was destroyed** — no install, no uninstall, no
+`connectedDebugAndroidTest`. SystemUI demo mode and `show_ime_with_hard_keyboard` were changed
+for the recording and **both are restored**; animation scales still `1.0`; the app's material
+and background prefs are back to `neo` / `match`.
+
+📌 **The answer under two of those tickets, so nobody re-derives it:** task scheduling exists as
+**data and not as a surface**. A task takes a day (`ALL_DAY`) and a time (`DEADLINE`) through the
+*When?* chip; `BLOCK` and `SPAN` are fully modelled with **no UI author at all**; there is **no
+calendar to look at**; and `grep` for `googleEventId` / `calendar.app.created` over `app/src/main`
+returns **zero hits**. `#26` and `#17`/`#27`/`#28`/`#33` are closed because the **designs** were
+decided, not because anything was built.
+
+⚠️ **Left in Ido's live account, deliberately and not deleted:** four or five demo tasks from the
+recording — two "Practice saxophone…" on *Learn to play the saxophone*, and two or three "Write
+the project book chapter" on *Submit Android final project*, one scheduled for Aug 24 8:00 PM.
+**None is marked done, so no points moved** and the leaderboard is unchanged. Deletions are
+always-ask; they are one tap each.
+
+⚠️ **Before the tour video goes anywhere public:** it shows `name.iddo@gmail.com`, the friend code
+`NDXVJC` and a friend's real name. `docs/marketing/tour-timecodes.md` names the two ranges.
+
+📥 **KB drained:** five candidates → `C:\Dev\JARVIS` `5890864`.
+`kb-candidates/2026-08-22-tutorial-onboarding.md` is **not** mine and is untouched —
+`tutorial-onboarding` still holds a live row above.
 
 > 🏁 **`tutorial-onboarding` (release pass) RELEASED 2026-08-22 — this commit.** Ido asked for the
 > tutorial build to reach his phone and `rachil751@gmail.com`. **v0.3.2** (`versionCode` 7) is
