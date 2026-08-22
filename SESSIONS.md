@@ -16,6 +16,7 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `57d-entrance-animation` (re-claimed) | Close `#57` d's one held item on Ido's approval -- make `screenrecord` usable on this machine, then amend KB 6.2 to what is true | `CLAUDE.md`, `kb-candidates/2026-08-22-57d-entrance-animation.md`, `CHANGELOG/2026-08-22/57d-entrance-animation.md`, plus `kb/dev/android-device-verification.md` and `kb/log/2026-08-22.md` in `C:\Dev\JARVIS` (claimed there too) | `Pixel_10_Pro_XL` (`emulator-5554`) for one verification recording | 2026-08-22 |
+| `53-tag-sweep` | `#53`'s last held item -- the `.tag` sweep: words at every categorical mark, then `rampTint` wired so dark neo's collapse is survivable | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/` (ColorExt, DonutChart, StackedColumnChart), `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-22/53-tag-sweep.md`, `sessions/53-tag-sweep.md` | **Gradle daemon**; the AVD **after `57d` releases it** -- `57d` holds `emulator-5554` for one recording and this session does not touch adb until that row clears | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED 2026-08-22 — this commit.** `#57` d shipped in `9f6b92b`,
 > brief closed. Singletons free: the AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle
 > daemon.
