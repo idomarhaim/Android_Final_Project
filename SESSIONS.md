@@ -38,7 +38,44 @@ before your first write. Normative rule:
 > what caught `-vsync 0` having been **removed** from ffmpeg — a command this project's KB had
 > prescribed since 2026-08-08. An amendment written from the parked draft alone would have shipped it
 > intact.
-| `53-tag-sweep` | `#53`'s last held item -- the `.tag` sweep: words at every categorical mark, then `rampTint` wired so dark neo's collapse is survivable | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/` (ColorExt, DonutChart, StackedColumnChart), `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-22/53-tag-sweep.md`, `sessions/53-tag-sweep.md` | **Gradle daemon**; the AVD **after `57d` releases it** -- `57d` holds `emulator-5554` for one recording and this session does not touch adb until that row clears | 2026-08-22 |
+> 🏁 **`53-tag-sweep` RELEASED 2026-08-22 — this commit.** `#53`'s last held item, the §4.1 `.tag`
+> sweep, shipped in `70922d7`; brief closed to `sessions/done/`. Singletons free: the AVD
+> (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle daemon.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED, and no device setting was changed.** Every run
+> used `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`. **The AVD was restarted
+> twice, and that is the part worth reading:** it was killed with `taskkill` and relaunched
+> **without `-wipe-data`**, so app data survived — `pm list packages` confirmed both packages still
+> installed afterwards, and all three animation scales read `1.0` before and after. The second
+> relaunch added `-gpu swiftshader_indirect`; it is slower and it did not crash again.
+>
+> ⚠️ **The AVD died mid-run, and it reported itself as SIX TEST FAILURES.** The first full
+> instrumented run came back `204 run, 6 failures`, all in `57d`'s `EntranceAnimationUiTest`, all
+> reading `expected: -65536 but was: 0`. **Not a regression** — the 16 render frames from that same
+> run totalled **33 KB** against a healthy **2.4 MB**, and `adb` lost the device minutes later. The
+> trap worth carrying: **the render passes PASSED on that run**, because they assert the PNG has
+> `length > 0` and a blank PNG has `length > 0`. `ls -la` on the frames is the cheap discriminator.
+> After the reboot: `OK (204 tests)`.
+>
+> 🔧 **Two operational notes for the next session on this device.** `am instrument -w` buffers
+> everything until the end, so a stalled run and a slow one look identical — pass **`-r`** and it
+> streams `current=<n>` per test. And `adb pull` from Git Bash needs `MSYS_NO_PATHCONV=1` plus a
+> **Windows-form** destination, or the path is mangled into `C:/Program Files/Git/sdcard/...`.
+>
+> 📌 **For whoever picks up `#53` next — it is STILL OPEN, and not because of this brief.** The brief
+> said the `.tag` sweep was *"the only thing standing between `#53` and closed"*. That was true when
+> it was written on 2026-08-21 and stopped being true the same day: a second comment on `#53` filed a
+> **naming gap** — §4.1 says *neo* / *dark neo*, the picker says **Soft** / **Soft dark**, and the
+> word "neo" appears nowhere in the UI. `Observed:` still unfixed at HEAD. Its own recommendation is
+> nearly free, but it cannot close without Ido answering whether *"no dark blue neo"* meant the
+> **name** or the **charcoal ground**.
+>
+> 📌 **What changed under `ui/components/` for the next session there.** `ColorExt.toComposeColor` no
+> longer touches `android.graphics` — it is a hand-rolled hex parser, because `parseColor` throws on
+> the JVM and made every category resolve to one fallback colour under a unit test. `StackedSegment`
+> gained a **required** `label`, so its three-argument constructor no longer compiles. `DonutChart`
+> and `StackedColumnChart` both draw category words now, measured with `rememberTextMeasurer`.
+
 > 🏁 **`57d-entrance-animation` RELEASED 2026-08-22 — this commit.** `#57` d shipped in `9f6b92b`,
 > brief closed. Singletons free: the AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle
 > daemon.

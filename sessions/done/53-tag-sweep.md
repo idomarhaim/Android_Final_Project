@@ -2,18 +2,37 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 53
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/
   - app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt
   - app/src/test/java/com/idomarhaim/goalpilot/ui/
-  # androidTest is `58-instrumented-order`'s in full while that session is live -- see the
-  # board note at the top of this brief before claiming it.
-  - CHANGELOG/<today>/53-tag-sweep.md
+  # androidTest WAS `58-instrumented-order`'s. That row released 2026-08-21, checked on the
+  # board before the first write, so this session took it -- `StackedSegment` gained a required
+  # `label` and three call sites there had to follow it.
+  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/
+  - CHANGELOG/2026-08-22/53-tag-sweep.md
   - sessions/53-tag-sweep.md
 created: 2026-08-21
+completed: 2026-08-22
+commit: 70922d7
+result: |
+  Shipped. Words at every categorical mark, then `rampTint` wired at
+  `ui/components/ColorExt.kt`'s `categoryFill`. JVM 746/0 (+17), instrumented 204/0,
+  16 palette frames, three committed to `docs/render-passes/2026-08-22-53-tag-sweep/`.
+
+  `#53` is NOT closed, and the reason is not this brief. This brief asserts the `.tag`
+  sweep is "the only thing standing between #53 and closed"; that was true when it was
+  written on 2026-08-21 and stopped being true the same day, when a second comment on
+  `#53` filed a naming gap (spec says neo/dark neo, the picker says Soft/Soft dark).
+  Observed still unfixed at HEAD. It cannot close without Ido answering whether
+  "no dark blue neo" meant the name or the charcoal ground.
+
+  One residual inside this brief's own scope, named rather than hidden: the trend
+  chart's thin bands cannot carry inline words at phone width. See
+  `StackedColumnChart.segmentLabelFits` and CHANGELOG section 4.
 ---
 
 # `#53`'s one held item — the `.tag` sweep, so the dark-neo collapse becomes survivable
