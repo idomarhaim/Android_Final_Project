@@ -97,11 +97,27 @@ fun GoalDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val action by viewModel.action.collectAsStateWithLifecycle()
+    // §1.3's two surfaces, as two independent claims: the note says the absence is
+    // legal, the offer proposes a number. The note outlives a dismissal, which is
+    // why they are not one nullable value (`C22` #44, #65).
+    val measureProposal by viewModel.measureProposal.collectAsStateWithLifecycle()
+    val showUnmeasuredNote by viewModel.showUnmeasuredNote.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
     var menuOpen by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogDialog by remember { mutableStateOf(false) }
+
+    // Keyed on the goal AND its task count: the goal arrives before its tasks do,
+    // and §3.4's branch is chosen by the task counts -- keyed on the goal alone,
+    // the very first evaluation would see zero tasks, take the silent row, and
+    // latch it. The ViewModel's own once-per-goal guard is what stops the second
+    // key change from re-asking; this key only ensures it is asked once the inputs
+    // to the question exist. Opening the goal IS the consent §0.7 requires, which
+    // is why loading the offer here needs no further gate.
+    LaunchedEffect(state.goal?.id, state.tasks.size) {
+        viewModel.loadMeasureProposal()
+    }
 
     LaunchedEffect(action.message) {
         action.message?.let {
@@ -183,6 +199,19 @@ fun GoalDetailScreen(
                             onFill = viewModel::logFill,
                             onLogProgress = { showLogDialog = true },
                         )
+                    }
+                    // §1.3: the absence is stated as legal BEFORE anything is
+                    // offered, or the offer reads as a correction of a decision he
+                    // made on purpose. It stands above the offer and outlives it.
+                    if (showUnmeasuredNote) {
+                        item { UnmeasuredNote() }
+                        item {
+                            MeasureOffer(
+                                proposal = measureProposal,
+                                onAccept = viewModel::acceptMeasureProposal,
+                                onDismiss = viewModel::dismissMeasureProposal,
+                            )
+                        }
                     }
                     item { SectionHeader(title = "Tasks") }
                     item {

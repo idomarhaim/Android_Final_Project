@@ -172,6 +172,32 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _tutorialSeenVersion.value = version
     }
 
+    /**
+     * §1.3's permanent per-goal dismissal, as one growing [Set] under one key.
+     *
+     * A set rather than a key per goal (which is what `healthSyncKey(uid)` does
+     * one field up) because these accumulate without bound and a deleted goal
+     * would leave its key behind forever with nothing that could ever collect it.
+     * A set is one entry to read, one to rewrite, and a stale id inside it is
+     * inert — it suppresses an offer on a goal that no longer exists.
+     *
+     * `getStringSet` hands back a collection the framework may reuse, so it is
+     * **copied before being mutated** — writing back the instance you were given
+     * is documented as unsupported and loses the edit.
+     */
+    override fun isMeasureProposalDismissed(goalId: String): Boolean =
+        goalId.isNotBlank() && dismissedMeasureProposals().contains(goalId)
+
+    override fun dismissMeasureProposal(goalId: String) {
+        if (goalId.isBlank()) return
+        val next = dismissedMeasureProposals().toMutableSet()
+        if (!next.add(goalId)) return
+        prefs.edit { putStringSet(KEY_MEASURE_PROPOSAL_DISMISSED, next) }
+    }
+
+    private fun dismissedMeasureProposals(): Set<String> =
+        prefs.getStringSet(KEY_MEASURE_PROPOSAL_DISMISSED, emptySet()).orEmpty()
+
     private companion object {
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
@@ -192,6 +218,12 @@ class AppPreferencesRepositoryImpl @Inject constructor(
          * see `AppPreferencesRepository.tutorialSeenVersion` for why.
          */
         const val KEY_TUTORIAL_SEEN_VERSION = "tutorial_seen_version"
+
+        /**
+         * §1.3's dismissed measure proposals — goal ids, and the set only grows.
+         * Absent reads as the empty set, which a fresh install honestly has.
+         */
+        const val KEY_MEASURE_PROPOSAL_DISMISSED = "measure_proposal_dismissed"
 
         /** Outside `0..1439`, so it cannot collide with a real minute-of-day. */
         const val NO_OVERRIDE = -1

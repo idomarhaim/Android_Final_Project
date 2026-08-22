@@ -10,6 +10,7 @@ import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.testing.FakeAppPreferences
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import io.mockk.every
@@ -37,8 +38,16 @@ class RecommendationRepositoryFallbackTest {
         override fun clear() = Unit
     }
     private val aiProvider = DefaultAiProviderRepository(emptyStore)
-    private val repo =
-        RecommendationRepositoryImpl(functions, aiProvider, UnconfinedTestDispatcher())
+    // The preferences are read for exactly one thing -- the language §3.3 E's
+    // `word` is authored in -- and none of the three calls this suite exercises
+    // reads it. The fake's default is the production default, so a fallback tested
+    // here is the fallback a fresh install gets.
+    private val repo = RecommendationRepositoryImpl(
+        functions,
+        aiProvider,
+        FakeAppPreferences(),
+        UnconfinedTestDispatcher(),
+    )
 
     private val goals = listOf(
         Goal(id = "g1", title = "Run 5k", currentValue = 10.0, targetValue = 100.0),

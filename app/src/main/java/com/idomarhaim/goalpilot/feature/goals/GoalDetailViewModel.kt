@@ -10,18 +10,23 @@ import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Occurrence
 import com.idomarhaim.goalpilot.domain.model.DurationSource
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.GoalStructure
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.MeasureProposal
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
+import com.idomarhaim.goalpilot.domain.usecase.ProposeMeasureUseCase
+import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.ui.navigation.Routes
+import java.time.LocalDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,6 +45,7 @@ class GoalDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val progressRepository: ProgressRepository,
     private val recommendationRepository: RecommendationRepository,
+    private val preferences: AppPreferencesRepository,
     lifeAreaRepository: LifeAreaRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -305,6 +311,152 @@ class GoalDetailViewModel @Inject constructor(
                 _action.update { it.copy(message = result.message) }
             }
         }
+    }
+
+    // ── §1.3's measure proposal (`C22` #44, #65) ─────────────────────────────
+
+    /**
+     * The offer currently on screen, or `null` for §3.4's silent row.
+     *
+     * Held here rather than derived in the `combine` above, for one reason that is
+     * the feature's whole tone rule: **the offer must not move under the user's
+     * finger.** A derived value would recompute on every task edit, so ticking a
+     * step could change the proposal's own number — or make it vanish — while it
+     * is being read. §1.3 asks for an offer, and an offer that rewrites itself
+     * mid-consideration is a nag.
+     *
+     * So it is computed **once per goal**, by [loadMeasureProposal], and then left
+     * alone until the goal changes or the user answers it.
+     */
+    private val _measureProposal = MutableStateFlow<MeasureProposal?>(null)
+    val measureProposal: StateFlow<MeasureProposal?> = _measureProposal.asStateFlow()
+
+    /**
+     * Whether the **absence note** should be drawn at all.
+     *
+     * A separate flag from [measureProposal] because §1.3 makes them separate
+     * claims: *"the absence is stated as legal **before** anything is offered"*, so
+     * the note is shown for every unmeasured goal — including one with no proposal
+     * under it, which is the state that has to read as deliberate rather than
+     * broken. It goes false the moment a measure exists.
+     */
+    private val _showUnmeasuredNote = MutableStateFlow(false)
+    val showUnmeasuredNote: StateFlow<Boolean> = _showUnmeasuredNote.asStateFlow()
+
+    /**
+     * Guards the once-per-goal rule against recomposition and against the
+     * snapshot listener firing repeatedly for one goal.
+     *
+     * The goal id it last ran for, so a genuine navigation to another goal still
+     * loads — this is a *once per goal*, not a *once per ViewModel*.
+     */
+    private var measureProposalLoadedFor: String? = null
+
+    /**
+     * Decides whether to offer, and offers.
+     *
+     * The gate is three conditions and the order matters, because each is cheaper
+     * than the one after it:
+     *
+     *  1. **Already answered for this goal in this ViewModel** — no work.
+     *  2. **Dismissed** (§1.3, permanent) — no work, and specifically **no network
+     *     call**: a dismissed goal must not cost a request against the free tier's
+     *     30 RPM, or the dismissal would only be silencing the *screen*.
+     *  3. **Not eligible** — the goal has a measure, or has no structure to compute
+     *     a target from. §3.4's last row: nothing at all, silently.
+     *
+     * Only then does it call. And the call's failure is not a branch here — the
+     * repository returns an empty list, and the `?:` below runs §3.4's mechanical
+     * proposal over the same structure. That is the arrangement §0.1 asks for: the
+     * non-AI half is the default path with the model as an improvement on its
+     * wording, not a primary path with a degraded backup.
+     */
+    fun loadMeasureProposal() {
+        val goal = uiState.value.goal ?: return
+        if (measureProposalLoadedFor == goal.id) return
+        measureProposalLoadedFor = goal.id
+
+        val unmeasured = goal.measure == null
+        _showUnmeasuredNote.value = unmeasured
+        if (!unmeasured) {
+            _measureProposal.value = null
+            return
+        }
+        if (preferences.isMeasureProposalDismissed(goal.id)) {
+            _measureProposal.value = null
+            return
+        }
+
+        val structure = ProposeMeasureUseCase.structureOf(uiState.value.tasks, LocalDateTime.now())
+        if (!ProposeMeasureUseCase.isEligible(goal, structure)) {
+            _measureProposal.value = null
+            return
+        }
+
+        viewModelScope.launch {
+            val remote = recommendationRepository
+                .proposeMeasures(listOf(goal), mapOf(goal.id to structure))
+                .let { (it as? Resource.Success)?.data.orEmpty() }
+                .firstOrNull { it.goalId == goal.id }
+            // The model's wording if it produced a whole one, the app's arithmetic
+            // otherwise. Both already carry a target computed here (§3.3 E), so the
+            // screen cannot tell which path filled the number — which is exactly
+            // §3.4's claim that this fallback is not a degraded version of itself.
+            _measureProposal.value = remote ?: ProposeMeasureUseCase.mechanical(goal, structure)
+        }
+    }
+
+    /**
+     * Applies the offer — the **only** path from a proposal to a goal (§1.3: it
+     * *never auto-applies*).
+     *
+     * Writes the kind and the word always, and the target **only when the app
+     * computed one**. A `USER` proposal leaves [Goal.targetValue] untouched rather
+     * than writing a placeholder: §3.3 E forbids inventing that number, and
+     * writing one here would be inventing it at the last possible moment.
+     *
+     * Does **not** dismiss. An accepted goal stops being offered because it now
+     * has a measure — a fact about the goal — and recording a suppression as well
+     * would leave a second, invisible reason for the offer's absence that would
+     * survive the measure being removed again.
+     */
+    fun acceptMeasureProposal() {
+        val goal = uiState.value.goal ?: return
+        val proposal = _measureProposal.value ?: return
+        if (proposal.goalId != goal.id) return
+
+        viewModelScope.launch {
+            val updated = goal.copy(
+                measure = proposal.toMeasure(),
+                targetValue = if (proposal.hasTarget) proposal.target!! else goal.targetValue,
+                updatedAtEpochMillis = System.currentTimeMillis(),
+            )
+            when (val result = goalRepository.upsertGoal(updated)) {
+                is Resource.Success -> {
+                    _measureProposal.value = null
+                    _showUnmeasuredNote.value = false
+                }
+
+                is Resource.Error -> _action.update { it.copy(message = result.message) }
+                else -> Unit
+            }
+        }
+    }
+
+    /**
+     * §1.3's dismissal: **permanent for this goal, not snoozed**, *because a
+     * default that re-asks is not a default*.
+     *
+     * There is no un-dismiss and no timer. The manual path — the goal editor —
+     * always exists, so nothing becomes unreachable; it is simply never
+     * volunteered again. The absence note stays: dismissing the *offer* does not
+     * make the absence stop being legal, and removing the line that says so would
+     * leave the goal looking incomplete, which is the whole failure mode.
+     */
+    fun dismissMeasureProposal() {
+        val goalId = uiState.value.goal?.id ?: return
+        preferences.dismissMeasureProposal(goalId)
+        _measureProposal.value = null
     }
 
     fun archiveGoal() {

@@ -10,14 +10,22 @@ import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.GoalStructure
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.MeasureBasis
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.MeasureProposal
+import com.idomarhaim.goalpilot.domain.model.ProposalOrigin
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.RecommendationType
 import com.idomarhaim.goalpilot.domain.model.TaskClassification
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
+import com.idomarhaim.goalpilot.domain.model.TargetSource
 import com.idomarhaim.goalpilot.domain.model.TaskEstimate
 import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
+import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
+import com.idomarhaim.goalpilot.domain.usecase.ProposeMeasureUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -65,6 +73,17 @@ import javax.inject.Singleton
 class RecommendationRepositoryImpl @Inject constructor(
     private val functions: FirebaseFunctions,
     private val aiProvider: AiProviderRepository,
+    /**
+     * Read for exactly one field, and only by `proposeMeasures`: §3.3 E's `word`
+     * is **content**, authored once in the language that was current when it was
+     * proposed and never re-rendered afterwards (§3.5, `C15b`). The model cannot
+     * be left to infer that from a goal title, which may be in either language —
+     * or in neither, as `Read Clean Architecture` is on a Hebrew device.
+     *
+     * Not read by the other three calls on purpose: their outputs are **speech**,
+     * which the app already renders in the current language at display time.
+     */
+    private val preferences: AppPreferencesRepository,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) : RecommendationRepository {
 
@@ -166,6 +185,114 @@ class RecommendationRepositoryImpl @Inject constructor(
             // judgement (×1.0), not a guess at one, which is the same shape as `null`
             // minutes meaning "not said" rather than "zero".
             Resource.Success(TaskEstimate(difficulty = Difficulty.ROUTINE, minutes = null))
+        }
+    }
+
+    /**
+     * §3.3 E's `measure` call, and the arithmetic §3.3 E forbids the model doing.
+     *
+     * ## The shape of this method is the feature's design
+     *
+     * Everything before `parseProposals` is an ordinary callable invocation like the
+     * three above it. Everything after is §0.5 — *the AI judges, the app computes* —
+     * and it is why there is no `fallbackProposals` beside the other three fallbacks
+     * in this file: §3.4's fallback for `measure` is
+     * [ProposeMeasureUseCase.mechanical], which is **arithmetic over structure the
+     * caller already holds** and has nothing to do with a network call. Putting a
+     * copy of it here would be the second implementation `classifyTask`'s catch
+     * block already carries a paragraph explaining the cost of.
+     *
+     * So the failure path returns an **empty list**, not a manufactured proposal.
+     * The caller reads empty and runs the mechanical path itself, offline, with no
+     * way to mistake one for the other.
+     *
+     * ⚠️ **Nothing here logs**, like the three calls above: the payload carries the
+     * user's provider key.
+     */
+    override suspend fun proposeMeasures(
+        goals: List<Goal>,
+        structures: Map<String, GoalStructure>,
+    ): Resource<List<MeasureProposal>> = withContext(io) {
+        if (goals.isEmpty()) return@withContext Resource.Success(emptyList())
+        val credential = aiProvider.credential.value
+        try {
+            val payload = hashMapOf<String, Any>(
+                // The language the WORD is authored in. It is content, so it is written
+                // once in whatever language is current and never re-rendered (§3.5,
+                // `C15b`) — which is exactly why it has to travel: the model cannot be
+                // left to infer it from a goal title that may be in either.
+                "language" to preferences.language.value.id,
+                "goals" to goals.map { goal ->
+                    val structure = structures[goal.id] ?: GoalStructure()
+                    mapOf(
+                        "id" to goal.id,
+                        "title" to goal.title,
+                        // §3.3 E's two optional structure hints. They are what the model
+                        // reads to choose a `targetSource`; it never sees the resulting
+                        // number, and neither does this payload.
+                        "occurrencesPerWeek" to structure.occurrencesPerWeek,
+                        "openStepCount" to structure.openStepCount,
+                    )
+                },
+            ).withCredential(credential)
+            val result = functions.getHttpsCallable(CloudFunctions.PROPOSE_MEASURE)
+                .call(payload).await()
+            val data = result.getData()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(data, credential))
+            Resource.Success(parseProposals(data, structures))
+        } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
+            // Empty, never a substitute. §3.4's mechanical proposal is the caller's.
+            Resource.Success(emptyList())
+        }
+    }
+
+    /**
+     * The response into domain proposals, with the target computed here.
+     *
+     * **Resolution, not validation.** §3.4 puts validation in the Cloud Function
+     * *singly*, and the membership check that matters — `goalId` against the ids the
+     * request carried — has already run there. What is left is turning three
+     * validated strings back into three Kotlin enums, which cannot disagree with
+     * anything: it either resolves or it does not. An element that fails to resolve
+     * is dropped whole, matching §3.3 E's *"there is no partial measure"* rather
+     * than inventing a default kind.
+     *
+     * The target is put on last, by [ProposeMeasureUseCase.withComputedTarget], and
+     * a goal with no structure entry gets an empty one — which yields a null target,
+     * which the screen renders as *the app will not invent a number*.
+     */
+    private fun parseProposals(
+        data: Any?,
+        structures: Map<String, GoalStructure>,
+    ): List<MeasureProposal> {
+        val proposals = (data as? Map<*, *>)?.get("proposals") as? List<*> ?: return emptyList()
+        return proposals.mapNotNull { element ->
+            val m = element as? Map<*, *> ?: return@mapNotNull null
+            val goalId = (m["goalId"] as? String)?.takeIf { it.isNotBlank() }
+                ?: return@mapNotNull null
+            val kind = MeasureKind.fromName(m["measureKind"] as? String)
+                ?: return@mapNotNull null
+            val word = (m["word"] as? String)?.trim()?.takeIf { it.isNotEmpty() }
+                ?: return@mapNotNull null
+            val targetSource = TargetSource.fromName(m["targetSource"] as? String)
+                ?: return@mapNotNull null
+            ProposeMeasureUseCase.withComputedTarget(
+                MeasureProposal(
+                    goalId = goalId,
+                    kind = kind,
+                    word = word,
+                    // The Function already substitutes OUTCOME for an unusable basis,
+                    // so this second default is only reached by a response that never
+                    // went through it — an older deployment. Same value, so the two
+                    // cannot disagree.
+                    basis = MeasureBasis.fromName(m["basis"] as? String) ?: MeasureBasis.OUTCOME,
+                    targetSource = targetSource,
+                    target = null,
+                    origin = ProposalOrigin.MODEL,
+                ),
+                structures[goalId] ?: GoalStructure(),
+            )
         }
     }
 

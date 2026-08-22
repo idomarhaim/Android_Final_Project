@@ -14,6 +14,7 @@ import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
+import com.idomarhaim.goalpilot.testing.FakeAppPreferences
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import com.idomarhaim.goalpilot.util.MainDispatcherRule
 import io.mockk.coEvery
@@ -93,6 +94,9 @@ class GoalDetailViewModelTest {
             taskRepository = taskRepository,
             progressRepository = progressRepository,
             recommendationRepository = recommendationRepository,
+            // Nothing dismissed and nothing seeded: a fresh install, which is the
+            // state every assertion in this suite was written against.
+            preferences = FakeAppPreferences(),
             lifeAreaRepository = lifeAreaRepository,
             savedStateHandle = handle,
         )

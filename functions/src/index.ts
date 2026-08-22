@@ -42,6 +42,19 @@ export { projectPoints, projectPointsOnTaskWrite, projectChallengeScore } from "
 // into offering a value the validator then silently drops.
 import { CATEGORIES, listsFromRequest, validateClassification, asDifficulty } from "./classify";
 
+// `measure`'s validator (spec §3.3 E, §3.4) -- `C7`'s fifth AI feature, which `C11b` never
+// wrote a format for (§10.1). Firebase-free like `classify.ts`, so `test/measure.test.mjs`
+// runs under plain `node --test`. `MEASURE_KINDS` lives there so the list the prompt OFFERS
+// and the list the response is CHECKED against cannot drift into disagreeing.
+import {
+  MEASURE_KINDS,
+  BASES,
+  TARGET_SOURCES,
+  MAX_WORD,
+  listsFromMeasureRequest,
+  validateProposals,
+} from "./measure";
+
 // `C13`'s four provider adapters (#54, decided in #32). Firebase-free for the same
 // reason `classify.ts` is: `test/providers.test.mjs` runs them under plain
 // `node --test` with no emulator.
@@ -360,5 +373,80 @@ export const scoreTask = onCall(async (request: CallableRequest) => {
     // No judgement and no duration: nothing spoke. ROUTINE is x1.0, so the client prices
     // the task on whatever minutes the user supplies and nothing has been invented.
     return { difficulty: "ROUTINE", ...nothingAnswered(e) };
+  }
+});
+
+/**
+ * `measure` — a concrete measure for a goal that has none (spec §1.3, §3.3 E, §3.4;
+ * `C7` #14, `C22` #44, #65).
+ *
+ * **`C7`'s fifth AI feature, and the one `C11b` never wrote a format for.** §10.1 carries
+ * the whole account of how the hand-off was lost; the short version is that two tickets each
+ * said *"fifth"* about a different feature.
+ *
+ * ## What this call may and may not author
+ *
+ * It authors a **kind**, a **word**, a **basis** and the **name of an arithmetic**. It does
+ * NOT author a number, and there is no field here it could put one in — §3.3 E, and §0.5's
+ * strongest form. `C11a` measured free numbers swinging 2x run-to-run; the target is what
+ * the feature would be judged on, so the client computes it from `C9a`'s schedule and
+ * `C18`'s sub-tree, both of which it already holds.
+ *
+ * ## Wide by contract, and one goal per call today
+ *
+ * §3.2's wide call: the request carries `goals[]` and the response carries `proposals[]`,
+ * so batching costs nothing to add later. The client currently sends **one goal — the one
+ * being opened** — because §1.3 puts the offer only on the goal's own screen, so firing over
+ * the whole list would spend calls on goals nobody opened. The load ceiling is unchanged
+ * either way: dismissal is permanent (§1.3), so a goal is proposed **at most once, ever**,
+ * and the feature adds no recurring load against the free tier's 30 RPM.
+ *
+ * ## Failure is silent, and the client has a real fallback rather than a degraded one
+ *
+ * §3.4's `measure` row: any absent field falls back to the **mechanical proposal** —
+ * `openStepCount >= 2` counts the steps, else `occurrencesPerWeek >= 1` counts the
+ * occurrences, else nothing at all and the app says nothing. That lives in
+ * `ProposeMeasureUseCase` on the client, where it also has to work offline. So on transport
+ * failure this returns an **empty list** rather than throwing: unlike `classify`, whose
+ * whole-response fallback needs the client to see a failure, an empty `proposals` here is
+ * both the honest report and exactly the input the mechanical path wants.
+ */
+export const proposeMeasure = onCall(async (request: CallableRequest) => {
+  const { language = "en", goals = [] } = request.data ?? {};
+  const lists = listsFromMeasureRequest(request.data);
+
+  const system =
+    "Propose ONE concrete measure for each goal that currently has no number. " +
+    "Reply ONLY with a JSON object: {\"proposals\":[{\"goalId\":string," +
+    `\"measureKind\":\"${MEASURE_KINDS.join("|")}\",` +
+    `\"word\":string,\"basis\":\"${BASES.join("|")}\",` +
+    `\"targetSource\":\"${TARGET_SOURCES.join("|")}\"}]}. ` +
+    "goalId MUST be one of the given goal ids -- never invent one and never adapt one; " +
+    "omit the goal entirely rather than guess. " +
+    `word is the user's own unit for what is counted ("runs a week", "pages", "km"), ` +
+    `at most ${MAX_WORD} characters, authored in the language named below. ` +
+    "basis is OUTCOME when the number says how far along the goal itself is, or LEADING " +
+    "when it measures the recurring behaviour that produces the outcome -- prefer LEADING " +
+    "over inventing an outcome number for a goal whose result cannot honestly be counted. " +
+    "targetSource names WHERE THE APP GETS THE NUMBER, and you must not supply the number " +
+    "itself: SCHEDULE if the goal's occurrencesPerWeek is the right target, STEPS if its " +
+    "openStepCount is, USER if neither and the person must set it. " +
+    "Propose nothing for a goal you cannot phrase a real unit for -- a missing proposal is " +
+    "correct, and a vague one is not.";
+  const user =
+    `Language: ${language}. Goals: ${JSON.stringify(goals)}.`;
+
+  try {
+    const a = await answer(request, system, user);
+    return { proposals: validateProposals(a.json, lists), ...provenance(a) };
+  } catch (e) {
+    // §3.4's transport class: silent, no retry. An EMPTY list rather than a throw, and the
+    // difference from `classifyTask` above is the difference in their fallbacks -- the
+    // client's mechanical proposal is not a second implementation of this call, it is a
+    // different (arithmetic) answer to the same question, so handing it an empty list is
+    // handing it exactly its own input. Nothing is fabricated: zero proposals is what a
+    // call that did not happen produced.
+    logger.error("proposeMeasure failed", e);
+    return { proposals: [], ...nothingAnswered(e) };
   }
 });

@@ -78,4 +78,20 @@ class FakeAppPreferences : AppPreferencesRepository {
     override fun setTutorialSeenVersion(version: Int) {
         tutorialSeenVersion.value = version
     }
+
+    /**
+     * §1.3's permanent per-goal dismissal (`C22` #44, #65), as a plain growing set
+     * — which is what the production store is too.
+     *
+     * Deliberately exposed so a suite can seed it: *this goal was already
+     * dismissed* is a starting state a test needs, and there is no un-dismiss to
+     * reach it through. Empty is a fresh install, which has dismissed nothing.
+     */
+    val dismissedMeasureProposals = mutableSetOf<String>()
+    override fun isMeasureProposalDismissed(goalId: String): Boolean =
+        goalId in dismissedMeasureProposals
+
+    override fun dismissMeasureProposal(goalId: String) {
+        dismissedMeasureProposals += goalId
+    }
 }

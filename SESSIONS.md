@@ -17,7 +17,6 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `59-health-metric-mismatch` | `#59` — stop a Health Connect metric being pinned to an unrelated goal (`Strength Training` reads `245613/100`), and put the data repair to Ido | `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `kb-candidates/2026-08-23-59-health-metric-mismatch.md` · `CHANGELOG/2026-08-23/59-health-metric-mismatch.md` · `sessions/59-health-metric-mismatch.md` | **none — JVM unit layer only; no AVD, no adb, no `connectedDebugAndroidTest`** | 2026-08-23 |
 | `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
-| `65-measure-proposal` | `#65` — the measure proposal: a silent dashed-square marker wherever an unmeasured goal is listed, and the offer itself only on the goal's own screen (§1.3, `C22` #44) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/MeasureProposal.kt` (new) · `…/domain/usecase/ProposeMeasureUseCase.kt` (new) · `…/domain/repository/AppPreferencesRepository.kt` · `…/domain/repository/RecommendationRepository.kt` · `…/data/prefs/AppPreferencesRepositoryImpl.kt` · `…/data/remote/RecommendationRepositoryImpl.kt` · `…/core/util/Constants.kt` · `…/feature/goals/GoalDetailScreen.kt` · `…/feature/goals/GoalDetailViewModel.kt` · `…/feature/goals/MeasureProposalCard.kt` (new) · `…/ui/components/UnmeasuredMarker.kt` (new) · `…/ui/components/GoalCard.kt` · `functions/src/measure.ts` (new) · `functions/src/index.ts` · `functions/test/measure.test.mjs` (new) · `app/src/test/java/com/idomarhaim/goalpilot/domain/MeasureProposalTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MeasureProposalUiTest.kt` (new) · `kb-candidates/2026-08-23-65-measure-proposal.md` · `CHANGELOG/2026-08-23/65-measure-proposal.md` · `sessions/65-measure-proposal.md` | **AVD (`emulator-5554`) + `adb`** — released by `tour-video`, and no other live row claims them; **Gradle daemon queued behind `63-occurrences-and-recurrence`**, which the board already records as shareable by queueing. ⚠️ `adb install -r` + `am instrument` only — never `connectedDebugAndroidTest`. **NOT `data/firestore/**` or `firestore.rules`** — `63` owns those, which is why the dismissal is stored in SharedPreferences rather than on the goal document | 2026-08-23 |
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
 > **local Firestore emulator** (ports 8080/4000, shut down cleanly).
@@ -4416,6 +4415,49 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `65-measure-proposal` — released 2026-08-23, this commit
+
+[`#65`](https://github.com/idomarhaim/Android_Final_Project/issues/65) ships whole: §1.3's **two
+surfaces**, §3.3 E's **schema**, §3.4's **mechanical fallback**. `C7`'s fifth AI feature, which
+`C11b` never wrote a format for — `grep -rn "MeasureProposal"` over `app/src/main` returned **zero
+hits** when this session opened.
+
+📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED.** `adb install -r` + `am instrument` throughout —
+no uninstall, no `connectedDebugAndroidTest`. **AVD, adb and the Gradle daemon are released.**
+
+☁️ **`proposeMeasure(us-central1)` is DEPLOYED and live** — `Successful create operation`, under
+`docs/OPERATIONS.md` § *Standing authorisation*. The six existing functions updated cleanly with it.
+
+**Tests:** 876 JVM (0 fail; **18** of them this session's), 93 functions (0 fail; 26 new), 11
+instrumented (0 fail), 3 render PNGs looked at — two rounds of copy changed as a result.
+
+⚠️ **`63-occurrences-and-recurrence`: I built around you, not through you.** Your `data/firestore/**`
+claim is why §1.3's permanent dismissal is stored in `SharedPreferences` rather than on the goal
+document — a defensible home (#65's exit criterion is *across process death*, which it meets exactly)
+but a real limit, and the reason is on the record in `AppPreferencesRepository`'s KDoc so nobody reads
+it as a preference. Nothing of yours was touched. Two notes for you:
+- Your `Schedule.kt` was mid-edit and did not compile at ~02:09; my build failed on **your** file and
+  I waited rather than touching it. It cleared within minutes. No action needed — recorded only so the
+  next session knows the board's *"a build during a sibling's mid-edit fails on their half-written
+  file"* note held again.
+- The JVM suite total moved **860 → 876** during my run, and those 16 are yours (`ScheduleMappingTest`,
+  `RepeatRuleTest` and siblings). My changelog says so rather than claiming the total.
+
+⚠️ **Three shared test files were edited to keep the suite compiling** — `testing/FakeAppPreferences.kt`
+(two new interface members), `data/RecommendationRepositoryFallbackTest.kt` and
+`feature/goals/GoalDetailViewModelTest.kt` (one new constructor argument each). None was on any live
+row. Flagged because they are shared infrastructure and a sibling adding a fake would collide.
+
+📌 **Found and NOT fixed, because it is the measure model's:** an unmeasured goal still renders a
+percentage — the dark render shows *Get fit* carrying the marker (*no number yet*) beside `0%` and
+`0/100`. §1.3 already rules that `"%"` survives *only as a chosen `PERCENT` measure*, so this is real,
+but #65's brief puts the measure model explicitly out of scope. It belongs to
+[`#11`](https://github.com/idomarhaim/Android_Final_Project/issues/11).
+
+📌 **`#65` is left OPEN.** A `gh issue close` is an outward write and stays behind Ido's word in both
+modes; the work is complete and pushed.
+
 
 ### 🏁 `tour-video` (kickoff pass 2) — released 2026-08-23, this commit
 

@@ -46,6 +46,11 @@
     <string name="components_goal_untitled">יעד ללא שם</string>
     <string name="components_goal_complete">היעד הושלם</string>
 
+    <!-- The marker's TalkBack line. From the prototype's Hebrew caption,
+         "עוד אין מספר" — "not yet a number" rather than "no number", because
+         the marker states a present absence and not a verdict. -->
+    <string name="components_goal_unmeasured">עוד אין מספר — שום דבר לא נדרש כאן</string>
+
     <string name="components_percent">%1$d%%</string>
 
     <!-- ── GoalCategory ──────────────────────────────────────────── -->

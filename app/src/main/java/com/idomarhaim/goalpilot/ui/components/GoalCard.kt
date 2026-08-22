@@ -83,6 +83,18 @@ fun GoalCard(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
+                    // §1.3's MARKER (`C22` #44, #65) — a dashed square, no words and
+                    // no buttons, wherever the goal is listed. It may be here, and
+                    // the offer may not, because §0.7 needs consent for intrinsic
+                    // structure and **stating a fact asserts nothing**. Opening the
+                    // goal is that consent, which is where the offer lives.
+                    //
+                    // It sits beside the percentage rather than replacing it: an
+                    // unmeasured goal still shows whatever its progress arithmetic
+                    // says, and the marker's claim is about the NUMBER's absence,
+                    // not about the row being empty.
+                    UnmeasuredMarkerIfNeeded(measureIsAbsent = goal.measure == null)
+                    if (goal.measure == null) Spacer(Modifier.width(8.dp))
                     if (goal.isComplete) {
                         Icon(
                             imageVector = Icons.Filled.Check,

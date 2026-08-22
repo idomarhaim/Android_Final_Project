@@ -223,4 +223,47 @@ interface AppPreferencesRepository {
     val tutorialSeenVersion: StateFlow<Int>
 
     fun setTutorialSeenVersion(version: Int)
+
+    /**
+     * Whether the measure proposal has been dismissed for [goalId] — spec §1.3,
+     * `C22` [#44](https://github.com/idomarhaim/Android_Final_Project/issues/44),
+     * [#65](https://github.com/idomarhaim/Android_Final_Project/issues/65).
+     *
+     * ### Permanent, not snoozed, and that is the whole point
+     *
+     * §1.3: *"the offer is dismissible per goal — dismissal is **permanent**, not
+     * snoozed, because a default that re-asks is not a default."* So there is no
+     * un-dismiss and no timestamp to expire: [dismissMeasureProposal] is one-way.
+     * The manual path always exists — the goal editor sets a measure by hand — so
+     * nothing is unreachable; it is simply never volunteered again.
+     *
+     * ### Device-local, and that is a real limit rather than an oversight
+     *
+     * This sits in [android.content.SharedPreferences] beside
+     * [tutorialSeenVersion] and not on the goal document, so a **second device
+     * re-offers** on a goal already dismissed on this one. Two reasons, and the
+     * second is the one that decides it:
+     *
+     *  1. §1.3's requirement is *permanent*, and #65's own exit criterion is
+     *     *"a dismissed goal never offers again, **across process death**"* —
+     *     which is what this satisfies exactly.
+     *  2. the `data/firestore` package was held by a live sibling session
+     *     (`63-occurrences-and-recurrence`) when this shipped, so the goal
+     *     document was not this session's to widen.
+     *
+     * `Untested:` whether the re-offer on a second device is felt as a defect —
+     * this app has one user and, as of 2026-08-23, one signed-in device. Moving
+     * it onto `GoalDto` is additive and costs one nullable field when someone
+     * decides it is.
+     */
+    fun isMeasureProposalDismissed(goalId: String): Boolean
+
+    /**
+     * Records that the offer was declined for [goalId], for good.
+     *
+     * One-way by design — see [isMeasureProposalDismissed]. Accepting a proposal
+     * does **not** call this: an accepted goal stops being eligible because it
+     * has a measure, which is a fact about the goal rather than a suppression.
+     */
+    fun dismissMeasureProposal(goalId: String)
 }
