@@ -52,58 +52,70 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
   ```
   succeeded unchanged. `firebase-tools` is installed, and `firebase login:list` still prints
   `name.iddo@gmail.com` on `goalpilot-56e30`.
-  - ⚠️ **The CLI cannot authenticate as of 2026-08-22, and `login:list` is exactly the command
-    that will not tell you so.** *(Found by `57b-backgrounds-and-combinations`.)* Every command
-    that actually talks to Google — `projects:list`, `appdistribution:testers:list`, and therefore
-    `deploy` — fails with *"Authentication Error: Your credentials are no longer valid. Please run
-    `firebase login --reauth`"*, while `login:list` happily reports the cached identity. So
-    **`login:list` is not a liveness check**; `firebase projects:list` is the cheap one that is.
-    **This blocks the standing-authorisation deploy path** ([`docs/OPERATIONS.md` §
-    *Standing authorisation*](docs/OPERATIONS.md)) until it is repaired.
-  - ⚠️ **CORRECTED the same day — the first version of this note said "that token is DEAD", and
-    the evidence says it is not.** That was the obvious reading of the error message and it is
-    wrong, so it is replaced rather than hedged. `firebase projects:list --debug` shows the whole
-    exchange:
+  - ⚠️ **`firebase-tools` cannot run any authenticated command, and IT IS NOT AN AUTH PROBLEM.**
+    *(Root-caused 2026-08-22 by `57b-backgrounds-and-combinations`, after three wrong answers.)*
+    Every command that talks to Google fails with *"Authentication Error: Your credentials are no
+    longer valid. Please run `firebase login --reauth`"*, and **that message names the wrong
+    cause.** The real error is in `firebase-debug.log`:
 
     ```
-    > refreshing access token with scopes: []
-    >>> POST https://www.googleapis.com/oauth2/v3/token
-    <<< status 200
+    Error: EPERM: operation not permitted, rename
+      'C:\Users\namei\.config\configstore\firebase-tools.json.3898539203'
+      -> 'C:\Users\namei\.config\configstore\firebase-tools.json'
+        at Object.renameSync (node:fs)
+        at write-file-atomic ... at Configstore.set ... at recordCredentials (lib/auth.js:335)
     ```
 
-    **Google returns HTTP 200 to the refresh.** A revoked or expired refresh token returns `400
-    invalid_grant`, and `auth.js` has an explicit branch for `400`/`401` that does *not* throw.
-    The throw comes one line further down, from `typeof res.body.access_token !== "string"` —
-    i.e. **firebase-tools got a 200 whose body carried no access token**, and then reported it
-    through `invalidCredentialError()`, whose text names the wrong cause. So the grant is intact
-    and nothing needs re-authorising on Google's side; the fault is local.
+    **`firebase-tools.json` is held open by another process without share-delete**, so
+    `write-file-atomic`'s rename can never replace it. The OAuth half works perfectly — Google
+    returns **200** to both the refresh and the code exchange — and then `auth.js` fails while
+    *persisting* the result, inside a `try` whose `catch` throws `invalidCredentialError()`. That
+    is how a **file lock** comes out of the tool as *"your credentials are no longer valid"*.
 
-    **FOUR theories were tested and all four are dead.** Recorded in full, because each one
-    looks plausible enough to be re-run by the next session:
+    **Proof, three ways, none of them ambiguous:**
+    - `firebase login --reauth` shows *"Firebase CLI Login Successful"* in the browser and then
+      dies — the exchange succeeded, the write did not.
+    - Renaming any file onto `firebase-tools.json` fails `EPERM`, while renaming onto **any other
+      name in the same directory succeeds**. `Rename-Item` on it says outright: *"The process
+      cannot access the file because it is being used by another process."* Attributes are
+      `Archive`, the ACL grants `namei` FullControl, and the owner is `namei` — so it is a lock,
+      not a permission.
+    - Point the store elsewhere and everything works: with `XDG_CONFIG_HOME` set to an empty
+      directory (`configstore` honours it on Windows via `xdg-basedir`), the error becomes the
+      honest *"Failed to authenticate, have you run `firebase login`?"*, **the MOTD warning
+      disappears**, and both store files are written. The MOTD failure was never a network
+      symptom — it is the same lock, one line earlier.
 
-    | theory | killed by |
-    |---|---|
-    | the refresh token is expired or revoked | the `200` above — a bad grant returns `400 invalid_grant` |
-    | a proxy is intercepting HTTPS and returning a 200 page | `firebase.tools` and `api.github.com` both answer `200`, the token endpoint answers `411` as it should for an empty POST, and no proxy variables are set |
-    | a stale `firebase-tools` version | **upgraded 15.27.0 → 15.28.1 on 2026-08-22 and the error is byte-identical.** Do not retry this |
-    | the configstore's `tokens.scopes` is corrupt (it is `[]`, while the granted `tokens.scope` string is 204 chars) | **`[]` is hard-coded**, not corruption — `lib/apiv2.js:53` literally calls `auth.getAccessToken(refreshToken, [])`, so every refresh this tool has ever made sent an empty scope |
+    **`Inferred:` the holder is a VS Code extension that bundles `firebase-tools`** — most likely
+    `googlecloudtools.firebase-dataconnect-vscode`, with `googlecloudtools.cloudcode` and
+    `google.geminicodeassist` as the other candidates; the store itself carries a
+    `vscode-analytics-clientId` key, which is a VS Code writer's fingerprint, and **24 `Code.exe`
+    processes are running while there is no `node` process at all.** Not confirmed to a PID:
+    that needs `handle.exe`, which is not installed, and the one process that could not be
+    stopped to test is the editor this session runs inside.
 
-    `Untested:` what actually remains needs the response body, which is `skipLog`-suppressed, so
-    reading it means handling the stored refresh token by hand — the one operation the classifier
-    blocks (see the `gh` note above), and dressing it up to get past that is still out. Saying so
-    beats inventing a fifth theory.
+    **The fix, and it is not a browser flow:** close VS Code (or disable that extension) so the
+    handle is released, then run `firebase login --reauth` **once**. The reauth is still needed
+    because the successful login of 2026-08-22 could not be saved.
 
-    **Last known-good refresh: 2026-08-21T12:41 UTC**, which is `c13-key-store`'s successful
-    functions deploy. So the break is ~20 hours old and something changed on this machine in
-    between, not on the account. The configstore holds a single account and a stale
-    `tempLoginState` — the fingerprint of a `firebase login` started and abandoned around the
-    same time.
+    **The escape hatch, if the editor must stay open:** set `XDG_CONFIG_HOME` to a directory
+    nothing holds and copy `firebase-tools.json` into `<dir>/configstore/`. **Deliberately not
+    done here** — it puts a second copy of a live refresh token on disk, to be rotated separately
+    and forgotten, which is exactly `kb/dev/redaction-leaves-a-second-copy.md`. Restarting the
+    editor costs thirty seconds and no secret.
 
-    **The fix is `firebase login --reauth`, and it is Ido's** — it opens a browser and cannot be
-    driven from a tool shell, same shape as `gh auth login --web` above. Because the grant is
-    intact, this is a **re-issue and not a re-consent**, so it is seconds rather than a
-    permissions dialog. Nothing cheaper is left: the only non-interactive candidate was the
-    version bump, and it was tried.
+    **Four earlier theories, all tested and all dead** — recorded so nobody re-runs them: the
+    grant is expired or revoked (killed by the `200`); a proxy is intercepting HTTPS (killed —
+    `firebase.tools` and `api.github.com` both answer `200`, the token endpoint answers `411` for
+    an empty POST, no proxy variables set, and Node's own `https` **and** `fetch` get a clean
+    parsed `401` from that endpoint); the CLI is stale (killed — **upgraded 15.27.0 → 15.28.1 and
+    the error is byte-identical**); the store's `tokens.scopes: []` is corrupt (killed — `[]` is
+    **hard-coded** at `lib/apiv2.js:53`).
+
+    **The lesson worth more than the fix:** the tool's own error message named a cause, and it was
+    wrong three times over. `--debug` and `firebase-debug.log` had the real one from the first
+    minute. **`firebase projects:list` is the cheap liveness check** — `firebase login:list` only
+    prints the cached identity and cannot fail.
   - ✅ **The Gradle App Distribution plugin authenticates SEPARATELY and still works.**
     `Observed:` 2026-08-22, `./gradlew :app:appDistributionUploadRelease` uploaded a signed
     release to `goalpilot-56e30` **in the same minute** that `firebase projects:list` was

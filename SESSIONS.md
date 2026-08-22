@@ -4256,20 +4256,15 @@ Currently unclaimed and ready:
 >    Photographing the other ten screens needs a stateless `*Content` split across ten feature
 >    files, or Ido signed in on the AVD; `MaterialRenderPass` can drive `SettingsContent` only
 >    because it is fully hoisted. `57c` and `57d` render the two busiest grounds for free.
-> 3. ⚠️ **`firebase-tools` cannot authenticate, and `firebase login:list` does not say so** — it
->    prints the cached identity while `projects:list` / `deploy` fail with *"credentials are no
->    longer valid"*. **This blocks the standing-authorisation deploy path.** **The Gradle App
->    Distribution plugin authenticates separately and still works** — `Observed:` an upload
->    succeeded in the same minute the CLI refused, so a dead CLI is not "no Firebase capability".
->    ⚠️ **This line first said the TOKEN was dead; that is corrected in
->    [CLAUDE.md](CLAUDE.md) and it matters** — `--debug` shows Google returning **HTTP 200** to
->    the refresh, so the grant is intact and the fault is local. Two theories (network
->    interception, plain expiry) were tested and killed, and so were two more: the **version bump
->    was tried** (15.27.0 → 15.28.1, error byte-identical — do not retry it), and the
->    `tokens.scopes: []` that looked like a corrupt configstore turns out to be **hard-coded** in
->    `lib/apiv2.js:53`. Nothing non-interactive is left: the fix is `firebase login --reauth`,
->    which needs a browser and is Ido's, and because the grant is intact it is a re-issue rather
->    than a re-consent.
+> 3. ⚠️ **`firebase-tools` is broken on this machine, and it is A FILE LOCK, NOT AN AUTH
+>    PROBLEM.** `~/.config/configstore/firebase-tools.json` is held open by another process
+>    without share-delete, so the CLI can never persist a token; the OAuth half returns **200**
+>    and the failure happens while *saving*, surfacing as *"your credentials are no longer
+>    valid"*. Proof and the four dead theories: [CLAUDE.md](CLAUDE.md). **Fix: close VS Code (or
+>    disable `googlecloudtools.firebase-dataconnect-vscode`), then `firebase login --reauth`
+>    once.** `firebase projects:list` is the liveness check; `login:list` cannot fail and tells
+>    you nothing. **The Gradle App Distribution plugin is unaffected** and shipped a signed
+>    release while the CLI was refusing.
 > 4. 📦 **A signed release build was distributed** — `app-release.apk`, real release key
 >    (`CN=Ido Marhaim`, SHA-1 `e7d5534c…`, verified with `apksigner`, **not** the debug fallback),
 >    uploaded to App Distribution release `1hsoupi086d88` for the `testers` group, with
