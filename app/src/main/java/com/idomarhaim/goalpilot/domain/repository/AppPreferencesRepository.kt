@@ -5,6 +5,7 @@ import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
@@ -92,6 +93,28 @@ interface AppPreferencesRepository {
     val background: StateFlow<AppBackground>
 
     fun setBackground(background: AppBackground)
+
+    /**
+     * Whether chart bodies are **extruded**, per spec §4.1's raised-3D toggle —
+     * `#57` c's fourth axis, and Ido's *"3d graphs is an option that can be
+     * implemented in addition on each of the design types"*.
+     *
+     * A [StateFlow] beside [material] and [background] for the same reason: all
+     * three are read together to build `GpMaterialSpec` before the first frame,
+     * so a cold flow here would draw one frame of flat charts and then repaint.
+     *
+     * **Orthogonal to [material], and stored that way.** It is not folded into
+     * the material id even though the two only ever appear together — the whole
+     * content of the decision this axis records is that raised is *not* a
+     * property of a material (see [AppRelief]), and a composite key would encode
+     * the overturned answer in the schema.
+     *
+     * Device-local like everything else here; §4.9's sign-out test puts every
+     * appearance axis in the left column.
+     */
+    val relief: StateFlow<AppRelief>
+
+    fun setRelief(relief: AppRelief)
 
     /**
      * Where the user is, for week start and date order — spec §5.1's **Region**,

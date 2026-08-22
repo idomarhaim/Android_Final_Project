@@ -7,16 +7,17 @@ import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * [AppPreferencesRepository] backed by [android.content.SharedPreferences].
@@ -89,6 +90,20 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         _background.value = background
     }
 
+    // Stored as an id rather than a boolean, which is `AppRelief`'s own note:
+    // `getBoolean` cannot tell ABSENT from FALSE, so a key renamed later would
+    // read as `flat` rather than as `the default` -- and the two differ the day
+    // the default changes.
+    private val _relief =
+        MutableStateFlow(AppRelief.fromId(prefs.getString(KEY_RELIEF, null)))
+    override val relief: StateFlow<AppRelief> = _relief.asStateFlow()
+
+    override fun setRelief(relief: AppRelief) {
+        if (_relief.value == relief) return
+        prefs.edit { putString(KEY_RELIEF, relief.id) }
+        _relief.value = relief
+    }
+
     private val _region = MutableStateFlow(AppRegion.fromId(prefs.getString(KEY_REGION, null)))
     override val region: StateFlow<AppRegion> = _region.asStateFlow()
 
@@ -149,6 +164,7 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         const val KEY_BRIGHTNESS = "app_brightness"
         const val KEY_MATERIAL = "app_material"
         const val KEY_BACKGROUND = "app_background"
+        const val KEY_RELIEF = "app_relief"
         const val KEY_REGION = "app_region"
         const val KEY_WAKING_START = "day_waking_start_minutes"
         const val KEY_WAKING_END = "day_waking_end_minutes"

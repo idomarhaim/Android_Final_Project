@@ -8,14 +8,15 @@ import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Spec §4.9's Settings surface: **Profile is the account, Settings is the
@@ -54,6 +55,10 @@ class SettingsViewModel @Inject constructor(
     val background: StateFlow<AppBackground> = appPreferences.background
 
     fun setBackground(background: AppBackground) = appPreferences.setBackground(background)
+
+    val relief: StateFlow<AppRelief> = appPreferences.relief
+
+    fun setRelief(relief: AppRelief) = appPreferences.setRelief(relief)
 
     val language: StateFlow<AppLanguage> = appPreferences.language
 

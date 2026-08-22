@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -13,18 +15,17 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
-import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.feature.settings.SettingsContent
@@ -191,7 +192,14 @@ class MaterialPickerUiTest {
             .performScrollTo()
             .performClick()
 
-        composeRule.onNodeWithTag(TAG_BRIGHTNESS_LOCK).assertIsDisplayed()
+        // performScrollTo before the display assertion, added by #57 c. The
+        // caption used to be on screen after the tile click; the Appearance card
+        // gained a FIFTH control (Chart relief) between Background and
+        // Brightness, so it now sits below the fold. The claim under test is
+        // "choosing the locked material captions the brightness control" -- not
+        // "the caption fits on one screen" -- and a scroll keeps the first while
+        // dropping only the second, which was never asserted on purpose.
+        composeRule.onNodeWithTag(TAG_BRIGHTNESS_LOCK).performScrollTo().assertIsDisplayed()
         val caption = textOf(TAG_BRIGHTNESS_LOCK)
         assertThat(caption).contains(materialName(AppMaterial.DARK_NEO))
         // The claim a user could be misled by: the setting is suspended, not
@@ -262,6 +270,12 @@ class MaterialPickerUiTest {
                     // forget the control and render one that silently does nothing.
                     background = AppBackground.DEFAULT,
                     onBackground = {},
+                    // #57 c's fourth axis. Explicit, like the third: a default
+                    // lets a real screen forget the control and render one that
+                    // silently does nothing. This suite is about the MATERIAL
+                    // picker, so the relief is held at its own default.
+                    relief = AppRelief.DEFAULT,
+                    onRelief = {},
                     language = language,
                     onLanguage = { language = it },
                     region = region,

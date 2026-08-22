@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 
 /** The skin currently in force. Read it to draw skin-aware chrome; set it via preferences. */
@@ -47,13 +48,28 @@ val LocalAppMaterial = staticCompositionLocalOf { AppMaterial.DEFAULT }
  */
 val LocalAppBackground = staticCompositionLocalOf { AppBackground.DEFAULT }
 
-/** The four answers — `surface · groove · elevation · accent`. See [GpMaterialSpec]. */
+/**
+ * Whether chart bodies are extruded — spec §4.1's raised-3D toggle, promoted to
+ * the fourth axis by `#57` c.
+ *
+ * Read this only to answer *"which relief is selected?"* for the **one** control
+ * allowed to ask: the relief picker, whose two tiles each draw a body in the
+ * relief they are offering rather than the current one. Every chart reads
+ * [LocalGpMaterial] instead, whose `volume` already carries the answer.
+ */
+val LocalAppRelief = staticCompositionLocalOf { AppRelief.DEFAULT }
+
+/**
+ * The answers — `surface · groove · elevation · accent`, plus the ground and the
+ * chart volume the two later axes resolve into. See [GpMaterialSpec].
+ */
 val LocalGpMaterial = staticCompositionLocalOf {
     materialSpecFor(
         material = AppMaterial.DEFAULT,
         background = AppBackground.DEFAULT,
         scheme = colorSchemeFor(AppSkin.DEFAULT, AppMaterial.DEFAULT, dark = false),
         dark = false,
+        relief = AppRelief.DEFAULT,
     )
 }
 
@@ -84,6 +100,7 @@ fun GoalPilotTheme(
     skin: AppSkin = AppSkin.DEFAULT,
     material: AppMaterial = AppMaterial.DEFAULT,
     background: AppBackground = AppBackground.DEFAULT,
+    relief: AppRelief = AppRelief.DEFAULT,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
@@ -107,8 +124,8 @@ fun GoalPilotTheme(
     // `background` joins the key list rather than being read inside: the spec is
     // provided through a staticCompositionLocalOf, so a value recomputed on every
     // composition would invalidate the entire app subtree each time.
-    val materialSpec = remember(material, background, colorScheme, resolvedDark) {
-        materialSpecFor(material, background, colorScheme, resolvedDark)
+    val materialSpec = remember(material, background, relief, colorScheme, resolvedDark) {
+        materialSpecFor(material, background, colorScheme, resolvedDark, relief)
     }
     val barsOverride = remember { mutableStateOf<Boolean?>(null) }
 
@@ -116,6 +133,7 @@ fun GoalPilotTheme(
         LocalAppSkin provides skin,
         LocalAppMaterial provides material,
         LocalAppBackground provides background,
+        LocalAppRelief provides relief,
         LocalGpMaterial provides materialSpec,
         LocalGpAccents provides accents,
         LocalSystemBarsOverride provides barsOverride,

@@ -1,10 +1,12 @@
 package com.idomarhaim.goalpilot.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,12 +19,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.ui.theme.VolumeBar
+import com.idomarhaim.goalpilot.ui.theme.drawVolumeBars
+import com.idomarhaim.goalpilot.ui.theme.gpMaterial
 
 /**
  * One band of a [StackedColumn]. [id] is the series it belongs to, so the chart
@@ -65,6 +72,14 @@ data class StackedColumn(
  * - **Labels thin out rather than shrink.** Thirteen weeks in a quarter cannot
  *   each carry a legible date on a phone, so [labelStride] shows every *n*th and
  *   leaves the rest blank — the columns stay evenly spaced either way.
+ * - **Segments are bodies, not blocks** (`#57` c). Each carries a three-stop fill
+ *   lit from one direction, a sheen down its lit side, a cast shadow and a grain
+ *   pass; on a raised relief it grows a right-hand wall, and the **top** face is
+ *   drawn only on the segment that actually has one. That is why a column is one
+ *   [androidx.compose.foundation.Canvas] rather than a `Column` of coloured
+ *   boxes: the old shape could not express *"this segment has another sitting on
+ *   it"*, and a lit plate through the middle of a stack is what you get when it
+ *   cannot.
  */
 @Composable
 fun StackedColumnChart(
@@ -85,6 +100,7 @@ fun StackedColumnChart(
     // SemanticsPropertyReceiver rather than to this parameter.
     val description = contentDescription
     val safeMax = maxValue.coerceAtLeast(1)
+    val volume = MaterialTheme.gpMaterial.volume
 
     Row(
         modifier = modifier
@@ -114,41 +130,51 @@ fun StackedColumnChart(
                                 .background(baselineColor),
                         )
                     } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(
-                                    RoundedCornerShape(
-                                        topStart = CORNER,
-                                        topEnd = CORNER,
-                                    ),
-                                ),
-                        ) {
-                            // Reversed, because a Column lays out top-down and the
-                            // caller's first segment belongs at the bottom.
-                            column.segments.asReversed().forEach { segment ->
-                                if (segment.value <= 0) return@forEach
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val corner = CORNER.toPx()
+                            val minSegment = MIN_SEGMENT_HEIGHT.toPx()
+                            // Bottom-first, exactly the caller's order -- a Canvas
+                            // has no top-down layout to fight, so the reversal the
+                            // old Column needed goes away with it.
+                            val drawn = column.segments.filter { it.value > 0 }
+                            var bottom = this.size.height
+                            val bodies = drawn.mapIndexed { position, segment ->
                                 val fraction = segment.value.toFloat() / safeMax
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(
-                                            (height * fraction * progress)
-                                                .coerceAtLeast(MIN_SEGMENT_HEIGHT * progress),
-                                        )
-                                        .background(
-                                            segment.color.copy(
-                                                alpha = if (selectedId == null ||
-                                                    segment.id == selectedId
-                                                ) {
-                                                    1f
-                                                } else {
-                                                    DIMMED_ALPHA
-                                                },
-                                            ),
-                                        ),
+                                val bodyHeight = (this.size.height * fraction * progress)
+                                    .coerceAtLeast(minSegment * progress)
+                                val top = bottom - bodyHeight
+                                val isTop = position == drawn.lastIndex
+                                val rect = Rect(0f, top, this.size.width, bottom)
+                                bottom = top
+                                VolumeBar(
+                                    rect = rect,
+                                    color = segment.color,
+                                    alpha = if (selectedId == null || segment.id == selectedId) {
+                                        1f
+                                    } else {
+                                        DIMMED_ALPHA
+                                    },
+                                    // Only the highest segment is rounded, and only
+                                    // it is capped: everything below has a neighbour
+                                    // sitting on it, so it has no top to show.
+                                    topRadius = if (isTop) corner else 0f,
+                                    bottomRadius = 0f,
+                                    capped = isTop,
+                                    // One cast for the column, from the segment
+                                    // that actually touches the baseline.
+                                    castsShadow = position == 0,
                                 )
                             }
+                            drawVolumeBars(
+                                volume = volume,
+                                // The column's OWN box, not the chart's. As far as
+                                // the light is concerned a stacked chart is a row
+                                // of charts -- one rect spanning all seven would
+                                // light Sunday and Saturday from opposite ends of
+                                // the same gradient.
+                                bounds = Rect(Offset.Zero, this.size),
+                                bars = bodies,
+                            )
                         }
                     }
                 }

@@ -2,23 +2,24 @@ package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.result.Resource
-import com.idomarhaim.goalpilot.domain.model.AppSkin
-import com.idomarhaim.goalpilot.domain.model.DailySteps
-import com.idomarhaim.goalpilot.domain.model.Goal
-import com.idomarhaim.goalpilot.domain.model.AppLanguage
-import com.idomarhaim.goalpilot.domain.model.AppMaterial
-import com.idomarhaim.goalpilot.domain.model.GoalCategory
-import com.idomarhaim.goalpilot.domain.model.Measure
-import com.idomarhaim.goalpilot.domain.model.MeasureKind
-import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
+import com.idomarhaim.goalpilot.domain.model.AppLanguage
+import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
+import com.idomarhaim.goalpilot.domain.model.AppSkin
+import com.idomarhaim.goalpilot.domain.model.DailySteps
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
+import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.HealthSnapshot
-import com.idomarhaim.goalpilot.domain.model.WakingHours
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SleepNight
+import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
@@ -34,13 +35,13 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import java.time.LocalDate
 
 /**
  * The automatic Health Connect sync: when it is allowed to run, and what it writes
@@ -384,6 +385,9 @@ class HealthSyncTest {
         override fun setBackground(background: AppBackground) {
             this.background.value = background
         }
+        // #57 c. Same: unread here, present because the interface has it.
+        override val relief = MutableStateFlow(AppRelief.DEFAULT)
+        override fun setRelief(relief: AppRelief) { this.relief.value = relief }
         override val region = MutableStateFlow(AppRegion.DEFAULT)
         override fun setRegion(region: AppRegion) { this.region.value = region }
         override val daySchedule = MutableStateFlow(DaySchedule.DEFAULT)

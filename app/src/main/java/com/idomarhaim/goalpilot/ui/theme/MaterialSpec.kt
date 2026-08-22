@@ -17,9 +17,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import kotlin.math.sqrt
 import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
+import com.idomarhaim.goalpilot.domain.model.AppRelief
+import kotlin.math.sqrt
 
 /**
  * Spec §4.1's **material contract** — the four answers every screen is allowed
@@ -133,6 +134,21 @@ data class GpMaterialSpec(
      * draw-it-twelve-times.
      */
     val backdrop: GpBackdrop,
+
+    /**
+     * How a **chart body** is built — the fifth answer, and the **fourth axis**,
+     * [AppRelief], resolved into something drawable.
+     *
+     * It sits inside the spec for exactly the reason [backdrop] does: a chart
+     * that had to know which material it was in would re-open the
+     * draw-it-four-times cost this type exists to close — now
+     * draw-it-sixteen-times, because raised multiplies it again. The four chart
+     * components ask for this and draw; none of them names a material.
+     *
+     * See [GpChartVolume] for the one prototype layer that is deliberately not
+     * ported, and whose authority for dropping it is the prototype itself.
+     */
+    val volume: GpChartVolume,
 ) {
     /** Whether this material's panels let the page through — glass and liquid only. */
     val isTranslucent: Boolean get() = surface.alpha < 1f
@@ -322,20 +338,27 @@ fun materialSpecFor(
     background: AppBackground,
     scheme: ColorScheme,
     dark: Boolean,
+    relief: AppRelief = AppRelief.DEFAULT,
 ): GpMaterialSpec {
     val ground = background.resolve(material)
     val backdrop = backdropFor(ground, scheme, dark)
+    val volume = chartVolumeFor(material, scheme, dark, relief)
     return when (material) {
-        AppMaterial.GLASS -> glassSpec(scheme, dark, backdrop)
-        AppMaterial.LIQUID_GLASS -> liquidSpec(scheme, dark, backdrop)
-        AppMaterial.NEO -> neoSpec(scheme, dark, backdrop)
-        AppMaterial.DARK_NEO -> darkNeoSpec(scheme, backdrop)
+        AppMaterial.GLASS -> glassSpec(scheme, dark, backdrop, volume)
+        AppMaterial.LIQUID_GLASS -> liquidSpec(scheme, dark, backdrop, volume)
+        AppMaterial.NEO -> neoSpec(scheme, dark, backdrop, volume)
+        AppMaterial.DARK_NEO -> darkNeoSpec(scheme, backdrop, volume)
     }
 }
 
 // ─────────────────────────── 1 · glassmorphism ─────────────────────────────
 
-private fun glassSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
+private fun glassSpec(
+    scheme: ColorScheme,
+    dark: Boolean,
+    backdrop: GpBackdrop,
+    volume: GpChartVolume,
+): GpMaterialSpec {
     val panel = if (dark) Color.White.copy(alpha = 0.13f) else Color.White.copy(alpha = 0.62f)
     return GpMaterialSpec(
         material = AppMaterial.GLASS,
@@ -393,12 +416,18 @@ private fun glassSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop):
         overlay = panel.over(scheme.background),
         corner = 26.dp,
         backdrop = backdrop,
+        volume = volume,
     )
 }
 
 // ─────────────────────────── 2 · liquid glass ──────────────────────────────
 
-private fun liquidSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
+private fun liquidSpec(
+    scheme: ColorScheme,
+    dark: Boolean,
+    backdrop: GpBackdrop,
+    volume: GpChartVolume,
+): GpMaterialSpec {
     val panel = if (dark) Color.White.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.66f)
     return GpMaterialSpec(
         material = AppMaterial.LIQUID_GLASS,
@@ -440,12 +469,18 @@ private fun liquidSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop)
         overlay = panel.over(scheme.background),
         corner = 32.dp,
         backdrop = backdrop,
+        volume = volume,
     )
 }
 
 // ───────────────────────────────── 3 · neo ─────────────────────────────────
 
-private fun neoSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): GpMaterialSpec {
+private fun neoSpec(
+    scheme: ColorScheme,
+    dark: Boolean,
+    backdrop: GpBackdrop,
+    volume: GpChartVolume,
+): GpMaterialSpec {
     // ── the definitional case, and it is the whole reason this parameter exists ──
     //
     // Neumorphism IS the surface being the same colour as what is behind it --
@@ -507,12 +542,17 @@ private fun neoSpec(scheme: ColorScheme, dark: Boolean, backdrop: GpBackdrop): G
     overlay = scheme.surface.shiftedLightness(if (dark) 0.055f else -0.045f),
     corner = 22.dp,
     backdrop = backdrop,
+    volume = volume,
     )
 }
 
 // ─────────────────────────────── 4 · dark neo ──────────────────────────────
 
-private fun darkNeoSpec(scheme: ColorScheme, backdrop: GpBackdrop): GpMaterialSpec {
+private fun darkNeoSpec(
+    scheme: ColorScheme,
+    backdrop: GpBackdrop,
+    volume: GpChartVolume,
+): GpMaterialSpec {
     // The same problem as neo, one shade darker: dark neo's shadows need a
     // charcoal to sit on, and a lit ground is not charcoal. The prototype's
     // answer is the same plate one shade down (`.st-darkneo.shared`, .88/.90),
@@ -558,7 +598,133 @@ private fun darkNeoSpec(scheme: ColorScheme, backdrop: GpBackdrop): GpMaterialSp
     overlay = scheme.surfaceContainerHighest,
     corner = 28.dp,
     backdrop = backdrop,
+    volume = volume,
     )
+}
+
+// ────────────────────────── 5 · chart volume ───────────────────────────────
+
+/**
+ * How [material] builds a chart body, on [relief].
+ *
+ * ## Why this is one function and not four fields on the four specs above
+ *
+ * The four material builders each answer `surface · groove · elevation ·
+ * accent` from scratch, because those four genuinely differ in kind. Volume does
+ * not: every material wants the same five layers, and what differs is **how
+ * hard each is pushed**. Written as four independent literal blocks, the fact
+ * that dark neo's cast is four times glass's would be invisible — it is a
+ * *relationship*, and a relationship is only readable where the values sit
+ * together.
+ *
+ * ## The ink, and why it is not `#0A101A`
+ *
+ * The prototype mixes every shade toward one hard-coded near-black. That hex is
+ * `#57` a's finding: it does not track the skin, and here it would be worse than
+ * there, because this one is mixed into **every category hue at once** — a wrong
+ * ink tints the whole palette rather than one swatch. So it is the scheme's own
+ * background taken down to near-black, which is the same colour on the default
+ * skin and the right one on the others.
+ *
+ * ## The numbers
+ *
+ * Read as a table, because that is what they are:
+ *
+ * | | tint | shade | bevel | fold | sheen | cast α | grain |
+ * |---|---|---|---|---|---|---|---|
+ * | glass | .34 | .26 | .20 | .16 | .42 | .16 | — |
+ * | liquid | .38 | .24 | .26 | .14 | .55 | .24 | .05 |
+ * | neo | .30 | .30 | .13 | .20 | .18 | .22 | .10 |
+ * | dark neo | .46 | .34 | .30 | .32 | .30 | .55 | .14 |
+ *
+ * Three of the four rows are the material's own §4.1 sentence, one axis over:
+ * glass is *depth from blur*, so it gets sheen and no grain — a grain pass on a
+ * translucent panel reads as dirt on the glass rather than as the body's own
+ * surface. Liquid is *depth from refraction at the edge*, so its sheen is the
+ * strongest of the four and its cast is **coloured** rather than black, matching
+ * the refracted glow its panels already drop. Neo is *depth from a shadow pair
+ * on one flat surface* and has no gloss at all, so its sheen is barely there and
+ * its work is done by shade and fold. Dark neo is *a deep shadow pair plus one
+ * saturated gradient*: every number is the largest in its column, which is what
+ * that material is.
+ */
+private fun chartVolumeFor(
+    material: AppMaterial,
+    scheme: ColorScheme,
+    dark: Boolean,
+    relief: AppRelief,
+): GpChartVolume {
+    // The prototype's `ch * 0.34`. Uniform across the four materials on purpose:
+    // `AppRelief`'s doc records that the height being a material property is the
+    // decision Ido OVERTURNED, so varying it here would re-collapse the axis by
+    // arithmetic after it was re-opened by ruling.
+    val height = if (relief.isRaised) 0.34f else 0f
+    val ink = scheme.background.atLightness(0.05f)
+    return when (material) {
+        AppMaterial.GLASS -> GpChartVolume(
+            tint = 0.34f,
+            shade = 0.26f,
+            ink = ink,
+            bevel = 0.20f,
+            fold = 0.16f,
+            sheen = 0.42f,
+            cast = Color.Black.copy(alpha = if (dark) 0.22f else 0.16f),
+            castOffset = 5.dp,
+            castSpread = 7.dp,
+            grain = 0f,
+            relief = height,
+        )
+
+        AppMaterial.LIQUID_GLASS -> GpChartVolume(
+            tint = 0.38f,
+            shade = 0.24f,
+            ink = ink,
+            bevel = 0.26f,
+            fold = 0.14f,
+            sheen = 0.55f,
+            // Coloured, not black: liquid's panels already cast refraction rather
+            // than a drop (see `liquidSpec`'s shadow pair), and a chart body that
+            // dropped plain black on that material would be the one object in the
+            // scene lit by a different physics.
+            cast = scheme.primary.copy(alpha = if (dark) 0.30f else 0.24f),
+            castOffset = 6.dp,
+            castSpread = 8.dp,
+            grain = 0.05f,
+            relief = height,
+        )
+
+        AppMaterial.NEO -> GpChartVolume(
+            tint = 0.30f,
+            shade = 0.30f,
+            ink = ink,
+            bevel = 0.13f,
+            fold = 0.20f,
+            sheen = 0.18f,
+            cast = if (dark) {
+                Color.Black.copy(alpha = 0.34f)
+            } else {
+                scheme.onSurface.copy(alpha = 0.22f)
+            },
+            castOffset = 4.dp,
+            castSpread = 6.dp,
+            grain = 0.10f,
+            relief = height,
+        )
+
+        AppMaterial.DARK_NEO -> GpChartVolume(
+            tint = 0.46f,
+            shade = 0.34f,
+            ink = ink,
+            bevel = 0.30f,
+            fold = 0.32f,
+            sheen = 0.30f,
+            cast = Color.Black.copy(alpha = 0.55f),
+            castOffset = 6.dp,
+            castSpread = 9.dp,
+            grain = 0.14f,
+            relief = height,
+        )
+    }
 }
 
 // ───────────────────────────── draw modifiers ──────────────────────────────

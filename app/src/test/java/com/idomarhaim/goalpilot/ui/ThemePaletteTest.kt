@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.ui.components.MIN_INK_CONTRAST
@@ -61,6 +62,23 @@ import kotlin.math.sqrt
  * for a flat one, and vice versa — twelve reachable combinations after
  * `resolveDark` collapses dark neo's pair, none of which any assertion here
  * previously reached.
+ *
+ * ## `#57` c's fourth axis widens neither, and that is the same finding again
+ *
+ * The brief expected the matrix to become *material × scheme × raised*. It does
+ * not multiply either of the two above, for the reason `#57` b already found one
+ * axis down and stated in the paragraph before this one: `AppRelief` reaches
+ * exactly one field, `GpMaterialSpec.volume`, and no scheme role and no ground
+ * is a function of it. **That is asserted rather than assumed** — see *relief
+ * moves nothing but the volume* below, which is the claim in one line of code.
+ *
+ * So `#57` c adds a **third** section, over the properties a chart BODY has: that
+ * raised is not a no-op on any material (the decision Ido overturned, made
+ * mechanical), that a body's three stops never invert, and that its walls stay
+ * separable from its face. Doubling the two sections above by a dimension
+ * provably absent from both would be the sort of cost that gets a guard weakened
+ * later for being slow — `#57` b's own page-contrast test samples a 41x27 grid
+ * over 64 cells already.
  */
 class ThemePaletteTest {
 
@@ -491,6 +509,176 @@ class ThemePaletteTest {
         grounds.forEach { ground ->
             assertWithMessage("$ground — overlay opacity")
                 .that(ground.spec.overlay.alpha).isEqualTo(1f)
+        }
+    }
+
+    // ──────────── the chart body, and its relief (`#57` c) ────────────
+    //
+    // A chart body is the one thing in the theme built by MIXING a categorical
+    // hue with two others -- toward white for the top stop, toward the scheme's
+    // ink for the bottom and for every wall. Mixing is exactly the operation
+    // `kb/dev/generated-values-need-matrix-guards.md` is about: it passes review
+    // because nobody reads a 34% lerp in their head, and it is wrong in one cell
+    // of a matrix nobody enumerated. So these iterate the AXES.
+
+    /** Every (skin, material, brightness, relief) a chart body can be drawn in. */
+    private data class Body(
+        val skin: AppSkin,
+        val material: AppMaterial,
+        val dark: Boolean,
+        val relief: AppRelief,
+    ) {
+        val scheme: ColorScheme get() = colorSchemeFor(skin, material, dark)
+        val spec get() = materialSpecFor(
+            material = material,
+            background = AppBackground.MATCH,
+            scheme = scheme,
+            dark = material.resolveDark(dark),
+            relief = relief,
+        )
+        override fun toString() =
+            skin.name + "/" + material.name + "/" +
+                (if (dark) "dark" else "light") + "/" + relief.name
+    }
+
+    private val bodies = AppSkin.entries.flatMap { skin ->
+        AppMaterial.entries.flatMap { material ->
+            listOf(false, true).flatMap { dark ->
+                AppRelief.entries.map { Body(skin, material, dark, it) }
+            }
+        }
+    }
+
+    /**
+     * ⛔ **The decision Ido overturned, as an assertion.**
+     *
+     * `TODO/TODO_OPTIONAL/Presentation.TODO.optional.md` used to hold that raised
+     * *"is a no-op on glass and liquid, where height would contradict what the
+     * material is"*. He overruled that on 2026-08-21 — raised is *"an option that
+     * can be implemented in addition on each of the design types (not only the two
+     * mentioned)"* — and `AppRelief`'s doc keeps the old argument verbatim because
+     * it is a good one and somebody will re-derive it.
+     *
+     * This is what stops the re-derivation landing. A `when (material)` in
+     * `chartVolumeFor` that zeroed the height for the two glass materials would
+     * look like tidying and would quietly restore the overruled behaviour; here it
+     * fails, naming the material.
+     */
+    @Test
+    fun `raised is not a no-op on any material`() {
+        AppMaterial.entries.forEach { material ->
+            AppSkin.entries.forEach { skin ->
+                listOf(false, true).forEach { dark ->
+                    val flat = Body(skin, material, dark, AppRelief.FLAT).spec.volume
+                    val raised = Body(skin, material, dark, AppRelief.RAISED).spec.volume
+                    assertWithMessage("$skin/$material — FLAT must have no height")
+                        .that(flat.relief).isEqualTo(0f)
+                    assertWithMessage("$skin/$material — RAISED must have height")
+                        .that(raised.relief).isGreaterThan(0f)
+                    assertWithMessage("$skin/$material — RAISED must differ from FLAT")
+                        .that(raised).isNotEqualTo(flat)
+                }
+            }
+        }
+    }
+
+    /**
+     * The orthogonality claim, in one line.
+     *
+     * `AppRelief`'s doc says its *"whole reach is the chart primitives"* — a card
+     * is **not** extruded by this setting, because the four materials already
+     * answer *"how deep is a panel?"* through `shadow`, and a second control over
+     * one question is §0.3's two-answers defect.
+     *
+     * Written as an equality after transplanting `volume`, rather than as a list
+     * of field comparisons: a field added to `GpMaterialSpec` later is covered on
+     * the day it is added, which a hand-written list would not be.
+     */
+    @Test
+    fun `relief moves nothing but the volume`() {
+        AppSkin.entries.forEach { skin ->
+            AppMaterial.entries.forEach { material ->
+                listOf(false, true).forEach { dark ->
+                    AppBackground.entries.forEach { background ->
+                        val resolvedDark = material.resolveDark(dark)
+                        val scheme = colorSchemeFor(skin, material, dark)
+                        val flat = materialSpecFor(
+                            material, background, scheme, resolvedDark, AppRelief.FLAT,
+                        )
+                        val raised = materialSpecFor(
+                            material, background, scheme, resolvedDark, AppRelief.RAISED,
+                        )
+                        assertWithMessage(
+                            "$skin/$material/$background — relief reached past `volume`",
+                        ).that(flat.copy(volume = raised.volume)).isEqualTo(raised)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * A body's three stops are a **shading of one hue**, not three colours.
+     *
+     * Two things can go wrong and both look fine in a swatch. The stops can
+     * **invert** — which happens the moment `ink` stops being darker than every
+     * hue it is mixed into, and it would turn the bottom of every wedge into a
+     * highlight. And they can **run away** from each other, at which point the
+     * gradient reads as two objects meeting rather than one object curving.
+     *
+     * The ceiling is 4.5 rather than something tighter because the four materials
+     * deliberately differ here — dark neo's `.46 / .34` is nearly twice glass's
+     * span, and that is what makes dark neo dark neo. What the number forbids is
+     * a span that has stopped being a shading, not one that is bolder than
+     * another material's.
+     */
+    @Test
+    fun `a chart body's stops shade one hue and never invert`() {
+        bodies.forEach { body ->
+            val volume = body.spec.volume
+            GoalCategory.entries.forEach { category ->
+                val hue = category.fillFor(body.scheme)
+                val top = volume.lit(hue)
+                val bottom = volume.shaded(hue)
+                assertWithMessage("$body/$category — top stop must be lighter than the hue")
+                    .that(top.luminance()).isGreaterThan(hue.luminance())
+                assertWithMessage("$body/$category — bottom stop must be darker than the hue")
+                    .that(bottom.luminance()).isLessThan(hue.luminance())
+                assertWithMessage("$body/$category — top stop has left the hue")
+                    .that(contrastRatio(top, hue)).isAtMost(4.5)
+                assertWithMessage("$body/$category — bottom stop has left the hue")
+                    .that(contrastRatio(bottom, hue)).isAtMost(4.5)
+            }
+        }
+    }
+
+    /**
+     * A raised body's **walls** stay separable from its **face**.
+     *
+     * This is the property that makes a solid read as a solid, and it is not a
+     * contrast requirement against the page: a wall is judged against the face it
+     * folds away from, not against the ground. `ChartVolume.kt` draws the inner
+     * wall at `shade * 1.7` capped at `.92`, and that cap is exactly where this
+     * could silently fail — push `shade` up and both walls converge on the ink,
+     * at which point the two facets are the same colour and the body flattens
+     * into a silhouette.
+     *
+     * 1.25:1 is a floor, not a target. The measured worst cell is well above it;
+     * what the number rules out is *no separation at all*.
+     */
+    @Test
+    fun `a raised body's walls stay separable from its face`() {
+        bodies.filter { it.relief == AppRelief.RAISED }.forEach { body ->
+            val volume = body.spec.volume
+            GoalCategory.entries.forEach { category ->
+                val hue = category.fillFor(body.scheme)
+                val outerWall = volume.shaded(hue, volume.shade * 0.85f)
+                val innerWall = volume.shaded(hue, minOf(0.92f, volume.shade * 1.7f))
+                assertWithMessage("$body/$category — outer wall is the face")
+                    .that(contrastRatio(outerWall, hue)).isAtLeast(1.25)
+                assertWithMessage("$body/$category — inner wall is the outer wall")
+                    .that(contrastRatio(innerWall, outerWall)).isAtLeast(1.25)
+            }
         }
     }
 

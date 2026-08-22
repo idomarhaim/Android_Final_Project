@@ -59,6 +59,7 @@ import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
@@ -66,9 +67,9 @@ import com.idomarhaim.goalpilot.domain.model.displayName
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LanguagePicker
 import com.idomarhaim.goalpilot.ui.components.MaterialPicker
-import com.idomarhaim.goalpilot.ui.components.label
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.SkinPicker
+import com.idomarhaim.goalpilot.ui.components.label
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
 import com.idomarhaim.goalpilot.ui.locale.AppTimePickerDialog
 import java.time.LocalDate
@@ -134,6 +135,7 @@ fun SettingsScreen(
     val brightness by viewModel.brightness.collectAsStateWithLifecycle()
     val material by viewModel.material.collectAsStateWithLifecycle()
     val background by viewModel.background.collectAsStateWithLifecycle()
+    val relief by viewModel.relief.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val region by viewModel.region.collectAsStateWithLifecycle()
     val schedule by viewModel.daySchedule.collectAsStateWithLifecycle()
@@ -149,6 +151,8 @@ fun SettingsScreen(
         onMaterial = viewModel::setMaterial,
         background = background,
         onBackground = viewModel::setBackground,
+        relief = relief,
+        onRelief = viewModel::setRelief,
         language = language,
         onLanguage = viewModel::setLanguage,
         region = region,
@@ -186,6 +190,8 @@ fun SettingsContent(
     onMaterial: (AppMaterial) -> Unit,
     background: AppBackground,
     onBackground: (AppBackground) -> Unit,
+    relief: AppRelief,
+    onRelief: (AppRelief) -> Unit,
     language: AppLanguage,
     onLanguage: (AppLanguage) -> Unit,
     region: AppRegion,
@@ -240,6 +246,8 @@ fun SettingsContent(
                 onMaterial = onMaterial,
                 background = background,
                 onBackground = onBackground,
+                relief = relief,
+                onRelief = onRelief,
                 brightness = brightness,
                 onBrightness = onBrightness,
                 skin = skin,
@@ -371,6 +379,8 @@ private fun AppearanceCard(
     onMaterial: (AppMaterial) -> Unit,
     background: AppBackground,
     onBackground: (AppBackground) -> Unit,
+    relief: AppRelief,
+    onRelief: (AppRelief) -> Unit,
     brightness: AppBrightness,
     onBrightness: (AppBrightness) -> Unit,
     skin: AppSkin,
@@ -419,6 +429,30 @@ private fun AppearanceCard(
             ConsequenceLine(
                 text = backgroundConsequence(background, material),
                 modifier = Modifier.testTag(TAG_BACKGROUND_CONSEQUENCE),
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // #57 c. Under Background and above Brightness, for the same reason
+            // Background sits under Material: it is the axis that COMBINES with
+            // the two above it, and Ido asked for presentation to be composable
+            // rather than for more preset bundles. Its tiles hold material AND
+            // ground fixed and vary only the relief, which is what makes the row
+            // a comparison -- and what shows, before it is picked, that raised
+            // glass is not the no-op the overturned decision assumed.
+            SettingLabel("Chart relief")
+            ReliefPicker(
+                selected = relief,
+                material = material,
+                background = background,
+                skin = skin,
+                brightnessIsDark = brightnessIsDark,
+                onSelect = onRelief,
+                modifier = Modifier.testTag(TAG_RELIEF_PICKER),
+            )
+            ConsequenceLine(
+                text = reliefConsequence(relief, material),
+                modifier = Modifier.testTag(TAG_RELIEF_CONSEQUENCE),
             )
 
             Spacer(Modifier.height(20.dp))
@@ -871,6 +905,8 @@ const val TAG_MATERIAL_PICKER = "settings_material_picker"
 const val TAG_MATERIAL_CONSEQUENCE = "settings_material_consequence"
 const val TAG_BACKGROUND_PICKER = "settings_background_picker"
 const val TAG_BACKGROUND_CONSEQUENCE = "settings_background_consequence"
+const val TAG_RELIEF_PICKER = "settings_relief_picker"
+const val TAG_RELIEF_CONSEQUENCE = "settings_relief_consequence"
 const val TAG_BRIGHTNESS_LOCK = "settings_brightness_lock"
 const val TAG_REGION_ROW = "settings_region_row"
 const val TAG_REGION_SHEET = "settings_region_sheet"

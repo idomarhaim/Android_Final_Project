@@ -6,11 +6,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -21,6 +23,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.idomarhaim.goalpilot.ui.theme.VolumeArc
+import com.idomarhaim.goalpilot.ui.theme.drawVolumeArcs
+import com.idomarhaim.goalpilot.ui.theme.gpMaterial
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.max
@@ -44,6 +49,12 @@ data class DonutSlice(
  * - **It answers questions.** Tapping a wedge selects it: the wedge thickens and
  *   the rest fade back, and the caller renders the detail in [center]. Tapping the
  *   hole (or the selected wedge again) clears the selection.
+ * - **It has volume.** `#57` c: every wedge is a body, not a fill — a three-stop
+ *   gradient lit from one direction for the whole chart, a sheen along the lit
+ *   edge, a cast shadow and a grain pass. Set the relief to raised and the same
+ *   wedges become solids with real side walls and end caps. None of that is
+ *   decided here: it arrives in `MaterialTheme.gpMaterial.volume`, so this file
+ *   still has no idea which material it is drawing in.
  * - **It stays honest.** Butt caps, not round: a rounded cap would add a couple of
  *   degrees to every wedge and quietly inflate the small ones. The inter-wedge gap
  *   is taken *out of* each wedge for the same reason, and is dropped entirely when
@@ -70,6 +81,7 @@ fun DonutChart(
     )
 
     val density = LocalDensity.current
+    val volume = MaterialTheme.gpMaterial.volume
     val trackColor = Color.Gray.copy(alpha = 0.12f)
     // Captured before the semantics lambda: inside it, `contentDescription` is the
     // SemanticsPropertyReceiver's own write-only property, not this parameter.
@@ -123,35 +135,59 @@ fun DonutChart(
             val drawnSoFar = 360f * sweepProgress
             var cursor = 0f
 
-            slices.forEach { slice ->
-                val full = slice.fraction.coerceIn(0f, 1f) * 360f
-                // Clip this wedge to however much of the circle has been drawn.
-                val visible = (minOf(cursor + full, drawnSoFar) - cursor).coerceAtLeast(0f)
-                if (visible > 0f) {
-                    val isSelected = slice.id == selectedId
-                    val stroke = if (isSelected) {
-                        baseStroke + (maxStroke - baseStroke) * selection
-                    } else {
-                        baseStroke
+            // Collected first and drawn in ONE call, because two of the volume
+            // layers are properties of the whole ring rather than of a wedge:
+            // walls run before faces across the entire set (or a neighbour's wall
+            // lands on a face), and the grain is one pass (or its tile seams
+            // show). See `drawVolumeArcs`.
+            val bodies = buildList {
+                slices.forEach { slice ->
+                    val full = slice.fraction.coerceIn(0f, 1f) * 360f
+                    // Clip this wedge to however much of the circle has been drawn.
+                    val visible = (minOf(cursor + full, drawnSoFar) - cursor).coerceAtLeast(0f)
+                    if (visible > 0f) {
+                        val isSelected = slice.id == selectedId
+                        val stroke = if (isSelected) {
+                            baseStroke + (maxStroke - baseStroke) * selection
+                        } else {
+                            baseStroke
+                        }
+                        add(
+                            VolumeArc(
+                                startAngle = -90f + cursor,
+                                sweepAngle = max(
+                                    visible - gap,
+                                    MIN_SWEEP_DEGREES.coerceAtMost(visible),
+                                ),
+                                color = slice.color,
+                                thickness = stroke,
+                                // Selection dims the OTHERS, and it dims the whole
+                                // body -- walls, caps and face together -- rather
+                                // than the fill only, which would leave a receded
+                                // wedge with a fully-lit rim.
+                                alpha = if (selectedId == null || isSelected) {
+                                    1f
+                                } else {
+                                    1f - DIMMED_BY * selection
+                                },
+                            ),
+                        )
                     }
-                    drawArc(
-                        color = slice.color.copy(
-                            alpha = if (selectedId == null || isSelected) {
-                                1f
-                            } else {
-                                1f - DIMMED_BY * selection
-                            },
-                        ),
-                        startAngle = -90f + cursor,
-                        sweepAngle = max(visible - gap, MIN_SWEEP_DEGREES.coerceAtMost(visible)),
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = stroke, cap = StrokeCap.Butt),
-                    )
+                    cursor += full
                 }
-                cursor += full
             }
+            drawVolumeArcs(
+                volume = volume,
+                // The WHOLE canvas, not the ring's box: one light for one scene.
+                bounds = Rect(Offset.Zero, this.size),
+                center = Offset(this.size.width / 2f, this.size.height / 2f),
+                radius = (this.size.minDimension - maxStroke) / 2f,
+                // The channel is what the track cuts, and the extrusion is spent
+                // INSIDE it -- so a raised donut occupies exactly the ring a flat
+                // one does and nothing can reach past the track's walls.
+                channel = maxStroke,
+                arcs = bodies,
+            )
         }
         center()
     }

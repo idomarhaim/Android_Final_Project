@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
             val brightness by appPreferences.brightness.collectAsStateWithLifecycle()
             val material by appPreferences.material.collectAsStateWithLifecycle()
             val background by appPreferences.background.collectAsStateWithLifecycle()
+            val relief by appPreferences.relief.collectAsStateWithLifecycle()
 
             // Outside the theme, because it redirects every `stringResource`
             // below it and sets the layout direction the theme's own surfaces
@@ -71,6 +72,7 @@ class MainActivity : ComponentActivity() {
                     skin = skin,
                     material = material,
                     background = background,
+                    relief = relief,
                     darkTheme = brightness.isDark(isSystemInDarkTheme()),
                 ) {
                     // gpPage, not a flat colour: glass and liquid glass are

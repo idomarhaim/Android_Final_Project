@@ -52,6 +52,12 @@ left here is a defect that gets built.
 - [x] ~~**Whether the raised-3D arc ships, and for which materials.**~~ **SETTLED 2026-08-21 by
   Ido, and the earlier reasoning is OVERTURNED.** Now tracked on
   [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57).
+  **SHIPPED 2026-08-22** as `AppRelief`, the fourth appearance axis — `FLAT` / `RAISED`, on all
+  four materials, chosen in Settings → Appearance → *Chart relief*
+  ([`CHANGELOG/2026-08-22/57c-chart-volume-and-raised.md`](../../CHANGELOG/2026-08-22/57c-chart-volume-and-raised.md)).
+  The overturned argument is kept **verbatim in `AppRelief`'s KDoc** and is now also an
+  *assertion* — `ThemePaletteTest.raised is not a no-op on any material` fails, naming the
+  material, on exactly the `when (material)` that would restore it.
 
   **His answer, asked directly:** *"neo, dark-neo both. 3d graphs is an option that can be
   implemented in addition on each of the design types (not only the two mentioned)."* So: **neo and
@@ -202,3 +208,21 @@ so it is not re-derived from the code.
     `57d-entrance-animation` renders the dashboard — the two busiest grounds in the app — and
     any session that runs the app at all sees the rest. If one of them finds a screen that reads
     wrong on a ground, that is the finding and it belongs to that session.
+  - ⚠️ **HALF of that did not happen, and the half that did not is the half this item needed.**
+    *(`57c-chart-volume-and-raised`, 2026-08-22.)* `57c` did **not** render the analytics screen.
+    It hit the wall this very bullet names two paragraphs up — `AnalyticsScreen` takes a
+    `hiltViewModel()` and needs a signed-in account and a live Firestore — so its render pass
+    (`ChartVolumeRenderPass`) photographs the four **chart primitives** composed directly under
+    `GoalPilotTheme` and `MainActivity`'s `gpPage` wrapper instead. That is a real check of a
+    chart body against a ground, on 32 frames across four materials, two skins, two brightnesses
+    and both reliefs — but it is **not a screen**, so it says nothing about the twelve call sites
+    or the ten `TopAppBar`s this item is actually about.
+
+    **The rest of the reasoning is untouched and the decision still stands.** The prediction was
+    the *cheap* half of the argument, not the load-bearing half; the load-bearing half is the
+    paragraph above, and no session has to redo it. What changes is only this: `57d` is now the
+    **only** remaining free closure, and if it hits the same wall — `DashboardScreen` also takes
+    a `hiltViewModel()` — then this item is **not** closing for free and wants an explicit
+    decision from Ido rather than another prediction. Recorded rather than quietly left standing,
+    because an unhedged forecast in a committed doc reads exactly like an observation to the next
+    person (`rules/claim-provenance.md`).

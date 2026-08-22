@@ -13,20 +13,21 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertWithMessage
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
-import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.feature.settings.SettingsContent
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import com.idomarhaim.goalpilot.ui.theme.gpMaterial
 import com.idomarhaim.goalpilot.ui.theme.gpPage
+import java.io.File
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 /**
  * The render pass for `C12` #53 — **not a test, a camera.**
@@ -183,6 +184,14 @@ class MaterialRenderPass {
                     // forget the control and render one that silently does nothing.
                     background = background.value,
                     onBackground = { background.value = it },
+                    // #57 c added a fourth axis and a fourth control to this
+                    // card. Held at FLAT here rather than walked: this pass is
+                    // the MATERIAL matrix, and ChartVolumeRenderPass is the one
+                    // that varies relief. The control still renders in every
+                    // frame below, which is the point of photographing the
+                    // whole screen rather than one picker.
+                    relief = AppRelief.DEFAULT,
+                    onRelief = {},
                     language = AppLanguage.ENGLISH,
                     onLanguage = {},
                     region = region.value,

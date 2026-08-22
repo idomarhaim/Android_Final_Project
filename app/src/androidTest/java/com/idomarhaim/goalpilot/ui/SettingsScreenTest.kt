@@ -13,11 +13,12 @@ import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.AiAnswer
 import com.idomarhaim.goalpilot.domain.model.AiCredential
+import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppBrightness
 import com.idomarhaim.goalpilot.domain.model.AppLanguage
-import com.idomarhaim.goalpilot.domain.model.AppBackground
 import com.idomarhaim.goalpilot.domain.model.AppMaterial
 import com.idomarhaim.goalpilot.domain.model.AppRegion
+import com.idomarhaim.goalpilot.domain.model.AppRelief
 import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
@@ -27,8 +28,11 @@ import com.idomarhaim.goalpilot.feature.settings.TAG_AI_STATUS
 import com.idomarhaim.goalpilot.feature.settings.TAG_PLANNING_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.TAG_PROFILE_ROW
 import com.idomarhaim.goalpilot.feature.settings.TAG_REGION_CONSEQUENCE
+import com.idomarhaim.goalpilot.feature.settings.TAG_RELIEF_CONSEQUENCE
+import com.idomarhaim.goalpilot.feature.settings.TAG_RELIEF_PICKER
 import com.idomarhaim.goalpilot.feature.settings.TAG_SCOPE_LINE
 import com.idomarhaim.goalpilot.feature.settings.TAG_WAKING_CONSEQUENCE
+import com.idomarhaim.goalpilot.feature.settings.reliefTileTag
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import org.junit.Rule
 import org.junit.Test
@@ -96,6 +100,9 @@ class SettingsScreenTest {
                     // forget the control and render one that silently does nothing.
                     background = AppBackground.DEFAULT,
                     onBackground = {},
+                    // #57 c. Explicit for the same reason the background is.
+                    relief = AppRelief.DEFAULT,
+                    onRelief = {},
                     language = language,
                     onLanguage = { language = it },
                     region = region,
@@ -164,6 +171,33 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag(TAG_AI_STATUS).performScrollTo().assertIsDisplayed()
         // The default state: no key, and the row still says which model answers.
         assertThat(textOf(TAG_AI_STATUS)).contains("free model")
+    }
+
+    /**
+     * §4.9's Appearance section gained a fourth axis (`#57` c), and the assertion
+     * that matters *on the screen* is the same one the AI section gets above: the
+     * control is there at all, and it says what the choice costs.
+     *
+     * What a body actually **looks** like is `ChartVolumeRenderPass`'s question,
+     * not this one — and the two tiles here are rendered by the same
+     * `drawVolumeArcs` those frames photograph, so a picker that drew nothing
+     * would be caught there rather than by a node count.
+     *
+     * The consequence line is asserted on `RAISED` because that is the branch
+     * carrying the sentence a user is owed: `AppRelief`'s doc records that
+     * *"raised is a no-op on glass and liquid"* was the recorded decision Ido
+     * **overturned**, so the app must neither refuse the combination nor stay
+     * silent about it.
+     */
+    @Test
+    fun theReliefPickerIsOnTheScreenAndStatesWhatRaisedCosts() {
+        setContent()
+        composeRule.onNodeWithTag(TAG_RELIEF_PICKER).performScrollTo().assertIsDisplayed()
+        AppRelief.entries.forEach { relief ->
+            composeRule.onNodeWithTag(reliefTileTag(relief)).performScrollTo().assertIsDisplayed()
+        }
+        // FLAT is the default, so this is the line the screen actually opens on.
+        assertThat(textOf(TAG_RELIEF_CONSEQUENCE)).contains("no height")
     }
 
     // ----------------------------------------- week start, measured on device

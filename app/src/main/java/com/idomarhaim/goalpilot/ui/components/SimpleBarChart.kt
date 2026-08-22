@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
+import com.idomarhaim.goalpilot.ui.theme.gpMaterial
 
 /**
  * One row of [HorizontalBarChart].
@@ -46,6 +47,11 @@ data class BarItem(
  * sweep rather than a table that blinks into existence. See [rememberChartProgress]
  * for why an [androidx.compose.animation.core.Animatable] and not
  * `animateFloatAsState`.
+ *
+ * `#57` c: the bars are **bodies**, because this is a chart. The pill they are
+ * drawn with is shared with nine other call sites that are not, so the volume is
+ * handed over from here rather than read inside [GpLinearProgress] — see its
+ * header for why that split is the design and not an oversight.
  */
 @Composable
 fun HorizontalBarChart(
@@ -53,6 +59,7 @@ fun HorizontalBarChart(
     modifier: Modifier = Modifier,
     animateOnAppear: Boolean = true,
 ) {
+    val volume = MaterialTheme.gpMaterial.volume
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         items.forEachIndexed { index, item ->
             // Keyed on the whole list: changing the data (a new range, a new goal)
@@ -101,6 +108,7 @@ fun HorizontalBarChart(
                     // progress bar animate towards each frame's value on top of it
                     // makes the bar lag its own number.
                     animate = false,
+                    volume = volume,
                     modifier = Modifier.padding(top = 6.dp),
                 )
             }
