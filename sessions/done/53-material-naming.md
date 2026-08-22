@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 53
 owns:
   - app/src/main/res/values/components_strings.xml
@@ -16,6 +16,32 @@ owns:
   - CHANGELOG/<today>/53-material-naming.md
   - sessions/53-material-naming.md
 created: 2026-08-22 by 53-tag-sweep
+completed: 2026-08-22
+commit: b3dbba3
+result: |
+  Shipped, and `#53` is CLOSED. Every material tile carries §4.1's own name in a
+  caption under its label (`Spec: Glassmorphism / Liquid glass / Neo / Dark neo`),
+  §4.1 carries the mapping table, and `MaterialVocabularyTest` parses that table
+  out of `PRODUCT_v0.3.md` so the two vocabularies cannot drift apart again in
+  silence. Option 2 as instructed -- the tiles were NOT renamed.
+
+  The one thing this brief left for the reader to decide, and the decision taken:
+  the spec names are `translatable="false"` and only the FRAME around them is
+  authored per language. A name whose job is to be the same token as the design of
+  record cannot be translated without becoming a word that appears in no document.
+  The Latin run is bidi-isolated at the call site instead.
+
+  Tests: JVM 752/0 across 70 classes (+6 tests, +1 class) - instrumented
+  `MaterialPickerUiTest` 10/0 (+3, including the Hebrew-locale isolate assertion) -
+  render pass 1/0, two frames committed to
+  `docs/render-passes/2026-08-22-53-material-naming/`.
+
+  `owns` was amended twice mid-session and both amendments are recorded above:
+  `MaterialPickerUiTest.kt` and this session's own render-pass directory.
+
+  Ido's open question -- NAME or GROUND -- did not arrive and did not block. It is
+  named on the closing comment and routes to a NEW spec ticket if the answer is
+  "the ground". It is not remaining work on `#53`.
 ---
 
 # `#53`'s last item — the material picker cannot be named, so it cannot be reported

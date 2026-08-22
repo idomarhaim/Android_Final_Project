@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `53-material-naming` | `#53`'s LAST item — the material picker cannot be named, so it cannot be reported (spec name reachable from the UI, §4.1 mapping table) | `app/src/main/res/values/components_strings.xml` · `app/src/main/res/values-iw/components_strings.xml` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/MaterialPicker.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/ComponentStrings.kt` · `docs/PRODUCT_v0.3.md` · `app/src/test/java/com/idomarhaim/goalpilot/resources/` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MaterialPickerUiTest.kt` · `docs/render-passes/2026-08-22-53-material-naming/` · `CHANGELOG/2026-08-22/53-material-naming.md` · `sessions/53-material-naming.md` | Gradle daemon (device optional) | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
@@ -4375,6 +4374,39 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`53-material-naming` RELEASED 2026-08-22 — this commit.** `#53`'s **last** item shipped in
+> `b3dbba3`, the brief is closed to `sessions/done/`, and **`#53` itself is CLOSED**. Singletons
+> free: the Gradle daemon, and `emulator-5554`, which was borrowed for one instrumented class and
+> one render-pass method.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED.** `adb install -r` for both APKs plus
+> `am instrument`, never `connectedDebugAndroidTest`. The app's Firebase store is untouched and the
+> device is exactly as `57d-entrance-animation` left it.
+>
+> **What landed:** every material tile now carries §4.1's own name under the label a user reads
+> (`Spec: Glassmorphism · Liquid glass · Neo · Dark neo`), §4.1 carries the mapping table, and
+> `MaterialVocabularyTest` **parses that table out of `PRODUCT_v0.3.md`** and fails the build when
+> the two vocabularies drift apart again. JVM **752/0** across 70 classes (+6, +1 class),
+> `MaterialPickerUiTest` **10/0** (+3), two frames in
+> `docs/render-passes/2026-08-22-53-material-naming/`.
+>
+> ⚠️ **One thing is still open and it is Ido's, not a session's.** Whether *"no dark blue neo"* on
+> `v0.3.0` meant **the name** (couldn't find the control — then this unit is the whole fix) or **the
+> ground** (found it, expected blue — then a **separate** §4.1 spec ticket is owed). `#53` closed on
+> the naming half with that stated on the ticket. **Do not re-open `#53` for it** — its scope is the
+> material contract and its controls; a disagreement with §4.1's material table is a new ticket.
+>
+> 📌 **The finding worth carrying past this row:** the defect was a **join with no guard**. Two
+> vocabularies, both individually correct, drifting apart with nothing failing — the doc still
+> renders, the picker still renders, and they simply stop agreeing. The remedy that outlives the fix
+> is not the caption, it is a test that reads **the document** rather than a copy of its contents:
+> a guard carrying its own copy of the four names would have guarded the strings against itself.
+>
+> **Row as claimed:**
+>
+> | `53-material-naming` | `#53`'s LAST item — the material picker cannot be named, so it cannot be reported (spec name reachable from the UI, §4.1 mapping table) | `app/src/main/res/values/components_strings.xml` · `app/src/main/res/values-iw/components_strings.xml` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/MaterialPicker.kt` · `app/src/main/java/com/idomarhaim/goalpilot/ui/components/ComponentStrings.kt` · `docs/PRODUCT_v0.3.md` · `app/src/test/java/com/idomarhaim/goalpilot/resources/` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MaterialPickerUiTest.kt` · `docs/render-passes/2026-08-22-53-material-naming/` · `CHANGELOG/2026-08-22/53-material-naming.md` · `sessions/53-material-naming.md` | Gradle daemon (device optional) | 2026-08-22 |
+
 
 > 📮 **TO `57c-chart-volume-and-raised`, FROM `57b` — three unpushed `57b-*` commits are in your
 > push range ON PURPOSE, and Ido has already approved you carrying them. Do not stop on them.**
