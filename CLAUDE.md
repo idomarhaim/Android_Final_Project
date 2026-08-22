@@ -78,26 +78,32 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
     through `invalidCredentialError()`, whose text names the wrong cause. So the grant is intact
     and nothing needs re-authorising on Google's side; the fault is local.
 
-    **Two theories were tested and both are dead** — record them so nobody re-runs them:
-    *network interception* (a proxy returning a 200 page) is out, because `firebase.tools` and
-    `api.github.com` both answer `200` and the token endpoint answers `411` as it should for an
-    empty POST, with no proxy variables set; and *plain expiry* is out for the reason above. The
-    live anomaly is that the stored `tokens.scopes` is **`[]`** while the granted `tokens.scope`
-    string is 204 characters, and the configstore also holds a stale `tempLoginState` — the
-    fingerprint of a `firebase login` that was started and abandoned. `Untested:` separating
-    those two needs the response body, which is `skipLog`-suppressed, so reading it means
-    handling the stored refresh token by hand — the one operation the classifier blocks (see the
-    `gh` note above), and dressing it up to get past that is still out.
+    **FOUR theories were tested and all four are dead.** Recorded in full, because each one
+    looks plausible enough to be re-run by the next session:
+
+    | theory | killed by |
+    |---|---|
+    | the refresh token is expired or revoked | the `200` above — a bad grant returns `400 invalid_grant` |
+    | a proxy is intercepting HTTPS and returning a 200 page | `firebase.tools` and `api.github.com` both answer `200`, the token endpoint answers `411` as it should for an empty POST, and no proxy variables are set |
+    | a stale `firebase-tools` version | **upgraded 15.27.0 → 15.28.1 on 2026-08-22 and the error is byte-identical.** Do not retry this |
+    | the configstore's `tokens.scopes` is corrupt (it is `[]`, while the granted `tokens.scope` string is 204 chars) | **`[]` is hard-coded**, not corruption — `lib/apiv2.js:53` literally calls `auth.getAccessToken(refreshToken, [])`, so every refresh this tool has ever made sent an empty scope |
+
+    `Untested:` what actually remains needs the response body, which is `skipLog`-suppressed, so
+    reading it means handling the stored refresh token by hand — the one operation the classifier
+    blocks (see the `gh` note above), and dressing it up to get past that is still out. Saying so
+    beats inventing a fifth theory.
 
     **Last known-good refresh: 2026-08-21T12:41 UTC**, which is `c13-key-store`'s successful
     functions deploy. So the break is ~20 hours old and something changed on this machine in
-    between, not on the account.
+    between, not on the account. The configstore holds a single account and a stale
+    `tempLoginState` — the fingerprint of a `firebase login` started and abandoned around the
+    same time.
 
-    **Fixes, cheapest first.** (1) `npm i -g firebase-tools` — installed is **15.27.0**, latest is
-    **15.28.1**; a one-minor gap in the package whose own refresh path is misbehaving is worth
-    trying before anything interactive, and it needs no browser. (2) `firebase login --reauth` —
-    twenty seconds, but it **opens a browser and cannot be driven from a tool shell**, so it is
-    **Ido's**, same shape as `gh auth login --web` above.
+    **The fix is `firebase login --reauth`, and it is Ido's** — it opens a browser and cannot be
+    driven from a tool shell, same shape as `gh auth login --web` above. Because the grant is
+    intact, this is a **re-issue and not a re-consent**, so it is seconds rather than a
+    permissions dialog. Nothing cheaper is left: the only non-interactive candidate was the
+    version bump, and it was tried.
   - ✅ **The Gradle App Distribution plugin authenticates SEPARATELY and still works.**
     `Observed:` 2026-08-22, `./gradlew :app:appDistributionUploadRelease` uploaded a signed
     release to `goalpilot-56e30` **in the same minute** that `firebase projects:list` was
