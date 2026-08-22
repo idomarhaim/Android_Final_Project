@@ -416,6 +416,9 @@ private fun TimeTrendCard(trend: TimeTrend, range: AnalyticsRange, selectedSlice
                 segments = trend.series.mapIndexed { index, series ->
                     StackedSegment(
                         id = series.areaId.sliceKey(),
+                        // §4.1's `.tag`. The band draws it wherever it fits; see
+                        // `StackedColumnChart.segmentLabelFits` for the residual.
+                        label = series.name,
                         color = series.colorHex.toGoalAccent(),
                         value = bucket.minutes.getOrElse(index) { 0 },
                     )

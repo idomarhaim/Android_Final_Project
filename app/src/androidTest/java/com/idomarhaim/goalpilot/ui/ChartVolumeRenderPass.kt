@@ -35,6 +35,7 @@ import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.StackedColumn
 import com.idomarhaim.goalpilot.ui.components.StackedColumnChart
 import com.idomarhaim.goalpilot.ui.components.StackedSegment
+import com.idomarhaim.goalpilot.ui.components.localizedLabel
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
 import com.idomarhaim.goalpilot.ui.theme.gpMaterial
@@ -232,7 +233,9 @@ private fun ChartGallery() {
                 slices = areas.map { (category, minutes) ->
                     DonutSlice(
                         id = category.name,
-                        label = category.name,
+                        // `#53` draws this now, so it has to be the word a user
+                        // reads rather than the enum constant.
+                        label = category.localizedLabel(),
                         fraction = minutes / total,
                         color = hues.getValue(category),
                     )
@@ -262,7 +265,14 @@ private fun ChartGallery() {
                 StackedColumn(
                     label = label,
                     segments = values.map { (category, minutes) ->
-                        StackedSegment(category.name, hues.getValue(category), minutes)
+                        // `#53`'s `.tag`: the label is required now, and the render
+                        // pass is a place where the words have to be visible.
+                        StackedSegment(
+                            id = category.name,
+                            label = category.localizedLabel(),
+                            color = hues.getValue(category),
+                            value = minutes,
+                        )
                     },
                 )
             },

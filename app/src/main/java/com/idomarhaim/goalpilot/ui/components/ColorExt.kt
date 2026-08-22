@@ -6,14 +6,49 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.core.graphics.toColorInt
+import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.PaletteTransform
+import com.idomarhaim.goalpilot.ui.theme.LocalAppMaterial
+import com.idomarhaim.goalpilot.ui.theme.LocalAppSkin
 import com.idomarhaim.goalpilot.ui.theme.atLightness
 import com.idomarhaim.goalpilot.ui.theme.hsl
+import com.idomarhaim.goalpilot.ui.theme.rampTint
 
-/** Parses a "#RRGGBB" / "#AARRGGBB" hex string into a Compose [Color], or [fallback]. */
-fun String.toComposeColor(fallback: Color = Color(0xFF718096)): Color =
-    runCatching { Color(this.toColorInt()) }.getOrDefault(fallback)
+/**
+ * Parses a `"#RRGGBB"` / `"#AARRGGBB"` hex string into a Compose [Color], or
+ * returns [fallback].
+ *
+ * ## Why this is hand-rolled and not `String.toColorInt()`
+ *
+ * `toColorInt` goes through `android.graphics.Color.parseColor`, which **throws
+ * on the JVM** — so with it in place every category in this file resolved to
+ * [fallback] under a unit test, and every colour came out *identical*. That is a
+ * silent failure in the worst direction: a test asserting that two categories are
+ * distinguishable would fail, and a test asserting they had *collapsed* would
+ * **pass for the wrong reason**. `#53` hit both, one after the other, writing the
+ * `.tag` guard.
+ *
+ * The rest of this file was already pure Kotlin for exactly this reason — see the
+ * note at the bottom about `ColorUtils` — and the parser was the one android
+ * dependency left in the middle of it. Removing it is what lets `CategoryTagTest`
+ * run `categoryFill` itself rather than a JVM-safe copy of it.
+ *
+ * **Behaviour is the same for everything this app stores.** `parseColor` also
+ * accepts a handful of colour *names* (`"red"`), which now fall back instead —
+ * and nothing writes one: every colour string here comes from
+ * `GoalCategory.defaultColorHex`, `LifeAreaPalette.hexes` or the swatch picker,
+ * all of which are `#RRGGBB`.
+ */
+fun String.toComposeColor(fallback: Color = Color(0xFF718096)): Color {
+    val hex = trim().removePrefix("#")
+    if (hex.length != 6 && hex.length != 8) return fallback
+    val value = hex.toLongOrNull(radix = 16) ?: return fallback
+    // A six-digit string is opaque; an eight-digit one carries its own alpha.
+    // `Color(Long)` reads the low 32 bits as ARGB -- the same overload the default
+    // `fallback` literal above uses.
+    return Color(if (hex.length == 6) value or ALPHA_OPAQUE else value)
+}
 
 /**
  * A goal's stored accent as a **fill** — the donut slice, the bar, the legend
@@ -45,15 +80,71 @@ fun String.toComposeColor(fallback: Color = Color(0xFF718096)): Color =
  */
 @Composable
 @ReadOnlyComposable
-fun String.toGoalAccent(fallback: Color = MaterialTheme.colorScheme.primary): Color {
-    val isDarkSurface = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    if (!isDarkSurface) return toComposeColor(fallback)
-    val authored = GoalCategory.darkTwinOf(this)
-    return if (authored != null) {
-        authored.toComposeColor(fallback)
-    } else {
-        toComposeColor(fallback).atLightness(DARK_SURFACE_LIGHTNESS)
-    }
+fun String.toGoalAccent(fallback: Color = MaterialTheme.colorScheme.primary): Color =
+    categoryFill(
+        hex = this,
+        transform = LocalAppMaterial.current.paletteTransform,
+        skin = LocalAppSkin.current,
+        darkSurface = MaterialTheme.colorScheme.surface.luminance() < 0.5f,
+        fallback = fallback,
+    )
+
+/**
+ * [toGoalAccent] with the composition read out, so the whole rule is one pure
+ * function over four values.
+ *
+ * Split out for the same reason [asInkOn] is: `ThemePaletteTest` runs the **real**
+ * function over the real fourteen schemes on the JVM instead of asserting a copy
+ * of it, and a `@Composable` cannot be called from a unit test.
+ *
+ * ## `#53`: this is where dark neo's collapse actually happens
+ *
+ * §4.1 says a material rewrites the skin through one of three palette transforms,
+ * and that dark neo's — [PaletteTransform.SINGLE_ACCENT_RAMP] — *collapses the six
+ * categorical hues into one ramp*. `MaterialPalettes.rampTint` has been the
+ * arithmetic for that since `C12` and had **zero call sites**: it was built and
+ * unit-tested and deliberately left unwired, because applying a collapse before
+ * the words are there installs exactly the identity failure §4.1's `.tag` rule
+ * exists to prevent. The words landed in this same commit — `DonutChart` and
+ * `StackedColumnChart` now draw them — so the collapse is safe to switch on, and
+ * this line is what switches it on.
+ *
+ * ## Why the ramp is taken from the LIGHT fill and not from the dark twin
+ *
+ * `rampTint` positions a hue on the ramp by the hue's **own lightness**, and `#57`
+ * a authored the ten [GoalCategory.darkColorHex] twins to a deliberately *even*
+ * lightness so ten slices in one donut hold together. Feeding the twins in would
+ * therefore land every category on nearly the same point of the ramp — a total
+ * collapse, not §4.1's. The stored light fill is the category's canonical hue and
+ * spreads across the ramp as far as one accent allows, which is the most identity
+ * a single-accent material is permitted to keep.
+ *
+ * The dark-twin lift is skipped under the ramp for the same reason it exists
+ * elsewhere: the ramp's two ends are already held in a readable band against dark
+ * neo's charcoal by `RAMP_BRIGHT` / `RAMP_DEEP`, so lifting first and ramping
+ * after would be one contrast rule undoing another.
+ *
+ * ## Why it branches on the TRANSFORM and not on the material
+ *
+ * `MaterialSpec.kt`'s rule is that nothing outside it may hold a `when (material)`
+ * that decides how something is drawn. This is not that: it is the palette layer,
+ * one axis over, and it reads the transform each material **declares** — the same
+ * value `MaterialPalettes.colorSchemeFor` switches on. A fifth material that
+ * declares the ramp inherits this by existing, which is the property §4.1 asks for
+ * a paragraph after it names the rule.
+ */
+fun categoryFill(
+    hex: String,
+    transform: PaletteTransform,
+    skin: AppSkin,
+    darkSurface: Boolean,
+    fallback: Color,
+): Color {
+    val stored = hex.toComposeColor(fallback)
+    if (transform == PaletteTransform.SINGLE_ACCENT_RAMP) return rampTint(stored, skin)
+    if (!darkSurface) return stored
+    val authored = GoalCategory.darkTwinOf(hex)
+    return authored?.toComposeColor(fallback) ?: stored.atLightness(DARK_SURFACE_LIGHTNESS)
 }
 
 /**
@@ -150,6 +241,9 @@ const val MIN_INK_CONTRAST: Double = 4.5
 
 private const val INK_SEARCH_STEPS = 24
 private const val DARK_SURFACE_LIGHTNESS = 0.72f
+
+/** The alpha byte a six-digit hex does not carry. */
+private const val ALPHA_OPAQUE = 0xFF000000L
 
 // `hsl()` and `atLightness()` are the pure-Kotlin pair in `ui/theme/MaterialPalettes.kt`.
 // androidx.core.graphics.ColorUtils would do the same arithmetic through

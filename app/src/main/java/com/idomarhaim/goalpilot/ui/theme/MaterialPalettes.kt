@@ -43,10 +43,14 @@ import kotlin.math.min
  *   accent"*. §4.1 collapses **categorical** hues, never these two.
  * - **The category palette.** Dark neo's ramp *does* collapse the six
  *   `GoalCategory` hues — that is exactly why §4.1's `.tag` rule requires a
- *   category to be **written in words** beside its dot. The collapse is
- *   declared here as [rampTint] and is **not yet applied** at the call sites:
- *   applying it before the words are there installs the identity failure the
- *   `.tag` rule exists to prevent. That sweep is `C12` §4.4's, with the charts.
+ *   category to be **written in words** beside its dot. The collapse is declared
+ *   here as [rampTint] and applied by `ui/components/ColorExt.kt`'s
+ *   `categoryFill`, which is the one seam every categorical fill in the app
+ *   passes through. **`#53` wired it, and only after the words were there** —
+ *   `DonutChart` and `StackedColumnChart` draw a band's own name in the same
+ *   commit. The order was the whole risk: applying the collapse first installs
+ *   the identity failure the `.tag` rule exists to prevent, in every chart at
+ *   once, and it looks correct on the three materials it is not for.
  * - **`swatchFor`.** The skin swatch shows what it *would* do, so it takes no
  *   material — the same exception the material picker takes, one axis over.
  */
@@ -145,7 +149,11 @@ private const val RAMP_DEEP = 0.55f
  * function; it is the fact `.tag` exists to survive: **colour stops carrying
  * identity**, so the word beside the dot has to.
  *
- * Declared and unit-tested, not yet wired — see this file's header.
+ * Wired by `#53` at `ui/components/ColorExt.kt`'s `categoryFill`, which feeds it
+ * the **stored light fill** rather than `#57` a's dark twin — the twins were
+ * authored to an even lightness on purpose, and this function reads lightness, so
+ * feeding them in would land the whole set on one point of the ramp. See that
+ * function's KDoc.
  */
 fun rampTint(base: Color, skin: AppSkin): Color {
     val (bright, deep) = rampFor(skin)

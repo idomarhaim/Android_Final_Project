@@ -190,8 +190,10 @@ class MaterialPaletteTest {
 
     @Test
     fun `the categorical ramp lands between the two ends and loses hue identity`() {
-        // rampTint is declared and not yet wired; this pins what it means so the
-        // `.tag` sweep inherits a defined answer rather than inventing one.
+        // This pinned rampTint's meaning while it had no call sites, so `#53`'s
+        // `.tag` sweep inherited a defined answer rather than inventing one. It
+        // is wired now (`ColorExt.categoryFill`) and the assertion is unchanged --
+        // which is the point of having written it early.
         AppSkin.entries.forEach { skin ->
             val (bright, deep) = rampFor(skin)
             listOf(Color(0xFF2F855A), Color(0xFF5145CD), Color(0xFFB83280)).forEach { category ->

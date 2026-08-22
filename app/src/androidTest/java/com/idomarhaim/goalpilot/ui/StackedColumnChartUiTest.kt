@@ -26,8 +26,8 @@ class StackedColumnChartUiTest {
     private fun column(label: String, health: Int, study: Int) = StackedColumn(
         label = label,
         segments = listOf(
-            StackedSegment(id = "health", color = Color.Red, value = health),
-            StackedSegment(id = "study", color = Color.Blue, value = study),
+            StackedSegment(id = "health", label = "Health", color = Color.Red, value = health),
+            StackedSegment(id = "study", label = "Studies", color = Color.Blue, value = study),
         ),
     )
 

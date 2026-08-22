@@ -50,7 +50,7 @@ import kotlin.math.sqrt
  * |---|---|
  * | **`--edge`** — every control carries a hairline contrast anchor; no affordance is ever shadow-only (neo's known WCAG failure) | [edge] is **not nullable**, and [gpSurface] always strokes it |
  * | **an overlay declares its own opacity** — a sheet, dialog or menu that inherits neo's surface *is* the page colour plus a shadow pair, so the dimmed screen reads straight through it | [overlay] is always opaque, and is a different token from [surface] |
- * | **`.tag`** — a category is written in words beside its dot, because dark neo collapses six hues into one ramp | authoring, not a token; the collapse arithmetic is `MaterialPalettes.rampTint` |
+ * | **`.tag`** — a category is written in words beside its dot, because dark neo collapses six hues into one ramp | authoring, not a token: the arithmetic is `MaterialPalettes.rampTint`, applied at `ui/components/ColorExt.kt`'s `categoryFill`, and the words are drawn by `DonutChart` and `StackedColumnChart` (`#53`) |
  *
  * ## The cost §4.1 already priced, paid in Compose
  *
