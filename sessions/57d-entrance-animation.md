@@ -16,6 +16,8 @@ owns:
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
   - app/src/test/java/com/idomarhaim/goalpilot/ui/GpEntranceTest.kt
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceAnimationUiTest.kt
+  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceRenderPass.kt
+  - kb-candidates/2026-08-22-57d-entrance-animation.md
   - CHANGELOG/2026-08-22/57d-entrance-animation.md
   - sessions/57d-entrance-animation.md
 created: 2026-08-21

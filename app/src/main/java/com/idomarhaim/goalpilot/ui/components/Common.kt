@@ -78,6 +78,14 @@ fun EmptyState(
     }
 }
 
+/**
+ * A section title inside a screen's block column.
+ *
+ * It carries [Modifier.gpEntrance] for the same reason [GpCard] does: on a
+ * screen that opted into an arrival, a header that did not animate would be the
+ * one motionless thing in a column that is rippling past it, which reads as a
+ * rendering fault rather than as restraint. A no-op everywhere else.
+ */
 @Composable
 fun SectionHeader(
     title: String,
@@ -86,6 +94,7 @@ fun SectionHeader(
 ) {
     Row(
         modifier = modifier
+            .gpEntrance()
             .fillMaxWidth()
             .padding(top = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

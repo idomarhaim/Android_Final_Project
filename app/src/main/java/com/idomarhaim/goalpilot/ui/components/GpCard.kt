@@ -42,6 +42,13 @@ import com.idomarhaim.goalpilot.ui.theme.gpSurface
  * every screen without any of them naming a material. There are 30-odd call
  * sites and none of them changed.
  *
+ * ## Arrival
+ *
+ * Since `#57` d a card also carries [Modifier.gpEntrance] — the staggered rise
+ * and fade the prototypes open with. It costs nothing and does nothing on a
+ * screen that has not provided a [GpEntrance]; see [Entrance.kt][GpEntrance] for
+ * why the trigger is screen entry rather than item entry.
+ *
  * @param colors `null` — the default — means **the material decides**. Pass a
  *   value only where the card is deliberately emphasised against its siblings;
  *   the shadow, the corner and the edge still come from the material, so an
@@ -89,6 +96,10 @@ private fun GpPanel(
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         Column(
             modifier = modifier
+                // Outside `gpSurface`, so the whole panel -- shadow pair, fill,
+                // gloss and hairline together -- rises and fades as one object.
+                // A no-op unless the screen provided a `GpEntrance`.
+                .gpEntrance()
                 .gpSurface(resolved, shape)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
             content = content,

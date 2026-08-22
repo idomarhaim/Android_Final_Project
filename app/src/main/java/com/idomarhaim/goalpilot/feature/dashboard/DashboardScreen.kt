@@ -51,6 +51,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,8 +90,10 @@ import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
 import com.idomarhaim.goalpilot.ui.components.HeroSurface
 import com.idomarhaim.goalpilot.ui.components.IconChip
+import com.idomarhaim.goalpilot.ui.components.LocalGpEntrance
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
+import com.idomarhaim.goalpilot.ui.components.rememberGpEntrance
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
@@ -216,103 +219,119 @@ fun DashboardScreen(
             LoadingBox(Modifier.padding(inner))
             return@Scaffold
         }
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(inner),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // §2.5's daily review, ABOVE the points card and nowhere else: it is the first
-            // thing the app has to say when it has something to say, and burying it under a
-            // level-up animation is how a miss goes unread. Absent entirely on the great
-            // majority of opens, which is the point -- an empty review is not an empty card.
-            if (missReview.isVisible && missReview.misses.isNotEmpty()) {
-                item {
-                    DailyMissReviewCard(
-                        misses = missReview.misses,
-                        onDismiss = viewModel::dismissMissReview,
-                    )
-                }
-            }
-            item {
-                PointsLevelCard(
-                    userName = state.userName,
-                    points = state.points,
-                    level = state.level,
-                    levelProgress = state.levelProgress,
-                    pointsToNext = state.pointsToNextLevel,
-                )
-            }
-            item {
-                OverviewCard(
-                    averageProgress = state.averageProgress,
-                    goalCount = state.goals.size,
-                    doneTasks = state.doneTasks,
-                    completedThisWeek = state.completedTasksLast7d,
-                    onOpenAnalytics = onOpenAnalytics,
-                )
-            }
-            item {
-                SmartAddCard(
-                    state = smartAdd,
-                    onClassify = viewModel::classifyForSmartAdd,
-                )
-            }
-            item {
-                GoogleTasksImportCard(
-                    isLoading = tasksImport.isLoading,
-                    consent = tasksConsent,
-                    onImport = viewModel::importGoogleTasks,
-                )
-            }
-            item {
-                HealthConnectCard(
-                    state = healthSync,
-                    onSync = viewModel::syncHealth,
-                )
-            }
-            item {
-                SectionHeader(
-                    title = "AI coach",
-                    action = {
-                        IconButton(onClick = viewModel::refreshRecommendations) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Refresh tips")
-                        }
-                    },
-                )
-            }
-            if (recs.isLoading) {
-                item { CircularProgressIndicator(Modifier.padding(8.dp)) }
-            } else {
-                items(recs.items, key = { it.id }) { rec -> RecommendationCard(rec) }
-            }
-            item {
-                SectionHeader(
-                    title = "Your goals",
-                    action = { TextButton(onClick = onSeeAllGoals) { Text("See all") } },
-                )
-            }
-            if (state.goals.isEmpty()) {
-                item {
-                    OutlinedButton(onClick = onAddGoal, modifier = Modifier.fillMaxWidth()) {
-                        Text("Create your first goal")
+        // #57 d -- the column ARRIVES. Every GpCard and SectionHeader below
+        // carries `Modifier.gpEntrance()` already, so this one provider is the
+        // whole opt-in: each block claims the next slot in one staggered wave of
+        // rise-and-fade.
+        //
+        // Deliberately below the loading gate. The entrance starts its clock on
+        // the first block that claims, not when it is constructed, so the wave
+        // begins when there is something to watch rather than being spent behind
+        // the spinner -- but remembering it here means it is also a genuinely new
+        // wave if the screen ever falls back to loading and returns.
+        //
+        // The trigger is SCREEN entry, not item entry: `GpEntrance` stops handing
+        // out slots once the arrival window has passed, so the cards below the
+        // fold that this LazyColumn composes on scroll are simply there.
+        CompositionLocalProvider(LocalGpEntrance provides rememberGpEntrance()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(inner),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // §2.5's daily review, ABOVE the points card and nowhere else: it is the first
+                // thing the app has to say when it has something to say, and burying it under a
+                // level-up animation is how a miss goes unread. Absent entirely on the great
+                // majority of opens, which is the point -- an empty review is not an empty card.
+                if (missReview.isVisible && missReview.misses.isNotEmpty()) {
+                    item {
+                        DailyMissReviewCard(
+                            misses = missReview.misses,
+                            onDismiss = viewModel::dismissMissReview,
+                        )
                     }
                 }
-            } else {
-                items(state.goals.take(3), key = { it.id }) { goal ->
-                    GoalCard(goal = goal, onClick = { onOpenGoal(goal.id) })
+                item {
+                    PointsLevelCard(
+                        userName = state.userName,
+                        points = state.points,
+                        level = state.level,
+                        levelProgress = state.levelProgress,
+                        pointsToNext = state.pointsToNextLevel,
+                    )
                 }
-            }
-            item {
-                ShareSummaryCard(
-                    onShare = { viewModel.shareWeeklySummary(null) },
-                    onShareWithPhoto = {
-                        sharePicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                        )
-                    },
-                )
+                item {
+                    OverviewCard(
+                        averageProgress = state.averageProgress,
+                        goalCount = state.goals.size,
+                        doneTasks = state.doneTasks,
+                        completedThisWeek = state.completedTasksLast7d,
+                        onOpenAnalytics = onOpenAnalytics,
+                    )
+                }
+                item {
+                    SmartAddCard(
+                        state = smartAdd,
+                        onClassify = viewModel::classifyForSmartAdd,
+                    )
+                }
+                item {
+                    GoogleTasksImportCard(
+                        isLoading = tasksImport.isLoading,
+                        consent = tasksConsent,
+                        onImport = viewModel::importGoogleTasks,
+                    )
+                }
+                item {
+                    HealthConnectCard(
+                        state = healthSync,
+                        onSync = viewModel::syncHealth,
+                    )
+                }
+                item {
+                    SectionHeader(
+                        title = "AI coach",
+                        action = {
+                            IconButton(onClick = viewModel::refreshRecommendations) {
+                                Icon(Icons.Filled.Refresh, contentDescription = "Refresh tips")
+                            }
+                        },
+                    )
+                }
+                if (recs.isLoading) {
+                    item { CircularProgressIndicator(Modifier.padding(8.dp)) }
+                } else {
+                    items(recs.items, key = { it.id }) { rec -> RecommendationCard(rec) }
+                }
+                item {
+                    SectionHeader(
+                        title = "Your goals",
+                        action = { TextButton(onClick = onSeeAllGoals) { Text("See all") } },
+                    )
+                }
+                if (state.goals.isEmpty()) {
+                    item {
+                        OutlinedButton(onClick = onAddGoal, modifier = Modifier.fillMaxWidth()) {
+                            Text("Create your first goal")
+                        }
+                    }
+                } else {
+                    items(state.goals.take(3), key = { it.id }) { goal ->
+                        GoalCard(goal = goal, onClick = { onOpenGoal(goal.id) })
+                    }
+                }
+                item {
+                    ShareSummaryCard(
+                        onShare = { viewModel.shareWeeklySummary(null) },
+                        onShareWithPhoto = {
+                            sharePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        },
+                    )
+                }
             }
         }
     }
