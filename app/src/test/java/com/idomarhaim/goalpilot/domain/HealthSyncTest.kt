@@ -274,6 +274,38 @@ class HealthSyncTest {
         coVerify(exactly = 0) { goals.upsertGoal(any()) }
     }
 
+    // ── #59: an unrelated goal is neither logged into nor pinned ────
+
+    @Test
+    fun `a category-mate with the wrong unit is left alone and a new goal is made instead`() =
+        runTest {
+            // The sync half of #59. The matcher refusing the pairing is only half the
+            // repair: what made the defect permanent was `pinMatchedGoals` stamping the
+            // wrong goal, after which no later sync could reconsider it. So assert on
+            // the stamp, not only on the proposal.
+            ready(
+                steps = 8_000,
+                existingGoals = listOf(
+                    Goal(
+                        id = "g-strength",
+                        title = "Strength Training",
+                        category = GoalCategory.FITNESS,
+                        measure = Measure(MeasureKind.PERCENT, "%"),
+                    ),
+                ),
+            )
+            val created = slot<Goal>()
+            coEvery { goals.upsertGoal(capture(created)) } returns Resource.Success("g-new")
+
+            val outcome = useCase(HealthSyncTrigger.MANUAL, now) as HealthSyncOutcome.Logged
+
+            coVerify(exactly = 0) { goals.upsertGoal(match { it.id == "g-strength" }) }
+            assertThat(outcome.createdGoals).isEqualTo(1)
+            assertThat(created.captured.title).isEqualTo(HealthMetric.STEPS.defaultGoalTitle)
+            assertThat(created.captured.healthSourceKey)
+                .isEqualTo(HealthMetric.STEPS.goalSourceKey)
+        }
+
     @Test
     fun `manual entries the user typed are left out of the dedupe`() = runTest {
         // A hand-logged entry carries no source key, so it must not be mistaken for

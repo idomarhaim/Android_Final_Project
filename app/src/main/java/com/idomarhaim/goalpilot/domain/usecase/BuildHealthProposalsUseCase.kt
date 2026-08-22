@@ -194,11 +194,35 @@ class BuildHealthProposalsUseCase @Inject constructor() {
      * meant one edit orphaned the goal and the next sync created a duplicate.
      *
      * **Then the old heuristic, for goals nobody has pinned yet** — an active goal
-     * in the matching category, preferring one whose unit already agrees so steps
-     * do not get added to a "workouts" goal and inflate it by four thousand. It
-     * stays because a goal the *user* made ("Move more") carries no key and must
+     * in the matching category **whose unit already agrees**. It stays because a
+     * goal the *user* made ("Move more", measured in steps) carries no key and must
      * still be found the first time; [SyncHealthDataUseCase] pins whatever this
      * returns, so each goal goes through the heuristic at most once.
+     *
+     * **Both halves are required, and until #59 the unit half was only a
+     * *preference*** — a last-resort branch took any unpinned category-mate when
+     * nothing agreed. That is not a weaker version of the same rule, it is the
+     * opposite one: the preference fires when a suitable goal exists, and the
+     * fallback fires precisely when none does. `Observed:` 2026-08-22 on the live
+     * account, `Strength Training` — a Fitness goal measured `x/100` — read
+     * **`245613/100`** and was still climbing two hours later, and `Sleep 7 hours`
+     * read `165.5/100`. The comment on the line above the fallback had named that
+     * exact hazard ("inflate it by four thousand") since the day it was written.
+     *
+     * **Nothing agreeing is a real answer, not a gap to fill.** The caller reads a
+     * null as *propose a new goal* and [HealthMetric.defaultGoalTitle] exists for
+     * it, so the cost of refusing is one extra goal the user can archive — against
+     * a wrong pairing that [SyncHealthDataUseCase] then makes **permanent** and
+     * that no later sync can reconsider. A magnitude check on
+     * [Goal.targetValue] was considered as a second line of defence and left out:
+     * it needs a threshold nobody can derive, and it would reject "walk 100 steps
+     * up the stairs" — a goal that agrees on the unit and is genuinely the right
+     * home for the reading.
+     *
+     * **The word is compared, never classified.** §1.3 forbids reading a
+     * [MeasureKind] out of user text, and this does not: it asks whether two words
+     * are the same word, which is why a goal carrying no measure at all (`""`)
+     * matches nothing — no metric's unit is empty.
      *
      * A goal pinned to the *other* metric is excluded from the heuristic outright.
      * Without that, deleting a category (which `C23` #45 decides to do) or editing
@@ -208,9 +232,11 @@ class BuildHealthProposalsUseCase @Inject constructor() {
         val active = goals.filter { !it.isArchived }
         active.firstOrNull { it.healthSourceKey == metric.goalSourceKey }?.let { return it }
 
-        val candidates = active.filter { it.healthSourceKey == null && it.category == metric.category }
-        return candidates.firstOrNull { it.measureWord.equals(metric.unit, ignoreCase = true) }
-            ?: candidates.firstOrNull()
+        return active.firstOrNull {
+            it.healthSourceKey == null &&
+                it.category == metric.category &&
+                it.measureWord.equals(metric.unit, ignoreCase = true)
+        }
     }
 
     private fun List<Goal>.matchFor(metric: HealthMetric): Goal? = match(this, metric)

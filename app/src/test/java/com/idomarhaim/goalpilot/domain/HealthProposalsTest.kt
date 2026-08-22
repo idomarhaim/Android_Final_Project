@@ -61,9 +61,11 @@ class HealthProposalsTest {
 
     @Test
     fun `steps go to a fitness goal and sleep to a sleep goal`() {
+        // Units stated, because since #59 that is what makes a goal eligible at all;
+        // the category is still what keeps the two readings from swapping places.
         val goals = listOf(
-            goal("g-fit", "Move more", GoalCategory.FITNESS),
-            goal("g-sleep", "Rest properly", GoalCategory.SLEEP),
+            goal("g-fit", "Move more", GoalCategory.FITNESS, unit = "steps"),
+            goal("g-sleep", "Rest properly", GoalCategory.SLEEP, unit = "hours"),
         )
         val snapshot = HealthSnapshot(
             steps = listOf(DailySteps(day1, 8_000)),
@@ -168,9 +170,61 @@ class HealthProposalsTest {
         assertThat(proposals.single().targetGoalId).isEqualTo("g-steps")
     }
 
+    // ── #59: the fallback that credited steps to a goal measured out of 100 ─
+
+    @Test
+    fun `steps are not credited to a category-mate whose unit says nothing about steps`() {
+        // The defect exactly as it was found. `Strength Training` is a Fitness goal
+        // measured `x/100` — `targetValue` simply kept its default — and it was the
+        // only unpinned Fitness goal, so the old last-resort branch handed it every
+        // step count in the account. `SyncHealthDataUseCase` then pinned that pairing,
+        // which is why it could not correct itself: the goal read `245613/100` and was
+        // still climbing two hours later.
+        val goals = listOf(goal("g-strength", "Strength Training", GoalCategory.FITNESS, unit = "%"))
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        val proposal = build(snapshot, goals).single()
+
+        assertThat(proposal.targetGoalId).isNull()
+        assertThat(proposal.newGoalTitle).isEqualTo(HealthMetric.STEPS.defaultGoalTitle)
+    }
+
+    @Test
+    fun `sleep is not credited to a sleep goal that is not measured in hours`() {
+        // The same defect's second victim, and the reason it is one bug and not two:
+        // `Sleep 7 hours` read `165.5/100` for the identical reason, in the other
+        // category. One guard covers both because both went through this branch.
+        val goals = listOf(goal("g-sleep", "Sleep 7 hours", GoalCategory.SLEEP, unit = "%"))
+        val snapshot = HealthSnapshot(sleep = listOf(SleepNight(day1, 450)))
+
+        val proposal = build(snapshot, goals).single()
+
+        assertThat(proposal.targetGoalId).isNull()
+        assertThat(proposal.newGoalTitle).isEqualTo(HealthMetric.SLEEP.defaultGoalTitle)
+    }
+
+    @Test
+    fun `a goal carrying no measure at all is not taken either`() {
+        // The commonest shape of the same thing, and the one that makes an empty word
+        // worth its own test: a goal made before §1.3 has no measure, so `measureWord`
+        // is `""`. It must read as *nothing to compare*, never as a wildcard — and it
+        // cannot accidentally agree, because no metric's unit is empty.
+        val goals = listOf(goal("g-vague", "Get fitter", GoalCategory.FITNESS))
+        val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
+
+        val proposal = build(snapshot, goals).single()
+
+        assertThat(proposal.targetGoalId).isNull()
+        assertThat(proposal.newGoalTitle).isEqualTo(HealthMetric.STEPS.defaultGoalTitle)
+    }
+
     @Test
     fun `archived goals are never proposed`() {
-        val goals = listOf(goal("g-old", "Old fitness goal", GoalCategory.FITNESS, archived = true))
+        // The unit agrees, so archiving is the only thing that can be rejecting it —
+        // without that this would pass for #59's reason instead of its own.
+        val goals = listOf(
+            goal("g-old", "Old fitness goal", GoalCategory.FITNESS, unit = "steps", archived = true),
+        )
         val snapshot = HealthSnapshot(steps = listOf(DailySteps(day1, 8_000)))
 
         val proposals = build(snapshot, goals)
