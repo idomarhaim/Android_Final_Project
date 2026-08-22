@@ -15,7 +15,50 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57c-chart-volume-and-raised` | [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57) c — chart volume + raised-3D axis | `ui/components/DonutChart.kt`, `ui/components/SimpleBarChart.kt`, `ui/components/StackedColumnChart.kt`, `ui/components/ProgressRing.kt`, `ui/theme/MaterialSpec.kt`, `domain/repository/AppPreferencesRepository.kt`, `data/prefs/AppPreferencesRepositoryImpl.kt`, `feature/settings/SettingsScreen.kt`, `test/.../ThemePaletteTest.kt`, `CHANGELOG/2026-08-22/57c-chart-volume-and-raised.md`, `sessions/57c-chart-volume-and-raised.md` | AVD + adb + Gradle daemon (claimed for the render pass and the release build) | 2026-08-22 |
+> 🏁 **`57c-chart-volume-and-raised` RELEASED 2026-08-22 — this commit.** No singletons held; the
+> AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle daemon are free.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED, and no device setting was changed.** Every
+> run used `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`. Animation
+> scales were verified at `1.0` **before** the first device command and are still `1.0` — check
+> it with `adb shell settings get global window_animation_scale` rather than taking my word for
+> it. The AVD's app data is intact; the `com.idomarhaim.goalpilot.debug` package was reinstalled
+> in place four times and never removed.
+>
+> 🚚 **This session's push carried three `57b-backgrounds-and-combinations` commits** —
+> `1242157`, `a22bc00`, `d06e34e` — because `git push` is branch-scoped. That was **settled by a
+> positive signal, not by silence**: `57b` released its row and then wrote `d06e34e` explicitly to
+> hand them over, quoting Ido (*"let 57c do the push"*). Verified rather than trusted:
+> `git diff --stat 37cb6bc..d06e34e` is `CLAUDE.md`, `SESSIONS.md` and `57b`'s own changelog —
+> **documentation only, no app code, no test, no build file.**
+>
+> 📌 **The generalisable finding, for `57d` and for `53` after it:** the brief's five-layer table
+> is **wrong on one of its five**, and the correction is not a Compose fact. It names
+> `feSpecularLighting`; `docs/prototypes/2026-08-11-visual-styles/` — written the day *after* rev 4
+> and rebuilt on 08-12 — **deletes that filter in as many words** and replaces it with a clipped
+> directional wash. So **rev 4 is not the authority on how a body is lit.** More usefully: the
+> 2026-08-12 prototype is built from **geometry and gradients** and ports to Compose almost for
+> free, while rev 4 is built from **SVG filters** and does not. A session that ports the older
+> artifact faithfully spends its budget reproducing a look the design already rejected.
+>
+> ⚠️ **A prediction in `Presentation.TODO.optional.md` did NOT come true and is corrected there.**
+> It said this session would *"render the analytics screen"* and close the `gpPage`-coverage item
+> for free. It did not: `AnalyticsScreen` takes a `hiltViewModel()` and needs a signed-in account
+> and a live Firestore — the wall that item names two paragraphs above its own prediction. The
+> render pass photographs the chart **primitives** under `gpPage` instead. `57d` is now the only
+> remaining free closure, and `DashboardScreen` has the same `hiltViewModel()` problem.
+>
+> ⚠️ **The Appearance card now carries FIVE controls and is the tallest card in the app.**
+> `BackgroundPicker` already called being the fourth *"a real cost"*. Not a defect and not in this
+> brief's scope to fix — flagged to Ido in the reply, and named here so the next session working
+> in §4.9 does not discover it as a surprise.
+>
+> ⚠️ **One process note, because it is the reason this note reads correctly.** The first attempt
+> to write it located the *Recently released* section with a `find('## ', …)` and landed **inside
+> `#51`'s release note 230 lines lower**, splitting a sentence in half. Caught by
+> `git diff -- SESSIONS.md` in its own tool call — which is the rule for a shared file — and
+> reverted with `git checkout` before anything was staged. A heading search over a file whose
+> prose contains `## Sequencing` is not a heading search.
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >

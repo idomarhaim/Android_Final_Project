@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 57
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/DonutChart.kt
@@ -17,6 +17,34 @@ owns:
   - CHANGELOG/<today>/57c-chart-volume-and-raised.md
   - sessions/57c-chart-volume-and-raised.md
 created: 2026-08-21
+completed: 2026-08-22 by 57c-chart-volume-and-raised
+commit: d48a7ee
+result: |
+  Shipped. Volume on the donut, the rings, the stacked columns and the horizontal bars;
+  AppRelief as the fourth appearance axis, FLAT/RAISED, on all four materials, with a
+  preview picker in Settings > Appearance. JVM 725/0, instrumented 189/0, 32 chart
+  frames + 8 settings frames, seen. Shipped to Ido's phone as v0.3.1.
+
+  ONE OF THE BRIEF'S FIVE LAYERS WAS WRONG AND IS NOT PORTED. The brief names
+  feSpecularLighting for the bevel; docs/prototypes/2026-08-11-visual-styles/ -- written
+  the day AFTER rev 4 and rebuilt on 08-12 -- deletes that filter in as many words
+  ("that filter over a fat stroke is what inflated rev 4's ring into a balloon") and
+  replaces it with a clipped directional wash. So the bevel is dropped on the DESIGN's
+  authority, not on Compose's limits. Generalisable, and it is what 57d should know
+  before it starts: the 2026-08-12 prototype ports to Compose almost for free because
+  it is geometry and gradients; rev 4 does not, because it is SVG filters.
+
+  Two genuine Compose limits, both substituted and both stated in the changelog:
+  soft-light (no PorterDuff equivalent below API 29, silently dropped -- neutral noise
+  over SrcOver instead) and blur (stacked strokes, as drawShadowPair already does).
+
+  NOT DONE, and it is a claim in a committed doc rather than scope I dropped:
+  Presentation.TODO.optional.md predicted this session would "render the analytics
+  screen" and close the gpPage-coverage item for free. It did not -- AnalyticsScreen
+  takes a hiltViewModel() and needs a signed-in account and a live Firestore, which is
+  the wall that item names itself. The render pass photographs the chart PRIMITIVES
+  under gpPage instead. Corrected in that file; 57d is now the only remaining free
+  closure and may hit the same wall.
 ---
 
 # `#57` c — chart volume, and raised-3D as an axis on all four materials
