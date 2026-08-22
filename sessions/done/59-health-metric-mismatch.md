@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 59
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt
@@ -13,6 +13,12 @@ owns:
   - CHANGELOG/2026-08-23/59-health-metric-mismatch.md
   - sessions/59-health-metric-mismatch.md
 created: 2026-08-23
+result: |
+  Both halves done. Code fix in a014e36 (pushed): match() requires the unit to agree,
+  4 new tests red-first, 790 JVM unit tests green. Data repair run on Ido's explicit
+  approval -- both mispaired goals unpinned and their 83 hc:* progress entries deleted
+  (245612 steps, 165.5 hours; zero hand-logged entries were at risk), verified by
+  re-reading. KB drained to C:\Dev\JARVIS 93c2c0c. #59 closed.
 ---
 
 # `#59` — a step count is being credited to a goal that has nothing to do with steps

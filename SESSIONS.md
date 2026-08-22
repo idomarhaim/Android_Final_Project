@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `59-health-metric-mismatch` | `#59` — stop a Health Connect metric being pinned to an unrelated goal (`Strength Training` reads `245613/100`), and put the data repair to Ido | `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `kb-candidates/2026-08-23-59-health-metric-mismatch.md` · `CHANGELOG/2026-08-23/59-health-metric-mismatch.md` · `sessions/59-health-metric-mismatch.md` | **none — JVM unit layer only; no AVD, no adb, no `connectedDebugAndroidTest`** | 2026-08-23 |
 | `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
@@ -4415,6 +4414,42 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`59-health-metric-mismatch` RELEASED 2026-08-23 — this commit.** `#59` closed: the matcher
+> fix shipped in `a014e36` and **the data repair was run too**, on Ido's explicit approval. Singletons:
+> none held — no AVD, no adb, no `connectedDebugAndroidTest`, and the Gradle daemon was used only
+> before `63-occurrences-and-recurrence` claimed it.
+>
+> **What landed:** `BuildHealthProposalsUseCase.match()` now requires the goal's unit to agree — the
+> unguarded `?: candidates.firstOrNull()` is gone · four new tests, written red first · two existing
+> tests that had been passing *through* the fallback now state their own reason · **790 JVM unit
+> tests, 0 failures**.
+>
+> 🗄️ **LIVE DATA WAS CHANGED, and this is the line to read if you are wondering why a goal moved.**
+> On `goalpilot-56e30`, Ido's account only: `Strength Training` and `Sleep 7 hours` were **unpinned**
+> (`healthSourceKey` → null) and their **83** Health Connect progress entries deleted — 58 steps rows
+> summing `245612`, 25 sleep rows summing `165.5`. **Zero hand-logged entries existed on either goal**,
+> so nothing typed by hand was touched. Both now read `0/100`. The second account
+> (`rachil751@gmail.com`) was **not touched** and is not mispaired. Backup of every deleted document
+> written outside the repo before the first delete.
+>
+> 📥 **KB drained:** `dev/prefer-else-any-inverts-the-rule.md` (new) and
+> `dev/stored-state-is-an-entry-point.md` §6, in `C:\Dev\JARVIS` `93c2c0c`.
+>
+> ⚠️ **A sibling's commit rode along with this session's push — naming it, per precondition 5.**
+> The range was read and held only `74613cc` (`63`'s claim, adjudicated and deliberately pushed); by
+> the time `git push` executed, `7c457c4` — **`#63` itself, 19 files** — had landed in the shared tree
+> and went up with it, unread by this session. No harm done (it was finished work with its own
+> changelog, and `63` released in `4385e57`), but it is the documented hazard and the remedy is saying so.
+>
+> 📌 **The finding worth carrying:** *a comment naming a hazard is not a guard.* The KDoc above the
+> defect had said, since the original commit, that steps must not be added to a goal measured in
+> something else *"and inflate it by four thousand"* — and `#47` later **rewrote that same KDoc**,
+> adding two paragraphs above the sentence and leaving the `?:` beneath it untouched.
+>
+> **Row as claimed:**
+>
+> | `59-health-metric-mismatch` | `#59` — stop a Health Connect metric being pinned to an unrelated goal (`Strength Training` reads `245613/100`), and put the data repair to Ido | `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `kb-candidates/2026-08-23-59-health-metric-mismatch.md` · `CHANGELOG/2026-08-23/59-health-metric-mismatch.md` · `sessions/59-health-metric-mismatch.md` | **none — JVM unit layer only; no AVD, no adb, no `connectedDebugAndroidTest`** | 2026-08-23 |
 
 ### 🏁 `65-measure-proposal` — released 2026-08-23, this commit
 

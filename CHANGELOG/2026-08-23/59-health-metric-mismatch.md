@@ -1,6 +1,6 @@
 # 59-health-metric-mismatch — the fallback that credited a step count to a goal measured out of 100
 
-> **Summary:** [`#59`](https://github.com/idomarhaim/Android_Final_Project/issues/59)'s code half is fixed: `BuildHealthProposalsUseCase.match()` no longer falls back to *any* unpinned goal in the metric's category, so a Health Connect reading is only ever filed against a goal whose **unit agrees**, and otherwise proposes a new one. Four tests written red first, then the one-branch deletion that turns them green; **790 JVM unit tests, 0 failures**. The **data half is held for Ido and is the half that matters on his account** — the fix cannot reach a goal that is already pinned, so `Strength Training` keeps climbing until the pin is cleared.
+> **Summary:** [`#59`](https://github.com/idomarhaim/Android_Final_Project/issues/59)'s code half is fixed: `BuildHealthProposalsUseCase.match()` no longer falls back to *any* unpinned goal in the metric's category, so a Health Connect reading is only ever filed against a goal whose **unit agrees**, and otherwise proposes a new one. Four tests written red first, then the one-branch deletion that turns them green; **790 JVM unit tests, 0 failures**. The **data half is done too**, on Ido's explicit approval — the fix cannot reach a goal that is already pinned, so both mispaired goals were unpinned and their **83** Health Connect entries deleted. `Strength Training` and `Sleep 7 hours` both read **0/100** and are no longer fed. § *The repair, as run* below has the numbers.
 
 **Date:** 2026-08-23 · **Session:** `59-health-metric-mismatch` · **Mode:** AUTO · **Issue:** [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59)
 
@@ -130,8 +130,8 @@ them a duplicate goal on the next sync. A cache built to outrank its inputs cann
 re-reading its inputs.
 
 So the repair is out-of-band and it is **Ido's call in both modes** — it writes to a live account's
-history, and one of the three options deletes his progress entries. Put to him with the fix; nothing
-was touched.
+history, and one of the three options deletes his progress entries. It was put to him with the fix,
+and **he chose the second: unpin, then delete.** § *The repair, as run* below is what happened.
 
 | option | what it does | cost |
 |---|---|---|
@@ -173,8 +173,93 @@ Two candidates, both drained this session into `C:\Dev\JARVIS` — commit
 ## 🧭 Siblings
 
 `63-occurrences-and-recurrence` (claimed `74613cc`) and `65-measure-proposal` (row written, not yet
-committed at the time of writing) are both live in this tree. Neither overlaps this session's paths:
+committed at the time of writing) were both live in this tree, and both have since shipped and
+released their rows. Neither overlaps this session's paths:
 `63` owns `data/firestore/**`, `Occurrence.kt`, `Task.kt` and the rules tests; `65` owns the measure
 proposal surface and `functions/**`. This commit names its three source paths explicitly and touches
 `SESSIONS.md` not at all — `65`'s row is sitting uncommitted in that file and is theirs to publish.
 
+
+### ⚠️ A sibling's commit rode along with this session's push, and precondition 5 says to name it
+
+`git push` is **branch-scoped, not commit-scoped**. The six preconditions were run against
+`@{u}..HEAD` and that range held one foreign commit — `74613cc`, `63`'s *claim* (a board row and a
+`status: active` line, no source), which Ido delegated the call on and which was judged harmless to
+publish. **By the time the push executed, `63` had committed again**, so the push actually carried:
+
+| commit | whose | what |
+|---|---|---|
+| `74613cc` | `63-occurrences-and-recurrence` | its claim — read, adjudicated, deliberately pushed |
+| `7c457c4` | `63-occurrences-and-recurrence` | **`#63` itself**, 19 files, 3 171 insertions — **not read by this session, and not in the range when the range was read** |
+
+Nothing was harmed: `7c457c4` is finished work carrying its own changelog, and `63` released its row
+in `4385e57` a minute later. But it is the exact hazard the rule documents — *nothing you do stops a
+sibling's commit riding along* — and the remedy is naming it rather than pretending the range was
+what it said. Recorded here because the reply that reported it scrolls away and this file does not.
+
+## The repair, as run
+
+Ido chose **unpin, then delete**. Run against the live `goalpilot-56e30` through the Cloud Firestore
+REST API, authenticated as the project owner by the `gcloud` SDK already logged in on this machine.
+
+**Read first, and the read is what made the deletion safe.** Both mispaired goals were listed in
+full before anything was written:
+
+| goal | id | category | measure | pinned to |
+|---|---|---|---|---|
+| `Strength Training` | `Syregg1BrcORq0B7QvuM` | `FITNESS` | **none** — `measureWord`, `measureKind` and legacy `unit` all `null` | `hc:goal:steps` |
+| `Sleep 7 hours` | `jKmjNFEF7MI8FslJcNyd` | `SLEEP` | **none**, same three fields | `hc:goal:sleep` |
+
+Both carry **no measure at all**, which is the case the third new test covers — under the fixed
+matcher neither could ever have been chosen. That is the diagnosis confirmed against the live data
+rather than against the issue text.
+
+**The empty-word reading was itself verified rather than trusted.** Every goal on both accounts came
+back with an empty measure word, *including one the sync itself creates with `"steps"`* — which
+reads as a broken field reader. Dumping the raw documents settled it: `Strength Training` genuinely
+stores `measureWord: nullValue`, while the sync-created goal on the second account is a pre-`#11`
+document carrying the legacy `unit: "steps"`, which `GoalDto.resolvedMeasure()` still resolves to a
+measure word. The reader was right; one more command proved it.
+
+**What was deleted:**
+
+| goal | progress entries | of which `hc:*` | hand-logged | sum deleted |
+|---|---|---|---|---|
+| `Strength Training` | 58 | **58** | **0** | `245612` steps |
+| `Sleep 7 hours` | 25 | **25** | **0** | `165.5` hours |
+
+Those two sums are the numbers on the Goals screen — `245613` at the time of filming, `165.5`
+exactly. **Zero hand-logged entries on either goal**, so nothing Ido typed was at risk and both
+goals return to their true state rather than to an arbitrary one.
+
+**Unpin first, delete second, and the order is not cosmetic.** The app syncs on every foreground and
+another session held the AVD. Had a sync fired between the two steps, unpin-first means it writes to
+a *new* goal; delete-first would mean it re-wrote all 83 entries back onto the still-pinned wrong
+one.
+
+**Verified by re-reading, not by the writes returning 200:**
+
+```
+Strength Training    healthSourceKey=<null>  progress entries remaining=0
+Sleep 7 hours        healthSourceKey=<null>  progress entries remaining=0
+```
+
+Both goals now read `0/100`, are unpinned, and the next sync will propose `Weekly steps` and
+`Weekly sleep` instead — the behaviour the fix was written to produce.
+
+**Not touched:** the project's second account (`rachil751@gmail.com`) — a different person's data,
+and not mispaired anyway. Its `Weekly steps` goal carries the legacy `unit: "steps"`, which resolves
+to a matching measure word, so the fixed matcher still finds it and it will *not* be duplicated.
+Checked before concluding, because *"does this fix orphan the legacy goals?"* is the one way it
+could have done harm.
+
+**Backup.** Every deleted document was written to `deleted-entries-59-2026-08-23.json` in this
+session's scratchpad before the first delete. Deliberately **outside the repo**: this is one
+person's private progress history and the GoalPilot repo is public. It is a session-temp path, so
+treat it as a short-lived safety net rather than an archive.
+
+## `#62` is unblocked as far as this ticket goes
+
+`#62` (re-record the tour) was listed as blocked on `#59`. The Goals screen no longer shows
+`245613/100`, so that dependency is cleared. `#62`'s other two blockers, `#60` and `#61`, are
+untouched by this session.
