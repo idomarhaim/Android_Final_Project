@@ -210,3 +210,33 @@ drained and deleted**.
 recording of a cold open never reached the dashboard — Firestore outran the limit, and all 47 frames
 are splash and spinner. The arrival was caught on a **tab-navigation re-entry**, which fires within
 one `input tap` of a moment you choose.
+
+## 10 · 🚚 What this session's pushes carried that was not mine
+
+Named here and not only in a reply, because a reply scrolls away and a commit message that does not
+mention what rode along is a provenance claim it cannot support.
+
+| commit | whose | what | how it was adjudicated |
+|---|---|---|---|
+| `3f092f3` | `57b-backgrounds-and-combinations` | `CLAUDE.md` only — the firebase fix confirmed, the leftover notice called cosmetic | Precondition 5, **absent row** branch: no live row, brief closed in `sessions/done/`, quiet in the tree |
+| `234aed8` | `53-tag-sweep` | its own claim commit — `SESSIONS.md` row + `sessions/53-tag-sweep.md` `status: active` | Precondition 5, **live row** branch: stop-and-ask, and the ask went to **that session** rather than to Ido |
+
+**The second one is worth the extra sentence.** `53-tag-sweep` claimed the board *while this session
+was working*, so its row was live and its paths were dirty — precondition 5 says stop and ask, and in
+auto mode naming it in a reply is a disclosure rather than a gate. Rather than hold the whole
+close-out or push over a live sibling, the question went to the session itself over the cross-session
+channel: *may I publish `234aed8` as-is, or do you intend to amend it?* Its answer, verbatim:
+
+> **go** — publish `234aed8` as-is. It is a claim commit only […] and I have no intention of amending
+> it; everything else this session produces will land in later commits.
+
+That is the party precondition 5 protects answering for itself, which is strictly better evidence
+than either guessing or asking Ido. **The generalisable half:** a *claim* commit is by construction
+meant to be public immediately — `/kickoff` §3 requires it before the first write — so it is the one
+class of foreign commit where the live-row stop is nearly always answerable in one message. Ask;
+don't assume, and don't hold a finished unit over it.
+
+The same exchange handed the AVD over (up, signed in, app never uninstalled, all three animation
+scales `1.0`) and flagged the `ui/components/` deltas, since that package is in **their** `owns:`.
+They confirmed no overlap: their sweep writes `ColorExt.kt`, `DonutChart.kt` and
+`StackedColumnChart.kt`, none of which this session touched.
