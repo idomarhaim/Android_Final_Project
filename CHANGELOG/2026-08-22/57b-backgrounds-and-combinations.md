@@ -228,3 +228,41 @@ session.
 reinstalled while the change under test lived in the *main* one. It looks exactly like "the fix
 did nothing". Same family as AGENTS.md's `${PIPESTATUS[0]}` warning: the run reports the **last
 build's** results and says nothing about it. The tell was the byte count, not the images.
+
+---
+
+## 📌 Addendum — the Firebase CLI root cause, and a held push (2026-08-22, later)
+
+**Ido asked why the token was dead and how to renew it. The premise was mine and it was false.**
+Three sessions-worth of my own claims are retracted in [CLAUDE.md](../../CLAUDE.md); the short
+version is that `firebase-tools` is broken by a **file lock**, not by authentication.
+`~/.config/configstore/firebase-tools.json` is held open by another process without share-delete,
+so `write-file-atomic`'s rename can never replace it. The OAuth half returns **200** to both the
+refresh and the code exchange; `auth.js` then fails while *persisting* the result, inside a `try`
+whose `catch` throws `invalidCredentialError()` — which is how a file lock is reported as *"your
+credentials are no longer valid"*.
+
+Proved three ways (browser login succeeded then died; rename fails onto that one filename and
+succeeds onto any other, with Windows naming the lock outright; and redirecting `XDG_CONFIG_HOME`
+to an empty directory makes everything work and **removes the MOTD warning**, which was the same
+lock one line earlier and not a network symptom at all). Four earlier theories are recorded dead
+so nobody re-runs them — including the version bump Ido actually performed.
+
+`Inferred:` the holder is a VS Code extension bundling `firebase-tools`, most likely
+`googlecloudtools.firebase-dataconnect-vscode`. Not confirmed to a PID: that needs `handle.exe`,
+and the process that would have to be stopped to test is the editor this session runs in.
+
+### ⏸️ The push is HELD, and this is the rule working rather than a failure
+
+`57c-chart-volume-and-raised` opened in a **parallel session** while this was being written, and
+committed its claim (`37cb6bc`) into the shared working tree. `git push` is **branch-scoped, not
+commit-scoped**, so that commit is an ancestor of mine and would go up with my push. It sits under
+a **live row** in *Active claims*, which is precondition 5's stop-and-ask case: that session is
+mid-unit and has not asked for its claim to be published.
+
+So: **committed, not pushed.** `1242157` and `37cb6bc` are both local. `Observed:` re-checked at
+the moment of writing — `git rev-list --count HEAD..@{u}` is `0`, so nothing has overtaken them
+and they are still unpublished.
+
+Nothing in this addendum is urgent: the App Distribution build already shipped (the Gradle plugin
+authenticates separately and is unaffected), and `#57` c does not touch Firebase at all.
