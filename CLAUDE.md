@@ -50,7 +50,23 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
   export FUNCTIONS_DISCOVERY_TIMEOUT=120
   firebase deploy --only functions --non-interactive
   ```
-  succeeded unchanged. `firebase-tools` is installed and logged in as `name.iddo@gmail.com` on `goalpilot-56e30`.
+  succeeded unchanged. `firebase-tools` is installed, and `firebase login:list` still prints
+  `name.iddo@gmail.com` on `goalpilot-56e30`.
+  - ⚠️ **But that token is DEAD as of 2026-08-22, and `login:list` is exactly the command that
+    will not tell you so.** *(Found by `57b-backgrounds-and-combinations`.)* Every command that
+    actually talks to Google — `projects:list`, `appdistribution:testers:list`, and therefore
+    `deploy` — fails with *"Authentication Error: Your credentials are no longer valid. Please run
+    `firebase login --reauth`"*, while `login:list` happily reports the cached identity. So
+    **`login:list` is not a liveness check**; `firebase projects:list` is the cheap one that is.
+    **This blocks the standing-authorisation deploy path** ([`docs/OPERATIONS.md` §
+    *Standing authorisation*](docs/OPERATIONS.md)) until it is repaired, and repairing it is
+    **Ido's**, not a session's: `firebase login --reauth` opens a browser and cannot be driven
+    from a tool shell — same shape as `gh auth login --web` above.
+  - ✅ **The Gradle App Distribution plugin authenticates SEPARATELY and still works.**
+    `Observed:` 2026-08-22, `./gradlew :app:appDistributionUploadRelease` uploaded a signed
+    release to `goalpilot-56e30` **in the same minute** that `firebase projects:list` was
+    refusing to authenticate at all. So a dead CLI token does **not** mean "no Firebase
+    capability" — check the specific path before reporting yourself blocked.
   - ⚠️ **The sentence that stood here — *"the deploy is gated by Ido's authorisation, never by capability"* — is FALSE as of 2026-08-21 and is deleted rather than hedged.** Ido gave a **standing** grant that day covering every Firebase action that costs nothing, the functions deploy included: *"I already gave you authorisation to do any Firebase action that does not require me to pay money."* Canonical text, boundary and honest limit: [`docs/OPERATIONS.md` § *Standing authorisation*](docs/OPERATIONS.md). **Deploy; do not wait.** What stays always-ask is narrow and named there — moving the billing plan, provisioning a resource that bills by existing, deleting anything, project settings or IAM. `outward-action-governance.md` is unchanged and still governs everything outward that is *not* this grant — but note **why** the old line was wrong, because it is the more useful half: a deploy to Ido's own project **reaches nobody**, and that rule's own discriminator is *"autonomy may persist where the blast radius is a repo; where it reaches people, it is re-granted per task or not at all."* Five sessions stopped at this gate applying a people-reaching rule to an action that does not reach people. The grant is that rule applied correctly, not an exception to it.
   - **The cost of the old wording, measured:** `#55` shipped a client whose document shape the deployed functions could not read, and the session stopped at the gate rather than deploying — leaving Ido's live points total reading **40 instead of 70** until he answered. The asking was the gate; capability never was.
 - **`firebase functions:log` truncates and can fail outright — check the line count before believing a `grep` over it.** A bare `firebase functions:log` returned only `Error: Failed to list log entries`, and three `grep -c` over that file returned a very convincing **0, 0, 0**. `--only <function>` works but its window may still end before the call you are looking for. Print `wc -l` beside every count, per `kb/dev/look-at-your-own-output.md` §4k.

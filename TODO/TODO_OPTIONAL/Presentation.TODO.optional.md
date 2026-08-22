@@ -167,3 +167,38 @@ so it is not re-derived from the code.
   Compose-side helper for the same §4.8 defect class. Mine is the string half and has no Android
   dependency, which is what let it be tested on the JVM; when both exist, the Compose one should
   call it rather than repeat it.
+
+## `#57` b — settled by Ido, parked for when he wants to go deeper (2026-08-22)
+
+- [ ] **Revisit the background axis' WIDTH if you ever want to.** `#57` b ships four grounds
+  (`MATCH · GLOW · SPECTRUM · PLAIN`) rather than the prototype's two-state *shared / native*
+  toggle. That was **the session's call, not Ido's** — the brief said to ask him and the
+  A-vs-B fork turned out to be false (both write one value, `GpMaterialSpec.backdrop`, so the
+  toggle's two states are two entries in the enum). **Ido then settled it on 2026-08-22:**
+  *"do now what you think is right and leave it in FUTURE or BACKLOG so when I have time to go
+  deeper I'll do it."* So there is **no open question** — this line exists only so the decision
+  is findable when he does.
+  - Narrowing it is one deletion: drop `SPECTRUM` and `PLAIN` from `AppBackground`, and the
+    picker, the persistence, the tests and the consequence lines all follow, because
+    `AppBackground.entries` is the only enumeration.
+  - What he would be giving up: `PLAIN` is the only way to put a soft material's flat ground
+    under **glass**, and `SPECTRUM` is the only four-light ground. Neither is reachable from a
+    two-state toggle.
+- [ ] **The `Scaffold(containerColor = Color.Transparent)` fix is rendered on ONE screen.**
+  `#57` b found that every screen's `Scaffold` was painting an opaque fill over
+  `Modifier.gpPage`, so no per-material ground had ever been visible anywhere, and fixed it at
+  all twelve call sites plus ten `TopAppBar`s. **Only `SettingsScreen` was photographed**, because
+  `MaterialRenderPass` drives `SettingsContent` — a stateless, fully hoisted composable — while
+  the other ten screens take a `hiltViewModel()` and would need a signed-in account and a live
+  Firestore to render anything.
+  - **Deliberately NOT given a session of its own** *(decision: this session's, 2026-08-22, on
+    Ido's question "next kickoff or its own kickoff?")*. Photographing the other ten needs either
+    a **stateless `*Content` split across ten feature files** — a refactor far larger than the
+    one-parameter change it would verify — or Ido signed in on the AVD and manual navigation.
+    Against a change that is **one uniform parameter with no per-screen logic**, and whose
+    *contrast* half is already asserted app-wide by `ThemePaletteTest`'s new `Ground` matrix,
+    that is ceremony out of all proportion to the risk (`scale-adaptive-ceremony.md`).
+  - **It closes for free.** `57c-chart-volume-and-raised` renders the analytics screen and
+    `57d-entrance-animation` renders the dashboard — the two busiest grounds in the app — and
+    any session that runs the app at all sees the rest. If one of them finds a screen that reads
+    wrong on a ground, that is the finding and it belongs to that session.

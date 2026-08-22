@@ -4241,6 +4241,33 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+> 📌 **`57b-backgrounds-and-combinations` ADDENDUM 2026-08-22 — Ido settled the one open
+> deviation, and the session shipped a signed release.** The row below stays released; this is a
+> follow-up commit, not a re-claim of territory.
+>
+> 1. **The A-vs-B question is CLOSED and there is no open question on it.** Ido, 2026-08-22:
+>    *"do now what you think is right and leave it in FUTURE or BACKLOG so when I have time to go
+>    deeper I'll do it."* A **delegation**, recorded as such — the four-value `AppBackground`
+>    stands as the **session's** decision, not his endorsement, and the revisit is parked in
+>    [`TODO/TODO_OPTIONAL/Presentation.TODO.optional.md`](TODO/TODO_OPTIONAL/Presentation.TODO.optional.md)
+>    with the exact one-deletion path to narrow it.
+> 2. **The unverified render coverage gets NO session of its own** — same file, with the reasoning.
+>    Photographing the other ten screens needs a stateless `*Content` split across ten feature
+>    files, or Ido signed in on the AVD; `MaterialRenderPass` can drive `SettingsContent` only
+>    because it is fully hoisted. `57c` and `57d` render the two busiest grounds for free.
+> 3. ⚠️ **`firebase-tools`' CLI TOKEN IS DEAD, and `firebase login:list` does not say so** — it
+>    prints the cached identity while `projects:list` / `deploy` fail with *"credentials are no
+>    longer valid"*. **This blocks the standing-authorisation deploy path** until Ido runs
+>    `firebase login --reauth` (browser flow, his to run). **The Gradle App Distribution plugin
+>    authenticates separately and still works** — `Observed:` an upload succeeded in the same
+>    minute the CLI refused. Recorded in [CLAUDE.md](CLAUDE.md).
+> 4. 📦 **A signed release build was distributed** — `app-release.apk`, real release key
+>    (`CN=Ido Marhaim`, SHA-1 `e7d5534c…`, verified with `apksigner`, **not** the debug fallback),
+>    uploaded to App Distribution release `1hsoupi086d88` for the `testers` group, with
+>    `release-notes.txt` written for it. `Untested:` **who** is in that group — the CLI could not
+>    list testers (see 3), so whether anyone besides Ido received it is unconfirmed.
+
+
 > 🏁 **`57b-backgrounds-and-combinations` RELEASED 2026-08-22 — `9e9fdff`.** No singletons held:
 > AVD `Pixel_10_Pro_XL` is free, adb and the Gradle daemon are free.
 >
