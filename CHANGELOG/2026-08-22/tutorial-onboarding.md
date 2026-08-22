@@ -255,3 +255,21 @@ construction.
 - [Mastering Coach Marks for Effective Mobile App Onboarding](https://www.go2blog.com/2026/05/mastering-coach-marks-for-effective-mobile-app-onboarding/)
 - [Reveal — coach marks for Compose Multiplatform](https://github.com/svenjacobs/reveal)
 - [A Deep Dive into Compose's `onGloballyPositioned`](https://proandroiddev.com/from-pixels-to-perfection-a-deep-dive-into-composes-ongloballypositioned-cc3ad0d8ab01)
+
+---
+
+## 9. What became knowledge (added in the release commit)
+
+The three candidates this session flagged are drained; `kb-candidates/2026-08-22-tutorial-onboarding.md`
+is deleted, fully drained. Pages landed in `C:\Dev\JARVIS` `5956953`, pushed, `Check-KbLinks` clean
+over 111 pages:
+
+| Claim | Landed in |
+|---|---|
+| An options bag encodes the preconditions of **one** call site; a second caller that borrows it can get a **silent no-op** rather than an error | **new** `kb/dev/copied-options-are-a-silent-no-op.md` |
+| A **walkthrough** of a stepped flow enters it the one way its author does — the matrix is `origins × directions`, and step count is not coverage | `kb/dev/look-at-your-own-output.md` **§4n** |
+| The Git Bash path rewrite is not only `adb pull` — a device path as a bare **`adb shell` argument** goes too | `kb/dev/android-device-verification.md` **§8a widened** |
+
+Two repos, so no single commit holds both ends of the candidate↔page tie; the tie is the journal entry
+at `kb/log/2026-08-22.md`.
+

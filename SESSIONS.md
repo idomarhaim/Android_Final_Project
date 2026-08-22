@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `tutorial-onboarding` | In-app first-run guided tour: spotlight coach marks over the real UI, one required action, skippable, replayable from Settings | `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/` (new) · `ui/root/GoalPilotRoot.kt` · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/goals/GoalsScreen.kt` · `feature/settings/SettingsScreen.kt` · `app/src/main/res/values/tutorial_strings.xml` (new) · `app/src/main/res/values-iw/tutorial_strings.xml` (new) · `app/src/test/java/com/idomarhaim/goalpilot/ui/tutorial/` (new) · `app/src/test/java/com/idomarhaim/goalpilot/testing/FakeAppPreferences.kt` (new) · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `app/src/androidTest/.../ui/{TutorialOverlayUiTest,TutorialNavigationUiTest}.kt` (new) · `app/src/androidTest/.../ui/{SettingsScreenTest,MaterialPickerUiTest,MaterialRenderPass}.kt` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (new) | AVD `emulator-5554` + adb + the Gradle daemon | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
@@ -4375,6 +4374,46 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`tutorial-onboarding` RELEASED 2026-08-22 — this commit.** Ido's ask — *a tutorial inside the
+> app, pop-up boxes explaining each part, guiding the user to do things the first time, skippable,
+> with a button to bring it back* — shipped as a **seven-step guided tour** over the real app
+> (`8b4407e`), and this commit drains its three KB candidates and closes the row. Singletons free:
+> the AVD (`emulator-5554`), adb and the Gradle daemon.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED, and no device setting was changed.** Every run
+> used `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`; the account signed in on
+> the AVD is still signed in, and the tour was walked on it. What **was** changed on the device and is
+> worth knowing: this session's own app data now has `tutorial_seen_version = 1`, so **the tour will
+> not open on the next launch** — replay it from *Settings → Help → Replay tutorial*, or clear that
+> one key. It is the app's own preference file, not a device setting.
+>
+> ⚠️ **The defect worth carrying, and it is not about tutorials.** Replaying the tour from Settings
+> started it and left the app **on Settings** — `navigate()` called, nothing thrown, nothing logged,
+> route unchanged. The tour had been sharing the bottom bar's navigation options, and
+> `popUpTo(start) { saveState = true }` + `restoreState = true` is a **total no-op** when the target is
+> the start destination and the call comes from a screen pushed above it. **The identical call from a
+> tab works**, which is why 782 JVM tests, a 219-test instrumented suite and seven hand-taken
+> screenshots were all green over it: every instrument entered the flow at step one. Ingested as
+> `kb/dev/copied-options-are-a-silent-no-op.md` and `look-at-your-own-output.md` §4n
+> (`C:\Dev\JARVIS` `5956953`, pushed).
+>
+> 📌 **For the next session in `ui/`:** `ui/tutorial/` is new and no feature package knows it exists.
+> A screen that gains a widget the tour should point at tags it with
+> `Modifier.tutorialAnchor(TutorialAnchor.X)` and does nothing else — `TutorialStepsTest` fails the
+> build if an anchor is named by a step and tagged by nobody, or tagged and named by nobody.
+> `DashboardScreen`'s `PointsLevelCard` and `SmartAddCard` each gained a `modifier` parameter with a
+> default; nothing else moved.
+>
+> 📌 **`values-iw/tutorial_strings.xml` exists and `#51` is still frozen.** Not a resumption:
+> `HebrewLocaleResourceTest` is **app-wide**, so a new `values/` file owes its counterpart today.
+> `Observed:` moving the file out and re-running that class gives `7 tests completed, 1 failed`.
+> `AppLanguage.OFFERED` is untouched and nothing renders it.
+>
+> ⚠️ **`Untested:` no TalkBack pass was run.** The card is an `Assertive` live region carrying the
+> step's own words, which is verified to be *on the node*; that the announcement fires as intended is
+> `Inferred:`. Turning TalkBack on and listening to one step change is a few minutes on the AVD.
+
 
 > 🏁 **`53-material-naming` RE-CLAIM RELEASED 2026-08-22 — this commit.** The KB drain is done and
 > the candidate file is **deleted**, fully drained. Both entries landed as **updates in place** in
