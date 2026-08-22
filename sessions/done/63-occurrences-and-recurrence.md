@@ -2,7 +2,8 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
+commit: 7c457c4
 issue: 63
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Occurrence.kt
@@ -98,3 +99,42 @@ Choose well, and record the choice in the changelog so the next three sessions u
 
 The calendar surface (#60), Google sync (#61) and the success/failure run (#64). This ticket
 builds the thing all three read; it renders nothing.
+
+---
+
+## Result — `status: done`, 2026-08-23, `7c457c4`
+
+Every item in *What to build* shipped, and the two readings the spec left open are recorded
+where the next session will hit them rather than only here:
+
+1. **`occurrences`** — `users/{uid}/occurrences/{id}`, **flat and per-user**, the owning task as
+   a `taskId` field. Carries `googleEventId`, the confirmation state (the rung's `placement`,
+   unchanged from `#56`) and the outcome.
+2. **`repeatRule`** — a nested map on the task, `{unit, interval, weekdays, endKind, endDate,
+   endCount}` — plus **`pausedUntil: Long?`**.
+3. **Security rules** — `firestore.rules` **did not change**, and that is the finding: the
+   owner-only `users/{uid}/{document=**}` match already covers the collection, the same result
+   life areas produced. Six cases in `firestore-tests/` assert it, **mutation-checked**: narrowing
+   the wildcard fails exactly **1 of 6**, the owner-succeeds case. The other five pass vacuously.
+4. **"This occurrence, or all future ones?"** — `EditScope`, `ScheduleEdit`, `SchedulePlan` and
+   the pure `ScheduleEdits.apply`. 14 tests, several of them the same edit under both scopes
+   asserting that the two answers differ.
+
+**Naming, as the brief asked:** the spelling stayed `occurrences`; the rest is in
+`CHANGELOG/2026-08-23/63-occurrences-and-recurrence.md` §2, one row per decision.
+
+**The sharp edge:** `Task.isDone` was **left as a `Boolean`** — it is the *stored* leg, correct
+for every task in the database, and widening it would have rewritten every screen for a case
+none can be in. The three-way answer is `TaskSchedule.doneness`, and `Inferred:` §7.1's *"absent
+on a recurring task"* was read as **unbounded** recurrence alone.
+
+**Owed elsewhere, named rather than left to be found:** points **per occurrence**.
+`completionFacts` is keyed `{taskId}`, so a repeating task banks its points once; the
+occurrence's outcome records *the window was honoured* and banks nothing. Widening that key is a
+migration on live data and belongs to `#64`. `docs/PRODUCT_v0.3.md` §7.1 carries the same note.
+
+**Held at close** (neither is a defect in the work): the **push**, because
+`59-health-metric-mismatch`'s two commits are in the range and its board row is live; and the
+**KB drain** of `kb-candidates/2026-08-23-63-occurrences.md`, because `65-measure-proposal` holds
+`kb/dev/look-at-your-own-output.md` and `kb/log/` on the JARVIS board, which is where two of the
+three entries go. The candidate file is committed, so nothing is lost.

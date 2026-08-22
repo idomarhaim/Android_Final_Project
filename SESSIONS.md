@@ -17,7 +17,46 @@ before your first write. Normative rule:
 |---|---|---|---|---|
 | `59-health-metric-mismatch` | `#59` — stop a Health Connect metric being pinned to an unrelated goal (`Strength Training` reads `245613/100`), and put the data repair to Ido | `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `kb-candidates/2026-08-23-59-health-metric-mismatch.md` · `CHANGELOG/2026-08-23/59-health-metric-mismatch.md` · `sessions/59-health-metric-mismatch.md` | **none — JVM unit layer only; no AVD, no adb, no `connectedDebugAndroidTest`** | 2026-08-23 |
 | `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
-| `63-occurrences-and-recurrence` | `#63` — build the flat occurrence collection and the repeat rule, so *“this occurrence, or all future ones?”* becomes askable (the recurrence half `#56` deliberately left out) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Occurrence.kt` · `…/domain/model/Task.kt` · `…/domain/model/RepeatRule.kt` (new) · `…/domain/repository/**` (occurrence interface) · `…/data/firestore/**` · `…/core/FirestorePaths.kt` · `firestore.rules` · `firestore-tests/**` · `app/src/test/java/com/idomarhaim/goalpilot/domain/Occurrence*Test.kt` (new) · `kb-candidates/2026-08-23-63-occurrences.md` · `CHANGELOG/2026-08-23/63-occurrences-and-recurrence.md` · `sessions/63-occurrences-and-recurrence.md` | **Gradle daemon** (JVM unit layer) and the **local Firestore emulator** (`firestore-tests`, ports 8080/4000) — **no AVD, no adb, no `connectedDebugAndroidTest`**; `59-health-metric-mismatch` is JVM-only and does not contend for the emulator | 2026-08-23 |
+| `65-measure-proposal` | `#65` — the measure proposal: a silent dashed-square marker wherever an unmeasured goal is listed, and the offer itself only on the goal's own screen (§1.3, `C22` #44) | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/MeasureProposal.kt` (new) · `…/domain/usecase/ProposeMeasureUseCase.kt` (new) · `…/domain/repository/AppPreferencesRepository.kt` · `…/domain/repository/RecommendationRepository.kt` · `…/data/prefs/AppPreferencesRepositoryImpl.kt` · `…/data/remote/RecommendationRepositoryImpl.kt` · `…/core/util/Constants.kt` · `…/feature/goals/GoalDetailScreen.kt` · `…/feature/goals/GoalDetailViewModel.kt` · `…/feature/goals/MeasureProposalCard.kt` (new) · `…/ui/components/UnmeasuredMarker.kt` (new) · `…/ui/components/GoalCard.kt` · `functions/src/measure.ts` (new) · `functions/src/index.ts` · `functions/test/measure.test.mjs` (new) · `app/src/test/java/com/idomarhaim/goalpilot/domain/MeasureProposalTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/MeasureProposalUiTest.kt` (new) · `kb-candidates/2026-08-23-65-measure-proposal.md` · `CHANGELOG/2026-08-23/65-measure-proposal.md` · `sessions/65-measure-proposal.md` | **AVD (`emulator-5554`) + `adb`** — released by `tour-video`, and no other live row claims them; **Gradle daemon queued behind `63-occurrences-and-recurrence`**, which the board already records as shareable by queueing. ⚠️ `adb install -r` + `am instrument` only — never `connectedDebugAndroidTest`. **NOT `data/firestore/**` or `firestore.rules`** — `63` owns those, which is why the dismissal is stored in SharedPreferences rather than on the goal document | 2026-08-23 |
+> 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
+> `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
+> **local Firestore emulator** (ports 8080/4000, shut down cleanly).
+>
+> 📱 **NO DEVICE WAS TOUCHED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** No `adb`, no AVD, no
+> `connectedDebugAndroidTest`, no install of any kind. `65-measure-proposal` holds
+> `emulator-5554` and nothing here contended for it.
+>
+> ⏸️ **TWO THINGS ARE HELD, and neither is a defect in the work.**
+> **(1) The push.** `59-health-metric-mismatch`'s `d94c296` and `a014e36` are in
+> `@{u}..HEAD` and its row is **live** above, so auto-push precondition 5 stops rather than
+> publishing a live session's commits on my schedule. `Observed:` still unpublished as of the
+> commit that carries this note. It needs Ido's word, or `59`'s release.
+> **(2) The KB drain** of `kb-candidates/2026-08-23-63-occurrences.md` (3 entries).
+> `65-measure-proposal` holds `kb/dev/look-at-your-own-output.md` **and** `kb/log/` on the
+> **JARVIS** board, and two of the three entries land on that page while all three owe the
+> journal. Nothing is dropped — the candidate file is committed, and the next session that
+> lists the folder finds it.
+>
+> 📣 **`65-measure-proposal`, one thing to know about a file we both edited.**
+> `core/util/Constants.kt` went up in `7c457c4` carrying your `CloudFunctions.PROPOSE_MEASURE`
+> line beside my `FirestorePaths.OCCURRENCES`. A pathspec commits the working tree, so it could
+> not be subtracted; it is named in that commit message. Nothing else of yours rode along —
+> the index held only my ten files at commit time. Your `kb-candidates/2026-08-23-65-measure-proposal.md`
+> was left untouched.
+>
+> 📌 **The finding worth carrying, and it is about this suite rather than this feature.**
+> The six new `firestore-tests/` cases were mutation-checked by narrowing the wildcard so it no
+> longer covers `occurrences`: **1 of 6 failed**, and it was the owner-**succeeds** case. All
+> four denial cases stayed green, because a path matching *no rule* is denied — observationally
+> identical to a path denied *by* a rule. `AGENTS.md` already says pure negative tests pass
+> vacuously; what it does not say is the ratio, and **5 of 6 decorative** is the number that
+> changes how the next suite gets written.
+>
+> ⚠️ **And `BUILD SUCCESSFUL` lied once, in a way only a shared tree produces.**
+> `:app:testDebugUnitTest` returned `UP-TO-DATE` in 7 s over test classes that had never
+> executed — a sibling had run the task in between, so the green belonged to **their** run over
+> a tree holding **their** uncommitted work. `--rerun` gave `1 executed` in 27 s. Read the task
+> line, not the last line.
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
