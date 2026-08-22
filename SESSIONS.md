@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57c-chart-volume-and-raised` | [#57](https://github.com/idomarhaim/Android_Final_Project/issues/57) c — chart volume + raised-3D axis | `ui/components/DonutChart.kt`, `ui/components/SimpleBarChart.kt`, `ui/components/StackedColumnChart.kt`, `ui/components/ProgressRing.kt`, `ui/theme/MaterialSpec.kt`, `domain/repository/AppPreferencesRepository.kt`, `data/prefs/AppPreferencesRepositoryImpl.kt`, `feature/settings/SettingsScreen.kt`, `test/.../ThemePaletteTest.kt`, `CHANGELOG/2026-08-22/57c-chart-volume-and-raised.md`, `sessions/57c-chart-volume-and-raised.md` | AVD + adb + Gradle daemon (claimed for the render pass and the release build) | 2026-08-22 |
 > 🏁 **`58-instrumented-order` RELEASED 2026-08-21 — this commit.** No singletons held; the AVD,
 > adb and the Gradle daemon are free.
 >

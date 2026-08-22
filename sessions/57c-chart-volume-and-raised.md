@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 57
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/DonutChart.kt
