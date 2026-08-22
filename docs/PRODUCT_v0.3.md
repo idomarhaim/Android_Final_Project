@@ -1882,9 +1882,9 @@ permitted to write**, and the Function applies it when every row agrees.
 | | `points` | **stops being stored** — a view of effort | derived |
 | | `isDone` | **splits three ways** — stored with no occurrences, **derived** with them, **absent** on a recurring task | — |
 | | `progressContribution` | **deleted** — moves onto the edge as `contribution`, defaulting to **undefined** | — |
-| `…/tasks/…/repeatRule` | the rule | **new** | — |
-| | `pausedUntil: Long?` | **new** | backfill `null` |
-| `…/occurrences` | the whole entity | **new** — flat, one per *when*, holding `googleEventId`, the confirmation state and the outcome | — |
+| `…/tasks` | `repeatRule` | **new** — ✅ built in `#63` as a **nested map on the task**, `{unit, interval, weekdays, endKind, endDate, endCount}` | backfill **none**: absent means *does not repeat*, which every existing task is |
+| | `pausedUntil: Long?` | **new** — ✅ built in `#63` | backfill `null` |
+| `users/{uid}/occurrences` | the whole entity | **new** — flat, one per *when*, holding `googleEventId`, the confirmation state and the outcome. ✅ **Built in `#63`**, and the spelling stayed `occurrences` | — |
 | `…/tasks` | `occurrenceRung` + `occurrenceStart` + `occurrenceEnd` + `occurrencePlacement` | **new in `#56`**, four fields on the **task** — see the deviation note below | backfill **none**: absent means *this task has no when*, which every existing task is |
 | `…/progressEntries` | edit history, soft delete, optional duration | **extended** | one nullable field, backfilled `null` |
 | `…/completionFacts` | `minutes` + `difficulty` + `completedAt` | **new** — the sum the points total is taken over | derived from the `completedAt` already stored |
@@ -1928,6 +1928,36 @@ that is exactly what lets a non-owner join something they cannot edit.
 > **The cost, stated rather than hidden.** Until that migration, this app cannot express a moved
 > instance, a skip, or a recurring task, and `isDone`'s three-way split two rows above stays
 > two-way. Nothing in `#56` pretends otherwise — `Occurrence`'s KDoc says it in the same words.
+
+> ✅ **RESOLVED 2026-08-23 by [`#63`](https://github.com/idomarhaim/Android_Final_Project/issues/63)
+> — the migration above is the one that happened, and the cost above is paid.** The collection
+> exists at `users/{uid}/occurrences`, `repeatRule` and `pausedUntil` are on the task, and
+> `Task.occurrence` is now the series' **template and start** rather than the whole schedule.
+> `#56`'s four fields did not move and did not change: a task that does not repeat reads exactly
+> as it did, which is every task written before this date. **The names are this file's, kept**
+> — `occurrences` as spelled here, with the owning task as a `taskId` field.
+>
+> **Two readings this table left open, resolved and recorded rather than assumed:**
+>
+> 1. **Flat means per-user, not under the task.** `users/{uid}/occurrences`, so §4.3's calendar
+>    reads a date range across every task in one query instead of a collection-group query — and
+>    so the owner-only `users/{uid}/{document=**}` match covers it with **no `firestore.rules`
+>    change at all**, the same finding life areas produced. `firestore-tests/` gained six cases
+>    asserting exactly that; `Observed:` narrowing the wildcard makes the owner case fail, and
+>    leaves all four denial cases passing vacuously.
+> 2. ***"absent on a recurring task"* fires on **unbounded** recurrence alone.** A rule that ends
+>    — *ten times*, *until 1 September* — is recurring and has a complete set of windows, so it
+>    has an answer, and returning *no answer* for it would invent an absence
+>    [§0.4](#04-legal-but-never-silent-c7-refined-by-c13-5) forbids. `Inferred:` the reading
+>    resolves toward what the sentence protects — an infinite series cannot be finished. Same
+>    move `#56` made for §2.3's two missing miss names, recorded in `Doneness.Unanswerable`.
+>
+> ⚠️ **One thing this row still promises that `#63` did not build: points per occurrence.**
+> `…/completionFacts` is keyed `{taskId}`, one per task, so a repeating task banks its points
+> once. The occurrence's own outcome records *the window was honoured* and banks nothing —
+> widening that collection's key is a migration on live data and belongs to
+> [`#64`](https://github.com/idomarhaim/Android_Final_Project/issues/64), which is the reader
+> that needs it. Stated here rather than left for the next session to discover.
 
 ### 7.2 Code sites this spec changes or deletes
 

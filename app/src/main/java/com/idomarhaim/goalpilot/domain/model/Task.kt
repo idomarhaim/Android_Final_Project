@@ -164,12 +164,43 @@ data class Task(
      * no `missedAt`, and no field a sweep would have to keep true — which is what makes
      * *"the reminder re-checks at fire time"* free rather than a second schedule to maintain.
      *
-     * **At most one**, and §2.1 wants more: a *rule* on the task plus occurrence documents, so
-     * that *"this occurrence, or all future ones?"* is askable. `#56` builds the occurrence
-     * half; recurrence is the other half and is not here. See [Occurrence] for why arriving at
-     * it is additive rather than a rewrite.
+     * **No longer at most one** (`#63`). §2.1 wants a *rule* on the task plus occurrence
+     * documents, so that *"this occurrence, or all future ones?"* is askable: `#56` built the
+     * occurrence half and left the rule out, and [repeatRule] below is that rule. With one
+     * present this field becomes the series' **template and start** rather than the whole
+     * schedule, and the instances the user has touched are documents in
+     * `users/{uid}/occurrences`. Arriving was additive exactly as [Occurrence] predicted —
+     * nothing in this field's meaning changed for a task that does not repeat, which is every
+     * task written before `#63`.
      */
     val occurrence: Occurrence? = null,
+    /**
+     * **How often the occurrence comes round** — §2.1's rule, the half `#56` deliberately left
+     * out ([#63](https://github.com/idomarhaim/Android_Final_Project/issues/63)).
+     *
+     * `null` is the common case and means *this happens once*, which is what every task written
+     * before `#63` is. With a rule, [occurrence] stops being *the* occurrence and becomes the
+     * **template and the start**: its rung, its time of day and its duration are copied to every
+     * generated instance, and its date is where the series begins. Nothing else is stored,
+     * because §2.1 wants a rule that generates rather than 26 duplicate documents a year.
+     *
+     * The instances the user has actually touched — moved, skipped, done, or synced to Google —
+     * are documents in `users/{uid}/occurrences`, and [TaskSchedule] is where the two meet.
+     * A rule with no [occurrence] generates nothing, which is the honest reading of *"how often"*
+     * with no *"starting when"*.
+     */
+    val repeatRule: RepeatRule? = null,
+    /**
+     * Suppress generated instances that open before this instant, or `null` for *not paused*
+     * (§7.1, whose name and `Long?` type are normative).
+     *
+     * **It reaches generated instances only.** A stored occurrence is a record that something
+     * was done, skipped or moved, and §2.3 is explicit that *"a missed occurrence is never
+     * edited — it is history"*; hiding those because the task is paused would delete exactly
+     * the evidence §4.7 counts. See [TaskSchedule.occurrencesIn], which also says why the zone
+     * this instant is compared in is a parameter rather than a hidden default.
+     */
+    val pausedUntil: Long? = null,
     val createdAtEpochMillis: Long = 0L,
     /**
      * The completion fact, or `null` when the task is not done (§1.4, `#55`).
@@ -192,7 +223,17 @@ data class Task(
      */
     val goalId: String? get() = goalEdges.firstOrNull()?.goalId
 
-    /** Whether the task is done — which is exactly *whether a completion fact exists*. */
+    /**
+     * Whether the task is done — which is exactly *whether a completion fact exists*.
+     *
+     * ⚠️ **This is the *stored* leg of a three-way split** (§7.1, `#63`): with no occurrences it
+     * is the answer, with them the answer is **derived** from the occurrences, and on an
+     * unbounded series there is **no answer at all**. It stays a plain `Boolean` because that
+     * is correct for every task in the database today — the occurrence collection is new and
+     * nothing is in it — and widening it would have rewritten every screen that reads it for a
+     * case none of them can be in. Ask [TaskSchedule.doneness] where occurrences are in play;
+     * [Doneness] carries all three and says which one it gave you.
+     */
     val isDone: Boolean get() = completion != null
 
     /** When it was completed, or `null`. Cannot disagree with [isDone]; they are one field. */

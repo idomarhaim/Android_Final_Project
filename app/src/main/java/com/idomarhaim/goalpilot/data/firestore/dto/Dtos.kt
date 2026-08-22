@@ -247,6 +247,33 @@ data class TaskDto(
      * rung is `BLOCK`, so a stored value can never contradict a rung that has no placement.
      */
     var occurrencePlacement: String? = null,
+    /**
+     * §2.1's recurrence rule, or absent for a task that happens once (`#63`, §7.1).
+     *
+     * A **nested map** rather than four more flat fields, for the reason the four above are
+     * flat and this is not: those four describe one value the task genuinely has, while this
+     * describes a *different* object that happens to be stored here. Nesting it means
+     * `repeatRule` is present or absent as a whole, so there is no state in which a stored
+     * interval sits beside an absent unit and something has to decide what that means.
+     *
+     * Absent on every document written before `#63`, and absent means *does not repeat* —
+     * which every existing task genuinely is, so there is **no backfill and nothing to
+     * migrate**, exactly as with the four occurrence fields.
+     */
+    var repeatRule: RepeatRuleDto? = null,
+    /**
+     * Epoch millis before which generated instances are suppressed, or absent for *not paused*
+     * (§7.1, whose name and `Long?` type are normative).
+     *
+     * ⚠️ **The one instant in the scheduling set, and it is the spec's choice rather than this
+     * file's.** Everything else about a *when* is stored as local text, and
+     * [occurrenceStart] explains at length why a **day** stored as millis moves between time
+     * zones. A pause is not a day — it is a moment after which the task resumes — so millis is
+     * defensible, but the comparison against a local `opensAt` still needs a zone, and
+     * `TaskSchedule.occurrencesIn` therefore takes one as a parameter instead of reaching for
+     * `systemDefault()` where nobody would see it.
+     */
+    var pausedUntil: Long? = null,
     var createdAt: Long = 0L,
     /** ⚠️ **Legacy — the pre-`#55` completion stamp.** See [done]. */
     var completedAt: Long? = null,
@@ -269,6 +296,96 @@ data class CompletionFactDto(
     var completedAt: Long = 0L,
     var minutes: Int = 30,
     var difficulty: String = "ROUTINE",
+)
+
+/**
+ * §2.1's recurrence rule, as it is stored inside [TaskDto.repeatRule] (`#63`).
+ *
+ * ### `endKind` is a discriminator, not a third bound
+ *
+ * The domain's `RepeatEnd` is a sealed type with exactly one of three answers, and the wire
+ * cannot nest a sealed type. So it names which answer it is and carries the payloads beside
+ * it — and the mapper reads **only the field the discriminator names**, so a stray [endDate]
+ * on an `AFTER_COUNT` rule is ignored rather than adjudicated. That is the same contract
+ * [TaskDto.occurrenceEnd] already has with [TaskDto.occurrenceRung], and it is what keeps the
+ * *"exactly one bound"* guarantee true after a round trip.
+ *
+ * An unrecognised [endKind] reads as `NEVER` for the reason `occurrenceRung` reads an
+ * unrecognised rung as absent: a bound this build cannot honour is a bound it must not
+ * pretend to, and *"it does not stop"* is the one reading that cannot silently truncate a
+ * user's series.
+ */
+data class RepeatRuleDto(
+    /** `DAY` | `WEEK` | `MONTH` | `YEAR`. Unrecognised or absent reads as *no rule at all*. */
+    var unit: String? = null,
+    /** How many [unit]s between instances. Below 1 is coerced to 1 — a 0 would never advance. */
+    var interval: Int = 1,
+    /** `MONDAY`…`SUNDAY`, for a `WEEK` rule. Empty means the anchor's own weekday. */
+    var weekdays: List<String> = emptyList(),
+    /** `NEVER` | `ON_DATE` | `AFTER_COUNT`. Absent reads as `NEVER`. */
+    var endKind: String? = null,
+    /** ISO-8601 `2026-09-01`, read only when [endKind] is `ON_DATE`. Inclusive. */
+    var endDate: String? = null,
+    /** Instances including the first, read only when [endKind] is `AFTER_COUNT`. */
+    var endCount: Int? = null,
+)
+
+/**
+ * **One occurrence, stored** — `users/{uid}/occurrences/{id}` (`#63`, spec §2.1 and §7.1).
+ *
+ * ### Only the instances somebody touched are here
+ *
+ * A repeating task generates its instances from [TaskDto.repeatRule] and stores none of them.
+ * A document appears the moment an instance stops being what the rule says — it was moved,
+ * skipped, done, or given a Google event id — which is what §2.1 means by needing *both* a rule
+ * and documents, and what stops `R18`'s fortnightly flowers becoming 26 documents a year.
+ *
+ * ### The four *when* fields are the same four, on purpose
+ *
+ * [rung], [start], [end] and [placement] carry exactly what [TaskDto]'s four occurrence fields
+ * carry, in the same encoding, read and written by the same codec. `#56` shipped that codec and
+ * §7.1's migration is *"the four task fields become the first occurrence in it"* — which is a
+ * copy only while both sides spell it the same way. See [TaskDto.occurrenceStart] for why a
+ * *day* is stored as local ISO text and never as millis.
+ *
+ * ### [outcome] is what the clock cannot tell you, and nothing else
+ *
+ * §2.3 derives every temporal state from the dates and a `now`, and forbids storing any of
+ * them. So there is no `missed`, no `overdue`, no `status`. What is here is whether the person
+ * **did** it and whether they deliberately **did not** — two facts no derivation can reach.
+ */
+data class OccurrenceDto(
+    @DocumentId var id: String = "",
+    /** The task this is an occurrence of. The link is a field because the collection is flat. */
+    var taskId: String = "",
+    /** `ALL_DAY` | `DEADLINE` | `BLOCK` | `SPAN` — §2.2's rung. See [TaskDto.occurrenceRung]. */
+    var rung: String? = null,
+    /** ISO-8601 local text — a date for the day rungs, a date-time for the instant ones. */
+    var start: String? = null,
+    /** The slot's end or the span's last day; absent for `ALL_DAY` and `DEADLINE`. */
+    var end: String? = null,
+    /** `PROVISIONAL` | `SILENT` | `CONFIRMED`, for `BLOCK` alone. Absent reads as `CONFIRMED`. */
+    var placement: String? = null,
+    /**
+     * ISO-8601 date of the **rule-generated instance this document stands in for**, or absent
+     * for an occurrence belonging to no series.
+     *
+     * ⚠️ Not the same as [start] once the instance has been moved, and that difference is the
+     * entire recurrence mechanism: it is what lets the next expansion recognise a moved Tuesday
+     * as still being Monday's instance rather than generating Monday again beside it.
+     */
+    var seriesDate: String? = null,
+    /** `PLANNED` | `DONE` | `SKIPPED`. Absent reads as `PLANNED`. */
+    var outcome: String? = null,
+    /** When [outcome] happened, epoch millis. Read only for `DONE` and `SKIPPED`. */
+    var outcomeAt: Long? = null,
+    /**
+     * The Google Calendar event mirroring this occurrence (§2.6, §2.7, `#61`), or absent.
+     *
+     * §2.7 requires clearing it to be expressible on its own — *"a disappearance never deletes
+     * and never re-creates"*; the occurrence keeps its date and loses the id.
+     */
+    var googleEventId: String? = null,
 )
 
 data class LifeAreaDto(

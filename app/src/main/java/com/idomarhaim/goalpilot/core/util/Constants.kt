@@ -16,6 +16,23 @@ object FirestorePaths {
      */
     const val COMPLETION_FACTS = "completionFacts"
 
+    /**
+     * §2.1's occurrences: `users/{uid}/occurrences/{id}` (`#63`, spec §7.1).
+     *
+     * **Flat and per-user, not nested under the task**, for two reasons that point the same
+     * way. §4.3's calendar surface asks *"what happens between these two dates?"* across every
+     * task, which is one query here and a collection-group query under
+     * `users/{uid}/tasks/{taskId}/occurrences`. And a per-user subcollection is already covered
+     * by the owner-only `users/{uid}/{document=**}` match, so it needed **no `firestore.rules`
+     * change at all** — the same finding life areas produced, and the reason `firestore-tests/`
+     * gained a section asserting it rather than the rules file gaining a block.
+     *
+     * The owning task is the `taskId` field. One document exists per *when* the user has
+     * actually touched; every other instance is generated from `Task.repeatRule` and is not
+     * stored, which is what stops `R18`'s fortnightly flowers becoming 26 documents a year.
+     */
+    const val OCCURRENCES = "occurrences"
+
     /** User-defined life areas: users/{uid}/lifeAreas/{id}. */
     const val LIFE_AREAS = "lifeAreas"
     const val PROGRESS = "progress"
@@ -68,6 +85,15 @@ object CloudFunctions {
     const val GET_RECOMMENDATIONS = "getRecommendations"
     const val CLASSIFY_TASK = "classifyTask"
     const val SCORE_TASK = "scoreTask"
+
+    /**
+     * §3.3 E's `measure` — a concrete measure for a goal that has none (`C22` #44, #65).
+     *
+     * `C7`'s fifth AI feature, and the one `C11b` never wrote a format for; §10.1 has the
+     * account. The name matches `export const proposeMeasure` in `functions/src/index.ts`,
+     * which is the only thing that makes the call resolve.
+     */
+    const val PROPOSE_MEASURE = "proposeMeasure"
 }
 
 /** Firebase Storage folder layout. */

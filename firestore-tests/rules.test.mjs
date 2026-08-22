@@ -328,6 +328,118 @@ test('#55: nobody else can bank a fact into someone else’s account', async () 
   )
 })
 
+// -- #63: the occurrences collection -----------------------------------
+//
+// §2.1's occurrences live at `users/{uid}/occurrences/{id}` -- flat and per-user, with the
+// owning task as a `taskId` field rather than as a path segment (spec §7.1, `#63`).
+//
+// THE RULES FILE DID NOT CHANGE, AND THAT IS THE FINDING RATHER THAN THE OMISSION.
+// `users/{uid}/{document=**}` already matches every per-user subcollection with an owner-only
+// rule, so a new one under that path is a client-side change -- the same result life areas
+// produced, which AGENTS.md records as a pitfall. Nothing in an occurrence is server-owned
+// either: no Cloud Function reads the collection, and `googleEventId` is written by the client
+// because §2.6 buys `calendar.app.created` CLIENT-SIDE and §2.7 says outright that "there is no
+// credential for a background sync and cannot be one". So a field-level condition like
+// `serverOwns('score')` would have had nothing to protect, and spec §5.2's own test for when a
+// derived number needs a stored writer -- does it cross an ownership boundary? -- says no.
+//
+// Which is exactly why these cases exist. An untested "it is covered by the wildcard" is a
+// claim about a file this layer is the ONLY one that can read: the Kotlin suites cannot reach
+// `firestore.rules` at all, so a future narrowing of that wildcard would expose an occurrence
+// -- what somebody plans to do and when -- with no client error and no failing unit test.
+//
+// Note the positive cases below and not only the negative ones. AGENTS.md: "pure negative tests
+// ('X is denied') pass vacuously when nothing matches at all", so a suite of denials would go
+// green against a rules file that denied everything, including the owner.
+
+const occurrenceFixture = (taskId = 'task_1') => ({
+  taskId,
+  rung: 'BLOCK',
+  start: '2026-08-17T09:00',
+  end: '2026-08-17T10:30',
+  placement: 'CONFIRMED',
+  seriesDate: '2026-08-17',
+  outcome: 'PLANNED',
+  outcomeAt: null,
+  googleEventId: null,
+})
+
+test('#63: the owner can create, read, edit and delete their own occurrences', async () => {
+  const ref = doc(asUser(OWNER), 'users', OWNER, 'occurrences', 'occ_1')
+  await assertSucceeds(setDoc(ref, occurrenceFixture()))
+  await assertSucceeds(getDoc(ref))
+  // Recording an outcome and linking a Google event are both owner updates, and both are
+  // field updates rather than whole-document writes -- see OccurrenceRepositoryImpl.
+  await assertSucceeds(updateDoc(ref, { outcome: 'DONE', outcomeAt: 1_755_000_000_000 }))
+  await assertSucceeds(updateDoc(ref, { googleEventId: 'gcal_abc' }))
+  // A THIS_AND_FUTURE skip deletes the stored instances from that date on.
+  await assertSucceeds(deleteDoc(ref))
+})
+
+test('#63: nobody else can read an occurrence, signed in or not', async () => {
+  // An occurrence is a plan -- what this person intends to do, and exactly when. It is at
+  // least as private as the completion fact above, which is a record of what they already did.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', OWNER, 'occurrences', 'occ_1'), occurrenceFixture())
+  })
+  await assertFails(getDoc(doc(asUser(JOINER), 'users', OWNER, 'occurrences', 'occ_1')))
+  await assertFails(getDoc(doc(asVisitor(), 'users', OWNER, 'occurrences', 'occ_1')))
+})
+
+test('#63: nobody else can write an occurrence into someone else’s schedule', async () => {
+  await assertFails(
+    setDoc(doc(asUser(JOINER), 'users', OWNER, 'occurrences', 'occ_2'), occurrenceFixture()),
+  )
+  await assertFails(
+    setDoc(doc(asVisitor(), 'users', OWNER, 'occurrences', 'occ_2'), occurrenceFixture()),
+  )
+})
+
+test('#63: nobody else can move or delete an occurrence that already exists', async () => {
+  // The write direction that is easy to forget: a stranger who cannot CREATE one might still
+  // be able to EDIT one, and moving somebody's block to 03:00 or deleting it outright is the
+  // more damaging of the two.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', OWNER, 'occurrences', 'occ_1'), occurrenceFixture())
+  })
+  await assertFails(
+    updateDoc(doc(asUser(JOINER), 'users', OWNER, 'occurrences', 'occ_1'), {
+      start: '2026-08-17T03:00',
+    }),
+  )
+  await assertFails(deleteDoc(doc(asUser(JOINER), 'users', OWNER, 'occurrences', 'occ_1')))
+})
+
+test('#63: the repeat rule on the task is as private as the task it sits on', async () => {
+  // §2.1 puts the rule on the task and the instances in their own collection, so the two
+  // halves are guarded by two different matches. Asserting only the collection would leave the
+  // half that says "every Tuesday at 19:00, indefinitely" checked by nothing.
+  const ref = doc(asUser(OWNER), 'users', OWNER, 'tasks', 'task_1')
+  await assertSucceeds(
+    setDoc(ref, {
+      title: 'Water the flowers',
+      occurrenceRung: 'ALL_DAY',
+      occurrenceStart: '2026-08-17',
+      repeatRule: { unit: 'WEEK', interval: 2, weekdays: [], endKind: 'NEVER' },
+      pausedUntil: null,
+    }),
+  )
+  await assertFails(getDoc(doc(asUser(JOINER), 'users', OWNER, 'tasks', 'task_1')))
+})
+
+test('#63: a whole batch of occurrences is refused for a stranger, one document at a time', async () => {
+  // A THIS_AND_FUTURE move materialises the series' past in one WriteBatch. A batch is not a
+  // transaction and the rules are evaluated per document, so this asserts the property the
+  // batch actually has: every document in it stands or falls on its own path.
+  await Promise.all(
+    ['occ_a', 'occ_b', 'occ_c'].map((id) =>
+      assertFails(
+        setDoc(doc(asUser(JOINER), 'users', OWNER, 'occurrences', id), occurrenceFixture()),
+      ),
+    ),
+  )
+})
+
 // -- C20: the leaderboard projection ---------------------------------
 //
 // `publicProfiles` had no coverage in this file before 2026-08-20, because until then

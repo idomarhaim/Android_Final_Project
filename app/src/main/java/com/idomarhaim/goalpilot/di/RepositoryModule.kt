@@ -4,6 +4,7 @@ import com.idomarhaim.goalpilot.data.auth.AuthRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.ChallengeRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.GoalRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.LifeAreaRepositoryImpl
+import com.idomarhaim.goalpilot.data.firestore.OccurrenceRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.ProgressRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.SocialRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.TaskRepositoryImpl
@@ -21,6 +22,7 @@ import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
@@ -71,6 +73,16 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLifeAreaRepository(impl: LifeAreaRepositoryImpl): LifeAreaRepository
+
+    /**
+     * §2.1's occurrence documents (`#63`). Bound separately from `TaskRepository` for the
+     * reason `#55` gave the completion fact its own collection: `upsertTask` is a
+     * whole-document `set()`, and an occurrence's outcome and `googleEventId` must survive an
+     * ordinary retitle.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindOccurrenceRepository(impl: OccurrenceRepositoryImpl): OccurrenceRepository
 
     @Binds
     @Singleton

@@ -21,7 +21,12 @@ import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.Occurrence
+import com.idomarhaim.goalpilot.domain.model.OccurrenceOutcome
 import com.idomarhaim.goalpilot.domain.model.OccurrenceRung
+import com.idomarhaim.goalpilot.domain.model.RepeatEnd
+import com.idomarhaim.goalpilot.domain.model.RepeatRule
+import com.idomarhaim.goalpilot.domain.model.RepeatUnit
+import com.idomarhaim.goalpilot.domain.model.ScheduledOccurrence
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SharedItem
 import com.idomarhaim.goalpilot.domain.model.Span
@@ -31,6 +36,7 @@ import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskSource
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -221,6 +227,12 @@ private fun TaskDto.legacyCompletion(): CompletionFact? {
  * §2.2's occurrence, from the four wire fields — or `null`, which is what **every task written
  * before `#56`** reads as and is the honest answer for a task nobody gave a *when* (`#56`).
  *
+ * ⚠️ **One codec, two documents** (`#63`). [TaskDto] and [OccurrenceDto] carry the same four
+ * fields in the same encoding, because §7.1's migration is *"the four task fields become the
+ * first occurrence in it"* — a sentence that is only true while both sides spell it the same
+ * way. A second copy of this `when` is the one thing that could make that false, and it would
+ * do it silently, on one rung, months later.
+ *
  * ### Nothing here guesses, and each `return null` is the same decision
  *
  * A rung this build does not recognise, a start that will not parse, a `BLOCK` or `SPAN` with
@@ -239,24 +251,32 @@ private fun TaskDto.legacyCompletion(): CompletionFact? {
  * see that field for why a *day* stored as millis moves between time zones. `LocalDate.parse`
  * and `LocalDateTime.parse` read exactly the ISO-8601 forms `toDto` writes.
  */
-private fun TaskDto.occurrence(): Occurrence? {
-    val start = occurrenceStart?.takeIf { it.isNotBlank() } ?: return null
-    return when (OccurrenceRung.fromName(occurrenceRung)) {
+private fun decodeOccurrence(
+    rung: String?,
+    start: String?,
+    end: String?,
+    placement: String?,
+): Occurrence? {
+    val from = start?.takeIf { it.isNotBlank() } ?: return null
+    return when (OccurrenceRung.fromName(rung)) {
         null -> null
-        OccurrenceRung.ALL_DAY -> parseLocalDate(start)?.let { AllDay(it) }
-        OccurrenceRung.DEADLINE -> parseLocalDateTime(start)?.let { Deadline(it) }
-        OccurrenceRung.BLOCK -> {
-            val from = parseLocalDateTime(start) ?: return null
-            val to = parseLocalDateTime(occurrenceEnd) ?: return null
-            Block(start = from, end = to, placement = BlockPlacement.fromName(occurrencePlacement))
-        }
-        OccurrenceRung.SPAN -> {
-            val from = parseLocalDate(start) ?: return null
-            val to = parseLocalDate(occurrenceEnd) ?: return null
-            Span(from = from, to = to)
-        }
+        OccurrenceRung.ALL_DAY -> parseLocalDate(from)?.let { AllDay(it) }
+        OccurrenceRung.DEADLINE -> parseLocalDateTime(from)?.let { Deadline(it) }
+        OccurrenceRung.BLOCK -> Block(
+            start = parseLocalDateTime(from) ?: return null,
+            end = parseLocalDateTime(end) ?: return null,
+            placement = BlockPlacement.fromName(placement),
+        )
+        OccurrenceRung.SPAN -> Span(
+            from = parseLocalDate(from) ?: return null,
+            to = parseLocalDate(end) ?: return null,
+        )
     }
 }
+
+/** [decodeOccurrence] over `#56`'s four fields on the task document. */
+private fun TaskDto.occurrence(): Occurrence? =
+    decodeOccurrence(occurrenceRung, occurrenceStart, occurrenceEnd, occurrencePlacement)
 
 /**
  * What [TaskDto.occurrenceStart] holds for this occurrence — a **date** for the two rungs that
@@ -291,6 +311,118 @@ private fun parseLocalDate(text: String?): LocalDate? =
 private fun parseLocalDateTime(text: String?): LocalDateTime? =
     text?.takeIf { it.isNotBlank() }?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
 
+/**
+ * §2.1's rule, or `null` for a task that happens once (`#63`).
+ *
+ * A rule with no recognisable [RepeatRuleDto.unit] is **no rule**, for the reason
+ * [decodeOccurrence] reads an unknown rung as no occurrence: a recurrence this build cannot
+ * expand is one whose instances it cannot place, and generating them from a guessed unit would
+ * put windows in front of the user on days nobody chose.
+ */
+private fun RepeatRuleDto.toDomain(): RepeatRule? {
+    val u = RepeatUnit.fromName(unit) ?: return null
+    return RepeatRule(
+        unit = u,
+        interval = interval,
+        weekdays = weekdays.mapNotNull { parseWeekday(it) }.toSet(),
+        end = decodeEnd(),
+    )
+}
+
+/**
+ * The bound named by [RepeatRuleDto.endKind], reading **only** that field's payload.
+ *
+ * Anything unreadable — an unknown kind, an `ON_DATE` with no parsable date, an `AFTER_COUNT`
+ * with no count — reads as [RepeatEnd.Never]. That is the one reading that cannot silently
+ * truncate somebody's series: a bound this build cannot honour must not become a bound it
+ * invents, and the failure of *"it kept going"* is visible where *"it stopped in March"* is not.
+ */
+private fun RepeatRuleDto.decodeEnd(): RepeatEnd = when (endKind?.uppercase()) {
+    "ON_DATE" -> parseLocalDate(endDate)?.let { RepeatEnd.OnDate(it) } ?: RepeatEnd.Never
+    "AFTER_COUNT" -> endCount?.let { RepeatEnd.AfterCount(it) } ?: RepeatEnd.Never
+    else -> RepeatEnd.Never
+}
+
+private fun RepeatRule.toDto(): RepeatRuleDto = RepeatRuleDto(
+    unit = unit.name,
+    interval = step,
+    // Written for WEEK alone, so a stored weekday set can never sit on a unit that has none --
+    // the same contract `occurrencePlacement` has with `occurrenceRung`.
+    weekdays = if (unit == RepeatUnit.WEEK) weekdays.map { it.name } else emptyList(),
+    endKind = when (end) {
+        is RepeatEnd.Never -> "NEVER"
+        is RepeatEnd.OnDate -> "ON_DATE"
+        is RepeatEnd.AfterCount -> "AFTER_COUNT"
+    },
+    // Each payload is written only by the kind that owns it, so a round trip cannot leave a
+    // date beside a count and make "exactly one bound" false after the fact.
+    endDate = (end as? RepeatEnd.OnDate)?.date?.toString(),
+    endCount = (end as? RepeatEnd.AfterCount)?.count,
+)
+
+/** `MONDAY`…`SUNDAY`, case-insensitively, or `null` for anything else. Never throws. */
+private fun parseWeekday(name: String?): DayOfWeek? =
+    DayOfWeek.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }
+
+// ── Occurrence documents — `users/{uid}/occurrences` (`#63`) ────────
+
+/**
+ * One stored occurrence, or `null` when the document carries no readable *when*.
+ *
+ * `null` rather than a placeholder for [decodeOccurrence]'s reason, one layer out: a document
+ * with half a window is not a window, and materialising it would put a task into a §2.2 state
+ * nobody chose. The caller drops it, which loses one instance of a series rather than the
+ * screen.
+ */
+fun OccurrenceDto.toDomain(): ScheduledOccurrence? {
+    val when_ = decodeOccurrence(rung, start, end, placement) ?: return null
+    return ScheduledOccurrence(
+        id = id,
+        taskId = taskId,
+        occurrence = when_,
+        seriesDate = parseLocalDate(seriesDate),
+        outcome = decodeOutcome(),
+        googleEventId = googleEventId?.takeIf { it.isNotBlank() },
+    )
+}
+
+/**
+ * §2.8's outcome from its discriminator and stamp.
+ *
+ * A `DONE` or `SKIPPED` with **no stamp** reads as [OccurrenceOutcome.Planned], not as a
+ * stamped-at-zero fact: `0L` is 1 January 1970, and a review counting when things happened
+ * would rather see nothing than see that. This is [CompletionFact]'s *"the fact is the
+ * completion"* rule at the wire boundary — half a fact is not a fact.
+ */
+private fun OccurrenceDto.decodeOutcome(): OccurrenceOutcome = when (outcome?.uppercase()) {
+    "DONE" -> outcomeAt?.let { OccurrenceOutcome.Done(it) } ?: OccurrenceOutcome.Planned
+    "SKIPPED" -> outcomeAt?.let { OccurrenceOutcome.Skipped(it) } ?: OccurrenceOutcome.Planned
+    else -> OccurrenceOutcome.Planned
+}
+
+fun ScheduledOccurrence.toDto(): OccurrenceDto = OccurrenceDto(
+    id = id,
+    taskId = taskId,
+    rung = occurrence.rung.name,
+    start = wireStart(occurrence),
+    end = wireEnd(occurrence),
+    placement = (occurrence as? Block)?.placement?.name,
+    seriesDate = seriesDate?.toString(),
+    outcome = when (outcome) {
+        is OccurrenceOutcome.Planned -> "PLANNED"
+        is OccurrenceOutcome.Done -> "DONE"
+        is OccurrenceOutcome.Skipped -> "SKIPPED"
+    },
+    // Written by the two constants that have one, so a stamp can never outlive the outcome it
+    // belonged to -- a re-planned occurrence loses its stamp in the same write.
+    outcomeAt = when (val o = outcome) {
+        is OccurrenceOutcome.Planned -> null
+        is OccurrenceOutcome.Done -> o.atEpochMillis
+        is OccurrenceOutcome.Skipped -> o.atEpochMillis
+    },
+    googleEventId = googleEventId,
+)
+
 fun TaskDto.toDomain(): Task = Task(
     id = id,
     title = title,
@@ -302,6 +434,10 @@ fun TaskDto.toDomain(): Task = Task(
     // for why a legacy row is left absent rather than back-filled.
     durationSource = DurationSource.fromName(durationSource),
     occurrence = occurrence(),
+    // A rule whose unit this build does not recognise reads as no rule at all -- see
+    // `RepeatRuleDto.toDomain`. Absent is the same answer and is what every pre-`#63` task has.
+    repeatRule = repeatRule?.toDomain(),
+    pausedUntil = pausedUntil,
     createdAtEpochMillis = createdAt,
     // The legacy shape only. A real fact document, when there is one, is overlaid by
     // `TaskRepositoryImpl.observeTasks` and wins — a task that has been ticked since the
@@ -331,6 +467,12 @@ fun Task.toDto(): TaskDto = TaskDto(
     occurrenceEnd = occurrence?.let { wireEnd(it) },
     // Written for BLOCK alone, so a stored placement can never sit on a rung that has none.
     occurrencePlacement = (occurrence as? Block)?.placement?.name,
+    // §2.1's rule (`#63`). Null for the task that happens once, which is most of them -- and a
+    // task whose recurrence was **removed** writes null over whatever was there, because
+    // `upsertTask` is a whole-document `set()` and a surviving rule beside a cleared one is the
+    // second answer §0.3 keeps naming. Nesting makes that all-or-nothing.
+    repeatRule = repeatRule?.toDto(),
+    pausedUntil = pausedUntil,
     createdAt = createdAtEpochMillis,
     // ── The four legacy fields, nulled on every write (`#55`) ──────────────
     //

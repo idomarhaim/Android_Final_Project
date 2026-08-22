@@ -181,16 +181,19 @@ enum class OccurrenceState {
  * the fields its miss semantics need and no others, so the normaliser has nothing to do and the
  * tests it would have needed do not exist.
  *
- * ### What this deliberately is **not**
+ * ### What `#56` deliberately left out, and where it now lives (`#63`)
  *
  * §2.1 wants *both* a rule on the task **and** occurrence documents, so that
- * *"this occurrence, or all future ones?"* is askable. **This ticket builds the occurrence and
- * not the rule**, and the consequence is stated plainly rather than hidden: a task has at most
- * **one** occurrence, so nothing here can express `R18`'s fortnightly flowers, a moved instance,
- * a skip, or a Google event id. That is §2.1's other half and it belongs to the ticket that
- * builds recurrence — the shape below is designed so that arriving is additive (the rungs, their
- * miss semantics and their reminders are per-occurrence already, so a list of these replaces one
- * of these without any of them changing).
+ * *"this occurrence, or all future ones?"* is askable. `#56` built the occurrence and not the
+ * rule, and said so: a task had at most **one** occurrence, so nothing here could express
+ * `R18`'s fortnightly flowers, a moved instance, a skip, or a Google event id.
+ *
+ * **`#63` built the other half, and the prediction held: nothing below changed.** [RepeatRule]
+ * is the rule, [ScheduledOccurrence] is the stored instance, and [TaskSchedule] is where the two
+ * meet — every one of them built *on top of* this file, because the rungs, their miss semantics
+ * and their reminders were per-occurrence already. A repeating task's instances are this
+ * template moved to another day ([onDate]), which is why each still carries §2.2's meaning of a
+ * miss rather than a date with a rung bolted back on.
  *
  * ### Everything temporal is derived from [stateAt]
  *
