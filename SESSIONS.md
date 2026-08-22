@@ -4255,12 +4255,17 @@ Currently unclaimed and ready:
 >    Photographing the other ten screens needs a stateless `*Content` split across ten feature
 >    files, or Ido signed in on the AVD; `MaterialRenderPass` can drive `SettingsContent` only
 >    because it is fully hoisted. `57c` and `57d` render the two busiest grounds for free.
-> 3. ⚠️ **`firebase-tools`' CLI TOKEN IS DEAD, and `firebase login:list` does not say so** — it
+> 3. ⚠️ **`firebase-tools` cannot authenticate, and `firebase login:list` does not say so** — it
 >    prints the cached identity while `projects:list` / `deploy` fail with *"credentials are no
->    longer valid"*. **This blocks the standing-authorisation deploy path** until Ido runs
->    `firebase login --reauth` (browser flow, his to run). **The Gradle App Distribution plugin
->    authenticates separately and still works** — `Observed:` an upload succeeded in the same
->    minute the CLI refused. Recorded in [CLAUDE.md](CLAUDE.md).
+>    longer valid"*. **This blocks the standing-authorisation deploy path.** **The Gradle App
+>    Distribution plugin authenticates separately and still works** — `Observed:` an upload
+>    succeeded in the same minute the CLI refused, so a dead CLI is not "no Firebase capability".
+>    ⚠️ **This line first said the TOKEN was dead; that is corrected in
+>    [CLAUDE.md](CLAUDE.md) and it matters** — `--debug` shows Google returning **HTTP 200** to
+>    the refresh, so the grant is intact and the fault is local. Two theories (network
+>    interception, plain expiry) were tested and killed; the cheap untried fix is
+>    `npm i -g firebase-tools` (15.27.0 → 15.28.1), and only after that `firebase login --reauth`,
+>    which needs a browser and is Ido's.
 > 4. 📦 **A signed release build was distributed** — `app-release.apk`, real release key
 >    (`CN=Ido Marhaim`, SHA-1 `e7d5534c…`, verified with `apksigner`, **not** the debug fallback),
 >    uploaded to App Distribution release `1hsoupi086d88` for the `testers` group, with

@@ -52,16 +52,52 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
   ```
   succeeded unchanged. `firebase-tools` is installed, and `firebase login:list` still prints
   `name.iddo@gmail.com` on `goalpilot-56e30`.
-  - ⚠️ **But that token is DEAD as of 2026-08-22, and `login:list` is exactly the command that
-    will not tell you so.** *(Found by `57b-backgrounds-and-combinations`.)* Every command that
-    actually talks to Google — `projects:list`, `appdistribution:testers:list`, and therefore
+  - ⚠️ **The CLI cannot authenticate as of 2026-08-22, and `login:list` is exactly the command
+    that will not tell you so.** *(Found by `57b-backgrounds-and-combinations`.)* Every command
+    that actually talks to Google — `projects:list`, `appdistribution:testers:list`, and therefore
     `deploy` — fails with *"Authentication Error: Your credentials are no longer valid. Please run
     `firebase login --reauth`"*, while `login:list` happily reports the cached identity. So
     **`login:list` is not a liveness check**; `firebase projects:list` is the cheap one that is.
     **This blocks the standing-authorisation deploy path** ([`docs/OPERATIONS.md` §
-    *Standing authorisation*](docs/OPERATIONS.md)) until it is repaired, and repairing it is
-    **Ido's**, not a session's: `firebase login --reauth` opens a browser and cannot be driven
-    from a tool shell — same shape as `gh auth login --web` above.
+    *Standing authorisation*](docs/OPERATIONS.md)) until it is repaired.
+  - ⚠️ **CORRECTED the same day — the first version of this note said "that token is DEAD", and
+    the evidence says it is not.** That was the obvious reading of the error message and it is
+    wrong, so it is replaced rather than hedged. `firebase projects:list --debug` shows the whole
+    exchange:
+
+    ```
+    > refreshing access token with scopes: []
+    >>> POST https://www.googleapis.com/oauth2/v3/token
+    <<< status 200
+    ```
+
+    **Google returns HTTP 200 to the refresh.** A revoked or expired refresh token returns `400
+    invalid_grant`, and `auth.js` has an explicit branch for `400`/`401` that does *not* throw.
+    The throw comes one line further down, from `typeof res.body.access_token !== "string"` —
+    i.e. **firebase-tools got a 200 whose body carried no access token**, and then reported it
+    through `invalidCredentialError()`, whose text names the wrong cause. So the grant is intact
+    and nothing needs re-authorising on Google's side; the fault is local.
+
+    **Two theories were tested and both are dead** — record them so nobody re-runs them:
+    *network interception* (a proxy returning a 200 page) is out, because `firebase.tools` and
+    `api.github.com` both answer `200` and the token endpoint answers `411` as it should for an
+    empty POST, with no proxy variables set; and *plain expiry* is out for the reason above. The
+    live anomaly is that the stored `tokens.scopes` is **`[]`** while the granted `tokens.scope`
+    string is 204 characters, and the configstore also holds a stale `tempLoginState` — the
+    fingerprint of a `firebase login` that was started and abandoned. `Untested:` separating
+    those two needs the response body, which is `skipLog`-suppressed, so reading it means
+    handling the stored refresh token by hand — the one operation the classifier blocks (see the
+    `gh` note above), and dressing it up to get past that is still out.
+
+    **Last known-good refresh: 2026-08-21T12:41 UTC**, which is `c13-key-store`'s successful
+    functions deploy. So the break is ~20 hours old and something changed on this machine in
+    between, not on the account.
+
+    **Fixes, cheapest first.** (1) `npm i -g firebase-tools` — installed is **15.27.0**, latest is
+    **15.28.1**; a one-minor gap in the package whose own refresh path is misbehaving is worth
+    trying before anything interactive, and it needs no browser. (2) `firebase login --reauth` —
+    twenty seconds, but it **opens a browser and cannot be driven from a tool shell**, so it is
+    **Ido's**, same shape as `gh auth login --web` above.
   - ✅ **The Gradle App Distribution plugin authenticates SEPARATELY and still works.**
     `Observed:` 2026-08-22, `./gradlew :app:appDistributionUploadRelease` uploaded a signed
     release to `goalpilot-56e30` **in the same minute** that `firebase projects:list` was
