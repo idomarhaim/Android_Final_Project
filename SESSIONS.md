@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `57d-entrance-animation` (re-claimed) | Close `#57` d's one held item on Ido's approval -- make `screenrecord` usable on this machine, then amend KB 6.2 to what is true | `CLAUDE.md`, `kb-candidates/2026-08-22-57d-entrance-animation.md`, `CHANGELOG/2026-08-22/57d-entrance-animation.md`, plus `kb/dev/android-device-verification.md` and `kb/log/2026-08-22.md` in `C:\Dev\JARVIS` (claimed there too) | `Pixel_10_Pro_XL` (`emulator-5554`) for one verification recording | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED 2026-08-22 — this commit.** `#57` d shipped in `9f6b92b`,
 > brief closed. Singletons free: the AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle
 > daemon.
