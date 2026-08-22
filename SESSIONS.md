@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `tour-video` | Record a full-app tutorial screen recording on the AVD, download it for Ido, and write the Google Flow / OpenArt prompt that turns it into a narrated explainer | `docs/marketing/**`, `CHANGELOG/2026-08-22/tour-video.md`, `kb-candidates/2026-08-22-tour-video.md` — video artifacts land OUTSIDE the repo, under `C:/Users/namei/Videos/GoalPilot-Tour/` | **AVD `emulator-5554` + adb — HELD** (screen recording only; no install, no uninstall, no Gradle) | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
