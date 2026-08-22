@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `59-health-metric-mismatch` | `#59` — stop a Health Connect metric being pinned to an unrelated goal (`Strength Training` reads `245613/100`), and put the data repair to Ido | `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt` · `app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `kb-candidates/2026-08-23-59-health-metric-mismatch.md` · `CHANGELOG/2026-08-23/59-health-metric-mismatch.md` · `sessions/59-health-metric-mismatch.md` | **none — JVM unit layer only; no AVD, no adb, no `connectedDebugAndroidTest`** | 2026-08-23 |
 | `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the

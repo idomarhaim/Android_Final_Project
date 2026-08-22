@@ -2,11 +2,12 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 59
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildHealthProposalsUseCase.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncHealthDataUseCase.kt
+  - app/src/test/java/com/idomarhaim/goalpilot/domain/HealthProposalsTest.kt
   - app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt
   - kb-candidates/2026-08-23-59-health-metric-mismatch.md
   - CHANGELOG/2026-08-23/59-health-metric-mismatch.md
