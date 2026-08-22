@@ -159,3 +159,20 @@ first device command and are unchanged at `1.0` / `1.0` / `1.0`.
 not written, for the reason in §4. Added: `ui/components/Entrance.kt`, `ui/components/Common.kt`
 (`SectionHeader` sits inside the same column and a motionless header in a rippling column reads as a
 fault), `app/src/test/…/GpEntranceTest.kt` and `EntranceRenderPass.kt`.
+
+## 8 · 📥 Ingested (AUTO MODE)
+
+Four candidates were flagged; three drained at the commit trigger into the central bundle
+(`C:\Dev\JARVIS`, commit `c211c59`, lint CLEAN over 109 pages), and one is held.
+
+- 📥 **Ingested:** two instruments that cannot see a Compose translation animation →
+  `kb/dev/android-device-verification.md` §14
+- 📥 **Ingested:** `graphicsLayer { alpha < 1 }` crops anything drawn outside the node →
+  `kb/dev/compose-soft-shadows-below-api-28.md`
+- 📥 **Ingested:** a brief's citation is a pointer to an instrument, not a substitute for running it
+  → `kb/dev/look-at-your-own-output.md` §4l
+- ⛔ **Held, always-ask:** *`screenrecord` is not a usable instrument on this machine.* It rewrites
+  `android-device-verification.md` §6.2 in place, and overwriting committed knowledge is a deletion.
+  Parked whole in `kb-candidates/2026-08-22-57d-entrance-animation.md` under
+  *Standing — always-ask*, with the substitute that worked, so nothing is lost if this session ends
+  first. **This is the one thing on this brief that needs Ido's word.**

@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 57
 owns:
   # Corrected at /kickoff 2026-08-22: the entrance vocabulary is its own file rather than
@@ -21,6 +21,7 @@ owns:
   - CHANGELOG/2026-08-22/57d-entrance-animation.md
   - sessions/57d-entrance-animation.md
 created: 2026-08-21
+result: shipped 2026-08-22 in `9f6b92b`; KB ingest `c211c59` in `C:\Dev\JARVIS`
 ---
 
 # `#57` d — the blocks arriving, instead of being already there

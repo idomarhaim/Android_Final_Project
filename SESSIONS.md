@@ -15,7 +15,35 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57d-entrance-animation` | `#57` d - blocks arrive with a staggered rise+fade instead of being already there | `ui/components/Entrance.kt` (new), `ui/components/GpCard.kt`, `ui/components/Common.kt`, `feature/dashboard/DashboardScreen.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/GpEntranceTest.kt` (new), `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceAnimationUiTest.kt` (new), `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/EntranceRenderPass.kt` (new), `kb-candidates/2026-08-22-57d-entrance-animation.md` (new), `CHANGELOG/2026-08-22/57d-entrance-animation.md`, `sessions/57d-entrance-animation.md` | Gradle daemon + `Pixel_10_Pro_XL` (`emulator-5554`) — HELD from 2026-08-22 11:12 | 2026-08-22 |
+> 🏁 **`57d-entrance-animation` RELEASED 2026-08-22 — this commit.** `#57` d shipped in `9f6b92b`,
+> brief closed. Singletons free: the AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle
+> daemon.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED, and no device setting was changed.** Every run
+> used `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`; the
+> `com.idomarhaim.goalpilot.debug` package was reinstalled in place ~6 times and never removed, and
+> the app still lands on the signed-in dashboard. All three animation scales were read **before** the
+> first device command and are still `1.0` — `adb shell settings get global animator_duration_scale`
+> rather than taking my word for it. Nothing was left on `/sdcard`; the render-pass PNGs are in the
+> app's own files dir where every other pass leaves them.
+>
+> 🚚 **This session's push carries one `57b-backgrounds-and-combinations` commit** — `3f092f3`,
+> which landed in the tree between `a6a7863` and this session's claim. `git push` is branch-scoped,
+> so it goes up whichever session pushes next. Adjudicated per precondition 5 rather than assumed:
+> `57b` has **no live row** on this board, its brief is closed in `sessions/done/`, and `3f092f3`
+> touches `CLAUDE.md` alone — its own release note called the leftover notice cosmetic. Named here
+> and in `CHANGELOG/2026-08-22/57d-entrance-animation.md` because a commit message that does not
+> mention what rode along is a provenance claim it cannot support.
+>
+> ⛔ **One thing is owed to Ido and is not a defect:** a KB candidate that would rewrite
+> `kb/dev/android-device-verification.md` §6.2 — *"`screenrecord` is the instrument"* — is **held**,
+> because `ffmpeg` does not exist on this machine and §6.2's whole recipe therefore cannot run here.
+> Rewriting a standing claim is always-ask in both modes. It is parked whole in
+> `kb-candidates/2026-08-22-57d-entrance-animation.md`.
+>
+> 📌 **For `53-tag-sweep`, the last brief left in `sessions/`:** `ui/components/` now contains
+> `Entrance.kt`, and `GpCard` and `SectionHeader` each carry one extra modifier line. Nothing there
+> touches a `.tag`, and `AnalyticsLiteralSweepTest`'s `SWEPT_PACKAGES` is unchanged.
 > 🏁 **`57c-chart-volume-and-raised` RELEASED 2026-08-22 — this commit.** No singletons held; the
 > AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle daemon are free.
 >
