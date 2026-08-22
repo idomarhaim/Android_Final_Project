@@ -298,6 +298,22 @@ tasks.withType<Test>().configureEach {
     inputs.file(rootProject.layout.projectDirectory.file("shared-fixtures/derived-state.json"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("sharedDerivedStateFixture")
+
+    // `ReleaseNotesGuardTest` reads the release notes and the RELEASE WORKFLOW, and both are
+    // outside anything Gradle associates with a test. Without these two lines, changing either
+    // leaves the task UP-TO-DATE and the guard reports green on the previous run.
+    //
+    // `Observed:` 2026-08-22, in the mutation check written to prove that guard is not vacuous —
+    // the workflow was edited to name a different notes file and `testDebugUnitTest` answered
+    // UP-TO-DATE in 2 s. The mutation would have been recorded as "the guard did not catch it",
+    // which is the opposite of what happened: the guard never ran. Same class as the
+    // shared-fixture line above, and it is the second instance in three days.
+    inputs.file(layout.projectDirectory.file("release-notes.txt"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("releaseNotesReadByGuard")
+    inputs.file(rootProject.layout.projectDirectory.file(".github/workflows/release.yml"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("releaseWorkflowReadByGuard")
 }
 
 /**

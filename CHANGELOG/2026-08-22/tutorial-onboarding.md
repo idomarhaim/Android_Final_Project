@@ -314,3 +314,74 @@ here — the Firebase console can answer it in a click.
 is left standing rather than deleted, because deleting one is always-ask and picking the wrong one to
 delete would silently break the CI path, which overwrites the file the *workflow* names.
 
+---
+
+## 11. The cleanup pass — the release-notes duplicate is closed, and guarded
+
+Ido delegated this one (*"do what's most right as long as it doesn't harm anything — you have
+authorization"*), so **the decision below is mine** and is recorded as mine, not as his answer. What
+he authorised was the class of action; what to do was not put to him.
+
+### 11.1 The deletion, and why it was safe to make
+
+`release-notes.txt` at the repo root is **deleted**. Every consumer names `app/release-notes.txt`:
+`.github/workflows/release.yml` writes it three times and passes `--release-notes-file
+app/release-notes.txt`, `app/build.gradle.kts` declares it (resolved against the module), and
+`docs/RELEASING.md` §3 already told readers to edit it. A scoped sweep over every `.kts`, `.yml`,
+`.md`, `.ps1`, `.cmd` and `.kt` in the repo found **no reader of the root copy at all**.
+
+Deletion is always-ask under my standing rules, so the grant was used narrowly and the no-harm half
+was **proved before acting**, not asserted after.
+
+### 11.2 The decision was not "which file to keep"
+
+I had offered that as the open question. It was the wrong question, and the delegation is what let it
+be re-opened rather than answered. Deleting the stray fixes today and leaves the thing that produced
+it: `releaseNotesFile = "release-notes.txt"` **reads like a repo-root path and is not one**, and
+`CHANGELOG/2026-08-20/c13-key-store.md` records that exact misreading as the reason the root file was
+created. So the deliverable is a **guard**, and the deletion is one line of it.
+
+`ReleaseNotesGuardTest` asserts three things, of which only the third is not hygiene:
+
+1. the declared path resolves to a file that exists and is non-empty;
+2. no second file of that name exists anywhere in the repo;
+3. **the tag route and the local route name the same file** — `release.yml` and `build.gradle.kts`
+   are edited by different people at different times, nothing makes them agree, and diverged they
+   ship *different release notes for the same build* with no error anywhere.
+
+### 11.3 ⚠️ The mutation check found a second, worse defect — in the check itself
+
+Written before the fix and run against the broken tree, the guard went red on case 2 and green on the
+other three: it runs, and it fails for the right reason.
+
+Then the divergence mutation — editing the workflow to name a different file — produced
+`BUILD SUCCESSFUL in 2s` and `Task :app:testDebugUnitTest UP-TO-DATE`. **The test had not executed.**
+Both of its inputs sit outside anything Gradle associates with a test task, so changing either leaves
+the guard reporting the previous run's result.
+
+That is worse than a stale number, because it corrupts the one procedure that tells a real guard from
+a decorative one: the honest reading of that output is *"the guard did not catch the mutation"*, and
+the natural next move is to strengthen an assertion in a test that never ran. Both files are now
+declared as task inputs — the repo already had this exact block for two other file-reading guards,
+and `shared-fixtures/derived-state.json` (2026-08-20) is the same class three days earlier. With the
+inputs declared, the same mutation fails **case 3** in 4 s.
+
+⚠️ The mutation edits `.github/workflows/release.yml` in place. It was restored immediately and
+`git status` on that path was read back as empty **twice** — a control arm that mutates shared state
+and restores on exit becomes permanent the moment the run is killed.
+
+### 11.4 What was deliberately left alone
+
+- **The AVD and adb.** Session `tour-video` holds them (screen recording, no install). Nothing in
+  this pass needs a device, so nothing waited on it.
+- **`app/release-notes.txt`'s v0.3.2 content.** It is what testers are reading right now.
+- **The `Untested:` TalkBack pass** from §2. It needs the device, which is held. Still owed.
+- **What testers actually saw on `20f3b7e` and `67c21e5`.** Unreadable from a shell; the Firebase
+  console answers it in a click. Left as `Inferred:` rather than upgraded on a guess.
+
+### 11.5 🧪 Tests
+
+JVM **786 / 0** across 74 classes — `ReleaseNotesGuardTest` (4) is new, and was checked in both
+directions: red on the real defect before the fix, red on an injected divergence after it. No
+instrumented run: nothing here touches the app, and the device is held by a sibling.
+

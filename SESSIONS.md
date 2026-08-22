@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
 | `tour-video` | Record a full-app tutorial screen recording on the AVD, download it for Ido, and write the Google Flow / OpenArt prompt that turns it into a narrated explainer | `docs/marketing/**`, `CHANGELOG/2026-08-22/tour-video.md`, `kb-candidates/2026-08-22-tour-video.md` — video artifacts land OUTSIDE the repo, under `C:/Users/namei/Videos/GoalPilot-Tour/` | **AVD `emulator-5554` + adb — HELD** (screen recording only; no install, no uninstall, no Gradle) | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the

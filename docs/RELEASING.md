@@ -265,6 +265,21 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
 
 Edit `app/release-notes.txt` first — that is what testers see.
 
+> ⚠️ **`app/release-notes.txt`, and there is only one of it.** `app/build.gradle.kts` declares
+> `releaseNotesFile = "release-notes.txt"`, which **reads like a repo-root path and is not one** —
+> the plugin resolves it against the `app` module. A second copy was created at the repo root on
+> 2026-08-20 from exactly that misreading, and became the file people edited, because it is the one
+> `ls` shows. `Inferred:` the two releases that edited it (`20f3b7e`, `67c21e5`) shipped the other
+> file's placeholder text to testers; nothing goes red when that happens — the build succeeds, the
+> upload succeeds, and the wrong words arrive on somebody else's phone.
+>
+> The stray was deleted on 2026-08-22 and `ReleaseNotesGuardTest` now fails the build if a second
+> one appears, if the declared path does not resolve to a real file, or if the workflow and the
+> Gradle plugin ever stop naming the same file.
+
+**Also bump the version.** The `versionCode` checklist above is not CI-specific: App Distribution
+compares `versionCode`, so a local upload with an unchanged one uploads happily and prompts nobody.
+
 ---
 
 ## 4. What a tester actually experiences
