@@ -86,17 +86,43 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
       disappears**, and both store files are written. The MOTD failure was never a network
       symptom — it is the same lock, one line earlier.
 
-    **`Inferred:` the holder is a VS Code extension that bundles `firebase-tools`** — most likely
-    `googlecloudtools.firebase-dataconnect-vscode`, with `googlecloudtools.cloudcode` and
-    `google.geminicodeassist` as the other candidates; the store itself carries a
-    `vscode-analytics-clientId` key, which is a VS Code writer's fingerprint, and **24 `Code.exe`
-    processes are running while there is no `node` process at all.** Not confirmed to a PID:
-    that needs `handle.exe`, which is not installed, and the one process that could not be
-    stopped to test is the editor this session runs inside.
+    **`Observed:` the holder is `googlecloudtools.firebase-dataconnect-vscode` (v2.4.3), and it is
+    named rather than guessed.** The configstore carries a `vscode-analytics-clientId` key — a VS
+    Code writer's fingerprint — and grepping every installed extension for that string returns
+    **exactly one file**:
 
-    **The fix, and it is not a browser flow:** close VS Code (or disable that extension) so the
-    handle is released, then run `firebase login --reauth` **once**. The reauth is still needed
-    because the successful login of 2026-08-22 could not be saved.
+    ```
+    ~/.vscode/extensions/googlecloudtools.firebase-dataconnect-vscode-2.4.3/dist/extension.js
+    ```
+
+    Seven other Google extensions are installed (`cloudcode` ×2, `datacloud` ×2, `geminicodeassist`,
+    `gemini-cli-…`, `colab`) and **none** of them contains it. That, plus **24 `Code.exe` processes
+    running with no `node` process at all**, identifies the holder. *(This note said `Inferred:`
+    and listed three candidates for about an hour; the grep that settled it had been started
+    earlier and timed out, and its result arrived afterwards. Upgraded rather than left hedged —
+    a hedge that can be resolved should be.)*
+
+    `Untested:` the handle is still not tied to a **PID**, because that needs `handle.exe`, which
+    is not installed. The identification above is by *authorship of the file*, not by observing the
+    open handle — a distinction worth keeping, since another Google extension could in principle
+    hold the same store without having written that key.
+
+    **The fix, and it is not a browser flow:** release the handle, then run
+    `firebase login --reauth` **once** — still needed, because the successful login of 2026-08-22
+    could not be saved.
+
+    ⚠️ **A plain restart is not enough, and this is the part that will waste a session.** The
+    extension re-opens the store as VS Code loads, so reauthenticating *inside* VS Code races it.
+    Do it with the editor **closed**:
+
+    ```powershell
+    # close VS Code completely first
+    firebase login --reauth
+    firebase projects:list      # the check -- if it lists projects, it is fixed
+    ```
+
+    Then reopen. The lock returns when the extension reloads and no longer matters: once the token
+    is saved, later refreshes reuse it. If it breaks again, disable that one extension.
 
     **The escape hatch, if the editor must stay open:** set `XDG_CONFIG_HOME` to a directory
     nothing holds and copy `firebase-tools.json` into `<dir>/configstore/`. **Deliberately not
