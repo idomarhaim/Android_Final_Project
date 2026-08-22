@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `53-material-naming` (re-claim) | KB drain — the two findings `b3dbba3` produced, into the central KB. Row also live on `C:\Dev\JARVIS`'s board, which is where the pages land | `kb-candidates/2026-08-22-53-material-naming.md` · `CHANGELOG/2026-08-22/53-material-naming.md` | none | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
@@ -4375,6 +4374,28 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`53-material-naming` RE-CLAIM RELEASED 2026-08-22 — this commit.** The KB drain is done and
+> the candidate file is **deleted**, fully drained. Both entries landed as **updates in place** in
+> the central KB: `kb/dev/spec-table-vs-vocabulary.md` **§6** and `kb/dev/untranslatable-idioms.md`
+> **§9**, ingested in `C:\Dev\JARVIS` `e42a68c`, that board released in `84ec3c8`, both pushed.
+> `Check-KbLinks` clean over 110 pages. Singletons: none held on this pass.
+>
+> **This is the second release of this row today** — the first (`7cd8932`) closed `#53` and the
+> brief. The drain was owed **at** that commit trigger and rode nowhere, so it came back as its own
+> unit rather than being dropped. Recorded plainly because a re-claim that is not explained reads
+> like a session that could not finish.
+>
+> 📌 **The finding worth carrying past this row:** *a join rots with nothing failing.* The document
+> renders, the product runs, no test reddens, and the two simply stop agreeing — which is exactly how
+> `#53`'s naming gap was born. So a guard over a join must take **the document** as its input; one
+> holding its own copy of the names guards the strings against **itself**, passes forever, and reads
+> exactly like a real guard.
+>
+> **Row as claimed:**
+>
+> | `53-material-naming` (re-claim) | KB drain — the two findings `b3dbba3` produced, into the central KB. Row also live on `C:\Dev\JARVIS`'s board, which is where the pages land | `kb-candidates/2026-08-22-53-material-naming.md` · `CHANGELOG/2026-08-22/53-material-naming.md` | none | 2026-08-22 |
+
 
 > 🏁 **`53-material-naming` RELEASED 2026-08-22 — this commit.** `#53`'s **last** item shipped in
 > `b3dbba3`, the brief is closed to `sessions/done/`, and **`#53` itself is CLOSED**. Singletons

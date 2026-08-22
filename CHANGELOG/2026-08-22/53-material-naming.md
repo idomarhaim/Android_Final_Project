@@ -205,3 +205,36 @@ one), and `c12-material-contract` + `53-tag-sweep`, both already `done`. Nothing
 `docs/render-passes/2026-08-22-53-material-naming/` (this session's own new directory).
 Zero live sibling rows throughout — counted mechanically, since the Active-claims section is ~4,200
 lines of appended release notes around a table that held only its header.
+
+---
+
+## 8. 📥 KB drain — two findings, both into existing central-KB pages
+
+Late by a commit rather than skipped: the drain is owed **at** the commit trigger and rode nowhere,
+so it went out as its own unit with the candidate file written first, exactly as the rule intends —
+a session that dies mid-ingest loses nothing.
+
+📥 **Ingested:** a vocabulary join with a **running product** on one side → `kb/dev/spec-table-vs-vocabulary.md` **§6**
+📥 **Ingested:** what a word is **for** decides whether it translates → `kb/dev/untranslatable-idioms.md` **§9**
+
+Both are **updates in place**. Neither creates a page, neither supersedes a standing claim and
+neither is `rules/`-destined, so no always-ask exclusion fired and both drained under `AUTO MODE`.
+Journal: `kb/log/2026-08-22.md`, naming this repo's candidate file — the only tie that survives the
+usual case of a candidate in one repo and its pages in another. `Check-KbLinks` **clean**, 110 pages.
+
+Cross-repo, so it owes a row on **both** boards, and it had one: `C:\Dev\JARVIS` claim `4e05295`,
+pages `e42a68c`, released `84ec3c8` (pushed); this repo's re-claim `ccb927e`.
+
+**On the destination search, because it is the part that could have gone wrong.** The candidate's
+entries carried a `Destination` but **no bundle-check field**, which is the *missing* signal rather
+than an explicit `not checked` — nobody had considered it. It turned out confirming anyway, but the
+useful half is how the page was found: the concept-level greps (*drift apart* · *two vocabularies* ·
+*guard against itself*) returned **nothing**, and only a search by the phenomenon's **other names**
+(`vocabulary|nomenclature|naming gap|designation`) surfaced `spec-table-vs-vocabulary.md`. A
+destination search run at the wrong width does not fail — it passes, and reports that nothing covers
+this. Two new duplicate pages is what the narrow search would have produced.
+
+⚠️ **Noted in passing, not fixed:** `kb/stale-pages.base` in `C:\Dev\JARVIS` is dirty with an
+**empty** diff — LF/CRLF only, so it is not a sibling's unpublished work and §5.4's *advance it or
+message the owner* does not apply. Left untouched and recorded on that board so the next arrival does
+not re-derive it.
