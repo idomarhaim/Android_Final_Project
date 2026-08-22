@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `53-material-naming` (re-claim) | KB drain — the two findings `b3dbba3` produced, into the central KB. Row also live on `C:\Dev\JARVIS`'s board, which is where the pages land | `kb-candidates/2026-08-22-53-material-naming.md` · `CHANGELOG/2026-08-22/53-material-naming.md` | none | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
