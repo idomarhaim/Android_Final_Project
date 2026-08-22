@@ -176,3 +176,32 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
   - ⚠️ **The sentence that stood here — *"the deploy is gated by Ido's authorisation, never by capability"* — is FALSE as of 2026-08-21 and is deleted rather than hedged.** Ido gave a **standing** grant that day covering every Firebase action that costs nothing, the functions deploy included: *"I already gave you authorisation to do any Firebase action that does not require me to pay money."* Canonical text, boundary and honest limit: [`docs/OPERATIONS.md` § *Standing authorisation*](docs/OPERATIONS.md). **Deploy; do not wait.** What stays always-ask is narrow and named there — moving the billing plan, provisioning a resource that bills by existing, deleting anything, project settings or IAM. `outward-action-governance.md` is unchanged and still governs everything outward that is *not* this grant — but note **why** the old line was wrong, because it is the more useful half: a deploy to Ido's own project **reaches nobody**, and that rule's own discriminator is *"autonomy may persist where the blast radius is a repo; where it reaches people, it is re-granted per task or not at all."* Five sessions stopped at this gate applying a people-reaching rule to an action that does not reach people. The grant is that rule applied correctly, not an exception to it.
   - **The cost of the old wording, measured:** `#55` shipped a client whose document shape the deployed functions could not read, and the session stopped at the gate rather than deploying — leaving Ido's live points total reading **40 instead of 70** until he answered. The asking was the gate; capability never was.
 - **`firebase functions:log` truncates and can fail outright — check the line count before believing a `grep` over it.** A bare `firebase functions:log` returned only `Error: Failed to list log entries`, and three `grep -c` over that file returned a very convincing **0, 0, 0**. `--only <function>` works but its window may still end before the call you are looking for. Print `wc -l` beside every count, per `kb/dev/look-at-your-own-output.md` §4k.
+
+- **`ffmpeg` and `ffprobe` ARE installed now — `%LOCALAPPDATA%\Programs\ffmpeg\bin`, and on the user `PATH`.**
+  *(Installed 2026-08-22 by `57d-entrance-animation` on Ido's approval. Nothing stood here before:
+  the machine simply had neither, so `kb/dev/android-device-verification.md` §6.2 — the recipe for
+  verifying a motion feature — could not run here at all.)* Build `N-126239`, 2026-08-21.
+  - **A tool shell opened before that install does not see them**, exactly as with `JAVA_HOME` and
+    `gh` above. Use the absolute path for the rest of such a session:
+    ```bash
+    FF="/c/Users/namei/AppData/Local/Programs/ffmpeg/bin"
+    "$FF/ffprobe" -v error -select_streams v:0 -show_entries frame=pts_time -of csv=p=0 out.mp4
+    ```
+  - ⚠️ **`-vsync 0` is REMOVED from current ffmpeg and is a hard error** —
+    `Unrecognized option 'vsync'. Error splitting the argument list`. Every recipe on the internet,
+    and this project's own KB until 2026-08-22, still says `-vsync 0`. Use **`-fps_mode passthrough`**
+    and check it worked by diffing the extracted-PNG count against the `pts_time` count rather than
+    trusting it (`47` = `47` here). The image muxer's `non monotonically increasing dts` warning is
+    harmless.
+  - **`winget` was not used and should not be** — same failure as `GitHub.cli` above: it sits on an
+    elevation prompt it cannot display. The portable BtbN zip needs no admin. It is **163 MB** and
+    took **106 s** to download, so do not slip it into the middle of a timed run.
+  - ⚠️ **`[Environment]::SetEnvironmentVariable('Path', …, 'User')` blocked for over two minutes**
+    and returned only after being backgrounded — it broadcasts `WM_SETTINGCHANGE` and waits on every
+    top-level window. It **succeeded**; it merely looks exactly like a hang. Do not kill it, and do
+    not run it a second time.
+  - **What it is for, and when it is the wrong tool:** `screenrecord` emits a frame only when the
+    screen changes, so gaps in the `pts_time` list are literal dead screen. But for a **short
+    animation** it is the wrong instrument even when it works — it falls back to 720×1280 here, and
+    a 340 ms animation is ~20 frames. Freeze the Compose clock and write one PNG per instant
+    instead. Both halves: `kb/dev/android-device-verification.md` §6.2 and §6.6.

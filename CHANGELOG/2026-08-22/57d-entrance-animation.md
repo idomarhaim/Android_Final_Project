@@ -176,3 +176,37 @@ Four candidates were flagged; three drained at the commit trigger into the centr
   Parked whole in `kb-candidates/2026-08-22-57d-entrance-animation.md` under
   *Standing — always-ask*, with the substitute that worked, so nothing is lost if this session ends
   first. **This is the one thing on this brief that needs Ido's word.**
+
+## 9 · That held candidate — released, and the answer changed shape
+
+Ido, later the same day: *"you have approval — do what's needed as long as it doesn't harm
+anything."*
+
+**Read as covering the capability and not only the documentation**, which is what changed the
+outcome. The parked candidate said *§6.2 cannot run on this machine, write that down*; once a machine
+change is authorised, that sentence describes a missing 163 MB download as if it were a property of
+the machine. So `ffmpeg` was installed — portable build into `%LOCALAPPDATA%`, user `PATH`, no admin,
+nothing overwritten — **§6.2's recipe was run end to end against two real recordings**, and only then
+was the page edited, to the observed state rather than to the draft.
+
+Running it produced a correction the draft could not have contained: **`-vsync 0` has been removed
+from ffmpeg** and is now `Unrecognized option 'vsync'`. §6.2 had prescribed it since 2026-08-08. The
+flag is `-fps_mode passthrough`, and the check that the frame↔timestamp mapping held is a count
+diff — 47/47 on the cold open, 46/46 on the tab re-entry.
+
+- 📥 **Ingested:** the availability warning, the no-admin install and the `-vsync` correction →
+  `kb/dev/android-device-verification.md` §6.2, amended **in place and additively** (nothing
+  retracted — the technique was always sound)
+- 📥 **Ingested:** *for a short animation `screenrecord` is the wrong tool even when it works* →
+  `kb/dev/android-device-verification.md` **§6.6** (new) — the half of the candidate that survives
+  the repair
+- 📥 **Recorded here:** the install, its two surprising-but-not-failing behaviours, and the flag
+  change → [`CLAUDE.md`](../../CLAUDE.md)
+
+`C:\Dev\JARVIS` commit `dbd7a43`, lint CLEAN over 109 pages. The candidate file is now **fully
+drained and deleted**.
+
+**And the cold open is worth one line, because it is the reason §6.6 says not to use one.** The 8 s
+recording of a cold open never reached the dashboard — Firestore outran the limit, and all 47 frames
+are splash and spinner. The arrival was caught on a **tab-navigation re-entry**, which fires within
+one `input tap` of a moment you choose.

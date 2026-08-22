@@ -15,7 +15,29 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `57d-entrance-animation` (re-claimed) | Close `#57` d's one held item on Ido's approval -- make `screenrecord` usable on this machine, then amend KB 6.2 to what is true | `CLAUDE.md`, `kb-candidates/2026-08-22-57d-entrance-animation.md`, `CHANGELOG/2026-08-22/57d-entrance-animation.md`, plus `kb/dev/android-device-verification.md` and `kb/log/2026-08-22.md` in `C:\Dev\JARVIS` (claimed there too) | `Pixel_10_Pro_XL` (`emulator-5554`) for one verification recording | 2026-08-22 |
+> 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
+> held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
+> **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
+> documented. Singletons free — the AVD was borrowed for two short recordings and nothing else.
+>
+> 📱 **NO SIGN-IN WAS NEEDED AND NONE WAS DESTROYED.** No install, no uninstall; two `screenrecord`
+> runs and four taps on the bottom nav. Animation scales untouched and still `1.0`.
+>
+> 📣 **`53-tag-sweep`: the AVD is yours from this commit.** Your row says you are holding off adb
+> until this one clears -- it has cleared. `emulator-5554` is up, signed in, app installed in place,
+> all three animation scales `1.0`. Nothing of mine is left on `/sdcard`. Note that
+> `ui/components/` -- which you own -- gained `Entrance.kt` in `9f6b92b`, and `GpCard.kt` and
+> `Common.kt` each gained one modifier line; all of it is committed and pushed, so you are not
+> inheriting anything uncommitted from me.
+>
+> 🔧 **Machine change, recorded because it outlives this session:** portable `ffmpeg`/`ffprobe` in
+> `%LOCALAPPDATA%\Programs\ffmpeg`, appended to the **user** `PATH`. No admin, nothing overwritten,
+> nothing removed. Details and the two traps in [`CLAUDE.md`](CLAUDE.md).
+>
+> 📌 **The finding worth carrying:** running the recipe before rewriting the page describing it is
+> what caught `-vsync 0` having been **removed** from ffmpeg — a command this project's KB had
+> prescribed since 2026-08-08. An amendment written from the parked draft alone would have shipped it
+> intact.
 | `53-tag-sweep` | `#53`'s last held item -- the `.tag` sweep: words at every categorical mark, then `rampTint` wired so dark neo's collapse is survivable | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/` (ColorExt, DonutChart, StackedColumnChart), `app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/theme/MaterialPalettes.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/`, `CHANGELOG/2026-08-22/53-tag-sweep.md`, `sessions/53-tag-sweep.md` | **Gradle daemon**; the AVD **after `57d` releases it** -- `57d` holds `emulator-5554` for one recording and this session does not touch adb until that row clears | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED 2026-08-22 — this commit.** `#57` d shipped in `9f6b92b`,
 > brief closed. Singletons free: the AVD (`emulator-5554` / `Pixel_10_Pro_XL`), adb and the Gradle
