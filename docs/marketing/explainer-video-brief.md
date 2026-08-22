@@ -237,6 +237,17 @@ it belongs over; the second-by-second timecodes are in
 
 ## 4 · OpenArt Director prompt — the primary route
 
+**Pin the models before you generate anything.** Ido has an OpenArt **PRO** subscription and
+asked for the best model in each class, one each:
+
+| | model | why |
+|---|---|---|
+| 🎬 **video** | **Seedance 2.0** | **#1 on the Artificial Analysis leaderboards** for both text-to-video and image-to-video as of June 2026, and the strongest at multi-shot continuity — which is what makes five separate b-roll clips read as one film. Runner-up **Kling 3 Omni** wins on native dialogue and a shared audio timeline; neither is needed, because **the narration comes from ElevenLabs on Director's timeline, not from the video model.** |
+| 🖼️ **image** | **Nano Banana Pro** | strongest on quality *and* text, with 4–6 second turnaround, which matters when the opening gets iterated. Runner-up **GPT Image 2** measured **98.5 %** text accuracy and wins only if a frame must render exact typography — **it should not**: the title card belongs in the editor, where it is sharp and editable without a re-roll. |
+
+Images are for **reference frames feeding Seedance** and at most one logo card — **never for the
+app**. The UI on screen is the recorded UI, always.
+
 Paste this into Director's chat after uploading `GoalPilot-full-tour.mp4`, and attach
 [the narration script](#3--the-narration-script) as the voiceover text.
 

@@ -101,3 +101,75 @@ What was verified mechanically:
 
 Not touched this session. No `adb`, no emulator, no Gradle. The AVD singleton claimed yesterday
 is released with this commit.
+
+---
+
+# Pass 2 — the prototype gap, and the models pinned
+
+Ido: *"if there are more unimplemented things from the PROTOTYPES then add them to kickoffs"*,
+*"in OpenArt use the best models there — only the best video model and the best image model"*,
+and a request for the kickoffs **in order**, with what can run **in parallel**.
+
+## The prototype audit
+
+Seven prototypes in `docs/prototypes/`, each an asset for a closed decision ticket. Checked
+against the code rather than against memory:
+
+| prototype | ticket | built? |
+|---|---|---|
+| `2026-08-10-calendar-surface` | `C9b` #26 | ❌ → already ticketed as **#60** |
+| `2026-08-10-charts-presentation` | `C12` #31 | ✅ charts **and widgets** — `ui/widget/` is a full package and the manifest declares **5** appwidget providers |
+| `2026-08-11-visual-styles` | `C12` #31 | ✅ four materials ship as a picker |
+| `2026-08-13-area-success-failure` | `C19` #41 | ❌ **not built** → **#64** |
+| `2026-08-13-log-progress` | `C6` #22 | ✅ |
+| `2026-08-15-c24-settings-surface` | `C24` #46 | ✅ |
+| `2026-08-15-measure-proposal` | `C22` #44 | ❌ **not built** → **#65** |
+
+Two genuine gaps, and each names its own absence in the codebase rather than needing to be
+inferred. `LifeAreaDetailScreen.kt` carries a KDoc block saying the success/failure run *"is not
+built here"* **and why it was left out rather than mocked** — *"a placeholder drawn from what
+exists today would be the map's most-repeated finding, a second number that quietly disagrees."*
+And `grep -rn "MeasureProposal"` over `app/src/main` returns **zero hits**.
+
+## The dependency neither gap can skip — and it is my call, not the audit's
+
+`C19`'s run counts **missed windows**, and a window is an **occurrence**. `Observed:` 2026-08-23
+— `grep -rn occurrences` over `core/`, `data/firestore/` and `firestore.rules` returns **zero
+hits**. `#56` shipped *at most one* `when` as **four fields on the task** and said so in
+`Task.kt`: *"`#56` builds the occurrence half; **recurrence is the other half and is not here.**"*
+[§7.1](../../docs/PRODUCT_v0.3.md) marks the collection **new**.
+
+**Decision, mine and overturnable:** that becomes its own ticket, **#63**, rather than a slice
+inside #64 — because #61 wants `googleEventId` on the occurrence too, and building the same
+foundation twice inside two tickets is what a shared ticket exists to prevent.
+
+⚠️ **And the honest limit on that decision:** **#60 does *not* block on #63.** The calendar
+renders from the task's four fields for one-off work; a repeating task simply shows once until
+#63 lands. Saying otherwise would have serialised two tickets that can run side by side, which
+is the opposite of what was asked for.
+
+## The models
+
+Ido has an OpenArt **PRO** subscription and asked for one best model per class.
+
+- 🎬 **Seedance 2.0** — `Observed:` **#1 on the Artificial Analysis leaderboards** for both
+  text-to-video and image-to-video as of June 2026, and strongest at multi-shot continuity, which
+  is what makes five separate b-roll clips read as one film. **Kling 3 Omni** is the runner-up and
+  wins on **native dialogue and a shared audio timeline** — neither is needed here, because the
+  narration comes from **ElevenLabs on Director's timeline, not from the video model**, and nobody
+  speaks on camera.
+- 🖼️ **Nano Banana Pro** — strongest on quality *and* text, 4–6 s turnaround. **GPT Image 2**
+  measured **98.5 %** text accuracy against Seedream 5 Pro's 89.5 % and wins only where a frame
+  must render exact typography — which it should not have to: the title card belongs in the
+  editor, sharp and editable without a re-roll.
+
+⚠️ **There is no single best video model in 2026 — there is a best model per task**, which is why
+both entries name the task before the model. Images are for **reference frames feeding Seedance**
+and at most one logo card; **never for the app**, whose UI on screen is always the recorded UI.
+
+## 🧪 Tests
+
+**No code changed** — three briefs, three issue bodies, and edits to two existing documents. No
+suite applies and none was run. The audit itself was mechanical: `grep` and `ls` against
+`app/src/main` and the manifest, per prototype, with the result recorded in the table above
+rather than asserted.

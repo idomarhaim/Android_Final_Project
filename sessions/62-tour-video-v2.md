@@ -118,6 +118,58 @@ screen must be the recorded UI. A five-minute Kling generation that *looks like*
 worse than useless as a product demo, and it is the failure this ticket is most likely to
 walk into, because it is the easiest thing for the tool to do.
 
+## Which OpenArt models to use — one for video, one for images
+
+Ido: *"use the best models there — only the best video model and the best image model."*
+
+### 🎬 Video — **Seedance 2.0**
+
+`Observed:` as of **June 2026** Seedance 2.0 ranks **#1 on the Artificial Analysis leaderboards
+for both text-to-video and image-to-video** (the default, audio-included view), and it is
+reported as **the best model available for strict character continuity and multi-shot director
+control**. That second property is the one that matters here even though there are no
+characters: the opening is **five separate clips that have to read as one film**, and continuity
+across shots is exactly what a b-roll montage lives or dies on.
+
+**The runner-up, and when it would win instead.** **Kling 3 Omni** is *"arguably the most capable
+general-purpose video model available right now"* and is stronger specifically at **multi-shot
+sequences with a shared audio timeline and native dialogue in five languages**. Neither of those
+is needed here: **the narration comes from ElevenLabs through Director's timeline, not from the
+video model**, and nobody speaks on camera. So the dialogue advantage buys nothing and the
+leaderboard position decides it.
+
+⚠️ **There is no single best video model in 2026 — there is a best model per task.** That is why
+this section names the task before it names the model. If a later ticket needs someone speaking
+on camera, re-open this choice; for silent atmospheric b-roll, Seedance 2.0.
+
+### 🖼️ Images — **Nano Banana Pro**
+
+`Observed:` reported as **the strongest on both quality and text**, returning Pro-level results
+in **4–6 seconds**, which matters because the opening will be iterated on several times.
+
+**The runner-up, and when it would win instead.** **GPT Image 2** measured **98.5 % text
+accuracy** against Seedream 5 Pro's 89.5 % in Atlas Cloud's 2026 API benchmark — so if a frame
+has to render **exact typography**, it wins. It should not have to: **the title card and any
+on-screen words belong in the editor, not in a generated image**, where they are sharp, correct,
+and editable without a re-roll.
+
+### What images are even for here
+
+Not the app — **never** the app. The UI on screen is the recorded UI, always. Images are for
+**reference frames** feeding Seedance (a start frame for a clip, a style reference), and for the
+one **logo/title card** if it is not simply drawn in the editor.
+
+⚠️ **Do not let a generative model re-render GoalPilot.** A five-minute generation that *looks
+like* the app is worse than useless as a product demo, and it is the easiest thing for the tool
+to do — which is why it is the failure this ticket is most likely to walk into.
+
+### Sources
+
+[Artificial Analysis rankings via Hedra's 2026 model round-up](https://www.hedra.com/blog/best-ai-video-models) ·
+[Seedance vs Veo vs Kling](https://pixo.video/blog/seedance-vs-veo-vs-kling) ·
+[Atlas Cloud's 2026 image API benchmark](https://www.atlascloud.ai/blog/tips/2026-ai-image-api-benchmark-gpt-image-2-vs-nano-banana-2-pro-vs-seedream-5-0) ·
+[OpenArt MCP](https://openart.ai/mcp/)
+
 ## Exit
 
 - A new `GoalPilot-full-tour.mp4` in `C:\Users\namei\Videos\GoalPilot-Tour\`, CFR, with a

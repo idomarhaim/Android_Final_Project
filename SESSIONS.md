@@ -4376,6 +4376,35 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+### 🏁 `tour-video` (kickoff pass 2) — released 2026-08-23, this commit
+
+The prototype gap is closed. Audited all seven prototypes in `docs/prototypes/` against the code
+(not against memory): **four are built** — charts *and* widgets (`ui/widget/` is a full package,
+5 appwidget providers in the manifest), the four materials, log-progress, and the settings
+surface. **Two are not**, and each names its own absence in the codebase:
+[`#64`](https://github.com/idomarhaim/Android_Final_Project/issues/64) `C19`'s success/failure run
+and [`#65`](https://github.com/idomarhaim/Android_Final_Project/issues/65) `C22`'s measure
+proposal. Both have briefs.
+
+⚠️ **A dependency neither can skip, and it is my call rather than the audit's:**
+[`#63`](https://github.com/idomarhaim/Android_Final_Project/issues/63) — the **`occurrences`
+collection and recurrence**. `#56` shipped *at most one* `when` as four fields on the task and
+said so; §7.1 marks the collection **new**; `grep -rn occurrences` over `core/`, `data/firestore/`
+and `firestore.rules` returns **zero hits**. It is its own ticket because **#64 cannot start
+without it** and **#61 wants `googleEventId` on it**.
+
+📌 **The honest limit on that: #60 does NOT block on #63.** The calendar renders from the task's
+four fields for one-off work; a repeating task simply shows once until #63 lands. Serialising them
+would have removed a parallel lane that really exists.
+
+📌 **OpenArt models pinned into `#62`** on Ido's instruction — one each. **Seedance 2.0** for video
+(#1 on the Artificial Analysis leaderboards for both text-to-video and image-to-video as of June
+2026; Kling 3 Omni's dialogue advantage buys nothing here because narration comes from ElevenLabs
+on Director's timeline) and **Nano Banana Pro** for images (strongest on quality and text; GPT
+Image 2 wins only where exact typography must render, which the title card should not ask of it).
+
+**Singletons: none held this pass.** No device, no Gradle, no `adb`.
+
 ### 🏁 `tour-video` — released 2026-08-23, this commit
 
 Two units: yesterday's 6:41 full-app screen recording plus its narration brief (`1ad9770`), and
