@@ -2,14 +2,16 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 63
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Occurrence.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Task.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/RepeatRule.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/repository/**
   - app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Mappers.kt
   - app/src/main/java/com/idomarhaim/goalpilot/data/firestore/**
+  - app/src/main/java/com/idomarhaim/goalpilot/di/RepositoryModule.kt
   - app/src/main/java/com/idomarhaim/goalpilot/core/FirestorePaths.kt
   - firestore.rules
   - firestore-tests/**
