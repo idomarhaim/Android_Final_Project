@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -129,6 +131,7 @@ import java.util.Locale
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenProfile: (() -> Unit)?,
+    onReplayTutorial: (() -> Unit)?,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val skin by viewModel.skin.collectAsStateWithLifecycle()
@@ -166,6 +169,7 @@ fun SettingsScreen(
         onClearAiCredential = viewModel::clearAiCredential,
         onBack = onBack,
         onOpenProfile = onOpenProfile,
+        onReplayTutorial = onReplayTutorial,
     )
 }
 
@@ -205,6 +209,17 @@ fun SettingsContent(
     onClearAiCredential: () -> Unit,
     onBack: () -> Unit,
     onOpenProfile: (() -> Unit)?,
+    /**
+     * Replays the guided tour, or `null` where there is no tour to replay.
+     *
+     * Nullable for the same reason [onOpenProfile] is, and the null branch is
+     * the same branch: this screen is reachable from the **sign-in screen**,
+     * where the app the tour walks through does not exist yet. §4.9's rule —
+     * *a lock is a word, never a dimming* — is met by not drawing the section
+     * at all rather than by drawing a Replay button that would navigate into a
+     * dashboard nobody is signed in to.
+     */
+    onReplayTutorial: (() -> Unit)?,
 ) {
     // The *device* locale, read off the framework's own configuration rather
     // than LocalContext's: AppLocale overrides the composition's context with
@@ -271,6 +286,11 @@ fun SettingsContent(
                 onEdit = { editingTime = it },
                 onFollowWakingHours = { onPlanningOverrideMinutes(null) },
             )
+
+            if (onReplayTutorial != null) {
+                SectionHeader(stringResource(R.string.tutorial_settings_section))
+                TutorialCard(onReplay = onReplayTutorial)
+            }
 
             SectionHeader(stringResource(R.string.settings_ai_title))
             AiCard(
@@ -680,6 +700,51 @@ private fun spanOf(minutes: Int): String {
     return if (rest == 0) "$hours h" else "$hours h $rest m"
 }
 
+/**
+ * §4.9's **Help** section: the way back into the guided tour.
+ *
+ * ### Why the tour needs a permanent home at all
+ *
+ * The first-run tour records itself as seen the moment it is skipped — which is
+ * the only humane behaviour, because re-offering something a user has explicitly
+ * dismissed is how onboarding earns its reputation. That trade is only honest if
+ * the tour can be got back, and this row is the whole of that promise. The
+ * tour's own last step points at the avatar and says so, so a user who watches
+ * it to the end has been told where this lives; a user who skipped it has not,
+ * which is exactly who needs the row to be findable rather than clever.
+ *
+ * ### It lives on Settings rather than Profile, and that follows from §4.9
+ *
+ * *Profile is the account, Settings is the device, and sign-out is the test.*
+ * Whether this phone has been walked through the app is a fact about the phone —
+ * it is stored beside the skin, in `AppPreferencesRepository`, and it survives
+ * signing out. Putting the replay on Profile would have it leave with the
+ * account, along with the tour of an app that is still installed.
+ */
+@Composable
+private fun TutorialCard(onReplay: () -> Unit) {
+    GpCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SettingLabel(stringResource(R.string.tutorial_settings_title))
+            SettingDescription(stringResource(R.string.tutorial_settings_description))
+            TextButton(
+                onClick = onReplay,
+                modifier = Modifier.testTag(TAG_TUTORIAL_REPLAY),
+            ) {
+                Icon(
+                    Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = stringResource(R.string.tutorial_settings_action),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun AccountCard(onOpenProfile: (() -> Unit)?) {
     GpCard(modifier = Modifier.fillMaxWidth()) {
@@ -901,6 +966,7 @@ private sealed interface TimeField {
 }
 
 const val TAG_SCOPE_LINE = "settings_scope_line"
+const val TAG_TUTORIAL_REPLAY = "settings_tutorial_replay"
 const val TAG_MATERIAL_PICKER = "settings_material_picker"
 const val TAG_MATERIAL_CONSEQUENCE = "settings_material_consequence"
 const val TAG_BACKGROUND_PICKER = "settings_background_picker"

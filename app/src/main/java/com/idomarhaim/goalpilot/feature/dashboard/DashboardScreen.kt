@@ -98,6 +98,8 @@ import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
+import com.idomarhaim.goalpilot.ui.tutorial.TutorialAnchor
+import com.idomarhaim.goalpilot.ui.tutorial.tutorialAnchor
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -206,6 +208,10 @@ fun DashboardScreen(
                         modifier = Modifier
                             .padding(end = 12.dp)
                             .clip(CircleShape)
+                            // The guided tour's last step points here, because
+                            // this is the door to Settings and Settings is where
+                            // the tour itself lives from then on.
+                            .tutorialAnchor(TutorialAnchor.AVATAR)
                             .clickable { avatarSheetOpen = true }
                             .semantics { this.contentDescription = "Your account" }
                             .testTag(TAG_HOME_AVATAR),
@@ -260,6 +266,7 @@ fun DashboardScreen(
                         level = state.level,
                         levelProgress = state.levelProgress,
                         pointsToNext = state.pointsToNextLevel,
+                        modifier = Modifier.tutorialAnchor(TutorialAnchor.POINTS_CARD),
                     )
                 }
                 item {
@@ -275,6 +282,10 @@ fun DashboardScreen(
                     SmartAddCard(
                         state = smartAdd,
                         onClassify = viewModel::classifyForSmartAdd,
+                        // Step 3's target. It is the one anchored widget that can
+                        // sit below the fold, which is why `tutorialAnchor` also
+                        // scrolls its own node into view when its step arrives.
+                        modifier = Modifier.tutorialAnchor(TutorialAnchor.QUICK_ADD),
                     )
                 }
                 item {
@@ -787,12 +798,16 @@ internal const val MISS_REVIEW_SUBTITLE = "Shown once. Nothing here counts again
 internal const val MISS_REVIEW_DISMISS_LABEL = "Got it"
 
 @Composable
-internal fun SmartAddCard(state: SmartAddState, onClassify: (String, Boolean) -> Unit) {
+internal fun SmartAddCard(
+    state: SmartAddState,
+    onClassify: (String, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var title by remember { mutableStateOf("") }
     // `#7`/`R6`. Held here rather than in the ViewModel because it is a property of what is
     // being typed, not of the app: it belongs to this half-finished sentence and dies with it.
     var alreadyDone by remember { mutableStateOf(false) }
-    GpCard(modifier = Modifier.fillMaxWidth()) {
+    GpCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconChip(
@@ -1012,9 +1027,10 @@ private fun PointsLevelCard(
     level: Int,
     levelProgress: Float,
     pointsToNext: Long,
+    modifier: Modifier = Modifier,
 ) {
     val accents = MaterialTheme.gpAccents
-    HeroSurface {
+    HeroSurface(modifier = modifier) {
         Column(modifier = Modifier.padding(22.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

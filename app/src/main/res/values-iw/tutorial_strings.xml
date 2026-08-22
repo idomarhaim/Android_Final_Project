@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Hebrew for ui/tutorial/ — the first-run guided tour.
+
+  ⚠️ THE BUCKET IS `values-iw`, NOT `values-he`. See values-iw/strings.xml for
+  the measurement; HebrewLocaleResourceTest fails the build if a `values-he`
+  directory appears.
+
+  WHY THIS EXISTS WHILE #51 IS DEFERRED
+
+  It is not a resumption of #51 and it opts nothing in. `HebrewLocaleResourceTest`
+  is APP-WIDE, not sweep-scoped: its `every translatable english string has a
+  hebrew counterpart` case reads every file in values/ and fails on any key with
+  no counterpart here. So the moment a new res/ file is authored — which
+  ui/tutorial did, because authoring 24 strings in res/ costs the same keystrokes
+  as authoring them inline and this is the one moment at which that is true — its
+  Hebrew is owed by the build, today, and not by #51.
+
+  `Observed:` 2026-08-22, rather than assumed. Moving this file out of the tree
+  and re-running that class gives `7 tests completed, 1 failed`, naming every key
+  below. Worth measuring because the alternative reading — that the guard is
+  scoped to the swept packages, like `AnalyticsLiteralSweepTest` — is the obvious
+  one, and under it this whole file is dead weight added during a freeze.
+
+  Nothing renders it: AppLanguage.OFFERED still excludes HEBREW, so this is
+  parked infrastructure exactly like values-iw/analytics_strings.xml. When #51
+  resumes, this package is already done.
+
+  The two wording rules it follows (kb/dev/untranslatable-idioms.md §3–§5):
+
+  1 · TERMINOLOGY (§5.1 / E1): the `Goal` entity is יעד, NEVER מטרה — matching
+      values-iw/strings.xml and values-iw/components_strings.xml.
+
+  2 · NO HEBREW PREFIX ATTACHED DIRECTLY TO A DIGIT RUN (§4.8). tutorial_step_counter
+      keeps a space on both sides of each specifier (שלב %1$d מתוך %2$d), so the
+      bidi algorithm resolves the digits as their own run and the Hebrew words
+      stay where they were written. `ב%1$d` would land on the far side of them.
+
+  Register matches the rest of the app: plural imperative (הקישו, בחרו), never
+  masculine singular.
+-->
+<resources>
+
+    <!-- ── Chrome ───────────────────────────────────────────────────────── -->
+
+    <string name="tutorial_skip">דילוג על הסיור</string>
+    <string name="tutorial_start">התחלה</string>
+    <string name="tutorial_back">חזרה</string>
+    <string name="tutorial_next">הבא</string>
+    <string name="tutorial_done">סיום</string>
+
+    <string name="tutorial_step_counter">שלב %1$d מתוך %2$d</string>
+
+    <string name="tutorial_overlay_description">סיור מודרך. אפשר לדלג עליו בכל רגע בעזרת הכפתור לדילוג על הסיור.</string>
+
+    <!-- Settings §4.9 -->
+    <string name="tutorial_settings_section">עזרה</string>
+    <string name="tutorial_settings_title">מדריך</string>
+    <string name="tutorial_settings_description">הסיור המודרך שרץ בפעם הראשונה שפותחים את GoalPilot. אפשר להפעיל אותו שוב מתי שתרצו — הוא לא משנה דבר ולוקח כחצי דקה.</string>
+    <string name="tutorial_settings_action">הפעלת המדריך מחדש</string>
+
+    <!-- ── שלב 1 · פתיחה ────────────────────────────────────────────────── -->
+
+    <string name="tutorial_welcome_title">ברוכים הבאים אל GoalPilot</string>
+    <string name="tutorial_welcome_body">סיור של חצי דקה על חמשת הדברים שכדאי להכיר. אפשר לדלג עליו עכשיו ולהפעיל אותו שוב מההגדרות בכל רגע.</string>
+
+    <!-- ── שלב 2 · כרטיס ההתקדמות ───────────────────────────────────────── -->
+
+    <string name="tutorial_progress_title">ההתקדמות שלכם, במבט אחד</string>
+    <string name="tutorial_progress_body">הנקודות והרמה עולות ככל שאתם משלימים משימות. זה הכרטיס הראשון שאתם רואים בכל בוקר.</string>
+
+    <!-- ── שלב 3 · הוספה מהירה ──────────────────────────────────────────── -->
+
+    <string name="tutorial_quick_add_title">הוספה של כל דבר, מיד</string>
+    <string name="tutorial_quick_add_body">כתבו משימה במילים רגילות. GoalPilot יזהה לאיזה יעד היא שייכת ויתייק אותה בשבילכם.</string>
+
+    <!-- ── שלב 4 · לשונית היעדים — הפעולה היחידה שהסיור מבקש ─────────────── -->
+
+    <string name="tutorial_goals_title">כל מה שאתם עובדים עליו</string>
+    <string name="tutorial_goals_body">היעדים והמשימות שלכם נמצאים מאחורי הלשונית הזו. פתחו אותה והסיור ימשיך אתכם לשם.</string>
+    <string name="tutorial_goals_hint">הקישו על היעדים כדי להמשיך</string>
+
+    <!-- ── שלב 5 · כפתור היעד החדש ──────────────────────────────────────── -->
+
+    <string name="tutorial_new_goal_title">כל יעד מתחיל כאן</string>
+    <string name="tutorial_new_goal_body">יעד הוא מדד עם תאריך יעד. המשימות נתלות עליו, וההתקדמות מסתכמת מעצמה.</string>
+
+    <!-- ── שלב 6 · שאר הסרגל ────────────────────────────────────────────── -->
+
+    <string name="tutorial_explore_title">שני מקומות נוספים שכדאי להכיר</string>
+    <string name="tutorial_explore_body">בחברתי נמצאים האתגרים והחברים. בפרופיל נמצאים הניתוחים, תחומי החיים וההישגים שלכם.</string>
+
+    <!-- ── שלב 7 · איפה הסיור הזה גר מכאן והלאה ─────────────────────────── -->
+
+    <string name="tutorial_settings_step_title">החשבון שלכם, והסיור הזה</string>
+    <string name="tutorial_settings_step_body">ההגדרות יושבות מאחורי התמונה שלכם: מראה, שפה, והפעלת המדריך מחדש בכל פעם שתרצו את הסיור הזה שוב.</string>
+
+    <string name="tutorial_finish_create_goal">יצירת היעד הראשון שלי</string>
+</resources>

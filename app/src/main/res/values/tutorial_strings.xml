@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy for ui/tutorial/ — the first-run guided tour.
+
+  A sibling file to components_strings.xml, analytics_strings.xml and
+  widget_strings.xml, following the same rule: they merge into one R.string
+  namespace at build time, and keeping a package's speech in its own file is
+  what lets two sessions write two packages without contending on one file.
+  Every key is prefixed tutorial_.
+
+  WHY THIS PACKAGE STARTS IN res/ RATHER THAN AS LITERALS
+
+  AGENTS.md §"Hebrew is deferred" permits plain English literals in any unswept
+  package, and every feature/ package this tour points at is unswept. It is
+  taken up anyway here because this package is BEING WRITTEN NOW: authoring 24
+  strings in res/ costs the same keystrokes as authoring them inline, and it is
+  the one moment at which it does. Nothing is opted into — ui/tutorial is
+  deliberately absent from AnalyticsLiteralSweepTest.SWEPT_PACKAGES, so a
+  missing values-iw/ counterpart fails nothing.
+
+  ⚠️ HebrewLocaleResourceTest pairs files by NAME. If that test is app-wide
+  rather than sweep-scoped it will want a values-iw/tutorial_strings.xml with
+  exactly these keys; #51 is where the Hebrew is authored, not here.
+
+  HOUSE STYLE FOR THE BODY LINES
+
+  One idea per step and two sentences at most. A coach mark is read standing up,
+  in a queue, by somebody who wanted to use the app — the research is unanimous
+  that the failure mode is length, not clarity. Where a step asks for an action,
+  the sentence names the CONSEQUENCE and the hint names the TAP; splitting them
+  is what keeps the instruction findable when the body has been skimmed.
+-->
+<resources>
+
+    <!-- ── Chrome: the controls that appear on every step ────────────────── -->
+
+    <string name="tutorial_skip">Skip tour</string>
+    <string name="tutorial_start">Start</string>
+    <string name="tutorial_back">Back</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_done">Done</string>
+
+    <!--
+      The counter. Positional arguments because a language that puts the total
+      first (and Hebrew is one) must be able to reorder them.
+    -->
+    <string name="tutorial_step_counter">Step %1$d of %2$d</string>
+
+    <!--
+      Read by TalkBack when the overlay appears, before the step's own title.
+      It is the only place that says the overlay is DISMISSIBLE, which a sighted
+      user learns from seeing the Skip button.
+    -->
+    <string name="tutorial_overlay_description">Guided tour. Skip it at any time with the Skip tour button.</string>
+
+    <!-- The replay entry point, spec §4.9's Settings surface. -->
+    <string name="tutorial_settings_section">Help</string>
+    <string name="tutorial_settings_title">Tutorial</string>
+    <string name="tutorial_settings_description">The guided tour that runs the first time you open GoalPilot. Replay it whenever you like — it changes nothing and takes about half a minute.</string>
+    <string name="tutorial_settings_action">Replay tutorial</string>
+
+    <!-- ── Step 1 · Welcome ─────────────────────────────────────────────── -->
+
+    <string name="tutorial_welcome_title">Welcome to GoalPilot</string>
+    <string name="tutorial_welcome_body">A half-minute tour of the five things worth knowing. You can skip it now and replay it from Settings any time.</string>
+
+    <!-- ── Step 2 · The hero card ───────────────────────────────────────── -->
+
+    <string name="tutorial_progress_title">Your progress, at a glance</string>
+    <string name="tutorial_progress_body">Points and level rise as you finish tasks. This card is the first thing you see each morning.</string>
+
+    <!-- ── Step 3 · Smart add ───────────────────────────────────────────── -->
+
+    <string name="tutorial_quick_add_title">Add anything, instantly</string>
+    <string name="tutorial_quick_add_body">Type a task in plain words. GoalPilot works out which goal it belongs to and files it for you.</string>
+
+    <!-- ── Step 4 · The Goals tab — the tour's one required action ──────── -->
+
+    <string name="tutorial_goals_title">Everything you are working on</string>
+    <string name="tutorial_goals_body">Your goals and their tasks live behind this tab. Open it and the tour follows you there.</string>
+    <string name="tutorial_goals_hint">Tap Goals to continue</string>
+
+    <!-- ── Step 5 · The new-goal button ─────────────────────────────────── -->
+
+    <string name="tutorial_new_goal_title">Every goal starts here</string>
+    <string name="tutorial_new_goal_body">A goal is a target with a measure and a deadline. Tasks hang off it, and the progress adds itself up.</string>
+
+    <!-- ── Step 6 · The rest of the bar ─────────────────────────────────── -->
+
+    <string name="tutorial_explore_title">Two more places to know</string>
+    <string name="tutorial_explore_body">Social holds challenges and friends. Profile holds your analytics, life areas and achievements.</string>
+
+    <!-- ── Step 7 · Where this tour lives afterwards ────────────────────── -->
+
+    <string name="tutorial_settings_step_title">Your account, and this tour</string>
+    <string name="tutorial_settings_step_body">Settings sits behind your picture: appearance, language, and Replay tutorial whenever you want this again.</string>
+
+    <!--
+      The closing action. Offered as a SECONDARY button on the last step rather
+      than as an eighth step: the research calls this the activation moment, and
+      a tour that ends by handing the user the thing they installed the app for
+      beats one that ends by congratulating them.
+    -->
+    <string name="tutorial_finish_create_goal">Create my first goal</string>
+</resources>

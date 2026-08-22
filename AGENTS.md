@@ -83,7 +83,11 @@ with per-session briefs in `sessions/`. Account of the freeze itself:
   - `domain/` — models, repository **interfaces**, use cases. **No Android/Firebase types here.**
   - `data/` — Firebase + GROQ implementations (`auth/`, `firestore/`, `storage/`, `remote/`) plus the Google Tasks (`tasks/`) and Health Connect (`health/`) integrations.
   - `di/` — Hilt modules (`FirebaseModule`, `DispatchersModule`, `RepositoryModule`).
-  - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold).
+  - `ui/` — `theme/`, reusable `components/`, `navigation/`, `root/` (auth gate + scaffold),
+    `locale/` (the `App*` window façades), and `tutorial/` — the first-run guided tour.
+    **A screen that gains a widget the tour points at tags it with
+    `Modifier.tutorialAnchor(...)` and does nothing else**; the overlay lives in `ui/root/`
+    and no feature package knows it exists.
   - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `lifeareas`, `challenges`.
 - `functions/` — GROQ proxy Cloud Functions (TypeScript).
 - `firestore-tests/` — security-rules tests (`@firebase/rules-unit-testing`) against the local emulator. The **only** layer that can test `firestore.rules`; the Kotlin suites cannot reach them.

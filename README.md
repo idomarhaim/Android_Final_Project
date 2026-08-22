@@ -38,6 +38,12 @@ The system works on three levels (spec §1):
   Tasks list names**. Every goal is filed under one, and that is what the time
   chart reports on.
 
+- ✅ **A guided tour on first launch** — seven coach marks over the *real* app: a
+  dimmed screen with a hole cut over the thing being described, one step at a
+  time. Skippable from any step, and replayable whenever you like from
+  *Settings → Help → Replay tutorial*. One step waits for you to open the Goals
+  tab yourself and then follows you there.
+
 **Bonus (implemented)**
 - 🤖 **LLM task→goal classification** — the "Smart add a task" card: describe a
   task in plain language and GoalPilot files it under the right goal, or proposes
@@ -107,7 +113,7 @@ app/                     Android app (Compose + MVVM)
     domain/              models · repository interfaces · use cases  (no Android/Firebase)
     data/                Firebase + GROQ implementations, integration stubs
     di/                  Hilt modules
-    ui/                  theme · shared components · navigation · root
+    ui/                  theme · shared components · navigation · root · tutorial
     feature/             auth · goals · dashboard · social · profile · analytics ·
                          lifeareas · challenges
   src/test/              JVM unit tests

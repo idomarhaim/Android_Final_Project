@@ -190,4 +190,37 @@ interface AppPreferencesRepository {
     fun missReviewLastShownAt(): Long
 
     fun setMissReviewLastShownAt(epochMillis: Long)
+
+    /**
+     * Which version of the in-app guided tour this install has already been
+     * shown, or `0` for *none*.
+     *
+     * ### An Int, not a Boolean, and that is the whole design
+     *
+     * `hasSeenTutorial` can answer *this install has run the tour* and can never
+     * answer *this install has run **this** tour*. The day a step is added for a
+     * feature that did not exist, every existing user is precisely the group that
+     * has not seen it — and the flag says they have. The version costs the same
+     * four bytes and turns that into a one-line change at
+     * [com.idomarhaim.goalpilot.ui.tutorial.TUTORIAL_VERSION].
+     *
+     * ### A [StateFlow], for the same reason [skin] is
+     *
+     * It is read on the first composition after sign-in to decide whether the
+     * tour starts at all. A cold flow would emit the default first, so every
+     * returning user would be shown the opening step of a tour they finished
+     * months ago and have it snatched away a frame later.
+     *
+     * ### Device-local, and per-install rather than per-account
+     *
+     * This is a fact about a **screen**, exactly like [missReviewLastShownAt],
+     * not about a person: a phone that has been walked through the app has been
+     * walked through it whoever was signed in at the time. The worst a shared
+     * value can do is deny a second account on the same phone a tour of an app
+     * it is already watching someone else use — against which a per-uid key would
+     * be a second thing to migrate for a case this app has never had.
+     */
+    val tutorialSeenVersion: StateFlow<Int>
+
+    fun setTutorialSeenVersion(version: Int)
 }

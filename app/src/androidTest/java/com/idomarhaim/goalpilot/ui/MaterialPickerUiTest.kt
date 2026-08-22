@@ -434,6 +434,7 @@ class MaterialPickerUiTest {
                     onClearAiCredential = {},
                     onBack = {},
                     onOpenProfile = {},
+                    onReplayTutorial = {},
                 )
             }
         }

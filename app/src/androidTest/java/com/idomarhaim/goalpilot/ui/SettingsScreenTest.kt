@@ -31,6 +31,7 @@ import com.idomarhaim.goalpilot.feature.settings.TAG_REGION_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.TAG_RELIEF_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.TAG_RELIEF_PICKER
 import com.idomarhaim.goalpilot.feature.settings.TAG_SCOPE_LINE
+import com.idomarhaim.goalpilot.feature.settings.TAG_TUTORIAL_REPLAY
 import com.idomarhaim.goalpilot.feature.settings.TAG_WAKING_CONSEQUENCE
 import com.idomarhaim.goalpilot.feature.settings.reliefTileTag
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
@@ -77,6 +78,7 @@ class SettingsScreenTest {
         aiLastAnswer: AiAnswer? = null,
         signedIn: Boolean = true,
         onOpenProfile: () -> Unit = {},
+        onReplayTutorial: () -> Unit = {},
     ) {
         composeRule.setContent {
             var region by remember { mutableStateOf(initialRegion) }
@@ -122,6 +124,9 @@ class SettingsScreenTest {
                     onClearAiCredential = { aiCredential = null },
                     onBack = {},
                     onOpenProfile = if (signedIn) onOpenProfile else null,
+                    // Same branch as Profile, and for the same reason: the
+                    // signed-out entry point has no app for the tour to walk.
+                    onReplayTutorial = if (signedIn) onReplayTutorial else null,
                 )
             }
         }
@@ -316,5 +321,30 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag(TAG_WAKING_CONSEQUENCE).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Not signed in").performScrollTo().assertIsDisplayed()
         assertThat(textOf(TAG_ACCOUNT_CONSEQUENCE)).contains("Nothing on this screen does")
+    }
+
+    // ── The guided tour's way back in (2026-08-22) ───────────────────────
+
+    @Test
+    fun helpSection_replaysTheTutorial() {
+        // This row is the whole of what makes Skip humane: the tour records
+        // itself as seen the moment it is dismissed, and this is the only way
+        // back. A tour that cannot be replayed cannot be skipped kindly.
+        var replayed = false
+        setContent(onReplayTutorial = { replayed = true })
+
+        composeRule.onNodeWithTag(TAG_TUTORIAL_REPLAY).performScrollTo().performClick()
+
+        assertThat(replayed).isTrue()
+    }
+
+    @Test
+    fun helpSection_isAbsentWithNoAccount() {
+        // §4.9's rule is that a lock is a word and never a dimming — and here
+        // the honest answer is neither, because the tour walks the signed-in
+        // app and there is no signed-in app to walk. Same branch as Profile.
+        setContent(signedIn = false)
+
+        composeRule.onNodeWithTag(TAG_TUTORIAL_REPLAY).assertDoesNotExist()
     }
 }

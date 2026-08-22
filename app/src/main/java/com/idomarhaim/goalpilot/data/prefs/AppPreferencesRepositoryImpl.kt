@@ -157,6 +157,21 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         prefs.edit { putLong(KEY_MISS_REVIEW_SHOWN_AT, epochMillis) }
     }
 
+    // A StateFlow like the appearance axes above, not a plain getter like the
+    // two stamps above it: this one is read to decide whether the guided tour
+    // opens on the first composition after sign-in, and the tour finishing has
+    // to move it without a restart -- `setTutorialSeenVersion` fires while the
+    // overlay that reads it is still on screen.
+    private val _tutorialSeenVersion =
+        MutableStateFlow(prefs.getInt(KEY_TUTORIAL_SEEN_VERSION, 0))
+    override val tutorialSeenVersion: StateFlow<Int> = _tutorialSeenVersion.asStateFlow()
+
+    override fun setTutorialSeenVersion(version: Int) {
+        if (_tutorialSeenVersion.value == version) return
+        prefs.edit { putInt(KEY_TUTORIAL_SEEN_VERSION, version) }
+        _tutorialSeenVersion.value = version
+    }
+
     private companion object {
         const val PREFS_NAME = "goalpilot_ui_prefs"
         const val KEY_SKIN = "app_skin"
@@ -170,6 +185,13 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         const val KEY_WAKING_END = "day_waking_end_minutes"
         const val KEY_PLANNING_OVERRIDE = "day_planning_override_minutes"
         const val KEY_MISS_REVIEW_SHOWN_AT = "miss_review_last_shown_at"
+
+        /**
+         * `0` -- the absent default -- reads as *this install has seen no tour*,
+         * which a fresh install honestly has not. Deliberately NOT a boolean;
+         * see `AppPreferencesRepository.tutorialSeenVersion` for why.
+         */
+        const val KEY_TUTORIAL_SEEN_VERSION = "tutorial_seen_version"
 
         /** Outside `0..1439`, so it cannot collide with a real minute-of-day. */
         const val NO_OVERRIDE = -1

@@ -46,6 +46,8 @@ import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.toGoalInk
+import com.idomarhaim.goalpilot.ui.tutorial.TutorialAnchor
+import com.idomarhaim.goalpilot.ui.tutorial.tutorialAnchor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +69,10 @@ fun GoalsScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onAddGoal,
+                // Step 5 of the guided tour points here. Tagged on the FAB
+                // itself rather than on the Scaffold slot, so the spotlight is
+                // the button's shape and not the slot's bounding box.
+                modifier = Modifier.tutorialAnchor(TutorialAnchor.NEW_GOAL),
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text("New goal") },
             )

@@ -213,6 +213,7 @@ class MaterialRenderPass {
                     onClearAiCredential = {},
                     onBack = {},
                     onOpenProfile = {},
+                    onReplayTutorial = {},
                 )
                     }
                 }

@@ -2,15 +2,7 @@ package com.idomarhaim.goalpilot.domain
 
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.core.result.Resource
-import com.idomarhaim.goalpilot.domain.model.AppBackground
-import com.idomarhaim.goalpilot.domain.model.AppBrightness
-import com.idomarhaim.goalpilot.domain.model.AppLanguage
-import com.idomarhaim.goalpilot.domain.model.AppMaterial
-import com.idomarhaim.goalpilot.domain.model.AppRegion
-import com.idomarhaim.goalpilot.domain.model.AppRelief
-import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DailySteps
-import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
@@ -19,8 +11,6 @@ import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.SleepNight
-import com.idomarhaim.goalpilot.domain.model.WakingHours
-import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
@@ -30,6 +20,7 @@ import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncOutcome
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncTrigger
 import com.idomarhaim.goalpilot.domain.usecase.SyncHealthDataUseCase
+import com.idomarhaim.goalpilot.testing.FakeAppPreferences
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,7 +29,6 @@ import io.mockk.slot
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -59,7 +49,9 @@ class HealthSyncTest {
     private val goals = mockk<GoalRepository>(relaxed = true)
     private val progress = mockk<ProgressRepository>(relaxed = true)
     private val auth = mockk<AuthRepository>(relaxed = true)
-    private val preferences = FakePreferences()
+    // Shared with the tutorial suite since 2026-08-22; see FakeAppPreferences
+    // for why one fake of this interface beats two.
+    private val preferences = FakeAppPreferences()
 
     private val day = LocalDate.of(2026, 8, 5).toEpochDay()
     private val stepsKey = BuildHealthProposalsUseCase.sourceKey(HealthMetric.STEPS, day)
@@ -365,47 +357,5 @@ class HealthSyncTest {
 
         assertThat(useCase.status.value.lastSyncAtMillis).isEqualTo(now)
         assertThat(useCase.status.value.isSyncing).isFalse()
-    }
-
-    /** In-memory stand-in for the SharedPreferences-backed implementation. */
-    private class FakePreferences : AppPreferencesRepository {
-        private val stamps = mutableMapOf<String, Long>()
-        override val skin = MutableStateFlow(AppSkin.AURORA)
-        override fun setSkin(skin: AppSkin) { this.skin.value = skin }
-        override val language = MutableStateFlow(AppLanguage.DEFAULT)
-        override fun setLanguage(language: AppLanguage) { this.language.value = language }
-        override val brightness = MutableStateFlow(AppBrightness.DEFAULT)
-        override fun setBrightness(brightness: AppBrightness) {
-            this.brightness.value = brightness
-        }
-        override val material = MutableStateFlow(AppMaterial.DEFAULT)
-        override fun setMaterial(material: AppMaterial) { this.material.value = material }
-        // #57 b. Unread by anything this suite exercises; here because the interface has it.
-        override val background = MutableStateFlow(AppBackground.DEFAULT)
-        override fun setBackground(background: AppBackground) {
-            this.background.value = background
-        }
-        // #57 c. Same: unread here, present because the interface has it.
-        override val relief = MutableStateFlow(AppRelief.DEFAULT)
-        override fun setRelief(relief: AppRelief) { this.relief.value = relief }
-        override val region = MutableStateFlow(AppRegion.DEFAULT)
-        override fun setRegion(region: AppRegion) { this.region.value = region }
-        override val daySchedule = MutableStateFlow(DaySchedule.DEFAULT)
-        override fun setWakingHours(wakingHours: WakingHours) {
-            daySchedule.value = daySchedule.value.copy(waking = wakingHours)
-        }
-        override fun setPlanningOverrideMinutes(minutes: Int?) {
-            daySchedule.value = daySchedule.value.copy(planningOverrideMinutes = minutes)
-        }
-        override fun healthLastSyncAt(uid: String): Long = stamps[uid] ?: 0L
-        override fun setHealthLastSyncAt(uid: String, epochMillis: Long) {
-            stamps[uid] = epochMillis
-        }
-        // #56. Unread by anything this suite exercises; here because the interface has it.
-        private var missReviewShownAt: Long = 0L
-        override fun missReviewLastShownAt(): Long = missReviewShownAt
-        override fun setMissReviewLastShownAt(epochMillis: Long) {
-            missReviewShownAt = epochMillis
-        }
     }
 }

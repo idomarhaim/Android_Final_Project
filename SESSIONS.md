@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `tutorial-onboarding` | In-app first-run guided tour: spotlight coach marks over the real UI, one required action, skippable, replayable from Settings | `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/` (new) · `ui/root/GoalPilotRoot.kt` · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/goals/GoalsScreen.kt` · `feature/settings/SettingsScreen.kt` · `app/src/main/res/values/tutorial_strings.xml` (new) · `app/src/main/res/values-iw/tutorial_strings.xml` (new) · `app/src/test/java/com/idomarhaim/goalpilot/ui/tutorial/` (new) · `app/src/test/java/com/idomarhaim/goalpilot/testing/FakeAppPreferences.kt` (new) · `app/src/test/java/com/idomarhaim/goalpilot/domain/HealthSyncTest.kt` · `app/src/androidTest/.../ui/{TutorialOverlayUiTest,TutorialNavigationUiTest}.kt` (new) · `app/src/androidTest/.../ui/{SettingsScreenTest,MaterialPickerUiTest,MaterialRenderPass}.kt` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (new) | AVD `emulator-5554` + adb + the Gradle daemon | 2026-08-22 |
 > 🏁 **`57d-entrance-animation` RELEASED (second time) 2026-08-22 — this commit.** The one item
 > held for Ido on the first pass is closed: he approved it, and the approval was read as covering the
 > **capability**, so `ffmpeg` is now installed on this machine rather than its absence merely being
