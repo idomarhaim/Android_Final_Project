@@ -124,6 +124,32 @@ Read [AGENTS.md](AGENTS.md) first. Anything below this line is **Claude-Code-spe
     Then reopen. The lock returns when the extension reloads and no longer matters: once the token
     is saved, later refreshes reuse it. If it breaks again, disable that one extension.
 
+    ✅ **`Observed:` this worked, 2026-08-22.** Ido closed VS Code, ran the two commands in a plain
+    PowerShell window and got *"Success! Logged in as name.iddo@gmail.com"* followed by
+    `projects:list` printing `goalpilot / goalpilot-56e30`. So the whole diagnosis is confirmed
+    end to end by the repair, not only by the reproduction — **the CLI is authenticated again and
+    the standing-authorisation deploy path is open.**
+
+  - ℹ️ **A cosmetic notification from the same extension, and it is NOT the lock coming back.**
+    On opening VS Code you may see *"The Firebase CLI is not installed (or not available on
+    $PATH)"*, sourced to *Firebase SQL Connect*. Its check is one line in
+    `dist/extension.js`:
+
+    ```js
+    const c = spawnSync("firebase", ["--version"], { env, shell: process.platform === "win32" });
+    const u = semver.valid(c.stdout?.toString());        // falsy -> "not installed"
+    ```
+
+    So it calls the CLI **not installed** whenever `firebase --version` fails to put a clean
+    semver on **stdout** — which a broken CLI does, and which is why the notice travelled with
+    this bug. `Observed:` after the repair the probe passes: replicating that exact `spawnSync`
+    gives `status 0`, `stdout "15.28.1\n"`, empty stderr, and `C:\Users\namei\AppData\Roaming\npm`
+    is on the **User** `PATH` with `firebase`, `firebase.cmd` and `firebase.ps1` all present.
+    `Untested:` why it still fired on the launch straight after the repair — most likely the
+    check runs at activation and that activation raced the fix. **If it recurs on a later launch
+    that is a real finding and worth chasing; a single stale one is not.** Either way it is
+    cosmetic — it changes nothing about the CLI, the Gradle plugin, or the app.
+
     **The escape hatch, if the editor must stay open:** set `XDG_CONFIG_HOME` to a directory
     nothing holds and copy `firebase-tools.json` into `<dir>/configstore/`. **Deliberately not
     done here** — it puts a second copy of a live refresh token on disk, to be rotated separately
