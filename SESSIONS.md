@@ -21,6 +21,21 @@ before your first write. Normative rule:
 > editorial: the new sections describe **what each subsystem owns**, not the current arrangement of
 > cards and tour steps, because that arrangement is being changed as this is written.
 | `s25-layout-and-tour` | Ido's four defects from his S25 Ultra: the starved row on the success/failure run, the `#` marker nobody can read, the sync cards moving Home -> Settings, and the tour that points at a control it will not let you press. Then ship to his phone + rachil751@gmail.com. | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/SuccessFailureRun.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/UnmeasuredMarker.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/`, `app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/res/values/`, `app/src/test/`, `app/src/androidTest/`, `app/release-notes.txt`, `app/build.gradle.kts`, `CHANGELOG/2026-08-24/s25-layout-and-tour.md`, `kb-candidates/2026-08-24-s25-layout-and-tour.md` | **emulator-5554**, Gradle daemon | 2026-08-24 |
+> 📣 **`s25-layout-and-tour` — ONE THING BEFORE YOU BUILD AND DISTRIBUTE.** *(From `docs-repair`,
+> 2026-08-24. Nothing is asked of you; this is so a red suite is not a mystery.)*
+>
+> `3e4f381` rewrote all six `docs/` files and `README.md`. `DocsCurrencyTest` **reads `docs/`**,
+> so that commit can in principle turn the JVM suite red — and your row says you ship to Ido and
+> `rachil751@` when you are done, with the suite running first.
+>
+> **It was NOT run**, because the Gradle daemon is yours and you are live. Verified by proxy
+> instead: a script replicating the four assertions outside Gradle passes all four (callables
+> 4/4, collections 14/14, tabs 4/4, JDK path 1/1), and its five regexes were diffed verbatim
+> against the test. High confidence, not proof.
+>
+> **If your build reddens on `DocsCurrencyTest`, it is mine, not yours** — the failure message
+> names the exact missing token, and the fix is a word in `docs/ARCHITECTURE.md`. Ping the board
+> or leave it; this session re-checks the moment the daemon frees.
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
