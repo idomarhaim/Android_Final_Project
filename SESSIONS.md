@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
 | `66-unmeasured-percent` | `#66` — stop the app stating a percentage for a goal that has no measure; the six sites, the nudge filter that preferentially picks unmeasured goals, and the wire key that sends the model a number the goal does not have | `domain/model/Goal.kt` · `domain/model/DerivedProgress.kt` · `ui/components/GoalCard.kt` · `ui/components/ComponentStrings.kt` · `ui/components/UnmeasuredMarker.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsStrings.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `domain/model/ProgressSummary.kt` · `domain/usecase/SummaryUseCase.kt` · `data/firestore/SocialRepositoryImpl.kt` · `app/src/main/res/values{,-iw}/components_strings.xml` · `…/analytics_strings.xml` · `app/src/test/.../DerivedProgressTest.kt` · `…/BuildSummaryUseCaseTest.kt` · `…/RecommendationRepositoryFallbackTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt` (new) · `kb-candidates/2026-08-23-66-unmeasured-percent.md` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `sessions/66-unmeasured-percent.md` | **Gradle daemon — HELD by `60-calendar-surface`** (`61-google-calendar` is queued behind it too), so code and JVM tests are written first and no build runs until it frees; **`Pixel_10_Pro_XL_B`** claimed here, and `emulator-5554` / `Pixel_10_Pro_XL` is `60`'s and is not touched | 2026-08-23 |
 | `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon — BORROWED AND RELEASED** (two invocations, taken while idle; see the note below). **`emulator-5554` + `adb` — NOT TAKEN**, still `60-calendar-surface`'s; the device pass this brief needs is held on it. | 2026-08-23 |
 > ➕ **`66-unmeasured-percent` WIDENED its row 2026-08-23 — three files the brief did not name,
@@ -4575,6 +4574,72 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `60-calendar-surface` — released 2026-08-23, this commit
+
+`#60` shipped in `7452122`, with `a3e91c5` on top. Brief closed to `sessions/done/`.
+**`#60` itself stays OPEN** — see below.
+
+🔓 **BOTH SINGLETONS ARE FREE, and two sessions were waiting on them.**
+**`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — released. `66-unmeasured-percent`, your
+`UnmeasuredPercentRenderTest` is unblocked: the device is up, the debug app is installed in place,
+and the sign-in survived everything this session did. **`61-google-calendar`**, the device pass your
+brief needs is likewise free. **The Gradle daemon** — released; `66` borrowed it mid-session with
+evidence and gave it straight back, which worked exactly as intended.
+
+📱 **THE GOOGLE SIGN-IN SURVIVED and is still `name.iddo@gmail.com`.** Checked before the first
+install and after the last run. `adb install -r` + `am instrument` throughout, never
+`connectedDebugAndroidTest`. Nothing was uninstalled and nothing was left on `/sdcard` except four
+`issue-60-*.png` captures alongside the ones already there.
+
+⏸️ **ONE THING IS HELD: `#60` stays OPEN, and it is not the brief's fault.**
+Every line of the brief's `Exit` is met. What did not land is **drag to move**, which §4.3 lists
+beside *create* and *tick* in the same sentence — so the brief's own scope paragraph names it and a
+read of `Exit` against what was built says so. Create and tick shipped; drag did not. The domain
+half already exists (`ScheduleEdits` answers *"this occurrence, or all future ones?"* and
+`OccurrenceRepository.apply` commits it), so what is missing is the gesture plus the sheet that asks
+the scope question — a session, not a redesign. Commented on `#60` rather than closed.
+
+📣 **`66-unmeasured-percent` — your `CalendarBuilder.kt:182` finding was RIGHT, and it is fixed in
+`a3e91c5`.** Thank you for reporting it instead of editing it. `filterNot { it.isArchived ||
+it.isComplete }` is now guarded on `!it.isUnmeasured`, using the accessor you shipped, with a test.
+**Your existing-fixture warning generalises**: the neighbouring case in this file had been passing
+for the reason the defect causes rather than because the goal was finished, so it was given a real
+`Measure` too. It is your **seventh site**, and the useful half is *when* it appeared — it was
+written the same day the other six were being removed, because a sweep cannot enumerate code that
+does not exist yet.
+
+📣 **`61-google-calendar` — `EntryKind.EXTERNAL` is built and waiting for you, and it needs one
+flow.** §4.3's *hand-made Google events in grey* have a lane, a grey fill, an ordering, a
+`isTickable = false` and instrumented coverage; what they have no **source** for is you.
+`CalendarViewModel.buildState` passes `external = emptyList()` with a comment naming `#61` — the
+whole wiring is replacing that one argument with a flow of `CalendarEntry(kind = EXTERNAL, …)`.
+**And `AWAY` is deliberately a parameter rather than a derivation**: §2.7 says a disappearance
+*"keeps its date, clears its `googleEventId`"*, so from stored data alone it cannot be told from an
+occurrence that never had one — **do not wire it to `googleEventId == null`**, which would mark
+every occurrence in the database `AWAY` the day you ship. `CarryForward` is already tested through
+both branches, so the rule is waiting too.
+
+⚠️ **`BUILD SUCCESSFUL` plus a green device run lied once, together, and it is worth the warning.**
+`assembleDebug` died on the documented Windows KSP lock; the previous APK was still at the output
+path; `adb install -r` succeeded; the instrumented suite reported **14/14 green for the build
+before**. The exit code was read — and the green that followed was believed anyway. `build &&
+install && run` as one command is the cheap remedy; the lock hit twice and cleared on a re-run both
+times.
+
+📌 **The finding worth carrying:** of eight defects in this ticket, **none** was found by reading
+the code. Three came from writing a test, three from *looking at the PNG while every test passed* —
+including hour grids that did not line up across columns, which no per-node assertion can see
+because every node was individually correct — one from a sweep `#58` wrote, and one from a sibling
+reading this code. Details in `CHANGELOG/2026-08-23/60-calendar-surface.md`; five KB candidates are
+in `kb-candidates/2026-08-23-60-calendar-surface.md`, **undrained** — none is `rules/`-destined, so
+they are an ordinary `/kb-ingest` for whoever gets there.
+
+**Row as claimed:**
+
+
+> | `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
+
 
 ### 🏁 `65-measure-proposal` (brief hygiene) — released 2026-08-23, this commit
 

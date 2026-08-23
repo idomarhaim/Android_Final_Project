@@ -2,7 +2,20 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
+commit: 7452122 (with a3e91c5 on top)
+result: |
+  Shipped: the 3-day / week / agenda surface, the all-day and untimed strips, the load bar
+  and booked/free ring, the UI author for BLOCK and SPAN, and the tab swap 4.2 asks for.
+  1013 JVM tests green (90 new), 14 instrumented green, render pass looked at.
+
+  NOT shipped, and #60 stays OPEN for it: DRAG TO MOVE. 4.3 lists it beside create and
+  tick, and the paragraph above quotes that sentence, so it is in scope and did not land.
+  The domain half exists already -- ScheduleEdits answers "this occurrence, or all future
+  ones?" and OccurrenceRepository.apply commits it -- so what is missing is the gesture and
+  the sheet that asks the scope question.
+
+  Also open by design: EntryKind.EXTERNAL has a lane and tests but no source until #61.
 issue: 60
 owns:
   # A new feature package plus its route. The Occurrence model is READ, not written --
