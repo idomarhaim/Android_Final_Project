@@ -1213,8 +1213,19 @@ private fun PointsLevelCard(
     }
 }
 
+/**
+ * ⚠️ **`internal`, not `private`, and only so `#70`'s render pass can reach it.**
+ *
+ * The card's three states differ in a way **no assertion covered** — the ring is
+ * replaced by a marker whose size is arithmetic (`56.dp` inside `18.dp` of padding,
+ * against the ring's `92.dp`), and if that arithmetic is off the card changes
+ * height. A test cannot look at a composable it cannot import, so the visibility
+ * is what makes the geometry checkable at all. `DailyMissReviewCard`, `SmartAddCard`
+ * and `CalendarDisappearanceCard` in this same file are `internal` for the same
+ * reason; nothing outside the module can see it either way.
+ */
 @Composable
-private fun OverviewCard(
+internal fun OverviewCard(
     averageProgress: Float,
     goalCount: Int,
     /**
