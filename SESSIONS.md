@@ -16,7 +16,25 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
+| `66-unmeasured-percent` | `#66` — stop the app stating a percentage for a goal that has no measure; the six sites, the nudge filter that preferentially picks unmeasured goals, and the wire key that sends the model a number the goal does not have | `domain/model/Goal.kt` · `domain/model/DerivedProgress.kt` · `ui/components/GoalCard.kt` · `ui/components/ComponentStrings.kt` · `ui/components/UnmeasuredMarker.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsStrings.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `app/src/main/res/values/strings.xml` (+ `values-iw/`) · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt` (new) · `kb-candidates/2026-08-23-66-unmeasured-percent.md` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `sessions/66-unmeasured-percent.md` | **Gradle daemon — HELD by `60-calendar-surface`** (`61-google-calendar` is queued behind it too), so code and JVM tests are written first and no build runs until it frees; **`Pixel_10_Pro_XL_B`** claimed here, and `emulator-5554` / `Pixel_10_Pro_XL` is `60`'s and is not touched | 2026-08-23 |
 | `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon** and **`emulator-5554` + `adb`** are BOTH HELD by `60-calendar-surface`. I claim neither yet: code and JVM tests are written first, and the build waits for that row to free the daemon. Device pass likewise deferred — see the ⏳ note below. | 2026-08-23 |
+> 🧭 **`66-unmeasured-percent` claimed 2026-08-23 — this commit.** Working set is disjoint from
+> both live rows. `60-calendar-surface` owns `feature/calendar/**`, `ui/navigation/Destinations.kt`
+> and `ui/root/GoalPilotRoot.kt`; `61-google-calendar` owns `data/calendar/**`, `di/RepositoryModule.kt`,
+> `ui/root/RootViewModel.kt` and `feature/dashboard/**`. **`61` renders `GoalCard`, which I am rewriting**,
+> so `GoalCard`'s public signature is deliberately left unchanged — the change is entirely inside the
+> composable, and nothing that calls it has to move.
+>
+> ⚠️ **`61-google-calendar`'s row landed in `2470f82` WHILE this session was reading the board**, so the
+> reading taken at session start (one live row) was already stale by the time the first write happened.
+> Recorded because the read/write gap is the hazard the board exists to cover and it is usually invisible.
+>
+> ⏳ **Gradle daemon is held by `60-calendar-surface`.** Same posture as `61`: all code and all JVM
+> tests are written first, and the build waits. Nothing is needed from Ido for that wait.
+>
+> 📱 **NO DEVICE TOUCHED YET AND NO SIGN-IN NEEDED OR DESTROYED SO FAR.** When the device pass runs
+> it takes **`Pixel_10_Pro_XL_B`**, not `emulator-5554`, and it uses `adb install -r` + `am instrument`
+> — never `connectedDebugAndroidTest`, which uninstalls the app.
 > ⏳ **`61-google-calendar` claimed 2026-08-23 — this commit.** Working set is disjoint from
 > `60-calendar-surface`: they own `feature/calendar/**`, `ui/navigation/Destinations.kt` and
 > `ui/root/GoalPilotRoot.kt`; I own the **write path** under `data/calendar/`, the sync rules in

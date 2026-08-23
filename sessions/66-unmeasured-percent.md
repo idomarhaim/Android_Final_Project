@@ -2,21 +2,29 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
-status: ready
+status: active
 issue: 66
 owns:
+  # Corrected at /kickoff, 2026-08-23 -- see "What the owns list got wrong" below.
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/DerivedProgress.kt
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/GoalCard.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/ComponentStrings.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/components/UnmeasuredMarker.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/LifeAreaDetailScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsScreen.kt
-  - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildWidgetSnapshotUseCase.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/analytics/AnalyticsStrings.kt
   - app/src/main/java/com/idomarhaim/goalpilot/data/remote/RecommendationRepositoryImpl.kt
+  - app/src/main/res/values/strings.xml
+  - app/src/main/res/values-iw/strings.xml
   - app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt
-  - kb-candidates/<date>-unmeasured-percent.md
-  - CHANGELOG/<date>/unmeasured-percent.md
+  - kb-candidates/2026-08-23-66-unmeasured-percent.md
+  - CHANGELOG/2026-08-23/66-unmeasured-percent.md
   - sessions/66-unmeasured-percent.md
+  # NOT owned, and the brief was wrong to list it:
+  #   domain/usecase/BuildWidgetSnapshotUseCase.kt -- site 5 is a FALSE POSITIVE.
 created: 2026-08-23
 ---
 
@@ -97,6 +105,83 @@ that has none and may repeat it in speech the fallback never touches.
 already draws candidate 2 in its `bRows` table and is the closest thing to a decided answer — read it
 before proposing anything else. A bar chart (site 4) and a widget ring (site 5) may also need
 different answers from a list row, and saying so is a legitimate outcome.
+
+## What `/kickoff` found before starting — two corrections to this brief *(2026-08-23)*
+
+**Mode.** This brief says `mode: normal`; Ido opened the session with `AUTO MODE`, and the session's
+own message wins. Commits, pushes and KB drains are ungated for this session.
+
+### 1 · Site 5 is a FALSE POSITIVE — `BuildWidgetSnapshotUseCase` needs no change
+
+The brief calls it *"half-fixed — `percent` is still passed unconditionally, so the home-screen ring
+draws"*. It does not. Nine lines above the site the brief cites:
+
+```kotlin
+val live = goals.filterNot { it.isArchived }
+val measured = live.filter { it.hasMeasure }
+...
+goals = measured.sortedWith(...).map { it.toWidgetGoal() },
+goalsWithoutMeasure = live.size - measured.size,
+```
+
+An unmeasured goal never reaches `toWidgetGoal()` at all, so `percent = progressPercent` is only ever
+evaluated for a goal that has a measure. `Observed:` by reading the function at `HEAD`; the filter
+has been there since `b2ba24c` (`widget-pack`, 2026-08-15), eight days before this brief was written,
+so it is a misreading of the file and not drift. The widget already **counts** the excluded goals
+(`goalsWithoutMeasure`), which is the same answer this ticket reaches everywhere else.
+
+**The brief's line-98 citation is what caused it** — the line is real and the code around it is not
+what the line implies. The lesson generalises past this ticket: a site list built by reading a *line*
+rather than the *function that reaches it* over-reports.
+
+### 2 · Three sites the brief missed, and they are the same defect
+
+The brief counts **the digit**. The digit is not the only thing computed from `progressFraction`:
+
+- **`GoalCard`'s `GpLinearProgress`** — an unmeasured goal's bar fills to `currentValue / 100.0`.
+  `#11`'s own live example (`Health · 1/100 %`) draws a 1 %-full bar, which is the same fiction with
+  no digit attached.
+- **`AreaGoalCard`'s `GpLinearProgress`** — identical, one screen over.
+- **`GoalHeaderCard`'s `ProgressRing`** — the ring is a fraction display and sits directly above
+  `#65`'s *"this goal has no number"* note.
+
+Removing the digit and leaving the bar would be half the fix, so all three go with their digits.
+
+### 3 · `AreaGoalCard` carries no marker at all
+
+`#65` put `UnmeasuredMarkerIfNeeded` on **one** row (`GoalCard`), not *"every list row"*. §1.3 says
+the marker belongs **wherever the goal is listed**, and the life-area screen lists goals. Added here,
+because this ticket is already rewriting that row's trailing slot and leaving it the only unmarked
+goal list in the app would be a worse state than before.
+
+### 4 · The design call — DERIVED and DECIDED, not asked *(and it is Ido's to overturn)*
+
+The brief says *"do not pick this by yourself"* and, in the same paragraph, names the artifact that
+picks it: the prototype §1.3 itself links as the design for this feature draws the unmeasured row as
+
+```js
+['num','Get fit','no number — <bdi>11</bdi> sessions logged'],
+```
+
+— **candidate 2**, with **no trailing percentage and no bar**, the marker at the head of the row and
+the honest count in the secondary line. `rules/derivable-decision.md` says not to ask what a
+committed principle already answers, and `kb/dev/a-later-prototype-outranks-the-brief.md` says which
+artifact wins when a brief and a prototype disagree. So: **decision taken per §1.3's named design
+asset**, logged here, and one message from Ido reverses it.
+
+**What the prototype does not draw, derived per surface rather than copied:**
+
+| Surface | Answer | Derived from |
+|---|---|---|
+| goal detail header | marker at ring size + `no number — N logged`; no ring, no `0 / 100` | §1.3 *"the absence is stated as legal before anything is offered"* — the ring contradicted the note under it |
+| analytics progress bar | the goal is **excluded**, and a footnote says how many were | §4.4 already refuses to rank goals by a fraction of their own target; `goalsWithoutMeasure` is the same answer the widget reached |
+| widget | unchanged — already correct | see correction 1 |
+| offline nudge | unmeasured goals excluded from the `< 0.34f` filter | the filter is arithmetic on `targetValue`'s `100.0` default |
+| wire payload | `progressPercent` omitted when `measure == null` | the model is told a number the goal does not have |
+
+**The count is entries only, not entries + completed tasks.** The goal's own screen renders a
+*Progress log* section listing exactly those entries, so `N` is a number the user can count. Adding
+task contributions would make it agree with nothing on screen, which is §0.3.
 
 ## Exit
 
