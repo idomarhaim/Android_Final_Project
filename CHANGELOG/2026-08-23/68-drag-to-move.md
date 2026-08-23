@@ -94,9 +94,13 @@ says it is what allows the guard to come off.
 instruction, 2026-08-23, after this entry was first written. Both the KDoc and that test now point
 at it, so the forward pointer resolves to something rather than to a sentence — which is the whole
 of `kb/dev/retracting-a-copied-claim.md` §5, the rule that made this ticket correct
-`CalendarModel.kt:157` in the first place. ⚠️ **`#69` the issue is unrelated to
-`sessions/69-verify-dashboard-average.md`**, whose `69-` is a brief sequence number written by
-`66-unmeasured-percent` and which carries no `issue:` field at all.
+`CalendarModel.kt:157` in the first place. ⚠️ **A numbering collision came with it, and it is now fixed rather than flagged.** The brief then
+at `sessions/69-verify-dashboard-average.md` was the only numbered brief in this repo carrying **no**
+`issue:` field — its `69-` was a bare sequence number — so filing `#69` for an unrelated defect put
+two different things on the same digits. On Ido's instruction the work got its own ticket,
+[`#70`](https://github.com/idomarhaim/Android_Final_Project/issues/70), and the brief was renumbered
+to `sessions/70-verify-dashboard-average.md`, restoring the convention 29 of the other 30 briefs
+already follow: **a brief's slug number is its issue number**.
 
 ## A second §0.4 hole, found by a failing test rather than by reading
 
@@ -234,7 +238,7 @@ which committed into this shared working tree while `#68` was being built:
 |---|---|
 | `fc5a8e9` | its claim |
 | `f25cca5` | the dashboard caption `#66` made false — *"Averaged across all your goals"* over a number now taken across measured goals only |
-| `254872f` | its row release, plus the brief `sessions/69-verify-dashboard-average.md` |
+| `254872f` | its row release, plus the brief now at `sessions/70-verify-dashboard-average.md` |
 
 **Adjudicated on the board, not on git state**, per the auto-push preconditions: that session left an
 **explicit, self-written release note** (`SESSIONS.md`, dated 2026-08-23 15:10) and its paths are
@@ -249,5 +253,5 @@ session's two suites were then built and run at **`HEAD = 254872f`**, i.e. **ove
 **1068 JVM, 0 failures** and **296 instrumented, 0 failures**. So *it compiles and breaks nothing*
 is now established. **What is NOT discharged is the semantic half** — whether the new caption
 actually describes the population the number is taken over — which is exactly what
-`sessions/69-verify-dashboard-average.md` exists for. `/kickoff 69-verify-dashboard-average` still
+`sessions/70-verify-dashboard-average.md` exists for. `/kickoff 70-verify-dashboard-average` still
 has work to do; it just no longer has to find out whether the tree builds.

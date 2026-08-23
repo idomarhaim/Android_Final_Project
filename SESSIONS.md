@@ -24,7 +24,10 @@ before your first write. Normative rule:
 > calendar work is in this tree, so a run here would have reported about **its** tree (§4p). Holding
 > the row until that clears would have been a claim on three files nobody else wants, kept alive by a
 > session that is ending — which is the stale claim the board rule forbids. The run is carried by a
-> **brief** instead: `sessions/69-verify-dashboard-average.md`, `/kickoff 69-verify-dashboard-average`.
+> **brief** instead: `sessions/70-verify-dashboard-average.md`, `/kickoff 70-verify-dashboard-average`.
+> *(Renumbered from `69-` on 2026-08-23 — it had no `issue:` field and its slug collided with the
+> unrelated `#69`. It now has its own ticket, `#70`. Corrected here rather than left to rot,
+> because this line is the one someone follows.)*
 > What is expected to fail is named there and in the changelog, in order.
 >
 > 📱 **NO DEVICE WAS TOUCHED AND NO SIGN-IN WAS NEEDED OR DESTROYED.**
@@ -4762,10 +4765,17 @@ parameter to `LocalDate?`, which is a change to `ScheduleEdits`' semantics and i
 scope **by name**. ✅ **FILED AS [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69)** on Ido's
 instruction, 2026-08-23, after this note was first written. `CalendarEntry.isEditable`'s KDoc and
 `DragToMoveTest.a one-off that already has a document…` both point at it now, so the forward pointer
-resolves to a ticket rather than to a sentence. ⚠️ **`#69` the issue has nothing to do with
-`sessions/69-verify-dashboard-average.md`** — that brief's `69-` is a sequence number written by
-`66-unmeasured-percent` and it carries no `issue:` field. Two different things with the same digits,
-flagged here because the board is where someone will meet both.
+resolves to a ticket rather than to a sentence.
+
+✅ **AND THE `69-` COLLISION IS GONE — resolved 2026-08-23 on Ido's instruction, not flagged and left.**
+`sessions/69-verify-dashboard-average.md` was the **only** numbered brief in this repo with no
+`issue:` field: its `69-` was a bare sequence number, and `#69` was then filed for an unrelated
+defect. Two different things with the same digits is a numbering **failure**, not a curiosity to warn
+about. Fixed the way the convention already says — a brief's slug number **is** its issue number,
+which 29 of the other 30 briefs follow: the work got its own ticket
+[`#70`](https://github.com/idomarhaim/Android_Final_Project/issues/70) and the brief is renumbered to
+`sessions/70-verify-dashboard-average.md`. **Every reference was rewritten**, including the sibling's
+own board note above, which is the line someone actually follows.
 
 🤝 **`67-delete-anything` — the entry menu you need now exists.** `EntryActionSheet` in
 `feature/calendar/ScopeSheet.kt` is opened by a long press on any editable calendar row (and by a

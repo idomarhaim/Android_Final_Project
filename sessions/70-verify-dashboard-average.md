@@ -3,20 +3,29 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
 status: ready
+issue: 70
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt
   - app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt
-  - CHANGELOG/2026-08-23/69-verify-dashboard-average.md
-  - sessions/69-verify-dashboard-average.md
+  - CHANGELOG/2026-08-23/70-verify-dashboard-average.md
+  - sessions/70-verify-dashboard-average.md
 created: 2026-08-23 by 66-unmeasured-percent
 ---
 
-# Run the one thing `f25cca5` could not: the dashboard's overall-progress card
+# `#70` — run the one thing `f25cca5` could not: the dashboard's overall-progress card
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `normal`
 
+⚠️ **RENUMBERED 2026-08-23, from `69-` to `70-`.** It was written with no `issue:` field and a
+slug number outside this repo's convention — a brief's slug number **is** its issue number, which
+29 of the other 30 briefs follow — and `69-` then collided with
+[`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69), an unrelated defect filed
+the same day. The work is unchanged; it now has a ticket of its own,
+[`#70`](https://github.com/idomarhaim/Android_Final_Project/issues/70).
+
 **Read first:** [`AGENTS.md`](../AGENTS.md) ·
+[`#70`](https://github.com/idomarhaim/Android_Final_Project/issues/70) ·
 [`CHANGELOG/2026-08-23/66-unmeasured-percent.md`](../CHANGELOG/2026-08-23/66-unmeasured-percent.md)
 § *Second revision, 15:05* — which is the whole specification of this session and already lists what
 is expected to fail.
@@ -59,7 +68,7 @@ across a subset for eleven hours. `f25cca5` fixes the caption and the ring.
   off the card changes height**. That is the one thing this session exists to look at.
 - ⚠️ `adb install -r` + `am instrument`, **never** `connectedDebugAndroidTest` — it uninstalls the
   app and takes the Firebase sign-in with it. **No sign-in is needed** for the render itself.
-- `CHANGELOG/2026-08-23/69-verify-dashboard-average.md`, and this brief moved to `sessions/done/`
+- `CHANGELOG/2026-08-23/70-verify-dashboard-average.md`, and this brief moved to `sessions/done/`
   with `status: done` in the same commit.
 
 ## Out of scope
