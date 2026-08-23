@@ -100,3 +100,56 @@ run does not mean the docs are current**, and the class KDoc says so where someb
 was taken only after the release. Its commit `4ddbced` **published this session's claim row**
 before this session could commit it — the inbound half of the shared-file hazard, which nothing
 on this side prevents. Nothing was lost.
+
+---
+
+## 📥 KB ingest — 2026-08-24, on Ido's instruction ("verify first it harms nothing")
+
+**The safety check he asked for, before anything was written:**
+
+| Check | Result |
+|---|---|
+| JARVIS tree | clean but for `kb/stale-pages.base`, whose diff is **empty** — a line-ending artifact, independently re-confirmed |
+| JARVIS live claims | **none**; repo in sync with its remote |
+| Both target pages exist | yes |
+| Does any entry **supersede** a standing claim? | **One nearly did** — see below |
+
+**The one that mattered.** `kb/dev/product-copy-describes-code.md` §2 states *"no test layer holds
+this"* — written **one day earlier** by `tour-refresh`. Entry 2 argued documentation *is* partly
+testable and shipped a test that proves it. Read carelessly that supersedes a standing claim, which
+is **always-ask in both modes**.
+
+It does not, and the reading is the point: §2's claim is about **prose semantics** (does this
+sentence match the layout it describes), and the guard checks **enumerations** (is every collection
+in the code named in the block that lists collections). Both agree prose is uncheckable. So §7 was
+written as a **bounded extension** with §2 left **verbatim**, and it states explicitly why it must
+not be generalised back to guided tours. **Nothing was overwritten, so nothing needed asking.**
+
+**Ingested:**
+
+- 📥 **regex class eats the backslash; a wrong width passes** → `kb/dev/look-at-your-own-output.md`
+  §4k instance (c)
+- 📥 **documentation is code's product copy; the enumeration slice is checkable** →
+  `kb/dev/product-copy-describes-code.md` §7
+- 📥 **Kotlin block comments nest, so `/*` in a KDoc breaks the file** → this repo's `CLAUDE.md`
+
+`Check-KbLinks` **CLEAN — 118 pages.** JARVIS commit `84eacd0`.
+
+**Entry 4 stays held** — whether `docs/` should grow the sections it lacks entirely is Ido's, and
+the candidate file keeps it under `## Standing — always-ask` with its original number.
+
+## 😅 The trap bit the ingest that was documenting it
+
+Writing the candidate file's tie line, `kb\log\2026-08-24.md` inside a `python - <<'PY'` heredoc
+lost a backslash level; Python read `\202` as an **octal escape**; the path silently became
+`log6-08-24.md` carrying an invisible control character. Same family as the entry being ingested
+one line above it. **Caught by scanning every file written this turn for control characters (0
+after the fix), not by reading them** — the repo's own pre-commit hook would have caught it a step
+later, which is the layer working as designed.
+
+## 📌 Not mine, and flagged rather than touched
+
+`kb-candidates/2026-08-24-tour-refresh.md` is still undrained. Its entries 1 and 2 read
+`Status: ready`, while that session's **journal entry and board note both call them
+held/always-ask**. `/kb-ingest` step 1 takes the *file* as the source, so the next drain would
+ingest them without asking. Another session's file — reported, not edited.
