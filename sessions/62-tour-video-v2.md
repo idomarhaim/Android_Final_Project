@@ -2,8 +2,13 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: blocked
-blocked_on: [60]  # was [59, 60, 61]; #59 closed and #61 closed 2026-08-23, see the note below
+status: ready
+# Was `blocked_on: [60]`, and before that `[59, 60, 61]`. ALL THREE ARE CLOSED as of
+# 2026-08-23 (#60 closed with the calendar surface shipped), so the declared blocker is
+# stale and cleared -- same repair as c14435b made for #61. Verify rather than trust this.
+#
+# NOT blocked on #67, and read the note below before deciding the order anyway: nothing
+# stops this brief running today, but running it BEFORE #67 buys a third recording.
 issue: 62
 owns:
   - docs/marketing/**
@@ -21,7 +26,25 @@ created: 2026-08-23
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 
-📌 **Partly cleared 2026-08-23: [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59)
+✅ **UNBLOCKED 2026-08-23 — all three named blockers are closed.** `#59` (`70bf805`), `#61`
+(`1ccdb3e`) and now **`#60`**, whose calendar surface shipped. The front matter is `ready`.
+**Verify all three yourself rather than trusting this line**, which is the instruction the
+paragraph below gives and it is still the right habit.
+
+⚠️ **BUT DO `#67` FIRST — this is an ordering call, not a blocker.** `#67` (*delete anything*) is
+**the last functional change on the board**: at the time of writing the repo has exactly three
+open issues — `#51` (Hebrew, **parked by Ido's own decision** until functionality works), `#62`
+(this one) and `#67`. So `#67` is the only thing left that will change what the app **looks
+like**, and this brief exists precisely because features landed after the first tour was shot —
+that is what the `v2` in its slug means. Recording before `#67` lands buys a `v3`, and `#67`
+touches the dashboard, the calendar, the goals list, the life-area screen and `C19`'s run card:
+**five surfaces this tour walks through.**
+
+*Decision taken by session `64-area-success-failure`, 2026-08-23, per `rules/derivable-decision.md`
+— it follows from this brief's own purpose rather than from anything Ido said. One message
+reverses it, and nothing technical stops you starting today.*
+
+📌 **Historical, now fully satisfied — kept because its instruction is still right:** [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59)
 has shipped and closed** (`70bf805`, the data repair ran). **`#61` has shipped and closed too**
 (`1ccdb3e`, 2026-08-23 — the GoalPilot calendar exists in Ido's account and its banners are
 photographed in Google Calendar's own UI at `docs/render-passes/2026-08-23-61-google-calendar/`,
