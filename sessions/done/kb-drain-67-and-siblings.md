@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 owns:
   - kb-candidates/2026-08-23-67-delete-anything.md
   - kb-candidates/2026-08-23-68-drag-to-move.md
@@ -15,6 +15,17 @@ owns:
   - sessions/kb-drain-67-and-siblings.md
   - "cross-repo: C:\\Dev\\JARVIS\\kb\\dev\\** and C:\\Dev\\JARVIS\\kb\\log\\**"
 created: 2026-08-23 by 67-delete-anything
+closed: 2026-08-24 by kb-drain-67-and-siblings
+result: |
+  10 of 11 entries ingested; JARVIS 64fc76f. Check-KbLinks CLEAN (117 pages).
+  Three candidate files deleted (fully drained); 67-delete-anything.md rewritten
+  down to entry 4, which is ALWAYS-ASK and still open -- one line as an example
+  under look-at-your-own-output.md visual-acceptance, or nothing. Ido's call.
+  No new page was needed: every destination already existed, and three entries
+  proposed one that was wrong. See CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md.
+  DEVIATION: #69/1 and #70/1 were drained as two sections, not the one the brief
+  required -- the cheap half was already committed as 4c-ii. Reasoned in the
+  changelog and in kb/log/2026-08-24.md.
 ---
 
 # Drain `kb-candidates/` — three files, one of them this session's

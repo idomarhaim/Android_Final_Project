@@ -15,8 +15,40 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+> 🏁 **`kb-drain-67-and-siblings` RELEASED 2026-08-24 — this commit.** The `kb-candidates/` folder is
+> drained: **10 of 11 entries ingested**, pages in `C:\Dev\JARVIS` (`64fc76f`), `Check-KbLinks`
+> **CLEAN** (117 pages). Three candidate files fully drained and deleted;
+> `2026-08-23-67-delete-anything.md` rewritten down to its one survivor and kept.
+> **No singleton was held or used** — no build, no device.
+>
+> ⏸️ **ONE ENTRY IS STILL OPEN AND IT IS ALWAYS-ASK.** `#67` entry 4 (*a flat list of consequences
+> invites an addition the design does not intend*). The decision is already narrowed to *one line as
+> an example, or nothing* — the open half is which, and it is Ido's. It sits under a
+> `## Standing — always-ask` heading in the candidate file, so the next drain does not re-reason
+> about it.
+>
+> 🔎 **The finding worth carrying off this drain: no new page was needed.** Three of the eleven
+> entries proposed a destination that was **wrong** — two named §4p when the phenomenon was already
+> at §4c-ii, and `#67` 1 asked for a new Compose-testing page when §5.4 had held the identical
+> mechanism since `#65`. None of the four files carried a **bundle check**. A mechanism written up on
+> 2026-08-23 was re-derived from scratch by a sibling **the same day**, at the cost of a device round
+> trip and a semantics dump. Writing the bundle-check field is cheap; this is what skipping it costs.
+>
+> ⚠️ **And a snippet this drain was about to publish was wrong — caught by running it.** `#69` entry
+> 2's prescribed fix (restrict the board probe to `grep '^| '` table rows) **still returns a false
+> positive on this board**: this session's own live row lists a *released* session's label as a
+> **path** in its `Owns` column. Session-column-only (`awk -F'|' '{print $2}'`) is the correct form —
+> **0** for the released label, **1** for the live one. Recorded in that page's §4q as a measured
+> residual.
+>
+> 🧭 **`tour-refresh` was seen live and untouched.** Its five files under `ui/tutorial/`,
+> `tutorial_strings.xml` and `GoalPilotRoot.kt` were dirty in the shared tree while this session
+> committed; all are on its own row. Every commit here named explicit paths.
+>
+> 🚫 **NOTHING WAS PUSHED.** Out of scope by the brief — the held commits are Ido's call, not this
+> session's — and no push was attempted. `#67` **stays open on GitHub**; its held item (the unfiled-task
+> defect confirmed end to end on a device) did not land here and is not this session's to close.
 | `tour-refresh` | Rework the in-app guided tour for the surfaces #60/#61/#68 added, and fix the step that names a tab #60 deleted | `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/**`, `app/src/main/res/values/tutorial_strings.xml`, `app/src/main/res/values-iw/tutorial_strings.xml`, `app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/tutorial/**`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialNavigationUiTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialOverlayUiTest.kt`, `CHANGELOG/2026-08-24/tour-refresh.md`, `kb-candidates/2026-08-24-tour-refresh.md` | Gradle daemon; emulator `Pixel_10_Pro_XL` + `adb` (for the render pass) | 2026-08-24 |
-| `kb-drain-67-and-siblings` | Drain all four `kb-candidates/` files into `C:\Dev\JARVIS\kb\` (cross-repo — row also on the JARVIS board) | `kb-candidates/2026-08-23-67-delete-anything.md`, `kb-candidates/2026-08-23-68-drag-to-move.md`, `kb-candidates/2026-08-23-69-one-off-occurrence-edits.md`, `kb-candidates/2026-08-23-70-verify-dashboard-average.md`, `CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md`, `sessions/kb-drain-67-and-siblings.md` | _none_ | 2026-08-24 |
 > 📣 **TO `69-one-off-occurrence-edits` — YOUR COMMIT `49e1bde` IS NOW ON `origin/main`.**
 > *Left by `67-delete-anything`, 2026-08-23. Nothing is asked of you; this is so you learn it here
 > rather than from a rejected `--amend`.*

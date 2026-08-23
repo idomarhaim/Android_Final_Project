@@ -3,131 +3,35 @@
 Each entry stands alone. No entry below depends on this session's transcript, per
 `rules/memory-promotion.md`.
 
----
+⚠️ **PARTLY DRAINED 2026-08-24 by session `kb-drain-67-and-siblings`.** Three of the four entries
+are ingested; the file is rewritten down to its one survivor and **not** deleted, with the original
+numbering kept. What happened to the other three:
 
-## 1. A bidi isolate splits every substring matcher that spans a number
+- **№1** (a bidi isolate splits every substring matcher that spans a number) — **INGESTED** into
+  `C:\Dev\JARVIS\kb\dev\look-at-your-own-output.md` as **new §5.6** (JARVIS `64fc76f`).
+  ⚠️ **Its proposed destination was wrong and this is the useful part.** The entry asked for *"a new
+  page, or a section on an existing Compose-testing page if one exists"*. **§5.4 of that page already
+  held the identical mechanism** — same helper (`bidiIsolated`), same U+2068/U+2069, same app,
+  written up two tickets earlier from `#65`. What survived reconciliation is the half §5.4 does not
+  have: §5.4's remedy (assert the invariant frame, drop the number) is **insufficient when the number
+  *is* the subject**, and the fix is to repair the **matcher** — a `SemanticsMatcher` that strips
+  isolates from the *actual* — which is the exit from the trap loop §5.5 describes. Plus the scale
+  (8 of 15) and the `Bidi.strip`-already-existed observation.
+- **№2** (`${PIPESTATUS[0]}` caught a failed build that then reported green) — **INGESTED** as an
+  `Observed:` line under **§4c-iii** of the same page, exactly as the entry asked. It is a dated
+  corroboration in a **second shape**: the standing note names the `grep` case, this was a plain
+  `tail`.
+- **№3** (deleting a document does not delete its subcollections) — **INGESTED** into
+  `C:\Dev\JARVIS\kb\dev\firestore-write-semantics.md` as **new §10**, with the general form (*an
+  orphan is invisible exactly when the read path is a join or a fan-out keyed on the parent*) and the
+  symptom-free detection procedure. `## 10. Adjacent` renumbered to `## 11`.
 
-**Claim.** In an app that direction-isolates its counts (`BidiFormatter.unicodeWrap`, `<bdi>`, or a
-hand-rolled `FSI…PDI` pair), a Compose `onNodeWithText("4 entries", substring = true)` **cannot
-match** — `U+2069 POP DIRECTIONAL ISOLATE` sits between the digit and the space, so the substring
-does not exist in the node's text. The marks are zero-width, the text renders perfectly, and
-Compose reports `Assert failed: The component is not displayed!`, which points at **layout**.
-Nothing about the failure suggests the string.
-
-`Observed:` 2026-08-23, GoalPilot `#67`, on `emulator-5554`. **8 of 15 instrumented tests failed on
-the first run and every one of them was matching a string containing a number**; the 7 that passed
-matched either a test tag or a literal with no argument (`"This task."`). Diagnosed by dumping the
-semantics tree on the device — walking every node's `SemanticsProperties.Text` and logging
-`t.text.map { it.code }` — which showed
-`⁨4⁩ entries in its progress log.` as codes `8296, 52, 8297, 32, 101, …`. Reading the composable
-would not have settled it; the isolation happens two files away, in the string helper.
-
-**Why it matters more than an ordinary matcher bug.** It fails toward the **wrong repair**. The
-obvious fix is to match `"entries in its progress log"` and drop the number — which goes green while
-leaving the one thing the feature added, the count, unasserted. So the guard reports success on
-exactly the assertion it exists to make. The tell that you are about to make that mistake: the
-failing assertions all contain digits and the passing ones do not.
-
-**The fix is to the instrument, not the assertion.** A `SemanticsMatcher` that strips isolates
-before comparing:
-
-```kotlin
-private fun hasStrippedText(substring: String) =
-    SemanticsMatcher("text (isolates stripped) contains '$substring'") { node ->
-        node.config.getOrNull(SemanticsProperties.Text).orEmpty()
-            .any { Bidi.strip(it.text).contains(substring) }
-    }
-```
-
-GoalPilot already had `Bidi.strip`, whose own KDoc says *"for tests and for logging, never for
-display"* — the helper existed and no test had ever used it, which is the second half of the
-finding: an isolation utility ships with a stripping counterpart and nothing points the test author
-at it.
-
-**Scope.** Not `#67`-specific. Every swept-package string in that app interpolates a
-`bidiIsolated()` count, so **any** future substring assertion spanning a number fails this way.
-
-**Rejected:** *"match on the number alone"* (`"4"`) — matches the wrong node on any screen with two
-numbers. *"assert on `contentDescription` instead"* — most of these strings have none, and adding
-one to make a test pass is a semantics change for a test's convenience.
-
-**Why:** the diagnosis cost a device round trip plus a semantics dump, and the failure message
-points at the wrong layer. Anyone writing an instrumented assertion in this app will hit it.
-**Destination:** `C:\Dev\JARVIS\kb\dev\` — a new page, or a section on an existing Compose-testing
-page if one exists; it is a **testing** finding, not a device-verification one, so
-`android-device-verification.md` is the wrong home unless nothing better exists.
-**Anchors:** `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DeleteAnythingUiTest.kt`
-(`hasStrippedText`) · `app/src/main/java/com/idomarhaim/goalpilot/core/util/Bidi.kt`
-**Supersedes:** nothing.
-**Status:** ready.
+`Check-KbLinks` **CLEAN** (117 pages). Journal entry — and the candidate→page tie, since the pages
+are in another repo: `C:\Dev\JARVIS\kb\log\2026-08-24.md`.
 
 ---
 
-## 2. `${PIPESTATUS[0]}` caught a failed build that then reported a green test run — the recorded trap firing exactly as written
-
-**Claim.** GoalPilot's `CLAUDE.md` already records that a Gradle build piped to another command must
-be gated on `${PIPESTATUS[0]}`, *"because the previous APK is still sitting at the output path, so
-`adb install -r` succeeds and the test run reports the last build's results."* This session hit it
-and the gate held.
-
-`Observed:` 2026-08-23. `./gradlew :app:assembleDebug :app:assembleDebugAndroidTest | tail -3`
-returned `BUILD FAILED in 3s` with `GRADLE_EXIT=1` (a transient Windows KSP lock — it succeeded
-unchanged on the next invocation). Both `adb install -r` calls then printed `Success` and
-`am instrument` printed `OK (15 tests)` — for the build **before** the fix under test. Without
-reading the exit code, that run would have been reported as verifying a change it never contained.
-
-**Why this is worth a line rather than a page.** It adds no new mechanism; the value is a
-**dated confirmation** that the recorded trap is live on this machine and that the prescribed guard
-is sufficient. A prediction that has fired once is worth more than the same sentence unwitnessed —
-and the note's own wording (*"a Kotlin compile error scrolled past inside a `grep`"*) had only the
-`grep` case, where this instance was a plain `tail`.
-
-**Why:** cheap corroboration of an existing claim, with a second shape of the same trap.
-**Destination:** `C:\Dev\JARVIS\kb\dev\look-at-your-own-output.md` — as an `Observed:` line under the
-existing section, **not** a new section.
-**Anchors:** `c:\Dev\Android_Final_Project\CLAUDE.md` (the `${PIPESTATUS[0]}` bullet).
-**Supersedes:** nothing; it corroborates.
-**Status:** ready.
-
----
-
-## 3. Deleting a document does not delete its subcollections, and a per-parent fan-out hides the orphans perfectly
-
-**Claim.** Where a repository reads a subcollection by **fanning out over the parents that exist**
-rather than by a collection-group query, deleting a parent makes its subcollection unreachable by
-every reader **and** invisible to every check. No number goes wrong, no screen misbehaves, and the
-documents accumulate for the life of the account.
-
-`Observed:` 2026-08-23, GoalPilot `#67`. `GoalRepositoryImpl.deleteGoal` removed
-`users/{uid}/goals/{id}` and nothing else, while `entriesFlow` builds one snapshot listener **per
-live goal id** — so `goals/{deletedId}/progressEntries` had no reader and no route to one. The same
-shape appeared one collection over with a different mechanism: `deleteTask` left
-`users/{uid}/occurrences` rows whose `taskId` was gone, and all four consumers of that collection
-join it back to the task list, so every orphan is silently dropped from every count.
-
-**The general form.** *An orphan is invisible exactly when the read path is a join or a fan-out
-keyed on the parent.* That is also the property that makes it feel safe to skip the cleanup — you
-cannot find a symptom, because the reader that would show one is the reader that filters it out.
-
-**How to find them without a symptom.** For each `delete` in a repository, list every collection
-whose documents carry the deleted entity's id (as a subcollection path segment **or** as a field),
-then ask of each: *would any reader ever return this row again?* If the answer is no, the delete is
-incomplete. Reading the delete method alone never surfaces it, because the omission is not in the
-method.
-
-**Rejected:** *"leave them, they cost nothing"* — they cost storage on the user's own project
-forever, and the codebase already had the counter-argument written down one method over: *"an orphan
-fact would add points the user cannot see, find or remove."*
-
-**Why:** it is a Firestore-shaped trap with a general detection procedure, and it was found twice in
-one ticket by two different mechanisms.
-**Destination:** `C:\Dev\JARVIS\kb\dev\firestore-write-semantics.md` — a new section.
-**Anchors:** `app/src/main/java/com/idomarhaim/goalpilot/data/firestore/GoalRepositoryImpl.kt`
-(`deleteGoal`) · `.../TaskRepositoryImpl.kt` (`deleteTask`).
-**Supersedes:** nothing.
-**Status:** ready.
-
----
+## Standing — always-ask
 
 ## 4. A flat list of consequences invites an addition the design does not intend
 
@@ -151,4 +55,9 @@ at length. Flagged rather than promoted; it may be worth one line as an example 
 **Anchors:** `app/src/main/java/com/idomarhaim/goalpilot/ui/components/DeleteConfirm.kt`
 (`Consequence`) · `docs/render-passes/2026-08-23-67-delete-anything/issue-67-confirm-task-light.png`
 **Supersedes:** nothing.
-**Status:** ready, thin — ask before promoting.
+**Status:** **always-ask, still open.** Held 2026-08-24 by `kb-drain-67-and-siblings`, which drained
+the other three. Its author marked it *ask before promoting*, and
+`sessions/done/kb-drain-67-and-siblings.md` records the decision as already taken and not to be
+reopened: **one line as an example, or nothing — do not write it a page.** The only question left for
+Ido is which of those two. Asked in that session's final reply; not dropped, so a session that dies
+here loses nothing.
