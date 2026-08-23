@@ -40,6 +40,12 @@ that is what the `v2` in its slug means. Recording before `#67` lands buys a `v3
 touches the dashboard, the calendar, the goals list, the life-area screen and `C19`'s run card:
 **five surfaces this tour walks through.**
 
+**Amended the same day: `#68` (drag to move) joins `#67` ahead of this one**, and it was filed
+after this note was first written — so the count above is *"the last functional change"* as it
+stood at that moment, not a standing claim. `#68` builds §4.3's third verb on the **calendar**,
+which is one of this tour's headline surfaces. Order: **`#67` and `#68` in either order, then
+this.** Neither blocks the other.
+
 *Decision taken by session `64-area-success-failure`, 2026-08-23, per `rules/derivable-decision.md`
 — it follows from this brief's own purpose rather than from anything Ido said. One message
 reverses it, and nothing technical stops you starting today.*
