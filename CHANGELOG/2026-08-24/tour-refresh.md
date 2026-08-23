@@ -261,3 +261,30 @@ detector was **a person asking a coverage question**, and the mitigation belongs
 The expensive half is second-order and is why it earned a page: that one false sentence had already
 reproduced into **three** downstream artifacts — the previous build's release notes, `#62`'s brief,
 and `docs/marketing/tour-timecodes.md` — before anyone read it.
+
+---
+
+## 🚀 Pushes — one sent, one held
+
+**`C:\Dev\JARVIS` — PUSHED.** The range carried **six foreign commits**, all from
+`kb-drain-67-and-siblings`, and all named here because a commit message asserting contents it does
+not have is the failure this disclosure exists to prevent:
+
+`6e26525` · `64fc76f` · `6e9dfb6` · `41dacac` · `9753db5` · `0eb22f3`
+
+Adjudicated on that board, not from git state: the session's row is **explicitly released** (its own
+release note, 2026-08-24, *"11 of 11 now ingested, 0 held"*), and the tree is quiet — the one dirty
+path, `kb/stale-pages.base`, has an **empty `git diff`** and is a line-ending artifact, not
+somebody's uncommitted work. Their notes say *"Nothing pushed"* as a report of what they did, not as
+a hold pending Ido; the same session's Android-side commits were already published by another
+session under the same reading.
+
+**`C:\Dev\Android_Final_Project` — HELD, and still unpublished as of the check at the end of this
+session.** `git log @{u}..HEAD` carries `5e7bb22`, a claim commit from **`62-kickoff-refresh`**,
+whose row is **live in Active claims** right now — that session messaged this one mid-turn asking
+for `sessions/62-tour-video-v2.md`. Precondition 5 is unambiguous there: a foreign commit under a
+live row is **stop and ask**, because that session is mid-unit and un-publishing needs a force-push.
+
+Everything this session owns is **committed** — `243c14b`, `eefb88a`, `4ddbced` — and the earlier
+part of the work is already on `origin/main` through `37794f5`. Only `4ddbced` (this KB
+reconciliation) and the sibling's claim are waiting.
