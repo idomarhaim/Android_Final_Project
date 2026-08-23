@@ -243,7 +243,7 @@ private fun AreaHeaderCard(state: LifeAreaDetailUiState, accent: Color) {
  * the only colour on the row, is the **area's** (`C23`).
  */
 @Composable
-private fun AreaGoalCard(
+internal fun AreaGoalCard(
     goal: Goal,
     accent: Color,
     /** The readable twin of [accent] -- `#57` a split fill from ink; see `String.toGoalInk`. */
@@ -294,7 +294,11 @@ private fun AreaGoalCard(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                Text(
+                // Nothing at all for a goal that CHOSE percent: this row's only
+                // meta line IS the ratio, and the trailing `45%` above already
+                // said it. `BuildWidgetSnapshotUseCase.measureLabel()` has made
+                // the same call since `#11`; `#66` found the row had not.
+                if (!goal.restatesPercent) Text(
                     text = if (goal.isUnmeasured) {
                         // The honest count, which is what the `C22` prototype's own
                         // life-area frame draws: `no number — 11 sessions logged`.

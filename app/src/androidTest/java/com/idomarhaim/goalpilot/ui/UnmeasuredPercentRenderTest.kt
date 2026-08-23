@@ -24,8 +24,13 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.feature.analytics.AnalyticsUiState
+import com.idomarhaim.goalpilot.feature.analytics.ProgressByGoalCard
+import com.idomarhaim.goalpilot.feature.goals.GoalHeaderCard
+import com.idomarhaim.goalpilot.feature.lifeareas.AreaGoalCard
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
@@ -226,14 +231,201 @@ class UnmeasuredPercentRenderTest {
         }
 
         composeRule.onNodeWithText("45%", substring = true).assertIsDisplayed()
+        // …and it states it ONCE. The row used to read `45%` on the right and
+        // `Other · 45/100 %` below — the same claim twice, which is what the
+        // render pass showed while every assertion in this file passed. A
+        // per-node query cannot see a relation between two marks, so the
+        // assertion that pins it has to name the mark that should be absent.
+        composeRule.onAllNodesWithText("45/100", substring = true).assertCountEquals(0)
     }
 
     // ------------------------------------------------------- the render pass
 
+    // ------------------------- the other three surfaces the brief's Exit named
+
+    /**
+     * The **goal header**, the **life-area row** and the **analytics bar** — the
+     * three surfaces `#66`'s brief asked the render pass to cover beside the list
+     * row, and the three the first pass did not reach.
+     *
+     * All three were `private` in their own files. Widening them to `internal` is
+     * the smallest honest way to render them: the alternatives were to drive the
+     * real screens (Hilt, Firebase, seeded data — a different test) or to rebuild
+     * approximations here, which would **exhibit something that is not the thing
+     * under test** and is the failure `kb/dev/describing-is-not-exhibiting.md`
+     * names. `GoalDetailScreen.kt` already exposes `AddTaskRow` this way.
+     */
+    @Composable
+    private fun HeaderUnmeasured() {
+        Framed("5 · GOAL HEADER · no measure — the marker at ring size, no ring") {
+            GoalHeaderCard(
+                isUnmeasured = true,
+                restatesPercent = false,
+                loggedEntryCount = 11,
+                percent = 0,
+                fraction = 0f,
+                accentHex = "#4C6FFF",
+                categoryLabel = "Other",
+                lifeAreaNames = listOf("Health"),
+                current = "11",
+                target = "100",
+                unit = "",
+                description = "",
+                fillAmounts = emptyList(),
+                currentValue = 11.0,
+                targetValue = 100.0,
+                onFill = {},
+                onLogProgress = {},
+            )
+        }
+    }
+
+    @Composable
+    private fun HeaderMeasured() {
+        Framed("6 · GOAL HEADER · CONTROL · measured, so the ring and the ratio stay") {
+            GoalHeaderCard(
+                isUnmeasured = false,
+                restatesPercent = false,
+                loggedEntryCount = 4,
+                percent = 40,
+                fraction = 0.4f,
+                accentHex = "#4C6FFF",
+                categoryLabel = "Other",
+                lifeAreaNames = listOf("Health"),
+                current = "40",
+                target = "100",
+                unit = "sessions",
+                description = "",
+                fillAmounts = emptyList(),
+                currentValue = 40.0,
+                targetValue = 100.0,
+                onFill = {},
+                onLogProgress = {},
+            )
+        }
+    }
+
+    @Composable
+    private fun AreaRowAndChart() {
+        Framed("7 · LIFE-AREA ROW · no measure above, measured below") {
+            AreaGoalCard(
+                goal = unmeasured("a1", "Get fit").copy(loggedEntryCount = 11),
+                accent = MaterialTheme.colorScheme.primary,
+                ink = MaterialTheme.colorScheme.primary,
+                onClick = {},
+                onRemove = {},
+            )
+            AreaGoalCard(
+                goal = measured("a2", "Drink 2 L a day", 40.0),
+                accent = MaterialTheme.colorScheme.primary,
+                ink = MaterialTheme.colorScheme.primary,
+                onClick = {},
+                onRemove = {},
+            )
+        }
+        Framed("8 · ANALYTICS · two unmeasured goals excluded, and the chart says so") {
+            ProgressByGoalCard(
+                state = AnalyticsUiState(
+                    isLoading = false,
+                    goals = listOf(
+                        measured("b1", "Drink 2 L a day", 40.0),
+                        measured("b2", "Read 12 books", 75.0),
+                        unmeasured("b3", "Get fit"),
+                        unmeasured("b4", "Sleep before midnight"),
+                    ),
+                    lifeAreas = listOf(LifeArea(id = "h", name = "Health")),
+                ),
+            )
+        }
+    }
+
+    // ⚠️ **ONE header per capture, and the split is a finding rather than a
+    // preference — the same finding `MeasureProposalUiTest` records one ticket
+    // earlier, arrived at the same way.** Both headers on one page put the
+    // control's `40/100 sessions` below the fold, and `onRoot()` captures the
+    // window: the PNG simply would not have contained it. The difference this
+    // time is that **the run said so** — `capture`'s subject probe failed on its
+    // first execution, where the three container assertions under it all passed.
+    // §4g's remedy, firing on §4g's defect.
+    @Test
+    fun theGoalHeaderWithNoMeasure_light() {
+        composeRule.setContent { Page(dark = false) { HeaderUnmeasured() } }
+        capture("issue-66-header-none-light.png", lastFrameProbe = "11 entries logged")
+    }
+
+    @Test
+    fun theGoalHeaderWithNoMeasure_dark() {
+        composeRule.setContent { Page(dark = true) { HeaderUnmeasured() } }
+        capture("issue-66-header-none-dark.png", lastFrameProbe = "11 entries logged")
+    }
+
+    @Test
+    fun theGoalHeaderControl_light() {
+        composeRule.setContent { Page(dark = false) { HeaderMeasured() } }
+        capture("issue-66-header-measured-light.png", lastFrameProbe = "40 / 100 sessions")  // spaces: the HEADER renders
+            // `"$current / $target $unit"`, where the list ROW renders `40/100`.
+            // Two formats, one ticket — the first draft of this probe copied the
+            // row's and the run said 'component is not displayed' on a card that was
+            // rendering perfectly, which is §5-family: recompute the string the
+            // consumer sees, never the one you remember writing.
+    }
+
+    @Test
+    fun theGoalHeaderControl_dark() {
+        composeRule.setContent { Page(dark = true) { HeaderMeasured() } }
+        capture("issue-66-header-measured-dark.png", lastFrameProbe = "40 / 100 sessions")  // spaces: the HEADER renders
+            // `"$current / $target $unit"`, where the list ROW renders `40/100`.
+            // Two formats, one ticket — the first draft of this probe copied the
+            // row's and the run said 'component is not displayed' on a card that was
+            // rendering perfectly, which is §5-family: recompute the string the
+            // consumer sees, never the one you remember writing.
+    }
+
+    @Test
+    fun theAreaRowAndTheChart_light() {
+        composeRule.setContent { Page(dark = false) { AreaRowAndChart() } }
+        capture("issue-66-area-chart-light.png", lastFrameProbe = "no number yet and are not charted")
+    }
+
+    @Test
+    fun theAreaRowAndTheChart_dark() {
+        composeRule.setContent { Page(dark = true) { AreaRowAndChart() } }
+        capture("issue-66-area-chart-dark.png", lastFrameProbe = "no number yet and are not charted")
+    }
+
+    @Test
+    fun theAnalyticsChartNamesTheGoalsItLeftOut() {
+        // The footnote is the half that stops the exclusion being silent, and it
+        // is the one thing on that card a screenshot alone would not confirm is
+        // *correct* -- the count has to match the goals that were dropped.
+        composeRule.setContent {
+            GoalPilotTheme {
+                Surface {
+                    ProgressByGoalCard(
+                        state = AnalyticsUiState(
+                            isLoading = false,
+                            goals = listOf(
+                                measured("b1", "Drink 2 L a day", 40.0),
+                                unmeasured("b3", "Get fit"),
+                                unmeasured("b4", "Sleep before midnight"),
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("goals have no number yet", substring = true).assertIsDisplayed()
+        // The charted goal is still charted -- the control that stops the whole
+        // card silently emptying and this test passing on nothing.
+        composeRule.onNodeWithText("Drink 2 L a day", substring = true).assertIsDisplayed()
+        composeRule.onAllNodesWithText("Get fit", substring = true).assertCountEquals(0)
+    }
+
     @Test
     fun theRowsSideBySide_light() {
         composeRule.setContent { Page(dark = false) { Frames() } }
-        capture("issue-66-light.png")
+        capture("issue-66-light.png", lastFrameProbe = "Renovate the flat")
     }
 
     @Test
@@ -242,7 +434,7 @@ class UnmeasuredPercentRenderTest {
         // and the marker's whole argument is that it is distinguished by **form**
         // rather than hue, so a dark frame is where that claim is actually tested.
         composeRule.setContent { Page(dark = true) { Frames() } }
-        capture("issue-66-dark.png")
+        capture("issue-66-dark.png", lastFrameProbe = "Renovate the flat")
     }
 
     @Composable
@@ -303,7 +495,18 @@ class UnmeasuredPercentRenderTest {
      * and reported green. Four rows fit; the height assertion is what would notice
      * if a fifth were added and the page silently started clipping.
      */
-    private fun capture(name: String) {
+    private fun capture(name: String, lastFrameProbe: String) {
+        // ⚠️ `lastFrameProbe` is the floor, and the three lines under it are not.
+        // `file.length()`, `width` and `height` all describe the CONTAINER, and
+        // `kb/dev/look-at-your-own-output.md` §4g records this exact helper shape
+        // passing against a capture missing two of the five states it existed to
+        // show — an unscrollable `Column` renders its overflow at zero height, so
+        // the bitmap is honest about itself and silent about the subject. The
+        // probe names something from the **last** frame on the page, so a capture
+        // that clipped anything fails here instead of shipping a PNG whose
+        // bottom third is missing.
+        composeRule.onNodeWithText(lastFrameProbe, substring = true).assertIsDisplayed()
+
         val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
         val out = File(context.getExternalFilesDir(null), name)
         out.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }

@@ -198,6 +198,33 @@ data class Goal(
     val isUnmeasured: Boolean get() = measure == null
 
     /**
+     * Whether a `current / target word` line would merely **restate** the
+     * percentage already shown beside it — `#66`, and the reasoning is not new.
+     *
+     * [BuildWidgetSnapshotUseCase][com.idomarhaim.goalpilot.domain.usecase.BuildWidgetSnapshotUseCase]
+     * has made exactly this call since `#11`, at the tile: *"a goal that
+     * genuinely chose PERCENT still belongs on the tile, but its label would
+     * restate the ring digit for digit — so the goal stays and the label goes."*
+     * §0.3 in miniature: two numbers side by side that do not even disagree,
+     * which is worse than disagreement, because it trains the eye to read them as
+     * two facts.
+     *
+     * **Found by looking, not by asserting.** `#66`'s render pass shipped a row
+     * reading `45%` on the right and `Other • 45/100 %` below it, and every
+     * assertion in the suite passed — the defect is a **relation between two
+     * marks**, which no per-node query ranges over. The tile had the rule; the
+     * three surfaces that draw a goal row did not, which is the same
+     * *applied at one site and not the others* the ticket opened with.
+     *
+     * ⚠️ **And the two numbers CAN disagree, which is why suppressing the label
+     * is right and reformatting it is not.** [progressPercent] is
+     * `currentValue / targetValue`, so a `PERCENT` goal with a target of `50` and
+     * `45` logged renders **`90%`** beside a label reading **`45/50 %`**. Dropping
+     * the label leaves the one number the goal's own arithmetic produced.
+     */
+    val restatesPercent: Boolean get() = measure?.kind == MeasureKind.PERCENT
+
+    /**
      * Whether the sorter proposed this goal and nobody has ruled on it yet (§1.1, `#6`).
      *
      * The read side of `#6`'s witness: silent filing is legal precisely because a goal the app

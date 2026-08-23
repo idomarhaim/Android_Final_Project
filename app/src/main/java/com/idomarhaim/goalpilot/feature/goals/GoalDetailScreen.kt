@@ -188,6 +188,7 @@ fun GoalDetailScreen(
                             // above the "No number on this one." note below and
                             // read `0%` while the note said there was none.
                             isUnmeasured = goal.isUnmeasured,
+                            restatesPercent = goal.restatesPercent,
                             loggedEntryCount = goal.loggedEntryCount,
                             percent = goal.progressPercent,
                             fraction = goal.progressFraction,
@@ -315,8 +316,9 @@ object GoalHeaderTags {
 }
 
 @Composable
-private fun GoalHeaderCard(
+internal fun GoalHeaderCard(
     isUnmeasured: Boolean,
+    restatesPercent: Boolean,
     loggedEntryCount: Int,
     percent: Int,
     fraction: Float,
@@ -389,13 +391,20 @@ private fun GoalHeaderCard(
                         Text(categoryLabel, style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Text(
-                    text = "$current / $target $unit",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .testTag(GoalHeaderTags.RATIO),
-                )
+                // Suppressed for a goal that CHOSE percent: the ring above already
+                // reads `45%`, and `45 / 100 %` under it restates it — which is
+                // the argument `BuildWidgetSnapshotUseCase.measureLabel()`'s KDoc
+                // has carried since `#11`, at the tile, about a ring. This is the
+                // same ring. `#66` found it by looking at its own render pass.
+                if (!restatesPercent) {
+                    Text(
+                        text = "$current / $target $unit",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .testTag(GoalHeaderTags.RATIO),
+                    )
+                }
             }
             // Which parts of the user's life this goal counts towards — plural
             // since §1.2. Absent when the goal is unfiled, and then it says so,

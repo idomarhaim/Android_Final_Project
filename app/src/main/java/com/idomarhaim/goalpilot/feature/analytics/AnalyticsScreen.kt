@@ -842,7 +842,7 @@ private fun EstimateFootnote(allocation: TimeAllocation) {
  * arithmetic on facts a goal has whether or not it counts anything.
  */
 @Composable
-private fun ProgressByGoalCard(state: AnalyticsUiState) {
+internal fun ProgressByGoalCard(state: AnalyticsUiState) {
     val untitled = stringResource(R.string.analytics_untitled_goal)
     val percentFormat = stringResource(R.string.analytics_percent)
     val measured = state.goals.filterNot { it.isUnmeasured }

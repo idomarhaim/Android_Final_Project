@@ -145,6 +145,35 @@ class UnmeasuredPercentTest {
         assertThat(logged.progressPercent).isEqualTo(1)
     }
 
+    @Test
+    fun `a chosen PERCENT measure restates its number, and nothing else does`() {
+        // The eighth site, and it is the ticket's own sentence one step further:
+        // "the reasoning is settled; it was applied at one site and not the
+        // others." The tile has dropped this label since `#11`; the three
+        // surfaces that draw a goal ROW had not, and `#66`'s render pass showed
+        // `45%` beside `Other · 45/100 %` with every assertion green.
+        assertThat(Goal(measure = Measure(MeasureKind.PERCENT, "%")).restatesPercent).isTrue()
+        assertThat(measured("m", 10.0).restatesPercent).isFalse()
+        assertThat(unmeasured("u").restatesPercent).isFalse()
+    }
+
+    @Test
+    fun `the restated pair can actually disagree, which is why the LABEL is what goes`() {
+        // Not a tidiness argument. `progressPercent` is `current / target`, so a
+        // PERCENT goal whose target is not 100 renders one number beside a label
+        // holding a different one. Dropping the label leaves the number the
+        // goal's own arithmetic produced; reformatting the label would leave two.
+        val odd = Goal(
+            id = "g",
+            currentValue = 45.0,
+            targetValue = 50.0,
+            measure = Measure(MeasureKind.PERCENT, "%"),
+        )
+        assertThat(odd.progressPercent).isEqualTo(90)          // what the row shows
+        assertThat(odd.currentValue).isWithin(1e-9).of(45.0)   // what the label showed
+        assertThat(odd.restatesPercent).isTrue()
+    }
+
     // ------------------------------- the honest replacement: a count, not a %
 
     @Test

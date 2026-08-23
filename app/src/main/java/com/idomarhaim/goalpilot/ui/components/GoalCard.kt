@@ -142,6 +142,16 @@ fun GoalCard(
                             categoryLabel = goal.category.localizedLabel(),
                             loggedEntryCount = goal.loggedEntryCount,
                         )
+                    } else if (goal.restatesPercent) {
+                        // The category alone. A goal that CHOSE percent already
+                        // states its number in the trailing slot above, and
+                        // `45/100 %` under it is the same claim a second time —
+                        // §0.3's two numbers that do not even disagree. The widget
+                        // has dropped this label since `#11`; the row had not.
+                        // Caught in `#66`'s own render pass, by looking: every
+                        // assertion passed, because the defect is a RELATION
+                        // between two marks and no per-node query ranges over one.
+                        goal.category.localizedLabel()
                     } else {
                         stringResource(
                             R.string.components_goal_meta,
