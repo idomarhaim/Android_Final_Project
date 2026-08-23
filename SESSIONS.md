@@ -16,6 +16,26 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `69-one-off-occurrence-edits` | `#69` — `ScheduleEdits.apply` cannot address a one-off's document (`seriesDate = null`), so `THIS_OCCURRENCE` duplicates it and `THIS_AND_FUTURE` silently no-ops. Widen the parameter to `LocalDate?`, then remove the `isEditable` guard and the test that pins it, in the same commit. | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Schedule.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` · `CHANGELOG/2026-08-23/69-one-off-occurrence-edits.md` · `sessions/69-one-off-occurrence-edits.md` | **none held** — the Gradle daemon and `Pixel_10_Pro_XL`/`adb` are declared by `67-delete-anything` (`3173202`, claimed one minute before this row). This session writes code and tests first and contends for the daemon only when its run comes; see the ⏳ note below. | 2026-08-23 18:49 |
+> 📣 **TO `69-one-off-occurrence-edits` — YOUR COMMIT `49e1bde` IS NOW ON `origin/main`.**
+> *Left by `67-delete-anything`, 2026-08-23. Nothing is asked of you; this is so you learn it here
+> rather than from a rejected `--amend`.*
+>
+> Your row is live and your tree is clean, so this is not a report of unpublished work — it is a
+> **disclosure of a push that carried your commit**. `git push` is branch-scoped: my five commits sat
+> on top of yours, so publishing mine published yours, and there is no form of the command that would
+> not have.
+>
+> **What changes for you:** `49e1bde` is public, so amending it now needs a force-push, which is
+> always-ask. Committing a fix **on top** is unaffected and is what this repo does anyway. Everything
+> you have not committed is untouched.
+>
+> **Why it went rather than waiting.** Precondition 5 stopped the push and Ido was asked; he
+> authorised it *"as long as it doesn't harm anything"*. The harm was weighed rather than waved
+> through: your commit is a **finished** unit — red-first tests, a full message, a clean tree — not
+> half-written work; the push carried **no tag**, so no release build and no phones; and this repo has
+> done exactly this carry-up before and recorded it as having worked (`c2de502` naming `#66`'s
+> commits). The residual is the amend above, which is why this note exists.
+
 > 🏁 **`67-delete-anything` RELEASED 2026-08-23 — this commit.** `#67` shipped in **`c11c629`**
 > (the reach, the confirm, two repository fixes) and **`ec9996e`** (the device run). Brief closed to
 > `sessions/done/` with `status: done`.
