@@ -1,22 +1,24 @@
-GoalPilot 0.3.2 — the app now shows you how it works
+GoalPilot 0.3.3 — the tour now describes the app you actually have
 
-The first time you open this build, a short guided tour starts by itself. It
-dims the screen, puts a spotlight on one thing at a time, and explains it in a
-sentence — your points card, the quick-add box, the Goals tab, the new-goal
-button, the rest of the bottom bar, and where your account and settings live.
+The guided tour was written before the bottom bar changed. It has been fixed,
+and because it changed, it will run once more even if you have already seen it.
+Press "Skip tour" and it will not come back.
 
-Seven steps, about half a minute.
+What is different in the tour:
 
-- You can skip it at any point. Tap "Skip tour", or just press Back.
-- One step waits for you: it asks you to tap the Goals tab yourself, and then
-  follows you there.
-- Tapping anywhere on the dimmed area moves to the next step.
-- It only opens once. To see it again — Settings > Help > Replay tutorial.
-  Replaying changes nothing in your data.
+- Step 6 used to say "Social holds challenges and friends. Profile holds your
+  analytics, life areas and achievements", with the whole bottom bar lit up.
+  Profile is not in that bar any more — it moved behind your picture, top-right,
+  and Calendar took its place. So the tour was naming a tab that was not there.
+- Step 6 is now the Calendar tab: what it is for, and the one thing about it you
+  cannot see by looking — press and hold a block to pick it up, then drag it to
+  another time.
+- Step 7 now covers your picture properly: profile, analytics, life areas and
+  achievements, plus Settings and Replay tutorial.
 
-If you turn animations off in Android's accessibility settings, the tour is
-still there, without the pulsing highlight.
+Still seven steps, still about half a minute, still skippable at any point.
+Settings > Help > Replay tutorial brings it back whenever you like.
 
-Nothing else changed in this build: no goals, tasks or settings are touched.
-
-782 unit tests and 223 instrumented tests green.
+Nothing else changed in this build. No goals, tasks, calendar entries or
+settings are touched — the only thing this build writes is the note that you
+have seen the tour.

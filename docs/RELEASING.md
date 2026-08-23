@@ -266,16 +266,29 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
 Edit `app/release-notes.txt` first — that is what testers see.
 
 > ⚠️ **`app/release-notes.txt`, and there is only one of it.** `app/build.gradle.kts` declares
-> `releaseNotesFile = "release-notes.txt"`, which **reads like a repo-root path and is not one** —
-> the plugin resolves it against the `app` module. A second copy was created at the repo root on
-> 2026-08-20 from exactly that misreading, and became the file people edited, because it is the one
-> `ls` shows. `Inferred:` the two releases that edited it (`20f3b7e`, `67c21e5`) shipped the other
-> file's placeholder text to testers; nothing goes red when that happens — the build succeeds, the
-> upload succeeds, and the wrong words arrive on somebody else's phone.
+> `releaseNotesFile = "app/release-notes.txt"` — **resolved against the repo root**, which is why
+> the value carries its own `app/`.
 >
-> The stray was deleted on 2026-08-22 and `ReleaseNotesGuardTest` now fails the build if a second
-> one appears, if the declared path does not resolve to a real file, or if the workflow and the
-> Gradle plugin ever stop naming the same file.
+> ⚠️ **This paragraph said the opposite until 2026-08-24, and the wrong version had teeth.** It
+> read *"the plugin resolves it against the `app` module"*, the property was the bare
+> `"release-notes.txt"`, and on that basis a session **deleted the copy at the repo root on
+> 2026-08-22** — the copy the plugin had actually been reading. `Observed:` the next local upload,
+> two days later, died with `Failed to read file "C:/Dev/Android_Final_Project/release-notes.txt"`.
+> Nothing went red in between because nobody ran the local route.
+>
+> Two corrections follow from that measurement:
+>
+> - The `Inferred:` claim that `20f3b7e` and `67c21e5` shipped placeholder text to testers is
+>   **refuted**. The plugin read the root file, which is the one people were editing, so those
+>   releases shipped the notes written for them.
+> - `ReleaseNotesGuardTest` **encoded the same wrong rule** and its *"both routes name the same
+>   file"* assertion passed while they named different ones. It now resolves the declared path the
+>   way the plugin does, and `app/build.gradle.kts` is declared as one of its inputs — without
+>   that, editing the property left `testDebugUnitTest` cacheable and the guard reported green on
+>   exactly the edit it exists to catch (measured: 9 s, nothing executed).
+>
+> The guard still fails the build if a second notes file appears, if the declared path does not
+> resolve to a real file, or if the workflow and the Gradle plugin stop naming the same file.
 
 **Also bump the version.** The `versionCode` checklist above is not CI-specific: App Distribution
 compares `versionCode`, so a local upload with an unchanged one uploads happily and prompts nobody.

@@ -10,20 +10,41 @@ import org.junit.Test
  *
  * ## The defect this exists for, which shipped twice before anyone noticed
  *
- * `app/build.gradle.kts` says `releaseNotesFile = "release-notes.txt"`. That path is resolved
- * **relative to the `app` module**, so the file the App Distribution plugin reads is
- * `app/release-notes.txt`. Read literally — as a repo-relative path, which is what it looks like —
- * it names a file at the repo root instead, and `CHANGELOG/2026-08-20/c13-key-store.md` records
- * exactly that reading: *"`release-notes.txt` — **created** — it did not exist, and
- * `app/build.gradle.kts` names it as `releaseNotesFile`"*.
+ * ⚠️ **THIS CLASS ASSERTED THE RESOLUTION RULE BACKWARDS UNTIL 2026-08-24, AND SO DID THE FIX
+ * IT SHIPPED WITH.** What stood here — *"that path is resolved relative to the `app` module"* — is
+ * **false**, and it was never run against a real upload. `Observed:` 2026-08-24, the first
+ * `./gradlew :app:appDistributionUploadRelease` since:
  *
- * So a second file was born at the root, and from then on it was the one people edited: it is what
- * `ls` shows, and it is where the previous notes were. `Inferred:` the two releases that edited it
- * (`20f3b7e`, `67c21e5`) therefore showed testers `app/release-notes.txt`'s placeholder — *"see the
- * repository CHANGELOG for what changed in this build"* — rather than the notes written for them.
- * `Untested:` that inference; the Firebase CLI has no `appdistribution:releases:list`, so what
- * testers saw cannot be read back from a shell. Found 2026-08-22 while cutting v0.3.2, by a session
- * that wrote to both files rather than resolve it under a release.
+ * ```
+ * Failed to read file "C:/Dev/Android_Final_Project/release-notes.txt"
+ * ```
+ *
+ * naming the **repo root**, with `app/release-notes.txt` sitting there the whole time. The plugin
+ * resolves the property against the **root project**, not the module.
+ *
+ * Three things follow, and the middle one is the expensive one:
+ *
+ * 1. The `Inferred:` claim that stood here — that `20f3b7e` and `67c21e5` shipped testers the
+ *    *module* file's placeholder — is **refuted**. The plugin was reading the root file, which is
+ *    the one people were editing, so those releases shipped the notes intended for them.
+ * 2. **Deleting the stray root file on 2026-08-22 killed the local upload route**, and nothing went
+ *    red for two days because nobody ran it. The deletion was reasoned from this KDoc; the KDoc was
+ *    wrong; the guard written to stop the next person making a bad reading encoded the bad reading.
+ * 3. Assertion three — *the two routes name the same file* — **passed while the two routes named
+ *    different files**, because it applied this same wrong rule to the Gradle side. Two errors
+ *    cancelling inside a test is worse than no test, and it is why this class now resolves the
+ *    declared path exactly the way the plugin does.
+ *
+ * The property now reads `"app/release-notes.txt"`, which names the same file under **either**
+ * reading of the rule. That is the form that cannot rot back — not a comment saying which reading
+ * is right.
+ *
+ * ### The original defect, which is still real
+ *
+ * `CHANGELOG/2026-08-20/c13-key-store.md` records a session creating a second notes file at the
+ * root from reading the bare property as repo-relative. It **was** repo-relative, so that reading
+ * was correct and the file it made was the live one; what was wrong was having two. One file, named
+ * unambiguously, is the fix to both.
  *
  * ## Why a test rather than deleting the stray file and moving on
  *
@@ -71,13 +92,14 @@ class ReleaseNotesGuardTest {
     @Test
     fun `the release notes file the plugin names actually exists, and says something`() {
         val declared = declaredReleaseNotesPath()
-        // Resolved against the MODULE, which is the whole point of this file.
-        val resolved = File(File(repoRoot, "app"), declared)
+        // Resolved against the REPO ROOT, because that is what the plugin does -- measured under a
+        // real upload on 2026-08-24, not read off the property. See this class's KDoc.
+        val resolved = File(repoRoot, declared)
 
         assertWithMessage(
             "app/build.gradle.kts declares releaseNotesFile = \"$declared\", which resolves to " +
-                "${resolved.path} and is not there. The plugin resolves it relative to the app " +
-                "MODULE, not the repo root.",
+                "${resolved.path} and is not there. The plugin resolves it relative to the REPO " +
+                "ROOT, not the app module -- so the value needs its \"app/\" prefix.",
         ).that(resolved.isFile).isTrue()
 
         // An empty notes file is not a failure the plugin reports — testers just get nothing.
@@ -89,7 +111,7 @@ class ReleaseNotesGuardTest {
     @Test
     fun `no second release-notes file exists anywhere else in the repo`() {
         val declared = declaredReleaseNotesPath()
-        val canonical = File(File(repoRoot, "app"), declared).canonicalFile
+        val canonical = File(repoRoot, declared).canonicalFile
 
         val strays = repoRoot.walkTopDown()
             .onEnter { it.name !in IGNORED_DIRS }
@@ -111,7 +133,7 @@ class ReleaseNotesGuardTest {
         // The assertion that is not hygiene. These two paths are written by different people at
         // different times and nothing makes them agree; diverged, a tag release and a local release
         // ship different notes for the same build, silently.
-        val fromGradle = File(File(repoRoot, "app"), declaredReleaseNotesPath())
+        val fromGradle = File(repoRoot, declaredReleaseNotesPath())
             .canonicalFile
 
         val fromWorkflow = Regex("""--release-notes-file\s+(\S+)""")

@@ -61,8 +61,8 @@ android {
         // versionCode is lower than the one already on the device. The release
         // checklist in docs/RELEASING.md exists because forgetting this is
         // silent — the build succeeds and testers are simply never prompted.
-        versionCode = 7
-        versionName = "0.3.2"
+        versionCode = 8
+        versionName = "0.3.3"
 
         testInstrumentationRunner = "com.idomarhaim.goalpilot.HiltTestRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -111,7 +111,25 @@ android {
                 // like an auth problem.
                 groups = "testers"
                 artifactType = "APK"
-                releaseNotesFile = "release-notes.txt"
+
+                // ⚠️ REPO-ROOT-RELATIVE, and the "app/" is load-bearing. This read
+                // `"release-notes.txt"` until 2026-08-24 on the belief — written into
+                // ReleaseNotesGuardTest's KDoc and docs/RELEASING.md — that the plugin
+                // resolves the property against the app MODULE. It does not.
+                //
+                // `Observed:` `./gradlew :app:appDistributionUploadRelease` on
+                // 2026-08-24 failed with
+                //   Failed to read file "C:/Dev/Android_Final_Project/release-notes.txt"
+                // naming the REPO ROOT, with app/release-notes.txt present the whole
+                // time. The stray root copy deleted on 2026-08-22 was the file the
+                // plugin had been reading all along, so deleting it killed the local
+                // upload route, and nothing noticed for two days because nobody ran it.
+                //
+                // Writing the path with its directory in it makes the property say what
+                // it does under either reading, which is the only form that cannot rot
+                // back. It also now literally matches release.yml's
+                // `--release-notes-file app/release-notes.txt`.
+                releaseNotesFile = "app/release-notes.txt"
             }
         }
     }
@@ -314,6 +332,19 @@ tasks.withType<Test>().configureEach {
     inputs.file(rootProject.layout.projectDirectory.file(".github/workflows/release.yml"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("releaseWorkflowReadByGuard")
+
+    // THIS FILE is the guard's third input, and it was missing from the day the guard was
+    // written -- the comment above says "if this class grows a third file, declare that one
+    // too" without noticing the class already had one. A build script is not an input to a
+    // test task, so editing `releaseNotesFile` above leaves testDebugUnitTest cacheable.
+    //
+    // `Observed:` 2026-08-24, mutating that property back to its broken value and re-running
+    // this class gave BUILD SUCCESSFUL in 9 s having executed nothing. With --rerun-tasks the
+    // same mutation fails three of the four assertions. Without this line the guard is green
+    // on exactly the edit it exists to catch.
+    inputs.file(layout.projectDirectory.file("build.gradle.kts"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("moduleBuildFileReadByGuard")
 }
 
 /**

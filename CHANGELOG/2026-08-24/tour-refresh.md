@@ -100,3 +100,70 @@ it in the wrong order buys a third recording.
 **`app/release-notes.txt` was the same trap in miniature** and is updated here too: it described the
 0.3.2 tour to testers, step by step, including *"the rest of the bottom bar"* — the step this
 commit deleted.
+
+---
+
+# 📦 The build Ido asked to be sent — and the defect that stopped it
+
+Ido asked, mid-session, for the new build to go to his phone and to
+`rachil751@gmail.com`. Both are already in the `testers` group, so nothing outward was newly
+granted; the distribution is to a group that already exists.
+
+`v0.3.3` (`versionCode` 7 → 8), release `6thlp69g1amj0`, uploaded to `goalpilot-56e30` by
+`:app:appDistributionUploadRelease`.
+
+## ⚠️ The local upload route had been dead for two days, and the guard written to protect it said green
+
+The first upload attempt failed:
+
+```
+Failed to read file "C:/Dev/Android_Final_Project/release-notes.txt"
+```
+
+**naming the repo root**, with `app/release-notes.txt` present the whole time. So the App
+Distribution plugin resolves `releaseNotesFile` against the **root project**, not the `app` module
+— the exact opposite of what `ReleaseNotesGuardTest`'s KDoc, `docs/RELEASING.md` and the property's
+own value all asserted.
+
+That belief was not free. On 2026-08-22 a session deleted the stray copy at the repo root *because
+of it* — and that copy was the file the plugin had been reading all along. Nothing went red for two
+days because nobody ran the local route.
+
+| Claim, as it stood | After measuring |
+|---|---|
+| Plugin resolves against the `app` module | **False.** Repo root, `Observed:` under a real upload |
+| `20f3b7e` / `67c21e5` shipped testers a placeholder (`Inferred:`) | **Refuted.** The plugin read the root file, which is the one people were editing |
+| Guard asserts both routes name the same file | It **passed while they named different files** — it applied the wrong rule to the Gradle side, and the two errors cancelled |
+
+### Fixed, in the form that cannot rot back
+
+`releaseNotesFile = "app/release-notes.txt"`. That names the same file under **either** reading of
+the rule, which a comment explaining which reading is right does not.
+
+### The guard is now non-vacuous, and it was not before — measured twice
+
+- Mutating the property back to `"release-notes.txt"` and re-running the class: **`BUILD SUCCESSFUL`
+  in 9 s, nothing executed.** With `--rerun-tasks`, **three of four assertions fail.**
+- The cause is a **third missing `inputs.file`**. The KDoc says *"if this class grows a third file,
+  declare that one too"* without noticing the class already had one: it reads `app/build.gradle.kts`,
+  and a build script is not an input to a test task. Declared now.
+- Re-measured after declaring it: the same mutation fails **without** `--rerun-tasks`. The guard
+  finally catches the edit it exists to catch.
+
+This is the third instance in three days of *a guard reading a file Gradle does not associate with
+it*, and the same shape as `f25cca5`'s cached-green: **a test that never ran is not a test that
+passed**, and the two are indistinguishable from the console line.
+
+## 🧪 Tests, after the release-path fix
+
+| Layer | Result |
+|---|---|
+| **JVM unit** (`:app:testDebugUnitTest`) | **1084 tests, 89 classes, 0 failures, 0 errors** |
+| **Guard mutation check** | broken value → 3 of 4 assertions fail, no `--rerun-tasks` needed |
+| **Release build** | `:app:assembleRelease` green, signed with the real release key (`validateSigningRelease` ran; the upload task's `hasReleaseKey` check refuses a debug-signed artifact) |
+| **Upload** | `6thlp69g1amj0`, group `testers` |
+
+`Untested:` what the two testers actually see on their phones. The Firebase CLI has no
+`appdistribution:releases:list`, so the notes cannot be read back from a shell — this is the same
+honest limit the guard's KDoc already records, and it is why the notes file is guarded rather than
+verified.
