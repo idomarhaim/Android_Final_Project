@@ -4,30 +4,43 @@
 
 GoalPilot is a single-module Android app in **Kotlin + Jetpack Compose (Material 3)**
 following **MVVM with a clean-ish layering** and **Hilt** for dependency injection.
-It uses **Firebase** (Auth, Firestore, Storage, Cloud Functions) for the backend and
-**GROQ** (an LLM) for recommendations, proxied through a Cloud Function so the API
-key never ships in the app.
+It uses **Firebase** (Auth, Firestore, Storage, Cloud Functions, App Distribution) for
+the backend, and an **LLM behind a Cloud Function** so no API key ever ships in the app.
 
 ```
-┌────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  feature/*   Compose screens + ViewModels (StateFlow<UiState>)│
-├────────────────────────────────────────────────────────────┤
-│  domain/     models · repository INTERFACES · use cases      │  ← no Android/Firebase
-├────────────────────────────────────────────────────────────┤
-│  data/       AuthRepositoryImpl · *RepositoryImpl (Firestore) │
-│              StorageRepositoryImpl · RecommendationRepository  │
-│              GoogleAuthClient · Health/Tasks stubs            │
-├────────────────────────────────────────────────────────────┤
-│  Firebase (Auth · Firestore · Storage · Functions) · GROQ    │
-└────────────────────────────────────────────────────────────┘
-        di/ (Hilt) binds interfaces → impls, provides Firebase singletons
+│  ui/*        theme · components · navigation · tutorial ·     │
+│              widget · locale · root auth gate                 │
+│  notifications/  channels · reminder workers · deep links     │
+├──────────────────────────────────────────────────────────────┤
+│  domain/     models · repository INTERFACES · use cases       │ <- no Android/Firebase
+├──────────────────────────────────────────────────────────────┤
+│  data/       firestore/ · auth/ · storage/ · prefs/ ·         │
+│              security/ (encrypted AI keys) · tasks/ ·         │
+│              calendar/ · health/ · widget/ · remote/          │
+├──────────────────────────────────────────────────────────────┤
+│  Firebase (Auth · Firestore · Storage · Functions)            │
+│  Google Tasks · Google Calendar · Health Connect              │
+│  LLM: GROQ by default, or the user's own OpenAI / Anthropic / │
+│       Gemini key -- always via functions/, never from the app │
+└──────────────────────────────────────────────────────────────┘
+        di/ (Hilt) binds interfaces -> impls, provides Firebase singletons
 ```
+
+**Eleven feature packages at `HEAD`:** `analytics`, `auth`, `calendar`, `challenges`,
+`dashboard`, `goals`, `health`, `lifeareas`, `profile`, `settings`, `social`.
 
 ### Layer rules
 - **domain** depends on nothing Android/Firebase — trivially unit-testable (`BuildSummaryUseCase`, `Leveling`).
 - **data** implements domain interfaces using Firebase; maps DTOs ↔ domain models.
 - **feature** ViewModels depend only on domain interfaces (mockable in tests).
-- **ui** holds the theme, reusable components (`GpCard`, `GpLinearProgress`, `ProgressRing`, `GoalCard`, `HorizontalBarChart`, `DonutChart`, `IconChip`, `HeroSurface`, `Avatar`), navigation, and the root auth gate.
+- **ui** holds seven sub-packages, not one: `theme/` (the colour authority), `components/`
+  (~24 reusable composables -- `GpCard`, `ProgressRing`, `DonutChart`, `StackedColumnChart`,
+  `SuccessFailureRun`, `Avatar`, the pickers), `navigation/`, `root/` (the auth gate),
+  `tutorial/` (the in-app guided tour), `widget/` (the home-screen widget) and `locale/`.
+- **notifications** is its own top-level package: channels, the permission policy, deep links,
+  and two `WorkManager` workers (`OccurrenceReminderWorker`, `PlanTomorrowWorker`).
 
 ## Life areas and the time-allocation chart
 
@@ -102,8 +115,22 @@ deliberately off**: it let the device wallpaper override the brand palette, and
 it cannot coexist with a user-chosen skin — two colour authorities cannot both
 win.
 
-- `domain/model/AppSkin` — the pure enum (`AURORA` default, `BLOSSOM`) plus its
-  persisted id. No Compose types, same split as `GoalCategory.iconKey`.
+- **Appearance is seven independent axes, not one skin.** Each is a pure enum in
+  `domain/model/` with a persisted id and no Compose types, the same split as
+  `GoalCategory.iconKey`:
+
+  | Axis | Values |
+  |---|---|
+  | `AppSkin` | `AURORA` (default), `BLOSSOM` |
+  | `AppBrightness` | `SYSTEM`, `LIGHT`, `DARK` |
+  | `AppBackground` | `MATCH`, `GLOW`, `SPECTRUM`, `PLAIN` |
+  | `AppMaterial` | `GLASS`, `LIQUID_GLASS`, `NEO`, `DARK_NEO` |
+  | `AppRelief` | `FLAT`, `RAISED` |
+  | `AppLanguage` | `SYSTEM`, `ENGLISH`, `HEBREW` |
+  | `AppRegion` | the user's week-start / formatting region |
+
+  They are chosen on the Settings screen and are **device-local**, not synced to
+  Firestore. `PaletteTransform` composes them into the scheme actually rendered.
 - `ui/theme/Palettes.kt` — `colorSchemeFor(skin, dark)` returns one of four full
   Material 3 `ColorScheme`s; `accentsFor(...)` returns the off-Material brand
   accents (`GpAccents.heroGradient`, `positive`) exposed as `MaterialTheme.gpAccents`.
@@ -149,7 +176,8 @@ listeners (`snapshotsFlow()`), and suspend functions return `Resource<T>`.
 users/{uid}                       UserDto  (points, email, displayName, friendCode, …) [private]
   goals/{goalId}                  GoalDto  (…, lifeAreaId → lifeAreas/{id})
     progress/{entryId}            ProgressDto  (value, note, imageUrl)
-  tasks/{taskId}                  TaskDto  (goalId, points, done, completedAt, estimatedMinutes)
+  tasks/{taskId}                  TaskDto  (goalEdges[] + goalId projection, points,
+                                            difficulty, repeatRule, estimatedMinutes)
   completionFacts/{taskId}        TaskCompletion  — the banked completion (§1.4, #55)
   occurrences/{id}                Occurrence  (taskId, when) — only the instances touched (§7.1, #63)
   lifeAreas/{areaId}              LifeAreaDto  (name, colorHex, iconKey, sortOrder, googleListId)
@@ -197,7 +225,7 @@ challenges/{challengeId}          Challenge  (owner, standings)
   **no rules change** — it is matched by the existing `users/{uid}/{document=**}`
   owner-only rule.
 
-## LLM (GROQ) flow
+## LLM flow — GROQ by default, the user's own key optionally
 
 ```
 DashboardViewModel → RecommendationRepository → FirebaseFunctions.callable("getRecommendations")
@@ -230,6 +258,67 @@ AddEditGoalViewModel →      "                 →            "        .callabl
   dialog, and a `suggestedGoalId` that matches no real goal is discarded rather
   than trusted.
 
+## Scheduling, occurrences and the calendar
+
+`Task.repeatRule` (`domain/model/RepeatRule`) describes *when* a task recurs; instances are
+**generated, not stored**. One document exists in `users/{uid}/occurrences/{id}` per instance the
+user has actually touched — moved, completed, skipped — which is what stops a fortnightly task
+becoming 26 documents a year.
+
+- `feature/calendar/` — the §4.3 calendar surface, on its own bottom-bar tab. `CalendarBuilder`
+  expands rules into a window; `CalendarModel` is the pure shape the screen renders.
+- `domain/usecase/OccurrenceReminders` + `notifications/OccurrenceReminderWorker` — a
+  `WorkManager` job per due reminder. `PlanTomorrowWorker` is the evening nudge.
+- `domain/usecase/SyncCalendarUseCase` + `data/calendar/GoogleCalendarClient` — two-way sync with
+  Google Calendar, on the same token route as the Google Tasks import.
+
+## Settings, and why it is reachable signed out
+
+`feature/settings/` owns everything that belongs to the **device** rather than the account: the
+seven appearance axes above, language and region, notification permission, the sync cards, and the
+user's own AI key. It is registered in **both** navigation graphs — beside the sign-in screen as
+well as under the tabs — and that is the point: **Profile is the account, Settings is the device**,
+and being reachable with no account is what proves the split.
+
+## Bring-your-own AI key
+
+`#54` made the model provider a user choice. `domain/model/AiProvider` names exactly four adapters
+— GROQ, OpenAI, Anthropic, Gemini — and a fifth would be a Cloud Function deploy, not a settings
+edit. That cost was accepted deliberately over "any OpenAI-compatible endpoint, three text fields",
+which would have been free but would have let an **untested wire format** run.
+
+- `data/security/EncryptedAiCredentialStore` holds the key on-device, encrypted; it is never sent
+  to Firestore and never leaves the phone except to `functions/`.
+- `domain/model/AiAnswer` carries **whose credential paid** for an answer, which is what the
+  settings screen shows.
+- Model ids are **free text with a per-provider default**, not a curated list — a curated list
+  baked into a deploy rots identically, and now in four providers at once.
+
+## The home-screen widget
+
+`ui/widget/` is a Glance app widget. `domain/usecase/BuildWidgetSnapshotUseCase` and
+`BuildWidgetTileUseCase` are pure; `data/widget/WidgetSnapshotStore` persists the last snapshot so
+the widget renders instantly and offline rather than waiting on Firestore. `WidgetPalette` mirrors
+the theme axes above, because a widget cannot read `MaterialTheme`.
+
+## The in-app guided tour
+
+`ui/tutorial/` drives a spotlight overlay on first run. Its steps name **anchors** applied by the
+screens, and `TutorialStepsTest` asserts every named anchor really exists — the link is not checked
+at compile time.
+
+⚠️ **What that test cannot check is whether a step's sentence is still true.** A tour step is a
+claim about how the rest of the app is arranged, and when the arrangement moves the step keeps
+rendering perfectly and starts lying. It has happened here. Anyone moving a navigation destination
+owes the tour a grep. See `kb/dev/product-copy-describes-code.md` in the JARVIS KB.
+
+## Hebrew and RTL
+
+`ui/locale/AppLocale` applies the chosen `AppLanguage`; `core/util/Bidi` isolates interpolated
+values so a Latin number inside a Hebrew sentence cannot reorder the line.
+`LocaleAwareWindows` exists because a `Dialog` and a `Popup` render into their **own** window,
+which does not inherit the activity's locale configuration.
+
 ## Gamification
 
 `Leveling` uses a quadratic curve `pointsForLevel(n) = 50·(n-1)·n`
@@ -259,8 +348,11 @@ if (BuildConfig.DEBUG) {
   `functions/src/projection.ts` is now the only writer of `publicProfiles.points`, and
   `firestore.rules` stops the client writing it. The client sums its *own* points on
   device from `completionFacts`, which is what makes a tick work offline.
-- Deleting a goal doesn't cascade-delete its `tasks`/`progress` subcollections
-  (Firestore has no server-side cascade); acceptable for the demo.
+- ~~Deleting a goal doesn't cascade-delete its `tasks`/`progress` subcollections.~~ **Done.**
+  `GoalRepositoryImpl.deleteGoal` batch-deletes the `progress` subcollection and **unlinks**
+  rather than deletes tasks — a task may hang off several goals through `goalEdges`, so the
+  edge is removed and the indexed `goalId` projection follows it. Firestore still has no
+  server-side cascade; the client does it in batches.
 - The time-allocation chart measures **estimated** effort, not clocked time: there
   is no timer in the app, so a task's minutes come from the LLM or from its point
   value. The analytics card says which, per window, rather than implying precision

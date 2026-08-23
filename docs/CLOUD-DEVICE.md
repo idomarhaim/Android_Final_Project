@@ -40,7 +40,7 @@ already built if you have an Android phone in your pocket — see
 ## 3. Option A — the emulator that is already set up
 
 [`.github/workflows/instrumented-tests.yml`](../.github/workflows/instrumented-tests.yml)
-boots an Android emulator on GitHub's hardware, runs the 15 instrumented tests
+boots an Android emulator on GitHub's hardware, runs the instrumented suite
 in [`app/src/androidTest/`](../app/src/androidTest/), and photographs the running
 app. **Your machine does nothing** — you click a button in a browser.
 

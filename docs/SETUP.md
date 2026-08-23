@@ -102,6 +102,15 @@ firebase deploy --only firestore:rules,storage,functions
 > For production, store the key as a secret instead of `.env`:
 > `firebase functions:secrets:set GROQ_API_KEY` and read it via `defineSecret`.
 
+### The AI is multi-provider — this section is about the DEFAULT route
+
+GoalPilot ships with GROQ as the project's own free route: every call goes through the
+Cloud Function on GoalPilot's key, and that is what the steps above configure. Since
+[`#54`](https://github.com/idomarhaim/Android_Final_Project/issues/54) a user may instead
+bring **their own** key for GROQ, OpenAI, Anthropic or Gemini, entered on the Settings
+screen and held encrypted on the device (`data/security/EncryptedAiCredentialStore`). That
+path needs **no setup here** — it is the user's credential, not the project's.
+
 ### GROQ model — check before you demo
 
 `functions/src/index.ts` pins **`openai/gpt-oss-20b`**, overridable with

@@ -15,22 +15,30 @@ file covers only what a *new session* needs that the other docs don't say.
 
 ## 1. Where the project actually is
 
-The app is **feature-complete for spec §6 Core**, and every layer has been
-verified against the real backend — not inferred from the UI.
+The app is **feature-complete for spec §6 Core**, and every layer has been verified
+against the real backend — not inferred from the UI.
 
 | Area | State |
 |---|---|
 | Firebase backend | **Live.** Project `goalpilot-56e30`, Blaze plan |
 | Firestore / Storage / Auth / rules | Deployed and exercised |
-| Cloud Functions | `getRecommendations`, `classifyTask`, `scoreTask` — v2 callable, `us-central1`, `nodejs22` |
-| GROQ | `openai/gpt-oss-20b`, key in git-ignored `functions/.env` |
+| Cloud Functions — callables | `getRecommendations`, `classifyTask`, `scoreTask`, `proposeMeasure` — v2 callable, `us-central1`, `nodejs22` |
+| Cloud Functions — triggers | `projectPoints`, `projectPointsOnTaskWrite`, `projectChallengeScore` — the **only** writers of derived state (§5.2) |
+| LLM | GROQ `openai/gpt-oss-20b` by default; a user may bring an OpenAI / Anthropic / Gemini key (`#54`) |
 | §6 Core | ✅ verified end-to-end |
 | §6 Bonus — LLM classification | ✅ "Smart add a task" on the dashboard |
-| §6 Bonus — life areas + time-allocation analytics | ✅ shipped 2026-08-03, verified on the emulator against the real Google Tasks account |
+| §6 Bonus — life areas + time-allocation analytics | ✅ shipped, verified against the real Google Tasks account |
 | §6 Nice-to-have — Google Tasks | ✅ shipped, verified on real Hebrew data |
-| §6 Nice-to-have — Health Connect | ✅ shipped 2026-08-02 (this row said "compiling stub" until 2026-08-03; the emulator carries real synced step entries) |
-| §6 Nice-to-have — Challenges | ⬜ preview screen with sample data |
-| Tests | 92 JVM unit + 12 instrumented, all passing (2026-08-03) |
+| §6 Nice-to-have — Health Connect | ✅ shipped |
+| §6 Nice-to-have — Challenges | ✅ shipped — `ChallengeRepositoryImpl`, live standings via the `projectChallengeScore` trigger |
+| Beyond §6 | Calendar tab + recurrence, home-screen widget, notifications, guided tour, Settings surface, Hebrew/RTL |
+| Tests | JVM unit, instrumented, Firestore-rules (`firestore-tests/`) and functions (`functions/test/`) — all four layers green |
+
+> **No test counts here on purpose.** This row read *"92 JVM unit + 12 instrumented"*
+> for three weeks against a tree holding more than ten times that. A number in prose
+> changes on every commit that adds a test and nobody makes a decision from it, so the
+> layers are named and the digits are not. `gradlew :app:testDebugUnitTest` is the
+> answer, and it is current by construction.
 
 Full detail is in [`CHANGELOG/2026-07-31.md`](../CHANGELOG/2026-07-31.md) — it is
 long, but it is the record of what was done and *why*.
@@ -247,71 +255,44 @@ rachil751@gmail.com    second demo account, already an OAuth test user
 
 ## 3. What's left
 
-### MUST (blocks submission)
+> **This section deliberately does not list open work.** *(Decided 2026-08-24 by
+> `docs-repair`; Ido delegated the choice — "pick the best solution for the system" — so
+> the decision is **mine** and his to overturn.)*
+>
+> It used to, and by 2026-08-24 every item in it was false: Health Connect was called a
+> stub after it shipped, challenges a preview screen after the repository landed, and a
+> ⛔ box declared the whole §1.4/§1.5 points model absent from `HEAD` when `difficulty`,
+> `completionFacts` and `goalEdges` were all in the code. **A second backlog beside the
+> issue tracker drifts by construction** — the tracker is written to when work happens,
+> this file only when somebody remembers.
+>
+> So the split is by **what rots**: the live list lives in
+> [GitHub issues](https://github.com/idomarhaim/Android_Final_Project/issues), and what
+> stays here is only what the tracker cannot hold — a judgement about submission, and a
+> procedure. Neither changes when a ticket closes.
 
-1. **Two-account sharing demo (spec §7).** Everything is in place — both accounts
-   are OAuth test users, and since 2026-08-05 the second device exists too:
+### The one thing that blocks submission
 
-   ```powershell
-   .\scripts\run-goalpilot.ps1                              # emulator A, name.iddo@
-   .\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B       # emulator B, alongside
-   ```
+**Spec title page** still reads `[Full name & ID] · [Course number]`.
+`GoalPilot_spec_EN.docx` is marked frozen in AGENTS.md — confirm with the user before
+touching it.
 
-   Run them **one at a time** — the second waits for the first's Gradle build, and
-   `-Avd` guarantees it boots B rather than adopting A. Then sign in on B as
-   `rachil751@gmail.com`, add friend code `NDXVJC`, and exercise the leaderboard /
-   friends / shared-feed flow with both screens visible.
+### The two-account demo (spec §7) — a procedure, not a backlog item
 
-   Keep the two emulators on **different accounts**: they share the live Firebase
-   project, so two sessions of the same account produce writes attributable to
-   nobody.
-2. **Spec title page** still reads `[Full name & ID] · [Course number]`.
-   `GoalPilot_spec_EN.docx` is marked frozen in AGENTS.md — confirm with the user
-   before touching it.
+Everything is in place; this is how to run it.
 
-### OPTIONAL — the two remaining §6 features
+```powershell
+.\scripts\run-goalpilot.ps1                              # emulator A, name.iddo@
+.\scripts\run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B       # emulator B, alongside
+```
 
-See [`TODO/TODO_OPTIONAL/Integrations.TODO.optional.md`](../TODO/TODO_OPTIONAL/Integrations.TODO.optional.md)
-for both.
+Run them **one at a time** — the second waits for the first's Gradle build, and `-Avd`
+guarantees it boots B rather than adopting A. Then sign in on B as
+`rachil751@gmail.com`, add friend code `NDXVJC`, and exercise the leaderboard / friends
+/ shared-feed flow with both screens visible.
 
-**Health Connect** — `data/health/HealthConnectManager.kt` is a stub. Needs the
-`androidx.health.connect:connect-client` dependency, manifest permission
-declarations plus the Health Connect `<queries>` entry and a
-`PermissionsRationaleActivity`, then reads of `StepsRecord` / `SleepSessionRecord`
-feeding `ProgressRepository`. No account or API key required. Built into Android
-14+; older devices install it from Play.
-
-> ⚠️ **Re-evaluate that TODO's dependency list before following it.** The Google
-> Tasks entry told you to add three Google API libraries; none were needed — the
-> whole feature turned out to be two REST calls using a token from
-> `GoogleAuthUtil`, which `play-services-auth` already provides. Apply the same
-> scrutiny here. Health Connect genuinely does need its client library, but check
-> what else the plan assumes.
-
-**Competitive challenges** — `domain/model/Challenge.kt` and the `challenges`
-Firestore rules exist; `feature/challenges/ChallengesScreen.kt` renders sample
-data. Needs a `ChallengeRepository` (interface + Firestore impl) for create/join
-and standings, and the preview screen swapped onto live data. Standings are best
-computed server-side.
-
-### ⛔ DECIDED BUT NOT BUILT, and it is **not** on any list above *(audited 2026-08-20)*
-
-`docs/PRODUCT_v0.3.md` **§1.4 / §1.5** — the points-and-time model. `points =
-round(minutes/3) × difficulty`, the `difficulty` enum, deleting the `5..50` cap,
-retiring `heuristicPoints`, banking points as a `completionFacts` collection, and
-§1.5's `goalEdges`. **None of it exists at `HEAD`**, verified clause by clause.
-
-**It is listed here because it is the one piece of remaining work with no ticket
-and no brief**, so nothing else in this document or in the tracker would ever
-surface it. `C1`
-[#19](https://github.com/idomarhaim/Android_Final_Project/issues/19) is **closed**
-and is a *decision* ticket — it answered the question and was never going to build
-anything — yet four later artifacts defer implementation to it as though it would.
-
-**Nothing is blocked by this.** Points work today; the app is whole without it. It
-is a **model migration**, not a late edit, so it is a poor fit for a submission
-push. If it is wanted, it needs its own issue — deliberately not filed, since
-opening one is Ido's call. Full audit: the box at the top of §1.4.
+Keep the two emulators on **different accounts**: they share the live Firebase project,
+so two sessions of the same account produce writes attributable to nobody.
 
 ---
 

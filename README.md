@@ -11,7 +11,7 @@ leaderboard and gamification.
 The system works on three levels (spec §1):
 
 1. **Tracking** — visual progress rings & bars for every goal.
-2. **Recommendations** — GROQ LLM analysis, encouragement, and task→goal classification.
+2. **Recommendations** — LLM analysis, encouragement, and task→goal classification.
 3. **Motivation** — points, levels, a friends leaderboard, and shareable summaries.
 
 ---
@@ -27,11 +27,14 @@ The system works on three levels (spec §1):
 - ✅ **Image upload** to Firebase Storage (attach a photo to progress)
 - ✅ **Sharing between users**: weekly summaries + a **friends leaderboard** (spec §7),
   friends added with a 6-character **friend code**
-- ✅ **AI recommendations & encouragement** via GROQ (through a Cloud Function proxy)
+- ✅ **AI recommendations & encouragement** through a Cloud Function proxy — GROQ by
+  default, or **your own OpenAI / Anthropic / Gemini key**, entered in Settings and
+  stored encrypted on the device
 - ✅ Points, levels, and level progress (gamification)
-- ✅ **Two selectable colour skins** — *Aurora* (ocean blue → evergreen, default)
-  and *Blossom* (sunset pink → orange), chosen on the Profile tab and applied
-  instantly across the app. Both ship a full light **and** dark palette.
+- ✅ **Seven appearance axes**, all on the Settings screen and applied instantly:
+  skin (*Aurora* default, *Blossom*), brightness, background, material, relief,
+  language (English / **Hebrew**, full RTL) and region. Every skin ships a full
+  light **and** dark palette.
 
 - ✅ **Life areas** — your own division of your life (health, studies, career,
   relationships…), defined on *Profile → Life areas* or **synced from your Google
@@ -111,14 +114,17 @@ app/                     Android app (Compose + MVVM)
   src/main/java/com/idomarhaim/goalpilot/
     core/                Resource wrapper, utils, constants
     domain/              models · repository interfaces · use cases  (no Android/Firebase)
-    data/                Firebase + GROQ implementations, integration stubs
+    data/                Firebase impls · encrypted AI key store · Google Tasks,
+                         Calendar, Health Connect clients · widget snapshot store
     di/                  Hilt modules
-    ui/                  theme · shared components · navigation · root · tutorial
-    feature/             auth · goals · dashboard · social · profile · analytics ·
-                         lifeareas · challenges
+    ui/                  theme · components · navigation · root · tutorial ·
+                         widget · locale
+    notifications/       channels · reminder workers · deep links
+    feature/             analytics · auth · calendar · challenges · dashboard ·
+                         goals · health · lifeareas · profile · settings · social
   src/test/              JVM unit tests
   src/androidTest/       Compose UI + instrumented tests
-functions/               GROQ proxy Cloud Functions (TypeScript)
+functions/               LLM proxy + derived-state triggers (TypeScript)
 firestore.rules · storage.rules · firebase.json   Backend config & security rules
 docs/                    SETUP.md · ARCHITECTURE.md
 TODO/                    Backlog for nice-to-have / bonus tiers

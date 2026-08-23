@@ -28,7 +28,11 @@ v0.3 *is*; sequencing is the build session's.
 > [§5.3](#53-offline--an-as-of-stamp-not-a-connectivity-story-c21-43-c20-42) is `C21`, written from its
 > resolution rather than from its title.
 >
-> **What remains is three tickets and then `#12`'s own closure.** Writing this file surfaced three
+> ✅ **RESOLVED 2026-08-24 — all four are closed.** `C22` `#44`, `C23` `#45`, `C24` `#46` and
+> the map `#12` itself. The paragraph below is kept as written because it is the record of why
+> those three were filed rather than waved through; only its status is out of date.
+>
+> **What remained at the time of writing was three tickets and then `#12`'s own closure.** Writing this file surfaced three
 > decisions the map believed it had taken and had not, and they were **filed as children** rather than
 > waved through — [`C22` #44](https://github.com/idomarhaim/Android_Final_Project/issues/44),
 > [`C23` #45](https://github.com/idomarhaim/Android_Final_Project/issues/45),
