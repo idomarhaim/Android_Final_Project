@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `kb-drain-67-and-siblings` (follow-on) | Drain `#67` entry 4, the held always-ask candidate — Ido delegated the decision 2026-08-24 | `kb-candidates/2026-08-23-67-delete-anything.md`, `CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md` | _none_ | 2026-08-24 |
 > 🏁 **`kb-drain-67-and-siblings` RELEASED 2026-08-24 — this commit.** The `kb-candidates/` folder is
 > drained: **10 of 11 entries ingested**, pages in `C:\Dev\JARVIS` (`64fc76f`), `Check-KbLinks`
 > **CLEAN** (117 pages). Three candidate files fully drained and deleted;
