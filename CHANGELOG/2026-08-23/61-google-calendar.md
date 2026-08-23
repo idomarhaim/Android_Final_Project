@@ -393,3 +393,55 @@ exclusive, `showDeleted=true` surfacing a trashed event as `status: "cancelled"`
 Google's published contract and are the reason the device pass is owed rather than optional. Every
 claim about what **GoalPilot does with** those answers is `Observed:` — that is what the 29 tests
 are.
+
+---
+
+## 8. ⏸️ The push is held, and the reason is a rename shape rather than anything wrong
+
+**Auto-push precondition 2** — *read what you are sending* — stops on this range, and the honest
+report is that it stops on a **detail**, not on a danger.
+
+`@{u}..HEAD` carries **18** commits and three renames. Two are the sanctioned brief close and pass
+the carve-out exactly:
+
+```
+R  sessions/60-calendar-surface.md  ->  sessions/done/60-calendar-surface.md      (5d5e2a3, status: done ✓)
+R  sessions/61-google-calendar.md   ->  sessions/done/61-google-calendar.md       (1ccdb3e, status: done ✓)
+```
+
+The third does not:
+
+```
+R  sessions/unmeasured-percent.md   ->  sessions/done/66-unmeasured-percent.md    (72fb296, status: done ✓)
+```
+
+It is a brief close **and a slug rename** — `unmeasured-percent` → `66-unmeasured-percent` — in one
+move. The carve-out is written as one **named path shape**, `sessions/<slug>.md` →
+`sessions/done/<slug>.md`, and says outright that *"one rename of any other shape anywhere in the
+range still stops"*. This is a fourteenth rename in a history whose thirteen predecessors were all
+exact-slug closes, so it is **the first instance of a new shape** — which is exactly the case a gate
+measured on the old thirteen cannot have been measured against.
+
+**The judgement, stated so it can be overturned rather than hidden:** it is almost certainly benign.
+That session set `status: done` in the same commit, the destination is `sessions/done/`, and the new
+slug is strictly more useful than the old one because it carries the ticket number the other briefs
+carry. Nothing about it looks like an accident. It is held because *"almost certainly benign"* is
+the reading the gate exists to make somebody else confirm, and because a new shape appearing is
+information rather than noise.
+
+**Foreign commits in the range, adjudicated under precondition 5.** Twelve of the eighteen are not
+mine — `60-calendar-surface` (`0ca960d`, `7452122`, `a3e91c5`, `5d5e2a3`), `66-unmeasured-percent`
+(`0831bc6`, `7de9bc0`, `005d297`, `efe5f44`, `22833ed`, `99e2070`, `72fb296`) and
+`65-measure-proposal` (`0a4f012`). **Every one of those rows is released on the board and the
+working tree is clean**, which is the condition under which they ride along, so they are named here
+rather than blocking. This is the *"say so twice"* half that lives in the changelog: in a month,
+this is where *"that push carried eleven commits from two other sessions"* is still findable.
+
+**The binary, disclosed rather than waved through.** Three PNGs, and one is **1.05 MB** against a
+median of ~270 KB for the render-pass shots already in the repo — it is a full-colour screenshot
+carrying an embedded map tile. It is the same *kind* of file the folder exists for, so it is not
+treated as precondition 2's *"large binary"*; the number is here so that reading is checkable rather
+than asserted.
+
+**Nothing else in the range trips anything:** no deletions, no secrets, no force, and the remote has
+not moved since the fetch.
