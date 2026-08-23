@@ -109,3 +109,23 @@ the work was done, the evidence was not.
 
 📱 **`emulator-5554` was used and NO sign-in was needed or destroyed.** No install, no build, no
 `connectedDebugAndroidTest` — the APK was already there. One task was created and deleted, both mine.
+
+## ⬆️ This push carries four foreign commits, and it lifts a hold another session set
+
+| Commit | Session |
+|---|---|
+| `5e7bb22` · `27e9be0` | `62-kickoff-refresh` — the claim, and #62's brief/ticket brought up to the shipped app |
+| `4ddbced` · `4f6a3b5` | `tour-refresh` (follow-on) — the KB page that session's finding earned, and its own push disclosure |
+
+**`tour-refresh` held the app-repo push deliberately**, and said so: `5e7bb22` was a claim commit
+from `62-kickoff-refresh` **whose row was live at that moment**, which precondition 5 makes an
+unambiguous stop-and-ask.
+
+**That condition has cleared.** `62-kickoff-refresh` is released — its own release note sits in
+*Recently released* and it holds no row. Re-checked at the moment of pushing rather than assumed
+from the earlier note, which is the point of the dated form.
+
+`docs-currency-guard` **is** live, and is the reason this commit names four explicit paths: they
+hold `README.md`, `docs/ARCHITECTURE.md`, `docs/SETUP.md`, `docs/RELEASING.md` and
+`app/build.gradle.kts` **uncommitted** in the shared tree. None of it rides here — but a bare
+`git commit` would have taken all five under this message.
