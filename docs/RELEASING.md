@@ -246,12 +246,35 @@ Distribution compares `versionCode` and sees no change. Hence a checklist.
    **`versionName`**.
 2. Write the day's `CHANGELOG/YYYY-MM-DD/<session-label>.md` as usual.
 3. Commit.
-4. Tag and push — the tag message becomes the release note testers read:
+4. Tag and push — the tag message becomes the release note testers read.
+   **Tag an explicit SHA. Never bare `git tag`, which captures whatever `HEAD`
+   is at that instant:**
 
    ```powershell
-   git tag -a v0.2.0 -m "Health Connect auto-sync; faster analytics"
+   git rev-parse HEAD                 # read it, and confirm it is YOUR commit
+   git log --oneline "@{u}..HEAD"     # anything here that is not yours?
+   git tag -a v0.2.0 <that-sha> -m "Health Connect auto-sync; faster analytics"
    git push origin v0.2.0
    ```
+
+   > ⚠️ **This step said `git tag -a v0.2.0 -m "…"` with no SHA until 2026-08-24,
+   > and it has already misfired here.** `release.yml` fires `on: tags:` and does
+   > `actions/checkout@v4`, so **the tag chooses the commit that gets signed and sent
+   > to testers' phones.** `Observed:` 2026-08-22 — `main` was pushed at `915a388`,
+   > `v0.3.1` was created seconds later, and the workflow checked out a **sibling's**
+   > `d752342`, which had landed in the shared tree in between. Harmless in fact
+   > (documentation only) and harmless by luck, not by procedure.
+   >
+   > **Tagging before pushing does not help** — that moves the race, it does not
+   > close it; the working tree is shared at every instant. And unlike `git commit`
+   > there is **no pathspec** to defend with, because a tag names a commit rather
+   > than a set of files. Naming a SHA is the only form that removes the window,
+   > because a SHA is a value and not a moving reference.
+   >
+   > It also escapes every other gate in this file: the auto-push preconditions run
+   > on `@{u}..HEAD`, so a sibling commit landing *after* they pass is invisible to
+   > them. This is the global parallel-sessions rule's *tag an explicit SHA* clause,
+   > written down here because this is the file somebody follows during a release.
 
 5. Watch the run under the repo's **Actions** tab. It runs the JVM unit suite
    first and stops on a failure, so a red suite never reaches a tester.

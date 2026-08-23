@@ -167,3 +167,38 @@ passed**, and the two are indistinguishable from the console line.
 `appdistribution:releases:list`, so the notes cannot be read back from a shell — this is the same
 honest limit the guard's KDoc already records, and it is why the notes file is guarded rather than
 verified.
+
+## ✅ The tag route was NOT used, and its instruction is fixed anyway
+
+`sessions/kb-drain-67-and-siblings` warned mid-session that `docs/RELEASING.md` step 4 said
+`git tag -a v0.3.3 -m "…"` with **no SHA**, while `git log @{u}..HEAD` held six unpushed commits,
+four of them theirs, stacked above this session's `243c14b`. `release.yml` fires `on: tags:` and
+does `actions/checkout@v4`, so the tag chooses the commit that gets signed and sent to phones —
+and that already misfired here on 2026-08-22 (`v0.3.1` → a sibling's `d752342`).
+
+**It did not fire this time, because this release did not go through the tag route at all**: the
+upload was the local `:app:appDistributionUploadRelease`, which packages the working tree and never
+reads a ref. No tag was created and none should be until this branch is pushed.
+
+The instruction is fixed regardless — step 4 now reads the SHA first and tags **that** — because it
+sat in this session's working set and the next person to follow it is the one at risk.
+
+## ✅ The APK that went to testers was checked, not assumed
+
+`kb/dev/look-at-your-own-output.md` §4c-iv: a release build can come back `up-to-date`, exit `0`,
+and hand you an artefact another session built over their tree. `packageRelease` shows as
+**executed** (not `FROM-CACHE`) in the upload log, but the task line is the weak check. The strong
+one reads the artefact:
+
+```
+Your goals, as time          FOUND    in resources.arsc
+Press and hold a block       FOUND
+Social holds challenges      absent
+Your account, and this tour  absent
+```
+
+**Both directions.** The new copy is in the shipped APK and the copy this session deleted is not —
+which a merely-stale artefact could not manage. The APK is byte-identical in size to the 00:35
+build (`5,871,269`), and that is correct rather than suspicious: everything changed between the two
+builds (a `build.gradle.kts` comment, a test source, the notes file, docs) is absent from a release
+APK.
