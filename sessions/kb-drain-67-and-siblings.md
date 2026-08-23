@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 owns:
   - kb-candidates/2026-08-23-67-delete-anything.md
   - kb-candidates/2026-08-23-68-drag-to-move.md
@@ -11,7 +11,7 @@ owns:
   # close-out and did not drain them, on this brief's own precedent. Its entry 1 EXTENDS
   # 70-verify-dashboard-average's entry 1 -- they want merging, not two sections.
   - kb-candidates/2026-08-23-69-one-off-occurrence-edits.md
-  - CHANGELOG/2026-08-23/kb-drain-67-and-siblings.md
+  - CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md  # the day the session actually ran
   - sessions/kb-drain-67-and-siblings.md
   - "cross-repo: C:\\Dev\\JARVIS\\kb\\dev\\** and C:\\Dev\\JARVIS\\kb\\log\\**"
 created: 2026-08-23 by 67-delete-anything

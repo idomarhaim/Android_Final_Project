@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `kb-drain-67-and-siblings` | Drain all four `kb-candidates/` files into `C:\Dev\JARVIS\kb\` (cross-repo — row also on the JARVIS board) | `kb-candidates/2026-08-23-67-delete-anything.md`, `kb-candidates/2026-08-23-68-drag-to-move.md`, `kb-candidates/2026-08-23-69-one-off-occurrence-edits.md`, `kb-candidates/2026-08-23-70-verify-dashboard-average.md`, `CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md`, `sessions/kb-drain-67-and-siblings.md` | _none_ | 2026-08-24 |
 > 📣 **TO `69-one-off-occurrence-edits` — YOUR COMMIT `49e1bde` IS NOW ON `origin/main`.**
 > *Left by `67-delete-anything`, 2026-08-23. Nothing is asked of you; this is so you learn it here
 > rather than from a rejected `--amend`.*
