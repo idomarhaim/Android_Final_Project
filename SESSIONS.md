@@ -15,13 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `docs-currency-guard` | Audit `docs/` against `HEAD` (done -- 6 files, ~15 false claims found), then build the mechanical guard that makes the drift fail a build rather than wait for somebody to notice | `app/src/test/java/com/idomarhaim/goalpilot/docs/DocsCurrencyTest.kt` (new), `CHANGELOG/2026-08-24/docs-currency-guard.md`, `kb-candidates/2026-08-24-docs-currency-guard.md` | **Gradle daemon — TAKEN 2026-08-24 after `tour-refresh` released it (`37794f5`); no device** | 2026-08-24 |
-> ⚠️ **`app/build.gradle.kts` IS OWED AND I AM NOT TAKING IT — `tour-refresh` holds it.**
-> The guard reads `docs/`, `functions/src/index.ts`, `gradle.properties` and `README.md`, and
-> `testDebugUnitTest` tracks none of them, so without four `inputs.file` lines in that file's
-> existing block (~L300) the task answers **UP-TO-DATE and the guard reports green having never
-> run** — the exact failure `ReleaseNotesGuardTest`'s KDoc records from 2026-08-22. Until those
-> lines land, the guard only re-runs when `src/main/**` changes. Named here so it is not lost.
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
@@ -4860,6 +4853,53 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `docs-currency-guard` — released 2026-08-24, this commit
+
+**The docs were assertions about this code and nothing re-ran them; now something does.**
+Shipped in **`1258ce8`**: `DocsCurrencyTest` (4 assertions + a not-vacuous case), four `inputs`
+declarations in `app/build.gradle.kts`, and the false sentences repaired in `docs/ARCHITECTURE.md`
+plus the dead JDK path in `docs/SETUP.md`, `docs/RELEASING.md` and `README.md`.
+
+🧪 **JVM unit: 1089 tests, 0 failures.** Red-first the guard failed 4 of 5, each naming exactly the
+right drift. **Mutation check:** `FROM-CACHE` + SUCCESSFUL before, then a **docs-only** edit forced
+a re-run and a real failure — so the `inputs` lines work and this guard cannot report green from
+cache on the edit it exists to catch. That is the property `ReleaseNotesGuardTest` carried
+unnoticed for three days.
+
+⚠️ **A green run here does NOT mean the docs are current, and the KDoc says so.** Every assertion
+is a presence check over an enumeration: it catches the *omission* half of the drift and none of
+the *false-assertion* half. Of ~15 audit findings it would have caught 8.
+
+📌 **`tour-refresh` — thank you for the note, and it was right.** `docs/RELEASING.md` §3's
+corrected `releaseNotesFile` paragraph was read as **current, not drift**; the only line this
+session changed in that file is the JDK path.
+
+🔎 **The `🎬` walkthrough was waived, and the mechanical fallback found a defect in the draft.**
+The JDK check reported `silent` on all three broken documents because `[\/]` in a regex class
+collapses to `[/]` — the backslash eaten as an escape. A check run at the wrong width does not
+fail, it **passes**. Two further assertions were dropped after being run rather than on taste.
+
+⚠️ **I DELETED THIS SECTION'S `kb-drain-67-and-siblings` NOTE AND PUT IT BACK.** Removing my own
+row, the loop bound was *"lines starting with `>`"*, and with no blank line between the two
+blockquotes it ran 31 lines into a sibling's account of its own work. Caught by reading the diff
+before committing; restored from `HEAD` and redone bounded on my note's own last line. **Nobody
+who could have noticed was looking** — which is exactly why the read-before-write rule puts
+records of events in the hard-form append-only class.
+
+🚫 **Nothing was pushed by this session, and its commit is public anyway.** `1258ce8` went up in a
+sibling's `update by push` at 01:15:32 — the outbound half of the shared-tree hazard, where
+`git push` is branch-scoped and no gate of mine is involved. All six preconditions were checked
+and passed first; the push simply was not mine to make.
+
+📱 **No device, no sign-in touched.** The **Gradle daemon was taken** (after `tour-refresh`
+released it at `37794f5`) and is now **released**.
+
+⏸️ **ONE THING IS OWED AND NOT DONE:** `kb-candidates/2026-08-24-docs-currency-guard.md` is written
+and committed but **not ingested** — 3 ready entries (two cross-repo into `C:\Dev\JARVIS`, which
+needs a claim on that board) and 1 **held for Ido** (whether `docs/` should grow the sections it is
+missing entirely).
+
 
 ### 🏁 `67-close-or-finish` — released 2026-08-24, this commit
 
