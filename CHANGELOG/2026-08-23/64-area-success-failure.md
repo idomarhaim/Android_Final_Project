@@ -204,3 +204,24 @@ folder are the second pass. Full account: that folder's `README.md`.
 - **Points per occurrence.** `OccurrenceOutcome.Done`'s KDoc names it as `#64`'s and it is **not
   here**: it needs `completionFacts`' key to widen, which is a migration on live data. `#64`'s own
   text scopes itself to the run, and the run counts windows rather than points.
+
+## 🚚 A foreign commit rode this session's push, and here is the adjudication
+
+`b07f987` — **`60-calendar-surface`: `#60` CLOSED** — was in `@{u}..HEAD` when this session
+pushed, and `git push` is branch-scoped, so it went up under this session's action rather than
+its author's. Named here because a reply scrolls away and this file does not
+(auto-push precondition 5).
+
+**How it was adjudicated, and it did not need a transcript.** The board's *Active claims* section
+carries **zero live rows** — `60-calendar-surface` appears only in release notes — and the commit
+itself **is** that session's close-out: it writes an explicit `✅ #60 IS CLOSED` note about
+**itself**, updates its own changelog and its own closed brief. That is a positive signal a
+session wrote about its own state, which precondition 5 says settles the question on its own; the
+transcript escalation is for *silence*, and this is the opposite of silence. Working tree was
+clean, so none of their uncommitted work rode along either.
+
+**And it carries something that belongs on the roadmap, not just in a diff:** that note flags
+**drag-to-move** as *"genuinely homeless"* — specced in §4.3, owed by **no open issue**, with its
+domain half already built (`ScheduleEdits` + `OccurrenceRepository.apply`), so what is missing is
+the gesture and the scope sheet. It is **flagged, not filed**, because opening an issue is
+outward and Ido's. Recorded here so it is not lost between two sessions' changelogs.
