@@ -234,3 +234,29 @@ Both were assertions about code that this commit made false, and both are the
 
 `versionCode` 8 → 9, `versionName` 0.3.3 → **0.4.0**. Release notes rewritten
 for the four fixes, in Ido's terms rather than the code's.
+
+**Distributed by the local route**, not the tag route — `:app:assembleRelease`
+then `:app:appDistributionUploadRelease`. Firebase App Distribution release
+**`5sgpd1si43tu0`**.
+
+Signature verified before upload rather than assumed, because a debug-signed
+build is the failure that is only discovered months later:
+
+```
+Signer #1 certificate DN: CN=Ido Marhaim, OU=GoalPilot, O=GoalPilot, L=Tel Aviv, C=IL
+Signer #1 certificate SHA-1 digest: e7d5534cb6ce2fd81a48af9d1304be254dfc9062
+package: versionCode='9' versionName='0.4.0'
+```
+
+That SHA-1 is the one `RELEASING.md` §2.1a records as registered with Firebase,
+so this is the real key and the build installs over what testers already have.
+
+**Both recipients were already testers** — `firebase appdistribution:testers:list`
+shows `name.iddo@gmail.com` and `rachil751@gmail.com` both in the `testers` group,
+rachil since 2026-08-06. So one upload reached both and **nobody was invited, no
+new email address was added anywhere**. Ido asked for it to go to rachil by email;
+App Distribution is that email, and the account was already there.
+
+**Not pushed.** Precondition 5 — the range carries `3e4f381` and `59283d0` from
+`docs-repair`, which holds a **live** row and is mid-unit. Held for Ido's word,
+and still unpublished as of the `git fetch` run at the end of this session.

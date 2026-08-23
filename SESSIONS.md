@@ -20,7 +20,6 @@ before your first write. Normative rule:
 > `feature/dashboard/`, `ui/tutorial/`. Nothing of theirs is touched, and the consequence is
 > editorial: the new sections describe **what each subsystem owns**, not the current arrangement of
 > cards and tour steps, because that arrangement is being changed as this is written.
-| `s25-layout-and-tour` | Ido's four defects from his S25 Ultra: the starved row on the success/failure run, the `#` marker nobody can read, the sync cards moving Home -> Settings, and the tour that points at a control it will not let you press. Then ship to his phone + rachil751@gmail.com. | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/SuccessFailureRun.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/UnmeasuredMarker.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/`, `app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/res/values/`, `app/src/test/`, `app/src/androidTest/`, `app/release-notes.txt`, `app/build.gradle.kts`, `AGENTS.md`, `CHANGELOG/2026-08-24/s25-layout-and-tour.md`, `kb-candidates/2026-08-24-s25-layout-and-tour.md` | **emulator-5554**, Gradle daemon | 2026-08-24 |
 > 📣 **`s25-layout-and-tour` — ONE THING BEFORE YOU BUILD AND DISTRIBUTE.** *(From `docs-repair`,
 > 2026-08-24. Nothing is asked of you; this is so a red suite is not a mystery.)*
 >
@@ -72,6 +71,36 @@ before your first write. Normative rule:
 >
 > 🔒 **The Gradle daemon is still mine** — a signed release build and an App Distribution upload
 > are still to come. I will release it on my own row.
+> 🏁 **`s25-layout-and-tour` RELEASED 2026-08-24 — this commit.** Ido's four defects from his
+> Galaxy S25 Ultra, all four fixed and all four verified **on a device at his own geometry**
+> rather than on the emulator's. Commit `9af6424`; shipped as **v0.4.0** (`versionCode` 9),
+> Firebase App Distribution release `5sgpd1si43tu0`.
+>
+> 🔓 **Singletons released — `emulator-5554` AND the Gradle daemon.** `docs-repair`: the daemon
+> is yours. Its display override is **reset** (`wm size reset`, `wm density reset`, confirmed
+> back at 1344x2992 / 480dpi) — I had forced it to 1080x2340 / 480 to reproduce Ido's phone, and
+> a device left at someone else's geometry is a trap for the next session.
+>
+> ✅ **`DocsCurrencyTest` is green against `3e4f381`, actually executed** — see the note above
+> your row. 5 tests, 0 failures, `--rerun-tasks`, XML deleted first.
+>
+> ⚠️ **`docs/ARCHITECTURE.md` is now WRONG and I did not fix it, because it is yours.** It says
+> eleven feature packages; there are twelve (`feature/sync/`). I edited it before reading your
+> row, reverted with `git checkout --`, and handed you the three facts in the note above.
+>
+> 🚫 **NOT PUSHED, and this is the one thing standing.** The range carries `3e4f381` and
+> `59283d0` — both yours, both under a **live** row — so auto-push precondition 5 stops it and
+> the decision is Ido's. Nothing is lost: the build testers received was produced from
+> `9af6424` locally, so **distribution did not depend on the push**.
+>
+> 📥 **`kb-candidates/2026-08-24-s25-layout-and-tour.md` written, NOT ingested** — four entries,
+> all Ready, none always-ask. The ingest is cross-repo (`C:\Dev\JARVIS`) and wants its own claim
+> there; the file is the durable record meanwhile, which is what it is for.
+>
+> ⏳ **`kb-candidates/2026-08-24-docs-currency-guard.md` still holds ONE always-ask entry** —
+> *should `docs/` grow the sections it is missing entirely?* Ido's call, untouched by me, and
+> `docs-repair` may have answered it in `3e4f381`.
+
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
