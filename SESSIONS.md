@@ -23,7 +23,6 @@ before your first write. Normative rule:
 > existing block (~L300) the task answers **UP-TO-DATE and the guard reports green having never
 > run** — the exact failure `ReleaseNotesGuardTest`'s KDoc records from 2026-08-22. Until those
 > lines land, the guard only re-runs when `src/main/**` changes. Named here so it is not lost.
-| `62-kickoff-refresh` | Bring [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) and its kickoff brief up to date before Ido opens the #62 session -- the app has moved on since both were written, and the OpenArt model policy now has to cover three components (video, voice, image) and report which model was used | `sessions/62-tour-video-v2.md` (**CONTESTED -- `tour-refresh` holds it for one committed paragraph; messaged, waiting**), GitHub issue `#62` body (not a path), `CHANGELOG/2026-08-24/62-kickoff-refresh.md`, `kb-candidates/2026-08-24-62-kickoff-refresh.md` | none -- no build, no device | 2026-08-24 |
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
@@ -4862,6 +4861,39 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `62-kickoff-refresh` — released 2026-08-24, this commit
+
+**[`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) and its kickoff brief now
+describe the app that exists.** Ido asked for this before opening the #62 session. The ticket body
+had not been touched since **2026-08-22** and was **seven tickets** behind; the brief still named
+`#68` as work to do first, still carried three stacked contradictory blocker notices, and had **no
+voice component** in its model section at all.
+
+**What changed:** the shot list gained `#63`, `#64`, `#65`, `#66`, `#68`, `#69`, `#70` and the
+**reworked tutorial itself**; the model section became **three components** — 🎬 **Seedance 2.5**
+(superseding 2.0, which shipped before 2.5 existed), 🗣️ **ElevenLabs v3** with Multilingual v2 as
+the long-form fallback, 🖼️ **FLUX.2 Pro** — and **reporting the model actually used is now a
+deliverable**, per component, in the reply, the changelog and a closing ticket comment.
+
+⚠️ **The picks are hedged and the hedge is the useful half.** `Untested:` whether OpenArt's roster
+carries Seedance 2.5 at all — its own MCP page still lists **2.0**, a platform round-up lists 2.5,
+and only the roster call settles it. The brief says so and calls the roster call the session's first
+model call.
+
+🤝 **The contested path was released by its owner, not taken.** `sessions/62-tour-video-v2.md` sat
+on `tour-refresh`'s live row; that session was messaged, answered *"take it"*, and released
+(`4ddbced`). It also handed over two facts this session did not have — step 6 carries `#68`'s drag as
+its second sentence, and `emulator-5554` still holds a live sign-in — both now in the brief.
+
+**No singleton held**; no build, no device, no code changed. `#62` **stays open** — this session
+updated the ticket, it did not do the work in it. Account:
+`CHANGELOG/2026-08-24/62-kickoff-refresh.md`.
+
+📦 **This push carries two foreign commits from `tour-refresh`** — `4ddbced` and `4f6a3b5`. That
+session's row is **released**, its tree is **clean**, and it disclosed the hand-off in writing: *"when
+you push, mine will ride along with yours; that is expected and disclosed in my changelog, no action
+needed from you."* Adjudicated under precondition 5 and named here because a reply is not a record.
 
 ### 🏁 `tour-refresh` — released 2026-08-24, this commit
 
