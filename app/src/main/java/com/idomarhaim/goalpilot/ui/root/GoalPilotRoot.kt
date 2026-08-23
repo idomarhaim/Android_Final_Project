@@ -148,20 +148,23 @@ private fun MainScaffold() {
                         // Same fill as a card, so the bar reads as chrome lifted off the
                         // tinted canvas rather than another band of background.
                         NavigationBar(
-                            modifier = Modifier.tutorialAnchor(TutorialAnchor.NAV_BAR),
                             containerColor = gpCardContainerColor(),
                             tonalElevation = 0.dp,
                         ) {
                             TopLevelTab.entries.forEach { tab ->
                                 val selected = currentRoute == tab.route
                                 NavigationBarItem(
-                                    // The tour's one interactive step spotlights THIS
-                                    // item and waits for it to be tapped, so it needs a
-                                    // hole of its own inside the bar's.
-                                    modifier = if (tab == TopLevelTab.GOALS) {
-                                        Modifier.tutorialAnchor(TutorialAnchor.TAB_GOALS)
-                                    } else {
-                                        Modifier
+                                    // Two of the four items are spotlighted by the tour:
+                                    // Goals is its one interactive step, waiting to be
+                                    // tapped, and Calendar is the tab #60 added. The whole
+                                    // bar used to carry an anchor of its own; that went
+                                    // with the step that named Profile as a tab in it.
+                                    modifier = when (tab) {
+                                        TopLevelTab.GOALS ->
+                                            Modifier.tutorialAnchor(TutorialAnchor.TAB_GOALS)
+                                        TopLevelTab.CALENDAR ->
+                                            Modifier.tutorialAnchor(TutorialAnchor.TAB_CALENDAR)
+                                        else -> Modifier
                                     },
                                     selected = selected,
                                     onClick = { navController.navigateToTab(tab.route) },

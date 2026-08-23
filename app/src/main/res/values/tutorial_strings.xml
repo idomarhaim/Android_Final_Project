@@ -85,15 +85,30 @@
     <string name="tutorial_new_goal_title">Every goal starts here</string>
     <string name="tutorial_new_goal_body">A goal is a target with a measure and a deadline. Tasks hang off it, and the progress adds itself up.</string>
 
-    <!-- ── Step 6 · The rest of the bar ─────────────────────────────────── -->
+    <!--
+      Step 6 · The Calendar tab
 
-    <string name="tutorial_explore_title">Two more places to know</string>
-    <string name="tutorial_explore_body">Social holds challenges and friends. Profile holds your analytics, life areas and achievements.</string>
+      Replaced tutorial_explore_* on 2026-08-24. Those two keys spotlighted the
+      whole nav bar and said "Social holds challenges and friends. Profile holds
+      your analytics, life areas and achievements" — written on 2026-08-22, when
+      Profile was a tab. #60 moved Profile behind the Home avatar and gave the
+      freed tab to Calendar the next day, so the sentence named a destination
+      that was not in the thing being pointed at. Social is a labelled tab with
+      an icon and needs no step of its own; Profile moved into step 7, where the
+      avatar is already under the spotlight.
 
-    <!-- ── Step 7 · Where this tour lives afterwards ────────────────────── -->
+      The body carries the DRAG because #68's gesture has nowhere else to be
+      said: a first-run calendar is empty, so a step of its own would point at a
+      lane with nothing in it. Two sentences, one place, one thing you do there.
+    -->
 
-    <string name="tutorial_settings_step_title">Your account, and this tour</string>
-    <string name="tutorial_settings_step_body">Settings sits behind your picture: appearance, language, and Replay tutorial whenever you want this again.</string>
+    <string name="tutorial_calendar_title">Your goals, as time</string>
+    <string name="tutorial_calendar_body">Anything with a time on it shows up on this tab. Press and hold a block to pick it up, then drag it to where it should have been.</string>
+
+    <!-- Step 7 · Profile, and where this tour lives afterwards -->
+
+    <string name="tutorial_settings_step_title">Your profile, and this tour</string>
+    <string name="tutorial_settings_step_body">Your picture opens your profile, analytics, life areas and achievements. Settings is behind it too — appearance, language, and Replay tutorial.</string>
 
     <!--
       The closing action. Offered as a SECONDARY button on the last step rather

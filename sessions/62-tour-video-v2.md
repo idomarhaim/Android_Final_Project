@@ -31,6 +31,14 @@ created: 2026-08-23
 **Verify all three yourself rather than trusting this line**, which is the instruction the
 paragraph below gives and it is still the right habit.
 
+⚠️ **THE TOUR ITSELF CHANGED ON 2026-08-24 — the script this brief assumes is stale.**
+`tour-refresh` reworked `ui/tutorial/`: step 6 is no longer *"Social … Profile …"* over the whole
+nav bar (that step named a tab `#60` had removed) but the **Calendar** tab, and step 7 now carries
+Profile as well. `TUTORIAL_VERSION` went `1` → `2`, so **the tour re-runs by itself on any device
+that has already seen it** — which is convenient for recording and surprising if you are not
+expecting it. Read `CHANGELOG/2026-08-24/tour-refresh.md` and walk the tour once before setting up
+a shot list; `docs/marketing/tour-timecodes.md` describes the **old** seven steps.
+
 ⚠️ **BUT DO `#67` FIRST — this is an ordering call, not a blocker.** `#67` (*delete anything*) is
 **the last functional change on the board**: at the time of writing the repo has exactly three
 open issues — `#51` (Hebrew, **parked by Ido's own decision** until functionality works), `#62`

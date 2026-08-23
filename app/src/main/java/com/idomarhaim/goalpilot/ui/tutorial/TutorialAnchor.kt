@@ -62,8 +62,17 @@ enum class TutorialAnchor {
     /** The **Goals** item in the bottom navigation bar, on its own. */
     TAB_GOALS,
 
-    /** The whole bottom navigation bar, for the step that names Social and Profile. */
-    NAV_BAR,
+    /**
+     * The **Calendar** item in the bottom navigation bar, on its own.
+     *
+     * There was a `NAV_BAR` here until `#60`, spotlighting the whole bar for a
+     * step that named *Social and Profile*. That step could not survive the tab
+     * swap: Profile left the bar for the avatar and Calendar took its place, so
+     * half of what the hole contained was no longer in it. Pointing at one item
+     * is also the honest shape — a hole around four tabs says *look at these*
+     * and the card then has to say which.
+     */
+    TAB_CALENDAR,
 
     /** The Goals screen's extended FAB — *New goal*. */
     NEW_GOAL,

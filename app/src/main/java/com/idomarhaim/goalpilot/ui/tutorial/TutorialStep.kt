@@ -31,11 +31,23 @@ import com.idomarhaim.goalpilot.ui.navigation.Routes
  * This app has enough surface to fill twenty steps and seven is what it gets.
  *
  * The cut that produced seven: **one step per thing the user cannot discover by
- * looking.** The bottom bar is discoverable, so Social and Profile share one
- * step rather than taking two. Life areas, challenges, analytics, Health
- * Connect and Google Tasks import are all one tap behind a step that *is* here,
- * and each of them is a better fit for a first-use tip on its own screen than
- * for a line in a tour the user is trying to get out of.
+ * looking.** A labelled tab with an icon is discoverable, so Social gets no step
+ * at all; the Calendar tab gets one anyway, because what you can *do* there —
+ * drag a block to another time — is invisible from the label. Life areas,
+ * challenges, analytics, Health Connect and Google Tasks import are all one tap
+ * behind a step that *is* here, and each of them is a better fit for a first-use
+ * tip on its own screen than for a line in a tour the user is trying to get out
+ * of.
+ *
+ * ## What `#60` did to this file, and why the count did not move
+ *
+ * The tour was written on 2026-08-22 with Profile in the bottom bar. `#60`
+ * shipped the next day, took Profile out of the bar (it lives behind the Home
+ * avatar) and gave the freed tab to Calendar — which left step six naming a
+ * destination that no longer existed, while the app's newest surface went
+ * unmentioned. That step is now [CALENDAR], and Profile moved into the last
+ * step, where the avatar was already being pointed at. Seven steps in, seven
+ * steps out: the tour did not grow, it stopped being wrong.
  *
  * ## One required action, in the middle
  *
@@ -111,17 +123,34 @@ enum class TutorialStep(
         bodyRes = R.string.tutorial_new_goal_body,
     ),
 
-    EXPLORE(
-        anchor = TutorialAnchor.NAV_BAR,
+    /**
+     * `#60`'s tab, and `#68`'s gesture, in one step — which is one step and not
+     * two for a reason that is about the user's calendar rather than about
+     * length. **A first-run calendar is empty.** A step of its own for *drag to
+     * move* would spotlight a lane with nothing in it and ask for a gesture with
+     * no target, on the one run of the app where that is guaranteed. So the tab
+     * is what gets pointed at, and the drag is a promise about what is done
+     * there once there is something to drag.
+     *
+     * Anchored on the Calendar **item** rather than the bar: see
+     * [TutorialAnchor.TAB_CALENDAR].
+     */
+    CALENDAR(
+        anchor = TutorialAnchor.TAB_CALENDAR,
         route = Routes.GOALS,
-        titleRes = R.string.tutorial_explore_title,
-        bodyRes = R.string.tutorial_explore_body,
+        titleRes = R.string.tutorial_calendar_title,
+        bodyRes = R.string.tutorial_calendar_body,
     ),
 
     /**
      * Last, and it is the step that makes the whole feature safe to ship: it
      * tells the user where the tour lives now, so *Skip* costs nothing and the
      * replay entry in Settings is not a control nobody knows about.
+     *
+     * Since `#60` it carries Profile as well. That is not a second idea bolted
+     * on — the avatar under the spotlight is *the* way to Profile now that the
+     * tab is gone, so the step that points at it is the only place the two facts
+     * can honestly be said together.
      */
     WHERE_SETTINGS(
         anchor = TutorialAnchor.AVATAR,
@@ -182,5 +211,11 @@ data class TutorialAction(
  *
  * ⚠️ **Bumping this re-runs the tour for everybody**, so bump it for a genuinely
  * new step, never for a typo in one.
+ *
+ * `1` → `2` on 2026-08-24: [CALENDAR] replaced a step that named a tab `#60`
+ * had removed. Both halves earn the re-run on their own — a surface nobody was
+ * told about, and a sentence that was false — and this is exactly the case the
+ * paragraph above describes, where a `hasSeenTutorial` boolean would have said
+ * *yes* for every existing install.
  */
-const val TUTORIAL_VERSION = 1
+const val TUTORIAL_VERSION = 2
