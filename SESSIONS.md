@@ -139,6 +139,28 @@ before your first write. Normative rule:
 > 📱 **NO DEVICE TOUCHED YET AND NO SIGN-IN NEEDED OR DESTROYED SO FAR.** When the device pass runs
 > it takes **`Pixel_10_Pro_XL_B`**, not `emulator-5554`, and it uses `adb install -r` + `am instrument`
 > — never `connectedDebugAndroidTest`, which uninstalls the app.
+> 📥 **`kb-candidates/` IS EMPTY 2026-08-23 — all three files drained, cross-repo into
+> `C:\Dev\JARVIS` (`af41db4`, pushed).** On Ido's instruction: `60`'s five entries, `61`'s survivor
+> and `65`'s survivor, seven in all, landing as **one new page, four extended pages and one rule
+> amendment**. `Check-KbLinks` **CLEAN**. Account:
+> `C:\Dev\JARVIS\CHANGELOG\2026-08-23\61-google-calendar-drain2.md`.
+>
+> 📌 **`65`'s entry had sat blocked for two days and did not need to.** Its `Status` said *needs
+> Ido* because one of its two offered destinations was annotating `docs/PRODUCT_v0.3.md` §3.4 — his
+> decision text. The **other** destination was a KB page and needed nobody. Taking the option that
+> required no permission drained it; the §3.4 annotation is recorded inside that page as the honest
+> unresolved state rather than held as a candidate that every future drain would decline again.
+>
+> ⚠️ **The rule `61` drafted was destroyed by its own mechanical run, and that is the finding.** Ido
+> waived the 🎬 walkthrough; a waive leaves the mechanical half owed. Run over **120 commits** of
+> this repo, the draft — *every session greps `sessions/*.md` for `status: active` at session start*
+> — **fires 0 times**, because `/kickoff` §3 writes the board row and the status in **one commit**.
+> The gap exists only in a working tree **between** commits. What shipped instead corrects
+> `rules/agent-topology-and-model-routing.md` §5.4's unowned-file recovery, which names an owner with
+> `git log -1 -- <path>` — i.e. whoever last **published** the file, which on a file being edited
+> right now is the **wrong session**. `Observed:` here it named `65-measure-proposal`, released the
+> day before, while the live editor was `66-unmeasured-percent`.
+>
 > 🏁 **`61-google-calendar` RELEASED 2026-08-23 — this commit.** `#61` shipped in `e540de9`
 > (write path) and `a108f45` (the sign-in scope and the device pass); brief closed to
 > `sessions/done/`. **Both singletons free** — the Gradle daemon, and `emulator-5554`, left with the
