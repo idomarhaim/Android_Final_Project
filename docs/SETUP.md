@@ -25,7 +25,7 @@ Google/Firebase/GROQ accounts.
 Build the app now (no credentials required to compile):
 
 ```powershell
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
 .\gradlew :app:assembleDebug
 ```
 

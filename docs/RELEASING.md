@@ -282,7 +282,7 @@ Distribution compares `versionCode` and sees no change. Hence a checklist.
 **No CI, or CI is broken?** The same thing locally, needing only step 2.1:
 
 ```powershell
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
 .\gradlew :app:assembleRelease :app:appDistributionUploadRelease
 ```
 

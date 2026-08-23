@@ -126,9 +126,14 @@ that breaks legibility fails the build rather than shipping.
 `MainActivity` → `GoalPilotRoot` observes `RootViewModel.authState`:
 - `Loading` → spinner, `SignedOut` → `SignInScreen`, `SignedIn` → `MainScaffold`.
 
-`MainScaffold` hosts a bottom bar (**Home / Goals / Social / Profile**) and a
+`MainScaffold` hosts a bottom bar (**Home / Goals / Calendar / Social**) and a
 `NavHost`. Signing in/out simply flips the auth-state flow, which re-routes the
 whole tree — screens never navigate on auth changes themselves.
+
+⚠️ **This line read *Home / Goals / Social / Profile* until 2026-08-24, and both
+halves of that were wrong.** `#60` moved **Profile** off the bar to an avatar in Home's
+top-right (five is a crowded bar) and gave the freed tab to **Calendar**. `Routes.PROFILE`
+is still registered and must stay — the avatar sheet reaches it.
 
 ## State pattern
 
@@ -145,18 +150,29 @@ users/{uid}                       UserDto  (points, email, displayName, friendCo
   goals/{goalId}                  GoalDto  (…, lifeAreaId → lifeAreas/{id})
     progress/{entryId}            ProgressDto  (value, note, imageUrl)
   tasks/{taskId}                  TaskDto  (goalId, points, done, completedAt, estimatedMinutes)
+  completionFacts/{taskId}        TaskCompletion  — the banked completion (§1.4, #55)
+  occurrences/{id}                Occurrence  (taskId, when) — only the instances touched (§7.1, #63)
   lifeAreas/{areaId}              LifeAreaDto  (name, colorHex, iconKey, sortOrder, googleListId)
+  summaries/{summaryId}           ProgressSummary
+  challengeReports/{challengeId}  what the participant measured — private, owner-written (§5.2)
   friends/{friendUid}             { addedAt }                                [private]
 
-publicProfiles/{uid}              { displayName, photoUrl, points, level, friendCode } [world-readable]
+publicProfiles/{uid}              { displayName, photoUrl, points, friendCode } [world-readable]
 shares/{shareId}                  SharedItemDto  (authorUid, period, message, imageUrl)
-challenges/{challengeId}          Challenge  (owner, participants, standings) [nice-to-have]
+challenges/{challengeId}          Challenge  (owner, standings)
+  participants/{uid}              { score } — projected, NOT client-written (§5.2)
 ```
 
-- **Completing a task is a Firestore transaction** (`TaskRepositoryImpl.setDone`):
-  it flips `done`, awards/rescinds points on `users/{uid}` **and** the
-  `publicProfiles/{uid}` leaderboard projection, recomputes the level, and moves
-  the linked goal's `currentValue` — all atomically.
+- **Completing a task is one document write, not a transaction** (`TaskRepositoryImpl.setDone`).
+  It banks a fact in `completionFacts/{taskId}` — a `set` on a known path for a tick, a `delete`
+  for an untick — and nothing else. `functions/src/projection.ts` then totals the collection onto
+  `publicProfiles/{uid}.points`.
+
+  ⚠️ **This bullet described a `runTransaction` until 2026-08-24, four weeks after `#55` deleted
+  it.** The transaction is gone on purpose: it could not be served from the Firestore cache and
+  failed after a measured 7.9 s with the radio off. `publicProfiles.level` went with it (§5.2) —
+  it was a stored function of `points` in the same document, so every reader could already derive
+  it, and the client now does at the point of use.
 - The **leaderboard** has two modes. "Everyone" reads `publicProfiles` ordered by
   points, capped at 100. "Friends" instead fetches the friends' profiles *by
   document id* (`whereIn` on `documentId()`, chunked at Firestore's 30-value cap)
@@ -187,15 +203,21 @@ challenges/{challengeId}          Challenge  (owner, participants, standings) [n
 DashboardViewModel → RecommendationRepository → FirebaseFunctions.callable("getRecommendations")
 GoalDetailViewModel →       "                 →            "        .callable("scoreTask")
 DashboardViewModel  →       "                 →            "        .callable("classifyTask")
+AddEditGoalViewModel →      "                 →            "        .callable("proposeMeasure")
                                                         │
-                              functions/src/index.ts ──┘  → GROQ chat completions (JSON)
+                              functions/src/index.ts ──┘  → the provider's chat completions (JSON)
 ```
 - Key lives only in `functions/.env` (spec §5). The model id is pinned in
   `functions/src/index.ts` and overridable via `GROQ_MODEL` — GROQ retires models
   on a rolling schedule, see [SETUP.md](SETUP.md#groq-model--check-before-you-demo).
-- All three callables are surfaced in the UI: `getRecommendations` → the AI coach
+- **GROQ is the default route, not the only one.** `#54` added `functions/src/providers.ts`:
+  a user may bring their own key for GROQ, OpenAI, Anthropic or Gemini, held in
+  `data/security/EncryptedAiCredentialStore`. Four named adapters and no generic
+  OpenAI-compatible endpoint, so no untested wire format can run.
+- All four callables are surfaced in the UI: `getRecommendations` → the AI coach
   card, `scoreTask` → the ✨ button on the add-task row, `classifyTask` → the
-  "Smart add a task" card on the dashboard (spec §6 Bonus).
+  "Smart add a task" card on the dashboard (spec §6 Bonus), `proposeMeasure` → the
+  measure proposal on the goal editor.
 - `classifyTask` and `scoreTask` also return **`estimatedMinutes`** — the duration
   the time-allocation chart weighs a completed task by — and `classifyTask` takes
   the user's life areas so a goal it creates is filed straight away. Both facts
@@ -233,13 +255,16 @@ if (BuildConfig.DEBUG) {
 
 ## Known limitations (course scope)
 
-- Points/level are written client-side (transaction) — a determined user could
-  edit `publicProfiles`. Production would compute them in a Cloud Function trigger.
+- ~~Points/level are written client-side (transaction).~~ **Done, `#42`/`#55`.**
+  `functions/src/projection.ts` is now the only writer of `publicProfiles.points`, and
+  `firestore.rules` stops the client writing it. The client sums its *own* points on
+  device from `completionFacts`, which is what makes a tick work offline.
 - Deleting a goal doesn't cascade-delete its `tasks`/`progress` subcollections
   (Firestore has no server-side cascade); acceptable for the demo.
 - The time-allocation chart measures **estimated** effort, not clocked time: there
   is no timer in the app, so a task's minutes come from the LLM or from its point
   value. The analytics card says which, per window, rather than implying precision
   it does not have.
-- Life areas are not reorderable in the UI. `sortOrder` is persisted and honoured;
-  only the drag handle is missing — see [TODO/](../TODO/TODO.md).
+- ~~Life areas are not reorderable in the UI.~~ **Done** — the drag handle shipped with
+  `ReorderLifeAreasUseCase`, described two sections above. This bullet contradicted the
+  same document from 2026-08-04 until 2026-08-24.

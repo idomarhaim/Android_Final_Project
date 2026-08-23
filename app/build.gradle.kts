@@ -345,6 +345,26 @@ tasks.withType<Test>().configureEach {
     inputs.file(layout.projectDirectory.file("build.gradle.kts"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
         .withPropertyName("moduleBuildFileReadByGuard")
+
+    // `DocsCurrencyTest` reads the documentation, the functions entry point and the JDK pin, and
+    // Gradle associates a test task with none of them. Same class as all three cases above; this
+    // is the third instance in three days, which is why the guard's own KDoc says so out loud.
+    //
+    // The two Kotlin sources it parses (`Constants.kt`, `Destinations.kt`) need NO line here --
+    // `inputs.dir("src/main/java")` above already covers them as text. Only these four are outside
+    // every tracked tree.
+    inputs.dir(rootProject.layout.projectDirectory.dir("docs"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("docsReadByCurrencyGuard")
+    inputs.file(rootProject.layout.projectDirectory.file("README.md"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("readmeReadByCurrencyGuard")
+    inputs.file(rootProject.layout.projectDirectory.file("functions/src/index.ts"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("functionsIndexReadByCurrencyGuard")
+    inputs.file(rootProject.layout.projectDirectory.file("gradle.properties"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("gradlePropertiesReadByCurrencyGuard")
 }
 
 /**

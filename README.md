@@ -88,7 +88,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layered design and data
 
 ```powershell
 # 1) Build (compiles with placeholder config — no credentials needed)
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot"
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
 .\gradlew :app:assembleDebug
 
 # 2) Run unit tests
