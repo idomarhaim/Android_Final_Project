@@ -4694,7 +4694,7 @@ Currently unclaimed and ready:
 ### 🏁 `60-calendar-surface` — released 2026-08-23, this commit
 
 `#60` shipped in `7452122`, with `a3e91c5` on top. Brief closed to `sessions/done/`.
-**`#60` itself stays OPEN** — see below.
+**`#60` is CLOSED.**
 
 🔓 **BOTH SINGLETONS ARE FREE, and two sessions were waiting on them.**
 **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — released. `66-unmeasured-percent`, your
@@ -4708,13 +4708,29 @@ install and after the last run. `adb install -r` + `am instrument` throughout, n
 `connectedDebugAndroidTest`. Nothing was uninstalled and nothing was left on `/sdcard` except four
 `issue-60-*.png` captures alongside the ones already there.
 
-⏸️ **ONE THING IS HELD: `#60` stays OPEN, and it is not the brief's fault.**
-Every line of the brief's `Exit` is met. What did not land is **drag to move**, which §4.3 lists
-beside *create* and *tick* in the same sentence — so the brief's own scope paragraph names it and a
-read of `Exit` against what was built says so. Create and tick shipped; drag did not. The domain
-half already exists (`ScheduleEdits` answers *"this occurrence, or all future ones?"* and
-`OccurrenceRepository.apply` commits it), so what is missing is the gesture plus the sheet that asks
-the scope question — a session, not a redesign. Commented on `#60` rather than closed.
+✅ **`#60` IS CLOSED — and this note said the opposite an hour ago, which is the correction worth
+reading.**
+The first pass held it open for **drag to move**, on the reasoning that §4.3 lists it beside
+*create* and *tick*. Ido asked why it was still open, and the answer did not survive re-reading the
+**ticket**. `#60` separates two sections deliberately: *"What was already decided — do not reopen
+it"* (design context, restating §4.3 so nobody re-litigates it — where the drag sentence lives) and
+***"What this ticket owes"***, four numbered deliverables. Drag is not among them, and reading the
+first section as acceptance criteria makes the two indistinguishable, which would make the ticket's
+own structure meaningless. All four owed items shipped, so it is closed.
+
+**The mechanism worth carrying, because no rule here catches it.** `/kickoff` §5 step 4's last
+check is *"a read of your own `Exit` against what you actually built"* — and the brief is not the
+authority on whether a **ticket** is done. This brief paraphrased §4.3's design paragraph into its
+own *"do not reopen the design"* section, drag included; measured against **that**, the work looked
+incomplete. Measured against the ticket's own owed list, it was finished. **Read the issue body,
+not the brief, before deciding a ticket's state** — the two are written by different sessions for
+different purposes, and a brief that quotes a spec is not thereby quoting an acceptance criterion.
+
+⏸️ **What is genuinely homeless: drag to move.** Specced in §4.3, owed by no open issue, and its
+domain half already exists (`ScheduleEdits` answers *"this occurrence, or all future ones?"* and
+`OccurrenceRepository.apply` commits the plan) — so what is missing is the gesture plus the sheet
+that asks the scope question. It wants **its own ticket**, which is an outward action and therefore
+Ido's to file. Flagged, not filed.
 
 📣 **`66-unmeasured-percent` — your `CalendarBuilder.kt:182` finding was RIGHT, and it is fixed in
 `a3e91c5`.** Thank you for reporting it instead of editing it. `filterNot { it.isArchived ||

@@ -9,11 +9,16 @@ result: |
   and booked/free ring, the UI author for BLOCK and SPAN, and the tab swap 4.2 asks for.
   1013 JVM tests green (90 new), 14 instrumented green, render pass looked at.
 
-  NOT shipped, and #60 stays OPEN for it: DRAG TO MOVE. 4.3 lists it beside create and
-  tick, and the paragraph above quotes that sentence, so it is in scope and did not land.
-  The domain half exists already -- ScheduleEdits answers "this occurrence, or all future
+  #60 is CLOSED: all four items under the ticket's own "What this ticket owes" heading
+  shipped. An earlier version of this block held it open for DRAG TO MOVE, reading the
+  paragraph above -- this brief's paraphrase of 4.3's decided design -- as an acceptance
+  criterion. It is not one. The ticket separates decided-design context from what it owes,
+  and drag appears only in the first. Corrected after Ido asked why #60 was still open.
+
+  NOT shipped and now homeless: DRAG TO MOVE. Specced in 4.3, owed by no open issue. The
+  domain half exists already -- ScheduleEdits answers "this occurrence, or all future
   ones?" and OccurrenceRepository.apply commits it -- so what is missing is the gesture and
-  the sheet that asks the scope question.
+  the sheet that asks the scope question. Wants its own ticket; Ido's to file.
 
   Also open by design: EntryKind.EXTERNAL has a lane and tests but no source until #61.
 issue: 60

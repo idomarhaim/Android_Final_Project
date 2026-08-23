@@ -202,10 +202,23 @@ is the thing most likely to be misattributed by whoever runs next.
 
 - **Google Calendar in either direction** — `#61`. The grey layer is built and empty; this surface
   is complete and useful with no Google account at all.
-- **Drag to move.** §4.3 lists *"drag to move"* beside create and tick. Create and tick shipped;
-  drag did not. `ScheduleEdits` already answers *"this occurrence, or all future ones?"* and
-  `OccurrenceRepository.apply` commits it, so the domain half is done and what is missing is the
-  gesture plus the sheet that asks the scope question. Named on `#60` rather than left implied.
+- **Drag to move.** §4.3 lists it beside create and tick. Create and tick shipped; drag did not.
+  `ScheduleEdits` already answers *"this occurrence, or all future ones?"* and
+  `OccurrenceRepository.apply` commits the plan, so the domain half is done and what is missing is
+  the gesture plus the sheet that asks the scope question.
+
+  ⚠️ **This was first reported as *"`#60` stays open for it"*, and that was wrong.** Ido asked why
+  `#60` was still open and the answer did not survive re-reading the **ticket**: `#60` separates
+  *"What was already decided — do not reopen it"* (design context, where the drag sentence lives)
+  from ***"What this ticket owes"***, four numbered deliverables that do not include it. All four
+  shipped; `#60` is **closed**. Drag is specced in §4.3 and owed by **no open issue**, so it wants
+  its own ticket — flagged to Ido, whose call it is to file.
+
+  **The mechanism, because no rule caught it.** `/kickoff` §5 step 4's last check is *"a read of
+  your own `Exit` against what you actually built"* — but the **brief** is not the authority on
+  whether a **ticket** is done. This brief paraphrased §4.3's design paragraph into a *"do not
+  reopen the design"* section, drag included; measured against that, the work read as incomplete.
+  Read the issue body, not the brief, before deciding a ticket's state.
 - **Points per occurrence** — `#64`'s. A tick records that the window was honoured (§4.7's count);
   it banks no points, per `OccurrenceOutcome.Done`.
 
