@@ -7,6 +7,10 @@ owns:
   - kb-candidates/2026-08-23-67-delete-anything.md
   - kb-candidates/2026-08-23-68-drag-to-move.md
   - kb-candidates/2026-08-23-70-verify-dashboard-average.md
+  # Added 2026-08-23 by 69-one-off-occurrence-edits, which wrote its candidates at
+  # close-out and did not drain them, on this brief's own precedent. Its entry 1 EXTENDS
+  # 70-verify-dashboard-average's entry 1 -- they want merging, not two sections.
+  - kb-candidates/2026-08-23-69-one-off-occurrence-edits.md
   - CHANGELOG/2026-08-23/kb-drain-67-and-siblings.md
   - sessions/kb-drain-67-and-siblings.md
   - "cross-repo: C:\\Dev\\JARVIS\\kb\\dev\\** and C:\\Dev\\JARVIS\\kb\\log\\**"
@@ -43,6 +47,22 @@ working: nobody had to remember.
 | `2026-08-23-67-delete-anything.md` | **4 entries, undrained.** Entries 1–3 ready; entry 4 is thin and marked *ask before promoting*. |
 | `2026-08-23-68-drag-to-move.md` | **Partly drained twice already.** One survivor (`№4`, clamp-before-snap), kept with its original numbering and its reasons written into the file. |
 | `2026-08-23-70-verify-dashboard-average.md` | Written by that session, **undrained**. Read it before assuming; it may hold more than the one entry visible at the top. |
+| `2026-08-23-69-one-off-occurrence-edits.md` | **3 entries, undrained.** Added after this brief was written. **Entry 1 EXTENDS `70-verify-dashboard-average`'s entry 1** — read the two together and write **one** section, not two. Entry 3 is thin and marked *merge or drop*. |
+
+## Two entries that must be drained as ONE
+
+`2026-08-23-70-verify-dashboard-average.md` entry 1 (*`UP-TO-DATE` replays another session's test
+run*) and `2026-08-23-69-one-off-occurrence-edits.md` entry 1 (*… replays another session's **APK***)
+are the same failure at two points on one pipeline. The second was found **because** the first was
+read that morning, and it carries a measurement the first does not have: the replayed androidTest
+APK **shrank by 133,739 bytes** when rebuilt, which is independent evidence the artifact was a
+*sibling's* rather than merely *stale* — a distinction a timestamp cannot make and which needs the
+opposite response.
+
+Writing them as two sections would put the cheaper half first and leave a reader who stops there
+believing `--rerun-tasks` on the build is the whole remedy. It is not: the APK case fails **across a
+process boundary**, so the habit is *check the artifact's mtime and size before installing*, not
+*check the build log*.
 
 ## The entry that matters most
 
