@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `70-verify-dashboard-average` (follow-on) | Write the missing brief for `#69` — at Ido's request; it is the only actionable open ticket with no `sessions/` file | `sessions/69-one-off-occurrence-edits.md` · `SESSIONS.md` | **none** — no build, no device | 2026-08-23 |
 > 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
 > dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
 >
@@ -4740,7 +4741,8 @@ CLOSED** — no sibling brief carries `issue: 70`.
 `qemu-system-x86_64` pid 17968 was `Responding: False`, up since 2026-08-22 16:21 with ~142,000 s of
 CPU; `adb devices` still reported it as `device` (adb's cached view) while `dumpsys` hung for 120 s,
 and the emulator window showed a blank white app. Recovered with
-`scriptsun-goalpilot.ps1 -Recover -Avd Pixel_10_Pro_XL -SkipInstall` — **AVD-scoped, never a
+`scripts
+un-goalpilot.ps1 -Recover -Avd Pixel_10_Pro_XL -SkipInstall` — **AVD-scoped, never a
 blanket `qemu` kill**, and it does not wipe userdata, so the Firebase sign-in survived. **No result
 in this entry depends on the wedged period:** every run reported here completed and was read before
 it hung.
