@@ -171,6 +171,16 @@ object CalendarBuilder {
      * Archived and already-complete objectives are dropped: a deadline you have already met is not
      * a thing that needs a banner, and §4.4's *"a card with nothing to say hides itself"* is the
      * same instinct one screen over.
+     *
+     * ⚠️ **"Complete" is asked only of a goal that counts something, and skipping that guard makes
+     * a deadline VANISH.** [Goal.isComplete] is `progressFraction >= 1f`, and for an
+     * [Goal.isUnmeasured] objective that fraction is computed against a `targetValue` **nobody
+     * set** — so an unmeasured goal whose logged entries happen to sum past its default target
+     * reads as finished and silently loses its banner, on the one surface whose whole job is to
+     * say when things are due. `Observed:` reported on `SESSIONS.md` 2026-08-23 by
+     * `66-unmeasured-percent`, which found it while sweeping §1.3's *absence is the default* and
+     * left it for this session rather than editing another row's file. It is `#66`'s seventh site
+     * and it was written the same day the other six were being removed.
      */
     private fun goalDeadlineEntries(
         goals: List<Goal>,
@@ -179,7 +189,7 @@ object CalendarBuilder {
         to: LocalDate,
         zone: ZoneId,
     ): List<CalendarEntry> = goals
-        .filterNot { it.isArchived || it.isComplete }
+        .filterNot { it.isArchived || (!it.isUnmeasured && it.isComplete) }
         .mapNotNull { goal ->
             val at = goal.deadlineEpochMillis?.let { millisToLocal(it, zone) } ?: return@mapNotNull null
             val date = at.toLocalDate()

@@ -8,6 +8,8 @@ import com.idomarhaim.goalpilot.domain.model.Deadline
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalEdge
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.Occurrence
 import com.idomarhaim.goalpilot.domain.model.RepeatRule
 import com.idomarhaim.goalpilot.domain.model.RepeatUnit
@@ -175,13 +177,44 @@ class CalendarBuilderTest {
     }
 
     @Test
+    fun `an unmeasured goal's deadline is drawn however far past its default target it reads`() {
+        // #66's seventh site, found by that session sweeping 1.3 and reported on SESSIONS.md
+        // rather than edited into this file. `isComplete` is `progressFraction >= 1f`, and for a
+        // goal that counts NOTHING that fraction is measured against a targetValue nobody set --
+        // so logged entries summing past the default would silently delete the banner, on the one
+        // surface whose whole job is to say when things are due.
+        val at = monday.atTime(20, 0).atZone(zone).toInstant().toEpochMilli()
+        val unmeasured = Goal(
+            id = "g-unmeasured",
+            title = "Read more",
+            deadlineEpochMillis = at,
+            currentValue = 250.0,
+            targetValue = 100.0,
+        )
+
+        assertThat(unmeasured.isUnmeasured).isTrue()
+        assertThat(unmeasured.isComplete).isTrue()
+        assertThat(build(goals = listOf(unmeasured)).first().allDay.map { it.title })
+            .containsExactly("Read more")
+    }
+
+    @Test
     fun `an archived or completed goal's deadline is not drawn`() {
         // 4.4's instinct one screen over: a card with nothing to say hides itself. A deadline you
         // have already met is not a thing that needs a banner.
         val at = monday.atTime(20, 0).atZone(zone).toInstant().toEpochMilli()
         val archived = fitness.copy(id = "a", deadlineEpochMillis = at, isArchived = true)
-        val met = fitness.copy(id = "b", deadlineEpochMillis = at, targetValue = 10.0, currentValue = 10.0)
+        // `met` carries a real measure, or the assertion below would be passing for the reason the
+        // case above exists to forbid rather than because the goal is finished.
+        val met = fitness.copy(
+            id = "b",
+            deadlineEpochMillis = at,
+            measure = Measure(word = "km", kind = MeasureKind.DISTANCE),
+            targetValue = 10.0,
+            currentValue = 10.0,
+        )
 
+        assertThat(met.isUnmeasured).isFalse()
         assertThat(met.isComplete).isTrue()
         assertThat(build(goals = listOf(archived, met)).flatMap { it.all }).isEmpty()
     }

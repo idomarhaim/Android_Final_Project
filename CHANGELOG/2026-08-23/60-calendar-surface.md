@@ -1,6 +1,6 @@
 # 60-calendar-surface — `#60`, the calendar you can look at
 
-> **Summary:** Spec §4.3's calendar surface — a 3-day/week/agenda zoom on the tab §4.2 freed, the first UI author `BLOCK` and `SPAN` have ever had, the all-day and untimed strips, and a load bar and booked/free ring that are arithmetic rather than inference. 1012 JVM tests green (89 new), 14 instrumented green, four render-pass defects found and fixed.
+> **Summary:** Spec §4.3's calendar surface — a 3-day/week/agenda zoom on the tab §4.2 freed, the first UI author `BLOCK` and `SPAN` have ever had, the all-day and untimed strips, and a load bar and booked/free ring that are arithmetic rather than inference. 1013 JVM tests green (90 new), 14 instrumented green, and seven defects found — three by writing tests, three by looking at the PNG with every test green, and one reported by a sibling session reading this code.
 
 **Ticket:** [`#60`](https://github.com/idomarhaim/Android_Final_Project/issues/60) ·
 **Brief:** `sessions/60-calendar-surface.md` · **Mode:** auto
@@ -89,20 +89,21 @@ branches regardless.
 
 | Layer | Result |
 |---|---|
-| **JVM unit** (`app/src/test/`) | ✅ **1012 tests, 0 failures** — **89 new** across 5 classes |
+| **JVM unit** (`app/src/test/`) | ✅ **1013 tests, 0 failures** — **90 new** across 5 classes |
 | **Instrumented** (`app/src/androidTest/`) | ✅ **14 tests, 0 failures**, `emulator-5554` |
 | **Render pass** | ✅ 4 PNGs, looked at — and 4 defects found, below |
 | Firestore rules (`firestore-tests/`) | **Not run — nothing to run.** This ticket adds no collection and no rule; it *reads* `users/{uid}/occurrences`, which `#63` shipped and tested. |
 | Endpoints / Cloud Functions | **Not run — none touched.** §0.1's free-model rule is the point of the load bar: no model call, no network. |
 
 New JVM classes: `DayLoadTest` (23) · `SlotDraftTest` (21) · `CalendarBuilderTest` (20) ·
-`CarryForwardTest` (14) · `CalendarLaneTest` (11) — **89**. *(Counted from the JUnit XML rather
+`CarryForwardTest` (14) · `CalendarLaneTest` (11) — **90** (`CalendarBuilderTest` gained one
+after the fix below). *(Counted from the JUnit XML rather
 than from memory; the first draft of this line had all five numbers wrong and the total right.)*
 
 **Commands, verbatim:**
 
 ```bash
-./gradlew :app:testDebugUnitTest --rerun          # 1012 tests completed, 0 failed
+./gradlew :app:testDebugUnitTest --rerun          # 1013 tests completed, 0 failed
 adb -s emulator-5554 install -r app/build/outputs/apk/debug/app-debug.apk
 adb -s emulator-5554 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb -s emulator-5554 shell am instrument -w \
@@ -118,7 +119,7 @@ adb -s emulator-5554 shell am instrument -w \
 
 ## What writing the tests and looking at the output actually found
 
-Six defects, and **none of them was found by reading the code**.
+Eight defects, and **not one of them was found by reading the code I had just written**.
 
 ### Found by writing a test
 
@@ -153,6 +154,22 @@ Six defects, and **none of them was found by reading the code**.
    column is for*. `StackedChip` gives the week its own layout.
 
 Also fixed on sight: a filled tick button reading as the heaviest thing on every row, and `1 days`.
+
+### Found by a sibling session reading this code
+
+8. **A goal that counts *nothing* would have lost its deadline banner.**
+   `66-unmeasured-percent` was sweeping §1.3 (*absence is the default*), found
+   `CalendarBuilder`'s `filterNot { it.isArchived || it.isComplete }`, and **reported it on
+   `SESSIONS.md` rather than editing another row's file**. `Goal.isComplete` is
+   `progressFraction >= 1f`, and for an unmeasured goal that fraction is measured against a
+   `targetValue` **nobody set** — so logged entries summing past the default would silently delete
+   the banner, on the one surface whose whole job is to say when things are due. Now
+   `!it.isUnmeasured && it.isComplete`, with a test. It is `#66`'s **seventh site**, written the
+   same day the other six were being removed — which is the more useful half of the finding: a
+   defect class is at its most reproducible while it is being fixed elsewhere.
+   *(The existing `an archived or completed goal's deadline is not drawn` fixture was also given a
+   real `Measure`. Without one it had been passing for the reason this case forbids rather than
+   because the goal was finished.)*
 
 ### Found by a sweep somebody else wrote
 
