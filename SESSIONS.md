@@ -15,7 +15,23 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `66-unmeasured-percent` | `#66` follow-on — the dashboard's *Overall progress* ring, which `#66` could not touch (the file was `61-google-calendar`'s) and which `#66` **made worse**: the subtitle still reads *"Averaged across all your goals"* over a mean that now excludes unmeasured ones | `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `SESSIONS.md` | **none** — no build, no device. `68-drag-to-move` has uncommitted calendar work in this tree, so a suite run here would compile **their** WIP and its result would be about their tree, not mine (§4p) | 2026-08-23 |
+> 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
+> dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
+>
+> ⚠️ **IT IS UNVERIFIED, AND THE ROW IS RELEASED ANYWAY — deliberately.** No test and no build ran:
+> `68-drag-to-move` declares the Gradle daemon and was **actively building** (probe 41 s old, two
+> JVMs at `+2.2 s`/`+2.3 s` CPU over a 15 s sample, still busy a minute later), and its uncommitted
+> calendar work is in this tree, so a run here would have reported about **its** tree (§4p). Holding
+> the row until that clears would have been a claim on three files nobody else wants, kept alive by a
+> session that is ending — which is the stale claim the board rule forbids. The run is carried by a
+> **brief** instead: `sessions/69-verify-dashboard-average.md`, `/kickoff 69-verify-dashboard-average`.
+> What is expected to fail is named there and in the changelog, in order.
+>
+> 📱 **NO DEVICE WAS TOUCHED AND NO SIGN-IN WAS NEEDED OR DESTROYED.**
+>
+> ✅ **`#66`'s own push is resolved** — all seven of its commits are on `origin/main`, carried up by
+> a later session once `61-google-calendar` released. `c2de502` named the foreign commits it took,
+> which is the disclosure this repo's push rule asks for and is worth noting as having worked.
 > 🧭 **`66-unmeasured-percent` RE-CLAIMED 2026-08-23 14:59, for one file it could not reach the
 > first time.** `#66` is closed and its brief is in `sessions/done/`; this is the one open defect that
 > ticket listed and left, now that `61-google-calendar` has released `feature/dashboard/`. Disjoint
