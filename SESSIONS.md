@@ -16,6 +16,26 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
+| `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon** and **`emulator-5554` + `adb`** are BOTH HELD by `60-calendar-surface`. I claim neither yet: code and JVM tests are written first, and the build waits for that row to free the daemon. Device pass likewise deferred — see the ⏳ note below. | 2026-08-23 |
+> ⏳ **`61-google-calendar` claimed 2026-08-23 — this commit.** Working set is disjoint from
+> `60-calendar-surface`: they own `feature/calendar/**`, `ui/navigation/Destinations.kt` and
+> `ui/root/GoalPilotRoot.kt`; I own the **write path** under `data/calendar/`, the sync rules in
+> `domain/usecase/`, and `ui/root/RootViewModel.kt` — which is **not** `GoalPilotRoot.kt` and is
+> where the foreground trigger already lives beside `SyncHealthDataUseCase`. No path appears on
+> both rows.
+>
+> 🔧 **`owns:` corrected against the repo before claiming** (`/kickoff` §2). The brief listed
+> `data/firestore/dto/Mappers.kt`; `#63` already maps `googleEventId` in both directions
+> (`Mappers.kt:385`, `:423`) and `ScheduleMappingTest` already covers the blank-reads-as-absent
+> case, so there is nothing left for me there and it is **dropped** rather than claimed. Six
+> paths the brief did not anticipate are **added**: the two preference paths (the pull throttle
+> stamp and the created calendar's id both need a per-uid home), `RootViewModel.kt`, the two
+> dashboard files (§2.7's Keep / Cancel / Put back sheet belongs in the daily-review card that
+> already exists there), and `domain/model/GoogleCalendar.kt`.
+>
+> 📱 **NO DEVICE TOUCHED YET, AND NO SIGN-IN DESTROYED.** The device pass this brief needs is
+> deferred until `60-calendar-surface` releases `emulator-5554`. When it runs it takes the
+> `adb install -r` + `am instrument` path, never `connectedDebugAndroidTest`.
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
 > **local Firestore emulator** (ports 8080/4000, shut down cleanly).

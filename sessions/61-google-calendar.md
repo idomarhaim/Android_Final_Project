@@ -2,18 +2,30 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 61
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/GoogleCalendar.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/repository/CalendarRepository.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/CalendarSync.kt
   - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/SyncCalendarUseCase.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/repository/AppPreferencesRepository.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/data/prefs/AppPreferencesRepositoryImpl.kt
   - app/src/main/java/com/idomarhaim/goalpilot/di/RepositoryModule.kt
-  - app/src/main/java/com/idomarhaim/goalpilot/data/firestore/dto/Mappers.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/root/RootViewModel.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt
   - app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt
   - kb-candidates/2026-08-23-61-google-calendar.md
   - CHANGELOG/2026-08-23/61-google-calendar.md
   - sessions/61-google-calendar.md
+# Corrected on kickoff, 2026-08-23. DROPPED `data/firestore/dto/Mappers.kt` -- `#63` already
+# maps `googleEventId` both ways (Mappers.kt:385, :423) and `ScheduleMappingTest` covers it.
+# ADDED the two preference paths (per-uid pull stamp + created calendar id), `RootViewModel.kt`
+# (the foreground trigger, and NOT `GoalPilotRoot.kt`, which `60-calendar-surface` holds), the
+# two dashboard files (the Keep/Cancel/Put back sheet joins the daily-review card that lives
+# there), and `domain/model/GoogleCalendar.kt`.
 created: 2026-08-23
 ---
 
