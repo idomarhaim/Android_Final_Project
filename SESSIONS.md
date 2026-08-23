@@ -15,7 +15,39 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `kb-drain-67-and-siblings` (follow-on) | Drain `#67` entry 4, the held always-ask candidate — Ido delegated the decision 2026-08-24 | `kb-candidates/2026-08-23-67-delete-anything.md`, `CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md` | _none_ | 2026-08-24 |
+> 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
+> entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
+> `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
+> build, no device.
+>
+> 🧭 **The decision was MINE, by delegation, and it is Ido's to overturn.** He was asked which of
+> *one line as an example* or *nothing* `#67` entry 4 should get and answered *"choose the best
+> solution for the system"*. That removes the judgment half to me and forbids re-asking — and it
+> requires **re-opening the problem** rather than breaking my own tie, because a delegated answer is
+> often not one of the options offered. **It was not.**
+>
+> ⚠️ **The candidate's own classification was the error, and both it and the brief carried it.** They
+> called the entry *"one instance of look at the render"* and sent it to the visual-acceptance
+> material. Its own words are *"every count is individually correct and every matcher passes"* — the
+> defect is in a **relation between two lines**, which is verbatim §4e's claim (*every assertion is
+> correct, and the defect is between them*). Every option built on the old classification was mediocre
+> for that one reason. Landed as **two** short additions instead:
+> **§4e widened** — the first instance there where the relation is **arithmetic containment** rather
+> than visual resemblance, so §4e's own question (*what else in this frame looks like what I just
+> added?*) would **not** have caught it; and **`untranslatable-idioms.md` §*Two interacting plurals***
+> — the design half nobody had classified, on why subordination beat one sentence (Hebrew's four
+> plural categories to English's two make it a 4 × 4 matrix).
+>
+> 📁 **`kb-candidates/` no longer exists in this repo** — the last file was fully drained and
+> deleted. The next session that flags a candidate re-creates it; that is the folder working, not a
+> loss.
+>
+> 🧭 **`tour-refresh` remained live and untouched throughout.** Every commit named explicit paths.
+>
+> 🚫 **Nothing pushed**, in either repo. **`#67` stays OPEN on GitHub** — its held item (the
+> unfiled-task defect confirmed end to end on a device) is not this session's, and no ticket write was
+> made.
+
 > 🏁 **`kb-drain-67-and-siblings` RELEASED 2026-08-24 — this commit.** The `kb-candidates/` folder is
 > drained: **10 of 11 entries ingested**, pages in `C:\Dev\JARVIS` (`64fc76f`), `Check-KbLinks`
 > **CLEAN** (117 pages). Three candidate files fully drained and deleted;

@@ -121,3 +121,55 @@ touched, and every commit here names explicit paths.
 - `CHANGELOG/2026-08-24/kb-drain-67-and-siblings.md` *(new)*
 - `SESSIONS.md` — row claimed, then released
 - `sessions/kb-drain-67-and-siblings.md` → `sessions/done/` with `status: done`
+
+---
+
+# Follow-on — the held entry, 2026-08-24
+
+`#67` entry 4 is **no longer held.** Ido was asked which of *one line as an example* or *nothing* it
+should get and answered **"choose the best solution for the system"** — a **delegation**. Under
+`rules/question-axis-naming.md` that removes the judgment half to me, forbids re-asking, and requires
+re-opening the problem rather than breaking my own tie, **because the delegated answer is often not
+one of the options offered.** It was not.
+
+## The decision, and it is mine to overturn
+
+**Two short additions, in two places, neither of them what was proposed.** The candidate and the
+brief both classified this as *one instance of look at the render*, destined for
+`look-at-your-own-output.md`'s visual-acceptance material. **That classification was the error**, and
+every option built on it was mediocre for the same reason.
+
+The entry's own words are *"every count is individually correct and every matcher passes"* — the
+defect is in a **relation between two lines**, not in any line. That is verbatim the claim of **§4e**
+of the same page (*"every assertion is correct, and the defect is between them"*). Filed under
+visual-acceptance it restates a principle the page already argues at length; filed under §4e it is a
+**fourth instance and a new kind**.
+
+| Half | Landed as |
+|---|---|
+| The **instrument** half — a subset drawn as a peer is unassertable | `kb/dev/look-at-your-own-output.md` **§4e widened** |
+| The **design** half — why subordination beat one sentence | `kb/dev/untranslatable-idioms.md` **new §*Two interacting plurals*** |
+
+**§4e widened.** The first instance in that section where the relation is **arithmetic containment**
+rather than visual resemblance — so §4e's operational question (*"what else in this frame looks like
+what I just added?"*) **would not have caught it**; nothing here looks like anything else. The added
+question is *"which of these numbers is inside another one?"*, and the general form covers both:
+**a flat list asserts that its items are disjoint, and that assertion is made by the layout, never by
+any element in it.**
+
+**The design half had no classification at all**, from anyone. The fix was subordination rather than
+folding both counts into one sentence **because** *"12 occurrences, 5 of which already happened"*
+needs two **interacting** plural forms per language — Hebrew has four plural categories to English's
+two, a 4 × 4 matrix where English reads 2 × 2. Generalised: **where a relationship between two
+quantities can be expressed in grammar or in layout, layout is the one that does not multiply per
+language.** It sits beneath that page's existing one-count `<plurals>` remedy, which says nothing
+about two. Cross-linked both ways, with the honest caveat that choosing layout over grammar trades a
+**translation** cost for a **verification** cost — it does not remove the cost.
+
+## Result
+
+- **11 of 11 entries now ingested**, 0 held.
+- `kb-candidates/2026-08-23-67-delete-anything.md` was down to this one survivor, so it is **fully
+  drained and deleted**. The folder is empty.
+- `Check-KbLinks` **CLEAN** (117 pages).
+- **No test layer applies** — documentation and a candidate file. No build, no device.
