@@ -88,7 +88,8 @@ with per-session briefs in `sessions/`. Account of the freeze itself:
     **A screen that gains a widget the tour points at tags it with
     `Modifier.tutorialAnchor(...)` and does nothing else**; the overlay lives in `ui/root/`
     and no feature package knows it exists.
-  - `feature/` — one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `lifeareas`, `challenges`.
+  - `feature/` — mostly one package per screen: `auth`, `goals`, `dashboard`, `social`, `profile`, `analytics`, `lifeareas`, `challenges`, `calendar`, `settings`, `health`.
+    - `sync/` is the exception — **not a screen**. Google Tasks import + Health Connect, rendered as a section inside Settings (`SyncSection` is a composable slot `SettingsContent` takes, because it registers two `ActivityResultContract` launchers and only a composable may). Moved off Home 2026-08-24.
 - `functions/` — GROQ proxy Cloud Functions (TypeScript).
 - `firestore-tests/` — security-rules tests (`@firebase/rules-unit-testing`) against the local emulator. The **only** layer that can test `firestore.rules`; the Kotlin suites cannot reach them.
 - `firestore.rules`, `storage.rules`, `firebase.json`, `.firebaserc` — backend config.

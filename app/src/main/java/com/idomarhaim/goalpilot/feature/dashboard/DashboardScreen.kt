@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,15 +21,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -64,7 +60,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -72,17 +67,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
-import androidx.health.connect.client.PermissionController
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
 import com.idomarhaim.goalpilot.domain.model.Deletion
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.notifications.FilingNotificationEffect
-import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.OccurrenceState
 import com.idomarhaim.goalpilot.core.util.AppDateFormatters
 import com.idomarhaim.goalpilot.domain.model.startDate
@@ -90,7 +82,6 @@ import com.idomarhaim.goalpilot.domain.usecase.CalendarEntry
 import com.idomarhaim.goalpilot.domain.usecase.DisappearanceChoice
 import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.model.Recommendation
-import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.ui.components.Avatar
 import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.GoalCard
@@ -104,12 +95,10 @@ import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.UnmeasuredMarker
 import com.idomarhaim.goalpilot.ui.components.rememberGpEntrance
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
-import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.ui.tutorial.TutorialAnchor
 import com.idomarhaim.goalpilot.ui.tutorial.tutorialAnchor
-import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,10 +116,6 @@ fun DashboardScreen(
     val recs by viewModel.recommendations.collectAsStateWithLifecycle()
     val smartAdd by viewModel.smartAdd.collectAsStateWithLifecycle()
     val filed by viewModel.filed.collectAsStateWithLifecycle()
-    val tasksImport by viewModel.tasksImport.collectAsStateWithLifecycle()
-    val healthSync by viewModel.healthSync.collectAsStateWithLifecycle()
-    val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
-    val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val disappearances by viewModel.calendarDisappearances.collectAsStateWithLifecycle()
     val missReview by viewModel.missReview.collectAsStateWithLifecycle()
@@ -143,10 +128,6 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         viewModel.ensureRecommendations()
-        viewModel.ensureHealthAvailability()
-        // Re-read on every entry, not once: the life-areas screen grants the same
-        // scope, and this ViewModel outlives a trip there and back (#36).
-        viewModel.refreshTasksConsent()
     }
     LaunchedEffect(message) {
         message?.let { snackbarHost.showSnackbar(it); viewModel.consumeMessage() }
@@ -173,35 +154,10 @@ fun DashboardScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri -> if (uri != null) viewModel.shareWeeklySummary(uri) }
 
-    // Google's own consent screen — reached either because the account predates
-    // the Tasks scope, or (the normal case, spec §2.6) because "View your tasks"
-    // arrived unticked at sign-in. Backing out of it is recorded as a decline so
-    // the card can say so, rather than looking like a first-ever run (#36).
-    val consentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            viewModel.onConsentGranted()
-        } else {
-            viewModel.onConsentDeclined()
-        }
-    }
-    LaunchedEffect(consentIntent) {
-        consentIntent?.let { consentLauncher.launch(it) }
-    }
-
-    // Health Connect runs its own permission UI; the contract below is the only
-    // supported way to ask, and it has to be registered from a composable.
-    val healthPermissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract(),
-    ) { granted -> viewModel.onHealthPermissionsResult(granted) }
-    LaunchedEffect(healthSync.requestPermissions) {
-        if (!healthSync.requestPermissions) return@LaunchedEffect
-        // Launching throws if the provider vanished between the availability check
-        // and this call — uninstalling Health Connect mid-session does exactly that.
-        runCatching { healthPermissionLauncher.launch(viewModel.healthPermissions) }
-            .onFailure { viewModel.consumeHealthPermissionRequest() }
-    }
+    // The Google Tasks consent launcher and the Health Connect permission
+    // contract both moved to `feature/sync/` with their cards on 2026-08-24.
+    // Both HAVE to be registered from a composable, which is why they were ever
+    // in a screen file rather than in a ViewModel — Settings registers them now.
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -328,19 +284,6 @@ fun DashboardScreen(
                     )
                 }
                 item {
-                    GoogleTasksImportCard(
-                        isLoading = tasksImport.isLoading,
-                        consent = tasksConsent,
-                        onImport = viewModel::importGoogleTasks,
-                    )
-                }
-                item {
-                    HealthConnectCard(
-                        state = healthSync,
-                        onSync = viewModel::syncHealth,
-                    )
-                }
-                item {
                     SectionHeader(
                         title = "AI coach",
                         action = {
@@ -384,15 +327,6 @@ fun DashboardScreen(
                 }
             }
         }
-    }
-
-    if (tasksImport.isVisible) {
-        GoogleTasksImportDialog(
-            state = tasksImport,
-            onToggle = viewModel::toggleImportProposal,
-            onConfirm = viewModel::confirmImport,
-            onDismiss = viewModel::dismissImport,
-        )
     }
 
     pendingDelete?.let { task ->
@@ -468,7 +402,17 @@ private fun AccountSheet(
             // enumerates the sections, so leaving it at four would have made the
             // door to the new one invisible from the one place it is opened.
             supportingContent = {
-                Text("Appearance, language, your day, AI — stays on this phone.")
+                // ⚠️ This sentence is an ASSERTION ABOUT ANOTHER SCREEN, and nothing
+                // recompiles when that screen changes -- `kb/dev/product-copy-describes-code.md`.
+                // It listed four sections and Settings now has six: the tutorial replay went
+                // to the TOP of it on 2026-08-24 (Ido could not find the control), and the
+                // Google Tasks and Health Connect cards moved there off this very screen in
+                // the same commit. Naming the tour here is the load-bearing half -- a person
+                // looking for it is looking at this sheet.
+                Text(
+                    "Replay the tutorial, connect Google Tasks and Health, " +
+                        "appearance, language, your day, AI — stays on this phone.",
+                )
             },
             leadingContent = {
                 Icon(
@@ -490,254 +434,6 @@ const val TAG_HOME_AVATAR = "home_avatar"
 const val TAG_SHEET_PROFILE = "home_sheet_profile"
 const val TAG_SHEET_SETTINGS = "home_sheet_settings"
 
-/**
- * Status and manual override for the Health Connect sync (spec §5, §6 nice-to-have).
- *
- * The sync itself is automatic — it runs whenever the app comes forward, at most
- * once every fifteen minutes — so this card is mostly a window onto something that
- * has already happened. It exists because a feature that writes to your goals
- * without ever being visible is worse than one you have to press: "Synced 4
- * minutes ago" is how the user knows it is working, and the button is how they
- * skip the wait.
- *
- * The card is deliberately honest about absence: Health Connect is a separate app
- * below Android 14 and missing from most emulator images, so "not available here"
- * is a normal outcome that gets its own explanation rather than a dead button.
- */
-@Composable
-private fun HealthConnectCard(state: HealthSyncState, onSync: () -> Unit) {
-    val availability = state.availability
-    val canSync = availability == HealthAvailability.AVAILABLE ||
-        availability == HealthAvailability.PERMISSIONS_REQUIRED
-    GpCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconChip(
-                    icon = Icons.Filled.MonitorHeart,
-                    tint = MaterialTheme.colorScheme.secondary,
-                )
-                Spacer(Modifier.width(12.dp))
-                Text("Health data", style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = when (availability) {
-                    null -> "Checking whether Health Connect is available…"
-                    HealthAvailability.AVAILABLE ->
-                        "Your steps and sleep are pulled from Health Connect and logged " +
-                            "against your goals automatically, every time you open GoalPilot."
-                    else -> availability.explain()
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            // Recomputed on every recomposition rather than ticking: the label is a
-            // coarse "4 minutes ago", and a card that repaints once a second to keep
-            // a number honest costs more than the honesty is worth.
-            val ago = healthSyncAgoLabel(state.lastSyncAtMillis, System.currentTimeMillis())
-            if (availability == HealthAvailability.AVAILABLE) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = ago ?: "Not synced on this device yet",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(14.dp))
-            OutlinedButton(
-                onClick = onSync,
-                enabled = canSync && !state.isSyncing,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                when {
-                    state.isSyncing -> {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Syncing…")
-                    }
-
-                    availability == HealthAvailability.PERMISSIONS_REQUIRED ->
-                        Text("Connect Health Connect")
-
-                    else -> Text("Sync now")
-                }
-            }
-        }
-    }
-}
-
-/**
- * Entry point for the Google Tasks import (spec §6 nice-to-have). Pulls open
- * tasks from the signed-in account's Google Tasks lists and files them against
- * goals using the same classifier as [SmartAddCard].
- *
- * When [consent] is [TasksConsent.MISSING] the card says so *before* anything is
- * pressed (#36). Until this existed, a declined scope and a first-ever run were
- * pixel-identical: both landed on the same generic grant prompt after an import
- * had already failed.
- */
-@Composable
-private fun GoogleTasksImportCard(
-    isLoading: Boolean,
-    consent: TasksConsent?,
-    onImport: () -> Unit,
-) {
-    // Only a positively observed refusal changes the card. Null is "not checked
-    // yet" and NOT_SIGNED_IN is "never asked" — neither is a decline, and §0.4
-    // only licenses speech about a failure the user can act on.
-    val declined = consent == TasksConsent.MISSING
-    GpCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconChip(icon = Icons.Filled.CloudDownload)
-                Spacer(Modifier.width(12.dp))
-                Text("Import from Google Tasks", style = MaterialTheme.typography.titleMedium)
-            }
-            Spacer(Modifier.height(10.dp))
-            if (declined) {
-                TasksConsentNotice()
-            } else {
-                Text(
-                    "Pull your open Google Tasks in and let GoalPilot file each one " +
-                        "under the right goal. You review everything before it is saved.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(14.dp))
-            OutlinedButton(
-                onClick = onImport,
-                enabled = !isLoading,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                when {
-                    isLoading -> {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Importing…")
-                    }
-
-                    declined -> Text(stringResource(R.string.tasks_consent_grant_action))
-
-                    else -> Text("Import tasks")
-                }
-            }
-        }
-    }
-}
-
-/**
- * Review sheet for an import. Every row is opt-out-able and nothing is written
- * until "Import" is pressed — the LLM proposes, the user decides (spec §8).
- */
-@Composable
-private fun GoogleTasksImportDialog(
-    state: TasksImportState,
-    onToggle: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val selectedCount = state.proposals.count { it.selected }
-    AppAlertDialog(
-        onDismissRequest = { if (!state.isSaving) onDismiss() },
-        title = { Text("Import from Google Tasks") },
-        text = {
-            when {
-                state.isLoading -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Text("Reading your tasks and sorting them…")
-                }
-
-                state.error != null -> Text(state.error)
-
-                else -> Column {
-                    Text(
-                        "Found ${state.totalFound} open task(s). " +
-                            "Tap a row to include or exclude it.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    LazyColumn(
-                        modifier = Modifier.heightIn(max = 320.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        items(state.proposals, key = { it.externalId }) { proposal ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(enabled = !state.isSaving) {
-                                        onToggle(proposal.externalId)
-                                    }
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Checkbox(
-                                    checked = proposal.selected,
-                                    onCheckedChange = { onToggle(proposal.externalId) },
-                                    enabled = !state.isSaving,
-                                )
-                                Column(Modifier.weight(1f)) {
-                                    // Google Tasks titles are unbounded — people paste
-                                    // whole messages in. Without a clamp one entry
-                                    // pushes every other row off the dialog.
-                                    Text(
-                                        proposal.title,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        buildString {
-                                            append(
-                                                proposal.targetGoalTitle
-                                                    ?.let { "→ $it" }
-                                                    ?: "→ new goal “${proposal.newGoalTitle}”",
-                                            )
-                                            // `#55`: the row says what the model JUDGED, not
-                                            // a currency it never emitted. Points are
-                                            // computed from this and the duration beside it
-                                            // at the write, so printing them here would be a
-                                            // third number to keep in step.
-                                            append(" · ${proposal.difficulty.name.lowercase()}")
-                                            append(" · ${durationLabel(proposal.minutes)}")
-                                            proposal.lifeAreaName?.let {
-                                                append(
-                                                    if (proposal.createsLifeArea) {
-                                                        " · new area “$it”"
-                                                    } else {
-                                                        " · $it"
-                                                    },
-                                                )
-                                            }
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (state.error == null && !state.isLoading) {
-                TextButton(onClick = onConfirm, enabled = !state.isSaving && selectedCount > 0) {
-                    Text(if (state.isSaving) "Importing…" else "Import $selectedCount")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !state.isSaving) {
-                Text(if (state.error != null) "Close" else "Cancel")
-            }
-        },
-    )
-}
 
 /**
  * Entry point for the LLM task→goal classifier (spec §6 Bonus). Type a task in
@@ -1515,7 +1211,7 @@ private fun ShareSummaryCard(onShare: () -> Unit, onShareWithPhoto: () -> Unit) 
  * re-estimable and is never counted among the durations the analytics card
  * attributes to the AI. Asking *"how long?"* here is #7's surface, not this one's.
  */
-private fun durationLabel(minutes: Int?): String =
+internal fun durationLabel(minutes: Int?): String =
     if (minutes == null) {
         "no estimate · counts as ${formatMinutes(TaskDuration.DEFAULT_MINUTES)}"
     } else {

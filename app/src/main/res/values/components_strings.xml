@@ -75,6 +75,14 @@
          "no number yet. Nothing is owed and nothing is offered here." -->
     <string name="components_goal_unmeasured">No number yet — nothing is owed here</string>
 
+    <!-- ── The words on the inline marker (2026-08-24) ──────────────────
+         VISIBLE, unlike the line above it, and that is the whole point of it.
+         The marker carried a bold `#` glyph until Ido reported it as a picture
+         he could not read; 0.8 says form and words before iconography, so the
+         inline shape now says what it means. Short because it sits in a
+         trailing slot the reader has been trained to read as `45%`. -->
+    <string name="components_goal_no_number">No number</string>
+
     <!-- ── The row where the percentage used to be (#66) ──────────────
          A goal with no measure printed `0%` and `0/100` beside the marker that
          says it has no number. Spec 1.3 makes absence the DEFAULT, and both

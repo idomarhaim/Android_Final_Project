@@ -30,6 +30,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -66,6 +68,7 @@ import com.idomarhaim.goalpilot.domain.model.AppSkin
 import com.idomarhaim.goalpilot.domain.model.DaySchedule
 import com.idomarhaim.goalpilot.domain.model.WakingHours
 import com.idomarhaim.goalpilot.domain.model.displayName
+import com.idomarhaim.goalpilot.feature.sync.SyncSection
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LanguagePicker
 import com.idomarhaim.goalpilot.ui.components.MaterialPicker
@@ -145,6 +148,13 @@ fun SettingsScreen(
     val aiCredential by viewModel.aiCredential.collectAsStateWithLifecycle()
     val aiLastAnswer by viewModel.aiLastAnswer.collectAsStateWithLifecycle()
 
+    // Owned here rather than inside SettingsContent so the two consumers share
+    // one host: the settings surface itself has nothing to say today, and the
+    // sync section has plenty (`Imported 3 tasks`, `Could not sync`, a refused
+    // Health Connect grant). Passing the same state to both is what stops a
+    // second, invisible snackbar host being created inside the section.
+    val snackbarHostState = remember { SnackbarHostState() }
+
     SettingsContent(
         skin = skin,
         onSkin = viewModel::setSkin,
@@ -170,6 +180,15 @@ fun SettingsScreen(
         onBack = onBack,
         onOpenProfile = onOpenProfile,
         onReplayTutorial = onReplayTutorial,
+        snackbarHostState = snackbarHostState,
+        // Null on the signed-out branch for the same reason onReplayTutorial is:
+        // there is no account to import into and no per-account sync to report.
+        // The signed-out caller passes null and the section is simply not drawn.
+        syncSection = if (onOpenProfile == null) {
+            null
+        } else {
+            { SyncSection(snackbarHostState = snackbarHostState) }
+        },
     )
 }
 
@@ -220,6 +239,25 @@ fun SettingsContent(
      * dashboard nobody is signed in to.
      */
     onReplayTutorial: (() -> Unit)?,
+    /**
+     * Shared with [syncSection], which is the only thing on this screen that
+     * currently speaks. Defaulted so every existing `createComposeRule()` test
+     * of this surface keeps its two-argument shape.
+     */
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    /**
+     * **Connected apps** — the Google Tasks import and the Health Connect sync,
+     * moved here from Home on 2026-08-24 at Ido's request.
+     *
+     * A composable slot rather than state-in/edits-out like everything else on
+     * this screen, and that is forced rather than chosen: the section registers
+     * two `ActivityResultContract` launchers, which only a composable may do.
+     * Keeping it behind a slot is what preserves this function's whole point —
+     * that it can be driven with no Hilt graph and no Firebase.
+     *
+     * `null` where there is nothing to connect: the sign-in branch.
+     */
+    syncSection: (@Composable () -> Unit)? = null,
 ) {
     // The *device* locale, read off the framework's own configuration rather
     // than LocalContext's: AppLocale overrides the composition's context with
@@ -233,6 +271,7 @@ fun SettingsContent(
 
     Scaffold(
         containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -254,6 +293,29 @@ fun SettingsContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ScopeLine()
+
+            // ⚠️ Help is FIRST, and that is a fix rather than a preference.
+            // `Observed:` 2026-08-24 — Ido: *"I did not see a button I can use to
+            // run the TUTORIAL again."* The control existed and had existed since
+            // the tour shipped; it was fourth of six sections, below three tall
+            // cards, so finding it meant scrolling past the whole of Appearance.
+            // A replay control nobody can find is what makes `Skip tour` a
+            // one-way door, which is the single promise the overlay is built on
+            // (`TutorialController.skip`). So it goes where a first-time reader
+            // lands. It costs Appearance one scroll and it is one short card.
+            if (onReplayTutorial != null) {
+                SectionHeader(stringResource(R.string.tutorial_settings_section))
+                TutorialCard(onReplay = onReplayTutorial)
+            }
+
+            // Google Tasks + Health Connect, moved off Home on 2026-08-24. High,
+            // because they are the two settings that reach OUTSIDE the app: what
+            // this phone is connected to is the thing a person opens Settings to
+            // check, and it is the same per-device cut `ScopeLine` states above.
+            syncSection?.let {
+                SectionHeader(stringResource(R.string.settings_connected_title))
+                it()
+            }
 
             SectionHeader(stringResource(R.string.settings_appearance_title))
             AppearanceCard(
@@ -286,11 +348,6 @@ fun SettingsContent(
                 onEdit = { editingTime = it },
                 onFollowWakingHours = { onPlanningOverrideMinutes(null) },
             )
-
-            if (onReplayTutorial != null) {
-                SectionHeader(stringResource(R.string.tutorial_settings_section))
-                TutorialCard(onReplay = onReplayTutorial)
-            }
 
             SectionHeader(stringResource(R.string.settings_ai_title))
             AiCard(

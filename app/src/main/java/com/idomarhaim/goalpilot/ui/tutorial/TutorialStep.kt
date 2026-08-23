@@ -49,15 +49,49 @@ import com.idomarhaim.goalpilot.ui.navigation.Routes
  * step, where the avatar was already being pointed at. Seven steps in, seven
  * steps out: the tour did not grow, it stopped being wrong.
  *
- * ## One required action, in the middle
+ * ## One REQUIRED action, and one INVITED one — 2026-08-24
  *
  * [GOALS_TAB] does not advance on Next; it advances when the user actually
- * opens the Goals tab ([action]). That is the tour's one piece of doing, and
- * its position is deliberate — early enough that a user who bails afterwards
- * has still performed the gesture, late enough that they know why they are
- * being asked. Every other step is Next, because a tour that demands six
- * gestures is a chore and gets skipped, and a skipped tour teaches nothing at
- * all.
+ * opens the Goals tab ([action]). That is the tour's one piece of *demanded*
+ * doing, and its position is deliberate — early enough that a user who bails
+ * afterwards has still performed the gesture, late enough that they know why
+ * they are being asked. A tour that demands six gestures is a chore and gets
+ * skipped, and a skipped tour teaches nothing at all.
+ *
+ * ⚠️ **That argument was being used to justify something it does not say.**
+ * `Observed:` 2026-08-24 — Ido, after his first run: *"when it marked me to
+ * press certain buttons (for example the calendar), I did not see it open what
+ * I pressed on. That is important, so that I see the result of each thing I
+ * press — that I see it with my own eyes, in a real try."*
+ *
+ * He was right, and the defect was worse than *nothing happened*. The spotlight
+ * pulsed a ring around the Calendar tab, which reads as *press me*; the
+ * overlay's blockers covered the hole; and the tap landed on the scrim, whose
+ * informational-step behaviour was **advance the tour**. So pressing the thing
+ * the tour was pointing at moved the tour on and never opened the tab — an
+ * affordance that lied, and then swallowed the gesture it invited.
+ *
+ * Two changes, and neither of them spends the gesture budget the paragraph
+ * above is protecting:
+ *
+ * 1. **[CALENDAR] is now an action step, `required = false`.** The hole is
+ *    live, so the tab genuinely opens and the tour follows the user there. Next
+ *    is still on the card, so nobody is *made* to do it — the budget of
+ *    demanded gestures is still one, and it is still [GOALS_TAB]'s.
+ * 2. **Tap-anywhere-to-advance now fires only on a step that points at
+ *    nothing** ([WELCOME]). Where there is a ring, the ring means *look here*
+ *    and Next means *go on*; the two no longer compete for one tap. See
+ *    `TutorialOverlay.TutorialBlockers`.
+ *
+ * **What is deliberately NOT live**, and why the answer is not *all of them*:
+ * [PROGRESS] points at a card that does nothing when pressed, and [QUICK_ADD],
+ * [NEW_GOAL] and [WHERE_SETTINGS] point at controls that open a keyboard, a
+ * form and a bottom sheet. The tour is drawn **above** the scaffold, so each of
+ * those would surface underneath the scrim — and [NEW_GOAL] is worse than
+ * cosmetic: the next step lives on `GOALS`, so the host would navigate straight
+ * back out of a half-typed goal. A live hole is only honest where the result of
+ * the press is a **destination the tour can follow the user to**, which is
+ * exactly the two tab steps.
  */
 enum class TutorialStep(
     /**
@@ -140,6 +174,13 @@ enum class TutorialStep(
         route = Routes.GOALS,
         titleRes = R.string.tutorial_calendar_title,
         bodyRes = R.string.tutorial_calendar_body,
+        // Invited, not demanded: the hole is live so the tab really opens, and
+        // Next is still on the card. See this enum's KDoc for what that fixed.
+        action = TutorialAction(
+            hintRes = R.string.tutorial_calendar_hint,
+            completedOnRoute = Routes.CALENDAR,
+            required = false,
+        ),
     ),
 
     /**
@@ -186,13 +227,29 @@ enum class TutorialStep(
  * they get there by some other means, which is a user being ahead of the tour
  * rather than a user cheating it.
  *
+ * ### Required, or merely invited
+ *
+ * [required] is what separates *the tour is waiting for you* from *you may try
+ * this*. Both make the spotlight's hole live, which is the half that fixes the
+ * lying affordance; only a required one withholds Next.
+ *
+ * The budget is **one required action for the whole tour**, and
+ * `TutorialStepsTest` holds that number. An invited one costs nothing on that
+ * budget because a user who ignores it presses Next exactly as they would on
+ * any other step — which is the whole reason the distinction is worth a
+ * parameter rather than being a second boolean somewhere else.
+ *
  * @param hintRes the imperative — *Tap Goals to continue*. Separate from the
- *   step's body because it must survive the body being skimmed.
+ *   step's body because it must survive the body being skimmed. On an invited
+ *   step this is an offer and its wording says so.
  * @param completedOnRoute the route whose arrival advances the step.
+ * @param required `true` — the default — withholds Next until the user has
+ *   done it. `false` opens the hole and leaves Next in place.
  */
 data class TutorialAction(
     @StringRes val hintRes: Int,
     val completedOnRoute: String,
+    val required: Boolean = true,
 )
 
 /**
@@ -217,5 +274,10 @@ data class TutorialAction(
  * told about, and a sentence that was false — and this is exactly the case the
  * paragraph above describes, where a `hasSeenTutorial` boolean would have said
  * *yes* for every existing install.
+ *
+ * `2` → `3` on 2026-08-24: the tour became **pressable**. A step that points at
+ * a tab now opens it, and a tap on the spotlight is no longer swallowed by the
+ * scrim. That is not a typo in a step — it is a different tour, and the one
+ * person who has run the old one is the person who reported the defect.
  */
-const val TUTORIAL_VERSION = 2
+const val TUTORIAL_VERSION = 3

@@ -105,6 +105,12 @@
     <string name="tutorial_calendar_title">Your goals, as time</string>
     <string name="tutorial_calendar_body">Anything with a time on it shows up on this tab. Press and hold a block to pick it up, then drag it to where it should have been.</string>
 
+    <!-- An OFFER, not an order, and the wording has to carry that on its own:
+         the row it renders in is the same row a required step uses, and one
+         row that reads two ways is cheaper than two rows that look alike.
+         So it names Next as the way past, which is the whole difference. -->
+    <string name="tutorial_calendar_hint">Tap Calendar to open it, or press Next</string>
+
     <!-- Step 7 · Profile, and where this tour lives afterwards -->
 
     <string name="tutorial_settings_step_title">Your profile, and this tour</string>

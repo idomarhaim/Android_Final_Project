@@ -27,6 +27,13 @@ import kotlinx.coroutines.flow.StateFlow
  * thing here that already holds a `NavController` — decides what to do about the
  * difference.
  *
+ * ## The tour steers, EXCEPT when the user has just been invited to press
+ *
+ * Which route the tour wants is `state.route`, not `state.step.route`, and the
+ * difference is a `null` that means *stop steering*. `TutorialUiState.route`
+ * carries the whole reason; the short version is that a step which has just
+ * opened the Calendar for the user must not then navigate them off it.
+ *
  * ## One effect, not two, and that is a bug fix rather than a tidy-up
  *
  * Completing an action step and navigating for an informational one are two
@@ -72,7 +79,13 @@ fun TutorialHost(
             viewModel.completeAction()
             return@LaunchedEffect
         }
-        if (currentRoute != current.step.route) onNavigate(current.step.route)
+        // `current.route`, NOT `current.step.route`. A step whose invited action
+        // has just been performed reports `null` here, which means *the user is
+        // looking at the thing they pressed; leave them alone*. Reading the
+        // step's own route instead would navigate away from it in the same
+        // frame it opened — see `TutorialUiState.route`.
+        val wanted = current.route ?: return@LaunchedEffect
+        if (currentRoute != wanted) onNavigate(wanted)
     }
 
     val current = state ?: return

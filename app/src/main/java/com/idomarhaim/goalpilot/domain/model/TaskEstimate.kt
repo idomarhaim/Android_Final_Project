@@ -294,3 +294,18 @@ object TaskScoring {
         return Math.round(effortPoints * difficulty.multiplier).toInt()
     }
 }
+
+/**
+ * The provenance of a proposed duration: the model's if it supplied one, otherwise
+ * nobody's (#9, §3.4).
+ *
+ * One function rather than one per caller, so the quick-add sheet and the Google
+ * Tasks import cannot drift into disagreeing about what an absent minute count
+ * means. It lives here, in the domain, rather than in either of them: it was
+ * private to `DashboardViewModel` until 2026-08-24, when the import moved to
+ * `feature/sync/` and the single call site became two files. Copying it there
+ * would have made the KDoc above false in the same commit that moved it.
+ */
+fun Int?.durationSource(): DurationSource =
+    if (this == null) DurationSource.UNKNOWN else DurationSource.AI
+

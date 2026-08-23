@@ -99,6 +99,9 @@
     <string name="tutorial_calendar_title">היעדים שלכם, כזמן</string>
     <string name="tutorial_calendar_body">כל מה שיש לו שעה מופיע בלשונית הזו. לחיצה ארוכה על משבצת מרימה אותה, וגרירה מעבירה אותה למועד הנכון.</string>
 
+    <!-- An offer, not an order: it names Next as the way past. -->
+    <string name="tutorial_calendar_hint">הקישו על היומן כדי לפתוח אותו, או המשיכו</string>
+
     <!-- שלב 7 · הפרופיל, ואיפה הסיור הזה גר מכאן והלאה -->
 
     <string name="tutorial_settings_step_title">הפרופיל שלכם, והסיור הזה</string>

@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.ui.tutorial
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.testing.FakeAppPreferences
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import org.junit.Test
@@ -138,6 +139,56 @@ class TutorialControllerTest {
     }
 
     @Test
+    fun `an INVITED action does not advance -- it stops the tour steering`() {
+        // The 2026-08-24 defect, as an assertion. Ido tapped the spotlighted
+        // Calendar tab; it opened, the tour advanced, and step seven's route
+        // sent him straight back to Home. The calendar was up for one frame,
+        // which fails *"I want to see the result of what I press"* exactly as
+        // completely as never opening it.
+        controller.restart()
+        walkTo(TutorialStep.CALENDAR)
+        assertThat(controller.state.value?.pendingAction).isNotNull()
+
+        controller.completeAction()
+
+        val after = controller.state.value
+        assertWithMessage("performing an invited action must not move the step on")
+            .that(after?.step).isEqualTo(TutorialStep.CALENDAR)
+        assertWithMessage("the imperative is spent, so the card must now offer Next")
+            .that(after?.pendingAction).isNull()
+        assertWithMessage(
+            "a null route is what tells TutorialHost to stop navigating -- with the " +
+                "step's own route here, the host steers the user off the screen they " +
+                "just opened",
+        ).that(after?.route).isNull()
+    }
+
+    @Test
+    fun `a REQUIRED action still advances on the spot`() {
+        controller.restart()
+        walkTo(TutorialStep.GOALS_TAB)
+
+        controller.completeAction()
+
+        assertThat(controller.state.value?.step).isEqualTo(TutorialStep.NEW_GOAL)
+        // It steers again immediately, and that is right: this step has not been
+        // performed, so the tour is talking rather than waiting.
+        assertThat(controller.state.value?.route).isEqualTo(TutorialStep.NEW_GOAL.route)
+    }
+
+    @Test
+    fun `Next past a resolved invitation moves on and steers again`() {
+        controller.restart()
+        walkTo(TutorialStep.CALENDAR)
+        controller.completeAction()
+
+        controller.next()
+
+        assertThat(controller.state.value?.step).isEqualTo(TutorialStep.WHERE_SETTINGS)
+        assertThat(controller.state.value?.route).isEqualTo(TutorialStep.WHERE_SETTINGS.route)
+    }
+
+    @Test
     fun `stepping back into a performed action step offers Next instead of the imperative`() {
         // The dead end this exists to prevent: the step asks for a tap on the
         // Goals tab, and stepping back into it lands the user on the Goals
@@ -207,11 +258,20 @@ class TutorialControllerTest {
 
     // ── helpers ──────────────────────────────────────────────────────────
 
-    /** One step forward, whichever kind of step it is. */
+    /**
+     * One **step** forward, whichever kind of step it is.
+     *
+     * ⚠️ That can take two calls into the controller, and the asymmetry is the
+     * behaviour rather than a wrinkle in this helper. Performing an *invited*
+     * action does not advance: it clears the imperative and stops the tour
+     * steering, so the user can look at the thing they just opened. Next is what
+     * moves on from there. A *required* action advances on the spot, as before.
+     * See `TutorialUiState.route`.
+     */
     private fun advanceOneStep() {
-        if (controller.state.value?.pendingAction != null) {
-            controller.completeAction()
-        } else {
+        val before = controller.state.value?.step
+        if (controller.state.value?.pendingAction != null) controller.completeAction()
+        if (controller.state.value != null && controller.state.value?.step == before) {
             controller.next()
         }
     }

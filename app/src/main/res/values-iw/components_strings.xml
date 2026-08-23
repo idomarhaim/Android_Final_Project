@@ -51,6 +51,9 @@
          the marker states a present absence and not a verdict. -->
     <string name="components_goal_unmeasured">עוד אין מספר — שום דבר לא נדרש כאן</string>
 
+    <!-- The words on the inline marker, which replaced a bare "#" glyph. -->
+    <string name="components_goal_no_number">אין מספר</string>
+
     <!-- #66. Authored, not render-checked: 0.8's Hebrew render pass is
          suspended (AGENTS.md), and this file's parity contract is not. -->
     <string name="components_goal_meta_unmeasured">%1$s • בלי מספר — %2$s</string>

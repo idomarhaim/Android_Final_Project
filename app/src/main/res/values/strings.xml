@@ -29,6 +29,13 @@
       Settings surface §4.9 specifies; they are resolved from feature/settings/.
     -->
     <string name="settings_appearance_title">Appearance</string>
+
+    <!-- The Google Tasks import and the Health Connect sync, which moved here
+         from the home screen on 2026-08-24 at Ido's request. "Connected apps"
+         rather than "Sync": what the user is deciding is which other
+         applications this phone lets GoalPilot read, and a sync is what
+         follows from that rather than the thing being chosen. -->
+    <string name="settings_connected_title">Connected apps</string>
     <string name="settings_appearance_description">Pick the colour theme for the whole app.</string>
 
     <string name="settings_language_title">Language</string>

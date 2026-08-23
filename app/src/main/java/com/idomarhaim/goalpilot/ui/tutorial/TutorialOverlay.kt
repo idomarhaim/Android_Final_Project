@@ -136,11 +136,16 @@ fun TutorialOverlay(
             // steps is how many holes they leave.
             TutorialBlockers(
                 target = target,
-                // An informational step is dismissed by tapping anywhere, which
-                // is the gesture people try first. A step with an action must
-                // NOT be, or the one thing the tour asks for can be skipped by a
-                // tap meant for the app underneath.
-                onTapThrough = if (pendingAction == null) onNext else null,
+                // Live wherever the step is offering the widget underneath: the
+                // user presses the real control and the real thing happens. Both
+                // kinds of action open it — a required one has to, and an
+                // invited one exists FOR this.
+                holeIsLive = pendingAction != null,
+                // Tap-anywhere-to-advance survives only where the step points at
+                // NOTHING. With a ring on screen the two gestures compete for one
+                // tap and the scrim wins, which is exactly how pressing the
+                // Calendar tab used to advance the tour without opening it.
+                onTapThrough = if (step.anchor == null) onNext else null,
             )
 
             // Slot 2 — the card, placed last so it is on top of both and its
@@ -333,18 +338,34 @@ private fun TutorialScrim(target: Rect?, motion: Boolean) {
  * rectangles that simply are not there over the hole cannot be got wrong: the
  * live region is live because nothing is on top of it.
  *
- * @param onTapThrough what a tap on the blocked area does — advance, on an
- *   informational step, or nothing at all when the step is waiting for the user
- *   to tap the target itself. `null` still **blocks**; it only declines to act.
+ * ## ⚠️ Whether the hole is live is now its OWN question
+ *
+ * Until 2026-08-24 this function derived it: `onTapThrough == null` meant *the
+ * step wants a gesture*, so the hole opened. That coupling produced the defect
+ * Ido reported — on an informational step with a spotlight, `onTapThrough` was
+ * non-null, so the hole was **covered**, so a tap on the pulsing ring hit the
+ * scrim and **advanced the tour** instead of pressing the thing it was ringing.
+ * The affordance lied and then ate the gesture.
+ *
+ * The two are independent facts and are now two parameters. See
+ * [TutorialStep]'s KDoc for which steps get a live hole and why the answer is
+ * not *all of them*.
+ *
+ * @param holeIsLive leave the target's rectangle uncovered, so the widget under
+ *   the spotlight receives its own taps.
+ * @param onTapThrough what a tap on the blocked area does — advance, on a step
+ *   that points at nothing, or nothing at all otherwise. `null` still
+ *   **blocks**; it only declines to act.
  */
 @Composable
-private fun TutorialBlockers(target: Rect?, onTapThrough: (() -> Unit)?) {
+private fun TutorialBlockers(
+    target: Rect?,
+    holeIsLive: Boolean,
+    onTapThrough: (() -> Unit)?,
+) {
     val padding = with(LocalDensity.current) { SPOTLIGHT_PADDING.toPx() }
 
-    // The hole stays blocked on an informational step: there, tapping anywhere
-    // is *the* dismiss gesture, and leaving one live rectangle in the middle of
-    // it would make part of the screen do something else for no visible reason.
-    val hole = if (onTapThrough == null) target?.inflate(padding) else null
+    val hole = if (holeIsLive) target?.inflate(padding) else null
 
     if (hole == null) {
         Box(Modifier.fillMaxSize().blockTaps(onTapThrough))
@@ -477,7 +498,11 @@ private fun TutorialCard(
             pendingAction?.let { action ->
                 // The imperative gets its own line, its own colour and an arrow,
                 // because it is the one sentence on the card that is an
-                // instruction rather than an explanation.
+                // instruction rather than an explanation. On an INVITED action
+                // it is an offer instead, and the difference is carried by the
+                // wording (`tutorial_calendar_hint` names Next as a way past)
+                // rather than by a second visual treatment — one row that reads
+                // two ways is cheaper than two rows that look alike.
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 12.dp),
@@ -535,10 +560,12 @@ private fun TutorialCard(
                         Text(stringResource(R.string.tutorial_back))
                     }
                 }
-                // A step waiting on the user has no Next — offering one would
-                // make the instruction optional, and an optional instruction is
-                // an instruction nobody follows.
-                if (pendingAction == null) {
+                // A step waiting on a REQUIRED action has no Next — offering
+                // one would make the instruction optional, and an optional
+                // instruction is an instruction nobody follows. An *invited*
+                // action keeps its Next: it is an offer, and an offer you cannot
+                // decline is a demand wearing softer words.
+                if (pendingAction?.required != true) {
                     Button(
                         onClick = onNext,
                         modifier = Modifier.testTag(TAG_TUTORIAL_NEXT),

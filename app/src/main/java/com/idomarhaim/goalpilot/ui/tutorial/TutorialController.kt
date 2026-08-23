@@ -23,11 +23,51 @@ import kotlinx.coroutines.flow.asStateFlow
  * So *has the user done this yet* is state, and `pendingAction` is the answer:
  * `null` means either the step never asked or the user has already obliged, and
  * either way the card shows Next.
+ *
+ * ## A non-null `pendingAction` does NOT mean *no Next*
+ *
+ * Since 2026-08-24 an action carries [TutorialAction.required]. A **required**
+ * one withholds Next; an **invited** one only opens the spotlight's hole so the
+ * control underneath genuinely works. Both are `pendingAction`, and every
+ * reader of this field has to ask which — the two places that matter are
+ * [TutorialController.next] and the overlay's card.
  */
 data class TutorialUiState(
     val step: TutorialStep,
     /** The imperative still outstanding on this step, or `null` if there is none left. */
     val pendingAction: TutorialAction?,
+    /**
+     * The route the tour wants the user on, or **`null` for *wherever they
+     * are*** — which is the whole of the 2026-08-24 fix and is not the same
+     * thing as [TutorialStep.route].
+     *
+     * ## Why a step's route is not enough
+     *
+     * `TutorialHost` herds: any frame where the current route is not the step's
+     * route, it navigates. That is right while the tour is talking and wrong the
+     * instant the user has just been invited to press something.
+     *
+     * `Observed:` 2026-08-24, on the emulator at Ido's own geometry, in the
+     * first build that made [TutorialStep.CALENDAR] pressable. Tapping the
+     * spotlighted Calendar tab did open the Calendar and did advance the tour —
+     * and step seven lives on the dashboard, so the host navigated **straight
+     * back to Home**. The calendar was on screen for about one frame. Ido's
+     * complaint was *"I did not see it open what I pressed on"*, and a tour that
+     * opens the thing and then closes it fails that sentence exactly as
+     * completely as one that never opened it. The first fix was not wrong, it
+     * was half.
+     *
+     * So performing an **invited** action does not advance the step. It clears
+     * the imperative, puts Next on the card, and sets this to `null` — the tour
+     * stops steering and waits, with its explanation still on screen, while the
+     * user looks at the thing they just opened. Next moves on, and the next
+     * step's own route takes over the steering.
+     *
+     * A **required** action still advances, and needs none of this: the step
+     * after [TutorialStep.GOALS_TAB] lives on the very route that tap reaches,
+     * which is why that one never showed the defect.
+     */
+    val route: String?,
 )
 
 /**
@@ -106,13 +146,20 @@ class TutorialController @Inject constructor(
     /**
      * Advance, or finish if this was the last step.
      *
-     * Ignored while the current step is still waiting on its [TutorialAction], so
-     * a stray tap on the scrim cannot skip past the one thing the tour asks the
-     * user to do.
+     * Ignored while the current step is still waiting on a **required**
+     * [TutorialAction], so a stray tap cannot skip past the one thing the tour
+     * asks the user to do.
+     *
+     * ⚠️ **`required` is checked, not mere presence** — an *invited* action
+     * (2026-08-24: [TutorialStep.CALENDAR]) is an offer, so its step keeps its
+     * Next button and this must move on when it is pressed. Reading
+     * `pendingAction != null` here would leave that step with neither a Next
+     * that works nor a demand that says why, which is the dead end this class's
+     * KDoc spends a paragraph avoiding one case earlier.
      */
     fun next() {
         val current = _state.value ?: return
-        if (current.pendingAction != null) return
+        if (current.pendingAction?.required == true) return
         advanceFrom(current.step)
     }
 
@@ -131,16 +178,25 @@ class TutorialController @Inject constructor(
     }
 
     /**
-     * The user did the thing the current step asked for. Records it, then moves on.
+     * The user did the thing the current step asked for — or offered. Records
+     * it, then moves on.
      *
      * Recording is what stops the step demanding it again when the user steps
-     * back into it; see [TutorialUiState].
+     * back into it; see [TutorialUiState]. It applies to an *invited* action
+     * too: having actually opened the Calendar once, being invited to again on
+     * the way back is noise.
      */
     fun completeAction() {
         val current = _state.value ?: return
-        if (current.pendingAction == null) return
+        val action = current.pendingAction ?: return
         performed = performed + current.step
-        advanceFrom(current.step)
+        if (action.required) {
+            advanceFrom(current.step)
+        } else {
+            // Stay put and stop steering. See [TutorialUiState.route] for the
+            // frame-long calendar this exists to prevent.
+            _state.value = current.copy(pendingAction = null, route = null)
+        }
     }
 
     /**
@@ -174,6 +230,9 @@ class TutorialController @Inject constructor(
         _state.value = TutorialUiState(
             step = step,
             pendingAction = step.action?.takeIf { step !in performed },
+            // Every step starts by steering. Only performing an invited action
+            // turns that off, and only for as long as that step is showing.
+            route = step.route,
         )
     }
 }

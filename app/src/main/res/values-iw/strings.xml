@@ -39,6 +39,9 @@
 
     <!-- Device settings (§4.9 / §5.1). On Profile until #48 builds the Settings surface. -->
     <string name="settings_appearance_title">מראה</string>
+
+    <!-- Google Tasks + Health Connect, moved here from the home screen. -->
+    <string name="settings_connected_title">אפליקציות מחוברות</string>
     <string name="settings_appearance_description">בחרו את ערכת הצבעים של האפליקציה כולה.</string>
 
     <string name="settings_language_title">שפה</string>

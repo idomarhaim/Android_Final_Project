@@ -427,6 +427,39 @@ private fun OutcomeDot(outcome: WindowOutcome, accent: Color, diameter: Int) {
  * one deliberate cost: §4.7's *"there is no red on this screen at all"* is about **outcome
  * state**, the four window forms, and this is a destructive **control**, which every other
  * screen in the app already draws that way.
+ *
+ * ## ⚠️ The row is TWO lines, and the one-line version was a real defect
+ *
+ * Until 2026-08-24 the goal's title, the offer and `Let it go` shared one `Row`,
+ * with the title column carrying `weight(1f)` and the two buttons carrying no
+ * weight at all. That is the arrangement everybody writes and it has a failure
+ * mode with teeth: a Compose `Row` measures its **unweighted** children first,
+ * against the full incoming constraints, and only then hands what is left to the
+ * weighted ones. Two buttons reading *Schedule the first one* and *Let it go*
+ * will happily take the entire width, and the title column — the thing the row
+ * is **about** — gets whatever remains.
+ *
+ * `Observed:` 2026-08-24, on Ido's Galaxy S25 Ultra. The two buttons rendered at
+ * full size and every goal title was squeezed into a column roughly one glyph
+ * wide, wrapping vertically: `i` `d` `l` `e` down the screen, one letter per
+ * line, for eight goals. The same build on the `Pixel_10_Pro_XL` emulator looked
+ * fine — which is exactly why it shipped. The discriminator is available width in
+ * **dp** against **font scale**, and the emulator this was written on is wider
+ * and at scale 1.0.
+ *
+ * **What was rejected.** *Weight the buttons too* — then the button labels
+ * truncate instead, and a control reading `Schedule the fi…` is worse than a
+ * wrapped title. *Make them icons* — §0.8's *form and words before iconography*
+ * forbids it, and it is the same rule that sent the `#` marker to a word in this
+ * same commit. *Truncate the title harder* — it was already `maxLines = 1` and
+ * ellipsised, and that did nothing, because the column was never given the width
+ * to ellipsise **into**.
+ *
+ * So the actions get their own line. It costs one line of height per goal and it
+ * cannot be got wrong at any font scale, on any width — there is no longer a
+ * competition to lose. `maxLines` on the title goes 1 → 2 for the same reason:
+ * it now has a full row to itself, so a long goal name is legible rather than
+ * cut at the first fold.
  */
 @Composable
 private fun NoNextStepSection(
@@ -447,42 +480,62 @@ private fun NoNextStepSection(
             modifier = Modifier.testTag(TAG_NO_NEXT_STEP_FOOTER),
         )
         goals.forEach { goal ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-            ) {
-                NoNextStepMark(accent = accent)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = goal.title.ifBlank {
-                            stringResource(R.string.components_goal_untitled)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = goal.metaLine(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                TextButton(
-                    onClick = { onOpenGoal(goal.goalId) },
-                    modifier = Modifier.testTag(offerTag(goal.offer)),
+            // Two lines, and that is the whole fix for Ido's S25 Ultra. See this
+            // function's KDoc: the goal is what the row is ABOUT, so it may not be
+            // the thing that gives way when the buttons need room.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
-                    Text(stringResource(goal.offer.labelRes))
+                    NoNextStepMark(accent = accent)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = goal.title.ifBlank {
+                                stringResource(R.string.components_goal_untitled)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = goal.metaLine(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
-                onLetGo?.let { letGo ->
+                // End-aligned, so the eye reads title-then-offer down the card
+                // rather than hunting for two buttons in a ragged left column.
+                // The offer is still first and `Let it go` still last: the order
+                // this function's KDoc defends is about sequence, not about which
+                // line they sit on.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End,
+                ) {
                     TextButton(
-                        onClick = { letGo(goal) },
-                        modifier = Modifier.testTag(letGoTag(goal.goalId)),
+                        onClick = { onOpenGoal(goal.goalId) },
+                        modifier = Modifier.testTag(offerTag(goal.offer)),
                     ) {
                         Text(
-                            text = stringResource(R.string.components_run_let_it_go),
-                            color = MaterialTheme.colorScheme.error,
+                            text = stringResource(goal.offer.labelRes),
+                            maxLines = 1,
                         )
+                    }
+                    onLetGo?.let { letGo ->
+                        TextButton(
+                            onClick = { letGo(goal) },
+                            modifier = Modifier.testTag(letGoTag(goal.goalId)),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.components_run_let_it_go),
+                                color = MaterialTheme.colorScheme.error,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
             }

@@ -72,14 +72,50 @@ class TutorialStepsTest {
     }
 
     @Test
-    fun `the tour asks for exactly one action`() {
+    fun `the tour DEMANDS exactly one gesture`() {
         // Two would not break anything mechanically; it would break the tour.
         // Every gesture demanded is a place the user can decide they are being
         // made to work, and a skipped tour teaches nothing at all. One is the
         // budget, and it is spent on the gesture that matters most.
-        val withActions = TutorialStep.entries.filter { it.action != null }
+        //
+        // ⚠️ It counts REQUIRED actions, and that narrowing is the point of the
+        // test rather than a weakening of it. Before 2026-08-24 `action != null`
+        // and `is demanded` were the same fact, so counting either measured the
+        // budget. They are now separate: an INVITED action opens the spotlight's
+        // hole so the control underneath really works, and leaves Next in place.
+        // A user who ignores it presses Next exactly as on any other step, so it
+        // costs nothing on this budget — and counting it here would forbid the
+        // fix Ido asked for while claiming to protect a tour nobody is being
+        // made to work through.
+        val demanded = TutorialStep.entries.filter { it.action?.required == true }
 
-        assertThat(withActions.map { it.name }).hasSize(1)
+        assertWithMessage(
+            "every step here withholds its Next button until the user performs a gesture",
+        ).that(demanded.map { it.name }).hasSize(1)
+    }
+
+    @Test
+    fun `every step that points at a live control offers to open it`() {
+        // The defect Ido reported on 2026-08-24, as an assertion: the spotlight
+        // ringed the Calendar tab, the blockers covered the hole, and the tap
+        // landed on the scrim and advanced the tour. The invariant that stops it
+        // coming back is that a step naming a bottom-bar TAB must carry an
+        // action — because `TutorialOverlay` opens the hole exactly when there
+        // is one, and a tab's whole result is a destination the tour can follow
+        // the user to.
+        val tabSteps = TutorialStep.entries.filter {
+            it.anchor == TutorialAnchor.TAB_GOALS || it.anchor == TutorialAnchor.TAB_CALENDAR
+        }
+
+        assertWithMessage("no tab step found -- this test has stopped testing anything")
+            .that(tabSteps).isNotEmpty()
+        tabSteps.forEach { step ->
+            assertWithMessage(
+                "${step.name} rings a tab the user cannot press: it has no action, so " +
+                    "TutorialOverlay leaves the spotlight's hole covered and the tap is eaten " +
+                    "by the scrim",
+            ).that(step.action).isNotNull()
+        }
     }
 
     @Test
