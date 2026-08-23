@@ -32,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.idomarhaim.goalpilot.feature.analytics.AnalyticsScreen
 import com.idomarhaim.goalpilot.feature.auth.SignInScreen
+import com.idomarhaim.goalpilot.feature.calendar.CalendarScreen
 import com.idomarhaim.goalpilot.feature.challenges.ChallengesScreen
 import com.idomarhaim.goalpilot.feature.dashboard.DashboardScreen
 import com.idomarhaim.goalpilot.feature.goals.AddEditGoalScreen
@@ -230,6 +231,16 @@ private fun MainScaffold() {
                         ),
                     ) {
                         AddEditGoalScreen(onDone = { navController.popBackStack() })
+                    }
+                    // Spec 4.3's calendar surface (#60), on the tab 4.2 freed by moving
+                    // Profile into Home's avatar. `onOpenTask` points at the task's own
+                    // objective: there is no task-detail route in this app, and inventing one
+                    // for this screen would be a second surface for editing a task beside the
+                    // one Goals already owns.
+                    composable(Routes.CALENDAR) {
+                        CalendarScreen(
+                            onOpenTask = { navController.navigate(Routes.GOALS) },
+                        )
                     }
                     composable(Routes.SOCIAL) {
                         SocialScreen(onOpenChallenges = { navController.navigate(Routes.CHALLENGES) })
