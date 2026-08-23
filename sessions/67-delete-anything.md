@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 67
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/DeleteConfirm.kt
@@ -18,8 +18,8 @@ owns:
   - app/src/main/res/values-iw/components_strings.xml
   - app/src/test/java/com/idomarhaim/goalpilot/domain/DeletionReachTest.kt
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DeleteAnythingUiTest.kt
-  - kb-candidates/YYYY-MM-DD-67-delete-anything.md
-  - CHANGELOG/YYYY-MM-DD/67-delete-anything.md
+  - kb-candidates/2026-08-23-67-delete-anything.md
+  - CHANGELOG/2026-08-23/67-delete-anything.md
   - sessions/67-delete-anything.md
 created: 2026-08-23 by 64-area-success-failure
 ---
@@ -118,7 +118,7 @@ repository methods that already exist.
   so **English only**.
 - ⚠️ `adb install -r` + `am instrument`, **never `connectedDebugAndroidTest`** — it uninstalls the
   app and takes the Google sign-in with it.
-- `CHANGELOG/YYYY-MM-DD/67-delete-anything.md` with counts verbatim.
+- `CHANGELOG/2026-08-23/67-delete-anything.md` with counts verbatim.
 
 ## Out of scope
 
