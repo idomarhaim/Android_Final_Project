@@ -25,6 +25,18 @@ created: 2026-08-23 by 64-area-success-failure
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 
+⚠️ **COLLIDES with [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67) —
+these two CANNOT run in parallel.** Checked mechanically against that brief's `owns:` list, not by
+eye: both own
+**`app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`**. That is the
+whole overlap — every other path is disjoint — but one shared file is enough, and both also need
+the **AVD** and the **Gradle daemon**, which are exclusive singletons whatever the file lists say.
+
+**Take `#68` first.** `#68` builds the per-occurrence action menu on the calendar (it needs one for
+*Skip*), and `#67` then adds **one item** to a menu that already exists. In the other order `#67`
+invents a delete affordance and `#68` reworks it while building the menu — the same work, done
+twice. Nothing in `#68` depends on `#67`; the ordering is about not doing the calendar's action menu twice.
+
 **Read first:** [`AGENTS.md`](../AGENTS.md) ·
 [`#68`](https://github.com/idomarhaim/Android_Final_Project/issues/68) ·
 [`docs/PRODUCT_v0.3.md` §4.3](../docs/PRODUCT_v0.3.md) (line 1279 is the sentence) and **§2.1,
@@ -108,4 +120,9 @@ semantics · drag on any surface other than the calendar.
 This and [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67) both change
 surfaces that [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62)'s tour video
 walks through, so both belong **before** it — `#62` is already a `v2` because features landed
-after the first recording. Between this and `#67` there is no dependency either way.
+after the first recording.
+
+**No *dependency* runs between this and `#67` — but they still cannot run at the same time.** The
+two are different questions and the collision note at the top of this brief is the one that
+governs: neither needs the other's output, and they share a file and two singletons. Sequential,
+`#68` first.

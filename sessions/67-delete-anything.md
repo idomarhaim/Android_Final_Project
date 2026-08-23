@@ -33,6 +33,18 @@ created: 2026-08-23 by 64-area-success-failure
 > *"I do, but I need to have the ability to delete anything — `GOALS`, `TASKS`, `MILESTONES`,
 > `LIFE_AREAS`."*
 
+⚠️ **COLLIDES with [`#68`](https://github.com/idomarhaim/Android_Final_Project/issues/68) —
+these two CANNOT run in parallel.** Checked mechanically against that brief's `owns:` list, not by
+eye: both own
+**`app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`**. That is the
+whole overlap — every other path is disjoint — but one shared file is enough, and both also need
+the **AVD** and the **Gradle daemon**, which are exclusive singletons whatever the file lists say.
+
+**Take `#68` first.** `#68` builds the per-occurrence action menu on the calendar (it needs one for
+*Skip*), and `#67` then adds **one item** to a menu that already exists. In the other order `#67`
+invents a delete affordance and `#68` reworks it while building the menu — the same work, done
+twice. `#67`'s own first item — the undeletable unfiled task — is on the **dashboard**, not the calendar, so nothing about that defect waits on `#68`.
+
 **Read first:** [`AGENTS.md`](../AGENTS.md) ·
 [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67) ·
 [`CHANGELOG/2026-08-23/64-area-success-failure.md`](../CHANGELOG/2026-08-23/64-area-success-failure.md)
