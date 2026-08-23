@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 # Was `blocked_on: [63]`. Cleared 2026-08-23: #63 shipped in 7c457c4 and closed
 # 2026-08-22T23:37Z; its brief is in sessions/done/ with status: done.
 issue: 64

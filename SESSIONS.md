@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `64-area-success-failure` | `#64` — build `C19`'s success/failure run (`kept · missed · still-owed · nothing-due · no next step`, window filter `30 days · 8 weeks · 6 months`), in both placements — life-area detail and analytics | `ui/components/SuccessFailureRun.kt` (new) · `domain/usecase/BuildSuccessFailureRunUseCase.kt` (new) · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailViewModel.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/SuccessFailureRunTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SuccessFailureRunUiTest.kt` (new) · `kb-candidates/2026-08-23-64-area-success-failure.md` · `CHANGELOG/2026-08-23/64-area-success-failure.md` · `sessions/64-area-success-failure.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`66-unmeasured-percent` released them in `72fb296`; `61-google-calendar` released in `1ccdb3e`; board carries zero live rows) | 2026-08-23 |
 > 🏁 **`66-unmeasured-percent` RELEASED 2026-08-23 — this commit.** `#66` shipped over four
 > commits (`7de9bc0`, `005d297`, `efe5f44`, `99e2070`), the brief is closed to `sessions/done/`, and
 > the ticket is closed. **Both singletons are free**: the **Gradle daemon** and **`emulator-5554`
