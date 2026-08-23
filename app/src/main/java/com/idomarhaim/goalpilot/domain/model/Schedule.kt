@@ -309,6 +309,21 @@ data class TaskSchedule(
         return rule.datesUpTo(anchorAt, upTo)
     }
 
+    /**
+     * The stored document identified by [seriesDate] — and `null` is a **value** here, not an
+     * absence.
+     *
+     * `null` is the identity of a document that belongs to no series ([ScheduledOccurrence.seriesDate]
+     * — *"`null` means this document is not part of a series at all"*), so a lookup whose parameter
+     * cannot be null cannot address a one-off's document at all. That was
+     * [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69): the old
+     * `firstOrNull { it.seriesDate == seriesDate }` over a non-null date fell through to
+     * [instanceOn] every time, whose result has a blank id, so the upsert **created a second
+     * document** and the calendar drew the row twice.
+     */
+    internal fun storedFor(seriesDate: LocalDate?): ScheduledOccurrence? =
+        stored.firstOrNull { it.seriesDate == seriesDate }
+
     /** The generated instance for [date] — the anchor moved there, with no stored override. */
     internal fun instanceOn(date: LocalDate): ScheduledOccurrence? {
         val template = anchor ?: return null
@@ -409,6 +424,16 @@ object ScheduleEdits {
      * The writes [edit] implies for the instance whose series date is [seriesDate], under
      * [scope].
      *
+     * ### [seriesDate] is nullable, and `null` names a real instance
+     *
+     * `null` is not *"no instance"* — it is the identity of one that belongs to **no series**
+     * ([ScheduledOccurrence.seriesDate]), which is every one-off's document. Passing it is how a
+     * caller addresses that document; [TaskSchedule.storedFor] is the lookup that can receive it.
+     * Until [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) this parameter
+     * was non-null, so a one-off's document could not be found at all and **both** scopes went
+     * wrong on it silently — `THIS_OCCURRENCE` created a second document, `THIS_AND_FUTURE`
+     * moved the anchor under a calendar that kept drawing the old one.
+     *
      * ### `THIS_OCCURRENCE` writes one document and never touches the rule
      *
      * A move stores the new *when* against the same [ScheduledOccurrence.seriesDate], so the
@@ -435,14 +460,18 @@ object ScheduleEdits {
      */
     fun apply(
         schedule: TaskSchedule,
-        seriesDate: LocalDate,
+        seriesDate: LocalDate?,
         edit: ScheduleEdit,
         scope: EditScope,
         nowEpochMillis: Long,
     ): SchedulePlan {
         val task = schedule.task
-        val existing = schedule.stored.firstOrNull { it.seriesDate == seriesDate }
-            ?: schedule.instanceOn(seriesDate)
+        // `storedFor` takes the null, which is the whole of #69: a one-off's document IS the one
+        // whose seriesDate is null, and the old non-null lookup could never match it. The fallback
+        // is the generated instance -- for a series the day asked for, for a one-off the anchor --
+        // and it carries a BLANK id, which is what tells `moveSeries` no document exists yet.
+        val existing = schedule.storedFor(seriesDate)
+            ?: (seriesDate ?: schedule.anchorDate)?.let(schedule::instanceOn)
             ?: return SchedulePlan.Writes(task = task)
 
         return when (scope) {
@@ -461,8 +490,8 @@ object ScheduleEdits {
             }
 
             EditScope.THIS_AND_FUTURE -> when (edit) {
-                ScheduleEdit.Skip -> endSeries(schedule, seriesDate, nowEpochMillis)
-                is ScheduleEdit.MoveTo -> moveSeries(schedule, seriesDate, edit.occurrence)
+                ScheduleEdit.Skip -> endSeries(schedule, existing, seriesDate, nowEpochMillis)
+                is ScheduleEdit.MoveTo -> moveSeries(schedule, existing, seriesDate, edit.occurrence)
             }
         }
     }
@@ -477,29 +506,32 @@ object ScheduleEdits {
      */
     private fun endSeries(
         schedule: TaskSchedule,
-        seriesDate: LocalDate,
+        existing: ScheduledOccurrence,
+        seriesDate: LocalDate?,
         nowEpochMillis: Long,
     ): SchedulePlan {
         val task = schedule.task
+        // [existing] is the instance `apply` already resolved -- the one-off's own document where
+        // it has one, so a skip settles that document instead of minting a second (#69).
         val rule = task.repeatRule ?: return SchedulePlan.Writes(
             task = task,
-            upserts = listOfNotNull(
-                schedule.stored.firstOrNull { it.seriesDate == seriesDate }
-                    ?: schedule.instanceOn(seriesDate),
-            ).map { it.copy(outcome = OccurrenceOutcome.Skipped(nowEpochMillis)) },
+            upserts = listOf(existing.copy(outcome = OccurrenceOutcome.Skipped(nowEpochMillis))),
         )
+        // A rule generates from an anchor, so a null series date on a *ruled* task cannot mean
+        // "no instance" -- it means the series itself, which ends at its own first instance.
+        val from = seriesDate ?: schedule.anchorDate ?: return SchedulePlan.Writes(task = task)
         val doomed = schedule.stored
-            .filter { it.seriesDate != null && !it.seriesDate.isBefore(seriesDate) }
+            .filter { it.seriesDate != null && !it.seriesDate.isBefore(from) }
             .map { it.id }
             .filter { it.isNotBlank() }
         val anchorAt = schedule.anchorDate
         // Skipping from the first instance leaves a rule with nothing to generate. Rather than
         // store `end = the day before the start` -- a rule that is legal, inert and reads as a
         // bug -- the when goes with it.
-        val ended = if (anchorAt == null || !seriesDate.isAfter(anchorAt)) {
+        val ended = if (anchorAt == null || !from.isAfter(anchorAt)) {
             task.copy(occurrence = null, repeatRule = null)
         } else {
-            task.copy(repeatRule = rule.copy(end = RepeatEnd.OnDate(seriesDate.minusDays(1))))
+            task.copy(repeatRule = rule.copy(end = RepeatEnd.OnDate(from.minusDays(1))))
         }
         return SchedulePlan.Writes(task = ended, deletes = doomed)
     }
@@ -507,22 +539,39 @@ object ScheduleEdits {
     /** See [apply] — the past is written down before the anchor moves. */
     private fun moveSeries(
         schedule: TaskSchedule,
-        seriesDate: LocalDate,
+        existing: ScheduledOccurrence,
+        seriesDate: LocalDate?,
         moved: Occurrence,
     ): SchedulePlan {
         val task = schedule.task
-        val rule = task.repeatRule
+        // The no-rule branch writes **both** halves, and #69 is the half it used to miss. A
+        // one-off's *when* is [Task.occurrence] -- every other surface reads it -- but
+        // [TaskSchedule.occurrencesIn] draws a one-off THAT HAS a document from that document
+        // (source 3), so writing the anchor alone left the calendar drawing the old time and the
+        // move read as doing nothing at all. A one-off with **no** document still gains none:
+        // [existing] is then the blank-id instance `apply` synthesised, and a document for a
+        // one-off with no series is the shape §2.1 rejects.
+        val rule = task.repeatRule ?: return SchedulePlan.Writes(
+            task = task.copy(occurrence = moved),
+            upserts = if (existing.id.isBlank()) {
+                emptyList()
+            } else {
+                listOf(existing.copy(occurrence = moved))
+            },
+        )
+        // As in [endSeries]: a null series date on a ruled task names the series, not nothing.
+        val from = seriesDate ?: schedule.anchorDate
             ?: return SchedulePlan.Writes(task = task.copy(occurrence = moved))
 
         val touched = schedule.stored.mapNotNull { it.seriesDate }.toSet()
-        val past = schedule.generatedDates(upTo = seriesDate.minusDays(1))
-            .filter { it.isBefore(seriesDate) }
+        val past = schedule.generatedDates(upTo = from.minusDays(1))
+            .filter { it.isBefore(from) }
         val materialised = past
             .filterNot { it in touched }
             .mapNotNull { schedule.instanceOn(it) }
 
         val doomed = schedule.stored
-            .filter { it.seriesDate != null && !it.seriesDate.isBefore(seriesDate) }
+            .filter { it.seriesDate != null && !it.seriesDate.isBefore(from) }
             .map { it.id }
             .filter { it.isNotBlank() }
 

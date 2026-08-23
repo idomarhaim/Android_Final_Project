@@ -297,7 +297,7 @@ data class CalendarEntry(
      * §4.3's *drag to move* and on `Skip`
      * ([#68](https://github.com/idomarhaim/Android_Final_Project/issues/68)).
      *
-     * Three conditions, and each one is a different kind of *no*:
+     * Two conditions, and each one is a different kind of *no*:
      *
      * 1. **It is a task.** A goal deadline, a challenge window and an `EXTERNAL` event have no
      *    occurrence document and no schedule behind them; there is nothing for an edit to write.
@@ -306,41 +306,29 @@ data class CalendarEntry(
      *    already ticked or skipped is that record. Moving it would say the work happened at an hour
      *    it did not, and skipping something already done is incoherent. **Un-ticking is what the
      *    tick box is for** — this is not the only route back.
-     * 3. ⚠️ **It is either a series instance, or a one-off with no document yet.** This third
-     *    condition guards a real hole in `#63`'s machinery rather than a rule of the product, and
-     *    it is the one worth reading twice.
      *
-     * ### The hole, named
+     * ### There used to be a third, and it guarded a hole rather than a rule
      *
-     * `ScheduleEdits.apply` finds the instance an edit is about with
-     * `stored.firstOrNull { it.seriesDate == seriesDate }`, and its `seriesDate` parameter is a
-     * **non-null** `LocalDate`. A one-off's document carries `seriesDate = null` by construction
-     * ([ScheduledOccurrence.seriesDate] — *"`null` means this document is not part of a series at
-     * all"*), so **that lookup can never find it**. Both scopes then go wrong, in opposite
-     * directions and both silently:
+     * `#68` also required `(seriesDate != null || occurrenceId == null)` — *either a series
+     * instance, or a one-off with no document yet* — because `ScheduleEdits.apply` looked an
+     * instance up over a **non-null** `LocalDate` and a one-off's document carries
+     * `seriesDate = null` by construction. That lookup could never find it, so both scopes went
+     * wrong on it silently: `THIS_OCCURRENCE` fell through to `TaskSchedule.instanceOn`, whose
+     * result has a blank id, so the upsert **created a second document** and the calendar drew the
+     * entry twice; `THIS_AND_FUTURE` wrote `Task.occurrence` and touched no document, while a
+     * one-off *with* a document is drawn **from that document**, so the move appeared to do
+     * nothing at all.
      *
-     * - `THIS_OCCURRENCE` falls through to `TaskSchedule.instanceOn`, whose result has a blank id,
-     *   so the upsert **creates a second one-off document** and the calendar draws the entry twice.
-     * - `THIS_AND_FUTURE` writes `Task.occurrence` and touches no document — but a one-off *with* a
-     *   document is drawn **from that document**, so the move appears to do nothing at all.
-     *
-     * `Observed:` read out of `ScheduleEdits.apply`, `TaskSchedule.occurrencesIn` and
-     * `CalendarViewModel.seriesDateOf` on 2026-08-23; `Untested:` on a device, because this
-     * property is what stops the app reaching it. It is reachable two ways today — ticking a
-     * one-off (`CalendarViewModel.setDone` writes `seriesDate = null`) and `#61` pushing one to
-     * Google (`SyncCalendarUseCase` line 403) — and condition 2 already excludes the first, so
-     * what this third condition actually buys is **the Google-linked one-off**. Fixing it properly
-     * means widening that parameter to `LocalDate?`, which is a change to `ScheduleEdits`'
-     * semantics and was out of `#68`'s scope by name.
-     *
-     * ✅ **It has a ticket:
-     * [#69](https://github.com/idomarhaim/Android_Final_Project/issues/69).** When that lands, this
-     * third condition comes off together with `DragToMoveTest.a one-off that already has a
-     * document…`, and [MoveScope.seriesDateOf]'s KDoc — which explains why its `?: date` fallback
-     * is safe *because* of this guard — needs re-reading rather than left standing.
+     * ✅ **[`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) widened that
+     * parameter to `LocalDate?` and taught `moveSeries`' no-rule branch to carry the document
+     * across, so the condition came off** — together with the test that pinned it. What it cost
+     * while it stood was the **Google-linked one-off**: `#61`'s `SyncCalendarUseCase.link` mints a
+     * document with `seriesDate = null` and the outcome still `Planned`, and that row could be
+     * neither dragged nor skipped. (Ticking a one-off also mints one, but condition 2 excludes a
+     * settled window on its own account, so nothing there changed.)
      */
     val isEditable: Boolean
-        get() = isTickable && !isSettled && (seriesDate != null || occurrenceId == null)
+        get() = isTickable && !isSettled
 
     /**
      * Whether §4.3's *drag to move* is offered on this row **by virtue of its lane**.
@@ -585,14 +573,25 @@ object MoveScope {
     val whenNotAsked: EditScope = EditScope.THIS_AND_FUTURE
 
     /**
-     * The date `ScheduleEdits.apply` identifies this entry by.
+     * The date `ScheduleEdits.apply` identifies this entry by — **and `null` is one of the
+     * answers**.
      *
      * A series instance is named by the day the **rule** produced it on, which survives the
-     * instance being moved away from it; a one-off has no such date and is named by the only day it
-     * has. [CalendarEntry.isEditable] is what guarantees the second branch is reached only where
-     * that day really is the task's anchor.
+     * instance being moved away from it. A one-off is named by `null`, because that is what its
+     * occurrence document carries ([ScheduledOccurrence.seriesDate][com.idomarhaim.goalpilot.domain.model.ScheduledOccurrence.seriesDate]
+     * — *"`null` means this document is not part of a series at all"*) and therefore the only
+     * value that can find it.
+     *
+     * ⚠️ **This used to read `entry.seriesDate ?: entry.date`, and the fallback was the defect.**
+     * Substituting the entry's own day for a one-off looks harmless — it *is* the day the task
+     * sits on — but no document carries it in `seriesDate`, so the lookup matched nothing and
+     * `apply` silently created a second document instead of editing the one that existed. The
+     * argument that stood here, that [CalendarEntry.isEditable] guaranteed the fallback was only
+     * reached where the day really was the anchor, was **true and beside the point**: the day was
+     * right, the *field* was wrong. Both the fallback and that guard went with
+     * [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69).
      */
-    fun seriesDateOf(entry: CalendarEntry): LocalDate = entry.seriesDate ?: entry.date
+    fun seriesDateOf(entry: CalendarEntry): LocalDate? = entry.seriesDate
 }
 
 /**

@@ -24,6 +24,7 @@ import com.idomarhaim.goalpilot.domain.model.startDate
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 
 /**
  * §4.3's *drag to move*, and the mapping from a gesture to an `EditScope`
@@ -269,15 +270,18 @@ class DragToMoveTest {
     }
 
     @Test
-    fun `a one-off that already has a document is not editable, and that is a hole not a rule`() {
-        // `ScheduleEdits.apply` looks an instance up by a NON-NULL seriesDate, and a one-off's
-        // document carries `seriesDate = null` -- so that lookup can never find it and both scopes
-        // go wrong silently (see `CalendarEntry.isEditable`). Guarded here so the day the
-        // parameter widens, this test is what says the guard may come off -- and that day is
-        // #69 (github.com/idomarhaim/Android_Final_Project/issues/69), which owns the widening.
+    fun `a one-off that already has a document is editable, now that apply can address it`() {
+        // The inversion of the guard `#68` put here and `#69` took off, kept as a test rather than
+        // deleted because it is the assertion that would fail if the third condition were ever put
+        // back. Until `ScheduleEdits.apply` could look an instance up by a NULL seriesDate, a
+        // one-off's document -- which carries `seriesDate = null` by construction -- was
+        // unreachable, and `CalendarEntry.isEditable` refused the row rather than let both scopes
+        // fail silently. The lookup was widened, so the refusal went with it.
         val linked = entry(isRepeating = false, occurrenceId = "occ-1", seriesDate = null)
 
-        assertThat(linked.isEditable).isFalse()
+        assertThat(linked.isEditable).isTrue()
+        assertWithMessage("the Google-linked one-off is the case the guard actually cost -- #61 mints its document")
+            .that(linked.isDraggable).isTrue()
     }
 
     @Test
@@ -347,6 +351,114 @@ class DragToMoveTest {
 
         assertThat(plan.task.occurrence).isEqualTo(task.occurrence)
         assertThat(plan.upserts).hasSize(1)
+    }
+
+    // -- A one-off that ALREADY has a document (#69) ----------------------------------------
+
+    @Test
+    fun `moving a linked one-off through THIS_OCCURRENCE overwrites its document`() {
+        // `#69`'s first direction. The lookup used to be
+        // `stored.firstOrNull { it.seriesDate == seriesDate }` over a NON-NULL seriesDate, so it
+        // could never match a document whose seriesDate is null; control fell through to
+        // `instanceOn`, whose result has a BLANK id, and a blank id makes the repository CREATE.
+        // The calendar then drew the row twice.
+        val row = linkedRow()
+        val moved = DragToMove.movedTo(row, DragToMove.Target(monday.plusDays(1), 14 * 60))
+
+        val plan = ScheduleEdits.apply(
+            schedule = linkedOneOff(),
+            seriesDate = MoveScope.seriesDateOf(row),
+            edit = ScheduleEdit.MoveTo(moved),
+            scope = EditScope.THIS_OCCURRENCE,
+            nowEpochMillis = 0L,
+        ) as SchedulePlan.Writes
+
+        val upsert = plan.upserts.single()
+        assertWithMessage("a blank id makes the repository create a SECOND document, and the row is drawn twice")
+            .that(upsert.id).isEqualTo("occ-1")
+        assertThat(upsert.occurrence).isEqualTo(moved)
+        assertWithMessage("the same Google event is still the same event -- the link may not be dropped by a move")
+            .that(upsert.googleEventId).isEqualTo("gcal-1")
+        assertThat(plan.deletes).isEmpty()
+    }
+
+    @Test
+    fun `moving a linked one-off through the default scope moves its document too`() {
+        // `#69`'s second direction, and the quieter one. `moveSeries`' no-rule branch writes
+        // `Task.occurrence` and used to touch no document at all -- but `TaskSchedule.occurrencesIn`
+        // draws a one-off THAT HAS a document from that document (source 3), so the anchor moved
+        // underneath a calendar that kept drawing the old time. The move read as a no-op.
+        val row = linkedRow()
+        val moved = DragToMove.movedTo(row, DragToMove.Target(monday.plusDays(1), 14 * 60))
+
+        val plan = ScheduleEdits.apply(
+            schedule = linkedOneOff(),
+            seriesDate = MoveScope.seriesDateOf(row),
+            edit = ScheduleEdit.MoveTo(moved),
+            scope = MoveScope.whenNotAsked,
+            nowEpochMillis = 0L,
+        ) as SchedulePlan.Writes
+
+        assertWithMessage("the anchor is still the one-off's *when*, and every other surface reads it")
+            .that(plan.task.occurrence).isEqualTo(moved)
+        val upsert = plan.upserts.single()
+        assertWithMessage("the document is what the calendar draws, so leaving it behind is the no-op")
+            .that(upsert.id).isEqualTo("occ-1")
+        assertThat(upsert.occurrence).isEqualTo(moved)
+        assertThat(upsert.googleEventId).isEqualTo("gcal-1")
+        assertThat(plan.deletes).isEmpty()
+    }
+
+    @Test
+    fun `after either scope the calendar draws the linked one-off once, in its new place`() {
+        // The user-visible half, and the reason the two tests above are not enough on their own:
+        // each of them asserts about a PLAN, and what went wrong was what the plan did to the
+        // DOCUMENTS. Both defects are visible here and nowhere else -- a second document draws the
+        // row twice, an untouched one draws it in the old place.
+        val row = linkedRow()
+        val moved = DragToMove.movedTo(row, DragToMove.Target(monday.plusDays(1), 14 * 60))
+
+        listOf(EditScope.THIS_OCCURRENCE, MoveScope.whenNotAsked).forEach { scope ->
+            val before = linkedOneOff()
+            val plan = ScheduleEdits.apply(
+                schedule = before,
+                seriesDate = MoveScope.seriesDateOf(row),
+                edit = ScheduleEdit.MoveTo(moved),
+                scope = scope,
+                nowEpochMillis = 0L,
+            ) as SchedulePlan.Writes
+            val after = TaskSchedule(task = plan.task, stored = storedAfter(before.stored, plan))
+
+            val drawn = after.occurrencesIn(monday, monday.plusDays(6), ZoneId.of("UTC"))
+            assertWithMessage("under %s the calendar must draw exactly one row", scope)
+                .that(drawn).hasSize(1)
+            assertWithMessage("under %s the one row must be at the new time", scope)
+                .that(drawn.single().occurrence).isEqualTo(moved)
+        }
+    }
+
+    @Test
+    fun `skipping a linked one-off settles its document rather than minting a second`() {
+        // Skip travels the other leg -- `endSeries`' no-rule branch -- and it took the same lookup,
+        // so it had the same blank-id hole. Both scopes, because `endSeries` says in its own KDoc
+        // that a task with no rule degenerates to one write whichever scope is used.
+        val row = linkedRow()
+
+        listOf(EditScope.THIS_OCCURRENCE, MoveScope.whenNotAsked).forEach { scope ->
+            val plan = ScheduleEdits.apply(
+                schedule = linkedOneOff(),
+                seriesDate = MoveScope.seriesDateOf(row),
+                edit = ScheduleEdit.Skip,
+                scope = scope,
+                nowEpochMillis = 99L,
+            ) as SchedulePlan.Writes
+
+            val upsert = plan.upserts.single()
+            assertWithMessage("under %s the skip must settle the document that exists", scope)
+                .that(upsert.id).isEqualTo("occ-1")
+            assertThat(upsert.outcome).isEqualTo(OccurrenceOutcome.Skipped(99L))
+            assertThat(upsert.googleEventId).isEqualTo("gcal-1")
+        }
     }
 
     @Test
@@ -461,6 +573,59 @@ class DragToMoveTest {
 
         assertThat(MoveScope.seriesDateOf(movedRow)).isEqualTo(monday.plusDays(2))
         assertThat(movedRow.date).isEqualTo(monday.plusDays(4))
+    }
+
+    /** The one-off's *when*, shared by its task's anchor and its document so the two agree. */
+    private val oneOffAt = Block(monday.atTime(9, 0), monday.atTime(10, 0))
+
+    /**
+     * A one-off that ALREADY has an occurrence document -- the shape `#61` produces.
+     *
+     * `SyncCalendarUseCase.link` calls `commit` when `entry.occurrence.id.isBlank()`, which mints
+     * the document with `seriesDate = null` (a one-off belongs to no series), a `googleEventId`,
+     * and the outcome still `Planned`. That is the reachable case `#69`'s guard actually cost --
+     * the other way a one-off gets a document is being ticked, and a settled window is already
+     * refused by `isSettled` on its own account.
+     */
+    private fun linkedOneOff(): TaskSchedule = TaskSchedule(
+        task = Task(id = "t1", title = "Dentist", occurrence = oneOffAt),
+        stored = listOf(
+            ScheduledOccurrence(
+                id = "occ-1",
+                taskId = "t1",
+                occurrence = oneOffAt,
+                seriesDate = null,
+                googleEventId = "gcal-1",
+            ),
+        ),
+    )
+
+    /** The row the calendar draws for [linkedOneOff] -- drawn from the document, so it has its id. */
+    private fun linkedRow() = entry(
+        occurrence = oneOffAt,
+        isRepeating = false,
+        occurrenceId = "occ-1",
+        seriesDate = null,
+    )
+
+    /**
+     * What `OccurrenceRepository.apply` does to the stored documents, in memory.
+     *
+     * A blank id means *create* and the repository mints one (`OccurrenceRepositoryImpl.apply`); a
+     * known id replaces in place; a delete removes. Written out rather than asserted around,
+     * because the whole of `#69` is about which of the first two a plan lands on.
+     */
+    private fun storedAfter(
+        before: List<ScheduledOccurrence>,
+        plan: SchedulePlan.Writes,
+    ): List<ScheduledOccurrence> {
+        var minted = 0
+        val kept = before.filterNot { it.id in plan.deletes }.toMutableList()
+        plan.upserts.forEach { up ->
+            val at = kept.indexOfFirst { it.id.isNotBlank() && it.id == up.id }
+            if (at >= 0) kept[at] = up else kept += up.copy(id = "minted-" + (++minted))
+        }
+        return kept
     }
 
     // ── Fixtures ────────────────────────────────────────────────────────────────────────

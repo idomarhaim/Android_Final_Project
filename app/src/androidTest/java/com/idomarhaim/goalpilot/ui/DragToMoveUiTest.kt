@@ -213,6 +213,85 @@ class DragToMoveUiTest {
     private fun entry(title: String): CalendarEntry =
         fixture().days.flatMap { it.all }.first { it.title == title }
 
+    /**
+     * A **one-off whose occurrence document already exists** -- `#61`'s shape, and the row that
+     * [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) made reachable.
+     *
+     * `SyncCalendarUseCase.link` mints the document when it pushes a one-off to Google:
+     * `seriesDate = null` because it belongs to no series, a `googleEventId`, and the outcome still
+     * `Planned`. Until `#69` widened `ScheduleEdits.apply`'s parameter, `CalendarEntry.isEditable`
+     * refused this row outright rather than let both scopes fail silently on it -- so the gesture
+     * below did not arrive at all. Deliberately its **own** state rather than a fourth row in
+     * [fixture]: what is being asserted is one property of one row, and putting it in the shared
+     * fixture would change what every other test on this surface is exercising.
+     */
+    private fun linkedOneOff(): CalendarUiState {
+        val at = Block(monday.atTime(10, 0), monday.atTime(11, 0))
+        val schedule = TaskSchedule(
+            task = Task(id = "t2", title = "Dentist", occurrence = at),
+            stored = listOf(
+                ScheduledOccurrence(
+                    id = "occ-1",
+                    taskId = "t2",
+                    occurrence = at,
+                    seriesDate = null,
+                    googleEventId = "gcal-1",
+                ),
+            ),
+        )
+        return CalendarUiState(
+            zoom = CalendarZoom.THREE_DAYS,
+            anchor = monday,
+            today = monday,
+            days = CalendarBuilder.build(
+                range = CalendarBuilder.daysFor(monday, CalendarZoom.THREE_DAYS),
+                today = monday,
+                now = noon,
+                schedules = listOf(schedule),
+                goals = emptyList(),
+                lifeAreas = emptyList(),
+                challenges = emptyList(),
+                waking = WakingHours.DEFAULT,
+                zone = zone,
+            ),
+            isLoading = false,
+        )
+    }
+
+    @Test
+    fun aGoogleLinkedOneOffCanBeDraggedNowThatItsDocumentIsAddressable() {
+        // #69, end to end on the surface. The row carries an `occurrenceId` and a NULL
+        // `seriesDate` -- exactly the pair `isEditable`'s removed third condition refused -- so
+        // before the fix this gesture reported nothing at all, silently. What the resulting plan
+        // then writes is asserted on the JVM in `DragToMoveTest`; what this test buys is that the
+        // gesture is offered and arrives.
+        val state = linkedOneOff()
+        val row = state.days.flatMap { it.all }.first { it.title == "Dentist" }
+        assertWithMessage("the fixture must really be the guarded shape: a document id AND no series date")
+            .that(row.occurrenceId to row.seriesDate).isEqualTo("occ-1" to null)
+
+        setSurface(state)
+        val column = columnPitchPx()
+
+        composeRule.onNodeWithTag(entryTag(row)).performScrollTo().performTouchInput {
+            down(center)
+            moveBy(Offset(4f, 0f), delayMillis = 1_000)
+            moveBy(Offset(column * 0.5f, 0f), delayMillis = 32)
+            moveBy(Offset(column * 0.5f, 0f), delayMillis = 32)
+            up()
+        }
+        composeRule.waitForIdle()
+
+        assertWithMessage("the guard is gone, so a carried long press on a linked one-off must report a move")
+            .that(moved).hasSize(1)
+        val (title, landing, scope) = moved.single()
+        assertThat(title).isEqualTo("Dentist")
+        assertThat(landing.date).isEqualTo(monday.plusDays(1))
+        // Still a one-off, so §2.1's question is not asked and `whenNotAsked` decides.
+        assertThat(scope).isEqualTo(EditScope.THIS_AND_FUTURE)
+        assertThat(composeRule.onAllNodesWithTag(TAG_SCOPE_SHEET).fetchSemanticsNodes()).isEmpty()
+    }
+
     // ── The gesture arrives ─────────────────────────────────────────────────────────────
 
     @Test
