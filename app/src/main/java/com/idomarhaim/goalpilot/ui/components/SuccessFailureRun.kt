@@ -388,10 +388,22 @@ private fun OutcomeDot(outcome: WindowOutcome, accent: Color, diameter: Int) {
  * differ in the **sentence**, which is the part that is about this goal; inventing a second
  * route would be re-speccing a feature the ticket says to reuse.
  *
- * ⚠️ **`Let it go` is deliberately absent.** §4.7: it *"stays a command, never an inference"*,
- * and `C4` forbids the app asserting an intrinsic edge by itself. There is no command behind it
- * in the app today, and a button that proposes a goal is over — while doing nothing — is worse
- * than the honest silence. Named in `CHANGELOG/2026-08-23/64-area-success-failure.md` as held.
+ * ⚠️ **`Let it go` is absent, and it is WANTED — it waits on a capability, not on a decision.**
+ *
+ * §4.7 draws it beside the offer and says it *"stays a command, never an inference"* — `C4`
+ * forbids the app asserting an intrinsic edge by itself. `#64` shipped without it because there
+ * is no command behind it, and a button proposing a goal is over **while doing nothing** is
+ * worse than the honest silence.
+ *
+ * **Ido asked for it on 2026-08-23, and asked for something wider than it:** the ability to
+ * delete **any** entity — goals, tasks, milestones, life areas. That is its own ticket, because
+ * the gap is *reach* rather than capability: every repository already has its delete, and each is
+ * wired to exactly **one** screen. When that lands, this is where the goal's own instance of it
+ * belongs, behind a confirm.
+ *
+ * ⚠️ **Do not read this paragraph as licence to add the button.** Wiring a delete into a summary
+ * card is deletion-class and stays always-ask, and the wider ticket is what decides where these
+ * controls live. Until then the honest silence still applies.
  */
 @Composable
 private fun NoNextStepSection(

@@ -34,6 +34,15 @@ before your first write. Normative rule:
 > regression check; it came back **282 tests, 0 failures** across 39 classes, so precondition 1 is
 > satisfied and the branch went up. `@{u}..HEAD` carried **no foreign commits**.
 >
+> 🎫 **`#64` IS CLOSED, and its one held item MOVED rather than being dropped.** Asked directly,
+> Ido said `Let it go` **is** wanted — *"but I need to be able to delete anything: goals, tasks,
+> milestones, life areas."* So it is an instance of a wider requirement, filed as **`#67`** with a
+> brief at `sessions/67-delete-anything.md`. The survey for it found the capability **already
+> exists** (three repository deletes; milestones are not an entity) and that the gap is **reach** —
+> plus a defect: `Observed:` `GoalDetailViewModel` reads `observeTasks(goalId)` and neither the
+> dashboard nor the calendar carries a delete, so `Inferred:` **an unfiled task cannot be deleted
+> from the UI at all**. `Untested:` on a device; `#67` confirms it before building.
+>
 > 🏁 **`66-unmeasured-percent` RELEASED 2026-08-23 — this commit.** `#66` shipped over four
 > commits (`7de9bc0`, `005d297`, `efe5f44`, `99e2070`), the brief is closed to `sessions/done/`, and
 > the ticket is closed. **Both singletons are free**: the **Gradle daemon** and **`emulator-5554`

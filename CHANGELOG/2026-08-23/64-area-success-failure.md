@@ -39,6 +39,39 @@ next reader to the wrong property.
 **Decision taken per `rules/derivable-decision.md`** — it turns on the artifact, not on Ido — and
 recorded here as **mine**. One message reverses it.
 
+## ✅ `Let it go` — Ido answered, `#64` is closed, and the answer was wider than the question
+
+**Added 2026-08-23, after this entry's first version.** The section below shipped `Let it go` as
+**held**, and `#64` was left open on that one item. Asked directly, Ido answered both halves —
+and the second answer changed shape between the picker and the follow-up message, so both are
+recorded:
+
+- **`#64` is closed.** §4.7's table lists exactly two offers as the deliverable and both shipped;
+  the `Let it go` sentence is a constraint on how it may appear, not a thing to build.
+- **`Let it go` is wanted after all** — *"I do, but I need to be able to delete anything: goals,
+  tasks, milestones, life areas."* So the item is **not** declined; it is a small instance of a
+  wider requirement, and it belongs to that requirement's ticket rather than to this one.
+
+**The survey that requirement triggered found a real defect, and it is not the one anybody
+expected.** The capability is **already there** — `GoalRepository.deleteGoal`/`setArchived`,
+`TaskRepository.deleteTask` and `LifeAreaRepository.deleteLifeArea` all exist — and **milestones
+are not a separate entity at all** (`Goal.declaredBy == null` *is* a milestone, per its own
+KDoc), so there is nothing to build for them. What is missing is **reach**: each delete is wired
+to exactly **one** screen.
+
+`Observed:` mechanically over `app/src/main`, not by eye —
+`GoalDetailViewModel` reads `observeTasks(goalId)`, so it lists only tasks **filed under that
+goal**, and `DashboardScreen` and `CalendarScreen` contain no delete control at all. `Inferred:`
+from those two facts together, **a task with no goal — which `Task.goalEdges`' own KDoc calls
+*"unfiled, which is a legitimate state"* — is reachable from no screen that offers a delete, so
+it cannot be deleted from the UI.** `Untested:` on a device; this is a source read and wants
+confirming by trying it.
+
+That is the ticket, and it is filed separately rather than bolted onto `#64`:
+**[`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67)**, brief at
+`sessions/67-delete-anything.md`. **`#64` is closed** — nothing in §4.7's table is
+outstanding, and the held item moved rather than being dropped.
+
 ## The second decision: a window is a **bucket**, and the pair is its tally
 
 The brief says *"a window **is** an occurrence"*. The screen's own sentence says *"a window counts as
@@ -104,7 +137,7 @@ lives. Neither property's behaviour changed and no test moved.
 is authored — taken from the prototype's own Hebrew frame — so resuming `#51` is a render pass rather
 than a writing job.
 
-## `Let it go` is not here, and that is the deviation to know about
+## `Let it go` is not here — the reasoning, as it stood before Ido settled it above
 
 §4.7 has it *"beside the offer"*. It is **not rendered**, and the reason is the rest of that same
 sentence: *"`Let it go` stays a command, never an inference — `C4` forbids the app asserting an
