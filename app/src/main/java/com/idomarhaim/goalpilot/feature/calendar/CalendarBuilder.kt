@@ -160,6 +160,12 @@ object CalendarBuilder {
                 taskId = task.id,
                 occurrenceId = stored.id.ifBlank { null },
                 outcome = stored.outcome,
+                // The two fields `#68`'s edits are identified by. Neither is derivable from the
+                // row: `seriesDate` is the day the RULE produced this instance on, which a moved
+                // instance no longer sits on, and `isRepeating` is a property of the task, which
+                // an entry otherwise carries nothing of. See `CalendarEntry.isEditable`.
+                seriesDate = stored.seriesDate,
+                isRepeating = task.repeatRule != null,
             )
         }
     }

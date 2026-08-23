@@ -1,8 +1,11 @@
 package com.idomarhaim.goalpilot.feature.calendar
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,26 +40,38 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.domain.model.EditScope
 import com.idomarhaim.goalpilot.domain.model.OccurrenceOutcome
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
@@ -113,6 +128,9 @@ fun CalendarScreen(
         onOpenTask = onOpenTask,
         onTick = { entry, done -> viewModel.setDone(entry, done) },
         onCreate = { viewModel.create(it) },
+        onMove = { entry, target, scope -> viewModel.move(entry, target, scope) },
+        onSkip = { entry, scope -> viewModel.skip(entry, scope) },
+        onNoticeShown = viewModel::dismissNotice,
     )
 }
 
@@ -137,11 +155,52 @@ fun CalendarSurface(
     onOpenTask: (String) -> Unit = {},
     onTick: (CalendarEntry, Boolean) -> Unit = { _, _ -> },
     onCreate: (SlotDraft) -> Unit = {},
+    onMove: (CalendarEntry, DragToMove.Target, EditScope) -> Unit = { _, _, _ -> },
+    onSkip: (CalendarEntry, EditScope) -> Unit = { _, _ -> },
+    onNoticeShown: () -> Unit = {},
 ) {
     var draft by rememberSaveable(stateSaver = SlotDraftSaver) { mutableStateOf<SlotDraft?>(null) }
+    // Deliberately NOT `rememberSaveable`. A half-finished edit is a gesture that is still
+    // happening: the finger is down, or a sheet is open over the row it names. Restoring one
+    // across process death would put a scope question in front of a drag nobody remembers making,
+    // and `CalendarEntry` is a render-time value the surface is handed rather than one it owns.
+    var pending by remember { mutableStateOf<PendingEdit?>(null) }
+    val snackbars = remember { SnackbarHostState() }
+
+    // §0.4: legal, but never silent. `TooLarge` names both numbers here rather than degrading to
+    // "could not move", because the person cannot act on the refusal without learning it is about
+    // the size of their own history.
+    //
+    // ⚠️ **Taken off the state immediately, and shown from a copy — two effects, not one.**
+    // `showSnackbar` suspends for the whole time the bar is up, so consuming the notice *after* it
+    // returns leaves the state holding a sentence for four seconds. That is not merely untidy: a
+    // second refusal in that window produces an EQUAL `CalendarNotice`, `LaunchedEffect`'s key does
+    // not change, and the second refusal is **silent** — which is the one thing §0.4 forbids. The
+    // state round-trips through `null` here, so an identical refusal is a new one.
+    var showing by remember { mutableStateOf<String?>(null) }
+    state.notice?.let { notice ->
+        val text = when (notice) {
+            is CalendarNotice.TooLarge ->
+                "Too many days to rewrite in one go — that move needs ${notice.required} writes " +
+                    "and the limit is ${notice.limit}. Try moving just this one."
+
+            CalendarNotice.EditFailed -> "That change did not save. Check your connection and try again."
+        }
+        LaunchedEffect(notice) {
+            showing = text
+            onNoticeShown()
+        }
+    }
+    showing?.let { text ->
+        LaunchedEffect(text) {
+            snackbars.showSnackbar(text)
+            showing = null
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(snackbars, modifier = Modifier.testTag(TAG_NOTICE)) },
         topBar = {
             TopAppBar(
                 title = { Text(rangeLabel(state), maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -186,12 +245,26 @@ fun CalendarSurface(
                     onOpen = { it.taskId?.let(onOpenTask) },
                     onTick = onTick,
                     onCreate = { draft = SlotDraft(date = state.anchor) },
+                    onHold = { pending = PendingEdit.menu(it) },
                 )
                 else -> DayColumns(
                     state = state,
                     onOpen = { it.taskId?.let(onOpenTask) },
                     onTick = onTick,
                     onTapSlot = { date, hour -> draft = SlotDraft.atSlot(date, hour) },
+                    onHold = { pending = PendingEdit.menu(it) },
+                    onDrop = { entry, target ->
+                        // §2.1's question is asked ONLY where a rule exists. Where it is not, the
+                        // scope is derived rather than defaulted -- `MoveScope.whenNotAsked` is the
+                        // one that writes the task's own anchor, which is what a one-off's *when*
+                        // actually is.
+                        pending = if (MoveScope.isAsked(entry)) {
+                            PendingEdit(entry = entry, verb = ScopedVerb.MOVE, target = target)
+                        } else {
+                            onMove(entry, target, MoveScope.whenNotAsked)
+                            null
+                        }
+                    },
                 )
             }
         }
@@ -205,6 +278,59 @@ fun CalendarSurface(
             onDismiss = { draft = null },
             onSave = { onCreate(it); draft = null },
         )
+    }
+
+    pending?.let { edit ->
+        when {
+            // The long press that did not travel: what do you want to do with this row.
+            edit.verb == null -> EntryActionSheet(
+                entry = edit.entry,
+                onSkip = {
+                    pending = if (MoveScope.isAsked(edit.entry)) {
+                        edit.copy(verb = ScopedVerb.SKIP)
+                    } else {
+                        onSkip(edit.entry, MoveScope.whenNotAsked)
+                        null
+                    }
+                },
+                onDismiss = { pending = null },
+            )
+
+            else -> ScopeSheet(
+                entry = edit.entry,
+                verb = edit.verb,
+                onPick = { scope ->
+                    when (edit.verb) {
+                        ScopedVerb.MOVE -> edit.target?.let { onMove(edit.entry, it, scope) }
+                        ScopedVerb.SKIP -> onSkip(edit.entry, scope)
+                    }
+                    pending = null
+                },
+                onDismiss = { pending = null },
+            )
+        }
+    }
+}
+
+/**
+ * An edit the surface has begun and is waiting on an answer for
+ * ([#68](https://github.com/idomarhaim/Android_Final_Project/issues/68)).
+ *
+ * One type for both sheets, because they are two steps of one interaction and modelling them as
+ * two independent nullable states admits *both open at once* — a scope question over an action
+ * menu, on a row the person can no longer see.
+ *
+ * @param verb `null` while [EntryActionSheet] is choosing one. Non-null names which sheet is up.
+ * @param target where a drag landed. Only ever set for [ScopedVerb.MOVE], which is why it is
+ *   nullable rather than a second subclass: a skip has no *where*.
+ */
+private data class PendingEdit(
+    val entry: CalendarEntry,
+    val verb: ScopedVerb? = null,
+    val target: DragToMove.Target? = null,
+) {
+    companion object {
+        fun menu(entry: CalendarEntry) = PendingEdit(entry = entry)
     }
 }
 
@@ -240,9 +366,23 @@ private fun DayColumns(
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onTapSlot: (LocalDate, Int) -> Unit,
+    onHold: (CalendarEntry) -> Unit,
+    onDrop: (CalendarEntry, DragToMove.Target) -> Unit,
 ) {
     val stacked = state.zoom == CalendarZoom.WEEK
     val days = state.days
+    // Measured on the Row that lays the grids out, and divided by the column count -- so this is
+    // the PITCH, centre to centre, and not one column's drawn width. `DragToMove.Geometry`'s KDoc
+    // has why the difference matters: the 2 dp of padding each column carries on both sides puts
+    // consecutive columns 4 dp further apart than they are wide, and rounding a drag against the
+    // width would land every long drag short of the finger.
+    var columnPitchPx by remember { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+    val geometry = DragToMove.Geometry(
+        columnPitchPx = columnPitchPx,
+        hourHeightPx = with(density) { HOUR_HEIGHT_DP.dp.toPx() },
+        days = days.map { it.date },
+    )
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -260,20 +400,33 @@ private fun DayColumns(
         if (days.any { it.allDay.isNotEmpty() }) {
             Band(days) { day ->
                 Column(modifier = Modifier.padding(top = 6.dp)) {
-                    day.allDay.forEach { EntryChip(it, stacked, onOpen, onTick) }
+                    day.allDay.forEach { EntryChip(it, stacked, onOpen, onTick, onHold) }
                 }
             }
         }
         if (days.any { it.untimed.isNotEmpty() }) {
             Band(days) { day ->
-                if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, stacked, onOpen, onTick)
+                if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, stacked, onOpen, onTick, onHold)
             }
         }
         Spacer(Modifier.height(6.dp))
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onSizeChanged { columnPitchPx = if (days.isEmpty()) 0f else it.width.toFloat() / days.size },
+        ) {
             days.forEach { day ->
                 Box(modifier = Modifier.weight(1f).padding(horizontal = 2.dp)) {
-                    HourGrid(day = day, stacked = stacked, onOpen = onOpen, onTick = onTick, onTapSlot = onTapSlot)
+                    HourGrid(
+                        day = day,
+                        stacked = stacked,
+                        onOpen = onOpen,
+                        onTick = onTick,
+                        onTapSlot = onTapSlot,
+                        onHold = onHold,
+                        onDrop = onDrop,
+                        geometry = geometry,
+                    )
                 }
             }
         }
@@ -402,6 +555,7 @@ private fun UntimedStrip(
     stacked: Boolean,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
+    onHold: (CalendarEntry) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 6.dp).testTag(TAG_UNTIMED)) {
         Text(
@@ -410,7 +564,7 @@ private fun UntimedStrip(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
         )
-        entries.forEach { EntryChip(it, stacked, onOpen, onTick) }
+        entries.forEach { EntryChip(it, stacked, onOpen, onTick, onHold) }
     }
 }
 
@@ -429,6 +583,9 @@ private fun HourGrid(
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onTapSlot: (LocalDate, Int) -> Unit,
+    onHold: (CalendarEntry) -> Unit,
+    onDrop: (CalendarEntry, DragToMove.Target) -> Unit,
+    geometry: DragToMove.Geometry,
 ) {
     val hours = HOUR_TO - HOUR_FROM
     Box(modifier = Modifier.fillMaxWidth().height((hours * HOUR_HEIGHT_DP).dp).testTag(TAG_GRID)) {
@@ -452,7 +609,15 @@ private fun HourGrid(
             }
             val top = ((minutes - HOUR_FROM * 60).coerceAtLeast(0) / 60f) * HOUR_HEIGHT_DP
             Box(modifier = Modifier.offset(y = top.dp).fillMaxWidth()) {
-                EntryChip(entry, stacked, onOpen, onTick)
+                DraggableEntry(
+                    entry = entry,
+                    stacked = stacked,
+                    geometry = geometry,
+                    onOpen = onOpen,
+                    onTick = onTick,
+                    onHold = onHold,
+                    onDrop = onDrop,
+                )
             }
         }
     }
@@ -465,6 +630,7 @@ private fun AgendaColumn(
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onCreate: () -> Unit,
+    onHold: (CalendarEntry) -> Unit,
 ) {
     if (day == null) return
     Column(
@@ -484,9 +650,13 @@ private fun AgendaColumn(
                 modifier = Modifier.padding(vertical = 24.dp).clickable(onClick = onCreate),
             )
         }
-        day.allDay.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick) }
-        if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, false, onOpen, onTick)
-        day.timed.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick) }
+        // §4.2's agenda level is a LIST, so nothing here is dragged: a row's position in a list
+        // carries no *when*, and a drag would only ever mean *reorder*, which is not a thing this
+        // app has. The long press still reaches the entry menu, so `Skip` is available at every
+        // zoom -- see `CalendarEntry.isDraggable`.
+        day.allDay.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick, onHold = onHold) }
+        if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, false, onOpen, onTick, onHold)
+        day.timed.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick, onHold = onHold) }
         Spacer(Modifier.height(96.dp))
     }
 }
@@ -499,12 +669,16 @@ private fun AgendaColumn(
  * there is no glyph, no legend, and no symbol vocabulary here: the rung is in the **form** of
  * [TimeColumn], and [LifeAreaDot] carries a colour and a name.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EntryChip(
     entry: CalendarEntry,
     stacked: Boolean,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
+    onHold: (CalendarEntry) -> Unit = {},
+    /** Supplied by [DraggableEntry], which owns a gesture of its own. `null` means *use the default*. */
+    gesture: Modifier? = null,
 ) {
     val isExternal = entry.kind == EntryKind.EXTERNAL
     val accent = when {
@@ -513,16 +687,130 @@ private fun EntryChip(
         entry.carriedForward -> MaterialTheme.colorScheme.error
         else -> entry.lifeArea?.colorHex?.toComposeColor() ?: MaterialTheme.colorScheme.primary
     }
+    // A row with no schedule behind it -- a goal deadline, a challenge window, an EXTERNAL event,
+    // or a window already ticked or skipped -- gets a plain tap and nothing else. Offering a menu
+    // that could only say "cancel" teaches the person that holding a row does nothing, on the
+    // surface where holding a row is the ONLY way to reach §2.1's skip.
+    val press = when {
+        gesture != null -> gesture
+        entry.isEditable -> Modifier.combinedClickable(
+            onClick = { onOpen(entry) },
+            onLongClick = { onHold(entry) },
+        )
+        else -> Modifier.clickable { onOpen(entry) }
+    }
     val box = Modifier
         .fillMaxWidth()
         .padding(vertical = 2.dp)
         .clip(RoundedCornerShape(10.dp))
         .background(accent.copy(alpha = 0.14f))
-        .clickable { onOpen(entry) }
+        .then(press)
         .padding(horizontal = 4.dp, vertical = 4.dp)
         .testTag(entryTag(entry))
 
     if (stacked) StackedChip(entry, accent, box) else WideChip(entry, accent, box, onTick)
+}
+
+/**
+ * §4.3's ***drag to move***, on the one lane that has somewhere to drop
+ * ([#68](https://github.com/idomarhaim/Android_Final_Project/issues/68)).
+ *
+ * ### One long press, two verbs, and the release is what decides
+ *
+ * `detectDragGesturesAfterLongPress` rather than a plain drag, and that is not a stylistic choice:
+ * the grid lives inside a `verticalScroll`, so a gesture that began on touch-down would be
+ * competing with the scroll on every pixel and one of the two would have to lose. Every calendar
+ * resolves it the same way — hold the thing, then carry it.
+ *
+ * A long press that goes **nowhere** then has to mean something, because the chip has no room for
+ * a third control (`TimeColumn`'s KDoc records what happened the one time something on this row
+ * was allowed to grow). So it opens the entry menu. [DragToMove.isMove] is the whole of that
+ * decision and it is tested on the JVM; both terminal callbacks route through it rather than only
+ * `onDragEnd`, because a release with no travel is delivered as a **cancel** and reading only one
+ * of the two would drop half the presses.
+ *
+ * ### Nothing here decides where it lands
+ *
+ * This accumulates a pixel delta and offsets the chip by it. [DragToMove.targetOf] turns that into
+ * a day and a minute, and it is a pure function of a geometry — see its KDoc for why a drag handler
+ * is the wrong place to keep arithmetic whose every wrong answer still renders as a block.
+ */
+@Composable
+private fun DraggableEntry(
+    entry: CalendarEntry,
+    stacked: Boolean,
+    geometry: DragToMove.Geometry,
+    onOpen: (CalendarEntry) -> Unit,
+    onTick: (CalendarEntry, Boolean) -> Unit,
+    onHold: (CalendarEntry) -> Unit,
+    onDrop: (CalendarEntry, DragToMove.Target) -> Unit,
+) {
+    if (!entry.isDraggable) {
+        EntryChip(entry, stacked, onOpen, onTick, onHold)
+        return
+    }
+    var travel by remember(entry.key) { mutableStateOf(Offset.Zero) }
+    var carried by remember(entry.key) { mutableStateOf(false) }
+
+    // `pointerInput`'s block outlives the composition that created it -- it restarts only when its
+    // keys change -- so anything captured inside it goes stale the moment the caller recomposes.
+    // Nothing about that failure is visible: the gesture keeps working and reports into a closure
+    // over an older frame.
+    //
+    // ⚠️ **`row` is pinned as well as the two callbacks, and it is the one that would actually
+    // bite.** The `pointerInput` below is keyed on `entry.key`, and a **stored** instance's key is
+    // its document id -- which does NOT change when the instance is moved (`CalendarBuilder`: the
+    // key falls back to a synthesised one only for a generated instance with no document). So after
+    // one successful drag the same key carries a *new* occurrence at a *new* time, the block does
+    // not restart, and a second drag would compute its landing from the **old** `opensAt`: it would
+    // move the row back to roughly where it started, and look like the calendar fighting the
+    // finger. `geometry` needs no such treatment -- it is a key, so a change to it restarts the
+    // block outright, which is what a zoom or a scroll should do to a drag in flight.
+    val row by rememberUpdatedState(entry)
+    val hold by rememberUpdatedState(onHold)
+    val drop by rememberUpdatedState(onDrop)
+
+    val finish = { commit: Boolean ->
+        val (dx, dy) = travel
+        when {
+            !DragToMove.isMove(dx, dy) -> hold(row)
+            commit -> DragToMove.targetOf(row, dx, dy, geometry)?.let { drop(row, it) }
+            else -> Unit
+        }
+        travel = Offset.Zero
+        carried = false
+    }
+
+    Box(
+        modifier = Modifier
+            // Applied to the wrapper rather than to the chip, so the row the finger is holding is
+            // the row that moves -- offsetting inside the chip would leave its background behind.
+            .offset { IntOffset(travel.x.toInt(), travel.y.toInt()) }
+            // Picked up, and it reads as picked up. Without this a drag looks like the calendar
+            // redrawing itself under a stationary finger.
+            .alpha(if (carried) 0.75f else 1f),
+    ) {
+        EntryChip(
+            entry = entry,
+            stacked = stacked,
+            onOpen = onOpen,
+            onTick = onTick,
+            onHold = onHold,
+            gesture = Modifier
+                .clickable { onOpen(entry) }
+                .pointerInput(entry.key, geometry) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { travel = Offset.Zero; carried = true },
+                        onDrag = { change, delta ->
+                            change.consume()
+                            travel += delta
+                        },
+                        onDragEnd = { finish(true) },
+                        onDragCancel = { finish(false) },
+                    )
+                },
+        )
+    }
 }
 
 /**

@@ -8,7 +8,10 @@ import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalEdge
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.EditScope
 import com.idomarhaim.goalpilot.domain.model.OccurrenceOutcome
+import com.idomarhaim.goalpilot.domain.model.ScheduleEdit
+import com.idomarhaim.goalpilot.domain.model.ScheduleEdits
 import com.idomarhaim.goalpilot.domain.model.SchedulePlan
 import com.idomarhaim.goalpilot.domain.model.ScheduledOccurrence
 import com.idomarhaim.goalpilot.domain.model.Task
@@ -48,6 +51,15 @@ data class CalendarUiState(
     val days: List<CalendarDay> = emptyList(),
     val goals: List<Goal> = emptyList(),
     val isLoading: Boolean = true,
+    /**
+     * Something the surface has to **say** — §0.4's *legal, but never silent*.
+     *
+     * On the state rather than in a one-shot event channel, because the only thing that can put
+     * one here is an edit the user just asked for and is still looking at. A refusal that survived
+     * a rotation and a refusal that did not would be two different products, and this is the one
+     * where the sentence is still on screen.
+     */
+    val notice: CalendarNotice? = null,
 ) {
     val hasAnything: Boolean get() = days.any { !it.isEmpty }
 }
@@ -91,6 +103,15 @@ class CalendarViewModel @Inject constructor(
 
     private val zoom = MutableStateFlow(CalendarZoom.DEFAULT)
     private val anchor = MutableStateFlow(LocalDate.now(clock))
+    private val notice = MutableStateFlow<CalendarNotice?>(null)
+
+    /** What the user moved or was told, gathered so [state]'s outer `combine` stays at five arms. */
+    private data class Controls(
+        val zoom: CalendarZoom,
+        val anchor: LocalDate,
+        val waking: WakingHours,
+        val notice: CalendarNotice?,
+    )
 
     /**
      * A tick of the wall clock, taken **once per emission** rather than read inside the builder.
@@ -112,9 +133,11 @@ class CalendarViewModel @Inject constructor(
         goals.observeGoals(),
         lifeAreas.observeLifeAreas(),
         challenges.observeMyChallenges().map { it.map(ChallengeWithStandings::challenge) },
-        combine(zoom, anchor, appPreferences.daySchedule) { z, a, day -> Triple(z, a, day.waking) },
-    ) { schedules, goals, areas, myChallenges, (zoom, anchor, waking) ->
-        buildState(schedules, goals, areas, myChallenges, zoom, anchor, waking)
+        combine(zoom, anchor, appPreferences.daySchedule, notice) { z, a, day, notice ->
+            Controls(zoom = z, anchor = a, waking = day.waking, notice = notice)
+        },
+    ) { schedules, goals, areas, myChallenges, controls ->
+        buildState(schedules, goals, areas, myChallenges, controls)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -126,10 +149,9 @@ class CalendarViewModel @Inject constructor(
         allGoals: List<Goal>,
         areas: List<LifeArea>,
         myChallenges: List<Challenge>,
-        zoom: CalendarZoom,
-        anchor: LocalDate,
-        waking: WakingHours,
+        controls: Controls,
     ): CalendarUiState {
+        val (zoom, anchor, waking, notice) = controls
         val today = LocalDate.now(clock)
         return CalendarUiState(
             zoom = zoom,
@@ -150,7 +172,13 @@ class CalendarViewModel @Inject constructor(
             ),
             goals = allGoals.filterNot { it.isArchived },
             isLoading = false,
+            notice = notice,
         )
+    }
+
+    /** The surface has shown what [notice] held. */
+    fun dismissNotice() {
+        notice.value = null
     }
 
     fun setZoom(next: CalendarZoom) {
@@ -245,13 +273,101 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
+    /**
+     * §4.3's *drag to move*, committed
+     * ([#68](https://github.com/idomarhaim/Android_Final_Project/issues/68)).
+     *
+     * [target] is where the finger landed, already resolved to a day and a minute by
+     * [DragToMove.targetOf] — a pure function of the grid's geometry, tested on the JVM. Turning it
+     * into an [Occurrence][com.idomarhaim.goalpilot.domain.model.Occurrence] is
+     * [DragToMove.movedTo], which is pure for the same reason. Nothing about *where* is decided
+     * here.
+     */
+    fun move(
+        entry: CalendarEntry,
+        target: DragToMove.Target,
+        scope: EditScope,
+        onDone: (Boolean) -> Unit = {},
+    ) = edit(entry, ScheduleEdit.MoveTo(DragToMove.movedTo(entry, target)), scope, onDone)
+
+    /**
+     * §2.1's *skip*, and the second entry point to the machinery `#63` built.
+     *
+     * ⚠️ **A skip is not a miss.** [OccurrenceOutcome.Skipped]'s KDoc is the authority: a window the
+     * person chose to drop is a decision, it is excluded from `Doneness`' totals and from `#64`'s
+     * success/failure run, and counting it against them is §2.3's *"an over-eager agent
+     * manufactures failures"* read from the other direction. Nothing here needs to enforce that —
+     * it is enforced where the totals are computed — but this is the call site that creates the
+     * outcome, so it is where a future reader will come looking.
+     */
+    fun skip(entry: CalendarEntry, scope: EditScope, onDone: (Boolean) -> Unit = {}) =
+        edit(entry, ScheduleEdit.Skip, scope, onDone)
+
+    /**
+     * **Compute the plan, then commit it** — the split `#63` designed and this ticket must not
+     * undo.
+     *
+     * `ScheduleEdits.apply` is pure and takes its clock as an argument, so the decision about what
+     * an edit implies is testable without a database and is asserted in `DragToMoveTest`. What
+     * happens here is only the two things a view model is for: reading the aggregate out of the
+     * stream, and handing the result to the repository.
+     *
+     * ⚠️ **[SchedulePlan.TooLarge] is surfaced and never swallowed.** §0.4 forbids the app being
+     * silent about a refusal, and this one is otherwise **invisible**: the plan is not committed,
+     * so nothing changes on screen, so the drag reads as a gesture the calendar failed to notice.
+     * It already names both numbers ([SchedulePlan.TooLarge.required] and `limit`) and they are
+     * carried through to the message rather than reduced to *"could not move"*, because the person
+     * cannot act on the refusal without knowing it is about the size of their own history.
+     */
+    private fun edit(
+        entry: CalendarEntry,
+        change: ScheduleEdit,
+        scope: EditScope,
+        onDone: (Boolean) -> Unit,
+    ) {
+        // A row with no task behind it should never reach here -- `CalendarEntry.isEditable` is
+        // false for every non-task kind -- so this is a guard and not a path, and it stays silent.
+        val taskId = entry.taskId ?: return onDone(false)
+        // This one is NOT unreachable: the task can leave the stream while a sheet is open over its
+        // row, and then answering the scope question would do nothing at all. §0.4 forbids that
+        // being silent for the same reason `TooLarge` may not be -- nothing on screen changes
+        // either way, so silence is indistinguishable from the app ignoring the answer.
+        val schedule = scheduleOf(taskId) ?: run {
+            notice.value = CalendarNotice.EditFailed
+            return onDone(false)
+        }
+        viewModelScope.launch {
+            val plan = ScheduleEdits.apply(
+                schedule = schedule,
+                seriesDate = MoveScope.seriesDateOf(entry),
+                edit = change,
+                scope = scope,
+                nowEpochMillis = clock.millis(),
+            )
+            when (plan) {
+                is SchedulePlan.TooLarge -> {
+                    notice.value = CalendarNotice.TooLarge(required = plan.required, limit = plan.limit)
+                    onDone(false)
+                }
+
+                is SchedulePlan.Writes -> {
+                    val ok = occurrences.apply(plan) is Resource.Success
+                    if (!ok) notice.value = CalendarNotice.EditFailed
+                    onDone(ok)
+                }
+            }
+        }
+    }
+
     private var cachedSchedules: List<TaskSchedule> = emptyList()
 
     init {
         viewModelScope.launch { schedules.collect { cachedSchedules = it } }
     }
 
-    private fun taskOf(taskId: String): Task? = cachedSchedules.firstOrNull { it.task.id == taskId }?.task
+    private fun scheduleOf(taskId: String): TaskSchedule? = cachedSchedules.firstOrNull { it.task.id == taskId }
+
+    private fun taskOf(taskId: String): Task? = scheduleOf(taskId)?.task
 
     private fun seriesDateOf(taskId: String, entry: CalendarEntry): LocalDate? =
         if (taskOf(taskId)?.repeatRule == null) null else entry.date

@@ -45,7 +45,6 @@ before your first write. Normative rule:
 > `SocialRepositoryImpl` (*"across N goals with a number"*) and could not make it here.
 >
 > 📱 **NO DEVICE WILL BE TOUCHED.** No `adb`, no AVD, no install.
-| `68-drag-to-move` | `#68` — drag to move on the calendar + the scope sheet that makes `#63`'s *this occurrence or all future ones?* reachable, plus Skip | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt` · `…/calendar/CalendarViewModel.kt` · `…/calendar/CalendarModel.kt` · `…/calendar/CalendarBuilder.kt` (**widened** — the two new `CalendarEntry` fields the drag needs are populated there) · `…/calendar/ScopeSheet.kt` (new) · `app/src/main/res/values/strings.xml` · `app/src/main/res/values-iw/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` (new) · `kb-candidates/2026-08-23-68-drag-to-move.md` · `CHANGELOG/2026-08-23/68-drag-to-move.md` · `sessions/68-drag-to-move.md` | **Gradle daemon** · **AVD + `adb`** (a drag cannot be verified any other way) | 2026-08-23 |
 > 🏁 **`64-area-success-failure` RELEASED 2026-08-23 — this commit.** `#64` shipped in
 > `9c89144`; brief closed to `sessions/done/` with `status: done`, and the candidate file drained in
 > full and deleted (4 entries, cross-repo into `C:\Dev\JARVIS` — `1736766`). **Singletons free**: the
@@ -4721,6 +4720,63 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `68-drag-to-move` — released 2026-08-23, this commit
+
+`#68` shipped in this commit. Brief closed to `sessions/done/` with `status: done`. **`#68` is
+CLOSED** — all four items it owed shipped, and no sibling brief carries `issue: 68`.
+
+🔓 **BOTH SINGLETONS ARE FREE**: the **Gradle daemon** and **`emulator-5554` (`Pixel_10_Pro_XL`)
++ `adb`**. `Pixel_10_Pro_XL_B` was never booted.
+
+📱 **A DEVICE WAS USED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** `adb install -r` on both APKs plus
+`am instrument` — never `connectedDebugAndroidTest`. `DragToMoveUiTest` uses a bare
+`createComposeRule()` with no Hilt and no Firebase, so it needed no account in the first place.
+
+**Tests:** **1068 JVM, 0 failures** · **296 instrumented, 0 failures** across 43 classes (the whole
+suite; **14** of them this ticket's) · **four render-pass PNGs pulled and looked at**.
+
+✅ **NOTHING IS HELD.** `@{u}..HEAD` carried **no foreign commits**.
+
+📌 **This note is in *Recently released*, and the previous eleven are not — deliberately.**
+`## 🔒 Active claims` is **4,543 lines** long and holds **one** table row; everything else in it is a
+release note appended after the table. That is exactly the shape the board rule names as a misread
+hazard: a partial read shows the header and then prose, and reports *empty* while live rows sit
+below the cut. Nothing already there was moved — that is somebody else's account of their own work
+— but this one goes where the file already has a section for it.
+
+🐞 **ONE DEFECT IS REPORTED AND NOT FIXED, and it is in `#63`'s machinery rather than in this
+ticket's.** `ScheduleEdits.apply` identifies an instance with
+`stored.firstOrNull { it.seriesDate == seriesDate }` over a **non-null** `seriesDate` parameter, and
+a **one-off's** document carries `seriesDate = null` by construction — so that lookup can never find
+it. `THIS_OCCURRENCE` then creates a **second** one-off document (the calendar draws the row twice);
+`THIS_AND_FUTURE` writes the anchor and touches no document, so the move appears to **do nothing**.
+`Observed:` read out of `ScheduleEdits.apply`, `TaskSchedule.occurrencesIn` and
+`CalendarViewModel.setDone`, 2026-08-23. `Untested:` on a device — `CalendarEntry.isEditable` is what
+stops the app reaching it, and it carries the whole argument in its KDoc.
+
+**Reachable two ways, and only one is closed on its own account:** ticking a one-off (already
+excluded, because a settled window is history under §2.3/§2.8), and **`#61` pushing a one-off to
+Google** (`SyncCalendarUseCase.link`, line 403, creates the document). The fix is widening that
+parameter to `LocalDate?`, which is a change to `ScheduleEdits`' semantics and is out of `#68`'s
+scope **by name**. **It wants its own ticket; filing one is an outward action and is Ido's call.**
+Whoever picks it up: `DragToMoveTest.a one-off that already has a document is not editable…` is the
+test that says the guard may come off.
+
+🤝 **`67-delete-anything` — the entry menu you need now exists.** `EntryActionSheet` in
+`feature/calendar/ScopeSheet.kt` is opened by a long press on any editable calendar row (and by a
+long press that travelled less than `DragToMove.PRESS_SLOP_PX` on a grid row). Adding *Delete* is
+one `OutlinedButton` beside `Skip` plus a callback — which is the ordering `#68`-before-`#67` was
+chosen for, and it held. **`CalendarScreen.kt` is free**; note that `EntryChip` gained an `onHold`
+parameter and an optional `gesture: Modifier?`, and that `DraggableEntry` wraps grid rows.
+
+⚠️ **`AGENTS.md`'s `am instrument` recipe is under-specified and cost one failed run.** It writes
+`<appId>.test/<runner>`, but the debug build sets `applicationIdSuffix = ".debug"`, so the real
+component is **`com.idomarhaim.goalpilot.debug.test/com.idomarhaim.goalpilot.HiltTestRunner`**.
+`adb shell pm list instrumentation` answers it in one command. **Not edited here** — `AGENTS.md` is
+a leased commons path and this session did not take that lease. Flagged for whoever does; it is also
+entry 3 in `kb-candidates/2026-08-23-68-drag-to-move.md`.
+
 
 ### 🏁 `60-calendar-surface` — released 2026-08-23, this commit
 

@@ -2,12 +2,13 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 68
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarViewModel.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarModel.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarBuilder.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/ScopeSheet.kt
   - app/src/main/res/values/strings.xml
   - app/src/main/res/values-iw/strings.xml
@@ -19,6 +20,12 @@ owns:
 singletons:
   - the AVD and adb, for the gesture pass — a drag cannot be verified any other way
 created: 2026-08-23 by 64-area-success-failure
+result: shipped 2026-08-23 by session `68-drag-to-move`. All four owed items landed;
+  1068 JVM / 296 instrumented tests, 0 failures; four render-pass PNGs looked at.
+  One defect found and REPORTED, not fixed -- `ScheduleEdits.apply` cannot address a
+  one-off's occurrence document (its `seriesDate` parameter is non-null and a one-off's
+  is null), which is out of this ticket's scope by name. Guarded by
+  `CalendarEntry.isEditable`. See CHANGELOG/2026-08-23/68-drag-to-move.md.
 ---
 
 # `#68` — drag to move, and the sheet that makes `#63`'s question askable
