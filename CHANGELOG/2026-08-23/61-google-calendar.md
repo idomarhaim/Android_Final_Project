@@ -22,9 +22,10 @@
 > JVM **1010 tests, 2 failed** — and **both failures are a live sibling's uncommitted work**, not
 > this ticket's. `CalendarSyncTest` is **29 / 0**. See §5.
 >
-> ⏸️ **The device pass is OWED and `#61` stays OPEN.** `60-calendar-surface` holds
-> `emulator-5554`; nothing here touched a device, an AVD or `adb`, and **no sign-in was needed or
-> destroyed**.
+> ✅ **The device pass is DONE and `#61` is CLOSED.** Ido granted the scope; the calendar was created
+> in his account and three `DEADLINE` banners landed in it, photographed in **Google Calendar's own
+> UI** — and still three after a second sync, which is what proves the push idempotent. His sign-in
+> survived every install and all 262 instrumented tests.
 
 ---
 
@@ -146,7 +147,7 @@ implementation manufactures on top of it. The two constants are one decision, an
 | **Compile** (`:app:compileDebugKotlin :app:compileDebugUnitTestKotlin`) | `BUILD SUCCESSFUL`, 4 warnings (`GoogleSignIn` deprecation, the same class `GoogleTasksClient` already uses) |
 | **Instrumented / UI** (`adb install -r` + `am instrument`) | **OK (262 tests)**, 0 failures, 852 s — run 2026-08-23 11:22 once both siblings released the AVD |
 | **Security rules** (`firestore-tests/`) | **not run and none owed** — this ticket adds no collection and no rule; `#63` already covered `users/{uid}/occurrences` |
-| **Device pass** | 🟡 **HALF DONE** — everything that does not need the calendar grant is verified on `emulator-5554`; the calendar half is Ido's tap. See §7 |
+| **Device pass** | ✅ **DONE** — the calendar exists in Ido's account and three events landed in it, shown in **Google Calendar's own UI**. `docs/render-passes/2026-08-23-61-google-calendar/`. See §5e |
 
 `--rerun` is deliberate. `63-occurrences-and-recurrence` recorded on 2026-08-23 that
 `:app:testDebugUnitTest` returned `UP-TO-DATE` in 7 s over test classes that had never executed,
@@ -295,6 +296,71 @@ and **driving those taps programmatically is not an option that was considered**
 exists to be read by a person, and automating it would defeat the only protection the user has.
 
 So §7's `Untested:` list is unchanged and still needs one sign-out/sign-in with the box ticked.
+
+## 5e. ✅ The calendar half — proven in Google's own UI
+
+Ido granted `calendar.app.created` at the app's own consent screen. Everything below is a
+**device observation**, and the shots are committed at
+`docs/render-passes/2026-08-23-61-google-calendar/`.
+
+**The calendar was created, client-side, in his account.**
+
+```
+calendar_id_cTmjUK6FDGf…  =  7cec978e…@group.calendar.google.com
+```
+
+A `@group.calendar.google.com` id is Google's form for a **secondary** calendar — which is the whole
+of §2.6's *"the calendar is Ido's, not the app's … a service-account owner is actively wrong"*, and
+the reason his own note that *"in Google Calendar you can create several calendars for one
+account"* is exactly the mechanism this uses.
+
+**Three occurrences went in, three banners came out.** GoalPilot's own surface (`#60`) held three
+`DEADLINE`s on Mon 24 Aug, *due 20:00*. Google Calendar shows three all-day banners on Mon 24 titled
+
+```
+Due 20:00 · Write the project book chapter
+```
+
+and opening one says **`Tomorrow`** — all-day, no slot — on calendar **GoalPilot**, account
+`name.iddo@gmail.com`. That is §2.7's deadline rule end to end: *"its only job is to be **seen**,
+which a banner does and a 23:59 marker does not."* Had this been built as a timed event it would sit
+at 20:00 in a slot the app cannot check, which §2.7 says collapses `DEADLINE` into `BLOCK`.
+
+### The check worth more than the screenshot: a **second** sync
+
+A picture of three events proves an insert happened. It does **not** prove the insert will not
+happen again — and if `link()` had failed to store `googleEventId`, every future foreground would
+add three more, forever, silently, and the first screenshot would look identical.
+
+So the app was force-stopped and relaunched, and the shot was retaken:
+
+| After sync 1 | After sync 2 |
+|---|---|
+| 3 banners | **3 banners** |
+
+Still three. The stored pull stamp was **unchanged** across the second run — §2.7's fifteen-minute
+throttle doing its job — so `remote` was empty and the push ran under `UnknownRemote.ASSUME_STALE`,
+which **patches a linked occurrence and inserts an unlinked one**. Three rather than six is
+therefore a direct observation that the link was stored on the first run, taken at the one moment
+the two designs are distinguishable.
+
+`Observed:` this is the hardest input the instrument has, in `look-at-your-own-output.md`'s sense:
+the failing case and the passing case produce **identical** first screenshots.
+
+### And what the same frame proves about restraint
+
+Ido's own Hebrew events surround the banners — his other calendars, rendered by Google Calendar.
+GoalPilot cannot see any of them: `calendar.app.created` reaches only calendars this app created, so
+the blindness is Google-enforced rather than a filter the app applies. That is §2.7's promise
+holding at the only layer where a promise is worth anything.
+
+### The one honest gap left, and it is not this ticket's
+
+Ido asked for the app to be able to **view** his other calendars. It currently cannot — §2.7 asks
+for that at its own trigger (busy/free when he ticks calendars to avoid, full read only if he sets
+one to *Full*, with that calendar named). Neither trigger has a consumer yet: the first is §2.4's
+agent placement, which is `#24`'s. Recorded here because he asked for it in so many words, and
+because *"we did not build it"* and *"we deliberately deferred it"* look identical from outside.
 
 ## 6. What is NOT in this ticket, and why
 

@@ -2,7 +2,8 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
+commit: e540de9 (write path) · a108f45 (sign-in scope + device pass)
 issue: 61
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**
@@ -168,7 +169,12 @@ one exit criterion is owed.
   calendar scope at **sign-in** — was not implemented. Fixed in `GoogleAuthClient`. Every JVM test
   passed both before and after, because the gap is between the client and the sign-in.
 
-**Owed — the calendar half, and it is Ido's tap.**
+**✅ Calendar half — DONE 2026-08-23.** Ido granted the scope; the calendar was created in his
+account and three `DEADLINE` banners landed in it, photographed in Google Calendar's own UI and
+still three after a second sync. Shots and what each settles:
+`docs/render-passes/2026-08-23-61-google-calendar/`.
+
+<details><summary>What was owed before he granted it</summary>
 
 - The AVD is now **claimed by this session** and free.
 - Ido **is** signed in (`name.iddo@gmail.com`), and his cached grant carries
@@ -188,3 +194,4 @@ one exit criterion is owed.
 all-day `end.date` being exclusive, `showDeleted=true` surfacing a trashed event as
 `status: "cancelled"`, and `calendar.app.created` scoping `calendarList` to this app's own calendars.
 All three come from Google's published contract, not from an observation on this machine.
+</details>

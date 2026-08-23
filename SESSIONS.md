@@ -49,7 +49,6 @@ before your first write. Normative rule:
 > unpublished as of the commit that carries this note. It needs Ido's word, or that row releasing.
 > **The JARVIS half of this session's work IS pushed** (`e0a5c52`) — that range had no foreign
 > commits.
-| `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon** and **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb` — BOTH CLAIMED 2026-08-23**, both free at claim time (`60-calendar-surface` released in `5d5e2a3`, `66-unmeasured-percent` in `72fb296`; I am the only live row and the tree is clean). Taken for the device pass `#61`'s exit needs. | 2026-08-23 |
 > ➕ **`66-unmeasured-percent` WIDENED its row 2026-08-23 — three files the brief did not name,
 > and the third is why it matters.** Sweeping every consumer of `progressPercent` /
 > `progressFraction` rather than only the brief's six sites found the same defect in
@@ -140,6 +139,40 @@ before your first write. Normative rule:
 > 📱 **NO DEVICE TOUCHED YET AND NO SIGN-IN NEEDED OR DESTROYED SO FAR.** When the device pass runs
 > it takes **`Pixel_10_Pro_XL_B`**, not `emulator-5554`, and it uses `adb install -r` + `am instrument`
 > — never `connectedDebugAndroidTest`, which uninstalls the app.
+> 🏁 **`61-google-calendar` RELEASED 2026-08-23 — this commit.** `#61` shipped in `e540de9`
+> (write path) and `a108f45` (the sign-in scope and the device pass); brief closed to
+> `sessions/done/`. **Both singletons free** — the Gradle daemon, and `emulator-5554`, left with the
+> app installed and Ido signed in.
+>
+> 📱 **IDO'S SIGN-IN IS INTACT AND NOW CARRIES THE CALENDAR SCOPE.** He granted
+> `calendar.app.created` at the app's own consent screen at my request; nothing here destroyed it —
+> `install -r` + `am instrument` throughout, never `connectedDebugAndroidTest`, and `FIREBASE_USER`
+> was verified present after both installs and after all 262 instrumented tests.
+>
+> ✅ **The device pass is done and is the interesting half.** The calendar exists in his account as a
+> secondary `@group.calendar.google.com` calendar named **GoalPilot**, and three `DEADLINE`s came out
+> as three all-day banners `Due 20:00 · …` in **Google Calendar's own UI**
+> (`docs/render-passes/2026-08-23-61-google-calendar/` — the shots `#62` needs).
+>
+> 📌 **The check worth copying, not the screenshot.** A picture of three events proves an insert
+> happened; it does not prove it will not happen again, and a failed `link()` would add three more on
+> every foreground with the first screenshot looking *identical*. So the app was force-stopped and
+> relaunched and the shot retaken: **still three, not six**, with the pull throttled and the push
+> therefore running under `ASSUME_STALE`. The failing and passing designs are distinguishable at
+> exactly one moment, and that is the moment to look.
+>
+> ⚠️ **A defect was found by doing the device pass, and it was mine.** §2.7's incremental-
+> authorization table has three rows; I built rows 2 and 3 and **not row 1** — the sign-in never
+> asked for the calendar scope, so every call fell through to the recovery interstitial. Every JVM
+> test passed before and after, because the gap sits in `GoogleAuthClient`, which neither the tests
+> nor the sync touches. `pre-commit-self-review.md`'s second question would have caught it: the KDoc
+> right above the enum **contains that table**.
+>
+> ⏸️ **The push.** Held at the previous note for a red suite and live siblings; both cleared, and the
+> range is re-read at release — see the line below.
+>
+> --- *(the note as first written, when the row was still live)* ---
+>
 > 🚧 **`61-google-calendar` — WORK COMMITTED, ROW STILL LIVE 2026-08-23.** `#61`'s client-side
 > write path shipped in this commit: the calendar is created client-side, confirmed occurrences push
 > to it, and their times pull back on foreground. **The row does not release**, because the brief's
