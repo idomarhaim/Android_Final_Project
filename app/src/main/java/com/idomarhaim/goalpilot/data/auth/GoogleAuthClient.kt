@@ -9,6 +9,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.data.tasks.GoogleTasksScopes
+import com.idomarhaim.goalpilot.domain.model.CalendarScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -35,6 +36,28 @@ class GoogleAuthClient @Inject constructor(
             // signed in before this scope existed are handled at call time by
             // GoogleTasksClient, which surfaces the recovery intent.
             .requestScopes(Scope(GoogleTasksScopes.TASKS_READONLY))
+            // §2.7's incremental-authorization table, ROW ONE: "sign-in ->
+            // `calendar.app.created` + the calendar list" (`#61`). One scope covers both,
+            // because that scope's own `calendarList` is limited to calendars this app
+            // created -- see `GoogleCalendarClient.listCalendars`.
+            //
+            // ⚠️ This is a checkbox in the sign-in sheet, NOT a gate. §2.6: "the consent
+            // checkbox arrives UNCHECKED, so sign-in can succeed while granting nothing" --
+            // so declining it here is the normal case and every calendar feature degrades
+            // rather than blocking. What asking here buys is that the ask lands *where the
+            // user is already granting things*, instead of as an interstitial the first time
+            // they open a calendar surface.
+            //
+            // The other two rows of that table are deliberately NOT here: `freeBusy` and
+            // `calendar.readonly` are asked for at their own trigger, because §2.7 requires
+            // the restraint to be "visible in which call is made, rather than as a filter
+            // after the fact". Adding them to this builder would be exactly the omnibus
+            // request that sentence rejects.
+            //
+            // Accounts that signed in before this line existed keep their old scope set;
+            // `GoogleCalendarClient` mints per-scope and surfaces the recovery intent for
+            // them, the same fallback the Tasks scope above already relies on.
+            .requestScopes(Scope(CalendarScope.APP_CREATED.url))
             .build()
 
     private val client: GoogleSignInClient = GoogleSignIn.getClient(context, options)

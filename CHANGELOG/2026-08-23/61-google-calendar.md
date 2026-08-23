@@ -141,12 +141,12 @@ implementation manufactures on top of it. The two constants are one decision, an
 
 | Layer | Result |
 |---|---|
-| **JVM unit** (`:app:testDebugUnitTest --rerun`) | **1010 completed, 2 failed** — both a sibling's, see below |
+| **JVM unit** (`:app:testDebugUnitTest --rerun`) | **1015 completed, 0 failed, 0 errors** across 86 classes, re-run after `#66` committed. The first run at 00:40 read `1010 / 2 failed` and **both were that sibling's uncommitted work** — see below |
 | ↳ `CalendarSyncTest` (new) | **29 / 0** |
 | **Compile** (`:app:compileDebugKotlin :app:compileDebugUnitTestKotlin`) | `BUILD SUCCESSFUL`, 4 warnings (`GoogleSignIn` deprecation, the same class `GoogleTasksClient` already uses) |
-| **Instrumented / UI** | **not run** — `60-calendar-surface` holds `emulator-5554` |
+| **Instrumented / UI** (`adb install -r` + `am instrument`) | **OK (262 tests)**, 0 failures, 852 s — run 2026-08-23 11:22 once both siblings released the AVD |
 | **Security rules** (`firestore-tests/`) | **not run and none owed** — this ticket adds no collection and no rule; `#63` already covered `users/{uid}/occurrences` |
-| **Device pass** | ⏸️ **OWED** — see §7 |
+| **Device pass** | 🟡 **HALF DONE** — everything that does not need the calendar grant is verified on `emulator-5554`; the calendar half is Ido's tap. See §7 |
 
 `--rerun` is deliberate. `63-occurrences-and-recurrence` recorded on 2026-08-23 that
 `:app:testDebugUnitTest` returned `UP-TO-DATE` in 7 s over test classes that had never executed,
@@ -212,6 +212,89 @@ not have*, destination `rules/`, therefore always-ask in both modes and owing a 
 besides. Its **diagnostic** half is §4p above and stands on its own; the **procedural** half — telling
 every session to run `grep '^status: active' sessions/*.md` — is Ido's call.
 `kb-candidates/2026-08-23-61-google-calendar.md` is rewritten down to that one survivor, not deleted.
+
+## 5c. The defect the device found, and it was mine
+
+**§2.7's incremental-authorization table has three rows. Row one was not implemented.**
+
+```
+| Trigger | Scope asked |
+|---|---|
+| sign-in | `calendar.app.created` + the calendar list |   <- NOT BUILT
+| ticking calendars to avoid | `calendar.events.freebusy` |
+| first setting one calendar to Full | `calendar.readonly` |
+```
+
+`GoogleAuthClient`'s `GoogleSignInOptions` requested `tasks.readonly` and nothing else, so a new
+sign-in never offered the calendar checkbox and **every** calendar call fell through to the
+`UserRecoverableAuthException` recovery path — an interstitial the first time someone opens a
+calendar surface, instead of a box in the sheet where they are already granting things.
+
+**How it was found, and it is not how it should have been found.** By reading the emulator's cached
+sign-in on the way to the device pass:
+
+```
+"scopes":["email","https://www.googleapis.com/auth/tasks.readonly","openid","profile"]
+```
+
+Four scopes, no calendar. **Every JVM test still passed**, and they were right to — the sync rules
+are correct and the recovery path genuinely works, so nothing in `CalendarSyncTest` could see it.
+The gap is between the client and the **sign-in**, which is one file neither the tests nor the sync
+touches.
+
+**The self-review question it should have failed.** `rules/pre-commit-self-review.md` asks *"which
+of my own arguments does my output contradict?"* — and `CalendarScope`'s KDoc **contains that
+table**, quoted from §2.7, immediately above an enum whose first member the sign-in never asked
+for. A table in a KDoc is an argument; skipping its first row is a contradiction of it. Answering
+that question honestly against the file I had just written would have caught this before the
+commit, with no device involved.
+
+**The fix, and what it deliberately does not do.** One `requestScopes` line for
+`CalendarScope.APP_CREATED` and **only** that one. Rows two and three stay where they are, asked at
+their own trigger, because §2.7 requires the restraint to be *"visible in **which call is made**,
+rather than as a filter after the fact"* — adding all three to the builder would be exactly the
+omnibus request that sentence rejects, and it would ask for `calendar.readonly` from a user who may
+never use the feature that needs it.
+
+**It changes nothing for accounts that already exist.** A cached grant is not re-negotiated by
+editing the options; Ido's stays as it is and `GoogleCalendarClient` keeps surfacing the recovery
+intent for it — the same fallback the Tasks scope above it has relied on since `#36`.
+
+## 5d. What the device pass proved, and the one thing it could not
+
+Run on `emulator-5554` (`Pixel_10_Pro_XL`), 2026-08-23, after `60-calendar-surface` (`5d5e2a3`) and
+`66-unmeasured-percent` (`72fb296`) released both singletons.
+
+**✅ Proved without the calendar grant:**
+
+- **262 instrumented tests, 0 failures** — including `DailyMissReviewUiTest`, which drives the real
+  dashboard card the new Keep / Cancel / Put back sheet sits beside, and which therefore exercises
+  `DashboardViewModel`'s widened constructor through **real Hilt injection on a device**. That is
+  the layer a JVM test cannot reach: a missing binding for `SyncCalendarUseCase` is a runtime
+  failure, not a compile one.
+- **The foreground trigger does not crash.** `RootViewModel.onAppForegrounded` now launches a
+  second coroutine into a network round-trip that immediately fails for want of a scope. App
+  launched, `pidof` alive, **zero `FATAL EXCEPTION` in logcat**.
+- **It degrades exactly as §2.6 requires and gates nothing.** `goalpilot_ui_prefs.xml` holds **no**
+  `calendar_id_*` key after a full launch — `ensureCalendar()` returned `NeedsConsent` and the sync
+  stopped having written nothing, while the dashboard rendered normally and every other feature
+  worked. *"Every calendar feature degrades legibly and none blocks the app"*, observed rather than
+  asserted.
+- **The sheet is correctly absent.** No disappearances exist, so no card — an empty review is not
+  an empty card, the same rule the miss review already follows.
+- **The sign-in survived everything.** `install -r` for both APKs, then 262 instrumented tests, and
+  `FIREBASE_USER` is still in the Firebase store afterwards; the dashboard greets *עידו*.
+  `connectedDebugAndroidTest` was **not** used, which is the whole reason that is true
+  (`kb/dev/android-device-verification.md` §8).
+
+**⏸️ Could not be proved, and it is one thing:** that a calendar is actually created in Google and
+an event lands in it. The emulator's account grant predates §5c's fix and carries no calendar
+scope, so the app correctly refuses. Granting it is a consent screen requiring a human — including
+Google's *Advanced → Go to GoalPilot (unsafe)*, since the app is `In production` and unverified —
+and **driving those taps programmatically is not an option that was considered**: a consent screen
+exists to be read by a person, and automating it would defeat the only protection the user has.
+
+So §7's `Untested:` list is unchanged and still needs one sign-out/sign-in with the box ticked.
 
 ## 6. What is NOT in this ticket, and why
 

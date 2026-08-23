@@ -158,13 +158,27 @@ one exit criterion is owed.
 - **JVM 1010 / 2 failed**, and both failures are `66-unmeasured-percent`'s uncommitted work.
   `CalendarSyncTest` is **29 / 0**.
 
-**Owed — the device pass, and it is this brief's own exit criterion.**
+**Device pass — HALF DONE 2026-08-23**, once both siblings released the AVD.
 
-- Needs `emulator-5554`, held by `60-calendar-surface`; AGENTS.md is explicit that two sessions
-  driving one AVD corrupts its quickboot snapshot.
-- Needs **Ido signed in with the calendar scope granted once**. The consent screen is
-  `In production` and unverified, so it shows *"Google hasn't verified this app"* with
-  **Advanced → Go to GoalPilot (unsafe)**; scoped calls work through it.
+- **262 instrumented tests, 0 failures** (`adb install -r` + `am instrument`, never
+  `connectedDebugAndroidTest`). The sign-in survived all of it.
+- The foreground trigger does not crash, and the sync **degrades and gates nothing**: no
+  `calendar_id_*` preference is written, the dashboard renders, every other feature works.
+- **A defect was found by doing this**: §2.7's incremental-authorization table row one — the
+  calendar scope at **sign-in** — was not implemented. Fixed in `GoogleAuthClient`. Every JVM test
+  passed both before and after, because the gap is between the client and the sign-in.
+
+**Owed — the calendar half, and it is Ido's tap.**
+
+- The AVD is now **claimed by this session** and free.
+- Ido **is** signed in (`name.iddo@gmail.com`), and his cached grant carries
+  `email`, `openid`, `profile`, `tasks.readonly` and **no calendar scope** — it predates the
+  `GoogleAuthClient` fix above. So he must **sign out and back in inside the app** and tick the
+  calendar box.
+- The consent screen is `In production` and unverified, so it shows *"Google hasn't verified this
+  app"* with **Advanced → Go to GoalPilot (unsafe)**; scoped calls work through it.
+- ⛔ **Driving those taps with `adb shell input` is not an option.** A consent screen exists to be
+  read by a person; automating it defeats the only protection the user has.
 - ⚠️ `adb install -r` both APKs + `am instrument`. **Never `connectedDebugAndroidTest`** — it
   uninstalls the app and takes the sign-in with it.
 - The keeper shot is **Google Calendar's own UI showing the created calendar and one event**, which
