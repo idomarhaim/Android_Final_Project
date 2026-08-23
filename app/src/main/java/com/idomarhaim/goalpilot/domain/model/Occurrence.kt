@@ -146,9 +146,30 @@ enum class OccurrenceState {
      * Whether this counts against the user — **[MISSED] alone**.
      *
      * §2.3 says so of exactly one constant (*"`MISSED` … → a failure"*), says the opposite of
-     * [OVERDUE] (*"NOT a failure"*), and says [EXPIRED] *"counts for nothing"*. `Untested:`
-     * nothing consumes this yet — §4.7's per-life-area failure surface (`C19` #41) is the
-     * reader it is written for, and it is not this ticket's.
+     * [OVERDUE] (*"NOT a failure"*), and says [EXPIRED] *"counts for nothing"*.
+     *
+     * ⚠️ **The reader this was written for arrived, and does not use it.** This KDoc said
+     * *"§4.7's per-life-area failure surface (`C19` #41) is the reader it is written for"*;
+     * that surface shipped as `BuildSuccessFailureRunUseCase`
+     * ([#64](https://github.com/idomarhaim/Android_Final_Project/issues/64)) and counts
+     * [DAY_PASSED] and [WINDOW_CLOSED] as misses too. The sentence is corrected rather than
+     * left standing, because a stale pointer here sends the next reader to the wrong property.
+     *
+     * The property is **not wrong** — it answers a narrower question. §2.3's three-word
+     * vocabulary predates `#56`'s split, so *"`MISSED` is a failure"* is a sentence about the
+     * **block rung**; §4.7 counts *windows*, and all four rungs have one.
+     * [meetsUserInDailyReview] is the property that already groups the four, and
+     * `DailyMissReview` already shows all four to the user as misses — so a run built on this
+     * one would say `0 missed` about windows the daily review had just named. The full
+     * derivation, with the third reason (`OccurrenceDraft` can only produce `ALL_DAY` and
+     * `DEADLINE`, so this set is structurally always empty in the shipped app), is in
+     * `BuildSuccessFailureRunUseCase.outcomeOf`.
+     *
+     * `Observed:` nothing in `app/src/main` **reads** this property as of `#64` — checked
+     * mechanically over the source tree, not by eye. A grep for the name returns three hits
+     * outside this file and all three are **prose** in that use case's KDoc, which is worth
+     * saying here so the next person running the same grep does not read it as a
+     * contradiction. `OccurrenceTest` pins the set over the whole enum and is unchanged.
      */
     val countsAsFailure: Boolean get() = this == MISSED
 

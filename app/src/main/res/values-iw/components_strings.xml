@@ -102,4 +102,64 @@
     <string name="components_material_spec_name">במפרט: %1$s</string>
     <string name="components_material_dark_only">כהה בלבד</string>
 
+    <!-- ── C19 · the success/failure run (4.7, #64) ────────────────────
+         Copy taken from the prototype's own Hebrew frame
+         (docs/prototypes/2026-08-13-area-success-failure/), which is what #41
+         was resolved against, rather than translated fresh here. 0.8 is
+         suspended so this has NOT been seen in a Hebrew render; it is authored
+         so the parity guard holds and so resuming #51 is a render pass rather
+         than a writing job.
+
+         TERMINOLOGY, as this file's header requires: the Goal entity is יעד.
+         The run itself never names the entity - it counts windows - so the
+         only place it appears is the footer, which is about goals. -->
+    <string name="components_run_title">שבוע אחר שבוע</string>
+    <string name="components_run_range_30_days">30 יום</string>
+    <string name="components_run_range_8_weeks">8 שבועות</string>
+    <string name="components_run_range_6_months">6 חודשים</string>
+
+    <string name="components_run_kept">עמדת</string>
+    <string name="components_run_missed">הוחמצו</string>
+
+    <string name="components_run_legend_kept">עמדת</string>
+    <string name="components_run_legend_missed">הוחמץ</string>
+    <string name="components_run_legend_owed">עוד פתוח — לא כישלון</string>
+    <string name="components_run_legend_nothing_due">לא נדרש כלום</string>
+    <string name="components_run_window_is">מועד נחשב «עמדת בו» כשכל מה שנדרש בו נעשה</string>
+
+    <string name="components_run_asymmetry">משימה שמשרתת שני תחומים נספרת כהצלחה במלואה בשניהם. רק הדקות מתחלקות — האי־סימטריה הזאת מכוונת.</string>
+
+    <string name="components_run_empty_title">כאן עוד לא נדרש כלום</string>
+    <string name="components_run_empty_subtitle">קבעו מועד למשהו בתחום הזה, וכאן תיווצר הרשומה שלו — מועד אחר מועד, עמדתם בו או שהוחמץ.</string>
+
+    <string name="components_run_no_next_step">אין צעד הבא</string>
+    <plurals name="components_run_no_next_step_footer">
+        <item quantity="one">יש כאן %1$s יעד שאין לו צעד הבא — לא נדרש שם כלום, ולכן שום דבר לא יכול להיות מוחמץ.</item>
+        <item quantity="two">יש כאן %1$s יעדים שאין להם צעד הבא — לא נדרש שם כלום, ולכן שום דבר לא יכול להיות מוחמץ.</item>
+        <item quantity="other">יש כאן %1$s יעדים שאין להם צעד הבא — לא נדרש שם כלום, ולכן שום דבר לא יכול להיות מוחמץ.</item>
+    </plurals>
+    <string name="components_run_offer_break_down">לפרק לצעדים</string>
+    <string name="components_run_offer_schedule">לקבוע מועד לראשונה</string>
+
+    <plurals name="components_run_idle_days">
+        <item quantity="one">%1$s יום ללא תנועה</item>
+        <item quantity="two">%1$s ימים ללא תנועה</item>
+        <item quantity="other">%1$s ימים ללא תנועה</item>
+    </plurals>
+    <plurals name="components_run_idle_weeks">
+        <item quantity="one">%1$s שבוע ללא תנועה</item>
+        <item quantity="two">%1$s שבועות ללא תנועה</item>
+        <item quantity="other">%1$s שבועות ללא תנועה</item>
+    </plurals>
+    <plurals name="components_run_idle_months">
+        <item quantity="one">%1$s חודש ללא תנועה</item>
+        <item quantity="two">%1$s חודשים ללא תנועה</item>
+        <item quantity="other">%1$s חודשים ללא תנועה</item>
+    </plurals>
+
+    <string name="components_run_window_kept">עמדת בו, %1$s</string>
+    <string name="components_run_window_missed">הוחמץ, %1$s</string>
+    <string name="components_run_window_owed">עוד פתוח, %1$s</string>
+    <string name="components_run_window_nothing_due">לא נדרש כלום, %1$s</string>
+
 </resources>

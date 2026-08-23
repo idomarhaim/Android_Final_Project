@@ -35,11 +35,16 @@ sealed interface OccurrenceOutcome {
      * ⚠️ **This is not a [CompletionFact] and it banks no points.** §1.4's fact carries the
      * *inputs* — the minutes and the difficulty as they stood at the tick — because points must
      * not be re-priced by a later edit, and it lives one per task at
-     * `users/{uid}/completionFacts/{taskId}`. Points **per occurrence** is a real question and
-     * it is [`#64`](https://github.com/idomarhaim/Android_Final_Project/issues/64)'s: it needs
-     * that collection's key to widen, which is a migration on live data and is not this
-     * ticket's. What this constant records is *the window was honoured*, which is what §4.7
-     * counts and what a miss is counted against.
+     * `users/{uid}/completionFacts/{taskId}`. What this constant records is *the window was
+     * honoured*, which is what §4.7 counts and what a miss is counted against.
+     *
+     * ⚠️ **Points per occurrence is a real question and it is NOT `#64`'s** — this KDoc said it
+     * was, and `#64` shipped without it. The issue's own text scopes itself to the run and
+     * lists what is out of scope; points are not in either list, so the claim was `#63`
+     * assigning work to a ticket that never accepted it. It stays true that the question needs
+     * `completionFacts`' key to widen, which is a migration on live data. **It has no ticket
+     * today.** Corrected rather than deleted, because the constraint is the useful half and a
+     * pointer to a closed ticket is worse than none.
      */
     data class Done(val atEpochMillis: Long) : OccurrenceOutcome
 

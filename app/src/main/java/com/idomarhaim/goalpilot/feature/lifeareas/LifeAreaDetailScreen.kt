@@ -55,6 +55,7 @@ import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.SuccessFailureRunCard
 import com.idomarhaim.goalpilot.ui.components.UnmeasuredMarkerIfNeeded
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
@@ -75,14 +76,16 @@ import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
  * Every accent on this screen is the **area's** colour, so the one thing the
  * screen is about is the one thing that is coloured.
  *
- * ⚠️ **The success/failure run belongs above the list and is not built here.**
- * §4.7 puts `C19`'s component (`kept · missed · still-owed · nothing-due ·
- * no next step`, with the `30 days · 8 weeks · 6 months` window filter) between
- * the header and the goal list, and #2 scopes itself to *"the route and the screen
- * that hosts it"*. It is left out rather than mocked up: the run counts **missed
- * windows**, and windows are `occurrences`, a collection §7.1 marks **new**. A
- * placeholder drawn from what exists today would be the map's most-repeated
- * finding — a second number that quietly disagrees.
+ * ✅ **The success/failure run is here now** — `C19`
+ * ([#64](https://github.com/idomarhaim/Android_Final_Project/issues/64)), between the
+ * header and the goal list exactly as §4.7 puts it. This file used to carry a note
+ * saying it was *"left out rather than mocked up"* because the run counts **missed
+ * windows** and windows are `occurrences`, a collection §7.1 marked **new**; that
+ * collection shipped with [#63](https://github.com/idomarhaim/Android_Final_Project/issues/63),
+ * so the reason expired and the note with it. The component itself is
+ * [SuccessFailureRunCard][com.idomarhaim.goalpilot.ui.components.SuccessFailureRunCard]
+ * in `ui/components/`, shared with analytics so the two placements cannot drift into
+ * two answers.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,6 +150,23 @@ fun LifeAreaDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { AreaHeaderCard(state = state, accent = accent) }
+
+            // §4.7: "above the goal list on the life-area screen". Above the empty
+            // state too -- an area with no goals filed is precisely the case the
+            // run's `no next step` half is about, and hiding it there would leave
+            // the screen silent about the one thing it could usefully offer.
+            item {
+                SuccessFailureRunCard(
+                    run = state.run,
+                    onSelectRange = viewModel::selectSuccessRange,
+                    onOpenGoal = onOpenGoal,
+                    accent = accent,
+                    // §4.7: the asymmetry sentence lives beside the time donut on
+                    // analytics AND NOWHERE ELSE. Revision 1 of the prototype put it
+                    // on every area frame and said the same thing twice.
+                    showAsymmetryNote = false,
+                )
+            }
 
             if (state.goals.isEmpty()) {
                 item {

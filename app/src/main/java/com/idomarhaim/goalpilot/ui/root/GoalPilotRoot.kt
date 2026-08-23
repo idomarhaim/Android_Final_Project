@@ -259,6 +259,11 @@ private fun MainScaffold() {
                         AnalyticsScreen(
                             onBack = { navController.popBackStack() },
                             onOpenLifeAreas = { navController.navigate(Routes.LIFE_AREAS) },
+                            // `C19`'s run offers a goal with no next step the step it is
+                            // missing (#64, §4.7), and both offers open the goal -- where
+                            // tasks are added and dated today. No new surface: §4.7 marks
+                            // "Break it into steps" as C8's existing feature.
+                            onOpenGoal = { navController.navigate(Routes.goalDetail(it)) },
                         )
                     }
                     composable(Routes.SETTINGS) {

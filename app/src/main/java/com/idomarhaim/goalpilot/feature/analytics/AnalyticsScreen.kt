@@ -79,6 +79,7 @@ import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.StackedColumn
 import com.idomarhaim.goalpilot.ui.components.StackedColumnChart
 import com.idomarhaim.goalpilot.ui.components.StackedSegment
+import com.idomarhaim.goalpilot.ui.components.SuccessFailureRunCard
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 import com.idomarhaim.goalpilot.ui.components.rememberChartProgress
@@ -92,6 +93,8 @@ import kotlin.math.roundToInt
 fun AnalyticsScreen(
     onBack: () -> Unit,
     onOpenLifeAreas: () -> Unit,
+    /** For `C19`'s no-next-step offers (§4.7, `#64`) — C8's and C9a's existing surfaces. */
+    onOpenGoal: (String) -> Unit,
     viewModel: AnalyticsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -194,6 +197,19 @@ fun AnalyticsScreen(
                     onSelectSlice = viewModel::selectSlice,
                     onOpenLifeAreas = onOpenLifeAreas,
                     onReEstimate = viewModel::reEstimateDurations,
+                )
+
+                // §4.7: "beside the time donut on analytics -- where the asymmetry
+                // sentence lives AND NOWHERE ELSE." Directly under the donut card,
+                // which is what "beside" means on a phone: `C17` deliberately put
+                // the DIVIDED number (minutes) and the UNDIVIDED one (successes) on
+                // one screen, and the note between them is the only place that
+                // asymmetry can be stated where both are visible.
+                SuccessFailureRunCard(
+                    run = state.run,
+                    onSelectRange = viewModel::selectSuccessRange,
+                    onOpenGoal = onOpenGoal,
+                    showAsymmetryNote = true,
                 )
 
                 TimeTrendCard(

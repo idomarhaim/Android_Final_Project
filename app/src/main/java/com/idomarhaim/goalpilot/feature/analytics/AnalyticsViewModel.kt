@@ -10,10 +10,14 @@ import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.domain.usecase.BackfillDurationsUseCase
+import com.idomarhaim.goalpilot.domain.usecase.BuildSuccessFailureRunUseCase
 import com.idomarhaim.goalpilot.domain.usecase.DurationProposal
+import com.idomarhaim.goalpilot.domain.usecase.SuccessFailureRun
+import com.idomarhaim.goalpilot.domain.usecase.SuccessRange
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocationUseCase
 import com.idomarhaim.goalpilot.domain.usecase.TimeTrend
@@ -31,6 +35,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -49,6 +55,7 @@ class AnalyticsViewModel @Inject constructor(
     goalRepository: GoalRepository,
     private val taskRepository: TaskRepository,
     lifeAreaRepository: LifeAreaRepository,
+    occurrenceRepository: OccurrenceRepository,
     private val recommendationRepository: RecommendationRepository,
     private val timeAllocation: TimeAllocationUseCase,
     private val backfillDurations: BackfillDurationsUseCase,
@@ -67,8 +74,10 @@ class AnalyticsViewModel @Inject constructor(
         goalRepository.observeGoals(),
         taskRepository.observeTasks(null),
         lifeAreaRepository.observeLifeAreas(includeArchived = true),
+        // §2.1's occurrence documents -- what `C19`'s run counts (§4.7, `#64`).
+        occurrenceRepository.observeOccurrences(),
         controls,
-    ) { goals, tasks, areas, controls ->
+    ) { goals, tasks, areas, occurrences, controls ->
         lastTasks = tasks
         // Resolved per emission rather than once at construction, so the window
         // follows the calendar for a session left open across midnight.
@@ -99,6 +108,25 @@ class AnalyticsViewModel @Inject constructor(
             // the id would leave the chart dimmed with nothing highlighted.
             selectedSliceId = controls.selectedSliceId
                 ?.takeIf { id -> allocation.slices.any { it.areaId.sliceKey() == id } },
+            // §4.7's run, over EVERY goal -- which is what makes this screen the one
+            // place `C17`'s asymmetry can be stated. The donut divides a task's
+            // minutes between its areas; the run does not divide a success at all,
+            // so the two totals are not meant to agree and the card says so.
+            //
+            // Its own range, not `controls.range`. The donut's window is a calendar
+            // period (day/week/month/quarter/year) and the run's is §4.7's
+            // `30 days · 8 weeks · 6 months`, which is a different question with a
+            // different default -- tying them would silently answer one with the
+            // other.
+            run = BuildSuccessFailureRunUseCase(
+                goals = goals,
+                tasks = tasks,
+                occurrences = occurrences,
+                range = controls.successRange,
+                today = today,
+                now = LocalDateTime.now(),
+                zone = ZoneId.systemDefault(),
+            ),
         )
     }.catch { emit(AnalyticsUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -114,6 +142,11 @@ class AnalyticsViewModel @Inject constructor(
     /** Pass null to clear. Selection is a property of the data, not of the canvas. */
     fun selectSlice(sliceId: String?) {
         controls.update { it.copy(selectedSliceId = sliceId) }
+    }
+
+    /** §4.7's window filter, which is separate from the donut's range on purpose. */
+    fun selectSuccessRange(range: SuccessRange) {
+        controls.update { it.copy(successRange = range) }
     }
 
     // ── Duration back-fill (making the pie measured, not inferred) ────
@@ -229,6 +262,8 @@ class AnalyticsViewModel @Inject constructor(
     private data class AnalyticsControls(
         val range: AnalyticsRange = AnalyticsRange.WEEK,
         val selectedSliceId: String? = null,
+        /** §4.7's `30 days · 8 weeks · 6 months`, default 8 weeks. */
+        val successRange: SuccessRange = SuccessRange.DEFAULT,
     )
 }
 
@@ -269,6 +304,8 @@ data class AnalyticsUiState(
     val allocation: TimeAllocation = TimeAllocation(),
     val trend: TimeTrend = TimeTrend(),
     val selectedSliceId: String? = null,
+    /** `C19`'s success/failure run over every goal — §4.7, `#64`. */
+    val run: SuccessFailureRun = SuccessFailureRun(range = SuccessRange.DEFAULT),
     val error: String? = null,
 ) {
     /**

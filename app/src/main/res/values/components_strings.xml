@@ -181,4 +181,87 @@
          to SAY so. This is that word, on the tile itself. -->
     <string name="components_material_dark_only">Dark only</string>
 
+    <!-- ══════════════════════════════════════════════════════════════════
+         C19 · the success/failure run — spec 4.7, #64.
+
+         > A failure is a missed WINDOW and nothing else; a goal with nothing
+         > due is missing a STEP, not failing.
+
+         Every string here is one of that section's own sentences, and two of
+         them are load-bearing rather than decorative:
+
+         * components_run_window_is answers the ticket's headline question ON
+           THE SCREEN. 4.7: "The numbers are meaningless without it, so it is
+           not spec-only text." It is not a caption to be trimmed.
+         * components_run_asymmetry lives BESIDE THE TIME DONUT and nowhere
+           else. Revision 1 of the prototype printed it on every area frame,
+           which said the same thing twice and never where the two numbers
+           actually meet.
+
+         There is deliberately NO string here for a rate, a percentage or a
+         streak: 4.7 refuses the single "success rate" that C3 and C5 both
+         refused, and a resource is how one would sneak back in as a subtitle.
+         ══════════════════════════════════════════════════════════════════ -->
+    <string name="components_run_title">Window by window</string>
+    <string name="components_run_range_30_days">30 days</string>
+    <string name="components_run_range_8_weeks">8 weeks</string>
+    <string name="components_run_range_6_months">6 months</string>
+
+    <!-- The pair. Two numbers, never a rate. -->
+    <string name="components_run_kept">kept</string>
+    <string name="components_run_missed">missed</string>
+
+    <!-- The legend. "still owed - not a failure" carries its own disclaimer
+         because 2.3 is explicit that OVERDUE is not one, and the material note
+         calls it "the one state that must NOT read as a failure". -->
+    <string name="components_run_legend_kept">kept</string>
+    <string name="components_run_legend_missed">missed</string>
+    <string name="components_run_legend_owed">still owed — not a failure</string>
+    <string name="components_run_legend_nothing_due">nothing due</string>
+    <string name="components_run_window_is">a window counts as kept when everything due in it was done</string>
+
+    <!-- C17's asymmetry, stated where the divided number and the undivided one
+         meet. Analytics only. -->
+    <string name="components_run_asymmetry">A task serving two areas is a success in full in both. Only its minutes are divided — that asymmetry is deliberate.</string>
+
+    <!-- Nothing has ever been due here. Said in words rather than drawn as a
+         row of empty dots over "0 kept · 0 missed", which reads as a verdict. -->
+    <string name="components_run_empty_title">Nothing has been due here yet</string>
+    <string name="components_run_empty_subtitle">Give something in this area a date and this becomes the record of it — window by window, kept or missed.</string>
+
+    <!-- 4.7's table. NOT a dormancy state: "Asleep · invisible · failed were
+         three labels for C10's already-decided theme axis." The row names the
+         step that is missing and offers that step. -->
+    <string name="components_run_no_next_step">no next step</string>
+    <plurals name="components_run_no_next_step_footer">
+        <item quantity="one">%1$s goal here has no next step — nothing is owed there, so nothing can be missed.</item>
+        <item quantity="other">%1$s goals here have no next step — nothing is owed there, so nothing can be missed.</item>
+    </plurals>
+    <string name="components_run_offer_break_down">Break it into steps</string>
+    <string name="components_run_offer_schedule">Schedule the first one</string>
+
+    <!-- "idle 4 months". The unit is chosen by size so the sentence stays
+         readable; null idle prints nothing at all, because "idle 0 days" would
+         claim activity that never happened. -->
+    <plurals name="components_run_idle_days">
+        <item quantity="one">idle %1$s day</item>
+        <item quantity="other">idle %1$s days</item>
+    </plurals>
+    <plurals name="components_run_idle_weeks">
+        <item quantity="one">idle %1$s week</item>
+        <item quantity="other">idle %1$s weeks</item>
+    </plurals>
+    <plurals name="components_run_idle_months">
+        <item quantity="one">idle %1$s month</item>
+        <item quantity="other">idle %1$s months</item>
+    </plurals>
+
+    <!-- A screen reader has no dot to look at, so each window says which of the
+         four it is and when it was. Same duty UnmeasuredMarker's one string
+         discharges for a component that is otherwise silent. -->
+    <string name="components_run_window_kept">Kept, %1$s</string>
+    <string name="components_run_window_missed">Missed, %1$s</string>
+    <string name="components_run_window_owed">Still owed, %1$s</string>
+    <string name="components_run_window_nothing_due">Nothing due, %1$s</string>
+
 </resources>

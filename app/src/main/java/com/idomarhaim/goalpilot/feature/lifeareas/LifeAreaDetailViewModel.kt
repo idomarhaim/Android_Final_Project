@@ -8,6 +8,11 @@ import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
+import com.idomarhaim.goalpilot.domain.repository.TaskRepository
+import com.idomarhaim.goalpilot.domain.usecase.BuildSuccessFailureRunUseCase
+import com.idomarhaim.goalpilot.domain.usecase.SuccessFailureRun
+import com.idomarhaim.goalpilot.domain.usecase.SuccessRange
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +22,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -37,10 +46,21 @@ import javax.inject.Inject
 class LifeAreaDetailViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     lifeAreaRepository: LifeAreaRepository,
+    taskRepository: TaskRepository,
+    occurrenceRepository: OccurrenceRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val areaId: String = savedStateHandle[Routes.ARG_LIFE_AREA_ID] ?: ""
+
+    /**
+     * The `30 days · 8 weeks · 6 months` filter (§4.7, `#64`), default 8 weeks.
+     *
+     * A control rather than a stored preference: §4.7 is explicit that the window
+     * is *"a filter over history, not decay of it"*, and a persisted one would be
+     * a second place the same question is answered.
+     */
+    private val successRange = MutableStateFlow(SuccessRange.DEFAULT)
 
     val uiState: StateFlow<LifeAreaDetailUiState> = combine(
         // Archived areas included: this screen is reachable from a link that may
@@ -48,19 +68,43 @@ class LifeAreaDetailViewModel @Inject constructor(
         // is archived" is a better answer than "no such area".
         lifeAreaRepository.observeLifeAreas(includeArchived = true),
         goalRepository.observeGoals(),
-    ) { areas, goals ->
+        taskRepository.observeTasks(null),
+        // §2.1's occurrence documents. Deliberately the whole collection: it holds
+        // one document per instance the user TOUCHED, not one per instance, so it
+        // stays small by construction and the snapshot is cache-served
+        // (`OccurrenceRepository.observeOccurrences`).
+        occurrenceRepository.observeOccurrences(),
+        successRange,
+    ) { areas, goals, tasks, occurrences, range ->
         val area = areas.firstOrNull { it.id == areaId }
+        // Resolved per emission rather than once at construction, so the window
+        // follows the calendar for a screen left open across midnight -- the same
+        // reason AnalyticsViewModel resolves its own `today` here.
+        val today = LocalDate.now()
+        val mine = goals.filter { areaId in it.lifeAreaIds }
         LifeAreaDetailUiState(
             isLoading = false,
             area = area,
             // Deliberately computed even when the area is gone, so the screen can
             // say how many goals a deletion would unfile rather than showing an
             // empty page.
-            goals = goals.filter { areaId in it.lifeAreaIds },
+            goals = mine,
             unfiledGoals = goals.filter { goal ->
                 goal.lifeAreaIds.none { id -> areas.any { it.id == id } }
             },
             areaExists = area != null,
+            // §4.7's run, over THIS area's goals. A task serving two areas is
+            // counted whole here and whole under the other one, because each
+            // screen asks about its own goals and nothing divides a success.
+            run = BuildSuccessFailureRunUseCase(
+                goals = mine,
+                tasks = tasks,
+                occurrences = occurrences,
+                range = range,
+                today = today,
+                now = LocalDateTime.now(),
+                zone = ZoneId.systemDefault(),
+            ),
         )
     }.catch { emit(LifeAreaDetailUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -105,6 +149,11 @@ class LifeAreaDetailViewModel @Inject constructor(
         }
     }
 
+    /** §4.7's window filter. Re-reads the same history over a different span. */
+    fun selectSuccessRange(range: SuccessRange) {
+        successRange.update { range }
+    }
+
     fun consumeMessage() { _message.value = null }
 }
 
@@ -120,5 +169,14 @@ data class LifeAreaDetailUiState(
      * another device, or a stale link. Distinct from `area == null` while loading.
      */
     val areaExists: Boolean = false,
+    /**
+     * `C19`'s success/failure run for this area — §4.7, `#64`.
+     *
+     * Defaulted to an empty run rather than made nullable: the screen shows the
+     * card while loading nothing rather than branching, and an empty run reads
+     * as *nothing has been due here yet*, which is the honest thing to say about
+     * an area whose goals have not arrived from the snapshot yet.
+     */
+    val run: SuccessFailureRun = SuccessFailureRun(range = SuccessRange.DEFAULT),
     val error: String? = null,
 )

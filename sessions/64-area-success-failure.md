@@ -15,6 +15,15 @@ owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/usecase/BuildSuccessFailureRunUseCase.kt
   - app/src/test/java/com/idomarhaim/goalpilot/domain/SuccessFailureRunTest.kt
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SuccessFailureRunUiTest.kt
+  # Added while working, and said in the changelog rather than assumed. The first three are
+  # where the component is hosted or where a stale pointer to THIS ticket had to be corrected;
+  # the strings are forced by `ui/components` being a swept package (AGENTS.md 0.8).
+  - app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Occurrence.kt
+  - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Schedule.kt
+  - app/src/main/res/values/components_strings.xml
+  - app/src/main/res/values-iw/components_strings.xml
+  - docs/render-passes/2026-08-23-64-area-success-failure/
   - kb-candidates/2026-08-23-64-area-success-failure.md
   - CHANGELOG/2026-08-23/64-area-success-failure.md
   - sessions/64-area-success-failure.md
