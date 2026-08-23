@@ -2,8 +2,9 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: blocked
-blocked_on: [63]
+status: ready
+# Was `blocked_on: [63]`. Cleared 2026-08-23: #63 shipped in 7c457c4 and closed
+# 2026-08-22T23:37Z; its brief is in sessions/done/ with status: done.
 issue: 64
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/SuccessFailureRun.kt
@@ -24,7 +25,18 @@ created: 2026-08-23
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 
-⚠️ **`status: blocked` on [#63](https://github.com/idomarhaim/Android_Final_Project/issues/63).**
+✅ **UNBLOCKED 2026-08-23 — [#63](https://github.com/idomarhaim/Android_Final_Project/issues/63) has
+shipped** (`7c457c4`, closed 2026-08-22T23:37Z, brief in `sessions/done/` with `status: done`). The
+paragraph below is kept as written because its instruction — *check #63 has shipped before claiming* —
+is still the right habit; it has simply been carried out. Verify rather than trust this line.
+
+⚠️ **COLLIDES with [`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66)** — both own
+`feature/lifeareas/LifeAreaDetailScreen.kt` and `feature/analytics/AnalyticsScreen.kt`, so **these two
+cannot run in parallel.** Prefer `#66` first: it *removes* a meaningless percentage from those two
+screens, and this ticket *adds* a run to them — doing the removal first means the new component lands
+beside a screen that already tells the truth, instead of beside a number that then has to be revisited.
+
+**Historical, now satisfied:**
 The run counts **missed windows**, a window *is* an occurrence, and that collection does not
 exist yet. Check #63 has shipped before claiming.
 

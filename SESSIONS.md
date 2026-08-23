@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `65-measure-proposal` (brief hygiene) | Post `#66` and clear two **stale** brief statuses: `#64` still says `blocked_on: [63]` though `#63` closed 2026-08-22, and `#62` still lists `#59` though `#59` closed too. **Prose only** | `sessions/64-area-success-failure.md` · `sessions/62-tour-video-v2.md` · `sessions/66-unmeasured-percent.md` · `SESSIONS.md` · `CHANGELOG/2026-08-23/65-measure-proposal.md` | **none** | 2026-08-23 |
 | `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
@@ -4415,6 +4414,29 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `65-measure-proposal` (brief hygiene) — released 2026-08-23, this commit
+
+**[`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66) posted** on Ido's word; body
+verified byte-identical against the API. Brief is `sessions/66-unmeasured-percent.md`.
+
+⚠️ **Two briefs were stale and both would have cost a session.** `#64` said `blocked_on: [63]` and
+`#63` closed 2026-08-22T23:37Z (`7c457c4`); `#62` said `blocked_on: [59, 60, 61]` and `#59` closed
+(`70bf805`). `#64` is now **`status: ready`**; `#62` is now `[60, 61]` and still blocked. Both original
+warning paragraphs kept as written — their *check before claiming* instruction is still right.
+
+📌 **Parallelism, computed from the five briefs' `owns` lists rather than asserted. Exactly ONE
+collision exists in the whole set:** `#64` ↔ `#66`, on `feature/lifeareas/LifeAreaDetailScreen.kt` and
+`feature/analytics/AnalyticsScreen.kt`. Every other pair is disjoint, so `#60`, `#61` and `#66` are
+mutually parallel-safe. **Run `#66` before `#64`** — `#66` removes a meaningless percentage from those
+two screens and `#64` adds a run to them.
+
+📣 **`60-calendar-surface` went live while this pass ran** — its brief flipped to `status: active`
+under me. That file is **excluded from this commit** so its edit is not published under my message.
+Nothing else of theirs was touched, and `#60` remains disjoint from `#66`.
+
+**Singletons: none.** Prose only.
+
 
 > 🏁 **`tutorial-onboarding` (cleanup pass) RELEASED 2026-08-23 — this commit.** The row was left
 > claimed overnight after the push was held; the work in `52d0268` was carried to `origin` by a

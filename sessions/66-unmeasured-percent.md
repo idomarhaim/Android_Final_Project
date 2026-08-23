@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
 status: ready
-issue: unassigned — the ticket body is §Ticket below; post it before or at kickoff and fill this in
+issue: 66
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Goal.kt
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/GoalCard.kt
@@ -16,7 +16,7 @@ owns:
   - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt
   - kb-candidates/<date>-unmeasured-percent.md
   - CHANGELOG/<date>/unmeasured-percent.md
-  - sessions/unmeasured-percent.md
+  - sessions/66-unmeasured-percent.md
 created: 2026-08-23
 ---
 
@@ -124,10 +124,10 @@ different answers from a list row, and saying so is a legitimate outcome.
 
 ---
 
-## Ticket
+## Ticket — POSTED as [`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66) on 2026-08-23
 
-*Post this body as a new issue, then put its number in this file's front matter. Everything above the
-`---` is the brief; everything below is the ticket text.*
+*Kept verbatim so the brief and the issue can be diffed. `#66`'s body is this section with the
+blockquote prefix stripped; it was read back from the API and is byte-identical to what was sent.*
 
 **Title:** `An unmeasured goal still renders a percentage — six surfaces, and one of them speaks it`
 
@@ -170,4 +170,4 @@ different answers from a list row, and saying so is a legitimate outcome.
 > **Out of scope:** the measure proposal itself (`#65`), what a measure is (`#11`, §1.3), and
 > `targetValue`'s `100.0` default — branch on `measure == null`, which needs no migration.
 >
-> Brief: `sessions/unmeasured-percent.md`.
+> Brief: `sessions/66-unmeasured-percent.md`.

@@ -198,3 +198,45 @@ why the brief points at it rather than proposing a fourth option.
 
 **No code changed in this pass.** Prose only: no build, no device, no emulator.
 
+## Second follow-up — `#66` posted, and two briefs were stale
+
+**[`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66) is posted** on Ido's word.
+Body read back from the API and **byte-identical** to what was sent, em dashes and `§` intact — the
+`stdin`-decoding trap in `CLAUDE.md` was avoided by writing the response to a file and reading it with
+an explicit `encoding='utf-8'`. Brief renamed `sessions/66-unmeasured-percent.md`, `issue: 66`.
+
+**Two briefs were stale, and both would have cost a session.**
+
+- **`#64` said `blocked_on: [63]`** — `#63` shipped in `7c457c4` and closed 2026-08-22T23:37Z, during
+  `#65`'s own session. Now `status: ready`.
+- **`#62` said `blocked_on: [59, 60, 61]`** — `#59` closed in `70bf805`. Now `[60, 61]`, still blocked.
+
+Both warning paragraphs were **kept as written** rather than rewritten: their instruction is *check
+before claiming*, which is still right, and a note saying *do not take this note as current state* is
+more honest than a note claiming to be it.
+
+**Parallelism, computed rather than asserted.** The `owns` lists of all five live briefs were read and
+intersected on code paths. **Exactly one collision exists:**
+
+> `64-area-success-failure` ↔ `66-unmeasured-percent` — `feature/lifeareas/LifeAreaDetailScreen.kt`
+> and `feature/analytics/AnalyticsScreen.kt`.
+
+Every other pair is disjoint. `#66` is therefore parallel-safe with `#60` and `#61`, and **must not**
+run beside `#64`. Recommended order is `#66` before `#64`: `#66` *removes* a meaningless percentage
+from those two screens and `#64` *adds* a run to them, so the removal first means the new component
+lands beside a screen that already tells the truth.
+
+⚠️ **My first reading of `#60`'s brief said it had no `owns` block. That was my own regex failing**, not
+the brief: the list starts with a `#` comment line and the pattern demanded a `- ` immediately after
+`owns:`. Corrected before it reached a recommendation, but it is the exact shape of a check that
+**passes at the wrong width** — a false negative that reads like a finding. The fixed reader takes
+every indented line under `owns:`.
+
+📣 **And `#60` went live mid-pass.** `sessions/60-calendar-surface.md` turned up modified in my tree —
+`status: ready` → `active` — which I had not written: a sibling ran `/kickoff 60-calendar-surface`
+while this pass was running, and its row is now on the board. **That file is excluded from this
+commit**, because a pathspec commit takes the *working tree* content of the paths it names, so
+including it would have published their edit under my message. The parallelism note above still holds
+(`#60` is disjoint from `#66`); what changed is that `#60` is no longer merely *available*, it is
+**being worked**.
+

@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: blocked
-blocked_on: [59, 60, 61]
+blocked_on: [60, 61]  # was [59, 60, 61]; #59 closed 2026-08-23, see the note below
 issue: 62
 owns:
   - docs/marketing/**
@@ -20,6 +20,12 @@ created: 2026-08-23
 # `#62` — record the tour again, then make the film
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
+
+📌 **Partly cleared 2026-08-23: [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59)
+has shipped and closed** (`70bf805`, the data repair ran). **Still blocked on #60 and #61**, which are
+`status: ready` and unstarted. The paragraph below is kept as written and still lists all three,
+because its instruction is *check them before claiming* — do that; do not take either this note or
+that list as the current state.
 
 ⚠️ **`status: blocked`. Do not start this until
 [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59),
