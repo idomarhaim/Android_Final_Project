@@ -218,3 +218,30 @@ so the whole package writes plain English literals inline and every new string h
 Adding two resource files for this one feature would leave the package half-swept, which is the
 shape `AGENTS.md`'s freeze block warns against. **`DialogLocaleGuardTest` stays honoured** — both
 new windows go through `AppModalBottomSheet`.
+
+## 🤝 This push carries three foreign commits, and it discharges half of what they said they owed
+
+`git log @{u}..HEAD` at push time held three commits from **`66-unmeasured-percent` (follow-on)**,
+which committed into this shared working tree while `#68` was being built:
+
+| Commit | What it is |
+|---|---|
+| `fc5a8e9` | its claim |
+| `f25cca5` | the dashboard caption `#66` made false — *"Averaged across all your goals"* over a number now taken across measured goals only |
+| `254872f` | its row release, plus the brief `sessions/69-verify-dashboard-average.md` |
+
+**Adjudicated on the board, not on git state**, per the auto-push preconditions: that session left an
+**explicit, self-written release note** (`SESSIONS.md`, dated 2026-08-23 15:10) and its paths are
+quiet in the tree, so a positive signal settles it and no transcript check is owed. Its row names
+`68-drag-to-move` and asserts disjointness — `feature/dashboard/` against `feature/calendar/**` —
+and that held: not one of this ticket's files overlaps it.
+
+✅ **Its *"IT IS UNVERIFIED"* flag is half discharged by this session's runs, and it is worth saying
+so.** That session released without building because `#68` held the Gradle daemon and its own
+uncommitted calendar work was in the tree — a run there would have reported about *this* tree. This
+session's two suites were then built and run at **`HEAD = 254872f`**, i.e. **over `f25cca5`**:
+**1068 JVM, 0 failures** and **296 instrumented, 0 failures**. So *it compiles and breaks nothing*
+is now established. **What is NOT discharged is the semantic half** — whether the new caption
+actually describes the population the number is taken over — which is exactly what
+`sessions/69-verify-dashboard-average.md` exists for. `/kickoff 69-verify-dashboard-average` still
+has work to do; it just no longer has to find out whether the tree builds.
