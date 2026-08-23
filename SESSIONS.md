@@ -15,7 +15,8 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `tutorial-onboarding` (cleanup pass) | Close the release-notes duplicate found during the v0.3.2 release, and guard it so it cannot recur | `release-notes.txt` (DELETE) · `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt` (new) · `docs/RELEASING.md` · `CHANGELOG/2026-08-22/tutorial-onboarding.md` (§11) | **none — `tour-video` holds the AVD and adb, and nothing here needs a device** | 2026-08-22 |
+| `65-measure-proposal` (brief hygiene) | Post `#66` and clear two **stale** brief statuses: `#64` still says `blocked_on: [63]` though `#63` closed 2026-08-22, and `#62` still lists `#59` though `#59` closed too. **Prose only** | `sessions/64-area-success-failure.md` · `sessions/62-tour-video-v2.md` · `sessions/66-unmeasured-percent.md` · `SESSIONS.md` · `CHANGELOG/2026-08-23/65-measure-proposal.md` | **none** | 2026-08-23 |
+| `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
 > **local Firestore emulator** (ports 8080/4000, shut down cleanly).
@@ -4414,6 +4415,31 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+> 🏁 **`tutorial-onboarding` (cleanup pass) RELEASED 2026-08-23 — this commit.** The row was left
+> claimed overnight after the push was held; the work in `52d0268` was carried to `origin` by a
+> sibling's push, and this commit drains its candidates and closes the row. No singletons — nothing
+> in this pass touched the AVD or adb.
+>
+> 📌 **The drain's own finding, and it is about reading the KB rather than writing to it.** One of the
+> two candidates was **already recorded** — `kb/dev/scanned-files-are-not-task-inputs.md`, since
+> 2026-08-16 — and reading that page back caught a real hole in `52d0268`: its §4 says proving an
+> input declaration takes **four** states, because every transition *out of a failed task* is
+> uninformative. That commit had run exactly two and believed the declaration proven. States 3 and 4
+> were run here — revert (executed, green), re-run (**`UP-TO-DATE` in 1 s**), re-apply (executed,
+> **FAILED**) — and only the last one proves anything. `ReleaseNotesGuardTest`'s inputs are now
+> genuinely verified; nothing in the code changed.
+>
+> ⚠️ **The candidate's bundle check was stale six days after the page it missed was written.** It
+> named `look-at-your-own-output.md` §4c; the dedicated page is named for the mechanism. **A bundle
+> check is only as good as the words it is run with**, and it fails flatteringly — a plausible
+> destination comes back and nothing says the search was too narrow. Ingest: `C:\Dev\JARVIS`
+> `17da052`, pushed, `Check-KbLinks` clean over 113 pages.
+>
+> 📌 **Not mine, and left exactly as it is:** `kb-candidates/2026-08-23-65-measure-proposal.md` is a
+> correct **partial** drain with one survivor, `Status: blocked — needs Ido` (annotating
+> `docs/PRODUCT_v0.3.md` §3.4 is committed decision text he owns).
+
 
 ### 🏁 `65-measure-proposal` (follow-up) — released 2026-08-23, this commit
 

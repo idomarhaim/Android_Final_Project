@@ -385,3 +385,42 @@ JVM **786 / 0** across 74 classes — `ReleaseNotesGuardTest` (4) is new, and wa
 directions: red on the real defect before the fix, red on an injected divergence after it. No
 instrumented run: nothing here touches the app, and the device is held by a sibling.
 
+---
+
+## 12. The drain (2026-08-23) — and what reading the KB back cost §11
+
+Both candidates went to `C:\Dev\JARVIS` in `17da052`; the file is deleted, fully drained.
+
+| Claim | Outcome |
+|---|---|
+| A path-valued config property resolves against a base the reader is not thinking about | 📥 **ingested** — `kb/dev/copied-options-are-a-silent-no-op.md` **§5a** |
+| A guard whose inputs are invisible to the build reports on the previous run | **already recorded** — `kb/dev/scanned-files-are-not-task-inputs.md`, since 2026-08-16 |
+
+### ⚠️ §11.3's verification was incomplete, and the existing page is what said so
+
+That page's §4: proving an input declaration takes **four** states, because *every transition out of
+a failed task is uninformative* — the test ran because the previous run was red, not because an input
+changed. §11.3 ran exactly two of those and called the declaration proven. It was not.
+
+Run properly during the drain:
+
+| # | State | Task | Result |
+|---|---|---|---|
+| 1 | mutation, no declaration | `UP-TO-DATE` in 2 s | green — the fault |
+| 2 | mutation, declaration added | executed | **FAILED** |
+| 3 | mutation reverted | executed | green |
+| 3b | re-run, to establish the starting state | **`UP-TO-DATE` in 1 s** | green |
+| 4 | mutation re-applied **from that state** | executed | **FAILED** |
+
+Only row 4 shows the declaration invalidating anything. **No code changed** — what changed is that
+the claim is now true. Recorded upstream as that page's §4a, as evidence §4 fires on a session that
+was not there when it was written.
+
+### The bundle check was stale, and flatteringly so
+
+The candidate said the destination was `look-at-your-own-output.md` §4c. A dedicated page had existed
+since 2026-08-16 — **six days before the check** — named for the mechanism
+(`scanned-files-are-not-task-inputs`) rather than for the §4c wording the searcher already had. A
+bundle check is only as good as the words it is run with, and a too-narrow one returns a plausible
+destination with nothing to say it was too narrow.
+
