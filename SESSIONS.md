@@ -15,7 +15,21 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `68-drag-to-move` | `#68` — drag to move on the calendar + the scope sheet that makes `#63`'s *this occurrence or all future ones?* reachable, plus Skip | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt` · `…/calendar/CalendarViewModel.kt` · `…/calendar/CalendarModel.kt` · `…/calendar/ScopeSheet.kt` (new) · `app/src/main/res/values/strings.xml` · `app/src/main/res/values-iw/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` (new) · `kb-candidates/2026-08-23-68-drag-to-move.md` · `CHANGELOG/2026-08-23/68-drag-to-move.md` · `sessions/68-drag-to-move.md` | **Gradle daemon** · **AVD + `adb`** (a drag cannot be verified any other way) | 2026-08-23 |
+| `66-unmeasured-percent` | `#66` follow-on — the dashboard's *Overall progress* ring, which `#66` could not touch (the file was `61-google-calendar`'s) and which `#66` **made worse**: the subtitle still reads *"Averaged across all your goals"* over a mean that now excludes unmeasured ones | `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `SESSIONS.md` | **none** — no build, no device. `68-drag-to-move` has uncommitted calendar work in this tree, so a suite run here would compile **their** WIP and its result would be about their tree, not mine (§4p) | 2026-08-23 |
+> 🧭 **`66-unmeasured-percent` RE-CLAIMED 2026-08-23 14:59, for one file it could not reach the
+> first time.** `#66` is closed and its brief is in `sessions/done/`; this is the one open defect that
+> ticket listed and left, now that `61-google-calendar` has released `feature/dashboard/`. Disjoint
+> from `68-drag-to-move`, which owns `feature/calendar/**`.
+>
+> ⚠️ **Half of it is `#66`'s own regression, and that is why it is not being left for a ticket.**
+> `#66` moved `DerivedProgress.overallCompletionOf` to average **measured goals only** — correct —
+> and could not touch the screen that renders it, whose subtitle still says *"Averaged across all
+> your goals"*. So the label now describes a population the number is not taken over, which is §0.3
+> in the ticket that exists to remove §0.3. `#66` made exactly this correction in
+> `SocialRepositoryImpl` (*"across N goals with a number"*) and could not make it here.
+>
+> 📱 **NO DEVICE WILL BE TOUCHED.** No `adb`, no AVD, no install.
+| `68-drag-to-move` | `#68` — drag to move on the calendar + the scope sheet that makes `#63`'s *this occurrence or all future ones?* reachable, plus Skip | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt` · `…/calendar/CalendarViewModel.kt` · `…/calendar/CalendarModel.kt` · `…/calendar/CalendarBuilder.kt` (**widened** — the two new `CalendarEntry` fields the drag needs are populated there) · `…/calendar/ScopeSheet.kt` (new) · `app/src/main/res/values/strings.xml` · `app/src/main/res/values-iw/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` (new) · `kb-candidates/2026-08-23-68-drag-to-move.md` · `CHANGELOG/2026-08-23/68-drag-to-move.md` · `sessions/68-drag-to-move.md` | **Gradle daemon** · **AVD + `adb`** (a drag cannot be verified any other way) | 2026-08-23 |
 > 🏁 **`64-area-success-failure` RELEASED 2026-08-23 — this commit.** `#64` shipped in
 > `9c89144`; brief closed to `sessions/done/` with `status: done`, and the candidate file drained in
 > full and deleted (4 entries, cross-repo into `C:\Dev\JARVIS` — `1736766`). **Singletons free**: the
