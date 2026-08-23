@@ -75,6 +75,32 @@
          "no number yet. Nothing is owed and nothing is offered here." -->
     <string name="components_goal_unmeasured">No number yet — nothing is owed here</string>
 
+    <!-- ── The row where the percentage used to be (#66) ──────────────
+         A goal with no measure printed `0%` and `0/100` beside the marker that
+         says it has no number. Spec 1.3 makes absence the DEFAULT, and both
+         figures were arithmetic against targetValue's 100.0 fallback — a target
+         nobody set — so the row stated two facts it did not have.
+
+         What replaces them is drawn by the design 1.3 links, the C22 prototype
+         at docs/prototypes/2026-08-15-measure-proposal: its life-area frame
+         renders the unmeasured row as `no number — 11 sessions logged`. The
+         count is the one number such a goal genuinely has.
+
+         %1$s is the category label, resolved from this file. %2$s is the count
+         phrase below, ALREADY carrying its own pre-isolated digits. -->
+    <string name="components_goal_meta_unmeasured">%1$s • no number — %2$s</string>
+
+    <!-- The same row before anything has been logged. Not the plural's zero
+         case: `no number — 0 entries logged` states an absence twice and reads
+         as a scolding, which is the opposite of 1.3's "nothing is owed". -->
+    <string name="components_goal_meta_unlogged">%1$s • no number yet</string>
+
+    <!-- %1$s is a pre-isolated count (rule 1 at the top of this file). -->
+    <plurals name="components_goal_entries_logged">
+        <item quantity="one">%1$s entry logged</item>
+        <item quantity="other">%1$s entries logged</item>
+    </plurals>
+
     <!-- Percentage, as its own string so the sign's placement is the
          translator's call. Letters-free, so the untranslated-copy rule in
          HebrewLocaleResourceTest exempts it by construction. -->

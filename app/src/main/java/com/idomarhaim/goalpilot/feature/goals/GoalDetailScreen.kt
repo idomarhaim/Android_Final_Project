@@ -82,6 +82,7 @@ import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.UnmeasuredMarker
 import com.idomarhaim.goalpilot.ui.components.icon
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.trimNumber
@@ -181,6 +182,13 @@ fun GoalDetailScreen(
                 ) {
                     item {
                         GoalHeaderCard(
+                            // §1.3 / `#66`: a goal with no measure states no
+                            // number, so the ring and the ratio are not merely
+                            // blank here — they are absent. The ring sat directly
+                            // above the "No number on this one." note below and
+                            // read `0%` while the note said there was none.
+                            isUnmeasured = goal.isUnmeasured,
+                            loggedEntryCount = goal.loggedEntryCount,
                             percent = goal.progressPercent,
                             fraction = goal.progressFraction,
                             accentHex = goal.colorHex,
@@ -290,8 +298,26 @@ fun GoalDetailScreen(
     }
 }
 
+/**
+ * Test handles for the goal header — `#66`.
+ *
+ * The header states either a percentage or its absence, and an instrumented test
+ * that asserted on the **text** would pass on a screen where the whole card
+ * failed to compose. Tags name the two mutually exclusive shapes so a render
+ * pass can assert that the wrong one does not exist, which is the half a
+ * screenshot cannot check.
+ */
+object GoalHeaderTags {
+    const val PERCENT = "goal_header_percent"
+    const val RATIO = "goal_header_ratio"
+    const val UNMEASURED_MARKER = "goal_header_unmeasured_marker"
+    const val UNMEASURED_COUNT = "goal_header_unmeasured_count"
+}
+
 @Composable
 private fun GoalHeaderCard(
+    isUnmeasured: Boolean,
+    loggedEntryCount: Int,
     percent: Int,
     fraction: Float,
     accentHex: String,
@@ -315,21 +341,62 @@ private fun GoalHeaderCard(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ProgressRing(progress = fraction, color = accent, size = 140.dp) {
+            if (isUnmeasured) {
+                // The marker at header size, and NOT a dashed ring. Every circle
+                // in this app's language is an occurrence or an outcome, which is
+                // why `#65` made the marker a square in the first place — a
+                // dashed circle here would re-import the shape collision one
+                // screen over, on the largest object on the screen.
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "$percent%",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
+                    UnmeasuredMarker(
+                        size = 72.dp,
+                        modifier = Modifier.testTag(GoalHeaderTags.UNMEASURED_MARKER),
                     )
-                    Text(categoryLabel, style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        categoryLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(top = 10.dp),
+                    )
                 }
+                Text(
+                    // The honest count, where `0 / 100 %` used to be. It is the
+                    // same sentence the goal's own rows carry in every list, and
+                    // it names the section further down this very screen — the
+                    // *Progress log* — so it is a number the reader can go and
+                    // check rather than one only this line knows.
+                    text = if (loggedEntryCount <= 0) {
+                        "No number yet — nothing logged"
+                    } else if (loggedEntryCount == 1) {
+                        "No number — 1 entry logged"
+                    } else {
+                        "No number — $loggedEntryCount entries logged"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .testTag(GoalHeaderTags.UNMEASURED_COUNT),
+                )
+            } else {
+                ProgressRing(progress = fraction, color = accent, size = 140.dp) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "$percent%",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag(GoalHeaderTags.PERCENT),
+                        )
+                        Text(categoryLabel, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                Text(
+                    text = "$current / $target $unit",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .testTag(GoalHeaderTags.RATIO),
+                )
             }
-            Text(
-                text = "$current / $target $unit",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 12.dp),
-            )
             // Which parts of the user's life this goal counts towards — plural
             // since §1.2. Absent when the goal is unfiled, and then it says so,
             // because unfiled time shows up as "Unassigned" in the analytics pie

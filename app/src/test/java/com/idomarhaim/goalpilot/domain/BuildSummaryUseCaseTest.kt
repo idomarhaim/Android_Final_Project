@@ -5,6 +5,8 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalEdge
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
@@ -14,9 +16,34 @@ class BuildSummaryUseCaseTest {
 
     private val useCase = BuildSummaryUseCase()
 
+    /**
+     * ⚠️ **These carry a `measure`, and before `#66` they did not.**
+     *
+     * The fixture predated §1.3: back then every goal had a `"%"` unit by default,
+     * so `Goal(currentValue = 50.0, targetValue = 100.0)` read as *half done*. Since
+     * §1.3 that same construction is a goal that counts **nothing** — absence is the
+     * default (`E6`) — and `#66` makes `ProgressSummary.averageProgress` skip such a
+     * goal, because the fraction is against `targetValue`'s `100.0` fallback.
+     *
+     * So the measure is not decoration and not a workaround for a stricter rule: it
+     * is what these fixtures always *meant*, written down now that the model can say
+     * it. Delete it and `averageProgress` correctly reads `0f`.
+     */
     private val goals = listOf(
-        Goal(id = "g1", title = "Run", currentValue = 50.0, targetValue = 100.0),
-        Goal(id = "g2", title = "Read", currentValue = 20.0, targetValue = 100.0),
+        Goal(
+            id = "g1",
+            title = "Run",
+            currentValue = 50.0,
+            targetValue = 100.0,
+            measure = Measure(MeasureKind.DISTANCE, "km"),
+        ),
+        Goal(
+            id = "g2",
+            title = "Read",
+            currentValue = 20.0,
+            targetValue = 100.0,
+            measure = Measure(MeasureKind.COUNT, "pages"),
+        ),
         Goal(id = "g3", title = "Old", isArchived = true),
     )
 

@@ -55,6 +55,7 @@ import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
+import com.idomarhaim.goalpilot.ui.components.UnmeasuredMarkerIfNeeded
 import com.idomarhaim.goalpilot.ui.components.iconForKey
 import com.idomarhaim.goalpilot.ui.components.toGoalAccent
 import com.idomarhaim.goalpilot.ui.components.toGoalInk
@@ -266,23 +267,49 @@ private fun AreaGoalCard(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        // A percentage inside a bidi paragraph is the §4.8 shape.
-                        text = "${goal.progressPercent}%".bidiIsolated(),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = ink,
+                    // §1.3's marker, which `#65` put on `GoalCard` and not here —
+                    // and §1.3 says *wherever the goal is listed*, which this is
+                    // (`#66`). It takes the trailing slot rather than sharing it:
+                    // the percentage that used to sit here was `currentValue`
+                    // over `targetValue`'s 100.0 default, so the row asserted a
+                    // fraction of a target nobody set.
+                    UnmeasuredMarkerIfNeeded(measureIsAbsent = goal.isUnmeasured)
+                    if (!goal.isUnmeasured) {
+                        Text(
+                            // A percentage inside a bidi paragraph is the §4.8 shape.
+                            text = "${goal.progressPercent}%".bidiIsolated(),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = ink,
+                        )
+                    }
+                }
+                // The bar is the same claim drawn instead of printed, so it goes
+                // with the digit rather than staying behind as a 1%-full sliver.
+                if (!goal.isUnmeasured) {
+                    GpLinearProgress(
+                        progress = goal.progressFraction,
+                        color = accent,
+                        height = 8.dp,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                GpLinearProgress(
-                    progress = goal.progressFraction,
-                    color = accent,
-                    height = 8.dp,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
                 Text(
-                    text = ("${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()} " +
-                        goal.measureWord).trim(),
+                    text = if (goal.isUnmeasured) {
+                        // The honest count, which is what the `C22` prototype's own
+                        // life-area frame draws: `no number — 11 sessions logged`.
+                        // This package is unswept (§0.8 is suspended; AGENTS.md), so
+                        // the copy is a plain English literal, like every other
+                        // string on this screen.
+                        when (goal.loggedEntryCount) {
+                            0 -> "No number yet"
+                            1 -> "No number — 1 entry logged"
+                            else -> "No number — ${goal.loggedEntryCount} entries logged"
+                        }
+                    } else {
+                        ("${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()} " +
+                            goal.measureWord).trim()
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

@@ -815,11 +815,39 @@ private fun EstimateFootnote(allocation: TimeAllocation) {
 
 // ── The two goal-level charts ────────────────────────────────────────
 
+/**
+ * *Progress by goal* — and it charts **measured goals only** (`#66`).
+ *
+ * An unmeasured goal used to get a bar whose length, `trailing` label and
+ * count-up animation were all `currentValue / targetValue`, where `targetValue`
+ * is the `100.0` default a goal gets for saying nothing (§1.3, `E6`). So the
+ * chart ranked goals by a fraction of a target nobody set, and animated the
+ * digit up to it, which is §0.3's *second number that quietly disagrees* with a
+ * count-up attached.
+ *
+ * §4.4 already refuses a neighbouring version of this shape — *"a percentage is
+ * a fraction of its own target, so ranking by movement partly ranks how modest
+ * the goals are"* — which is why the effort chart orders minutes. With no target
+ * at all there is not even a modest ranking left to make.
+ *
+ * **Excluded, then counted.** Dropping the goals silently would make the chart
+ * claim to describe every goal while describing a subset, so the footnote states
+ * how many are missing. That is the same answer
+ * [BuildWidgetSnapshotUseCase][com.idomarhaim.goalpilot.domain.usecase.BuildWidgetSnapshotUseCase]
+ * already reached independently with `goalsWithoutMeasure`, which is a reason to
+ * trust it rather than a coincidence.
+ *
+ * `TaskFocusCard` below is deliberately **not** given the same treatment: its
+ * share is `completed tasks on this goal / all completed tasks`, which is
+ * arithmetic on facts a goal has whether or not it counts anything.
+ */
 @Composable
 private fun ProgressByGoalCard(state: AnalyticsUiState) {
     val untitled = stringResource(R.string.analytics_untitled_goal)
     val percentFormat = stringResource(R.string.analytics_percent)
-    val bars = state.goals.map { g ->
+    val measured = state.goals.filterNot { it.isUnmeasured }
+    val unmeasuredCount = state.goals.size - measured.size
+    val bars = measured.map { g ->
         BarItem(
             label = g.title.ifBlank { untitled },
             fraction = g.progressFraction,
@@ -834,6 +862,18 @@ private fun ProgressByGoalCard(state: AnalyticsUiState) {
         stringResource(R.string.analytics_progress_subtitle),
     ) {
         HorizontalBarChart(items = bars)
+        if (unmeasuredCount > 0) {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.analytics_progress_unmeasured,
+                    unmeasuredCount,
+                    unmeasuredCount.isolated(),
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
     }
 }
 

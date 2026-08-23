@@ -256,25 +256,52 @@ class DerivedProgressTest {
     fun `withDerivedProgress leaves every other field alone`() {
         val goal = Goal(id = "g1", title = "Read 12 books", targetValue = 12.0, measure = Measure(MeasureKind.COUNT, "books"))
         val derived = goal.withDerivedProgress(listOf(entry("g1", 3.0)), emptyList())
-        assertThat(derived).isEqualTo(goal.copy(currentValue = 3.0))
+        // `loggedEntryCount` joined `currentValue` at this seam in `#66`: two derived
+        // views of the same facts, filled in the same pass. Naming it here rather than
+        // relaxing the assertion is the point of the test — it fails the moment a
+        // THIRD field starts being derived silently.
+        assertThat(derived).isEqualTo(goal.copy(currentValue = 3.0, loggedEntryCount = 1))
     }
 
     // ── The aggregation site, and the 16259% it produced ──────────────────────
+
+    /**
+     * A goal that is genuinely counting something, for the aggregation tests below.
+     *
+     * ⚠️ **They did not need this before `#66`, and the reason is worth reading.**
+     * These fixtures were written when a bare `Goal(targetValue = 100.0,
+     * currentValue = 50.0)` meant *half done*, which was true while every goal
+     * carried a `"%"` unit by default. §1.3 deleted that default — absence is now
+     * the default (`E6`) — so the same construction now means *a goal that counts
+     * nothing, whose 100.0 target nobody set*, and `#66` makes
+     * [DerivedProgress.overallCompletionOf] skip exactly those.
+     *
+     * So the measure is not a concession to a stricter rule: it writes down what the
+     * fixture always meant. What these tests are **about** — the clamp, and the
+     * 16259% that motivated it — is untouched, and every expected number below is
+     * the number it was before.
+     */
+    private fun measured(id: String, target: Double, current: Double = 0.0) = Goal(
+        id = id,
+        targetValue = target,
+        currentValue = current,
+        measure = Measure(MeasureKind.COUNT, "reps"),
+    )
 
     @Test
     fun `overall completion is bounded above however far one goal has run past its target`() {
         // The device pass read "Overall progress 16259%". A plain mean of
         // progressFraction can say that; this cannot say more than 100%.
-        val beaten = Goal(id = "steps", targetValue = 70_000.0, currentValue = 34_000_000.0)
-        val untouched = Goal(id = "b", targetValue = 100.0)
+        val beaten = measured("steps", target = 70_000.0, current = 34_000_000.0)
+        val untouched = measured("b", target = 100.0)
         assertThat(DerivedProgress.overallCompletionOf(listOf(beaten, untouched)))
             .isWithin(1e-6f).of(0.5f)
     }
 
     @Test
     fun `overall completion is bounded below by a goal whose progress has gone negative`() {
-        val negative = Goal(id = "a", targetValue = 100.0, currentValue = -500.0)
-        val half = Goal(id = "b", targetValue = 100.0, currentValue = 50.0)
+        val negative = measured("a", target = 100.0, current = -500.0)
+        val half = measured("b", target = 100.0, current = 50.0)
         assertThat(DerivedProgress.overallCompletionOf(listOf(negative, half)))
             .isWithin(1e-6f).of(0.25f)
     }
@@ -284,9 +311,9 @@ class DerivedProgressTest {
         // The clamp must be invisible where nothing overshoots — otherwise this is
         // a behaviour change dressed as a bug fix.
         val goals = listOf(
-            Goal(id = "a", targetValue = 100.0, currentValue = 20.0),
-            Goal(id = "b", targetValue = 100.0, currentValue = 40.0),
-            Goal(id = "c", targetValue = 100.0, currentValue = 90.0),
+            measured("a", target = 100.0, current = 20.0),
+            measured("b", target = 100.0, current = 40.0),
+            measured("c", target = 100.0, current = 90.0),
         )
         assertThat(DerivedProgress.overallCompletionOf(goals)).isWithin(1e-6f).of(0.5f)
     }
@@ -302,7 +329,7 @@ class DerivedProgressTest {
         // §1.5's whole point: the overshoot stays readable where the goal speaks
         // for itself. This is the test that fails if someone "fixes" 16259% by
         // putting the clamp back on progressFraction.
-        val beaten = Goal(id = "steps", targetValue = 70_000.0, currentValue = 210_000.0)
+        val beaten = measured("steps", target = 70_000.0, current = 210_000.0)
         assertThat(beaten.progressFraction).isWithin(1e-6f).of(3f)
         assertThat(beaten.progressPercent).isEqualTo(300)
         assertThat(DerivedProgress.overallCompletionOf(listOf(beaten))).isEqualTo(1f)
@@ -316,7 +343,7 @@ class DerivedProgressTest {
         // one target per week. The old stored counter hid this by clamping at the
         // target, which is why it surfaced only when #49 removed the clamp.
         val ninetyDays = (1..90).map { day -> entry("steps", 8_000.0, id = "hc:steps:$day") }
-        val goal = Goal(id = "steps", targetValue = 70_000.0)
+        val goal = measured("steps", target = 70_000.0)
             .withDerivedProgress(ninetyDays, emptyList())
 
         assertThat(goal.currentValue).isWithin(1e-6).of(720_000.0)

@@ -100,6 +100,37 @@ object DerivedProgress {
     }
 
     /**
+     * How many progress entries name each goal — the count behind
+     * [Goal.loggedEntryCount] (`#66`).
+     *
+     * A **separate pass from [currentValues]** rather than a second return value
+     * on it, and the reason is that they are not the same population. That one
+     * sums entries **and** the declared contributions of completed tasks; this
+     * one counts entries alone, because the number it feeds is rendered beside a
+     * *Progress log* the user can go and count. Merging them would have to pick
+     * one population for both and would make one of the two numbers wrong.
+     *
+     * Goals with no entries are **absent** rather than present at `0`, the same
+     * contract [currentValues] documents, so a caller resolves a missing key
+     * itself and this never has to be handed the goal list to enumerate it.
+     */
+    fun entryCounts(entries: List<ProgressEntry>): Map<String, Int> {
+        val counts = HashMap<String, Int>()
+        for (entry in entries) {
+            val goalId = entry.goalId
+            if (goalId.isBlank()) continue
+            counts[goalId] = (counts[goalId] ?: 0) + 1
+        }
+        return counts
+    }
+
+    /** [entryCounts] for one goal. `0` when nothing has been logged against it. */
+    fun entryCountOf(goalId: String, entries: List<ProgressEntry>): Int {
+        if (goalId.isBlank()) return 0
+        return entryCounts(entries)[goalId] ?: 0
+    }
+
+    /**
      * The derived `currentValue` for one goal. `0.0` when nothing has been logged
      * and nothing linked to it is done — the same number an untouched goal has
      * always read.
@@ -155,9 +186,31 @@ object DerivedProgress {
         return if (count == 0) 0f else sum / count
     }
 
-    /** [overallCompletion] over goals. */
+    /**
+     * [overallCompletion] over goals — **the measured ones**, `#66`.
+     *
+     * A goal with no measure has `currentValue / 100.0`, where the `100.0` is
+     * §1.3's default for a goal that said nothing. It is therefore not a low
+     * score: it is **not a score**, and averaging it in makes the dashboard's
+     * *Overall progress* headline a mean of numbers and non-numbers. Three
+     * unmeasured goals beside one finished goal read **25 %**, which states that
+     * three quarters of the work is outstanding on goals that were never
+     * counting anything.
+     *
+     * The filter is here rather than at the caller for the reason the clamp is:
+     * this is the aggregation site, and putting the rule at one of two callers
+     * would leave the other one wrong — which is the shape [Goal.isUnmeasured]'s
+     * KDoc argues against for the marker and the percentage.
+     *
+     * **`0f` when no goal has a measure**, which is what an untouched account
+     * already read and is the honest floor. `Untested:` what the dashboard should
+     * *say* in that state — a `0 %` ring for an account whose goals all
+     * legitimately have no number is the ticket's own defect one layer up — but
+     * `feature/dashboard/` is held by `61-google-calendar`, so the display half is
+     * named on the board and left alone rather than half-fixed.
+     */
     fun overallCompletionOf(goals: List<Goal>): Float =
-        overallCompletion(goals.map { it.progressFraction })
+        overallCompletion(goals.filterNot { it.isUnmeasured }.map { it.progressFraction })
 }
 
 /**
@@ -175,11 +228,23 @@ fun List<Goal>.withDerivedProgress(
 ): List<Goal> {
     if (isEmpty()) return this
     val sums = DerivedProgress.currentValues(entries, tasks)
-    return map { goal -> goal.copy(currentValue = sums[goal.id] ?: 0.0) }
+    // Counted in the same pass, at the same seam, for the same reason (`#66`):
+    // a screen holding a `Goal` can read `loggedEntryCount` without knowing that
+    // entries exist, exactly as it reads `currentValue` without knowing they do.
+    val counts = DerivedProgress.entryCounts(entries)
+    return map { goal ->
+        goal.copy(
+            currentValue = sums[goal.id] ?: 0.0,
+            loggedEntryCount = counts[goal.id] ?: 0,
+        )
+    }
 }
 
 /** [withDerivedProgress] for a single goal. */
 fun Goal.withDerivedProgress(
     entries: List<ProgressEntry>,
     tasks: List<Task>,
-): Goal = copy(currentValue = DerivedProgress.currentValueOf(id, entries, tasks))
+): Goal = copy(
+    currentValue = DerivedProgress.currentValueOf(id, entries, tasks),
+    loggedEntryCount = DerivedProgress.entryCountOf(id, entries),
+)

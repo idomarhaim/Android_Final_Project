@@ -56,6 +56,14 @@ class BuildSummaryUseCase @Inject constructor() {
                 category = goal.category,
                 fraction = goal.progressFraction,
                 effortMinutes = minutesByGoal[goal.id] ?: 0,
+                // Carried, not filtered (`#66`). The slice keeps its effort --
+                // §1.4 makes that a separate quantity and it is perfectly real for
+                // an unmeasured goal -- and `ProgressSummary.averageProgress`
+                // drops only the fraction, which is `currentValue` over a target
+                // nobody set. That average is published by
+                // `SocialRepositoryImpl.shareSummary`, so this is the flag that
+                // stops a fiction leaving the device.
+                isUnmeasured = goal.isUnmeasured,
             )
         }
 

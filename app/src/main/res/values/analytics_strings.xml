@@ -139,6 +139,18 @@
     <!-- ── The two goal-level charts ───────────────────────────── -->
     <string name="analytics_progress_title">Progress by goal</string>
     <string name="analytics_progress_subtitle">How far along each goal is.</string>
+
+    <!-- #66. A goal with no measure has no fraction to rank, so it is left OUT of
+         this chart rather than drawn at 0 % of a target nobody set. Silent
+         exclusion would be its own defect (4.4 already refuses to rank goals by a
+         fraction of their own target, and says so), so the count is stated — the
+         same answer the widget already reached with goalsWithoutMeasure.
+         %1$s is a pre-isolated count. -->
+    <plurals name="analytics_progress_unmeasured">
+        <item quantity="one">%1$s goal has no number yet and is not charted here.</item>
+        <item quantity="other">%1$s goals have no number yet and are not charted here.</item>
+    </plurals>
+
     <string name="analytics_focus_title">Task focus</string>
     <string name="analytics_focus_subtitle">Share of completed tasks per goal (where your effort goes).</string>
     <string name="analytics_focus_empty">Complete some tasks to see your focus split.</string>

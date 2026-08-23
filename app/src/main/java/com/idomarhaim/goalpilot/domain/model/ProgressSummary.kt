@@ -28,7 +28,28 @@ data class ProgressSummary(
      * than merely displayed.
      */
     val averageProgress: Float
-        get() = DerivedProgress.overallCompletion(goals.map { it.fraction })
+        get() = DerivedProgress.overallCompletion(
+            // MEASURED GOALS ONLY (`#66`). An unmeasured goal's fraction is
+            // `currentValue` over §1.3's `100.0` default — a target nobody set —
+            // so it is not a low score, it is not a score, and averaging it in
+            // drags a number that leaves the device: the paragraph above is not
+            // decoration, `SocialRepositoryImpl.shareSummary` rounds this into
+            // `avg N% across M goals` and publishes it to other people. That
+            // makes this the one site in `#66` where the fiction reached
+            // somebody other than Ido.
+            goals.filterNot { it.isUnmeasured }.map { it.fraction },
+        )
+
+    /**
+     * How many of [goals] actually have a number — the denominator
+     * [averageProgress] is a mean over (`#66`).
+     *
+     * Published beside the average rather than left implicit: *"avg 60% across 5
+     * goals"* where two of the five were excluded is a **third** number that
+     * quietly disagrees with the other two, which is the defect this ticket is
+     * removing and not one to introduce fixing it.
+     */
+    val measuredGoals: Int get() = goals.count { !it.isUnmeasured }
 }
 
 /**
@@ -60,4 +81,17 @@ data class GoalProgress(
     val fraction: Float,
     /** Effort: minutes of completed work banked against this goal in the window. */
     val effortMinutes: Int = 0,
+    /**
+     * Whether this goal counts nothing at all —
+     * [Goal.isUnmeasured][com.idomarhaim.goalpilot.domain.model.Goal.isUnmeasured],
+     * carried through so [ProgressSummary.averageProgress] can exclude it (`#66`).
+     *
+     * **The slice survives; only [fraction] is disqualified**, because §1.4 makes
+     * effort and outcome two quantities and an unmeasured goal has a perfectly
+     * real [effortMinutes]. Dropping the whole `GoalProgress` would have deleted
+     * hours of logged work to remove a number that was never there.
+     *
+     * Defaulted to `false` so a hand-built summary reads as it always did.
+     */
+    val isUnmeasured: Boolean = false,
 )

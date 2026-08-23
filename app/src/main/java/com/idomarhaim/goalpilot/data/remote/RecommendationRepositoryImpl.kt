@@ -96,16 +96,26 @@ class RecommendationRepositoryImpl @Inject constructor(
         try {
             val payload = hashMapOf<String, Any>(
                 "goals" to goals.map {
-                    mapOf(
-                        "id" to it.id,
-                        "title" to it.title,
-                        "category" to it.category.name,
-                        "progressPercent" to it.progressPercent,
+                    buildMap<String, Any> {
+                        put("id", it.id)
+                        put("title", it.title)
+                        put("category", it.category.name)
+                        // ABSENT, not zero, for a goal with no measure (`#66`).
+                        // `functions/src/index.ts` puts this map into the prompt
+                        // with a bare `JSON.stringify`, so a key that is present
+                        // is a fact the model is told — and `progressPercent` on
+                        // an unmeasured goal is `currentValue` over
+                        // `targetValue`'s 100.0 default, a target nobody set.
+                        // Sending `0` there does not merely mislead: it reads as
+                        // *this goal has gone nowhere*, which is the sentence the
+                        // model then writes back in speech no fallback touches.
+                        // Omitting the key says nothing at all, which is true.
+                        if (!it.isUnmeasured) put("progressPercent", it.progressPercent)
                         // The wire key stays `unit` — the Cloud Function reads
                         // it — but what travels is §1.3's *word*, which is the
                         // only half of a measure the prompt was ever using.
-                        "unit" to it.measureWord,
-                    )
+                        put("unit", it.measureWord)
+                    }
                 },
                 "completedTasksLast7d" to completedTasksLast7d,
                 "totalPoints" to totalPoints,
@@ -380,7 +390,25 @@ class RecommendationRepositoryImpl @Inject constructor(
             },
             type = RecommendationType.ENCOURAGEMENT,
         )
-        goals.filter { it.progressFraction < 0.34f }
+        // MEASURED GOALS ONLY, and the filter's own arithmetic is why (`#66`).
+        //
+        // `progressFraction` is `currentValue / targetValue`, and an unmeasured
+        // goal's target is the `100.0` default it gets for saying nothing (§1.3,
+        // `E6`). A goal nobody has logged against therefore sits at **exactly
+        // 0.0** — below every measured goal that has moved at all — so
+        // `< 0.34f` did not merely include unmeasured goals, it **preferred**
+        // them, and `.take(2)` then handed the whole offline nudge feed to goals
+        // with no number, quoting each one a percentage of a target nobody set.
+        // The app said it out loud, which is what makes this the worst of the
+        // ticket's sites rather than another stray digit.
+        //
+        // There is deliberately no unmeasured branch here. The thing worth saying
+        // about such a goal is §1.3's measure OFFER, and §0.7 puts that on the
+        // goal's own screen behind the consent of opening it — never in a feed
+        // the user is scanning for something else. So the honest recommendation
+        // count for an all-unmeasured account is the encouragement above and
+        // nothing more.
+        goals.filter { !it.isUnmeasured && it.progressFraction < 0.34f }
             .take(2)
             .forEach { g ->
                 recs += Recommendation(

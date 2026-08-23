@@ -51,6 +51,16 @@
          the marker states a present absence and not a verdict. -->
     <string name="components_goal_unmeasured">עוד אין מספר — שום דבר לא נדרש כאן</string>
 
+    <!-- #66. Authored, not render-checked: 0.8's Hebrew render pass is
+         suspended (AGENTS.md), and this file's parity contract is not. -->
+    <string name="components_goal_meta_unmeasured">%1$s • בלי מספר — %2$s</string>
+    <string name="components_goal_meta_unlogged">%1$s • עוד אין מספר</string>
+    <plurals name="components_goal_entries_logged">
+        <item quantity="one">%1$s רישום נרשם</item>
+        <item quantity="two">%1$s רישומים נרשמו</item>
+        <item quantity="other">%1$s רישומים נרשמו</item>
+    </plurals>
+
     <string name="components_percent">%1$d%%</string>
 
     <!-- ── GoalCategory ──────────────────────────────────────────── -->

@@ -89,13 +89,15 @@ fun GoalCard(
                     // structure and **stating a fact asserts nothing**. Opening the
                     // goal is that consent, which is where the offer lives.
                     //
-                    // It sits beside the percentage rather than replacing it: an
-                    // unmeasured goal still shows whatever its progress arithmetic
-                    // says, and the marker's claim is about the NUMBER's absence,
-                    // not about the row being empty.
-                    UnmeasuredMarkerIfNeeded(measureIsAbsent = goal.measure == null)
-                    if (goal.measure == null) Spacer(Modifier.width(8.dp))
-                    if (goal.isComplete) {
+                    // It REPLACES the percentage rather than sitting beside it
+                    // (`#66`). It used to do the latter, and the two then made
+                    // opposite claims on one row: the marker said there is no
+                    // number and the row printed `0%` and `0/100` next to it —
+                    // both computed against `targetValue`'s 100.0 default, a
+                    // target nobody set. §0.3's *second number that quietly
+                    // disagrees*, in the one place §1.3 had just denied it.
+                    UnmeasuredMarkerIfNeeded(measureIsAbsent = goal.isUnmeasured)
+                    if (goal.isComplete && !goal.isUnmeasured) {
                         Icon(
                             imageVector = Icons.Filled.Check,
                             contentDescription = stringResource(R.string.components_goal_complete),
@@ -103,19 +105,27 @@ fun GoalCard(
                             modifier = Modifier.size(18.dp),
                         )
                     }
-                    Text(
-                        text = percentText(goal.progressPercent),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = ink,
+                    if (!goal.isUnmeasured) {
+                        Text(
+                            text = percentText(goal.progressPercent),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = ink,
+                        )
+                    }
+                }
+                // The BAR goes with the digit, and that is not tidiness: it is the
+                // same fiction drawn instead of printed. #11's live example —
+                // `Health · 1/100 %` — fills this bar to 1% of a target nobody set,
+                // and a reader who never reads the digit still reads the fill.
+                if (!goal.isUnmeasured) {
+                    GpLinearProgress(
+                        progress = goal.progressFraction,
+                        color = accent,
+                        height = 8.dp,
+                        modifier = Modifier.padding(top = 10.dp),
                     )
                 }
-                GpLinearProgress(
-                    progress = goal.progressFraction,
-                    color = accent,
-                    height = 8.dp,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
                 Text(
                     // One resource with three arguments, not a four-part
                     // concatenation: word order is a property of the language
@@ -123,13 +133,24 @@ fun GoalCard(
                     // is isolated as ONE run — `5/10` reverses to `10/5` in an
                     // RTL paragraph otherwise — and `unit` is isolated because
                     // it is user-authored (§8) and its script is unknown here.
-                    text = stringResource(
-                        R.string.components_goal_meta,
-                        goal.category.localizedLabel(),
-                        "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()}"
-                            .bidiIsolated(),
-                        goal.measureWord.bidiIsolated(),
-                    ),
+                    //
+                    // The unmeasured branch states the honest count instead of the
+                    // ratio, which is what the `C22` prototype draws — `no number
+                    // — 11 sessions logged` on its own life-area frame.
+                    text = if (goal.isUnmeasured) {
+                        unmeasuredMetaText(
+                            categoryLabel = goal.category.localizedLabel(),
+                            loggedEntryCount = goal.loggedEntryCount,
+                        )
+                    } else {
+                        stringResource(
+                            R.string.components_goal_meta,
+                            goal.category.localizedLabel(),
+                            "${goal.currentValue.trimNumber()}/${goal.targetValue.trimNumber()}"
+                                .bidiIsolated(),
+                            goal.measureWord.bidiIsolated(),
+                        )
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),

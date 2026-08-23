@@ -79,6 +79,28 @@ data class Goal(
      */
     val currentValue: Double = 0.0,
     /**
+     * How many progress entries have been logged against this goal — **derived,
+     * never stored**, exactly like [currentValue] and by the same seam
+     * (`withDerivedProgress`).
+     *
+     * It exists because `#66` had to answer *"what does a row show where the
+     * percentage was?"* for a goal with no measure, and the answer the design
+     * draws is **the honest count** — `no number — 11 entries logged` rather than
+     * a percent of a target nobody set. A count is the one number such a goal
+     * genuinely has.
+     *
+     * **Entries only, deliberately not entries plus completed tasks.** The goal's
+     * own screen renders a *Progress log* section listing exactly these entries,
+     * so this is a number the user can go and count. Folding in task
+     * contributions would make it agree with nothing on screen, which is §0.3's
+     * *second number that quietly disagrees* in the shape this ticket exists to
+     * remove — and it would be a **different** count from [currentValue]'s
+     * summands, since §1.5 lets an edge declare nothing and add nothing.
+     *
+     * A `Goal` built by hand carries `0`, honestly: nothing has been logged.
+     */
+    val loggedEntryCount: Int = 0,
+    /**
      * What this goal counts, or `null` when it counts nothing — spec §1.3 (`C7`
      * #14), replacing the free-text `unit: String = "%"` this field grew out of.
      *
@@ -146,6 +168,34 @@ data class Goal(
      * that means nothing rather than a number that means zero.
      */
     val hasMeasure: Boolean get() = targetValue > 0.0 && measureWord.isNotBlank()
+
+    /**
+     * Whether this goal counts nothing at all — §1.3's *absence is the default*
+     * (`E6`), and the one question every surface asks before stating a number
+     * (`#66`).
+     *
+     * **The population is `measure == null`, and it is deliberately not
+     * `!`[hasMeasure].** It is the same predicate
+     * [UnmeasuredMarkerIfNeeded][com.idomarhaim.goalpilot.ui.components.UnmeasuredMarkerIfNeeded]
+     * already uses, and that agreement is load-bearing rather than tidy: the
+     * marker's claim (*no number yet*) and the missing percentage are two halves
+     * of one statement, so a row that showed the marker **and** a percentage —
+     * which is exactly what `#65`'s render pass caught — is the defect. Two
+     * predicates could drift back into it; one cannot.
+     *
+     * ### What it deliberately does not cover
+     *
+     * A goal carrying a measure with a **zero or negative target** also has no
+     * meaningful percentage — [progressFraction] returns `0f` there, a number
+     * that means nothing rather than a number that means zero. It is not folded
+     * in here because the two states want **different words**: this one has
+     * nothing to count, that one counts something and has nowhere to count it
+     * to. `Untested:` it is also unreachable from the UI — `AddEditGoalViewModel`
+     * refuses a save with *"Target must be a number greater than 0"* — so it can
+     * only arrive from a legacy Firestore document, and no such document is known
+     * to exist. Worth its own ticket if one ever turns up; worth nothing before.
+     */
+    val isUnmeasured: Boolean get() = measure == null
 
     /**
      * Whether the sorter proposed this goal and nobody has ruled on it yet (§1.1, `#6`).

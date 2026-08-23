@@ -12,6 +12,8 @@ import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.testing.FakeAppPreferences
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import io.mockk.every
 import io.mockk.mockk
@@ -49,9 +51,31 @@ class RecommendationRepositoryFallbackTest {
         UnconfinedTestDispatcher(),
     )
 
+    /**
+     * ⚠️ **These carry a `measure` now, and before `#66` they did not.**
+     *
+     * The fixture predated §1.3, when every goal had a `"%"` unit by default and
+     * `currentValue = 10.0, targetValue = 100.0` therefore read as *10% along*. Since
+     * §1.3 absence is the default (`E6`), so the same construction is a goal counting
+     * **nothing** — and `#66` takes those out of the nudge filter, because their
+     * fraction is against a target nobody set. Without a measure here,
+     * `the low-progress goal is surfaced as a nudge` would fail, correctly.
+     */
     private val goals = listOf(
-        Goal(id = "g1", title = "Run 5k", currentValue = 10.0, targetValue = 100.0),
-        Goal(id = "g2", title = "Read books", currentValue = 90.0, targetValue = 100.0),
+        Goal(
+            id = "g1",
+            title = "Run 5k",
+            currentValue = 10.0,
+            targetValue = 100.0,
+            measure = Measure(MeasureKind.DISTANCE, "km"),
+        ),
+        Goal(
+            id = "g2",
+            title = "Read books",
+            currentValue = 90.0,
+            targetValue = 100.0,
+            measure = Measure(MeasureKind.COUNT, "books"),
+        ),
     )
 
     private val areas = listOf(
@@ -70,6 +94,56 @@ class RecommendationRepositoryFallbackTest {
         assertThat(recommendations).isNotEmpty()
         // The low-progress goal should be surfaced as a nudge.
         assertThat(recommendations.any { it.relatedGoalId == "g1" }).isTrue()
+    }
+
+    @Test
+    fun `the offline nudge never quotes a percentage for a goal that has no measure`() = runTest {
+        // ⚠️ **The priority site of `#66`, and it is worse than a stray digit.**
+        //
+        // The filter is `progressFraction < 0.34f`, and an unmeasured goal's fraction
+        // is `currentValue / targetValue` where the target is §1.3's `100.0` default
+        // — the value a goal gets for saying nothing. So a goal nobody has logged
+        // against sits at **exactly 0.0**, below every measured goal that has moved
+        // at all, and `.take(2)` then hands the whole feed to goals with no number
+        // and tells the user their percentage. The app said it out loud.
+        //
+        // Asserted on the FEED rather than on the message text: the defect is which
+        // goals are chosen, and a test that only grepped for `%` would keep passing
+        // if the selection stayed wrong and the wording changed.
+        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+
+        val unmeasured = Goal(id = "u1", title = "Get fit")
+        val result = repo.getRecommendations(
+            goals + unmeasured,
+            completedTasksLast7d = 0,
+            totalPoints = 0,
+        )
+
+        val recommendations = (result as Resource.Success).data
+        assertThat(recommendations.map { it.relatedGoalId }).doesNotContain("u1")
+        // …and the measured low-progress goal is still nudged, so this is an
+        // exclusion and not the feature quietly switching itself off.
+        assertThat(recommendations.any { it.relatedGoalId == "g1" }).isTrue()
+    }
+
+    @Test
+    fun `an account whose goals all lack a measure gets encouragement and no nudges`() = runTest {
+        // The honest consequence of the exclusion above, stated rather than left to
+        // be discovered: there is deliberately no unmeasured *branch*. The thing
+        // worth saying about such a goal is §1.3's measure OFFER, and §0.7 puts that
+        // on the goal's own screen behind the consent of opening it — never in a
+        // feed being scanned for something else.
+        every { functions.getHttpsCallable(any()) } throws RuntimeException("no network")
+
+        val result = repo.getRecommendations(
+            listOf(Goal(id = "u1", title = "Get fit"), Goal(id = "u2", title = "Write more")),
+            completedTasksLast7d = 0,
+            totalPoints = 0,
+        )
+
+        val recommendations = (result as Resource.Success).data
+        assertThat(recommendations).hasSize(1)
+        assertThat(recommendations.single().relatedGoalId).isNull()
     }
 
     @Test

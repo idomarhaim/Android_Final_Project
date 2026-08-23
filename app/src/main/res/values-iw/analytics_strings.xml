@@ -135,6 +135,15 @@
     <!-- ── The two goal-level charts — יעד, never מטרה (§5.1 / E1) ── -->
     <string name="analytics_progress_title">התקדמות לפי יעד</string>
     <string name="analytics_progress_subtitle">כמה התקדם כל יעד.</string>
+
+    <!-- #66. Authored, not render-checked: 0.8's Hebrew render pass is suspended
+         (AGENTS.md), the parity contract in HebrewLocaleResourceTest is not. -->
+    <plurals name="analytics_progress_unmeasured">
+        <item quantity="one">עבור %1$s יעד עוד אין מספר, והוא אינו מוצג כאן.</item>
+        <item quantity="two">עבור %1$s יעדים עוד אין מספר, והם אינם מוצגים כאן.</item>
+        <item quantity="other">עבור %1$s יעדים עוד אין מספר, והם אינם מוצגים כאן.</item>
+    </plurals>
+
     <string name="analytics_focus_title">מיקוד משימות</string>
     <string name="analytics_focus_subtitle">חלקן של המשימות שהושלמו בכל יעד (לאן המאמץ שלכם הולך).</string>
     <string name="analytics_focus_empty">השלימו כמה משימות כדי לראות את פילוח המיקוד שלכם.</string>

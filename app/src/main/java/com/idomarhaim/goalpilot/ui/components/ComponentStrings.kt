@@ -3,6 +3,7 @@ package com.idomarhaim.goalpilot.ui.components
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
@@ -133,6 +134,40 @@ fun AppMaterial.specName(): String = stringResource(
 @ReadOnlyComposable
 fun percentText(percent: Int): String =
     stringResource(R.string.components_percent, percent).bidiIsolated()
+
+/**
+ * The meta line of a goal row that has **no measure** — `#66`.
+ *
+ * `Health • no number — 11 entries logged`, where a measured goal reads
+ * `Health • 3/10 books`. Both come out of `res/` with the category label as the
+ * first argument, so the two shapes stay word-orderable by a translator rather
+ * than by a Kotlin `+`.
+ *
+ * **Nothing logged is its own string, not the plural's zero case.** *"no number
+ * — 0 entries logged"* states the absence twice and reads as a reproach, which
+ * is the opposite of §1.3's *nothing is owed here*; the marker beside it already
+ * carries the whole claim.
+ *
+ * The count is pre-isolated (§4.8) because it lands inside prose that may be
+ * rendered right-to-left, the same rule the ratio in
+ * `R.string.components_goal_meta` follows.
+ */
+@Composable
+@ReadOnlyComposable
+fun unmeasuredMetaText(categoryLabel: String, loggedEntryCount: Int): String =
+    if (loggedEntryCount <= 0) {
+        stringResource(R.string.components_goal_meta_unlogged, categoryLabel)
+    } else {
+        stringResource(
+            R.string.components_goal_meta_unmeasured,
+            categoryLabel,
+            pluralStringResource(
+                R.plurals.components_goal_entries_logged,
+                loggedEntryCount,
+                loggedEntryCount.toString().bidiIsolated(),
+            ),
+        )
+    }
 
 @get:StringRes
 private val GoalCategory.labelRes: Int

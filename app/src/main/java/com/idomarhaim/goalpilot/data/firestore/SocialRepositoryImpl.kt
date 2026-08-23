@@ -235,9 +235,15 @@ class SocialRepositoryImpl @Inject constructor(
                 authorPhotoUrl = user.photoUrl?.toString(),
                 period = summary.period.name,
                 headline = "${summary.period.label} progress",
+                // `measuredGoals`, not `activeGoals` (`#66`). The average is a mean
+                // over goals that have a number, and §1.3 makes having none the
+                // DEFAULT -- so quoting the full goal count as the denominator
+                // states a mean over a population it was not taken over, in text
+                // that is published to other people. When every goal is measured
+                // the two counts are equal and this reads exactly as before.
                 message = "Earned ${summary.totalPoints} pts • " +
                     "${summary.completedTasks} tasks done • avg $avgPercent% across " +
-                    "${summary.activeGoals} goals",
+                    "${summary.measuredGoals} goals with a number",
                 points = summary.totalPoints,
                 completedTasks = summary.completedTasks,
                 imageUrl = imageUrl,
