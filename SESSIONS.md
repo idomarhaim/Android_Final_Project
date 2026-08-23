@@ -30,10 +30,9 @@ before your first write. Normative rule:
 > and declined; the second was never in `#64`'s ticket text at all. **Neither property's behaviour
 > changed and no test moved** — flagged here because both files are ones other tickets read.
 >
-> ⏸️ **ONE THING IS HELD, and it is not a defect.** The push. Auto-mode precondition 1 wants nothing
-> knowingly unverified going up, and the **full** instrumented suite this session started as a
-> regression check had not reported when the work was committed. `Observed:` both commits still
-> unpublished as of this note; `@{u}..HEAD` carries **no foreign commits**, so nothing else blocks it.
+> ✅ **NOTHING IS HELD.** The push was held for one turn while the **full** instrumented suite ran as a
+> regression check; it came back **282 tests, 0 failures** across 39 classes, so precondition 1 is
+> satisfied and the branch went up. `@{u}..HEAD` carried **no foreign commits**.
 >
 > 🏁 **`66-unmeasured-percent` RELEASED 2026-08-23 — this commit.** `#66` shipped over four
 > commits (`7de9bc0`, `005d297`, `efe5f44`, `99e2070`), the brief is closed to `sessions/done/`, and
