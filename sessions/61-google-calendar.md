@@ -138,3 +138,39 @@ The calendar **surface** — [`#60`](https://github.com/idomarhaim/Android_Final
 Best sequenced after it so there is somewhere in-app to see the result, but the write path
 does not strictly need it; if `#60` has not shipped, verify in Google Calendar's own UI and
 say that is what you did.
+
+---
+
+## Progress — 2026-08-23
+
+**Status: `active`, and the row on `SESSIONS.md` is still live.** The client-side write path shipped;
+one exit criterion is owed.
+
+**Done** — `CHANGELOG/2026-08-23/61-google-calendar.md` is the account.
+
+- The calendar is created **client-side** and coloured; `data/calendar/GoogleCalendarClient.kt`.
+- All four rungs push, with `DEADLINE` as an all-day banner; both directions of the time sync.
+- The disappearance path clears the link, keeps the date, and asks **Keep / Cancel / Put back** in
+  the daily-review card.
+- Pull throttled at the shipped fifteen minutes, per uid; push not throttled.
+- Incremental authorization: one scope per call, `freeBusy` shipped with **no consumer yet** because
+  §2.4's caller is `#24`'s and does not exist — said in the changelog rather than left to be found.
+- **JVM 1010 / 2 failed**, and both failures are `66-unmeasured-percent`'s uncommitted work.
+  `CalendarSyncTest` is **29 / 0**.
+
+**Owed — the device pass, and it is this brief's own exit criterion.**
+
+- Needs `emulator-5554`, held by `60-calendar-surface`; AGENTS.md is explicit that two sessions
+  driving one AVD corrupts its quickboot snapshot.
+- Needs **Ido signed in with the calendar scope granted once**. The consent screen is
+  `In production` and unverified, so it shows *"Google hasn't verified this app"* with
+  **Advanced → Go to GoalPilot (unsafe)**; scoped calls work through it.
+- ⚠️ `adb install -r` both APKs + `am instrument`. **Never `connectedDebugAndroidTest`** — it
+  uninstalls the app and takes the sign-in with it.
+- The keeper shot is **Google Calendar's own UI showing the created calendar and one event**, which
+  is also what `#62` needs.
+
+**Untested and settled only by that pass:** every claim about what Google's API *returns* — the
+all-day `end.date` being exclusive, `showDeleted=true` surfacing a trashed event as
+`status: "cancelled"`, and `calendar.app.created` scoping `calendarList` to this app's own calendars.
+All three come from Google's published contract, not from an observation on this machine.

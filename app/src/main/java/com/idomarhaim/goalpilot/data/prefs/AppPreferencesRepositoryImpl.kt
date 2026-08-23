@@ -150,6 +150,23 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         prefs.edit { putLong(healthSyncKey(uid), epochMillis) }
     }
 
+    override fun calendarLastPullAt(uid: String): Long =
+        prefs.getLong(calendarPullKey(uid), 0L)
+
+    override fun setCalendarLastPullAt(uid: String, epochMillis: Long) {
+        prefs.edit { putLong(calendarPullKey(uid), epochMillis) }
+    }
+
+    // A blank stored value reads as absent, so a half-written entry cannot be mistaken for a
+    // calendar id and sent to Google as one -- the same reading `Mappers` gives a blank
+    // `googleEventId`.
+    override fun goalPilotCalendarId(uid: String): String? =
+        prefs.getString(calendarIdKey(uid), null)?.takeIf { it.isNotBlank() }
+
+    override fun setGoalPilotCalendarId(uid: String, calendarId: String) {
+        prefs.edit { putString(calendarIdKey(uid), calendarId) }
+    }
+
     /** `0` reads as *never shown*, which is what a fresh install honestly is. */
     override fun missReviewLastShownAt(): Long = prefs.getLong(KEY_MISS_REVIEW_SHOWN_AT, 0L)
 
@@ -230,5 +247,11 @@ class AppPreferencesRepositoryImpl @Inject constructor(
 
         /** One key per account, so switching users does not inherit a sync clock. */
         fun healthSyncKey(uid: String) = "health_last_sync_$uid"
+
+        /** One key per account, for the same reason -- see `calendarLastPullAt` (#61 §2.7). */
+        fun calendarPullKey(uid: String) = "calendar_last_pull_$uid"
+
+        /** One key per account, so a switch never inherits the other account's calendar. */
+        fun calendarIdKey(uid: String) = "calendar_id_$uid"
     }
 }

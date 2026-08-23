@@ -1,6 +1,7 @@
 package com.idomarhaim.goalpilot.di
 
 import com.idomarhaim.goalpilot.data.auth.AuthRepositoryImpl
+import com.idomarhaim.goalpilot.data.calendar.GoogleCalendarClient
 import com.idomarhaim.goalpilot.data.firestore.ChallengeRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.GoalRepositoryImpl
 import com.idomarhaim.goalpilot.data.firestore.LifeAreaRepositoryImpl
@@ -18,6 +19,7 @@ import com.idomarhaim.goalpilot.data.storage.StorageRepositoryImpl
 import com.idomarhaim.goalpilot.domain.repository.AiProviderRepository
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
+import com.idomarhaim.goalpilot.domain.repository.CalendarRepository
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
@@ -111,4 +113,17 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHealthRepository(impl: HealthConnectManager): HealthRepository
+
+    /**
+     * §2.6's Google Calendar (`#61`). Bound like every other Google integration, so nothing
+     * above the domain interface can reach the REST client, the OAuth token, or the
+     * `Intent` `GoogleCalendarClient` wraps for a refused scope.
+     *
+     * That the binding exists at all is not a statement that the scope is granted: §2.6 says a
+     * partial grant is the normal case, and every method answers `NeedsConsent` rather than
+     * failing when it is not.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCalendarRepository(impl: GoogleCalendarClient): CalendarRepository
 }

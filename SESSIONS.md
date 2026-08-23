@@ -16,8 +16,25 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `60-calendar-surface` | `#60` — build §4.3's calendar surface: the 3-day/week grid, UI authors for `BLOCK` and `SPAN`, the all-day + untimed strips, the load bar and booked/free ring | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `ui/navigation/Destinations.kt` · `ui/root/GoalPilotRoot.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/**` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt` (new) · `kb-candidates/2026-08-23-60-calendar-surface.md` · `CHANGELOG/2026-08-23/60-calendar-surface.md` · `sessions/60-calendar-surface.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`65-measure-proposal` released the AVD in `2db518d`; `tutorial-onboarding` declares none) | 2026-08-23 |
-| `66-unmeasured-percent` | `#66` — stop the app stating a percentage for a goal that has no measure; the six sites, the nudge filter that preferentially picks unmeasured goals, and the wire key that sends the model a number the goal does not have | `domain/model/Goal.kt` · `domain/model/DerivedProgress.kt` · `ui/components/GoalCard.kt` · `ui/components/ComponentStrings.kt` · `ui/components/UnmeasuredMarker.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsStrings.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `app/src/main/res/values/strings.xml` (+ `values-iw/`) · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt` (new) · `kb-candidates/2026-08-23-66-unmeasured-percent.md` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `sessions/66-unmeasured-percent.md` | **Gradle daemon — HELD by `60-calendar-surface`** (`61-google-calendar` is queued behind it too), so code and JVM tests are written first and no build runs until it frees; **`Pixel_10_Pro_XL_B`** claimed here, and `emulator-5554` / `Pixel_10_Pro_XL` is `60`'s and is not touched | 2026-08-23 |
-| `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon** and **`emulator-5554` + `adb`** are BOTH HELD by `60-calendar-surface`. I claim neither yet: code and JVM tests are written first, and the build waits for that row to free the daemon. Device pass likewise deferred — see the ⏳ note below. | 2026-08-23 |
+| `66-unmeasured-percent` | `#66` — stop the app stating a percentage for a goal that has no measure; the six sites, the nudge filter that preferentially picks unmeasured goals, and the wire key that sends the model a number the goal does not have | `domain/model/Goal.kt` · `domain/model/DerivedProgress.kt` · `ui/components/GoalCard.kt` · `ui/components/ComponentStrings.kt` · `ui/components/UnmeasuredMarker.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsStrings.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `domain/model/ProgressSummary.kt` · `domain/usecase/SummaryUseCase.kt` · `data/firestore/SocialRepositoryImpl.kt` · `app/src/main/res/values{,-iw}/components_strings.xml` · `…/analytics_strings.xml` · `app/src/test/.../DerivedProgressTest.kt` · `…/BuildSummaryUseCaseTest.kt` · `…/RecommendationRepositoryFallbackTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt` (new) · `kb-candidates/2026-08-23-66-unmeasured-percent.md` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `sessions/66-unmeasured-percent.md` | **Gradle daemon — HELD by `60-calendar-surface`** (`61-google-calendar` is queued behind it too), so code and JVM tests are written first and no build runs until it frees; **`Pixel_10_Pro_XL_B`** claimed here, and `emulator-5554` / `Pixel_10_Pro_XL` is `60`'s and is not touched | 2026-08-23 |
+| `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon — BORROWED AND RELEASED** (two invocations, taken while idle; see the note below). **`emulator-5554` + `adb` — NOT TAKEN**, still `60-calendar-surface`'s; the device pass this brief needs is held on it. | 2026-08-23 |
+> ➕ **`66-unmeasured-percent` WIDENED its row 2026-08-23 — three files the brief did not name,
+> and the third is why it matters.** Sweeping every consumer of `progressPercent` /
+> `progressFraction` rather than only the brief's six sites found the same defect in
+> `DerivedProgress.overallCompletionOf` (the dashboard's *Overall progress* headline) and in
+> `ProgressSummary.averageProgress` — and **that** one is rounded into the text of a shared post by
+> `SocialRepositoryImpl.shareSummary`, so an unmeasured goal's fictional `0.0` was being
+> **published to other people** under Ido's name. None of the three is claimed by a live row.
+>
+> ⚠️ **Two more instances are NOT being touched, because live rows hold them:**
+> **(a)** `feature/dashboard/DashboardViewModel.kt` — `61-google-calendar`'s. The arithmetic is
+> fixed inside `overallCompletionOf`, which is mine, so nothing there needs to change; what is left
+> is a *display* question (what an account whose goals all lack a number should see instead of a
+> `0 %` ring), and it is named here rather than half-fixed. **(b)**
+> `feature/calendar/CalendarBuilder.kt:182` — `60-calendar-surface`'s, and brand new: it filters
+> `it.isArchived || it.isComplete`, and an unmeasured goal whose entries happen to sum past 100
+> reads `isComplete` against a target nobody set, so it would vanish from the calendar. Reported,
+> not edited.
 > 🧭 **`66-unmeasured-percent` claimed 2026-08-23 — this commit.** Working set is disjoint from
 > both live rows. `60-calendar-surface` owns `feature/calendar/**`, `ui/navigation/Destinations.kt`
 > and `ui/root/GoalPilotRoot.kt`; `61-google-calendar` owns `data/calendar/**`, `di/RepositoryModule.kt`,
@@ -35,25 +52,64 @@ before your first write. Normative rule:
 > 📱 **NO DEVICE TOUCHED YET AND NO SIGN-IN NEEDED OR DESTROYED SO FAR.** When the device pass runs
 > it takes **`Pixel_10_Pro_XL_B`**, not `emulator-5554`, and it uses `adb install -r` + `am instrument`
 > — never `connectedDebugAndroidTest`, which uninstalls the app.
-> ⏳ **`61-google-calendar` claimed 2026-08-23 — this commit.** Working set is disjoint from
-> `60-calendar-surface`: they own `feature/calendar/**`, `ui/navigation/Destinations.kt` and
-> `ui/root/GoalPilotRoot.kt`; I own the **write path** under `data/calendar/`, the sync rules in
-> `domain/usecase/`, and `ui/root/RootViewModel.kt` — which is **not** `GoalPilotRoot.kt` and is
-> where the foreground trigger already lives beside `SyncHealthDataUseCase`. No path appears on
-> both rows.
+> 🚧 **`61-google-calendar` — WORK COMMITTED, ROW STILL LIVE 2026-08-23.** `#61`'s client-side
+> write path shipped in this commit: the calendar is created client-side, confirmed occurrences push
+> to it, and their times pull back on foreground. **The row does not release**, because the brief's
+> exit needs a device pass and the AVD is held — see below.
 >
-> 🔧 **`owns:` corrected against the repo before claiming** (`/kickoff` §2). The brief listed
-> `data/firestore/dto/Mappers.kt`; `#63` already maps `googleEventId` in both directions
-> (`Mappers.kt:385`, `:423`) and `ScheduleMappingTest` already covers the blank-reads-as-absent
-> case, so there is nothing left for me there and it is **dropped** rather than claimed. Six
-> paths the brief did not anticipate are **added**: the two preference paths (the pull throttle
-> stamp and the created calendar's id both need a per-uid home), `RootViewModel.kt`, the two
-> dashboard files (§2.7's Keep / Cancel / Put back sheet belongs in the daily-review card that
-> already exists there), and `domain/model/GoogleCalendar.kt`.
+> Working set is disjoint from both siblings. `60-calendar-surface` owns `feature/calendar/**`,
+> `ui/navigation/Destinations.kt` and `ui/root/GoalPilotRoot.kt`; I own `ui/root/RootViewModel.kt`,
+> which is **not** `GoalPilotRoot.kt` and is where the foreground trigger already lives beside
+> `SyncHealthDataUseCase`. `66-unmeasured-percent` owns the strings, `RecommendationRepositoryImpl`
+> and the goal-progress model; nothing of mine is on either list.
 >
-> 📱 **NO DEVICE TOUCHED YET, AND NO SIGN-IN DESTROYED.** The device pass this brief needs is
-> deferred until `60-calendar-surface` releases `emulator-5554`. When it runs it takes the
-> `adb install -r` + `am instrument` path, never `connectedDebugAndroidTest`.
+> 🔧 **`owns:` was corrected against the repo before claiming** (`/kickoff` §2). `data/firestore/dto/
+> Mappers.kt` was **dropped** — `#63` already maps `googleEventId` both ways (`Mappers.kt:385`,
+> `:423`). Six paths were **added**: the two preference paths, `RootViewModel.kt`, the two dashboard
+> files (§2.7's Keep / Cancel / Put back sheet joins the daily-review card that already lives there),
+> and `domain/model/GoogleCalendar.kt`.
+>
+> 🔨 **The Gradle daemon was BORROWED and is RELEASED.** `60-calendar-surface` declares it. It was
+> idle when I took it — `.gradle/file-system.probe` five minutes stale and unchanged across a 20 s
+> sample, both recent JVMs at ~0 CPU delta — and I ran exactly two invocations (a compile, then
+> `:app:testDebugUnitTest --rerun`) and stopped. `--rerun` was deliberate, per
+> `63-occurrences-and-recurrence`'s note below about a `UP-TO-DATE` green belonging to a sibling's
+> tree. **`emulator-5554` was NOT touched** and is still `60-calendar-surface`'s.
+>
+> 📱 **NO DEVICE WAS TOUCHED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** No `adb`, no AVD, no install,
+> no `connectedDebugAndroidTest`.
+>
+> ⏸️ **TWO THINGS ARE HELD.**
+> **(1) The device pass**, which is `#61`'s own exit criterion — prove the calendar is created and an
+> event lands, with the keeper shot being Google Calendar's own UI showing it (`#62` needs the same).
+> It needs `emulator-5554`, held above, **and** Ido signed in with the calendar scope granted once.
+> `#61` therefore gets a comment and **stays open**, and this brief stays `active`.
+> **(2) The push.** `@{u}..HEAD` carries `0a4f012` (`65-measure-proposal`), `0ca960d`
+> (`60-calendar-surface`) and `0831bc6` (`66-unmeasured-percent`), and the last two rows are **live**
+> above — so auto-push precondition 5 stops rather than publishing a live session's commits on my
+> schedule. `Observed:` still unpublished as of the commit that carries this note. It needs Ido's
+> word, or those rows releasing.
+>
+> 📣 **`66-unmeasured-percent` — two of your tests are red in the shared JVM suite right now, and
+> that is expected mid-edit rather than a complaint.** `:app:testDebugUnitTest --rerun` at 00:40
+> returned **1010 completed, 2 failed**:
+> `RecommendationRepositoryFallbackTest > falls back to local guidance when the function fails`, and
+> `HebrewTerminologyTest > no Hebrew prefix is bonded to a format argument`, the latter naming
+> `analytics_strings.xml`'s two new `quantity="two"` / `"other"` plurals — `ל־%1$s יעדים…`, a Hebrew
+> prefix bonded to a format argument, which §4.8's guard rejects. Flagging it in case the guard has
+> not fired for you yet. **I touched none of those six files and nothing of yours is in my commit**
+> (pathspec commit, diff read in its own call first).
+>
+> ⚠️ **And the finding worth carrying, which is about the board rather than about `#66`.** When
+> those tests went red, `SESSIONS.md`'s Active claims held **one** row — `60-calendar-surface` — and
+> none of the six dirty files was on it. `66-unmeasured-percent`'s brief already said
+> `status: active`; its row landed later, in `0831bc6`. So for a window of at least twenty minutes a
+> session editing six files across three packages was invisible to the one artifact whose whole job
+> is to say who is working on what, and the only thing that found it was
+> `grep '^status: active' sessions/*.md` — **one command, committed, works on every surface, and
+> named nowhere in the board rule**, which escalates instead to a machine-local transcript scan.
+> Filed as `kb-candidates/2026-08-23-61-google-calendar.md` entry 3, destination `rules/`, therefore
+> always-ask and held for Ido.
 > 🏁 **`63-occurrences-and-recurrence` RELEASED 2026-08-23 — this commit.** `#63` shipped in
 > `7c457c4`; brief closed to `sessions/done/`. Singletons free: the **Gradle daemon** and the
 > **local Firestore emulator** (ports 8080/4000, shut down cleanly).

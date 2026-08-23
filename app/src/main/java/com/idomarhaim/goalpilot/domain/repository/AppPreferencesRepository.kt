@@ -161,6 +161,50 @@ interface AppPreferencesRepository {
     fun setHealthLastSyncAt(uid: String, epochMillis: Long)
 
     /**
+     * When Google Calendar was last **pulled** for [uid], in epoch millis, or 0 if never
+     * ([`#61`](https://github.com/idomarhaim/Android_Final_Project/issues/61), §2.7).
+     *
+     * Per-account for [healthLastSyncAt]'s reason, and named *pull* rather than *sync* for a
+     * second one that is this feature's own: §2.7 throttles the two directions differently —
+     * *"pull is foreground + the shipped 15-minute per-uid throttle; **push is not
+     * throttled** (a write must not lag the user)"*. A stamp called `calendarLastSyncAt` would
+     * read as though it gated both, and the first person to use it that way would make a user's
+     * edit wait a quarter of an hour to reach their own calendar.
+     */
+    fun calendarLastPullAt(uid: String): Long
+
+    fun setCalendarLastPullAt(uid: String, epochMillis: Long)
+
+    /**
+     * The id of the GoalPilot calendar this install created for [uid], or `null` if it has not
+     * created one (§2.6).
+     *
+     * ### Why it is cached at all, when Google can be asked
+     *
+     * Because the alternative to remembering is a `calendarList` request before every sync, and
+     * the cost of getting it wrong is not a wasted request but a **second calendar** in Ido's
+     * list with the same name. `SyncCalendarUseCase` still falls back to asking Google when
+     * this is absent, so a fresh install finds the calendar it made last time rather than
+     * duplicating it — the cache is a shortcut, never the source of truth.
+     *
+     * ### Per-uid, and that is §2.7's account-switch clause
+     *
+     * *"An account switch reads as **not mirrored**, not as events to patch."* A shared key
+     * would hand the new account the previous one's calendar id, and the first sync would write
+     * one person's schedule into another person's calendar. Keyed by uid, a new account simply
+     * has no id yet.
+     *
+     * ### Signing out does not clear it, and that is deliberate
+     *
+     * §2.7: *"**Sign-out does not delete** the calendar Ido owns."* Forgetting the id here
+     * would not delete anything either, but the next sign-in would create a duplicate — so the
+     * memory outlives the session on purpose.
+     */
+    fun goalPilotCalendarId(uid: String): String?
+
+    fun setGoalPilotCalendarId(uid: String, calendarId: String)
+
+    /**
      * When §2.5's **daily miss review** was last put in front of the user, or `null` if it
      * never has been (`#56`).
      *

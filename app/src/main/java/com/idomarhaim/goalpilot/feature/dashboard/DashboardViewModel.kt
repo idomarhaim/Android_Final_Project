@@ -38,7 +38,10 @@ import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
 import com.idomarhaim.goalpilot.domain.usecase.BuildSummaryUseCase
+import com.idomarhaim.goalpilot.domain.usecase.CalendarEntry
 import com.idomarhaim.goalpilot.domain.usecase.DailyMissReview
+import com.idomarhaim.goalpilot.domain.usecase.DisappearanceChoice
+import com.idomarhaim.goalpilot.domain.usecase.SyncCalendarUseCase
 import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncOutcome
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncResult
@@ -76,6 +79,7 @@ class DashboardViewModel @Inject constructor(
     private val lifeAreaRepository: LifeAreaRepository,
     private val buildSummary: BuildSummaryUseCase,
     private val syncHealthData: SyncHealthDataUseCase,
+    private val syncCalendar: SyncCalendarUseCase,
     private val appPreferences: AppPreferencesRepository,
 ) : ViewModel() {
 
@@ -107,6 +111,27 @@ class DashboardViewModel @Inject constructor(
      * economy, it is the clause. A push about a miss is the one thing §2.5 rules out by name.
      */
     val missReview: StateFlow<MissReviewState> = _missReview.asStateFlow()
+
+    /**
+     * §2.7's disappearances, awaiting **Keep / Cancel / Put back**
+     * ([`#61`](https://github.com/idomarhaim/Android_Final_Project/issues/61)).
+     *
+     * ### It sits beside the miss review because §2.7 says where it goes, not because it fits
+     *
+     * *"The ambiguity is **asked** in the daily-review batch sheet — Keep / Cancel / Put back —
+     * at the one moment Ido is holding the phone."* So this is the same surface and the same
+     * moment as `missReview`, and it is deliberately **not** a notification: an event vanishing
+     * from a calendar is not news worth interrupting anyone for, and §2.5 already rules out
+     * pushing about things that went wrong.
+     *
+     * ### Passed straight through from the use case, with no snapshot taken
+     *
+     * Unlike [missReview] — which is a `first()` snapshot precisely so a deadline lapsing
+     * mid-session cannot make a card appear — this list only grows when a **sync** finds a
+     * disappearance, and a sync only runs on foreground or on a tap. So there is no moment it
+     * could ambush anyone, and a live flow means an answer removes its own row immediately.
+     */
+    val calendarDisappearances: StateFlow<List<CalendarEntry>> = syncCalendar.disappearances
 
     /**
      * True once the review has been evaluated for this ViewModel.
@@ -171,6 +196,18 @@ class DashboardViewModel @Inject constructor(
      */
     fun dismissMissReview() {
         _missReview.update { it.copy(isVisible = false) }
+    }
+
+    /**
+     * Answers §2.7's disappearance question for one occurrence.
+     *
+     * There is nothing to dismiss and no *"not now"*: the link is **already cleared** by the
+     * time the row exists, so an unanswered row costs nothing and a user who ignores the whole
+     * sheet keeps every occurrence on its original date. That is what lets this be three
+     * buttons rather than three buttons and an escape.
+     */
+    fun resolveDisappearance(entry: CalendarEntry, choice: DisappearanceChoice) {
+        viewModelScope.launch { syncCalendar.resolve(entry, choice) }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(

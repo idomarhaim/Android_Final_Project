@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.repository.AuthRepository
+import com.idomarhaim.goalpilot.domain.usecase.CalendarSyncTrigger
 import com.idomarhaim.goalpilot.domain.usecase.HealthSyncTrigger
+import com.idomarhaim.goalpilot.domain.usecase.SyncCalendarUseCase
 import com.idomarhaim.goalpilot.domain.usecase.SyncHealthDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +20,7 @@ import javax.inject.Inject
 class RootViewModel @Inject constructor(
     authRepository: AuthRepository,
     private val syncHealthData: SyncHealthDataUseCase,
+    private val syncCalendar: SyncCalendarUseCase,
 ) : ViewModel() {
 
     val authState: StateFlow<AuthUiState> = authRepository.authState()
@@ -34,10 +37,23 @@ class RootViewModel @Inject constructor(
      * fire that often — the fifteen-minute throttle, the in-flight guard, the
      * per-day dedupe — is inside [SyncHealthDataUseCase], so calling it too eagerly
      * costs one map lookup.
+     *
+     * §2.7's calendar sync rides the same trigger and is the **only** one it can ride: *"there
+     * is no credential for a background sync and cannot be one"* — `GoogleAuthUtil` mints
+     * short-lived tokens with no refresh token, and `C9d` banned the service account. So this
+     * lifecycle callback is not one option among several; it is the whole schedule.
+     *
+     * The two launches are deliberately separate coroutines. They share no state, and a Health
+     * Connect read that stalls on a cold permission check must not hold the calendar pull
+     * behind it — nor the reverse, where a network round-trip to Google would delay a reading
+     * that is already on the device.
      */
     fun onAppForegrounded() {
         viewModelScope.launch {
             syncHealthData(HealthSyncTrigger.APP_FOREGROUND)
+        }
+        viewModelScope.launch {
+            syncCalendar(CalendarSyncTrigger.APP_FOREGROUND)
         }
     }
 }

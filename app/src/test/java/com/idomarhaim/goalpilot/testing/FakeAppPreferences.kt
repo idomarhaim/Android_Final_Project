@@ -67,6 +67,20 @@ class FakeAppPreferences : AppPreferencesRepository {
         healthStamps[uid] = epochMillis
     }
 
+    private val calendarPullStamps = mutableMapOf<String, Long>()
+    override fun calendarLastPullAt(uid: String): Long = calendarPullStamps[uid] ?: 0L
+    override fun setCalendarLastPullAt(uid: String, epochMillis: Long) {
+        calendarPullStamps[uid] = epochMillis
+    }
+
+    // `null` is the honest fresh-install value: no calendar has been created for this account
+    // yet, which is exactly what makes `SyncCalendarUseCase` ask Google rather than guess.
+    private val calendarIds = mutableMapOf<String, String>()
+    override fun goalPilotCalendarId(uid: String): String? = calendarIds[uid]
+    override fun setGoalPilotCalendarId(uid: String, calendarId: String) {
+        calendarIds[uid] = calendarId
+    }
+
     private var missReviewShownAt: Long = 0L
     override fun missReviewLastShownAt(): Long = missReviewShownAt
     override fun setMissReviewLastShownAt(epochMillis: Long) {

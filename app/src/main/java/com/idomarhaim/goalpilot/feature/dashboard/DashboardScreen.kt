@@ -81,6 +81,10 @@ import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.notifications.FilingNotificationEffect
 import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.OccurrenceState
+import com.idomarhaim.goalpilot.core.util.AppDateFormatters
+import com.idomarhaim.goalpilot.domain.model.startDate
+import com.idomarhaim.goalpilot.domain.usecase.CalendarEntry
+import com.idomarhaim.goalpilot.domain.usecase.DisappearanceChoice
 import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
@@ -123,6 +127,7 @@ fun DashboardScreen(
     val consentIntent by viewModel.consentIntent.collectAsStateWithLifecycle()
     val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val disappearances by viewModel.calendarDisappearances.collectAsStateWithLifecycle()
     val missReview by viewModel.missReview.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
 
@@ -256,6 +261,18 @@ fun DashboardScreen(
                         DailyMissReviewCard(
                             misses = missReview.misses,
                             onDismiss = viewModel::dismissMissReview,
+                        )
+                    }
+                }
+                // §2.7's batch sheet, immediately under the review it belongs to: "the
+                // ambiguity is asked in the daily-review batch sheet -- Keep / Cancel / Put
+                // back -- at the one moment Ido is holding the phone". Like the review above
+                // it, absent on almost every open, which is the point.
+                if (disappearances.isNotEmpty()) {
+                    item {
+                        CalendarDisappearanceCard(
+                            entries = disappearances,
+                            onChoose = viewModel::resolveDisappearance,
                         )
                     }
                 }
@@ -788,6 +805,107 @@ internal fun missLabel(state: OccurrenceState): String = when (state) {
     // row that silently reads "".
     OccurrenceState.SCHEDULED, OccurrenceState.UNDERWAY, OccurrenceState.EXPIRED -> ""
 }
+
+/**
+ * §2.7's **Keep / Cancel / Put back** sheet — the one question this feature asks
+ * ([`#61`](https://github.com/idomarhaim/Android_Final_Project/issues/61)).
+ *
+ * ## Why it is a question at all, when nothing else in this feature asks one
+ *
+ * §2.8 is emphatic that the per-action *"also update in Google?"* prompt is *"ceremony against
+ * an unreal risk"* and that *"a dialog answered yes ten times stops being read by the
+ * eleventh"*. This is the exception it names, and the reason is that here the app genuinely
+ * **cannot know**: *"a move-out is indistinguishable from a delete (both read as `cancelled`,
+ * and we see only our own calendar)"*. Every other decision in the sync is derivable; this one
+ * is not, so it is the one thing worth a person's attention.
+ *
+ * ## The data is already safe, which is what lets there be no *"not now"*
+ *
+ * By the time a row appears here the occurrence has **kept its date and cleared its
+ * `googleEventId`** — the sync did that, not this card. So ignoring the whole thing is a
+ * legitimate answer with a legitimate outcome: the plan survives, unmirrored. That is why the
+ * three buttons have no fourth escape and no dismiss: there is nothing to escape from.
+ *
+ * ## Neutral, for the daily review's reason
+ *
+ * §2.5 forbids anything that reads as *"you failed"*. A deleted event is not a miss and not a
+ * failure — most of the time it is Ido tidying his own calendar — so no row here is coloured,
+ * counted or ranked.
+ */
+@Composable
+internal fun CalendarDisappearanceCard(
+    entries: List<CalendarEntry>,
+    onChoose: (CalendarEntry, DisappearanceChoice) -> Unit,
+) {
+    GpCard(modifier = Modifier
+        .fillMaxWidth()
+        .testTag(DISAPPEARED_TAG)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(DISAPPEARED_TITLE, style = MaterialTheme.typography.titleMedium)
+            Text(
+                DISAPPEARED_SUBTITLE,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            entries.forEach { entry ->
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(
+                        text = entry.task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = disappearedWhen(entry),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(
+                            onClick = { onChoose(entry, DisappearanceChoice.KEEP) },
+                            modifier = Modifier.testTag(DISAPPEARED_KEEP_TAG),
+                        ) { Text(DISAPPEARED_KEEP_LABEL) }
+                        TextButton(
+                            onClick = { onChoose(entry, DisappearanceChoice.CANCEL) },
+                            modifier = Modifier.testTag(DISAPPEARED_CANCEL_TAG),
+                        ) { Text(DISAPPEARED_CANCEL_LABEL) }
+                        TextButton(
+                            onClick = { onChoose(entry, DisappearanceChoice.PUT_BACK) },
+                            modifier = Modifier.testTag(DISAPPEARED_PUT_BACK_TAG),
+                        ) { Text(DISAPPEARED_PUT_BACK_LABEL) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The day the occurrence still sits on — **its own date, not the deleted event's**.
+ *
+ * §2.7: the occurrence *"keeps its date"*. Reading the date off the vanished Google event would
+ * show whatever Google last held, which after a drag-and-delete is not where GoalPilot thinks
+ * the work is — and the whole question being asked is what to do about the thing GoalPilot
+ * still has.
+ *
+ * `get()` and not a `val`, per `AppDateFormatters`' KDoc: a formatter captured once outlives a
+ * language change.
+ */
+private val disappearedDay get() = AppDateFormatters.of("EEE d MMM")
+
+private fun disappearedWhen(entry: CalendarEntry): String =
+    disappearedDay.format(entry.occurrence.occurrence.startDate)
+
+internal const val DISAPPEARED_TAG = "calendar-disappearance"
+internal const val DISAPPEARED_KEEP_TAG = "calendar-disappearance-keep"
+internal const val DISAPPEARED_CANCEL_TAG = "calendar-disappearance-cancel"
+internal const val DISAPPEARED_PUT_BACK_TAG = "calendar-disappearance-put-back"
+
+internal const val DISAPPEARED_TITLE = "Gone from your GoalPilot calendar"
+internal const val DISAPPEARED_SUBTITLE =
+    "Still planned here. Google cannot tell us whether you deleted it or moved it away."
+internal const val DISAPPEARED_KEEP_LABEL = "Keep"
+internal const val DISAPPEARED_CANCEL_LABEL = "Cancel"
+internal const val DISAPPEARED_PUT_BACK_LABEL = "Put back"
 
 internal const val MISS_REVIEW_TAG = "daily-miss-review"
 internal const val MISS_REVIEW_DISMISS_TAG = "daily-miss-review-dismiss"
