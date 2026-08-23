@@ -26,6 +26,16 @@ owns:
   # NOT owned, and the brief was wrong to list it:
   #   domain/usecase/BuildWidgetSnapshotUseCase.kt -- site 5 is a FALSE POSITIVE.
 created: 2026-08-23
+result: |
+  Code half SHIPPED in 7de9bc0, 2026-08-23. 1012 JVM unit tests, 1 failure, and the failure is
+  60-calendar-surface's untracked CalendarSurfaceUiTest.kt -- all 98 tests across the ten suites
+  this session touched pass, 16 of them new.
+  STILL OWED, and it is why status is still `active` and #66 is still open:
+    - the instrumented run + render pass (UnmeasuredPercentRenderTest is WRITTEN and has NEVER
+      executed). Blocked twice over: emulator-5554 is 60-calendar-surface's, and a second AVD
+      cannot boot -- 408 MB free of 16 GB, observed 2026-08-23 04:02. No sign-in is needed for
+      it; use `adb install -r` + `am instrument`, never connectedDebugAndroidTest.
+    - the push (auto-push preconditions 5 and 2 both stop; see SESSIONS.md).
 ---
 
 # An unmeasured goal still renders a percentage — on six surfaces, and the app says one out loud

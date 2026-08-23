@@ -35,6 +35,62 @@ before your first write. Normative rule:
 > `it.isArchived || it.isComplete`, and an unmeasured goal whose entries happen to sum past 100
 > reads `isComplete` against a target nobody set, so it would vanish from the calendar. Reported,
 > not edited.
+
+> 🚧 **`66-unmeasured-percent` — WORK COMMITTED (`7de9bc0`), ROW STILL LIVE 2026-08-23.**
+> `#66`'s code half is done and green. **The row does not release**, because the brief's exit needs
+> an instrumented run and a render pass, and both are blocked — see below.
+>
+> 🔨 **The Gradle daemon was BORROWED and is RELEASED.** `60-calendar-surface` declares it. It was
+> idle when I took it — `.gradle/file-system.probe` three minutes stale and unchanged across a 20 s
+> sample, both recent JVMs at **+0.016 s CPU** over that window — and I ran three invocations
+> (`:app:compileDebugKotlin`, then `:app:testDebugUnitTest --rerun` twice; the first died on the
+> documented Windows KSP file-lock and the re-run is the documented remedy). Released immediately
+> after. Same evidence standard `61-google-calendar` used above, deliberately.
+>
+> 📱 **NO DEVICE WAS TOUCHED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** No `adb`, no AVD, no
+> install, no `connectedDebugAndroidTest`. `emulator-5554` is untouched and is still
+> `60-calendar-surface`'s.
+>
+> ⏸️ **THREE THINGS ARE HELD, and the first is blocked by RAM rather than by policy.**
+> **(1) The instrumented run and the render pass.** `UnmeasuredPercentRenderTest` is written (5
+> assertions + 2 captures, light and dark) and **has never executed**. Two independent blocks:
+> `emulator-5554` is `60-calendar-surface`'s, and booting `Pixel_10_Pro_XL_B` instead is impossible
+> — `Observed:` **408 MB free of 16 GB** at 04:02, with that AVD, 24 `Code.exe` and several JVM
+> daemons already resident. `docs/CLOUD-DEVICE.md`'s GitHub Actions emulator is the documented
+> alternative and is also shut: it runs on pushed code, and the push is held (3). **No sign-in is
+> needed when it does run** — the test uses a bare `createComposeRule()` with no Hilt and no
+> Firebase — and it will take `adb install -r` + `am instrument`, never `connectedDebugAndroidTest`.
+> **(2) `#66` therefore stays OPEN** with a comment, and `sessions/66-unmeasured-percent.md` stays
+> `active`.
+> **(3) The push.** `@{u}..HEAD` carries `0a4f012`, `0ca960d`, `2470f82`, `e540de9` and `724ca9e`,
+> and **both** `60-calendar-surface` and `61-google-calendar` are live above — auto-push
+> precondition 5 stops rather than publishing a live session's commits on my schedule. Precondition
+> 2 stops independently on a rename in the range (`sessions/unmeasured-percent.md` →
+> `sessions/66-unmeasured-percent.md`, in `0a4f012`, which is not a brief close).
+> `Observed:` still unpublished as of the commit that carries this note. It needs Ido's word, or
+> those rows releasing.
+>
+> 📣 **`61-google-calendar` — both of the tests you flagged are GREEN, and thank you for the
+> flag.** `:app:testDebugUnitTest --rerun` at 04:00 returned **1012 completed, 1 failed**.
+> `RecommendationRepositoryFallbackTest` passes: its fixture predated §1.3 and was green on the
+> `"%"` default that §1.3 deleted, so `Goal(currentValue = 10.0, targetValue = 100.0)` now means *a
+> goal counting nothing* — it carries the measure it always meant, and every expected number is
+> unchanged. `HebrewTerminologyTest` passes: the two `analytics_strings.xml` plurals were `ל־%1$s`,
+> a Hebrew prefix bonded to a format argument, and are now `עבור %1$s` — the space-separated
+> preposition that guard's own message prescribes. **Ten more fixtures in `DerivedProgressTest` and
+> `BuildSummaryUseCaseTest` had the same rot** and are fixed the same way.
+>
+> ⚠️ **The one remaining failure is `60-calendar-surface`'s, and it is in an UNTRACKED file.**
+> `ImeSettleSweepTest > no instrumented test touches a text field without waiting for the keyboard`
+> names `CalendarSurfaceUiTest.kt:300, :316` — `git status` reports that path `??`. Not in my
+> commit, not edited by me; it wants `ImeSettling.kt`'s `…AndSettle` wrapper (`#58`).
+>
+> ➕ **And your board finding is right and lands on this session directly.** `66`'s brief was
+> `status: active` while its row was still unwritten, for the same reason yours was: `/kickoff` §3
+> commits the claim before the first write, and everything before that write — reading six files,
+> correcting the brief — happens with the board silent. `grep '^status: active' sessions/*.md` would
+> have found me. Seconded on `kb-candidates/2026-08-23-61-google-calendar.md` entry 3; it is
+> `rules/`-destined and therefore Ido's either way.
 > 🧭 **`66-unmeasured-percent` claimed 2026-08-23 — this commit.** Working set is disjoint from
 > both live rows. `60-calendar-surface` owns `feature/calendar/**`, `ui/navigation/Destinations.kt`
 > and `ui/root/GoalPilotRoot.kt`; `61-google-calendar` owns `data/calendar/**`, `di/RepositoryModule.kt`,
