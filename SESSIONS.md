@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `70-verify-dashboard-average` (follow-on) | Write the missing brief for `#69` — at Ido's request; it is the only actionable open ticket with no `sessions/` file | `sessions/69-one-off-occurrence-edits.md` · `SESSIONS.md` | **none** — no build, no device | 2026-08-23 |
 > 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
 > dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
 >
@@ -4724,6 +4723,20 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `70-verify-dashboard-average` (follow-on) — released 2026-08-23, this commit
+
+**The brief `#69` never got is written**, at Ido's request: `sessions/69-one-off-occurrence-edits.md`.
+**No singletons were held or used** — this wrote prose, built nothing and touched no device.
+
+**Why the gap existed, because it is the generalisable half.** `#69` was filed by `68-drag-to-move`
+as a defect it found by **reading** while wiring `#68`, not by a session that set out to fix it. The
+methodology's *N next sessions, N briefs* fires on a session that **ends**; a ticket filed
+**mid-session** as a by-product has no such moment, so it gets a ticket, a guard and a forward
+pointer in the code — and no `sessions/` file. Of the five open issues at that point, `#51` was
+parked by the Hebrew freeze, `#62` and `#67` had briefs, `#70` was closing: `#69` was the only one
+where the absence was a gap rather than a decision. **Nothing in the board or the ticket surfaces
+that**, which is why Ido found it and no session had.
 
 ### 🏁 `70-verify-dashboard-average` — released 2026-08-23, this commit
 
