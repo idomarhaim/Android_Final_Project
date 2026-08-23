@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoalPilot — Examiner Q&amp;A Pack</title>
+<style>
+:root{
+  --bg:#f7f8fa; --panel:#ffffff; --ink:#171a20; --muted:#5a6270; --line:#dfe3ea;
+  --accent:#2c5f8a; --accent-soft:#eef3f8; --code-bg:#f0f2f5; --code-ink:#8a2a4a;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0e1116; --panel:#161a21; --ink:#e6e9ef; --muted:#98a2b3; --line:#262c36;
+  --accent:#7db3e0; --accent-soft:#182430; --code-bg:#1b2028; --code-ink:#f0a5c0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme=dark]{
+  --bg:#0e1116; --panel:#161a21; --ink:#e6e9ef; --muted:#98a2b3; --line:#262c36;
+  --accent:#7db3e0; --accent-soft:#182430; --code-bg:#1b2028; --code-ink:#f0a5c0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+code,pre{font-family:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace}
+a{color:var(--accent)}
+.wrap{display:grid;grid-template-columns:288px minmax(0,1fr);gap:34px;
+  max-width:1240px;margin:0 auto;padding:0 22px}
+/* sidebar */
+aside{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:22px 6px 60px 0}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:2px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px;letter-spacing:0}
+#q{width:100%;margin:14px 0 6px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);color:var(--ink);font-size:13.5px;box-shadow:var(--shadow)}
+#q:focus{outline:2px solid var(--accent);outline-offset:1px}
+#hits{font-size:12px;color:var(--muted);min-height:17px;margin-bottom:8px}
+nav a{display:block;padding:5px 9px;border-radius:7px;color:var(--ink);text-decoration:none;
+  font-size:13.3px;line-height:1.35}
+nav a:hover{background:var(--accent-soft)}
+nav a.sec{font-weight:650;margin-top:12px;color:var(--accent);font-size:13px}
+nav a.qq{padding-left:18px;color:var(--muted);font-size:12.6px}
+nav a.qq:hover{color:var(--ink)}
+/* main */
+main{padding:26px 0 120px;min-width:0}
+h1.doc{font-size:32px;line-height:1.18;letter-spacing:-.022em;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:15px;margin:0 0 4px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 26px}
+h2{font-size:21px;letter-spacing:-.015em;margin:44px 0 14px;padding-bottom:9px;
+  border-bottom:2px solid var(--line);scroll-margin-top:14px}
+h3{font-size:16.5px;margin:26px 0 10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:20px 22px;box-shadow:var(--shadow);margin:16px 0}
+.qa{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:11px;padding:4px 20px 4px;margin:14px 0;box-shadow:var(--shadow);
+  scroll-margin-top:14px}
+.qa>summary{cursor:pointer;list-style:none;padding:14px 0;font-weight:640;font-size:16px;
+  display:flex;gap:11px;align-items:flex-start;letter-spacing:-.008em}
+.qa>summary::-webkit-details-marker{display:none}
+.qa>summary:hover .qt{color:var(--accent)}
+.qn{flex:0 0 auto;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;
+  font-size:13.5px;padding-top:2.5px;min-width:34px}
+.qt{flex:1}
+.body{padding:0 0 14px 45px;border-top:1px solid var(--line);margin-top:-1px;padding-top:14px}
+.body>*:first-child{margin-top:0}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin:0 0 6px}
+code{background:var(--code-bg);color:var(--code-ink);padding:1.5px 5px;border-radius:5px;
+  font-size:.875em}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:9px;padding:13px 15px;
+  overflow-x:auto;margin:0 0 13px}
+pre code{background:none;color:var(--ink);padding:0;font-size:12.9px;line-height:1.5}
+.tw{overflow-x:auto;margin:0 0 13px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-weight:650}
+.deeper{background:var(--accent-soft);border-radius:9px;padding:11px 14px;margin:14px 0 2px;
+  font-size:14px;color:var(--muted)}
+.deeper b{color:var(--accent)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+button.t{border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;
+  border-radius:8px;padding:6px 12px;font-size:13px;box-shadow:var(--shadow)}
+button.t:hover{border-color:var(--accent);color:var(--accent)}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;
+  padding:2px 10px;font-size:12px;font-weight:600;margin-left:8px;vertical-align:2px}
+.hidden{display:none !important}
+@media (max-width:940px){
+  .wrap{grid-template-columns:1fr;gap:0}
+  aside{position:static;height:auto;padding:18px 0 0}
+  nav{display:none}
+  main{padding-top:12px}
+}
+@media print{
+  aside,.tools{display:none}
+  .wrap{display:block;max-width:none;padding:0}
+  body{background:#fff;font-size:10.5pt}
+  .qa,.card{box-shadow:none;break-inside:avoid;border-left-width:2px}
+  .qa>summary{padding:8px 0}
+  .body{display:block !important}
+  h2{break-after:avoid}
+  pre{white-space:pre-wrap}
+}
+</style>
+</head><body>
+<div class="wrap">
+<aside>
+  <div class="brand">GoalPilot Q&amp;A<small>2026-08-24</small></div>
+  <input id="q" type="search" placeholder="Search  (press / )" autocomplete="off">
+  <div id="hits"></div>
+  <nav><a class="sec" href="#product">1 · The product - what it is and why</a>
+<a class="qq" href="#q1">1. In one minute: what is GoalPilot?</a>
+<a class="qq" href="#q2">2. What is the difference between a life area, a goal, a task, and an occurrence?</a>
+<a class="qq" href="#q3">3. Which features are the core requirement and which are bonus?</a>
+<a class="qq" href="#q4">4. What is the friend code, and why not just use the user's UID?</a>
+<a class="qq" href="#q5">5. Where did the requirements come from, and how do you know you met them?</a>
+<a class="sec" href="#architecture">2 · Architecture and layering</a>
+<a class="qq" href="#q6">6. Describe the architecture.</a>
+<a class="qq" href="#q7">7. Why MVVM, and not MVC, MVP or MVI?</a>
+<a class="qq" href="#q8">8. Why do repository interfaces live in domain/ and implementations in data/?</a>
+<a class="qq" href="#q9">9. What is a use case, and when do you add one instead of putting the logic in a ViewModel?</a>
+<a class="qq" href="#q10">10. Why one Gradle module rather than a multi-module project?</a>
+<a class="qq" href="#q11">11. What is Resource&lt;T&gt;, and why not just throw exceptions?</a>
+<a class="qq" href="#q12">12. Why are there DTOs as well as domain models?</a>
+<a class="sec" href="#compose">3 · Jetpack Compose and the UI</a>
+<a class="qq" href="#q13">13. Why Compose instead of XML layouts?</a>
+<a class="qq" href="#q14">14. What is recomposition, and what triggers it?</a>
+<a class="qq" href="#q15">15. remember vs rememberSaveable vs ViewModel - when do you use each?</a>
+<a class="qq" href="#q16">16. What is state hoisting? Show me where you did it.</a>
+<a class="qq" href="#q17">17. How do you avoid unnecessary recomposition?</a>
+<a class="qq" href="#q18">18. Your charts animate when they appear. Why couldn't you use animateFloatAsState?</a>
+<a class="qq" href="#q19">19. How does navigation work?</a>
+<a class="qq" href="#q20">20. How does theming work, and why is Material You dynamic colour switched off?</a>
+<a class="qq" href="#q21">21. How do you know your colours are readable?</a>
+<a class="qq" href="#q22">22. Is the app accessible?</a>
+<a class="qq" href="#q23">23. Tell me about the first-run tutorial.</a>
+<a class="sec" href="#state">4 · State, coroutines and Flow</a>
+<a class="qq" href="#q24">24. Describe your state pattern.</a>
+<a class="qq" href="#q25">25. What is SharingStarted.WhileSubscribed(5000) and why five seconds?</a>
+<a class="qq" href="#q26">26. Flow vs StateFlow vs SharedFlow - when do you use which?</a>
+<a class="qq" href="#q27">27. Why collectAsStateWithLifecycle() and not collectAsState()?</a>
+<a class="qq" href="#q28">28. How does a Firestore snapshot listener become a Kotlin Flow?</a>
+<a class="qq" href="#q29">29. Your repositories build their flows on a UID flow and flatMapLatest. Why?</a>
+<a class="qq" href="#q30">30. Where do you switch dispatchers?</a>
+<a class="qq" href="#q31">31. What happens to an in-flight coroutine when the user rotates the screen?</a>
+<a class="qq" href="#q32">32. What is structured concurrency, and where does it show up in your code?</a>
+<a class="sec" href="#di">5 · Dependency injection with Hilt</a>
+<a class="qq" href="#q33">33. What is Hilt, and why use dependency injection at all?</a>
+<a class="qq" href="#q34">34. Which Hilt modules do you have?</a>
+<a class="qq" href="#q35">35. @Binds versus @Provides - what is the difference and why did you use each?</a>
+<a class="qq" href="#q36">36. How does a ViewModel get its dependencies inside a composable?</a>
+<a class="qq" href="#q37">37. Why is AppPreferencesRepository field-injected into MainActivity rather than read through a ViewModel?</a>
+<a class="qq" href="#q38">38. How does DI help your tests?</a>
+<a class="sec" href="#data">6 · Firebase, the data model, and offline</a>
+<a class="qq" href="#q39">39. Draw your Firestore data model.</a>
+<a class="qq" href="#q40">40. Why Firestore and not Room or SQLite?</a>
+<a class="qq" href="#q41">41. Does the app work offline?</a>
+<a class="qq" href="#q42">42. What happens when the user completes a task? Walk me through the write.</a>
+<a class="qq" href="#q43">43. Why did you remove the transaction? Wasn't that less safe?</a>
+<a class="qq" href="#q44">44. There used to be a level field. Where did it go?</a>
+<a class="qq" href="#q45">45. Why is points the one derived number that IS stored?</a>
+<a class="qq" href="#q46">46. How does the leaderboard work?</a>
+<a class="qq" href="#q47">47. Deleting a goal - does it cascade?</a>
+<a class="qq" href="#q48">48. How does image upload work?</a>
+<a class="qq" href="#q49">49. What indexes does your app need?</a>
+<a class="sec" href="#security">7 · Security, rules and permissions</a>
+<a class="qq" href="#q50">50. Walk me through your Firestore security rules.</a>
+<a class="qq" href="#q51">51. How do you let someone join a challenge without letting them edit it?</a>
+<a class="qq" href="#q52">52. You have a rule function called serverOwns(field). Explain it.</a>
+<a class="qq" href="#q53">53. google-services.json is committed to the repository. Isn't that a secret?</a>
+<a class="qq" href="#q54">54. Where does the LLM API key live?</a>
+<a class="qq" href="#q55">55. The user can bring their own AI key. Where is that stored?</a>
+<a class="qq" href="#q56">56. You keep allowBackup="true". Why not turn backup off?</a>
+<a class="qq" href="#q57">57. What runtime permissions does the app request, and why so few?</a>
+<a class="qq" href="#q58">58. Why don't you ask for the notification permission at launch?</a>
+<a class="sec" href="#ai">8 · The AI integration</a>
+<a class="qq" href="#q59">59. How does the LLM integration work, end to end?</a>
+<a class="qq" href="#q60">60. Why a Cloud Function proxy instead of calling the model from the app?</a>
+<a class="qq" href="#q61">61. What happens when the LLM call fails, or the phone is offline?</a>
+<a class="qq" href="#q62">62. Can the AI write to your database?</a>
+<a class="qq" href="#q63">63. How do you handle a model being retired?</a>
+<a class="qq" href="#q64">64. Why did classifyTask and scoreTask also return estimated minutes, rather than a second call?</a>
+<a class="qq" href="#q65">65. Bring-your-own-key supports exactly four providers. Why not any OpenAI-compatible endpoint?</a>
+<a class="sec" href="#platform">9 · Android platform fundamentals</a>
+<a class="qq" href="#q66">66. Walk me through the Activity lifecycle.</a>
+<a class="qq" href="#q67">67. You have a single Activity. Why, and what are the trade-offs?</a>
+<a class="qq" href="#q68">68. Why is MainActivity declared launchMode="singleTop"?</a>
+<a class="qq" href="#q69">69. What is enableEdgeToEdge, and how do you handle insets?</a>
+<a class="qq" href="#q70">70. What is in your manifest, and why?</a>
+<a class="qq" href="#q71">71. You have an &lt;activity-alias&gt;. What is that and why did you need one?</a>
+<a class="qq" href="#q72">72. How do you schedule reminders - WorkManager, AlarmManager, or a Service?</a>
+<a class="qq" href="#q73">73. How do notifications work in your app?</a>
+<a class="qq" href="#q74">74. Tell me about the home-screen widgets.</a>
+<a class="qq" href="#q75">75. How does the Health Connect integration work, and why read-only?</a>
+<a class="qq" href="#q76">76. Why minSdk 26, targetSdk 35, compileSdk 35?</a>
+<a class="qq" href="#q77">77. What is the difference between the app's debug and release build types here?</a>
+<a class="sec" href="#testing">10 · Testing</a>
+<a class="qq" href="#q78">78. What did you test, and how much?</a>
+<a class="qq" href="#q79">79. How do you test a ViewModel?</a>
+<a class="qq" href="#q80">80. How do you test Compose UI?</a>
+<a class="qq" href="#q81">81. How do you test the security rules? They aren't Kotlin.</a>
+<a class="qq" href="#q82">82. What is a 'guard test'? You seem to have several.</a>
+<a class="qq" href="#q83">83. Tell me about a bug your tests caught - or one they missed.</a>
+<a class="qq" href="#q84">84. What is not tested?</a>
+<a class="sec" href="#build">11 · Build, tooling and release</a>
+<a class="qq" href="#q85">85. How is the build configured?</a>
+<a class="qq" href="#q86">86. How do you sign and distribute the app?</a>
+<a class="qq" href="#q87">87. Is there continuous integration?</a>
+<a class="qq" href="#q88">88. What was the hardest thing about the toolchain?</a>
+<a class="sec" href="#hard">12 · The hard questions</a>
+<a class="qq" href="#q89">89. What are the known limitations of your app?</a>
+<a class="qq" href="#q90">90. Why is Hebrew disabled if you built the whole RTL infrastructure?</a>
+<a class="qq" href="#q91">91. What would you do differently if you started again?</a>
+<a class="qq" href="#q92">92. How would this scale to a hundred thousand users?</a>
+<a class="qq" href="#q93">93. What is the biggest technical risk in this project?</a>
+<a class="qq" href="#q94">94. What did you learn from this project?</a>
+<a class="qq" href="#q95">95. If I gave you one more week, what would you build?</a></nav>
+</aside>
+<main><h1 class="doc">GoalPilot — Examiner Q&amp;A Pack</h1>
+<p class="sub">Android Application Development · final project defence</p>
+<p class="meta">GoalPilot (com.idomarhaim.goalpilot) · v0.4.0 (versionCode 9) &nbsp;·&nbsp; Ido Marhaim &nbsp;·&nbsp; 2026-08-24 &nbsp;·&nbsp; 95 questions across 12 topics</p>
+<div class="tools"><button class="t" id="all">Expand all</button><button class="t" id="none">Collapse all</button><button class="t" id="theme">Light / dark</button><button class="t" onclick="print()">Print / PDF</button></div>
+<div class="card"><p><strong>The 60-second pitch.</strong> GoalPilot is an Android app for running your life by goals rather than by to-do lists. You divide your life into <strong>life areas</strong> (health, studies, career, relationships), file <strong>goals</strong> under them, and hang <strong>tasks</strong> off the goals. Completing a task banks points, points drive a level curve and a friends leaderboard, and an <strong>LLM behind a Cloud Function</strong> does the three jobs a human is bad at: reading a sentence like <em>"go for a 5 km run Tuesday morning"</em> and filing it under the right goal, estimating what it is worth in points and in minutes, and writing an encouragement line that is actually about your data. Those estimated minutes are what feed the <em>"where your time goes"</em> donut - the one screen that answers <em>which part of my life am I actually spending it on?</em></p>
+<p>Technically it is <strong>Kotlin + Jetpack Compose (Material 3), MVVM with a domain layer, Hilt for DI, coroutines and Flow throughout, and Firebase</strong> (Auth, Firestore, Storage, Cloud Functions, App Distribution) for the backend. 222 Kotlin source files, ~1,100 JVM unit tests, ~320 instrumented tests and 53 security-rules tests.</p></div>
+<div class="card"><p><strong>The 3-minute demo order - do it in this order every time.</strong></p>
+<ol><li><strong>Sign in with Google.</strong> One tap. Say: <em>Firebase Auth, and the auth state is a Flow - the whole tree re-routes off it, so no screen navigates on sign-in itself.</em></li><li><strong>Home.</strong> Point at the progress rings and the AI coach card. Say: <em>every screen is one immutable </em><em><code>StateFlow&lt;UiState&gt;</code></em><em>; the coach card comes from a Cloud Function, and if it fails you still get local guidance rather than a spinner.</em></li><li><strong>Smart add a task.</strong> Type a sentence in plain language. The LLM files it under a goal and estimates points, minutes and life area - then shows a <strong>confirmation dialog</strong>. Say: <em>the model proposes, the app decides. Nothing the model returns is written without a confirm.</em></li><li><strong>Tick the task.</strong> Watch the points move. Say: <em>one document write, not a transaction - and it works with the radio off.</em></li><li><strong>Analytics, then the donut.</strong> Switch day / week / month. Tap a slice. Say: <em>this is the AI's minute estimate per completed task, rolled up by life area, and the card states how many of those estimates were the model's rather than pretending they all were.</em></li><li><strong>Social</strong> - leaderboard, then add a friend by 6-character code.</li><li><strong>Settings.</strong> Flip the skin and the brightness live. Say: <em>seven independent appearance axes, all device-local, and the palette is contrast-tested in the build.</em></li></ol>
+<p><strong>If something breaks live:</strong> say what the fallback is, and show it. Every LLM call degrades to deterministic local guidance, the widget renders from a cached snapshot, and a task tick is a local write that syncs later. "It is designed to fail visibly rather than block" is a better answer than a retry.</p></div>
+<div class="card"><h3>Numbers to have ready</h3><div class=tw><table><tbody><tr><th>Package / applicationId</th><td>com.idomarhaim.goalpilot</td></tr><tr><th>Version</th><td>0.4.0, versionCode 9</td></tr><tr><th>minSdk / targetSdk / compileSdk</th><td>26 / 35 / 35</td></tr><tr><th>Language / UI toolkit</th><td>Kotlin 2.0.21 · Jetpack Compose (BOM 2024.12.01) · Material 3</td></tr><tr><th>Architecture</th><td>MVVM + domain layer, single Gradle module</td></tr><tr><th>DI</th><td>Hilt 2.52, via KSP</td></tr><tr><th>Backend</th><td>Firebase Auth · Firestore · Storage · Cloud Functions (TypeScript)</td></tr><tr><th>LLM</th><td>GROQ by default via a Cloud Function; the user may bring an OpenAI / Anthropic / Gemini key</td></tr><tr><th>Kotlin source files</th><td>222 under app/src/main</td></tr><tr><th>Feature packages</th><td>12 - analytics, auth, calendar, challenges, dashboard, goals, health, lifeareas, profile, settings, social, sync</td></tr><tr><th>Domain models / use cases / repository interfaces</th><td>44 / 17 / 14</td></tr><tr><th>JVM unit tests</th><td>~1,093 test methods across 90 classes</td></tr><tr><th>Instrumented tests</th><td>~319 test methods across 46 classes</td></tr><tr><th>Security-rules tests</th><td>53, with @firebase/rules-unit-testing against the emulator</td></tr><tr><th>Level curve</th><td>pointsForLevel(n) = 50 × (n-1) × n  →  L1:0, L2:100, L3:300, L4:600</td></tr><tr><th>Distribution</th><td>Firebase App Distribution, release-signed APK</td></tr></tbody></table></div></div>
+<h2 id="product">1 · The product - what it is and why<span class="pill">5</span></h2>
+<details class="qa" id="q1" data-s="in one minute: what is goalpilot? an android app for pursuing life goals. it works on three levels, and the spec names
+them in this order: tracking (progress rings and bars per goal), recommendations (an llm reads
+your goals and tasks and writes back guidance, encouragement, and a filing decision for a new task), and
+motivation (points, levels, a friends leaderboard, shareable weekly summaries).
+
+what makes it more than a to-do list is the life area: your own division of your life, not a fixed
+taxonomy. every goal is filed under one, and that is what the time-allocation donut reports on. " open><summary><span class="qn">Q1</span><span class="qt">In one minute: what is GoalPilot?</span></summary><div class="body"><p>An Android app for pursuing life goals. It works on three levels, and the spec names them in this order: <strong>tracking</strong> (progress rings and bars per goal), <strong>recommendations</strong> (an LLM reads your goals and tasks and writes back guidance, encouragement, and a filing decision for a new task), and <strong>motivation</strong> (points, levels, a friends leaderboard, shareable weekly summaries).</p>
+<p>What makes it more than a to-do list is the <strong>life area</strong>: your own division of your life, not a fixed taxonomy. Every goal is filed under one, and that is what the time-allocation donut reports on.</p></div></details>
+<details class="qa" id="q2" data-s="what is the difference between a life area, a goal, a task, and an occurrence? - life area - which part of my life is this? user-defined (&quot;health&quot;, &quot;studies&quot;,
+  &quot;career&quot;), reorderable, optionally synced from your google tasks list names.
+- goal - something you are trying to achieve, filed under exactly one life area. it also carries a
+  goalcategory, which is a different axis: category drives colour, icon and the llm's context, while
+  lifeareaid answers the &quot;which part of my life&quot; question.
+- task - a unit of work. it hangs off goals through goaledges (a task may serve more than one
+  goal), and carries points, a difficulty, an optional repeat rule, and an estimatedminutes.
+- occurrence - one instance of a repeating task. occurrences are generated, not stored: a
+  document exists only for an instance the user actually touched (moved, completed, skipped), which is
+  what stops a fortnightly task becoming 26 documents a year. if pressed on why category and life area both exist: they answer different questions, and one field would force one of the two to be wrong. category is presentation plus llm context; life area is the user's own ontology and the unit the analytics chart reports on." open><summary><span class="qn">Q2</span><span class="qt">What is the difference between a life area, a goal, a task, and an occurrence?</span></summary><div class="body"><ul><li><strong>Life area</strong> - <em>which part of my life is this?</em> User-defined ("health", "studies", "career"), reorderable, optionally synced from your Google Tasks list names.</li><li><strong>Goal</strong> - something you are trying to achieve, filed under exactly one life area. It also carries a <code>GoalCategory</code>, which is a <em>different</em> axis: category drives colour, icon and the LLM's context, while <code>lifeAreaId</code> answers the "which part of my life" question.</li><li><strong>Task</strong> - a unit of work. It hangs off goals through <code>goalEdges</code> (a task may serve more than one goal), and carries points, a difficulty, an optional repeat rule, and an <code>estimatedMinutes</code>.</li><li><strong>Occurrence</strong> - one <em>instance</em> of a repeating task. Occurrences are <strong>generated, not stored</strong>: a document exists only for an instance the user actually touched (moved, completed, skipped), which is what stops a fortnightly task becoming 26 documents a year.</li></ul><div class="deeper"><b>Going deeper —</b> If pressed on why category and life area both exist: they answer different questions, and one field would force one of the two to be wrong. Category is presentation plus LLM context; life area is the user's own ontology and the unit the analytics chart reports on.</div></div></details>
+<details class="qa" id="q3" data-s="which features are the core requirement and which are bonus? core (all implemented): google sign-in, goals across life categories, tasks with
+points, manual progress logging with visual rings and bars, image upload to firebase storage, sharing
+between users (weekly summaries plus a friends leaderboard), ai recommendations, points and levels.
+
+bonus (implemented): llm task-to-goal classification (the &quot;smart add a task&quot; card), the where your
+time goes donut, animated analytics charts.
+
+nice-to-have (implemented): google tasks import, health connect steps and sleep sync, google calendar
+two-way sync, five home-screen widgets, local reminders, bring-your-own-ai-key, a first-run guided tour,
+and seven appearance axes.
+
+architected but not finished: shared and competitive challenges - the model, the firestore rules and
+a preview screen exist; the full flow is tracked in todo/. " open><summary><span class="qn">Q3</span><span class="qt">Which features are the core requirement and which are bonus?</span></summary><div class="body"><p><strong>Core (all implemented):</strong> Google Sign-In, goals across life categories, tasks with points, manual progress logging with visual rings and bars, image upload to Firebase Storage, sharing between users (weekly summaries plus a friends leaderboard), AI recommendations, points and levels.</p>
+<p><strong>Bonus (implemented):</strong> LLM task-to-goal classification (the "Smart add a task" card), the <em>where your time goes</em> donut, animated analytics charts.</p>
+<p><strong>Nice-to-have (implemented):</strong> Google Tasks import, Health Connect steps and sleep sync, Google Calendar two-way sync, five home-screen widgets, local reminders, bring-your-own-AI-key, a first-run guided tour, and seven appearance axes.</p>
+<p><strong>Architected but not finished:</strong> shared and competitive challenges - the model, the Firestore rules and a preview screen exist; the full flow is tracked in <code>TODO/</code>.</p></div></details>
+<details class="qa" id="q4" data-s="what is the friend code, and why not just use the user's uid? a firebase uid is 28 characters and unusable in a live demo - nobody can read one
+across a table. authrepositoryimpl.ensureprofile allocates a 6-character friend code on first
+sign-in (back-filled for older accounts) and mirrors it onto the public profile so addfriendbycode can
+resolve it. addfriend rejects a uid with no public profile, so a mistyped code can never write a
+dangling friend edge. " open><summary><span class="qn">Q4</span><span class="qt">What is the friend code, and why not just use the user's UID?</span></summary><div class="body"><p>A Firebase UID is 28 characters and unusable in a live demo - nobody can read one across a table. <code>AuthRepositoryImpl.ensureProfile</code> allocates a <strong>6-character</strong> friend code on first sign-in (back-filled for older accounts) and mirrors it onto the public profile so <code>addFriendByCode</code> can resolve it. <code>addFriend</code> rejects a UID with no public profile, so a mistyped code can never write a dangling friend edge.</p></div></details>
+<details class="qa" id="q5" data-s="where did the requirements come from, and how do you know you met them? from the course specification (goalpilot_spec_en.docx) plus my own product and ux
+review notes, transcribed into product and ux reviews/ with stable per-item ids (r1-r28,
+e1-e19). those ids are cited from github issues, from todo/, and from docs/product_v0.3.md, the
+consolidated product spec - so a screen decision traces back to a numbered source line rather than to
+memory. " open><summary><span class="qn">Q5</span><span class="qt">Where did the requirements come from, and how do you know you met them?</span></summary><div class="body"><p>From the course specification (<code>GoalPilot_spec_EN.docx</code>) plus my own product and UX review notes, transcribed into <code>Product and UX Reviews/</code> with stable per-item ids (<code>R1</code>-<code>R28</code>, <code>E1</code>-<code>E19</code>). Those ids are cited from GitHub issues, from <code>TODO/</code>, and from <code>docs/PRODUCT_v0.3.md</code>, the consolidated product spec - so a screen decision traces back to a numbered source line rather than to memory.</p></div></details>
+<h2 id="architecture">2 · Architecture and layering<span class="pill">7</span></h2>
+<details class="qa" id="q6" data-s="describe the architecture. single gradle module, layered top to bottom:
+
+- feature/ - one package per screen (12 of them). each holds a compose screen and a viewmodel
+  exposing exactly one immutable stateflow&lt;...uistate&gt;.
+- ui/ - theme/ (the single colour authority), components/ (~24 reusable composables),
+  navigation/, root/ (the auth gate and scaffold), tutorial/, widget/, locale/.
+- notifications/ - channels, permission policy, deep links, two workmanager workers.
+- domain/ - models, repository interfaces, and use cases. no android and no firebase types
+  here at all, which is what makes this layer trivially unit-testable on the jvm.
+- data/ - the firebase implementations plus the google tasks, google calendar, health connect,
+  encrypted-key-store and widget-snapshot clients. maps dtos to and from domain models.
+- di/ - three hilt modules that bind interfaces to implementations and provide firebase singletons.
+- functions/ - typescript cloud functions: the llm proxy and the derived-state projection.
+
+dependencies point inwards: feature depends on domain, data implements domain. a viewmodel never
+sees firebase. " open><summary><span class="qn">Q6</span><span class="qt">Describe the architecture.</span></summary><div class="body"><p>Single Gradle module, layered top to bottom:</p>
+<ul><li><strong><code>feature/</code></strong> - one package per screen (12 of them). Each holds a Compose screen and a ViewModel exposing exactly one immutable <code>StateFlow&lt;...UiState&gt;</code>.</li><li><strong><code>ui/</code></strong> - <code>theme/</code> (the single colour authority), <code>components/</code> (~24 reusable composables), <code>navigation/</code>, <code>root/</code> (the auth gate and scaffold), <code>tutorial/</code>, <code>widget/</code>, <code>locale/</code>.</li><li><strong><code>notifications/</code></strong> - channels, permission policy, deep links, two WorkManager workers.</li><li><strong><code>domain/</code></strong> - models, repository <strong>interfaces</strong>, and use cases. <strong>No Android and no Firebase types here at all</strong>, which is what makes this layer trivially unit-testable on the JVM.</li><li><strong><code>data/</code></strong> - the Firebase implementations plus the Google Tasks, Google Calendar, Health Connect, encrypted-key-store and widget-snapshot clients. Maps DTOs to and from domain models.</li><li><strong><code>di/</code></strong> - three Hilt modules that bind interfaces to implementations and provide Firebase singletons.</li><li><strong><code>functions/</code></strong> - TypeScript Cloud Functions: the LLM proxy and the derived-state projection.</li></ul>
+<p>Dependencies point <strong>inwards</strong>: feature depends on domain, data implements domain. A ViewModel never sees Firebase.</p></div></details>
+<details class="qa" id="q7" data-s="why mvvm, and not mvc, mvp or mvi? mvvm is what the platform gives you: viewmodel survives configuration change, and
+compose's recomposition model wants a single observable state object rather than imperative view updates.
+mvp would need a view interface per screen, which in compose is dead weight - the composable is the
+view, and it is already stateless.
+
+in practice this is mvvm with an mvi-shaped state: one immutable uistate data class per screen, one
+stateflow of it, and the screen calls viewmodel functions. i did not go to full mvi (a sealed intent
+hierarchy plus a reducer) because at this size it adds indirection without removing a class of bug - the
+viewmodel's own functions are already the only mutation points. if pressed on unidirectional data flow: state flows down (one stateflow into the composable), events flow up (lambdas into the viewmodel). no composable writes repository state directly." open><summary><span class="qn">Q7</span><span class="qt">Why MVVM, and not MVC, MVP or MVI?</span></summary><div class="body"><p>MVVM is what the platform gives you: <code>ViewModel</code> survives configuration change, and Compose's recomposition model wants a single observable state object rather than imperative view updates. MVP would need a view interface per screen, which in Compose is dead weight - the composable <em>is</em> the view, and it is already stateless.</p>
+<p>In practice this is <strong>MVVM with an MVI-shaped state</strong>: one immutable <code>UiState</code> data class per screen, one <code>StateFlow</code> of it, and the screen calls ViewModel functions. I did not go to full MVI (a sealed <code>Intent</code> hierarchy plus a reducer) because at this size it adds indirection without removing a class of bug - the ViewModel's own functions are already the only mutation points.</p><div class="deeper"><b>Going deeper —</b> If pressed on unidirectional data flow: state flows down (one StateFlow into the composable), events flow up (lambdas into the ViewModel). No composable writes repository state directly.</div></div></details>
+<details class="qa" id="q8" data-s="why do repository interfaces live in domain/ and implementations in data/? dependency inversion. the domain layer declares what it needs (goalrepository,
+taskrepository, and twelve more) and the data layer supplies how it is done (firestore). three
+concrete pay-offs: the domain compiles with no android or firebase on the classpath; a viewmodel test
+hands a mock into the constructor with no emulator in the room; and swapping firestore for something else
+is a change confined to one package.
+
+hilt's repositorymodule is the single place the binding happens. " open><summary><span class="qn">Q8</span><span class="qt">Why do repository interfaces live in <code>domain/</code> and implementations in <code>data/</code>?</span></summary><div class="body"><p>Dependency inversion. The domain layer declares <em>what it needs</em> (<code>GoalRepository</code>, <code>TaskRepository</code>, and twelve more) and the data layer supplies <em>how it is done</em> (Firestore). Three concrete pay-offs: the domain compiles with no Android or Firebase on the classpath; a ViewModel test hands a mock into the constructor with no emulator in the room; and swapping Firestore for something else is a change confined to one package.</p>
+<p>Hilt's <code>RepositoryModule</code> is the single place the binding happens.</p></div></details>
+<details class="qa" id="q9" data-s="what is a use case, and when do you add one instead of putting the logic in a viewmodel? a use case is a pure, injectable object holding business logic with no android in it.
+i add one when the logic is non-trivial, shared by more than one screen, or worth testing in isolation.
+examples: timeallocationusecase (completed tasks to minutes per life area over a window),
+reorderlifeareasusecase, groupgoalsbylifeareausecase, buildsummaryusecase, leveling.
+
+reorderlifeareasusecase is the one i would show. it turns a drag (from, to) into the minimal
+id to sortorder map: positions outside the moved span keep their values, so one drag writes the span
+it crossed rather than the whole collection. it falls back to renumbering 0..n-1 only when the stored
+values are not strictly increasing, because rotating values through a tie would land the card wherever
+the (sortorder, name) tie-break decided rather than where the user dropped it. that is a rule with a
+dozen unit tests behind it, and it does not belong inside a viewmodel. " open><summary><span class="qn">Q9</span><span class="qt">What is a use case, and when do you add one instead of putting the logic in a ViewModel?</span></summary><div class="body"><p>A use case is a pure, injectable object holding business logic with no Android in it. I add one when the logic is non-trivial, shared by more than one screen, or worth testing in isolation. Examples: <code>TimeAllocationUseCase</code> (completed tasks to minutes per life area over a window), <code>ReorderLifeAreasUseCase</code>, <code>GroupGoalsByLifeAreaUseCase</code>, <code>BuildSummaryUseCase</code>, <code>Leveling</code>.</p>
+<p><code>ReorderLifeAreasUseCase</code> is the one I would show. It turns a drag <code>(from, to)</code> into the <strong>minimal</strong> <code>id</code> to <code>sortOrder</code> map: positions outside the moved span keep their values, so one drag writes the span it crossed rather than the whole collection. It falls back to renumbering <code>0..n-1</code> only when the stored values are not strictly increasing, because rotating values through a tie would land the card wherever the <code>(sortOrder, name)</code> tie-break decided rather than where the user dropped it. That is a rule with a dozen unit tests behind it, and it does not belong inside a ViewModel.</p></div></details>
+<details class="qa" id="q10" data-s="why one gradle module rather than a multi-module project? build time and layering enforcement are the two reasons to split, and only one of them
+was a real problem here. package-level layering plus a rule that domain/ imports nothing android gave me
+the discipline; the build is fast enough that module-level parallelism was not worth the hilt and gradle
+wiring cost for a single-developer course project.
+
+what i lose is enforcement - the layering is a convention that a careless import could break, where a
+module boundary would fail the compile. if this grew, :domain is the first module i would extract,
+because it already has zero android dependencies. name the enforcement gap yourself before the examiner does. showing you know the cost of your own choice scores better than defending it." open><summary><span class="qn">Q10</span><span class="qt">Why one Gradle module rather than a multi-module project?</span></summary><div class="body"><p>Build time and layering enforcement are the two reasons to split, and only one of them was a real problem here. Package-level layering plus a rule that <code>domain/</code> imports nothing Android gave me the discipline; the build is fast enough that module-level parallelism was not worth the Hilt and Gradle wiring cost for a single-developer course project.</p>
+<p>What I lose is <strong>enforcement</strong> - the layering is a convention that a careless import could break, where a module boundary would fail the compile. If this grew, <code>:domain</code> is the first module I would extract, because it already has zero Android dependencies.</p><div class="deeper"><b>Going deeper —</b> Name the enforcement gap yourself before the examiner does. Showing you know the cost of your own choice scores better than defending it.</div></div></details>
+<details class="qa" id="q11" data-s="what is resource&lt;t&gt;, and why not just throw exceptions? a three-state sealed interface - loading, success&lt;t&gt;, error(message, throwable)
+- returned by repository suspend functions. two reasons over exceptions: loading is a real state the
+ui has to render, and an exception cannot express it; and an error that reaches a compose screen has to be
+rendered, not caught, so making it a value forces every call site to handle it in a when the compiler
+checks for exhaustiveness.
+
+streams are separate: repositories return cold flows from firestore snapshot listeners, and errors there
+are handled with .catch { } into the state. " open><summary><span class="qn">Q11</span><span class="qt">What is <code>Resource&lt;T&gt;</code>, and why not just throw exceptions?</span></summary><div class="body"><p>A three-state sealed interface - <code>Loading</code>, <code>Success&lt;T&gt;</code>, <code>Error(message, throwable)</code></p>
+<ul><li>returned by repository suspend functions. Two reasons over exceptions: <strong>Loading is a real state</strong> the</li></ul>
+<p>UI has to render, and an exception cannot express it; and an error that reaches a Compose screen has to be <em>rendered</em>, not caught, so making it a value forces every call site to handle it in a <code>when</code> the compiler checks for exhaustiveness.</p>
+<p>Streams are separate: repositories return cold <code>Flow</code>s from Firestore snapshot listeners, and errors there are handled with <code>.catch { }</code> into the state.</p></div></details>
+<details class="qa" id="q12" data-s="why are there dtos as well as domain models? firestore's reflective deserializer needs mutable classes with no-arg defaults and a
+@documentid field. my domain models are immutable data classes with non-null invariants. those two
+requirements are incompatible, so data/firestore/ holds goaldto, taskdto, userdto and the rest
+with var and defaults, and maps them to and from domain models at the repository boundary.
+
+the pay-off is that schema migration is contained. when a field's meaning changed (lifeareaid,
+goaledges, estimatedminutes), the dto absorbed both the old and the new shape and the mapper decided
+between them - and goallifeareamigrationtest, taskscoringmigrationtest and goalmeasuremigrationtest
+pin exactly that behaviour, so a document written months ago still reads correctly today. " open><summary><span class="qn">Q12</span><span class="qt">Why are there DTOs as well as domain models?</span></summary><div class="body"><p>Firestore's reflective deserializer needs mutable classes with no-arg defaults and a <code>@DocumentId</code> field. My domain models are immutable <code>data class</code>es with non-null invariants. Those two requirements are incompatible, so <code>data/firestore/</code> holds <code>GoalDto</code>, <code>TaskDto</code>, <code>UserDto</code> and the rest with <code>var</code> and defaults, and maps them to and from domain models at the repository boundary.</p>
+<p>The pay-off is that schema migration is contained. When a field's meaning changed (<code>lifeAreaId</code>, <code>goalEdges</code>, <code>estimatedMinutes</code>), the DTO absorbed both the old and the new shape and the mapper decided between them - and <code>GoalLifeAreaMigrationTest</code>, <code>TaskScoringMigrationTest</code> and <code>GoalMeasureMigrationTest</code> pin exactly that behaviour, so a document written months ago still reads correctly today.</p></div></details>
+<h2 id="compose">3 · Jetpack Compose and the UI<span class="pill">11</span></h2>
+<details class="qa" id="q13" data-s="why compose instead of xml layouts? three reasons that actually mattered here. state: a compose screen is a function of
+its state, so there is no path where view and model disagree - the whole &quot;i forgot to call
+notifydatasetchanged&quot; class of bug does not exist. composition over inheritance: the ~24 reusable
+composables in ui/components/ compose into screens with no custom view subclass and no
+recyclerview.adapter anywhere. theming: seven independent appearance axes applied instantly would be
+a nightmare of styles and attribute resolution in xml; in compose it is a compositionlocal and a
+recomposition.
+
+the cost is that you must understand recomposition and stability, or you write code that is correct and
+slow. " open><summary><span class="qn">Q13</span><span class="qt">Why Compose instead of XML layouts?</span></summary><div class="body"><p>Three reasons that actually mattered here. <strong>State</strong>: a Compose screen is a function of its state, so there is no path where view and model disagree - the whole "I forgot to call <code>notifyDataSetChanged</code>" class of bug does not exist. <strong>Composition over inheritance</strong>: the ~24 reusable composables in <code>ui/components/</code> compose into screens with no custom <code>View</code> subclass and no <code>RecyclerView.Adapter</code> anywhere. <strong>Theming</strong>: seven independent appearance axes applied instantly would be a nightmare of styles and attribute resolution in XML; in Compose it is a <code>CompositionLocal</code> and a recomposition.</p>
+<p>The cost is that you must understand recomposition and stability, or you write code that is correct and slow.</p></div></details>
+<details class="qa" id="q14" data-s="what is recomposition, and what triggers it? compose records which composables read which state objects. when a state value
+changes, compose invalidates and re-runs only the composables that read it - not the whole tree. that is
+recomposition.
+
+three properties worth naming out loud: it can run frequently, so a composable body must be cheap and
+free of side effects; it can be skipped for a composable whose parameters are all stable and
+unchanged; and it can run out of order or in parallel, so nothing may depend on execution order. side
+effects go in launchedeffect / disposableeffect / sideeffect, never in the body. " open><summary><span class="qn">Q14</span><span class="qt">What is recomposition, and what triggers it?</span></summary><div class="body"><p>Compose records which composables <em>read</em> which <code>State</code> objects. When a <code>State</code> value changes, Compose invalidates and re-runs only the composables that read it - not the whole tree. That is recomposition.</p>
+<p>Three properties worth naming out loud: it can run <strong>frequently</strong>, so a composable body must be cheap and free of side effects; it can be <strong>skipped</strong> for a composable whose parameters are all stable and unchanged; and it can run <strong>out of order or in parallel</strong>, so nothing may depend on execution order. Side effects go in <code>LaunchedEffect</code> / <code>DisposableEffect</code> / <code>SideEffect</code>, never in the body.</p></div></details>
+<details class="qa" id="q15" data-s="remember vs remembersaveable vs viewmodel - when do you use each? - remember - survives recomposition only. correct for anything derivable or cheap
+  to rebuild: scroll state, an expanded/collapsed flag, an animation handle.
+- remembersaveable - additionally survives configuration change and process death, through the saved
+  instance state bundle. correct for small user input that would be annoying to lose, such as a text field
+  inside a dialog.
+- viewmodel - survives configuration change, is scoped to the navigation entry, and is where anything
+  that talks to a repository lives. all screen state in this app is here.
+
+my rule of thumb: if losing it on rotation would be a bug, it is not remember; if it needs a repository,
+it is not remembersaveable. " open><summary><span class="qn">Q15</span><span class="qt"><code>remember</code> vs <code>rememberSaveable</code> vs ViewModel - when do you use each?</span></summary><div class="body"><ul><li><strong><code>remember</code></strong> - survives recomposition only. Correct for anything derivable or cheap to rebuild: scroll state, an expanded/collapsed flag, an animation handle.</li><li><strong><code>rememberSaveable</code></strong> - additionally survives configuration change and process death, through the saved instance state bundle. Correct for small user input that would be annoying to lose, such as a text field inside a dialog.</li><li><strong>ViewModel</strong> - survives configuration change, is scoped to the navigation entry, and is where anything that talks to a repository lives. All screen state in this app is here.</li></ul>
+<p>My rule of thumb: if losing it on rotation would be a bug, it is not <code>remember</code>; if it needs a repository, it is not <code>rememberSaveable</code>.</p></div></details>
+<details class="qa" id="q16" data-s="what is state hoisting? show me where you did it. moving state out of a composable so the composable becomes stateless: it takes the
+value as a parameter and an onvaluechange lambda instead of owning it. every screen here is hoisted to
+its viewmodel - the composable takes a uistate plus lambdas, which is exactly why the same screen body
+can be driven by a compose ui test with no firebase present.
+
+lifearearows.kt is the clearest case: the drag-to-reorder state holder and the rows are exposed as a
+lazylistscope extension, so the rows drop into the screen's existing list rather than nesting a second
+scrollable, and a ui test can drive them directly. " open><summary><span class="qn">Q16</span><span class="qt">What is state hoisting? Show me where you did it.</span></summary><div class="body"><p>Moving state out of a composable so the composable becomes stateless: it takes the value as a parameter and an <code>onValueChange</code> lambda instead of owning it. Every screen here is hoisted to its ViewModel - the composable takes a <code>UiState</code> plus lambdas, which is exactly why the same screen body can be driven by a Compose UI test with no Firebase present.</p>
+<p><code>LifeAreaRows.kt</code> is the clearest case: the drag-to-reorder state holder and the rows are exposed as a <code>LazyListScope</code> extension, so the rows drop into the screen's existing list rather than nesting a second scrollable, and a UI test can drive them directly.</p></div></details>
+<details class="qa" id="q17" data-s="how do you avoid unnecessary recomposition? four habits. keep state as low as it can go, so invalidation stays local. pass
+stable types - immutable data classes, primitives - because compose can skip a composable only when
+it can prove the parameters are unchanged. give lazycolumn items a stable key so a list edit moves
+items instead of rebuilding them. and do not pass a lambda where a value would do.
+
+that last one caused a real bug here. the entry animation in chartanimation.kt restarts when its key
+changes, and baritem deliberately carries a countsuffix: string rather than a formatter lambda -
+because two structurally identical lambdas are not equals, so every recomposition would produce a &quot;new&quot;
+key and restart the sweep forever. volunteer this if you are asked 'did you hit any performance problems?' - it shows you understand stability, not just the api surface." open><summary><span class="qn">Q17</span><span class="qt">How do you avoid unnecessary recomposition?</span></summary><div class="body"><p>Four habits. Keep state as low as it can go, so invalidation stays local. Pass <strong>stable</strong> types - immutable <code>data class</code>es, primitives - because Compose can skip a composable only when it can prove the parameters are unchanged. Give <code>LazyColumn</code> items a stable <code>key</code> so a list edit moves items instead of rebuilding them. And do not pass a <strong>lambda</strong> where a value would do.</p>
+<p>That last one caused a real bug here. The entry animation in <code>ChartAnimation.kt</code> restarts when its <code>key</code> changes, and <code>BarItem</code> deliberately carries a <code>countSuffix: String</code> rather than a formatter lambda - because two structurally identical lambdas are not <code>equals</code>, so every recomposition would produce a "new" key and restart the sweep forever.</p><div class="deeper"><b>Going deeper —</b> Volunteer this if you are asked 'did you hit any performance problems?' - it shows you understand stability, not just the API surface.</div></div></details>
+<details class="qa" id="q18" data-s="your charts animate when they appear. why couldn't you use animatefloatasstate? because animatefloatasstate initialises at its target. on first composition there
+is no previous value to animate from, so a bar whose value never changes never moves - the chart simply
+appears fully formed. that is exactly what the analytics screen used to do.
+
+entry animation goes through rememberchartprogress in ui/components/chartanimation.kt: an animatable
+explicitly created at 0f and animated to 1f, which is the only way to express &quot;start from nothing&quot;.
+bars grow with a staggered sweep, the donut unrolls clockwise from twelve o'clock, and the numbers count
+up with them. " open><summary><span class="qn">Q18</span><span class="qt">Your charts animate when they appear. Why couldn't you use <code>animateFloatAsState</code>?</span></summary><div class="body"><p>Because <code>animateFloatAsState</code> <strong>initialises at its target</strong>. On first composition there is no previous value to animate from, so a bar whose value never changes never moves - the chart simply appears fully formed. That is exactly what the analytics screen used to do.</p>
+<p>Entry animation goes through <code>rememberChartProgress</code> in <code>ui/components/ChartAnimation.kt</code>: an <code>Animatable</code> explicitly created at <code>0f</code> and animated to <code>1f</code>, which is the only way to express "start from nothing". Bars grow with a staggered sweep, the donut unrolls clockwise from twelve o'clock, and the numbers count up with them.</p></div></details>
+<details class="qa" id="q19" data-s="how does navigation work? navigation-compose with a single navhost. every route and argument key lives in one
+object, ui/navigation/routes, with helper builders (routes.goaldetail(id)) so no call site hand-builds
+a string.
+
+there are two graphs, selected by auth state: signed-out (sign-in plus settings) and signed-in (the
+tabs plus detail screens). mainscaffold hosts a four-tab bottom bar - home / goals / calendar /
+social. profile is deliberately not a tab: five is a crowded bar, so profile became an avatar in home's
+top-right (what gmail and youtube do) and calendar took the freed slot. routes.profile is still
+registered, because the avatar sheet reaches it.
+
+arguments: a required id travels in the path (life_area_detail/{lifeareaid}), because the screen is
+meaningless without one - a nullable query argument would compile an impossible &quot;life area with no area&quot;
+state into every caller. an optional id travels as a query argument (add_edit_goal?goalid=...), because
+add and edit really are the same screen. " open><summary><span class="qn">Q19</span><span class="qt">How does navigation work?</span></summary><div class="body"><p>Navigation-Compose with a single <code>NavHost</code>. Every route and argument key lives in one object, <code>ui/navigation/Routes</code>, with helper builders (<code>Routes.goalDetail(id)</code>) so no call site hand-builds a string.</p>
+<p>There are <strong>two graphs</strong>, selected by auth state: signed-out (sign-in plus settings) and signed-in (the tabs plus detail screens). <code>MainScaffold</code> hosts a four-tab bottom bar - <strong>Home / Goals / Calendar / Social</strong>. Profile is deliberately not a tab: five is a crowded bar, so Profile became an avatar in Home's top-right (what Gmail and YouTube do) and Calendar took the freed slot. <code>Routes.PROFILE</code> is still registered, because the avatar sheet reaches it.</p>
+<p>Arguments: a required id travels <strong>in the path</strong> (<code>life_area_detail/{lifeAreaId}</code>), because the screen is meaningless without one - a nullable query argument would compile an impossible "life area with no area" state into every caller. An optional id travels as a query argument (<code>add_edit_goal?goalId=...</code>), because add and edit really are the same screen.</p></div></details>
+<details class="qa" id="q20" data-s="how does theming work, and why is material you dynamic colour switched off? ui/theme/ is the single colour authority. appearance is seven independent axes,
+each a pure enum in domain/model/ with a persisted id and no compose types: skin (aurora / blossom),
+brightness (system / light / dark), background, material (glass / liquid glass / neo / dark neo), relief,
+language and region. palettetransform composes them into the scheme actually rendered, and
+colorschemefor(skin, dark) returns one of four full material 3 colorschemes.
+
+dynamic colour is off deliberately, and this is not taste: it lets the device wallpaper decide every
+colour, which makes the brand palette dead code on android 12+, and it cannot coexist with a user-chosen
+skin - two colour authorities cannot both win.
+
+the settings are device-local, held in sharedpreferences and exposed as a hot stateflow, so the
+very first frame already has the right palette. mainactivity field-injects that repository because the
+skin must be known outside goalpilottheme, and every hiltviewmodel() lives inside it. " open><summary><span class="qn">Q20</span><span class="qt">How does theming work, and why is Material You dynamic colour switched off?</span></summary><div class="body"><p><code>ui/theme/</code> is the single colour authority. Appearance is <strong>seven independent axes</strong>, each a pure enum in <code>domain/model/</code> with a persisted id and no Compose types: skin (Aurora / Blossom), brightness (system / light / dark), background, material (glass / liquid glass / neo / dark neo), relief, language and region. <code>PaletteTransform</code> composes them into the scheme actually rendered, and <code>colorSchemeFor(skin, dark)</code> returns one of four full Material 3 <code>ColorScheme</code>s.</p>
+<p>Dynamic colour is off <strong>deliberately</strong>, and this is not taste: it lets the device wallpaper decide every colour, which makes the brand palette dead code on Android 12+, and it cannot coexist with a user-chosen skin - two colour authorities cannot both win.</p>
+<p>The settings are <strong>device-local</strong>, held in <code>SharedPreferences</code> and exposed as a hot <code>StateFlow</code>, so the very first frame already has the right palette. <code>MainActivity</code> field-injects that repository because the skin must be known <em>outside</em> <code>GoalPilotTheme</code>, and every <code>hiltViewModel()</code> lives inside it.</p></div></details>
+<details class="qa" id="q21" data-s="how do you know your colours are readable? themepalettetest is a jvm unit test asserting wcag contrast ratios across all four
+skin-by-brightness schemes, plus pairwise distinctness of the ten goalcategory colours. editing a hex
+without running the suite fails the build rather than shipping an unreadable screen.
+
+that is the general pattern in this project: where a design rule can be written as an assertion, it is a
+test rather than a comment. " open><summary><span class="qn">Q21</span><span class="qt">How do you know your colours are readable?</span></summary><div class="body"><p><code>ThemePaletteTest</code> is a JVM unit test asserting <strong>WCAG contrast ratios</strong> across all four skin-by-brightness schemes, plus pairwise distinctness of the ten <code>GoalCategory</code> colours. Editing a hex without running the suite fails the build rather than shipping an unreadable screen.</p>
+<p>That is the general pattern in this project: where a design rule can be written as an assertion, it is a test rather than a comment.</p></div></details>
+<details class="qa" id="q22" data-s="is the app accessible? partly, and i can say exactly where. contrast is test-enforced (above). icons and
+charts carry contentdescription through modifier.semantics - donutchart builds its description from
+its slices. touch targets follow the material 3 minimums, and the whole layout is written in dp with no
+fixed pixel sizes, so it scales with display size and font scale; that was verified on a real galaxy s25
+ultra at its own geometry, not only on the emulator.
+
+what is not done: a full talkback pass over every screen. hebrew and rtl are complete in the code but
+deliberately switched off for now - see the localisation question. " open><summary><span class="qn">Q22</span><span class="qt">Is the app accessible?</span></summary><div class="body"><p>Partly, and I can say exactly where. Contrast is test-enforced (above). Icons and charts carry <code>contentDescription</code> through <code>Modifier.semantics</code> - <code>DonutChart</code> builds its description from its slices. Touch targets follow the Material 3 minimums, and the whole layout is written in <code>dp</code> with no fixed pixel sizes, so it scales with display size and font scale; that was verified on a real Galaxy S25 Ultra at its own geometry, not only on the emulator.</p>
+<p>What is <strong>not</strong> done: a full TalkBack pass over every screen. Hebrew and RTL are complete in the code but deliberately switched off for now - see the localisation question.</p></div></details>
+<details class="qa" id="q23" data-s="tell me about the first-run tutorial. ui/tutorial/ drives a spotlight overlay: the screen dims and a hole is cut over the
+element being described, one step at a time, seven steps, skippable from any step and replayable from
+settings, then help. one step waits for you to open the goals tab yourself and then follows you there.
+
+the design point is that no feature package knows the tour exists. a screen tags a widget with
+modifier.tutorialanchor(...) and does nothing else; the overlay lives in ui/root/.
+tutorialstepstest asserts that every anchor a step names really exists, because that link is a string
+and is not checked at compile time.
+
+the limitation i would volunteer: that test cannot check whether a step's sentence is still true. a
+tour step is a claim about how the rest of the app is arranged, and when the arrangement moves the step
+keeps rendering perfectly and starts lying. it has happened here, which is why moving a navigation
+destination now carries an explicit obligation to re-read the tour. " open><summary><span class="qn">Q23</span><span class="qt">Tell me about the first-run tutorial.</span></summary><div class="body"><p><code>ui/tutorial/</code> drives a spotlight overlay: the screen dims and a hole is cut over the element being described, one step at a time, seven steps, skippable from any step and replayable from <em>Settings, then Help</em>. One step waits for you to open the Goals tab yourself and then follows you there.</p>
+<p>The design point is that <strong>no feature package knows the tour exists</strong>. A screen tags a widget with <code>Modifier.tutorialAnchor(...)</code> and does nothing else; the overlay lives in <code>ui/root/</code>. <code>TutorialStepsTest</code> asserts that every anchor a step names really exists, because that link is a string and is not checked at compile time.</p>
+<p>The limitation I would volunteer: that test cannot check whether a step's <em>sentence</em> is still true. A tour step is a claim about how the rest of the app is arranged, and when the arrangement moves the step keeps rendering perfectly and starts lying. It has happened here, which is why moving a navigation destination now carries an explicit obligation to re-read the tour.</p></div></details>
+<h2 id="state">4 · State, coroutines and Flow<span class="pill">9</span></h2>
+<details class="qa" id="q24" data-s="describe your state pattern. every viewmodel exposes exactly one immutable stateflow&lt;...uistate&gt;, built the
+same way:
+
+kotlin
+val uistate: stateflow&lt;dashboarduistate&gt; =
+    combine(goals, tasks, lifeareas, recommendations) { g, t, a, r -&gt; dashboarduistate(...) }
+        .statein(viewmodelscope, sharingstarted.whilesubscribed(5_000), dashboarduistate())
+
+
+screens are stateless: they collectasstatewithlifecycle() and call viewmodel functions or navigation
+lambdas. that gives one place where the screen's truth is assembled, and a single object to assert on in
+a test. " open><summary><span class="qn">Q24</span><span class="qt">Describe your state pattern.</span></summary><div class="body"><p>Every ViewModel exposes exactly <strong>one</strong> immutable <code>StateFlow&lt;...UiState&gt;</code>, built the same way:</p>
+<pre><code>val uiState: StateFlow&lt;DashboardUiState&gt; =
+    combine(goals, tasks, lifeAreas, recommendations) { g, t, a, r -&gt; DashboardUiState(...) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())</code></pre>
+<p>Screens are stateless: they <code>collectAsStateWithLifecycle()</code> and call ViewModel functions or navigation lambdas. That gives one place where the screen's truth is assembled, and a single object to assert on in a test.</p></div></details>
+<details class="qa" id="q25" data-s="what is sharingstarted.whilesubscribed(5000) and why five seconds? statein turns a cold flow into a hot stateflow with a sharing policy.
+whilesubscribed(5000) keeps the upstream alive for five seconds after the last collector goes away,
+then cancels it.
+
+the number is chosen for configuration change: a rotation destroys and recreates the composition, so
+the collector disappears and reappears within milliseconds. with eagerly the upstream would never stop
+and a backgrounded app would keep firestore listeners open, costing battery and reads. with lazily it
+would never restart cleanly. five seconds spans a rotation without spanning a real backgrounding. follow-up they may ask: 'what happens after five seconds in the background?' - the firestore snapshot listener is torn down and re-established on return; the last value is still in the stateflow, so the ui has something to draw immediately." open><summary><span class="qn">Q25</span><span class="qt">What is <code>SharingStarted.WhileSubscribed(5000)</code> and why five seconds?</span></summary><div class="body"><p><code>stateIn</code> turns a cold flow into a hot <code>StateFlow</code> with a sharing policy. <code>WhileSubscribed(5000)</code> keeps the upstream alive for <strong>five seconds after the last collector goes away</strong>, then cancels it.</p>
+<p>The number is chosen for <strong>configuration change</strong>: a rotation destroys and recreates the composition, so the collector disappears and reappears within milliseconds. With <code>Eagerly</code> the upstream would never stop and a backgrounded app would keep Firestore listeners open, costing battery and reads. With <code>Lazily</code> it would never restart cleanly. Five seconds spans a rotation without spanning a real backgrounding.</p><div class="deeper"><b>Going deeper —</b> Follow-up they may ask: 'what happens after five seconds in the background?' - the Firestore snapshot listener is torn down and re-established on return; the last value is still in the StateFlow, so the UI has something to draw immediately.</div></div></details>
+<details class="qa" id="q26" data-s="flow vs stateflow vs sharedflow - when do you use which? - flow - cold. nothing runs until someone collects, and each collector gets its
+  own execution. repositories return these.
+- stateflow - hot, always has a current value, conflates (a fast producer drops intermediate
+  values). this is state: exactly what a screen wants.
+- sharedflow - hot, no current value, configurable replay. this is events: a one-shot &quot;show a
+  snackbar&quot;, which must not replay on rotation.
+
+in this app, screen state is stateflow and transient one-shot signals are handled through the state
+object with an explicit consume call, so a rotation cannot re-fire them. " open><summary><span class="qn">Q26</span><span class="qt">Flow vs StateFlow vs SharedFlow - when do you use which?</span></summary><div class="body"><ul><li><strong><code>Flow</code></strong> - cold. Nothing runs until someone collects, and each collector gets its own execution. Repositories return these.</li><li><strong><code>StateFlow</code></strong> - hot, always has a current value, conflates (a fast producer drops intermediate values). This is <em>state</em>: exactly what a screen wants.</li><li><strong><code>SharedFlow</code></strong> - hot, no current value, configurable replay. This is <em>events</em>: a one-shot "show a snackbar", which must not replay on rotation.</li></ul>
+<p>In this app, screen state is <code>StateFlow</code> and transient one-shot signals are handled through the state object with an explicit consume call, so a rotation cannot re-fire them.</p></div></details>
+<details class="qa" id="q27" data-s="why collectasstatewithlifecycle() and not collectasstate()? collectasstate() collects for as long as the composable is in the composition, which
+includes while the app is in the background. collectasstatewithlifecycle() binds collection to the
+lifecycle owner and stops at stopped.
+
+the practical consequence with firestore is real money and battery: a backgrounded screen would otherwise
+keep its snapshot listener open and keep billing reads for updates nobody can see. it also pairs with
+whilesubscribed(5000) above - the two together are what actually tear the upstream down. " open><summary><span class="qn">Q27</span><span class="qt">Why <code>collectAsStateWithLifecycle()</code> and not <code>collectAsState()</code>?</span></summary><div class="body"><p><code>collectAsState()</code> collects for as long as the composable is in the composition, which includes while the app is in the <strong>background</strong>. <code>collectAsStateWithLifecycle()</code> binds collection to the lifecycle owner and stops at <code>STOPPED</code>.</p>
+<p>The practical consequence with Firestore is real money and battery: a backgrounded screen would otherwise keep its snapshot listener open and keep billing reads for updates nobody can see. It also pairs with <code>WhileSubscribed(5000)</code> above - the two together are what actually tear the upstream down.</p></div></details>
+<details class="qa" id="q28" data-s="how does a firestore snapshot listener become a kotlin flow? with callbackflow. data/firestore has a snapshotsflow() helper that registers
+addsnapshotlistener, emits each snapshot with trysend, closes the flow on error, and - the important
+part - calls awaitclose { registration.remove() }.
+
+awaitclose is what makes it leak-free: when the collector is cancelled (screen gone, scope cancelled),
+the listener is removed. a callbackflow without awaitclose throws at runtime, which is kotlin
+protecting you from exactly that leak. " open><summary><span class="qn">Q28</span><span class="qt">How does a Firestore snapshot listener become a Kotlin Flow?</span></summary><div class="body"><p>With <code>callbackFlow</code>. <code>data/firestore</code> has a <code>snapshotsFlow()</code> helper that registers <code>addSnapshotListener</code>, emits each snapshot with <code>trySend</code>, closes the flow on error, and - the important part - calls <code>awaitClose { registration.remove() }</code>.</p>
+<p><code>awaitClose</code> is what makes it leak-free: when the collector is cancelled (screen gone, scope cancelled), the listener is removed. A <code>callbackFlow</code> without <code>awaitClose</code> throws at runtime, which is Kotlin protecting you from exactly that leak.</p></div></details>
+<details class="qa" id="q29" data-s="your repositories build their flows on a uid flow and flatmaplatest. why? because a flow is constructed when its viewmodel is created, and the signed-in
+user can change afterwards. if a repository read auth.currentuser once at construction time, it would
+pin whichever account happened to be signed in at that moment.
+
+that is not hypothetical - it is exactly the bug that shows up when you demo sharing between two
+accounts: sign out of a, sign in as b, and the screen serves a's goals to b. so repositories build on
+firebaseauth.uidflow() (in data/auth/authext.kt) and flatmaplatest on it: when the uid changes, the
+old query is cancelled and a new one starts. good answer to 'tell me about a bug you found'. it shows a concrete failure, a root cause in the reactive model, and a structural fix rather than a patch." open><summary><span class="qn">Q29</span><span class="qt">Your repositories build their flows on a UID flow and <code>flatMapLatest</code>. Why?</span></summary><div class="body"><p>Because a <code>Flow</code> is <strong>constructed when its ViewModel is created</strong>, and the signed-in user can change afterwards. If a repository read <code>auth.currentUser</code> once at construction time, it would pin whichever account happened to be signed in at that moment.</p>
+<p>That is not hypothetical - it is exactly the bug that shows up when you demo sharing between two accounts: sign out of A, sign in as B, and the screen serves <strong>A's goals to B</strong>. So repositories build on <code>FirebaseAuth.uidFlow()</code> (in <code>data/auth/AuthExt.kt</code>) and <code>flatMapLatest</code> on it: when the UID changes, the old query is cancelled and a new one starts.</p><div class="deeper"><b>Going deeper —</b> Good answer to 'tell me about a bug you found'. It shows a concrete failure, a root cause in the reactive model, and a structural fix rather than a patch.</div></div></details>
+<details class="qa" id="q30" data-s="where do you switch dispatchers? dispatchersmodule provides the dispatchers as injected qualifiers rather than
+letting call sites reach for dispatchers.io directly - which is what makes them substitutable in tests
+with a testdispatcher.
+
+in practice very little needs switching: the firebase sdk does its own i/o off the main thread and hands
+results back through callbacks, which kotlinx-coroutines-play-services adapts with .await(). the
+places that do switch are pure cpu work over a large list - building the calendar window, rolling up the
+time allocation - which go to default. " open><summary><span class="qn">Q30</span><span class="qt">Where do you switch dispatchers?</span></summary><div class="body"><p><code>DispatchersModule</code> provides the dispatchers as injected qualifiers rather than letting call sites reach for <code>Dispatchers.IO</code> directly - which is what makes them substitutable in tests with a <code>TestDispatcher</code>.</p>
+<p>In practice very little needs switching: the Firebase SDK does its own I/O off the main thread and hands results back through callbacks, which <code>kotlinx-coroutines-play-services</code> adapts with <code>.await()</code>. The places that do switch are pure CPU work over a large list - building the calendar window, rolling up the time allocation - which go to <code>Default</code>.</p></div></details>
+<details class="qa" id="q31" data-s="what happens to an in-flight coroutine when the user rotates the screen? nothing. viewmodelscope is tied to the viewmodel, which survives configuration
+change, so a save that is in flight completes and its result lands in the state the recreated composition
+collects.
+
+that is the concrete reason the work lives in the viewmodel rather than in a launchedeffect in the
+composable: a launchedeffect is cancelled when its composable leaves the composition, so a rotation
+mid-save would cancel the save. " open><summary><span class="qn">Q31</span><span class="qt">What happens to an in-flight coroutine when the user rotates the screen?</span></summary><div class="body"><p>Nothing. <code>viewModelScope</code> is tied to the <strong>ViewModel</strong>, which survives configuration change, so a save that is in flight completes and its result lands in the state the recreated composition collects.</p>
+<p>That is the concrete reason the work lives in the ViewModel rather than in a <code>LaunchedEffect</code> in the composable: a <code>LaunchedEffect</code> is cancelled when its composable leaves the composition, so a rotation mid-save would cancel the save.</p></div></details>
+<details class="qa" id="q32" data-s="what is structured concurrency, and where does it show up in your code? structured concurrency means every coroutine has a parent scope, and cancelling the
+parent cancels the children - so no coroutine can outlive the thing that started it. viewmodelscope is
+the parent for everything a screen starts; the callbackflow above is torn down by the same cancellation;
+workmanager is the deliberate exception, because a reminder must survive the process.
+
+the practical effect is that i have no manual lifecycle bookkeeping anywhere in the app: nothing has to be
+unregistered in ondestroy. " open><summary><span class="qn">Q32</span><span class="qt">What is structured concurrency, and where does it show up in your code?</span></summary><div class="body"><p>Structured concurrency means every coroutine has a parent scope, and cancelling the parent cancels the children - so no coroutine can outlive the thing that started it. <code>viewModelScope</code> is the parent for everything a screen starts; the <code>callbackFlow</code> above is torn down by the same cancellation; <code>WorkManager</code> is the deliberate exception, because a reminder must survive the process.</p>
+<p>The practical effect is that I have no manual lifecycle bookkeeping anywhere in the app: nothing has to be unregistered in <code>onDestroy</code>.</p></div></details>
+<h2 id="di">5 · Dependency injection with Hilt<span class="pill">6</span></h2>
+<details class="qa" id="q33" data-s="what is hilt, and why use dependency injection at all? hilt is a compile-time di framework built on dagger, generating the wiring from
+annotations at build time (through ksp here) - so a missing binding is a compile error, not a
+runtime crash.
+
+why di at all: it makes dependencies explicit in the constructor, it puts object lifetimes under a scope
+rather than under scattered singletons, and it is what makes the viewmodels testable - a test constructs
+the viewmodel directly with mocks and never touches the hilt graph. " open><summary><span class="qn">Q33</span><span class="qt">What is Hilt, and why use dependency injection at all?</span></summary><div class="body"><p>Hilt is a compile-time DI framework built on Dagger, generating the wiring from annotations at build time (through KSP here) - so a missing binding is a <strong>compile error</strong>, not a runtime crash.</p>
+<p>Why DI at all: it makes dependencies explicit in the constructor, it puts object lifetimes under a scope rather than under scattered singletons, and it is what makes the ViewModels testable - a test constructs the ViewModel directly with mocks and never touches the Hilt graph.</p></div></details>
+<details class="qa" id="q34" data-s="which hilt modules do you have? three, and the split is by kind of thing:
+
+- firebasemodule - @provides for the firebase singletons (firebaseauth, firebasefirestore,
+  firebasestorage, firebasefunctions), because they come from a factory i do not own.
+- repositorymodule - @binds for interface to implementation, one line per repository. this is the
+  single place goalrepository becomes goalrepositoryimpl.
+- dispatchersmodule - the coroutine dispatchers behind qualifiers, so tests can substitute them.
+
+the application class is annotated @hiltandroidapp, mainactivity @androidentrypoint, and every
+viewmodel @hiltviewmodel. " open><summary><span class="qn">Q34</span><span class="qt">Which Hilt modules do you have?</span></summary><div class="body"><p>Three, and the split is by <em>kind of thing</em>:</p>
+<ul><li><strong><code>FirebaseModule</code></strong> - <code>@Provides</code> for the Firebase singletons (<code>FirebaseAuth</code>, <code>FirebaseFirestore</code>, <code>FirebaseStorage</code>, <code>FirebaseFunctions</code>), because they come from a factory I do not own.</li><li><strong><code>RepositoryModule</code></strong> - <code>@Binds</code> for interface to implementation, one line per repository. This is the single place <code>GoalRepository</code> becomes <code>GoalRepositoryImpl</code>.</li><li><strong><code>DispatchersModule</code></strong> - the coroutine dispatchers behind qualifiers, so tests can substitute them.</li></ul>
+<p>The application class is annotated <code>@HiltAndroidApp</code>, <code>MainActivity</code> <code>@AndroidEntryPoint</code>, and every ViewModel <code>@HiltViewModel</code>.</p></div></details>
+<details class="qa" id="q35" data-s="@binds versus @provides - what is the difference and why did you use each? @provides is a method with a body that builds the object; you need it when the
+type comes from a factory or a builder you do not control - which is why the firebase singletons use it.
+
+@binds is an abstract method saying &quot;when someone asks for this interface, give them that
+implementation&quot;. it generates no code at runtime beyond the binding itself, so it is cheaper, and it is
+the right tool whenever the implementation is already constructor-injectable - which every repository
+implementation here is. " open><summary><span class="qn">Q35</span><span class="qt"><code>@Binds</code> versus <code>@Provides</code> - what is the difference and why did you use each?</span></summary><div class="body"><p><code>@Provides</code> is a method with a <strong>body</strong> that builds the object; you need it when the type comes from a factory or a builder you do not control - which is why the Firebase singletons use it.</p>
+<p><code>@Binds</code> is an <strong>abstract</strong> method saying "when someone asks for this interface, give them that implementation". It generates no code at runtime beyond the binding itself, so it is cheaper, and it is the right tool whenever the implementation is already constructor-injectable - which every repository implementation here is.</p></div></details>
+<details class="qa" id="q36" data-s="how does a viewmodel get its dependencies inside a composable? hiltviewmodel() from androidx.hilt:hilt-navigation-compose. it resolves the
+viewmodelstoreowner from the current navbackstackentry, which means the viewmodel is scoped to the
+navigation destination: navigate away and back and you get a fresh one; rotate and you get the same one.
+
+that scoping is deliberate. if i had scoped to the activity instead, two goal-detail screens for two
+different goals would share one viewmodel. " open><summary><span class="qn">Q36</span><span class="qt">How does a ViewModel get its dependencies inside a composable?</span></summary><div class="body"><p><code>hiltViewModel()</code> from <code>androidx.hilt:hilt-navigation-compose</code>. It resolves the <code>ViewModelStoreOwner</code> from the current <code>NavBackStackEntry</code>, which means the ViewModel is <strong>scoped to the navigation destination</strong>: navigate away and back and you get a fresh one; rotate and you get the same one.</p>
+<p>That scoping is deliberate. If I had scoped to the Activity instead, two goal-detail screens for two different goals would share one ViewModel.</p></div></details>
+<details class="qa" id="q37" data-s="why is apppreferencesrepository field-injected into mainactivity rather than read through a viewmodel? because the chosen skin has to be known outside goalpilottheme, and every
+hiltviewmodel() in this app is created inside it. mainactivity needs the palette before the theme
+exists in order to pass it in, so it takes the repository directly with @inject lateinit var.
+
+it is exposed as a hot stateflow over sharedpreferences rather than a suspend read, so the very first
+composed frame already has the right colours instead of flashing the default and then correcting. " open><summary><span class="qn">Q37</span><span class="qt">Why is <code>AppPreferencesRepository</code> field-injected into <code>MainActivity</code> rather than read through a ViewModel?</span></summary><div class="body"><p>Because the chosen skin has to be known <strong>outside</strong> <code>GoalPilotTheme</code>, and every <code>hiltViewModel()</code> in this app is created <em>inside</em> it. <code>MainActivity</code> needs the palette before the theme exists in order to pass it in, so it takes the repository directly with <code>@Inject lateinit var</code>.</p>
+<p>It is exposed as a hot <code>StateFlow</code> over <code>SharedPreferences</code> rather than a suspend read, so the very first composed frame already has the right colours instead of flashing the default and then correcting.</p></div></details>
+<details class="qa" id="q38" data-s="how does di help your tests? two different ways at two layers.
+
+jvm tests do not use hilt at all - the viewmodel is constructed directly with mockk fakes for its
+repository interfaces. that is only possible because every dependency is a constructor parameter and an
+interface.
+
+instrumented tests do use hilt, through hilttestrunner and @hiltandroidtest, so a ui test can
+replace a real module with a test module and drive a screen against deterministic data with no network. " open><summary><span class="qn">Q38</span><span class="qt">How does DI help your tests?</span></summary><div class="body"><p>Two different ways at two layers.</p>
+<p><strong>JVM tests</strong> do not use Hilt at all - the ViewModel is constructed directly with mockk fakes for its repository interfaces. That is only possible because every dependency is a constructor parameter and an interface.</p>
+<p><strong>Instrumented tests</strong> do use Hilt, through <code>HiltTestRunner</code> and <code>@HiltAndroidTest</code>, so a UI test can replace a real module with a test module and drive a screen against deterministic data with no network.</p></div></details>
+<h2 id="data">6 · Firebase, the data model, and offline<span class="pill">11</span></h2>
+<details class="qa" id="q39" data-s="draw your firestore data model. 
+users/{uid}                        private, owner-only
+  goals/{goalid}                   -&gt; lifeareaid
+    progress/{entryid}             value, note, imageurl
+  tasks/{taskid}                   goaledges[], points, difficulty, repeatrule, estimatedminutes
+  completionfacts/{taskid}         the banked completion
+  occurrences/{id}                 only the instances the user touched
+  lifeareas/{areaid}               name, colorhex, iconkey, sortorder, googlelistid
+  summaries/{summaryid}
+  challengereports/{challengeid}
+  friends/{frienduid}
+
+publicprofiles/{uid}               world-readable: displayname, photourl, points, friendcode
+shares/{shareid}                   the shared achievement feed
+challenges/{challengeid}
+  participants/{uid}               score - projected, not client-written
+
+
+the shape follows one rule: everything private hangs under users/{uid}, so a single owner-only rule
+covers the whole subtree, and anything another user must see is a deliberate, separate, minimal
+projection. " open><summary><span class="qn">Q39</span><span class="qt">Draw your Firestore data model.</span></summary><div class="body"><pre><code>users/{uid}                        private, owner-only
+  goals/{goalId}                   -&gt; lifeAreaId
+    progress/{entryId}             value, note, imageUrl
+  tasks/{taskId}                   goalEdges[], points, difficulty, repeatRule, estimatedMinutes
+  completionFacts/{taskId}         the banked completion
+  occurrences/{id}                 only the instances the user touched
+  lifeAreas/{areaId}               name, colorHex, iconKey, sortOrder, googleListId
+  summaries/{summaryId}
+  challengeReports/{challengeId}
+  friends/{friendUid}
+
+publicProfiles/{uid}               world-readable: displayName, photoUrl, points, friendCode
+shares/{shareId}                   the shared achievement feed
+challenges/{challengeId}
+  participants/{uid}               score - projected, NOT client-written</code></pre>
+<p>The shape follows one rule: <strong>everything private hangs under </strong><strong><code>users/{uid}</code></strong>, so a single owner-only rule covers the whole subtree, and anything another user must see is a deliberate, separate, minimal projection.</p></div></details>
+<details class="qa" id="q40" data-s="why firestore and not room or sqlite? the requirement is multi-user: a leaderboard and shared summaries mean two devices
+have to see each other's data, so a purely local database would need a server anyway. firestore gives
+authentication, per-document security rules, real-time listeners and offline persistence in one
+dependency.
+
+the trade-off i would name honestly: i gave up sql. there are no joins, so anything relational is
+resolved client-side - the leaderboard's friends mode fetches friend profiles by document id rather than
+joining - and query capability is limited enough that some aggregation happens in a use case rather than
+in the query. " open><summary><span class="qn">Q40</span><span class="qt">Why Firestore and not Room or SQLite?</span></summary><div class="body"><p>The requirement is multi-user: a leaderboard and shared summaries mean two devices have to see each other's data, so a purely local database would need a server anyway. Firestore gives authentication, per-document security rules, real-time listeners and <strong>offline persistence</strong> in one dependency.</p>
+<p>The trade-off I would name honestly: I gave up SQL. There are no joins, so anything relational is resolved client-side - the leaderboard's friends mode fetches friend profiles by document id rather than joining - and query capability is limited enough that some aggregation happens in a use case rather than in the query.</p></div></details>
+<details class="qa" id="q41" data-s="does the app work offline? yes, and it is designed for it rather than merely tolerating it. firestore's local
+cache serves reads and queues writes, so ticking a task, editing a goal and logging progress all work with
+the radio off and sync when it returns.
+
+the part that took design work is honesty about staleness: rather than a connectivity banner, the app
+carries an as-of stamp on derived numbers, so a screen tells you what it is showing you and when it was
+true. llm calls degrade to deterministic local guidance; the home-screen widget renders from a persisted
+snapshot rather than waiting on firestore. " open><summary><span class="qn">Q41</span><span class="qt">Does the app work offline?</span></summary><div class="body"><p>Yes, and it is designed for it rather than merely tolerating it. Firestore's local cache serves reads and queues writes, so ticking a task, editing a goal and logging progress all work with the radio off and sync when it returns.</p>
+<p>The part that took design work is honesty about <strong>staleness</strong>: rather than a connectivity banner, the app carries an <em>as-of</em> stamp on derived numbers, so a screen tells you what it is showing you and when it was true. LLM calls degrade to deterministic local guidance; the home-screen widget renders from a persisted snapshot rather than waiting on Firestore.</p></div></details>
+<details class="qa" id="q42" data-s="what happens when the user completes a task? walk me through the write. taskrepositoryimpl.setdone performs one document write: it banks a fact at
+users/{uid}/completionfacts/{taskid} - a set on a known path for a tick, a delete for an untick -
+and nothing else. functions/src/projection.ts then totals that collection onto
+publicprofiles/{uid}.points. the client sums its own points on device from the same facts, which is
+what makes the tick render instantly.
+
+this used to be a runtransaction, and replacing it was a deliberate fix, not a refactor. " open><summary><span class="qn">Q42</span><span class="qt">What happens when the user completes a task? Walk me through the write.</span></summary><div class="body"><p><code>TaskRepositoryImpl.setDone</code> performs <strong>one document write</strong>: it banks a fact at <code>users/{uid}/completionFacts/{taskId}</code> - a <code>set</code> on a known path for a tick, a <code>delete</code> for an untick - and nothing else. <code>functions/src/projection.ts</code> then totals that collection onto <code>publicProfiles/{uid}.points</code>. The client sums its <em>own</em> points on device from the same facts, which is what makes the tick render instantly.</p>
+<p>This used to be a <code>runTransaction</code>, and replacing it was a deliberate fix, not a refactor.</p></div></details>
+<details class="qa" id="q43" data-s="why did you remove the transaction? wasn't that less safe? a firestore transaction cannot be served from the local cache - it needs the
+server, because the whole point is a read-modify-write against authoritative state. with the radio off,
+completing a task hung and then failed after a measured 7.9 seconds. that is not a rare edge: it is
+what a phone on a train does.
+
+the replacement is safe for a different reason: a tick is a set on a known document path - it is
+idempotent, so it needs no read-modify-write and cannot double-count no matter how many times it is
+retried. the sum moved to a cloud function, where it is the server's job anyway, and firestore.rules
+now forbids the client from writing points at all. so the app got more correct and more offline-
+capable at the same time. this is the strongest single story in the project: a measured failure, a root cause in the platform's semantics, and a redesign that improved both safety and availability. have the number 7.9 s ready." open><summary><span class="qn">Q43</span><span class="qt">Why did you remove the transaction? Wasn't that less safe?</span></summary><div class="body"><p>A Firestore transaction <strong>cannot be served from the local cache</strong> - it needs the server, because the whole point is a read-modify-write against authoritative state. With the radio off, completing a task hung and then failed after a measured <strong>7.9 seconds</strong>. That is not a rare edge: it is what a phone on a train does.</p>
+<p>The replacement is safe for a different reason: a tick is a <code>set</code> on a <strong>known document path</strong> - it is <strong>idempotent</strong>, so it needs no read-modify-write and cannot double-count no matter how many times it is retried. The sum moved to a Cloud Function, where it is the server's job anyway, and <code>firestore.rules</code> now forbids the client from writing <code>points</code> at all. So the app got <em>more</em> correct and <em>more</em> offline- capable at the same time.</p><div class="deeper"><b>Going deeper —</b> This is the strongest single story in the project: a measured failure, a root cause in the platform's semantics, and a redesign that improved both safety and availability. Have the number 7.9 s ready.</div></div></details>
+<details class="qa" id="q44" data-s="there used to be a level field. where did it go? deleted, on a rule i applied across the project: derive, do not store. level was
+a pure function of points sitting in the same document as points, so every reader could already
+compute it. storing it bought nothing and created a second number that could disagree with the first -
+which is a class of bug, not a hypothetical.
+
+user.level, levelprogress and pointstonextlevel are now computed properties over
+leveling.pointsforlevel(n) = 50·(n−1)·n. " open><summary><span class="qn">Q44</span><span class="qt">There used to be a <code>level</code> field. Where did it go?</span></summary><div class="body"><p>Deleted, on a rule I applied across the project: <strong>derive, do not store</strong>. <code>level</code> was a pure function of <code>points</code> sitting in the <em>same document</em> as <code>points</code>, so every reader could already compute it. Storing it bought nothing and created a second number that could disagree with the first - which is a class of bug, not a hypothetical.</p>
+<p><code>User.level</code>, <code>levelProgress</code> and <code>pointsToNextLevel</code> are now computed properties over <code>Leveling.pointsForLevel(n) = 50·(n−1)·n</code>.</p></div></details>
+<details class="qa" id="q45" data-s="why is points the one derived number that is stored? because it is the only one a reader cannot compute for themselves. the
+leaderboard shows you another user's points, and users/{uid}/ is owner-only, so a reader can never see
+the tasks that would let them sum it.
+
+that is the test i applied to all of them: a derived quantity gets a stored writer only when the person
+reading it cannot see the facts it is derived from. five of seven candidates failed that test and were
+deleted; points and a challenge participant's score passed. " open><summary><span class="qn">Q45</span><span class="qt">Why is <code>points</code> the one derived number that IS stored?</span></summary><div class="body"><p>Because it is the only one a reader <strong>cannot compute for themselves</strong>. The leaderboard shows you another user's points, and <code>users/{uid}/**</code> is owner-only, so a reader can never see the tasks that would let them sum it.</p>
+<p>That is the test I applied to all of them: a derived quantity gets a stored writer only when the person reading it cannot see the facts it is derived from. Five of seven candidates failed that test and were deleted; <code>points</code> and a challenge participant's <code>score</code> passed.</p></div></details>
+<details class="qa" id="q46" data-s="how does the leaderboard work? two modes. everyone reads publicprofiles ordered by points, capped at 100.
+friends fetches the friends' profiles by document id using wherein on documentid(), chunked at
+firestore's 30-value limit per query.
+
+the chunking is the interesting part, and so is why i did not take the cheap route: filtering the global
+top-100 client-side would silently drop any friend who is not in the global top 100 - which is most
+friends. ranking then happens after filtering, in a pure list&lt;leaderboardentry&gt;.rankedbypoints() that is
+unit-tested with no firebase in the room. " open><summary><span class="qn">Q46</span><span class="qt">How does the leaderboard work?</span></summary><div class="body"><p>Two modes. <strong>Everyone</strong> reads <code>publicProfiles</code> ordered by points, capped at 100. <strong>Friends</strong> fetches the friends' profiles <em>by document id</em> using <code>whereIn</code> on <code>documentId()</code>, chunked at Firestore's 30-value limit per query.</p>
+<p>The chunking is the interesting part, and so is why I did not take the cheap route: filtering the global top-100 client-side would silently drop any friend who is not in the global top 100 - which is most friends. Ranking then happens after filtering, in a pure <code>List&lt;LeaderboardEntry&gt;.rankedByPoints()</code> that is unit-tested with no Firebase in the room.</p></div></details>
+<details class="qa" id="q47" data-s="deleting a goal - does it cascade? firestore has no server-side cascade, so the client does it. goalrepositoryimpl
+.deletegoal batch-deletes the progress subcollection and unlinks rather than deletes the tasks -
+because a task may hang off several goals through goaledges, so the correct operation is removing the
+edge and letting the indexed goalid projection follow.
+
+deleting a life area is the mirror case and the order is deliberate: it batch-clears lifeareaid from
+its goals first, then deletes the area. a failure halfway then leaves the area alive - which the user
+can simply retry - rather than leaving goals pointing at an id that resolves to nothing. " open><summary><span class="qn">Q47</span><span class="qt">Deleting a goal - does it cascade?</span></summary><div class="body"><p>Firestore has no server-side cascade, so the client does it. <code>GoalRepositoryImpl .deleteGoal</code> batch-deletes the <code>progress</code> subcollection and <strong>unlinks</strong> rather than deletes the tasks - because a task may hang off several goals through <code>goalEdges</code>, so the correct operation is removing the edge and letting the indexed <code>goalId</code> projection follow.</p>
+<p>Deleting a <strong>life area</strong> is the mirror case and the order is deliberate: it batch-clears <code>lifeAreaId</code> from its goals <em>first</em>, then deletes the area. A failure halfway then leaves the area alive - which the user can simply retry - rather than leaving goals pointing at an id that resolves to nothing.</p></div></details>
+<details class="qa" id="q48" data-s="how does image upload work? a progress entry may carry a photo. the picker hands back a content uri,
+storagerepository uploads it to a path built by core/util/storagepaths under the user's own prefix,
+and the resulting download url is stored on the progress document. display is coil's asyncimage, which
+handles the fetch, the memory and disk cache, and the placeholder.
+
+storage.rules restricts writes to the owner's own prefix, so a user cannot upload into another user's
+folder. " open><summary><span class="qn">Q48</span><span class="qt">How does image upload work?</span></summary><div class="body"><p>A progress entry may carry a photo. The picker hands back a content <code>Uri</code>, <code>StorageRepository</code> uploads it to a path built by <code>core/util/StoragePaths</code> under the user's own prefix, and the resulting download URL is stored on the progress document. Display is Coil's <code>AsyncImage</code>, which handles the fetch, the memory and disk cache, and the placeholder.</p>
+<p><code>storage.rules</code> restricts writes to the owner's own prefix, so a user cannot upload into another user's folder.</p></div></details>
+<details class="qa" id="q49" data-s="what indexes does your app need? almost none, and that is by design - firestore.indexes.json is essentially empty.
+single-field indexes are automatic; a composite index is only needed for a query that filters on one field
+and orders by another.
+
+where i could have needed one, i chose not to. life areas are sorted by (sortorder, name) client-side
+rather than by a composite index, because the collection holds a handful of documents per user and an index
+would be ceremony. that is a judgement call about scale, and i would make the opposite call if a collection
+could be large. " open><summary><span class="qn">Q49</span><span class="qt">What indexes does your app need?</span></summary><div class="body"><p>Almost none, and that is by design - <code>firestore.indexes.json</code> is essentially empty. Single-field indexes are automatic; a composite index is only needed for a query that filters on one field and orders by another.</p>
+<p>Where I could have needed one, I chose not to. Life areas are sorted by <code>(sortOrder, name)</code> <strong>client-side</strong> rather than by a composite index, because the collection holds a handful of documents per user and an index would be ceremony. That is a judgement call about scale, and I would make the opposite call if a collection could be large.</p></div></details>
+<h2 id="security">7 · Security, rules and permissions<span class="pill">9</span></h2>
+<details class="qa" id="q50" data-s="walk me through your firestore security rules. two helpers - issignedin() and isowner(uid) - and then four blocks:
+
+- users/{uid} plus {document=} - read and write only if isowner(uid). one rule covers the
+  whole private subtree, including any subcollection added later. life areas needed no rules change at all
+  for exactly this reason.
+- publicprofiles/{uid} - any signed-in user may read (that is the leaderboard). the owner may create
+  it with a zero score and may update it, but only if the write does not touch points.
+- shares/{shareid} - any signed-in user reads; only the author creates, updates or deletes, checked
+  against authoruid.
+- challenges/{id} - owner-only for the challenge itself; a participants/{uid} subcollection
+  where a participant creates and deletes their own row but may not write score. " open><summary><span class="qn">Q50</span><span class="qt">Walk me through your Firestore security rules.</span></summary><div class="body"><p>Two helpers - <code>isSignedIn()</code> and <code>isOwner(uid)</code> - and then four blocks:</p>
+<ul><li><strong><code>users/{uid}</code></strong><strong> plus </strong><strong><code>{document=**}</code></strong> - read and write only if <code>isOwner(uid)</code>. One rule covers the whole private subtree, including any subcollection added later. Life areas needed no rules change at all for exactly this reason.</li><li><strong><code>publicProfiles/{uid}</code></strong> - any signed-in user may read (that is the leaderboard). The owner may create it with a zero score and may update it, <strong>but only if the write does not touch </strong><strong><code>points</code></strong>.</li><li><strong><code>shares/{shareId}</code></strong> - any signed-in user reads; only the author creates, updates or deletes, checked against <code>authorUid</code>.</li><li><strong><code>challenges/{id}</code></strong> - owner-only for the challenge itself; a <strong><code>participants/{uid}</code></strong><strong> subcollection</strong> where a participant creates and deletes their own row but may not write <code>score</code>.</li></ul></div></details>
+<details class="qa" id="q51" data-s="how do you let someone join a challenge without letting them edit it? with a subcollection, and the key fact is that a subcollection is not covered by its
+parent's match. match /challenges/{id} says nothing about challenges/{id}/participants/{uid} - without
+its own block those documents match no rule and are denied.
+
+so the challenge document stays owner-only (title, dates, type are the owner's), and joining is a write to
+your own participant row rather than an edit to the challenge. three writers with three different
+rights meet on that row: the participant owns the identity fields, the cloud function owns score, and the
+challenge owner has read only. " open><summary><span class="qn">Q51</span><span class="qt">How do you let someone join a challenge without letting them edit it?</span></summary><div class="body"><p>With a subcollection, and the key fact is that <strong>a subcollection is not covered by its parent's match</strong>. <code>match /challenges/{id}</code> says nothing about <code>challenges/{id}/participants/{uid}</code> - without its own block those documents match no rule and are denied.</p>
+<p>So the challenge document stays owner-only (title, dates, type are the owner's), and joining is a write to your <strong>own</strong> participant row rather than an edit to the challenge. Three writers with three different rights meet on that row: the participant owns the identity fields, the Cloud Function owns <code>score</code>, and the challenge owner has read only.</p></div></details>
+<details class="qa" id="q52" data-s="you have a rule function called serverowns(field). explain it. it is the file's only field-level condition, and it says this write does not touch
+this field:
+
+
+function serverowns(field) {
+  return resource != null
+    &amp;&amp; !request.resource.data.diff(resource.data).affectedkeys().hasany([field]);
+}
+
+
+diff().affectedkeys() reports the keys that actually change between the stored document and the one the
+write would leave behind - so it catches an add, an edit and a removal, and behaves identically whether
+the client sends a merge or a whole document. comparing request.resource.data.field == resource.data.field
+instead would error out on a document where the key is absent, which denies for the wrong reason and reads
+in the logs like a permissions bug.
+
+the resource != null guard matters because firestore evaluates both the create and the update clause
+for a set(), so on a document that does not exist yet this function would be called with no resource at
+all and diff() would fail. this is a strong answer if they push on 'how do you stop a client inflating its own score?'. the rule is field-level, and the cloud function reaches the field through the admin sdk, which bypasses rules entirely - so there is no service-account uid to keep in step with a deployment." open><summary><span class="qn">Q52</span><span class="qt">You have a rule function called <code>serverOwns(field)</code>. Explain it.</span></summary><div class="body"><p>It is the file's only field-level condition, and it says <em>this write does not touch this field</em>:</p>
+<pre><code>function serverOwns(field) {
+  return resource != null
+    &amp;&amp; !request.resource.data.diff(resource.data).affectedKeys().hasAny([field]);
+}</code></pre>
+<p><code>diff().affectedKeys()</code> reports the keys that actually change between the stored document and the one the write would leave behind - so it catches an add, an edit <strong>and</strong> a removal, and behaves identically whether the client sends a merge or a whole document. Comparing <code>request.resource.data.field == resource.data.field</code> instead would error out on a document where the key is absent, which denies for the wrong reason and reads in the logs like a permissions bug.</p>
+<p>The <code>resource != null</code> guard matters because Firestore evaluates <strong>both</strong> the create and the update clause for a <code>set()</code>, so on a document that does not exist yet this function would be called with no <code>resource</code> at all and <code>diff()</code> would fail.</p><div class="deeper"><b>Going deeper —</b> This is a strong answer if they push on 'how do you stop a client inflating its own score?'. The rule is field-level, and the Cloud Function reaches the field through the Admin SDK, which bypasses rules entirely - so there is no service-account UID to keep in step with a deployment.</div></div></details>
+<details class="qa" id="q53" data-s="google-services.json is committed to the repository. isn't that a secret? no, and this is worth being precise about because it looks alarming. that file holds
+the firebase project id and an android api key. the api key is not a credential - it identifies the
+project, it does not authenticate a user. it is restricted by package name plus signing-certificate
+sha-1, so it is useless to anyone who cannot sign an apk with my key, and every actual authorisation
+decision is made by firebase auth plus the security rules, on the server.
+
+committing it is the normal, documented android practice. what is not committed: local.properties
+(the oauth web client id and the release-signing credentials) and functions/.env (the groq key) - both
+git-ignored. " open><summary><span class="qn">Q53</span><span class="qt"><code>google-services.json</code> is committed to the repository. Isn't that a secret?</span></summary><div class="body"><p>No, and this is worth being precise about because it looks alarming. That file holds the Firebase project id and an Android API key. The API key is <strong>not a credential</strong> - it identifies the project, it does not authenticate a user. It is restricted by <strong>package name plus signing-certificate SHA-1</strong>, so it is useless to anyone who cannot sign an APK with my key, and every actual authorisation decision is made by Firebase Auth plus the security rules, on the server.</p>
+<p>Committing it is the normal, documented Android practice. What is <strong>not</strong> committed: <code>local.properties</code> (the OAuth web client id and the release-signing credentials) and <code>functions/.env</code> (the GROQ key) - both git-ignored.</p></div></details>
+<details class="qa" id="q54" data-s="where does the llm api key live? only in functions/.env, on the server. it never ships in the app, which is the
+whole reason the llm sits behind a cloud function rather than being called directly from the client.
+
+an api key inside an apk is extractable in about thirty seconds - the apk is a zip, and strings are
+strings. anyone with the app would be spending my quota. routing through a callable function also means
+firebase auth has already established who the caller is before a single token is spent. " open><summary><span class="qn">Q54</span><span class="qt">Where does the LLM API key live?</span></summary><div class="body"><p>Only in <code>functions/.env</code>, on the server. It <strong>never ships in the app</strong>, which is the whole reason the LLM sits behind a Cloud Function rather than being called directly from the client.</p>
+<p>An API key inside an APK is extractable in about thirty seconds - the APK is a zip, and strings are strings. Anyone with the app would be spending my quota. Routing through a callable function also means Firebase Auth has already established who the caller is before a single token is spent.</p></div></details>
+<details class="qa" id="q55" data-s="the user can bring their own ai key. where is that stored? on the device, encrypted: data/security/encryptedaicredentialstore uses
+androidx.security:security-crypto's encryptedsharedpreferences, whose master key lives in the android
+keystore - hardware-backed where the device supports it. it is never written to firestore and never
+leaves the phone except to my own cloud function, which uses it for that one call.
+
+firestore was the cheaper option and was rejected on posture rather than on reachability: the rules would
+have made it owner-only and technically unreadable by others, but a third-party secret at rest in someone
+else's database is a worse posture than the same secret in the platform's keystore. " open><summary><span class="qn">Q55</span><span class="qt">The user can bring their own AI key. Where is that stored?</span></summary><div class="body"><p>On the device, encrypted: <code>data/security/EncryptedAiCredentialStore</code> uses <code>androidx.security:security-crypto</code>'s <code>EncryptedSharedPreferences</code>, whose master key lives in the Android Keystore - hardware-backed where the device supports it. It is <strong>never written to Firestore</strong> and never leaves the phone except to my own Cloud Function, which uses it for that one call.</p>
+<p>Firestore was the cheaper option and was rejected on posture rather than on reachability: the rules would have made it owner-only and technically unreadable by others, but a third-party secret at rest in someone else's database is a worse posture than the same secret in the platform's keystore.</p></div></details>
+<details class="qa" id="q56" data-s="you keep allowbackup=&quot;true&quot;. why not turn backup off? because turning it off wholesale would take the theme, the language and the day
+schedule with it, to protect one file that can be excluded on its own. so allowbackup stays true and
+the encrypted key file alone is excluded, on both schemes - fullbackupcontent for api 30 and below,
+dataextractionrules for 31+ including its device-transfer half. minsdk is 26, so both are live.
+
+the reason the encrypted file must be excluded specifically: its master key is in the device's keystore
+and does not travel, so a restored copy on a new device would be undecryptable ciphertext - worse than
+absent, because the app would have to detect and clear it. " open><summary><span class="qn">Q56</span><span class="qt">You keep <code>allowBackup="true"</code>. Why not turn backup off?</span></summary><div class="body"><p>Because turning it off wholesale would take the theme, the language and the day schedule with it, to protect one file that can be excluded on its own. So <code>allowBackup</code> stays <code>true</code> and <strong>the encrypted key file alone is excluded</strong>, on both schemes - <code>fullBackupContent</code> for API 30 and below, <code>dataExtractionRules</code> for 31+ including its device-transfer half. <code>minSdk</code> is 26, so both are live.</p>
+<p>The reason the encrypted file must be excluded specifically: its master key is in the device's Keystore and does not travel, so a restored copy on a new device would be undecryptable ciphertext - worse than absent, because the app would have to detect and clear it.</p></div></details>
+<details class="qa" id="q57" data-s="what runtime permissions does the app request, and why so few? internet and access_network_state (install-time, not runtime), post_notifications
+(runtime from api 33), and health connect's read_steps and read_sleep.
+
+two deliberate absences. there is no schedule_exact_alarm / use_exact_alarm: nothing here needs the
+minute, and use_exact_alarm asserts to play that this is an alarm-clock app, which it is not. and there
+is no health write permission at all - the integration is strictly read-only, so the user is never
+asked for one and the rationale screen's promise stays true. " open><summary><span class="qn">Q57</span><span class="qt">What runtime permissions does the app request, and why so few?</span></summary><div class="body"><p><code>INTERNET</code> and <code>ACCESS_NETWORK_STATE</code> (install-time, not runtime), <code>POST_NOTIFICATIONS</code> (runtime from API 33), and Health Connect's <code>READ_STEPS</code> and <code>READ_SLEEP</code>.</p>
+<p>Two deliberate absences. There is <strong>no </strong><strong><code>SCHEDULE_EXACT_ALARM</code></strong><strong> / </strong><strong><code>USE_EXACT_ALARM</code></strong>: nothing here needs the minute, and <code>USE_EXACT_ALARM</code> asserts to Play that this is an alarm-clock app, which it is not. And there is <strong>no health write permission at all</strong> - the integration is strictly read-only, so the user is never asked for one and the rationale screen's promise stays true.</p></div></details>
+<details class="qa" id="q58" data-s="why don't you ask for the notification permission at launch? because from android 13 the system stops showing that dialog after two dismissals -
+so the first ask is very nearly the only ask. a cold-launch prompt spends it before the user has seen the
+app do anything, and a user who has no reason to say yes says no.
+
+notificationpermissionpolicy raises it at the first moment a notification would actually have something
+to say - the first filing outcome that speaks - so the ask arrives with its own justification attached.
+there is a unit test pinning that policy. this is a good answer because it is a platform-behaviour argument, not a taste argument. if they ask for the general principle: ask for a permission at the moment the user can see what it buys them." open><summary><span class="qn">Q58</span><span class="qt">Why don't you ask for the notification permission at launch?</span></summary><div class="body"><p>Because from Android 13 the system stops showing that dialog after <strong>two dismissals</strong> - so the first ask is very nearly the only ask. A cold-launch prompt spends it before the user has seen the app do anything, and a user who has no reason to say yes says no.</p>
+<p><code>NotificationPermissionPolicy</code> raises it at the first moment a notification would actually have something to say - the first filing outcome that speaks - so the ask arrives with its own justification attached. There is a unit test pinning that policy.</p><div class="deeper"><b>Going deeper —</b> This is a good answer because it is a <em>platform-behaviour</em> argument, not a taste argument. If they ask for the general principle: ask for a permission at the moment the user can see what it buys them.</div></div></details>
+<h2 id="ai">8 · The AI integration<span class="pill">7</span></h2>
+<details class="qa" id="q59" data-s="how does the llm integration work, end to end? 
+viewmodel -&gt; recommendationrepository -&gt; firebasefunctions.callable(&quot;...&quot;)
+                                              
+                        functions/src/index.ts -&gt; provider chat-completions api (json)
+
+
+the client never talks to a model. it calls a firebase callable function, which is authenticated by
+firebase auth before it runs, holds the api key in its own environment, builds the prompt, calls the
+provider, parses the json response against a fixed schema, and returns a typed result.
+
+there are four callables: getrecommendations (the ai coach card), classifytask (smart add a task),
+scoretask (the sparkle button on the add-task row) and proposemeasure (the measure proposal on the
+goal editor). all four are surfaced in the ui - none is dead code. " open><summary><span class="qn">Q59</span><span class="qt">How does the LLM integration work, end to end?</span></summary><div class="body"><pre><code>ViewModel -&gt; RecommendationRepository -&gt; FirebaseFunctions.callable("...")
+                                              |
+                        functions/src/index.ts -&gt; provider chat-completions API (JSON)</code></pre>
+<p>The client never talks to a model. It calls a <strong>Firebase callable function</strong>, which is authenticated by Firebase Auth before it runs, holds the API key in its own environment, builds the prompt, calls the provider, parses the JSON response against a fixed schema, and returns a typed result.</p>
+<p>There are four callables: <code>getRecommendations</code> (the AI coach card), <code>classifyTask</code> (Smart add a task), <code>scoreTask</code> (the sparkle button on the add-task row) and <code>proposeMeasure</code> (the measure proposal on the goal editor). All four are surfaced in the UI - none is dead code.</p></div></details>
+<details class="qa" id="q60" data-s="why a cloud function proxy instead of calling the model from the app? four reasons, in the order i would give them:
+
+1. the key never ships. an apk is a zip; a key inside it is extractable in seconds.
+2. the caller is already authenticated. a callable function receives a verified firebase auth context,
+   so i know who is spending tokens.
+3. the prompt and the schema are server-side, so i can change them without shipping an app update -
+   which matters, because prompts need iteration.
+4. the model id is one pin in one file. providers retire models on a rolling schedule. " open><summary><span class="qn">Q60</span><span class="qt">Why a Cloud Function proxy instead of calling the model from the app?</span></summary><div class="body"><p>Four reasons, in the order I would give them:</p>
+<ol><li><strong>The key never ships.</strong> An APK is a zip; a key inside it is extractable in seconds.</li><li><strong>The caller is already authenticated.</strong> A callable function receives a verified Firebase Auth context, so I know who is spending tokens.</li><li><strong>The prompt and the schema are server-side</strong>, so I can change them without shipping an app update - which matters, because prompts need iteration.</li><li><strong>The model id is one pin in one file.</strong> Providers retire models on a rolling schedule.</li></ol></div></details>
+<details class="qa" id="q61" data-s="what happens when the llm call fails, or the phone is offline? it degrades, it never blocks. every call has a deterministic local fallback -
+fallbackrecommendations, fallbackclassification, fallbackpoints - computed on device from the user's
+own data. the ui shows guidance rather than a spinner or an error dialog, and it says which it is showing.
+
+that is a design contract, not an accident: the ai is an enhancement to a product that has to work
+without it. it also has a pleasant demo property - if the network fails in front of an examiner, the app
+keeps working and i can say why. " open><summary><span class="qn">Q61</span><span class="qt">What happens when the LLM call fails, or the phone is offline?</span></summary><div class="body"><p>It <strong>degrades, it never blocks</strong>. Every call has a deterministic local fallback - <code>fallbackRecommendations</code>, <code>fallbackClassification</code>, <code>fallbackPoints</code> - computed on device from the user's own data. The UI shows guidance rather than a spinner or an error dialog, and it says which it is showing.</p>
+<p>That is a design contract, not an accident: the AI is an <em>enhancement</em> to a product that has to work without it. It also has a pleasant demo property - if the network fails in front of an examiner, the app keeps working and I can say why.</p></div></details>
+<details class="qa" id="q62" data-s="can the ai write to your database? no. the model proposes; the app decides. smart add always shows a confirmation
+dialog before anything is saved, and the returned filing decision is validated first - a suggestedgoalid
+that matches no real goal is discarded rather than trusted.
+
+the general rule i applied across the ai features: the ai supplies judgement (which goal is this, how
+hard is it, roughly how long), and the app supplies arithmetic (points totals, progress percentages,
+minutes rolled up per area). a number the model returns is never a number the app reports as fact. if they push on hallucination: the schema is fixed and parsed, out-of-range values are clamped, an unresolvable id is dropped, and the user confirms. four layers between the model and the database." open><summary><span class="qn">Q62</span><span class="qt">Can the AI write to your database?</span></summary><div class="body"><p>No. <strong>The model proposes; the app decides.</strong> Smart add always shows a confirmation dialog before anything is saved, and the returned filing decision is validated first - a <code>suggestedGoalId</code> that matches no real goal is <strong>discarded rather than trusted</strong>.</p>
+<p>The general rule I applied across the AI features: the AI supplies <em>judgement</em> (which goal is this, how hard is it, roughly how long), and the app supplies <em>arithmetic</em> (points totals, progress percentages, minutes rolled up per area). A number the model returns is never a number the app reports as fact.</p><div class="deeper"><b>Going deeper —</b> If they push on hallucination: the schema is fixed and parsed, out-of-range values are clamped, an unresolvable id is dropped, and the user confirms. Four layers between the model and the database.</div></div></details>
+<details class="qa" id="q63" data-s="how do you handle a model being retired? default_model in functions/src/index.ts is the single pin, overridable by a
+groq_model environment variable so it can be changed without a code edit. the failure mode is the
+dangerous part and worth naming: a retired model id fails silently - the client just serves local
+fallback tips, so the ai looks bland rather than broken. so the pre-demo checklist includes checking
+the model id against the provider's deprecation page. " open><summary><span class="qn">Q63</span><span class="qt">How do you handle a model being retired?</span></summary><div class="body"><p><code>DEFAULT_MODEL</code> in <code>functions/src/index.ts</code> is the single pin, overridable by a <code>GROQ_MODEL</code> environment variable so it can be changed without a code edit. The failure mode is the dangerous part and worth naming: a retired model id fails <strong>silently</strong> - the client just serves local fallback tips, so the AI looks <em>bland</em> rather than <em>broken</em>. So the pre-demo checklist includes checking the model id against the provider's deprecation page.</p></div></details>
+<details class="qa" id="q64" data-s="why did classifytask and scoretask also return estimated minutes, rather than a second call? rate limits. groq's free tier allows 30 requests per minute, and the google tasks
+import already spends one request per row - so a second call per task to ask &quot;and how long is this?&quot; would
+be the thing that breaks a bulk import.
+
+both facts ride on the existing call: one wide call per feature rather than several narrow ones.
+classifytask also takes the user's life areas in the same request, so a goal it proposes arrives already
+filed rather than needing a follow-up round trip. " open><summary><span class="qn">Q64</span><span class="qt">Why did <code>classifyTask</code> and <code>scoreTask</code> also return estimated minutes, rather than a second call?</span></summary><div class="body"><p>Rate limits. GROQ's free tier allows 30 requests per minute, and the Google Tasks import already spends one request per row - so a second call per task to ask "and how long is this?" would be the thing that breaks a bulk import.</p>
+<p>Both facts ride on the <strong>existing</strong> call: one wide call per feature rather than several narrow ones. <code>classifyTask</code> also takes the user's life areas in the same request, so a goal it proposes arrives already filed rather than needing a follow-up round trip.</p></div></details>
+<details class="qa" id="q65" data-s="bring-your-own-key supports exactly four providers. why not any openai-compatible endpoint? because &quot;any openai-compatible endpoint plus three text fields&quot; would have been free to
+build and would have let an untested wire format run in production. domain/model/aiprovider names four
+adapters - groq, openai, anthropic, gemini - and functions/src/providers.ts implements each one, so a
+fifth provider is a cloud function deploy rather than a settings edit.
+
+i accepted that cost deliberately. the model id within a provider is free text with a per-provider
+default, not a curated list - a curated list baked into a deploy rots identically, and would now rot in four
+providers at once. aianswer carries whose credential paid for each answer, which is what the settings
+screen displays. " open><summary><span class="qn">Q65</span><span class="qt">Bring-your-own-key supports exactly four providers. Why not any OpenAI-compatible endpoint?</span></summary><div class="body"><p>Because "any OpenAI-compatible endpoint plus three text fields" would have been free to build and would have let an <strong>untested wire format</strong> run in production. <code>domain/model/AiProvider</code> names four adapters - GROQ, OpenAI, Anthropic, Gemini - and <code>functions/src/providers.ts</code> implements each one, so a fifth provider is a Cloud Function deploy rather than a settings edit.</p>
+<p>I accepted that cost deliberately. The model <strong>id</strong> within a provider is free text with a per-provider default, not a curated list - a curated list baked into a deploy rots identically, and would now rot in four providers at once. <code>AiAnswer</code> carries whose credential paid for each answer, which is what the settings screen displays.</p></div></details>
+<h2 id="platform">9 · Android platform fundamentals<span class="pill">12</span></h2>
+<details class="qa" id="q66" data-s="walk me through the activity lifecycle. oncreate (create views / set content, once per instance) → onstart (becoming
+visible) → onresume (foreground, interactive). going away: onpause (losing focus, still partly visible)
+→ onstop (no longer visible) → ondestroy (finishing, or being recreated for a configuration change).
+onrestart runs between onstop and onstart when the user comes back.
+
+the two facts that matter in practice: a configuration change destroys and recreates the activity, which
+is why state lives in a viewmodel that outlives it; and the process can be killed while stopped, which
+is what remembersaveable and savedstatehandle exist for.
+
+in this app mainactivity is thin - enableedgetoedge(), offer the notification intent to the deep-link
+holder, run the update check, and setcontent { ... }. everything else is compose and viewmodels. " open><summary><span class="qn">Q66</span><span class="qt">Walk me through the Activity lifecycle.</span></summary><div class="body"><p><code>onCreate</code> (create views / set content, once per instance) → <code>onStart</code> (becoming visible) → <code>onResume</code> (foreground, interactive). Going away: <code>onPause</code> (losing focus, still partly visible) → <code>onStop</code> (no longer visible) → <code>onDestroy</code> (finishing, or being recreated for a configuration change). <code>onRestart</code> runs between <code>onStop</code> and <code>onStart</code> when the user comes back.</p>
+<p>The two facts that matter in practice: <strong>a configuration change destroys and recreates the Activity</strong>, which is why state lives in a <code>ViewModel</code> that outlives it; and <strong>the process can be killed while stopped</strong>, which is what <code>rememberSaveable</code> and <code>SavedStateHandle</code> exist for.</p>
+<p>In this app <code>MainActivity</code> is thin - <code>enableEdgeToEdge()</code>, offer the notification intent to the deep-link holder, run the update check, and <code>setContent { ... }</code>. Everything else is Compose and ViewModels.</p></div></details>
+<details class="qa" id="q67" data-s="you have a single activity. why, and what are the trade-offs? single-activity is the recommended architecture with navigation-compose: one activity,
+one navhost, and destinations are composables. the back stack is then one thing rather than two
+interleaved ones (activity stack plus fragment stack), transitions are cheap, and shared ui - the scaffold,
+the bottom bar, the tutorial overlay - wraps every screen without being duplicated.
+
+the trade-off: everything shares one process and one window, so a screen that genuinely needs different
+window behaviour has to be a real activity. this app has exactly one such case,
+healthpermissionsrationaleactivity, which the system launches from health connect's own settings - and
+that one had to be a separate exported activity. follow-up trap: 'an activity outside your root gets no insets for free.' true here - enableedgetoedge is on and only the root scaffold insets for it, so the standalone rationale activity needs modifier.safedrawingpadding() or its heading renders under the status bar." open><summary><span class="qn">Q67</span><span class="qt">You have a single Activity. Why, and what are the trade-offs?</span></summary><div class="body"><p>Single-Activity is the recommended architecture with Navigation-Compose: one Activity, one <code>NavHost</code>, and destinations are composables. The back stack is then one thing rather than two interleaved ones (Activity stack plus fragment stack), transitions are cheap, and shared UI - the scaffold, the bottom bar, the tutorial overlay - wraps every screen without being duplicated.</p>
+<p>The trade-off: everything shares one process and one window, so a screen that genuinely needs different window behaviour has to be a real Activity. This app has exactly one such case, <code>HealthPermissionsRationaleActivity</code>, which the <em>system</em> launches from Health Connect's own settings - and that one had to be a separate exported Activity.</p><div class="deeper"><b>Going deeper —</b> Follow-up trap: 'an Activity outside your root gets no insets for free.' True here - <code>enableEdgeToEdge</code> is on and only the root scaffold insets for it, so the standalone rationale activity needs <code>Modifier.safeDrawingPadding()</code> or its heading renders under the status bar.</div></div></details>
+<details class="qa" id="q68" data-s="why is mainactivity declared launchmode=&quot;singletop&quot;? for notification tap-through. a tap on a second notification while the app is already
+open must move the running instance to the front, not stack a fresh copy of the app on top of itself.
+singletop gives exactly that: if the target activity is already at the top of the stack, the intent is
+delivered to it through onnewintent instead of creating a new instance.
+
+which is why mainactivity handles both - oncreate for a cold start from a notification, onnewintent
+for a warm one. an app that handled only oncreate would route the first tap of a session and silently
+ignore every one after it. " open><summary><span class="qn">Q68</span><span class="qt">Why is <code>MainActivity</code> declared <code>launchMode="singleTop"</code>?</span></summary><div class="body"><p>For notification tap-through. A tap on a second notification while the app is already open must <strong>move the running instance to the front</strong>, not stack a fresh copy of the app on top of itself. <code>singleTop</code> gives exactly that: if the target activity is already at the top of the stack, the intent is delivered to it through <strong><code>onNewIntent</code></strong> instead of creating a new instance.</p>
+<p>Which is why <code>MainActivity</code> handles <em>both</em> - <code>onCreate</code> for a cold start from a notification, <code>onNewIntent</code> for a warm one. An app that handled only <code>onCreate</code> would route the first tap of a session and silently ignore every one after it.</p></div></details>
+<details class="qa" id="q69" data-s="what is enableedgetoedge, and how do you handle insets? enableedgetoedge() tells the system the app draws behind the status and navigation
+bars - which is the default look on android 15 and mandatory for apps targeting sdk 35. the app is then
+responsible for keeping content out from under those bars using window insets.
+
+only goalpilotroot's scaffold insets for it, once, at the root; every screen inside is therefore inset
+automatically. android:windowsoftinputmode=&quot;adjustresize&quot; is set so the keyboard resizes the window
+rather than panning it, which is what lets a text field stay visible in a bottom sheet. " open><summary><span class="qn">Q69</span><span class="qt">What is <code>enableEdgeToEdge</code>, and how do you handle insets?</span></summary><div class="body"><p><code>enableEdgeToEdge()</code> tells the system the app draws behind the status and navigation bars - which is the default look on Android 15 and mandatory for apps targeting SDK 35. The app is then responsible for keeping content out from under those bars using <strong>window insets</strong>.</p>
+<p>Only <code>GoalPilotRoot</code>'s scaffold insets for it, once, at the root; every screen inside is therefore inset automatically. <code>android:windowSoftInputMode="adjustResize"</code> is set so the keyboard resizes the window rather than panning it, which is what lets a text field stay visible in a bottom sheet.</p></div></details>
+<details class="qa" id="q70" data-s="what is in your manifest, and why? five permissions, one activity plus one exported rationale activity, an
+&lt;activity-alias&gt;, a &lt;queries&gt; block, and five widget receivers.
+
+the &lt;queries&gt; block is the non-obvious one: on android 13 and below health connect is a separate app, and
+android 11+ package filtering hides it - without that entry getsdkstatus() reports sdk_unavailable on a
+device that has it installed. it is redundant on 14+, where the provider is part of the system, and harmless
+there.
+
+the five receivers are one per widget tile, because the launcher's widget picker lists receivers - so
+the user chooses from five entries with five descriptions rather than one entry and a configuration screen.
+each is exported=&quot;true&quot; because the component is launched by the launcher, a different app. " open><summary><span class="qn">Q70</span><span class="qt">What is in your manifest, and why?</span></summary><div class="body"><p>Five permissions, one Activity plus one exported rationale Activity, an <code>&lt;activity-alias&gt;</code>, a <code>&lt;queries&gt;</code> block, and <strong>five widget receivers</strong>.</p>
+<p>The <code>&lt;queries&gt;</code> block is the non-obvious one: on Android 13 and below Health Connect is a separate app, and Android 11+ package filtering hides it - without that entry <code>getSdkStatus()</code> reports <code>SDK_UNAVAILABLE</code> on a device that has it installed. It is redundant on 14+, where the provider is part of the system, and harmless there.</p>
+<p>The five receivers are one per widget tile, because the launcher's widget picker lists <strong>receivers</strong> - so the user chooses from five entries with five descriptions rather than one entry and a configuration screen. Each is <code>exported="true"</code> because the component is launched by the <em>launcher</em>, a different app.</p></div></details>
+<details class="qa" id="q71" data-s="you have an &lt;activity-alias&gt;. what is that and why did you need one? an activity-alias is a second manifest entry pointing at an existing activity, with
+its own intent filters and its own android:permission.
+
+i needed one because android 14 moved the health-permissions rationale behind view_permission_usage, and
+the system requires start_view_permission_usage on the component it launches. putting that permission
+on the activity itself would also gate the android-13-and-below entry point, which is not allowed to be
+gated. the alias lets one activity be reachable through two different doors with two different permission
+requirements. " open><summary><span class="qn">Q71</span><span class="qt">You have an <code>&lt;activity-alias&gt;</code>. What is that and why did you need one?</span></summary><div class="body"><p>An <code>activity-alias</code> is a second manifest entry pointing at an existing Activity, with its own intent filters and its own <code>android:permission</code>.</p>
+<p>I needed one because Android 14 moved the health-permissions rationale behind <code>VIEW_PERMISSION_USAGE</code>, and the system requires <code>START_VIEW_PERMISSION_USAGE</code> <strong>on the component it launches</strong>. Putting that permission on the Activity itself would also gate the Android-13-and-below entry point, which is not allowed to be gated. The alias lets one Activity be reachable through two different doors with two different permission requirements.</p></div></details>
+<details class="qa" id="q72" data-s="how do you schedule reminders - workmanager, alarmmanager, or a service? workmanager, with one job per due reminder (occurrencereminderworker), plus
+plantomorrowworker for the evening nudge.
+
+not alarmmanager, because nothing here needs the exact minute and exact alarms now require a permission
+that asserts to play that this is an alarm-clock app. not a foreground service, because there is nothing
+continuous to do - a service that sleeps until a timestamp is exactly what workmanager replaced.
+workmanager also survives reboot and process death, and respects doze and battery optimisations, which a
+naive scheduler would fight.
+
+a design constraint worth stating: there is no server-side credential for a background sync and there cannot
+be one in this design, so every reminder in this app is scheduled locally or not at all. " open><summary><span class="qn">Q72</span><span class="qt">How do you schedule reminders - WorkManager, AlarmManager, or a Service?</span></summary><div class="body"><p><strong>WorkManager</strong>, with one job per due reminder (<code>OccurrenceReminderWorker</code>), plus <code>PlanTomorrowWorker</code> for the evening nudge.</p>
+<p>Not <code>AlarmManager</code>, because nothing here needs the exact minute and exact alarms now require a permission that asserts to Play that this is an alarm-clock app. Not a foreground <code>Service</code>, because there is nothing continuous to do - a <code>Service</code> that sleeps until a timestamp is exactly what WorkManager replaced. WorkManager also survives reboot and process death, and respects Doze and battery optimisations, which a naive scheduler would fight.</p>
+<p>A design constraint worth stating: there is no server-side credential for a background sync and there cannot be one in this design, so <strong>every reminder in this app is scheduled locally or not at all</strong>.</p></div></details>
+<details class="qa" id="q73" data-s="how do notifications work in your app? goalpilotchannels creates the notification channels (required since android 8 - a
+notification posted to a channel that does not exist is silently dropped). goalpilotnotifier posts;
+notificationpermissionpolicy decides when to ask for post_notifications; notificationdeeplink holds
+the tapped intent as a stateflow so the nav host can consume it whenever it is ready.
+
+that last piece is the interesting one. the intent is resolved in oncreate / onnewintent, before the
+nav controller exists, so it cannot be navigated on directly. parking it in a stateflow decouples
+&quot;a notification was tapped&quot; from &quot;the navigation graph is ready to act on it&quot;. " open><summary><span class="qn">Q73</span><span class="qt">How do notifications work in your app?</span></summary><div class="body"><p><code>GoalPilotChannels</code> creates the notification channels (required since Android 8 - a notification posted to a channel that does not exist is silently dropped). <code>GoalPilotNotifier</code> posts; <code>NotificationPermissionPolicy</code> decides when to ask for <code>POST_NOTIFICATIONS</code>; <code>NotificationDeepLink</code> holds the tapped intent as a <code>StateFlow</code> so the nav host can consume it whenever it is ready.</p>
+<p>That last piece is the interesting one. The intent is resolved in <code>onCreate</code> / <code>onNewIntent</code>, <strong>before the nav controller exists</strong>, so it cannot be navigated on directly. Parking it in a <code>StateFlow</code> decouples "a notification was tapped" from "the navigation graph is ready to act on it".</p></div></details>
+<details class="qa" id="q74" data-s="tell me about the home-screen widgets. five glance app widgets - goals, week, trend, effort, level. buildwidgetsnapshotusecase
+and buildwidgettileusecase are pure and unit-tested; widgetsnapshotstore persists the last snapshot so
+the widget renders instantly and offline instead of waiting on firestore.
+
+the fact examiners like here: glance is compose-shaped but it does not render compose. the composable
+tree is compiled down to a remoteviews that the launcher inflates in its own process. nothing from
+ui/components/ can cross that boundary - no canvas, no modifier.blur, no animation - which is why
+ui/widget/ draws its charts into bitmaps rather than reusing the app's chart components. and a widget
+cannot read materialtheme, so widgetpalette mirrors the theme axes separately. " open><summary><span class="qn">Q74</span><span class="qt">Tell me about the home-screen widgets.</span></summary><div class="body"><p>Five Glance app widgets - goals, week, trend, effort, level. <code>BuildWidgetSnapshotUseCase</code> and <code>BuildWidgetTileUseCase</code> are pure and unit-tested; <code>WidgetSnapshotStore</code> persists the last snapshot so the widget renders <strong>instantly and offline</strong> instead of waiting on Firestore.</p>
+<p>The fact examiners like here: Glance is Compose-<em>shaped</em> but it does <strong>not render Compose</strong>. The composable tree is compiled down to a <code>RemoteViews</code> that the <em>launcher</em> inflates <strong>in its own process</strong>. Nothing from <code>ui/components/</code> can cross that boundary - no <code>Canvas</code>, no <code>Modifier.blur</code>, no animation - which is why <code>ui/widget/</code> draws its charts into <strong>bitmaps</strong> rather than reusing the app's chart components. And a widget cannot read <code>MaterialTheme</code>, so <code>WidgetPalette</code> mirrors the theme axes separately.</p></div></details>
+<details class="qa" id="q75" data-s="how does the health connect integration work, and why read-only? steps and sleep are read on every app foreground, at most once every fifteen
+minutes, and logged against a fitness or sleep goal - creating one if the user has none.
+ui/root/rootviewmodel fires it on app_foreground; synchealthdatausecase is pure and tested. a day is
+never counted twice, and today is topped up by the difference as the user walks, so the goal keeps up
+without the day being logged again.
+
+read-only is load-bearing, not a simplification: only read_steps and read_sleep are declared. adding a
+write permission - even temporarily, even to seed test data - would contradict what the rationale screen
+promises the user on a screen the system itself surfaces. so test data is seeded on a real phone
+instead. " open><summary><span class="qn">Q75</span><span class="qt">How does the Health Connect integration work, and why read-only?</span></summary><div class="body"><p>Steps and sleep are read on <strong>every app foreground</strong>, at most once every fifteen minutes, and logged against a fitness or sleep goal - creating one if the user has none. <code>ui/root/RootViewModel</code> fires it on <code>APP_FOREGROUND</code>; <code>SyncHealthDataUseCase</code> is pure and tested. A day is never counted twice, and <em>today</em> is topped up by the difference as the user walks, so the goal keeps up without the day being logged again.</p>
+<p>Read-only is load-bearing, not a simplification: only <code>READ_STEPS</code> and <code>READ_SLEEP</code> are declared. Adding a write permission - even temporarily, even to seed test data - would contradict what the rationale screen promises the user on a screen <strong>the system itself surfaces</strong>. So test data is seeded on a real phone instead.</p></div></details>
+<details class="qa" id="q76" data-s="why minsdk 26, targetsdk 35, compilesdk 35? compilesdk 35 is the api i compile against - it must be at least as high as
+anything i call. targetsdk 35 is the behaviour contract: it tells android i have tested against
+android 15's behaviour changes, and it is what enables the edge-to-edge and notification-permission
+behaviour above. minsdk 26 (android 8.0) is the floor.
+
+26 specifically because that is where java.time and notification channels are available without
+desugaring, and it still covers effectively the entire active install base. going lower would buy a
+fraction of a percent of devices in exchange for desugaring and a second notification code path. " open><summary><span class="qn">Q76</span><span class="qt">Why minSdk 26, targetSdk 35, compileSdk 35?</span></summary><div class="body"><p><strong>compileSdk 35</strong> is the API I compile against - it must be at least as high as anything I call. <strong>targetSdk 35</strong> is the behaviour contract: it tells Android I have tested against Android 15's behaviour changes, and it is what enables the edge-to-edge and notification-permission behaviour above. <strong>minSdk 26</strong> (Android 8.0) is the floor.</p>
+<p>26 specifically because that is where <code>java.time</code> and notification channels are available without desugaring, and it still covers effectively the entire active install base. Going lower would buy a fraction of a percent of devices in exchange for desugaring and a second notification code path.</p></div></details>
+<details class="qa" id="q77" data-s="what is the difference between the app's debug and release build types here? debug has applicationidsuffix = &quot;.debug&quot; and a -debug version-name suffix, so a
+debug and a release build can sit on the same phone at once - which matters when i am testing an update
+flow. no minification.
+
+release turns on r8: isminifyenabled = true and isshrinkresources = true, with the
+proguard-android-optimize defaults plus the project's own rules. it is signed with the real release key
+when its credentials resolve from local.properties or the environment, and falls back to the debug key
+otherwise so a fresh clone can still produce an installable apk - but the upload task refuses outright
+when the real key is missing, because a debug-signed apk handed to a tester can never be updated by a
+properly signed one. " open><summary><span class="qn">Q77</span><span class="qt">What is the difference between the app's <code>debug</code> and <code>release</code> build types here?</span></summary><div class="body"><p><code>debug</code> has <code>applicationIdSuffix = ".debug"</code> and a <code>-debug</code> version-name suffix, so a debug and a release build can sit on the same phone at once - which matters when I am testing an update flow. No minification.</p>
+<p><code>release</code> turns on <strong>R8</strong>: <code>isMinifyEnabled = true</code> and <code>isShrinkResources = true</code>, with the <code>proguard-android-optimize</code> defaults plus the project's own rules. It is signed with the real release key when its credentials resolve from <code>local.properties</code> or the environment, and falls back to the debug key otherwise so a fresh clone can still produce an installable APK - but the <em>upload</em> task refuses outright when the real key is missing, because a debug-signed APK handed to a tester can never be updated by a properly signed one.</p></div></details>
+<h2 id="testing">10 · Testing<span class="pill">7</span></h2>
+<details class="qa" id="q78" data-s="what did you test, and how much? four layers:
+
+ layer  where  scale 
+---------
+ jvm unit tests  app/src/test/  ~1,093 test methods, 90 classes 
+ instrumented / compose ui  app/src/androidtest/  ~319 test methods, 46 classes 
+ security rules  firestore-tests/  53 tests against the emulator 
+ cloud functions  functions/test/  the projection logic, over a shared fixture 
+
+the jvm suite is the one that runs on every change - it needs no device and covers the whole domain/
+layer, every use case, the viewmodels, and the migrations. " open><summary><span class="qn">Q78</span><span class="qt">What did you test, and how much?</span></summary><div class="body"><p>Four layers:</p>
+<div class=tw><table><thead><tr><th>Layer</th><th>Where</th><th>Scale</th></tr></thead><tbody><tr><td>JVM unit tests</td><td><code>app/src/test/</code></td><td>~1,093 test methods, 90 classes</td></tr><tr><td>Instrumented / Compose UI</td><td><code>app/src/androidTest/</code></td><td>~319 test methods, 46 classes</td></tr><tr><td>Security rules</td><td><code>firestore-tests/</code></td><td>53 tests against the emulator</td></tr><tr><td>Cloud Functions</td><td><code>functions/test/</code></td><td>the projection logic, over a shared fixture</td></tr></tbody></table></div>
+<p>The JVM suite is the one that runs on every change - it needs no device and covers the whole <code>domain/</code> layer, every use case, the ViewModels, and the migrations.</p></div></details>
+<details class="qa" id="q79" data-s="how do you test a viewmodel? construct it directly - no hilt - with mockk fakes for its repository interfaces,
+run it on kotlinx-coroutines-test's runtest with a testdispatcher, and assert on the emitted
+uistate sequence with turbine.
+
+turbine is what makes a stateflow testable without sleeping: viewmodel.uistate.test { awaititem() }
+gives you each emission deterministically and fails if an expected one never arrives. truth is the
+assertion library.
+
+the reason this is easy is entirely architectural: because every dependency is a constructor-injected
+interface and no viewmodel touches firebase, there is nothing to stand up. " open><summary><span class="qn">Q79</span><span class="qt">How do you test a ViewModel?</span></summary><div class="body"><p>Construct it directly - no Hilt - with <strong>mockk</strong> fakes for its repository interfaces, run it on <code>kotlinx-coroutines-test</code>'s <code>runTest</code> with a <code>TestDispatcher</code>, and assert on the emitted <code>UiState</code> sequence with <strong>Turbine</strong>.</p>
+<p>Turbine is what makes a <code>StateFlow</code> testable without sleeping: <code>viewModel.uiState.test { awaitItem() }</code> gives you each emission deterministically and fails if an expected one never arrives. <code>truth</code> is the assertion library.</p>
+<p>The reason this is easy is entirely architectural: because every dependency is a constructor-injected interface and no ViewModel touches Firebase, there is nothing to stand up.</p></div></details>
+<details class="qa" id="q80" data-s="how do you test compose ui? createandroidcomposerule plus the semantics tree: find a node by its text or
+contentdescription, act on it, assert. hilt participates through hilttestrunner and @hiltandroidtest,
+so a test module can replace a real repository with a deterministic fake and the screen runs with no
+network.
+
+because screens are stateless and hoisted, many tests drive the screen composable directly with a
+hand-built uistate - which is faster and tests exactly the rendering rules i care about. " open><summary><span class="qn">Q80</span><span class="qt">How do you test Compose UI?</span></summary><div class="body"><p><code>createAndroidComposeRule</code> plus the semantics tree: find a node by its text or <code>contentDescription</code>, act on it, assert. Hilt participates through <code>HiltTestRunner</code> and <code>@HiltAndroidTest</code>, so a test module can replace a real repository with a deterministic fake and the screen runs with no network.</p>
+<p>Because screens are stateless and hoisted, many tests drive the <em>screen composable</em> directly with a hand-built <code>UiState</code> - which is faster and tests exactly the rendering rules I care about.</p></div></details>
+<details class="qa" id="q81" data-s="how do you test the security rules? they aren't kotlin. they cannot be reached from any kotlin suite, so they have their own layer:
+firestore-tests/ uses @firebase/rules-unit-testing against the local firestore emulator, 53 tests that
+assert both directions - this user can do x, that user cannot do y.
+
+both directions is the point. a rules test suite that only asserts the allowed cases passes happily against
+a rules file that allows everything. a trap worth knowing if they ask about your tooling: firebase emulators:exec returns exit code 0 even against a rules file with an undefined function and an unbalanced brace - confirmed by running it against a deliberately broken one. so 'the emulator started' is not evidence the rules compiled." open><summary><span class="qn">Q81</span><span class="qt">How do you test the security rules? They aren't Kotlin.</span></summary><div class="body"><p>They cannot be reached from any Kotlin suite, so they have their own layer: <code>firestore-tests/</code> uses <code>@firebase/rules-unit-testing</code> against the local Firestore emulator, 53 tests that assert both directions - this user <em>can</em> do X, that user <em>cannot</em> do Y.</p>
+<p>Both directions is the point. A rules test suite that only asserts the allowed cases passes happily against a rules file that allows everything.</p><div class="deeper"><b>Going deeper —</b> A trap worth knowing if they ask about your tooling: <code>firebase emulators:exec</code> returns exit code 0 even against a rules file with an undefined function and an unbalanced brace - confirmed by running it against a deliberately broken one. So 'the emulator started' is not evidence the rules compiled.</div></div></details>
+<details class="qa" id="q82" data-s="what is a 'guard test'? you seem to have several. a test that pins a project rule rather than a function's return value. there are
+several here, and they exist because these rules would otherwise be comments that rot:
+
+- themepalettetest - wcag contrast across all four schemes; a bad hex fails the build.
+- tutorialstepstest - every anchor a tour step names really exists (that link is a string).
+- dialoglocaleguardtest - app-wide: a raw alertdialog( / dialog( / dropdownmenu( /
+  modalbottomsheet( outside ui/locale/ fails, because a dialog renders into its own window which
+  does not inherit the activity's locale - an rtl defect invisible in an english render.
+- docscurrencytest - the documentation still names the callables, collections and tabs that exist.
+- releasenotesguardtest - the release notes and the release workflow agree with the build file. " open><summary><span class="qn">Q82</span><span class="qt">What is a 'guard test'? You seem to have several.</span></summary><div class="body"><p>A test that pins a <em>project rule</em> rather than a function's return value. There are several here, and they exist because these rules would otherwise be comments that rot:</p>
+<ul><li><strong><code>ThemePaletteTest</code></strong> - WCAG contrast across all four schemes; a bad hex fails the build.</li><li><strong><code>TutorialStepsTest</code></strong> - every anchor a tour step names really exists (that link is a string).</li><li><strong><code>DialogLocaleGuardTest</code></strong> - app-wide: a raw <code>AlertDialog(</code> / <code>Dialog(</code> / <code>DropdownMenu(</code> / <code>ModalBottomSheet(</code> outside <code>ui/locale/</code> fails, because a dialog renders into its <strong>own window</strong> which does not inherit the activity's locale - an RTL defect invisible in an English render.</li><li><strong><code>DocsCurrencyTest</code></strong> - the documentation still names the callables, collections and tabs that exist.</li><li><strong><code>ReleaseNotesGuardTest</code></strong> - the release notes and the release workflow agree with the build file.</li></ul></div></details>
+<details class="qa" id="q83" data-s="tell me about a bug your tests caught - or one they missed. the best story is one they missed, and why.
+
+several of my guards read files off disk with java.io.file rather than exercising code -
+themepalettetest reads resources, docscurrencytest reads docs/. gradle's up-to-date check for a test
+task declares the test classes and the runtime classpath as its inputs, and a file read at runtime is not
+in that set. so editing the value of a string in a resource file left every declared input
+byte-identical, testdebugunittest reported up-to-date, and the guard that existed to catch exactly that
+edit never executed a single assertion.
+
+it fails in the flattering direction, and precisely when it matters: a resource-only change is what a
+localisation sweep is. the fix is to declare those directories and files as explicit task inputs in
+build.gradle.kts, which is why that file has a block of inputs.dir(...) / inputs.file(...)
+declarations with the reason written next to each.
+
+the general lesson i took: a test that did not run is indistinguishable from a test that passed, so
+verifying a guard means proving it goes red - i mutate the thing it guards and check it actually fails. this is the single best 'what did you learn' answer in the project. it shows you understand your build tool, not just your test framework." open><summary><span class="qn">Q83</span><span class="qt">Tell me about a bug your tests caught - or one they missed.</span></summary><div class="body"><p>The best story is one they <strong>missed</strong>, and why.</p>
+<p>Several of my guards read files off disk with <code>java.io.File</code> rather than exercising code - <code>ThemePaletteTest</code> reads resources, <code>DocsCurrencyTest</code> reads <code>docs/</code>. Gradle's up-to-date check for a test task declares the test classes and the runtime classpath as its inputs, and <strong>a file read at runtime is not in that set</strong>. So editing the <em>value</em> of a string in a resource file left every declared input byte-identical, <code>testDebugUnitTest</code> reported <code>UP-TO-DATE</code>, and the guard that existed to catch exactly that edit <strong>never executed a single assertion</strong>.</p>
+<p>It fails in the flattering direction, and precisely when it matters: a resource-only change is what a localisation sweep <em>is</em>. The fix is to declare those directories and files as explicit task inputs in <code>build.gradle.kts</code>, which is why that file has a block of <code>inputs.dir(...)</code> / <code>inputs.file(...)</code> declarations with the reason written next to each.</p>
+<p>The general lesson I took: <strong>a test that did not run is indistinguishable from a test that passed</strong>, so verifying a guard means proving it goes red - I mutate the thing it guards and check it actually fails.</p><div class="deeper"><b>Going deeper —</b> This is the single best 'what did you learn' answer in the project. It shows you understand your build tool, not just your test framework.</div></div></details>
+<details class="qa" id="q84" data-s="what is not tested? i would name three honestly. there is no automated screenshot or visual-regression
+suite, so a layout regression is caught by a human render pass rather than by ci. the live firebase project
+is not exercised by tests - the rules suite runs against the emulator only, by design. and full talkback
+accessibility is verified by hand, not asserted.
+
+where the coverage is strongest is where the logic is: domain/ is close to fully covered, because it is
+pure kotlin and every branch is reachable from a unit test. " open><summary><span class="qn">Q84</span><span class="qt">What is not tested?</span></summary><div class="body"><p>I would name three honestly. There is no automated screenshot or visual-regression suite, so a layout regression is caught by a human render pass rather than by CI. The live Firebase project is not exercised by tests - the rules suite runs against the emulator only, by design. And full TalkBack accessibility is verified by hand, not asserted.</p>
+<p>Where the coverage is strongest is where the logic is: <code>domain/</code> is close to fully covered, because it is pure Kotlin and every branch is reachable from a unit test.</p></div></details>
+<h2 id="build">11 · Build, tooling and release<span class="pill">4</span></h2>
+<details class="qa" id="q85" data-s="how is the build configured? gradle with the kotlin dsl and a version catalog (gradle/libs.versions.toml), so
+every dependency version is declared once and referenced as libs.something. compose versions come from
+the compose bom, and firebase versions from the firebase bom, so an internally consistent set is
+resolved rather than a hand-picked one.
+
+hilt's annotation processing runs through ksp rather than kapt - ksp reads kotlin directly instead of
+generating java stubs, which is meaningfully faster.
+
+machine-local values (the oauth web client id, the functions region, the signing credentials) are read from
+local.properties or the environment at configuration time and surfaced as resvalue / buildconfigfield,
+so nothing secret is committed. " open><summary><span class="qn">Q85</span><span class="qt">How is the build configured?</span></summary><div class="body"><p>Gradle with the Kotlin DSL and a <strong>version catalog</strong> (<code>gradle/libs.versions.toml</code>), so every dependency version is declared once and referenced as <code>libs.something</code>. Compose versions come from the <strong>Compose BOM</strong>, and Firebase versions from the <strong>Firebase BOM</strong>, so an internally consistent set is resolved rather than a hand-picked one.</p>
+<p>Hilt's annotation processing runs through <strong>KSP</strong> rather than KAPT - KSP reads Kotlin directly instead of generating Java stubs, which is meaningfully faster.</p>
+<p>Machine-local values (the OAuth web client id, the functions region, the signing credentials) are read from <code>local.properties</code> or the environment at configuration time and surfaced as <code>resValue</code> / <code>buildConfigField</code>, so nothing secret is committed.</p></div></details>
+<details class="qa" id="q86" data-s="how do you sign and distribute the app? a release keystore whose credentials come from local.properties locally and from
+environment variables on ci - neither is committed. distribution is firebase app distribution to a
+tester group, with the in-app update prompt wired in so a sideloaded build can tell the user a newer one
+exists.
+
+two details that bit and are worth mentioning: versioncode must increase strictly on every release, or
+app distribution never prompts and android refuses the install - a silent failure, which is why there is a
+checklist. and the in-app updater is a release-only dependency with a no-op stub compiled into debug
+builds, so debug builds carry no updater at all. " open><summary><span class="qn">Q86</span><span class="qt">How do you sign and distribute the app?</span></summary><div class="body"><p>A release keystore whose credentials come from <code>local.properties</code> locally and from environment variables on CI - neither is committed. Distribution is <strong>Firebase App Distribution</strong> to a tester group, with the in-app update prompt wired in so a sideloaded build can tell the user a newer one exists.</p>
+<p>Two details that bit and are worth mentioning: <code>versionCode</code> must increase strictly on every release, or App Distribution never prompts and Android refuses the install - a silent failure, which is why there is a checklist. And the in-app updater is a <strong>release-only</strong> dependency with a no-op stub compiled into debug builds, so debug builds carry no updater at all.</p></div></details>
+<details class="qa" id="q87" data-s="is there continuous integration? yes - github actions. there is a workflow that runs the instrumented suite on an
+emulator in ci (which also means the tests can run on a machine with no ram for a local emulator), and a
+release workflow that builds and uploads the signed apk. the release workflow fails the build outright
+when the real signing key is missing, rather than falling back to the debug key the way a local build may. " open><summary><span class="qn">Q87</span><span class="qt">Is there continuous integration?</span></summary><div class="body"><p>Yes - GitHub Actions. There is a workflow that runs the instrumented suite on an emulator in CI (which also means the tests can run on a machine with no RAM for a local emulator), and a release workflow that builds and uploads the signed APK. The release workflow <strong>fails the build outright</strong> when the real signing key is missing, rather than falling back to the debug key the way a local build may.</p></div></details>
+<details class="qa" id="q88" data-s="what was the hardest thing about the toolchain? version constraints that are not about the library you are choosing. health connect is
+pinned to 1.1.0-beta01 not by preference but because stable 1.1.0 requires compilesdk 36 and agp
+8.9.1+ together, and this project is compilesdk 35 / agp 8.7.3 / gradle 8.10.2 -
+checkdebugaarmetadata rejects the newer one outright. &quot;upgrade to stable&quot; would be a three-part toolchain
+bump, so it is tracked in todo/ rather than done casually.
+
+similarly, espresso had to go to 3.7.0: 3.6.1 reflects on the private inputmanager.getinstance(), removed
+in android 15, so every instrumented test died with nosuchmethodexception before its body ran. " open><summary><span class="qn">Q88</span><span class="qt">What was the hardest thing about the toolchain?</span></summary><div class="body"><p>Version constraints that are not about the library you are choosing. Health Connect is pinned to <code>1.1.0-beta01</code> not by preference but because stable <code>1.1.0</code> requires <strong>compileSdk 36 and AGP 8.9.1+</strong> together, and this project is compileSdk 35 / AGP 8.7.3 / Gradle 8.10.2 - <code>checkDebugAarMetadata</code> rejects the newer one outright. "Upgrade to stable" would be a three-part toolchain bump, so it is tracked in <code>TODO/</code> rather than done casually.</p>
+<p>Similarly, Espresso had to go to 3.7.0: 3.6.1 reflects on the private <code>InputManager.getInstance()</code>, removed in Android 15, so every instrumented test died with <code>NoSuchMethodException</code> <strong>before its body ran</strong>.</p></div></details>
+<h2 id="hard">12 · The hard questions<span class="pill">7</span></h2>
+<details class="qa" id="q89" data-s="what are the known limitations of your app? four i would name before being asked:
+
+1. the time chart measures estimated effort, not clocked time. there is no timer, so a task's minutes
+   come from the llm or from its point value at three minutes per difficulty point. the analytics card
+   states, per window, how many estimates were the model's - rather than implying a precision it does not
+   have.
+2. challenges are architected, not finished - model, rules and a preview screen exist; the flow does
+   not.
+3. hebrew and rtl are complete in code but switched off. one enum list (applanguage.offered) withholds
+   it; nothing was deleted. that was a scheduling decision - all functionality before localisation.
+4. no automated visual regression testing, so layout changes rely on a human render pass. " open><summary><span class="qn">Q89</span><span class="qt">What are the known limitations of your app?</span></summary><div class="body"><p>Four I would name before being asked:</p>
+<ol><li><strong>The time chart measures </strong><strong><em>estimated</em></strong><strong> effort, not clocked time.</strong> There is no timer, so a task's minutes come from the LLM or from its point value at three minutes per difficulty point. The analytics card states, per window, how many estimates were the model's - rather than implying a precision it does not have.</li><li><strong>Challenges are architected, not finished</strong> - model, rules and a preview screen exist; the flow does not.</li><li><strong>Hebrew and RTL are complete in code but switched off.</strong> One enum list (<code>AppLanguage.OFFERED</code>) withholds it; nothing was deleted. That was a scheduling decision - all functionality before localisation.</li><li><strong>No automated visual regression testing</strong>, so layout changes rely on a human render pass.</li></ol></div></details>
+<details class="qa" id="q90" data-s="why is hebrew disabled if you built the whole rtl infrastructure? a time decision, taken explicitly and recorded: all functionality had to work before
+localisation. nothing was reverted or deleted - values-iw/, the bidi isolation helper, the locale-aware
+window façades, the locale test suites and goalcategory labels are all still there.
+
+hebrew is withheld by one list: applanguage.offered. that single switch closes three doors - the
+picker iterates it, the system-locale branch clamps an unoffered device locale to english, and the
+preferences read path clamps a &quot;he&quot; value stored before the freeze. turning it back on is putting
+hebrew back in that list.
+
+and the guard that protects it stayed armed the whole time: dialoglocaleguardtest still fails the build
+on a raw dialog( outside the façades, because that defect is invisible in an english render and would
+otherwise become a rework when hebrew resumes. this answers 'you claim hebrew support but the app is in english' - which an examiner reading the readme will notice. get in front of it." open><summary><span class="qn">Q90</span><span class="qt">Why is Hebrew disabled if you built the whole RTL infrastructure?</span></summary><div class="body"><p>A time decision, taken explicitly and recorded: all functionality had to work before localisation. Nothing was reverted or deleted - <code>values-iw/</code>, the bidi isolation helper, the locale-aware window façades, the locale test suites and <code>GoalCategory</code> labels are all still there.</p>
+<p>Hebrew is withheld by <strong>one list</strong>: <code>AppLanguage.OFFERED</code>. That single switch closes three doors - the picker iterates it, the system-locale branch clamps an unoffered device locale to English, and the preferences read path clamps a <code>"he"</code> value stored before the freeze. Turning it back on is putting <code>HEBREW</code> back in that list.</p>
+<p>And the guard that protects it stayed armed the whole time: <code>DialogLocaleGuardTest</code> still fails the build on a raw <code>Dialog(</code> outside the façades, because that defect is invisible in an English render and would otherwise become a rework when Hebrew resumes.</p><div class="deeper"><b>Going deeper —</b> This answers 'you claim Hebrew support but the app is in English' - which an examiner reading the README will notice. Get in front of it.</div></div></details>
+<details class="qa" id="q91" data-s="what would you do differently if you started again? three things.
+
+extract :domain as a real gradle module from day one. the layering is already clean enough that it
+would compile today; making it a module boundary turns a convention into a compile error.
+
+design the derived numbers first. the single largest rework in this project was moving points from a
+client-side transaction to a server-side projection, and the rule that would have prevented it - store a
+derived value only when the reader cannot compute it - was something i arrived at halfway through rather
+than started with.
+
+set up the guard tests' gradle inputs at the same time as the guards. several file-reading tests were
+silently not running for weeks. writing a test and proving it goes red should be one action, not two. " open><summary><span class="qn">Q91</span><span class="qt">What would you do differently if you started again?</span></summary><div class="body"><p>Three things.</p>
+<p><strong>Extract </strong><strong><code>:domain</code></strong><strong> as a real Gradle module from day one.</strong> The layering is already clean enough that it would compile today; making it a module boundary turns a convention into a compile error.</p>
+<p><strong>Design the derived numbers first.</strong> The single largest rework in this project was moving points from a client-side transaction to a server-side projection, and the rule that would have prevented it - <em>store a derived value only when the reader cannot compute it</em> - was something I arrived at halfway through rather than started with.</p>
+<p><strong>Set up the guard tests' Gradle inputs at the same time as the guards.</strong> Several file-reading tests were silently not running for weeks. Writing a test and proving it goes red should be one action, not two.</p></div></details>
+<details class="qa" id="q92" data-s="how would this scale to a hundred thousand users? three things break first, and i can name them in order.
+
+reads. the leaderboard's &quot;everyone&quot; mode reads the top 100 of publicprofiles per open. at scale that
+wants a cached, periodically-recomputed document rather than a live query - a cloud function writing a
+single leaderboard document on a schedule.
+
+the client-side sort. life areas are sorted client-side because a user has a handful; anything that can
+grow unboundedly needs a composite index and a server-side order.
+
+llm cost and rate limits. right now every classification is a live model call. at scale i would cache
+by normalised prompt, batch the google tasks import into one call rather than one per row, and put a
+per-user quota in the cloud function.
+
+what would not break: the security model, because it is per-document and per-field rather than per-query;
+and the offline behaviour, which is the client's cache. " open><summary><span class="qn">Q92</span><span class="qt">How would this scale to a hundred thousand users?</span></summary><div class="body"><p>Three things break first, and I can name them in order.</p>
+<p><strong>Reads.</strong> The leaderboard's "everyone" mode reads the top 100 of <code>publicProfiles</code> per open. At scale that wants a cached, periodically-recomputed document rather than a live query - a Cloud Function writing a single leaderboard document on a schedule.</p>
+<p><strong>The client-side sort.</strong> Life areas are sorted client-side because a user has a handful; anything that can grow unboundedly needs a composite index and a server-side order.</p>
+<p><strong>LLM cost and rate limits.</strong> Right now every classification is a live model call. At scale I would cache by normalised prompt, batch the Google Tasks import into one call rather than one per row, and put a per-user quota in the Cloud Function.</p>
+<p>What would <em>not</em> break: the security model, because it is per-document and per-field rather than per-query; and the offline behaviour, which is the client's cache.</p></div></details>
+<details class="qa" id="q93" data-s="what is the biggest technical risk in this project? the llm being a third party i do not control. a model can be retired on a rolling
+schedule, and the failure is silent - the app serves local fallbacks and simply looks bland. that is
+mitigated by the fallback contract, by the model id being a single pin, and by checking it before a demo,
+but it cannot be eliminated while the feature is genuinely ai-powered.
+
+second is firestore's lack of server-side cascade: deletion correctness is the client's job, done in
+batches, and a client that dies halfway leaves work behind. i chose the failure ordering deliberately in
+each case so that the survivable state is the one a retry fixes. " open><summary><span class="qn">Q93</span><span class="qt">What is the biggest technical risk in this project?</span></summary><div class="body"><p>The LLM being a third party I do not control. A model can be retired on a rolling schedule, and the failure is silent - the app serves local fallbacks and simply looks bland. That is mitigated by the fallback contract, by the model id being a single pin, and by checking it before a demo, but it cannot be eliminated while the feature is genuinely AI-powered.</p>
+<p>Second is Firestore's lack of server-side cascade: deletion correctness is the client's job, done in batches, and a client that dies halfway leaves work behind. I chose the failure ordering deliberately in each case so that the survivable state is the one a retry fixes.</p></div></details>
+<details class="qa" id="q94" data-s="what did you learn from this project? the technical answer: how much of android is really about lifetimes - a coroutine's
+scope, a listener's registration, a viewmodel's survival across configuration change, a flow's sharing
+policy. almost every real bug i hit was something outliving or under-living the thing it belonged to.
+
+the engineering answer, which i think matters more: verify by running the thing that consumes your
+output, never by reading it. several of my own guard tests were green because they never executed. once i
+started proving a test could go red before trusting it green, the number of things i believed were true
+and the number that were true converged. " open><summary><span class="qn">Q94</span><span class="qt">What did you learn from this project?</span></summary><div class="body"><p>The technical answer: how much of Android is really about <strong>lifetimes</strong> - a coroutine's scope, a listener's registration, a ViewModel's survival across configuration change, a Flow's sharing policy. Almost every real bug I hit was something outliving or under-living the thing it belonged to.</p>
+<p>The engineering answer, which I think matters more: <strong>verify by running the thing that consumes your output, never by reading it.</strong> Several of my own guard tests were green because they never executed. Once I started proving a test could go red before trusting it green, the number of things I <em>believed</em> were true and the number that <em>were</em> true converged.</p></div></details>
+<details class="qa" id="q95" data-s="if i gave you one more week, what would you build? finish challenges. the model, the firestore rules including the participant
+subcollection, and a preview screen already exist, so the remaining work is the flow: create, invite,
+join, and a standings screen fed by the same projection function that already owns score. it is the one
+feature where the hard part - the multi-writer security model - is done and the easy part is not.
+
+after that: a screenshot-based visual regression suite, because it is the layer my testing genuinely
+lacks. " open><summary><span class="qn">Q95</span><span class="qt">If I gave you one more week, what would you build?</span></summary><div class="body"><p>Finish challenges. The model, the Firestore rules including the participant subcollection, and a preview screen already exist, so the remaining work is the flow: create, invite, join, and a standings screen fed by the same projection function that already owns <code>score</code>. It is the one feature where the hard part - the multi-writer security model - is done and the easy part is not.</p>
+<p>After that: a screenshot-based visual regression suite, because it is the layer my testing genuinely lacks.</p></div></details></main>
+</div>
+<script>
+const q=document.getElementById('q'),hits=document.getElementById('hits');
+const cards=[...document.querySelectorAll('.qa')];
+const navq=[...document.querySelectorAll('nav a.qq')];
+const secs=[...document.querySelectorAll('main h2')];
+function apply(){
+  const t=q.value.trim().toLowerCase();
+  if(!t){cards.forEach(c=>c.classList.remove('hidden'));
+    navq.forEach(a=>a.classList.remove('hidden'));
+    secs.forEach(s=>s.classList.remove('hidden'));
+    hits.textContent='';return;}
+  let n=0;
+  cards.forEach(c=>{const m=c.dataset.s.includes(t);c.classList.toggle('hidden',!m);
+    if(m){n++;c.open=true;}});
+  navq.forEach(a=>a.classList.toggle('hidden',
+    !document.getElementById(a.hash.slice(1)) ||
+    document.getElementById(a.hash.slice(1)).classList.contains('hidden')));
+  secs.forEach(s=>{let e=s.nextElementSibling,any=false;
+    while(e&&e.tagName!=='H2'){if(e.classList&&e.classList.contains('qa')&&
+      !e.classList.contains('hidden'))any=true;e=e.nextElementSibling;}
+    s.classList.toggle('hidden',!any);});
+  hits.textContent=n+' of '+cards.length+' questions';
+}
+q.addEventListener('input',apply);
+document.getElementById('all').onclick=()=>cards.forEach(c=>c.open=true);
+document.getElementById('none').onclick=()=>cards.forEach(c=>c.open=false);
+document.getElementById('theme').onclick=()=>{
+  const r=document.documentElement;
+  const dark=r.dataset.theme? r.dataset.theme==='dark'
+    : matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme=dark?'light':'dark';
+  try{localStorage.setItem('gp-theme',r.dataset.theme)}catch(e){}
+};
+try{const s=localStorage.getItem('gp-theme');if(s)document.documentElement.dataset.theme=s}catch(e){}
+addEventListener('keydown',e=>{
+  if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus();}
+  if(e.key==='Escape'&&document.activeElement===q){q.value='';apply();q.blur();}});
+</script>
+</body></html>
