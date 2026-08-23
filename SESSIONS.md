@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `69-one-off-occurrence-edits` | `#69` — `ScheduleEdits.apply` cannot address a one-off's document (`seriesDate = null`), so `THIS_OCCURRENCE` duplicates it and `THIS_AND_FUTURE` silently no-ops. Widen the parameter to `LocalDate?`, then remove the `isEditable` guard and the test that pins it, in the same commit. | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Schedule.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` · `CHANGELOG/2026-08-23/69-one-off-occurrence-edits.md` · `sessions/69-one-off-occurrence-edits.md` | **`Pixel_10_Pro_XL` / `emulator-5554` + `adb`**, taken 20:30 once `67-delete-anything` released (`12bbc06`), for one instrumented class. The **Gradle daemon** was used 19:50–19:56 and released. | 2026-08-23 18:49 |
 > 📣 **TO `69-one-off-occurrence-edits` — YOUR COMMIT `49e1bde` IS NOW ON `origin/main`.**
 > *Left by `67-delete-anything`, 2026-08-23. Nothing is asked of you; this is so you learn it here
 > rather than from a rejected `--amend`.*
@@ -4788,6 +4787,36 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `69-one-off-occurrence-edits` — released 2026-08-23 20:40, this commit
+
+**[`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) is CLOSED.** `49e1bde`
+carried the fix and the JVM layer; this commit carries the device layer and the close-out.
+**1084 JVM unit tests / 0 failures** and **15 instrumented / 0 failures** on `emulator-5554`.
+Brief in `sessions/done/`, account in `CHANGELOG/2026-08-23/69-one-off-occurrence-edits.md`.
+
+📱 **`emulator-5554` and `adb` were held 20:30–20:37 and are RELEASED. The Gradle daemon was
+held 19:50–20:34 and is released.** `connectedDebugAndroidTest` was **not** used — `adb install -r`
+on both APKs then `am instrument`, so nothing was uninstalled and no sign-in was destroyed.
+
+⚠️ **THE PUSH IS HELD, and it is the second session in a row to say so.** `origin/main` is behind
+by this session's commits **and** by `67-delete-anything`'s, and neither session could publish the
+other's: auto-push precondition 5 stops on a foreign commit under a live row, and by the time that
+row cleared, `12bbc06` had already declared **its** push held for the mirror-image reason. So the
+two holds are now mutually sustaining and only Ido's word clears them. Nothing is broken — every
+commit in the range is green at every layer its session could run.
+
+✅ **Three instrument errors this session, all caught, and the third is the one worth reading.**
+(1) The first board read reported **zero live rows** — `67-delete-anything`'s claim landed between
+the read and the write. (2) A "is the daemon busy?" probe counted **idle** daemons' registry
+housekeeping as work and bought a 45-minute wait for nothing; `./gradlew --status` is the instrument
+that answers it. (3) The background wait armed on *"has `67-delete-anything` released?"* counted the
+label **5 times** — because it grepped the whole *Active claims section*, whose release-note prose
+mentions the label, rather than the section's `| ` **table rows**. It could therefore never fire, and
+it failed **silently**, which is how a session sits waiting on a sibling that finished half an hour
+ago. Ido noticed before the timeout did. **The section this note is in exists so that release prose
+stays out of the rows** — and the same prose is what broke a probe that read the section as if it
+were the table.
 
 ### 🏁 `70-verify-dashboard-average` (follow-on) — released 2026-08-23, this commit
 

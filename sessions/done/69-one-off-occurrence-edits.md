@@ -2,7 +2,13 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
-status: active
+status: done
+result: |
+  Shipped in 49e1bde (fix + JVM layer) and the commit that carries this close (device layer).
+  1084 JVM unit tests / 0 failures; 15 instrumented / 0 failures on emulator-5554.
+  Every Exit item met. The one gap, named in the changelog: no instrumented RED run --
+  the guard-removal claim is red-proven on the JVM layer and green-proven on the device.
+  #69 closed.
 issue: 69
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Schedule.kt

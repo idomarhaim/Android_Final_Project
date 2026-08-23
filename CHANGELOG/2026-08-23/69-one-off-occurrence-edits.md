@@ -1,6 +1,6 @@
 # 69-one-off-occurrence-edits — a `null` that names an instance, not the absence of one
 
-> **Summary:** [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) — `ScheduleEdits.apply` could not address a **one-off's** occurrence document, because its `seriesDate` parameter was a non-null `LocalDate` and a one-off's document carries `seriesDate = null` by construction. Both `EditScope` values went wrong on it in opposite directions and **both silently**: `THIS_OCCURRENCE` fell through to a blank-id instance and **created a second document** (the row drawn twice), `THIS_AND_FUTURE` moved `Task.occurrence` while the calendar kept drawing the untouched document (the move a **no-op**). The parameter is now `LocalDate?`, `TaskSchedule.storedFor` is the lookup that can receive the null, and `moveSeries`' no-rule branch carries the document across instead of leaving it behind. The guard `#68` put on `CalendarEntry.isEditable` — its third condition — comes off in the same commit, together with the test that pinned it and `MoveScope.seriesDateOf`'s `?: entry.date` fallback, which was itself the defect at the call site. Written **red first**: with the two production files restored to `HEAD` the five new assertions fail and their messages name the defect verbatim — a second document `minted-1` sitting beside `occ-1`, and an empty upsert list. **1084 JVM unit tests, 0 failures, 0 errors, 0 skipped** across 89 suites after the fix. The instrumented check is **written and not run** — the emulator is held by a live sibling; see *Tests*.
+> **Summary:** [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69) — `ScheduleEdits.apply` could not address a **one-off's** occurrence document, because its `seriesDate` parameter was a non-null `LocalDate` and a one-off's document carries `seriesDate = null` by construction. Both `EditScope` values went wrong on it in opposite directions and **both silently**: `THIS_OCCURRENCE` fell through to a blank-id instance and **created a second document** (the row drawn twice), `THIS_AND_FUTURE` moved `Task.occurrence` while the calendar kept drawing the untouched document (the move a **no-op**). The parameter is now `LocalDate?`, `TaskSchedule.storedFor` is the lookup that can receive the null, and `moveSeries`' no-rule branch carries the document across instead of leaving it behind. The guard `#68` put on `CalendarEntry.isEditable` — its third condition — comes off in the same commit, together with the test that pinned it and `MoveScope.seriesDateOf`'s `?: entry.date` fallback, which was itself the defect at the call site. Written **red first**: with the two production files restored to `HEAD` the five new assertions fail and their messages name the defect verbatim — a second document `minted-1` sitting beside `occ-1`, and an empty upsert list. **1084 JVM unit tests, 0 failures, 0 errors, 0 skipped** across 89 suites after the fix. **15 instrumented tests, 0 failures** on `emulator-5554` afterwards, once `67-delete-anything` released the device — the new one among them, re-run alone to prove it executed rather than being counted.
 
 **Date:** 2026-08-23 · **Session:** `69-one-off-occurrence-edits` · **Mode:** AUTO (Ido's message opened the session with `AUTO MODE`; the brief's front matter said `mode: normal`, which was the intent recorded when it was written — this session's message wins, per `/kickoff` §4) · **Issue:** [#69](https://github.com/idomarhaim/Android_Final_Project/issues/69)
 
@@ -129,35 +129,56 @@ suites 89 | tests 1084 | failures 0 | errors 0 | skipped 0
 One pre-existing Kotlin warning surfaced and is **not** this ticket's:
 `HebrewLocaleResourceTest.kt:158` — a nullable `java.io.File?` receiver. Untouched.
 
-### ⚠️ The instrumented check is written and NOT run — the emulator is held
+### The instrumented check, run once the device came free
 
 `DragToMoveUiTest.aGoogleLinkedOneOffCanBeDraggedNowThatItsDocumentIsAddressable` is the device half
-of the exit: a one-off carrying `occurrenceId = "occ-1"` and `seriesDate = null` — asserted to be
-that shape before the gesture, so the fixture cannot drift into testing something easier — dragged
+of the exit: a one-off carrying `occurrenceId = "occ-1"` and `seriesDate = null` — **asserted to be
+that shape before the gesture**, so the fixture cannot drift into testing something easier — dragged
 one column, expecting one reported move at `THIS_AND_FUTURE` and **no** scope sheet. It uses the
-file's existing bare `createComposeRule()`, so it needs no Google account and destroys no sign-in.
+file's existing bare `createComposeRule()`, so it needs no Google account.
 
-It did not run, and the reason is not capability:
+```
+com.idomarhaim.goalpilot.ui.DragToMoveUiTest:...............
+Time: 46.782
+OK (15 tests)
+```
 
-- **`emulator-5554` and `adb` are claimed by `67-delete-anything`**, which is live and mid-run
-  (last transcript turn 19:56, one commit `c11c629` landed at 19:47). Two sessions driving one AVD
-  corrupts its quickboot snapshot — `AGENTS.md` § Pitfalls.
-- **Its two untracked `androidTest` files are in this shared tree** (`DeleteAnythingUiTest.kt`,
-  `TmpDeleteDump.kt`), so building the test APK now would compile that session's unfinished work
-  into the run and report about **its** tree, not this one — §4p, the failure `f25cca5` refused to
-  risk this morning and `#70` then caught arriving anyway one step later.
+14 of those existed before; the fifteenth is this ticket's. **Re-run on its own** afterwards —
+`-e class …DragToMoveUiTest#aGoogleLinkedOneOffCanBeDragged…`, `OK (1 test)` in 4.4 s — because a
+count going 14 → 15 is not evidence that the *new* one ran, and a test that never executes is
+indistinguishable from a test that passes.
 
-The JVM layer is unaffected by both: `:app:testDebugUnitTest` does not compile the `androidTest`
-source set, and every tracked file the run did compile is committed.
+#### ⚠️ It was nearly run against a build this session did not make
 
-**`#69` therefore stays OPEN with this commit**, naming the one thing outstanding.
+The first `:app:assembleDebug :app:assembleDebugAndroidTest` returned **`BUILD SUCCESSFUL in 5s`**
+with `74 actionable tasks: 74 up-to-date`, and the two APKs on disk were stamped **20:05:53** and
+**19:55:39**. The androidTest APK was `67-delete-anything`'s build, made over a tree that still held
+its two scratch classes. `adb install -r` would have succeeded and the run would have reported about
+**its** tree — §4p arriving one step later, wearing a green tick, which is exactly what `#70`
+recorded this morning about `UP-TO-DATE` unit-test runs and is here shown to reach the **APK** as
+readily as the test task.
+
+Re-run with `--rerun-tasks`: `74 executed`, 3 m 21 s, both APKs stamped `20:33`. **The androidTest
+APK shrank from 1,665,402 to 1,531,663 bytes** — the sibling's two classes leaving it, which is the
+independent confirmation that the first build really was theirs and not merely stale.
+
+#### What was NOT done, and it is a deliberate gap
+
+**No instrumented *red* run.** Proving the gesture is unavailable with the guard back would cost
+another `--rerun-tasks` build, install and run to observe a failure the JVM layer already observed:
+`a one-off that already has a document is editable…` fails on `HEAD` with `expected to be true`, and
+`isDraggable` is `isEditable && lane == GRID` in the same file. So the claim is **red-proven one
+layer down and green-proven on the device**, and the missing cell is the instrumented red.
+
+📱 **`connectedDebugAndroidTest` was NOT used** — `adb install -r` on both APKs, then
+`am instrument`. Nothing was uninstalled and no sign-in was destroyed.
 
 ## Layers
 
 | Layer | Status |
 |---|---|
 | Domain / JVM unit (`:app:testDebugUnitTest`) | **green** — 1084 tests, 0 failures, 0 errors, 0 skipped, 89 suites, run at 19:53–19:56 with `--rerun-tasks`; **red first**, 5 failures against `HEAD` |
-| Instrumented UI (`androidTest`) | **written, NOT run** — one new test; `emulator-5554` is claimed and in use by `67-delete-anything`, and its untracked `androidTest` files are in this tree. Owed. |
+| Instrumented UI (`androidTest`) | **green** — 15 tests, 0 failures on `emulator-5554` (1 new), 20:35–20:36, after a forced `--rerun-tasks` rebuild of both APKs. No instrumented red — see above. |
 | Firestore rules (`firestore-tests/`) | **not applicable** — this ticket changes no rules and writes through the same `OccurrenceRepository.apply` batch as before |
 | Cloud Functions (`functions/`) | **not applicable** — nothing server-side is involved |
 
@@ -167,6 +188,9 @@ source set, and every tracked file the run did compile is committed.
   reached that way today: `apply` is only passed `null` by `seriesDateOf`, which returns `null` only
   for an entry with no series date, and a ruled task's entries all carry one. Written down because
   the lookup is `internal` and the next caller will not know that.
-- **The Google-linked one-off is now editable and nothing verifies it end to end on a device.** The
-  fixture in `DragToMoveTest` is built from `SyncCalendarUseCase.link`'s shape by reading it, not by
-  running the sync. See the tests section for what was and was not exercised.
+- **The fixtures are built from `SyncCalendarUseCase.link`'s shape by READING it, not by running
+  the sync.** Both the JVM and the instrumented fixture assert the pair (`occurrenceId` set,
+  `seriesDate` null) they claim to be, so they cannot silently drift into an easier shape — but if
+  `#61` ever stops minting a document with a null `seriesDate`, these tests keep passing while
+  testing a case the app no longer produces. Nothing here watches that.
+- **`#69` is closed.** Both layers ran; the one gap is named above and is the instrumented red.
