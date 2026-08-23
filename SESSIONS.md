@@ -4799,12 +4799,24 @@ Brief in `sessions/done/`, account in `CHANGELOG/2026-08-23/69-one-off-occurrenc
 held 19:50–20:34 and is released.** `connectedDebugAndroidTest` was **not** used — `adb install -r`
 on both APKs then `am instrument`, so nothing was uninstalled and no sign-in was destroyed.
 
-⚠️ **THE PUSH IS HELD, and it is the second session in a row to say so.** `origin/main` is behind
-by this session's commits **and** by `67-delete-anything`'s, and neither session could publish the
-other's: auto-push precondition 5 stops on a foreign commit under a live row, and by the time that
-row cleared, `12bbc06` had already declared **its** push held for the mirror-image reason. So the
-two holds are now mutually sustaining and only Ido's word clears them. Nothing is broken — every
-commit in the range is green at every layer its session could run.
+✅ **EVERYTHING IS PUSHED** — `origin/main` is `afb84bb`.
+
+⚠️ **This paragraph said *THE PUSH IS HELD* when it was committed, and that was already false.**
+Corrected in place rather than left standing, because a release note is the line a later session
+follows. The hold was real when `49e1bde` landed — the outgoing range then carried
+`67-delete-anything`'s commits under its **live** row, and precondition 5 stops on exactly that. It
+cleared without anyone deciding anything: that session pushed first, and `4bf939e` carried `49e1bde`
+up with it while **naming it in the message**, which is the disclosure this repo's push rule asks
+for and is worth recording as having worked twice in two days. By the time this session re-read
+`@{u}..HEAD` the range held **only its own two commits**, no foreign commit, one rename (this
+brief's close, with `status: done` in the same commit — the named carve-out) and no deletions, so
+all six preconditions passed and auto mode pushed.
+
+**The generalisable half:** a hold declared on precondition 5 can expire on its own, because the
+condition is about *someone else's row*, not about your commits. Re-read the upstream before
+repeating the claim — which is what the standing rule already says (*"re-check the upstream at the
+moment you report the hold"*) and what this note failed to do at **authoring** time rather than at
+reporting time. The rule covers the reply; nothing covered the committed prose.
 
 ✅ **Three instrument errors this session, all caught, and the third is the one worth reading.**
 (1) The first board read reported **zero live rows** — `67-delete-anything`'s claim landed between
