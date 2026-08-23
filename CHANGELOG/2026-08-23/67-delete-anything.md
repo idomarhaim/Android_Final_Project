@@ -30,10 +30,14 @@ path is the ordinary one: `DashboardViewModel.classifyForSmartAdd` writes
 `goalEdges = goalEdgesOf(null)` for a `FilingDecision.NoGoal` and sets no `occurrence`. The undo
 snackbar was the only control that could ever remove one, and it lives for a few seconds.
 
-⚠️ **`Untested:` on a device.** The brief asked for the device check *first*; it has not run yet —
-this commit is the JVM-green half and the instrumented run and render pass are the unit that
-follows. The defect is established from the code paths above and from `DeletionReachTest`, not from
-a phone.
+⚠️ **`Untested:` end to end on a phone, and that is stated rather than glossed.** The brief asked
+for a device check that creates an unfiled task through smart-add and hunts for it on every surface.
+What ran instead is the **code** path above plus `DeletionReachTest`, and on the device the
+**component** half — `DeleteAnythingUiTest` drives the real confirm and the real calendar sheet with
+hand-built inputs. Nobody has watched a quick-add produce an orphan and then deleted it from the
+dashboard card. The reason is that the end-to-end path needs a signed-in account and a live
+Firestore, which is a test of the network with a card attached; the reach claim is a claim about
+**which screens list what**, and that is decided in code and pinned in the JVM layer.
 
 ## The half the survey missed: `deleteGoal` was making more of them
 
@@ -153,8 +157,23 @@ operation the app does not have.
 | **JVM unit** (`:app:testDebugUnitTest --rerun-tasks`) | **1084 tests, 0 failures, 0 errors** — genuinely re-executed |
 | — of which `DeletionReachTest` *(new)* | **12 tests, 0 failures** |
 | **Resource guards** | `AnalyticsLiteralSweepTest`, `HebrewLocaleResourceTest`, `DialogLocaleGuardTest` all green |
-| **Instrumented** | ⚠️ **NOT RUN** — owed, and it is the next unit |
-| **Render pass** | ⚠️ **NOT RUN** — owed, both themes, English only (§0.8 suspended) |
+| **Instrumented** (`DeleteAnythingUiTest`, new) | **15 tests, 0 failures** |
+| **Instrumented — full regression** (`am instrument`, no class filter) | **320 tests, 0 failures** across 41 classes |
+| **Render pass** | **6 PNGs**, three subjects × light/dark plus the calendar sheet, read by eye |
+
+`adb install -r` on both APKs then `adb shell am instrument -w`, per
+`kb/dev/android-device-verification.md` §8 — **`connectedDebugAndroidTest` was never used.**
+
+⚠️ **The 320 included one temporary class.** `TmpDeleteDump` was a scratch test written to dump the
+semantics tree (below); it is **removed from the repo**, the test APK was rebuilt without it, and
+running it now fails *class not found*. So the honest figure for the suite as committed is **319**,
+and `DeleteAnythingUiTest`'s **15** were re-run green after the removal.
+
+⚠️ **A failed build reported a green test run, and `${PIPESTATUS[0]}` is the only reason it was
+caught.** One `./gradlew assembleDebug assembleDebugAndroidTest` failed in 3 s (a transient Windows
+KSP lock; it succeeded unchanged on the next run), and because the **previous** APK was still at the
+output path, `adb install -r` said `Success` twice and `am instrument` reported `OK (15 tests)` — for
+the build before the fix. AGENTS.md's pitfall predicted exactly this; it fired.
 
 ⚠️ **`AnalyticsLiteralSweepTest` failed first, and it was right.** `DeleteConfirm.kt`'s test tags
 were snake_case (`"delete_confirm_cancel"`), which the prose rule reads as five alphabetic words —
@@ -174,6 +193,56 @@ left for a reader to work out from a number.
 
 ⚠️ **No device was touched and no sign-in was needed or destroyed.**
 
+## 🔎 Two findings the run produced, and neither was predicted
+
+### 1. `onNodeWithText(substring = true)` cannot find a count in this app
+
+**8 of the 15 instrumented tests failed on the first run, and every one of them was matching a
+string with a number in it.** The failure message is `Assert failed: The component is not
+displayed!`, which points at layout; the cause is the string.
+
+Every count goes through `bidiIsolated()` (§4.8), so the node holds
+
+```
+⁨4⁩ entries in its progress log.        codes: 8296, 52, 8297, 32, 101, …
+```
+
+— `U+2069 POP DIRECTIONAL ISOLATE` sits **between the digit and the space**, so `"4 entries"` is not
+a substring of it. The marks are zero-width, the text renders perfectly, and nothing in the failure
+suggests the string. It was diagnosed by **dumping the semantics tree on the device** rather than by
+reading the code, which is the only thing that would have settled it.
+
+**The tempting fix is the wrong one.** Matching `"entries in its progress log"` and dropping the
+number would go green while leaving the one thing this ticket added — the counts — unasserted. The
+**matcher** is fixed instead: `Bidi.strip` already exists for this and its KDoc says so, *"for tests
+and for logging, never for display."* `DeleteAnythingUiTest.hasStrippedText` carries the whole
+finding.
+
+⚠️ This is not specific to `#67`. **Every** swept-package string with a count is unmatchable by a
+naive substring assertion, and any future test written that way will fail with a message about
+layout.
+
+### 2. A flat list of four lines invited an addition that is wrong
+
+With all 15 tests green, the task confirm read:
+
+```
+WHAT GOES
+This task.
+12 scheduled occurrences.
+Including 5 that already happened.
+The 40 points it earned.
+```
+
+The third line is a **subset of the second**, drawn as a fourth peer — so the page invites a total of
+`1 + 12 + 5 + 40`. That is §0.3's *second number that quietly disagrees*, arriving as typography
+rather than as a field, and no matcher can see it. Found by looking at
+`issue-67-confirm-task-light.png`.
+
+Fixed by **subordination** — smaller, muted, indented in the layout direction — and not by folding
+the two counts into one sentence, which would need two interacting plural forms per language where
+Hebrew has four categories to English's two. Re-rendered and re-read.
+
 ## Hebrew
 
 `ui/components/` is a **swept** package, so the confirm's eleven strings and `Let it go` went into
@@ -188,7 +257,9 @@ translations are authored, parity-checked, and unseen.
 ## Files
 
 **New** — `domain/model/Deletion.kt` · `ui/components/DeleteConfirm.kt` ·
-`app/src/test/java/.../domain/DeletionReachTest.kt`
+`app/src/test/java/.../domain/DeletionReachTest.kt` ·
+`app/src/androidTest/java/.../ui/DeleteAnythingUiTest.kt` ·
+`docs/render-passes/2026-08-23-67-delete-anything/` (6 PNGs)
 
 **Changed** — `data/firestore/TaskRepositoryImpl.kt` · `data/firestore/GoalRepositoryImpl.kt` ·
 `feature/dashboard/DashboardScreen.kt` + `DashboardViewModel.kt` ·

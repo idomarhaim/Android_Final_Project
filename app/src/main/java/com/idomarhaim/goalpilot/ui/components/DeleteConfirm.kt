@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -119,14 +120,40 @@ fun DeleteConfirm(
 }
 
 /**
- * One heading and its bullets.
+ * One line of a block, and whether it is a **thing** or a **remark about the line above it**.
+ *
+ * ⚠️ **The distinction was bought by a render, and nothing else would have found it.** Every
+ * assertion passed on a task confirm whose four lines read:
+ *
+ * ```
+ * WHAT GOES
+ * This task.
+ * 12 scheduled occurrences.
+ * Including 5 that already happened.     <- a SUBSET of the 12, drawn as a fourth item
+ * The 40 points it earned.
+ * ```
+ *
+ * A flat list of four equal lines invites the person to add them up, which is the one arithmetic
+ * this dialog must not suggest — §0.3's *second number that quietly disagrees*, arriving as
+ * typography rather than as a field. `Observed:` 2026-08-23 in
+ * `docs/render-passes/2026-08-23-67-delete-anything/issue-67-confirm-task-light.png`, with all
+ * 15 instrumented tests green.
+ *
+ * Fixed by **subordination** rather than by folding the two counts into one sentence: a single
+ * *"12 scheduled occurrences, 5 of which already happened"* would need two interacting plural
+ * forms in every language, and Hebrew has four categories where English has two.
+ */
+private data class Consequence(val text: String, val subordinate: Boolean = false)
+
+/**
+ * One heading and its lines.
  *
  * Drawn as plain stacked lines rather than as a bulleted list, because the two blocks are read
  * against each other and a glyph column between them adds a second thing to scan on a dialog
  * whose whole job is to be read once, quickly, under a decision.
  */
 @Composable
-private fun ConsequenceBlock(heading: String, lines: List<String>, tag: String) {
+private fun ConsequenceBlock(heading: String, lines: List<Consequence>, tag: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.testTag(tag)) {
         Text(
             text = heading,
@@ -135,7 +162,22 @@ private fun ConsequenceBlock(heading: String, lines: List<String>, tag: String) 
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         lines.forEach { line ->
-            Text(text = line, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = line.text,
+                style = if (line.subordinate) {
+                    MaterialTheme.typography.bodySmall
+                } else {
+                    MaterialTheme.typography.bodyMedium
+                },
+                color = if (line.subordinate) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                // Indented, in the layout direction, so it reads as belonging to the line above
+                // it in Hebrew as well as in English.
+                modifier = if (line.subordinate) Modifier.padding(start = 14.dp) else Modifier,
+            )
         }
     }
 }
@@ -148,57 +190,70 @@ private fun ConsequenceBlock(heading: String, lines: List<String>, tag: String) 
  * twice pushes the counts below the fold on a small screen.
  */
 @Composable
-private fun goesLines(impact: DeletionImpact): List<String> = buildList {
+private fun goesLines(impact: DeletionImpact): List<Consequence> = buildList {
     when (impact) {
         is DeletionImpact.OfGoal -> {
-            add(stringResource(R.string.components_delete_goal_itself))
+            add(Consequence(stringResource(R.string.components_delete_goal_itself)))
             if (impact.entryCount > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_goal_entries,
-                        impact.entryCount,
-                        "${impact.entryCount}".bidiIsolated(),
+                    Consequence(
+                        pluralStringResource(
+                            R.plurals.components_delete_goal_entries,
+                            impact.entryCount,
+                            "${impact.entryCount}".bidiIsolated(),
+                        ),
                     ),
                 )
             }
         }
 
         is DeletionImpact.OfTask -> {
-            add(stringResource(R.string.components_delete_task_itself))
+            add(Consequence(stringResource(R.string.components_delete_task_itself)))
             if (impact.occurrenceCount > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_task_occurrences,
-                        impact.occurrenceCount,
-                        "${impact.occurrenceCount}".bidiIsolated(),
+                    Consequence(
+                        pluralStringResource(
+                            R.plurals.components_delete_task_occurrences,
+                            impact.occurrenceCount,
+                            "${impact.occurrenceCount}".bidiIsolated(),
+                        ),
                     ),
                 )
             }
             // §2.3 keeps the past out of every *scoped* verb -- no move and no skip may reach
-            // backwards. A delete does reach it, so the count of windows that already happened
-            // is said out loud rather than folded into the number above, which would let the
-            // person read a series of future plans and lose a month of record.
+            // backwards. A delete does reach it, so the count of windows that already happened is
+            // said out loud rather than folded into the number above, which would let the person
+            // read a series of future plans and lose a month of record.
+            //
+            // SUBORDINATE, and that is the render finding: it is a slice OF the count above it,
+            // and four equal lines invite an addition that is wrong. See [Consequence].
             if (impact.settledOccurrenceCount > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_task_settled,
-                        impact.settledOccurrenceCount,
-                        "${impact.settledOccurrenceCount}".bidiIsolated(),
+                    Consequence(
+                        text = pluralStringResource(
+                            R.plurals.components_delete_task_settled,
+                            impact.settledOccurrenceCount,
+                            "${impact.settledOccurrenceCount}".bidiIsolated(),
+                        ),
+                        subordinate = true,
                     ),
                 )
             }
             if (impact.bankedPoints > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_task_points,
-                        impact.bankedPoints,
-                        "${impact.bankedPoints}".bidiIsolated(),
+                    Consequence(
+                        pluralStringResource(
+                            R.plurals.components_delete_task_points,
+                            impact.bankedPoints,
+                            "${impact.bankedPoints}".bidiIsolated(),
+                        ),
                     ),
                 )
             }
         }
 
-        is DeletionImpact.OfLifeArea -> add(stringResource(R.string.components_delete_area_itself))
+        is DeletionImpact.OfLifeArea ->
+            add(Consequence(stringResource(R.string.components_delete_area_itself)))
     }
 }
 
@@ -206,19 +261,24 @@ private fun goesLines(impact: DeletionImpact): List<String> = buildList {
  * **What stays** — often empty, and then the block is absent rather than reassuring.
  *
  * An empty *"what stays"* heading over nothing would be the worst of both: it implies something
- * survives and names none of it. A goal with no tasks filed under it simply has no second
- * block, and the dialog is shorter.
+ * survives and names none of it. A goal with no tasks filed under it simply has no second block,
+ * and the dialog is shorter.
+ *
+ * Nothing here is ever subordinate: every line is a whole thing that survives, and there is no
+ * second count for one of them to be a slice of.
  */
 @Composable
-private fun staysLines(impact: DeletionImpact): List<String> = buildList {
+private fun staysLines(impact: DeletionImpact): List<Consequence> = buildList {
     when (impact) {
         is DeletionImpact.OfGoal ->
             if (impact.unfiledTaskCount > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_goal_tasks_kept,
-                        impact.unfiledTaskCount,
-                        "${impact.unfiledTaskCount}".bidiIsolated(),
+                    Consequence(
+                        pluralStringResource(
+                            R.plurals.components_delete_goal_tasks_kept,
+                            impact.unfiledTaskCount,
+                            "${impact.unfiledTaskCount}".bidiIsolated(),
+                        ),
                     ),
                 )
             }
@@ -230,10 +290,12 @@ private fun staysLines(impact: DeletionImpact): List<String> = buildList {
         is DeletionImpact.OfLifeArea ->
             if (impact.unfiledGoalCount > 0) {
                 add(
-                    pluralStringResource(
-                        R.plurals.components_delete_area_goals_kept,
-                        impact.unfiledGoalCount,
-                        "${impact.unfiledGoalCount}".bidiIsolated(),
+                    Consequence(
+                        pluralStringResource(
+                            R.plurals.components_delete_area_goals_kept,
+                            impact.unfiledGoalCount,
+                            "${impact.unfiledGoalCount}".bidiIsolated(),
+                        ),
                     ),
                 )
             }
