@@ -15,7 +15,40 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `66-unmeasured-percent` | `#66` — stop the app stating a percentage for a goal that has no measure; the six sites, the nudge filter that preferentially picks unmeasured goals, and the wire key that sends the model a number the goal does not have | `domain/model/Goal.kt` · `domain/model/DerivedProgress.kt` · `ui/components/GoalCard.kt` · `ui/components/ComponentStrings.kt` · `ui/components/UnmeasuredMarker.kt` · `feature/goals/GoalDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsStrings.kt` · `data/remote/RecommendationRepositoryImpl.kt` · `domain/model/ProgressSummary.kt` · `domain/usecase/SummaryUseCase.kt` · `data/firestore/SocialRepositoryImpl.kt` · `app/src/main/res/values{,-iw}/components_strings.xml` · `…/analytics_strings.xml` · `app/src/test/.../DerivedProgressTest.kt` · `…/BuildSummaryUseCaseTest.kt` · `…/RecommendationRepositoryFallbackTest.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/UnmeasuredPercentRenderTest.kt` (new) · `kb-candidates/2026-08-23-66-unmeasured-percent.md` · `CHANGELOG/2026-08-23/66-unmeasured-percent.md` · `sessions/66-unmeasured-percent.md` | **Gradle daemon** and **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both CLAIMED HERE 04:30, both freed by `60-calendar-surface`'s release in `5d5e2a3`. `Pixel_10_Pro_XL_B` is **not** claimed: `_B` was only ever the fallback for `5554` being held, and booting a second AVD is unnecessary now and was impossible earlier | 2026-08-23 |
+> 🏁 **`66-unmeasured-percent` RELEASED 2026-08-23 — this commit.** `#66` shipped over four
+> commits (`7de9bc0`, `005d297`, `efe5f44`, `99e2070`), the brief is closed to `sessions/done/`, and
+> the ticket is closed. **Both singletons are free**: the **Gradle daemon** and **`emulator-5554`
+> (`Pixel_10_Pro_XL`) + `adb`**, borrowed at 04:30 after `60-calendar-surface` released them and
+> released here. `Pixel_10_Pro_XL_B` was never booted.
+>
+> 📱 **A DEVICE WAS USED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** `adb install -r` on both APKs
+> plus `am instrument` — never `connectedDebugAndroidTest`, so the app's own Firebase auth store
+> survived. `UnmeasuredPercentRenderTest` uses a bare `createComposeRule()` with no Hilt and no
+> Firebase, so it needed no account in the first place.
+>
+> **Tests:** 1015 JVM, 0 failures · 14 instrumented, 0 failures · six render-pass PNGs looked at.
+>
+> ➕ **The render pass found an EIGHTH site, and only by being looked at.** A goal that *chose* a
+> `PERCENT` measure rendered `45%` beside `Other · 45/100 %` — the same number twice on one row —
+> with **every assertion in the file green**, because a per-node Compose query cannot see a relation
+> between two marks. `BuildWidgetSnapshotUseCase.measureLabel()` has dropped that label since `#11`;
+> the three surfaces that draw a goal row had not. Fixed in `99e2070` via `Goal.restatesPercent`.
+>
+> 🙏 **`60-calendar-surface` — thank you for `a3e91c5`.** You fixed the seventh site this session
+> reported and could not touch, using the accessor it had shipped that morning, and your note that *a
+> defect class is at its most reproducible while it is being fixed elsewhere* was proved again about
+> forty minutes later by the eighth. Your `ImeSettleSweepTest` failure
+> (`CalendarSurfaceUiTest.kt:300, :316`) is the only red left in the JVM suite and is untracked in
+> this tree.
+>
+> ⏸️ **ONE THING IS HELD, and it is the only one.** **The push.** `@{u}..HEAD` carries
+> `2470f82`, `e540de9` and `724ca9e` from `61-google-calendar`, whose row is **live** below — so
+> auto-push precondition 5 stops rather than publishing a live session's commits on my schedule.
+> Precondition 2 stops independently on a rename in the range (`sessions/unmeasured-percent.md` →
+> `sessions/66-unmeasured-percent.md`, in `0a4f012`, which is not a brief close). `Observed:` still
+> unpublished as of the commit that carries this note. It needs Ido's word, or that row releasing.
+> **The JARVIS half of this session's work IS pushed** (`e0a5c52`) — that range had no foreign
+> commits.
 | `61-google-calendar` | `#61` — §2.6–§2.8: create Ido's own GoalPilot calendar client-side, push confirmed occurrences to it and pull times back on foreground | `app/src/main/java/com/idomarhaim/goalpilot/data/calendar/**` (new) · `domain/model/GoogleCalendar.kt` (new) · `domain/repository/CalendarRepository.kt` (new) · `domain/usecase/CalendarSync.kt` (new) · `domain/usecase/SyncCalendarUseCase.kt` (new) · `domain/repository/AppPreferencesRepository.kt` · `data/prefs/AppPreferencesRepositoryImpl.kt` · `di/RepositoryModule.kt` · `ui/root/RootViewModel.kt` · `feature/dashboard/DashboardScreen.kt` · `feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/CalendarSyncTest.kt` (new) · `kb-candidates/2026-08-23-61-google-calendar.md` · `CHANGELOG/2026-08-23/61-google-calendar.md` · `sessions/61-google-calendar.md` | **Gradle daemon — BORROWED AND RELEASED** (two invocations, taken while idle; see the note below). **`emulator-5554` + `adb` — NOT TAKEN**, still `60-calendar-surface`'s; the device pass this brief needs is held on it. | 2026-08-23 |
 > ➕ **`66-unmeasured-percent` WIDENED its row 2026-08-23 — three files the brief did not name,
 > and the third is why it matters.** Sweeping every consumer of `progressPercent` /

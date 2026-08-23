@@ -1,6 +1,6 @@
 # 66-unmeasured-percent — an unmeasured goal states no number, and one of the numbers was being published
 
-> **Summary:** [`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66) — a goal with `measure == null` no longer states a percentage anywhere. Of the brief's six sites, **five were real, one was already correct**, and a sweep of `progressFraction`'s consumers found **three more the brief did not name** — including `ProgressSummary.averageProgress`, which `SocialRepositoryImpl.shareSummary` rounds into the **text of a shared post**, so the fiction was leaving the device. The percentage is replaced by the honest count the `C22` prototype draws (*no number — 11 entries logged*), and the bar and the ring go with the digit. **1012 JVM unit tests, 1 failure — and the failure is a live sibling's untracked file** (`ImeSettleSweepTest` naming `CalendarSurfaceUiTest.kt:300,316`, owned by `60-calendar-surface`); all 98 tests across the ten suites this session touched pass, 16 of them new. Instrumented layer written and **not run** — the AVD is held.
+> **Summary (revised 04:58 — the device pass ran, and found an eighth site):** [`#66`](https://github.com/idomarhaim/Android_Final_Project/issues/66) — a goal with `measure == null` no longer states a percentage anywhere. Of the brief's six sites, **five were real, one was already correct**, and a sweep of `progressFraction`'s consumers found **three more the brief did not name** — including `ProgressSummary.averageProgress`, which `SocialRepositoryImpl.shareSummary` rounds into the **text of a shared post**, so the fiction was leaving the device. The percentage is replaced by the honest count the `C22` prototype draws (*no number — 11 entries logged*), and the bar and the ring go with the digit. **1015 JVM unit tests, 0 failures** and **14 instrumented tests, 0 failures** on `emulator-5554`, with **six render-pass PNGs pulled and looked at** — which is how the eighth site was found at all.
 
 **Date:** 2026-08-23 · **Session:** `66-unmeasured-percent` · **Mode:** AUTO · **Issue:** [#66](https://github.com/idomarhaim/Android_Final_Project/issues/66)
 
@@ -117,7 +117,11 @@ quietly disagrees — the defect this ticket removes, reintroduced by the fix.
 - **`feature/calendar/CalendarBuilder.kt:182`** — `60-calendar-surface`'s, and brand new. It filters
   `it.isArchived || it.isComplete`, and `isComplete` is `progressFraction >= 1f`, so an unmeasured
   goal whose entries happen to sum past 100 reads *complete* against a target nobody set and would
-  vanish from the calendar. **Reported on the board, not edited.**
+  vanish from the calendar. **Reported on the board, not edited** — and **fixed by that session in
+  `a3e91c5`**, using the `isUnmeasured` accessor this ticket shipped that morning. Their commit
+  message calls it *"`#66`'s seventh site"* and makes the observation this session's own eighth site
+  then repeated: **a defect class is at its most reproducible while it is being fixed elsewhere**,
+  because the sweep that enumerated it cannot see code that does not exist yet.
 - **`Goal.targetValue`'s `100.0` default** — the brief's own out-of-scope, and correctly: changing
   it reaches Firestore and every existing document (§7.1). Everything here branches on
   `measure == null`, which needs no migration.
@@ -142,8 +146,8 @@ document. `Untested:` no such document is known to exist. Worth its own ticket i
 
 | Layer | Result |
 |---|---|
-| **JVM unit** | **1012 completed, 1 failed** (`:app:testDebugUnitTest --rerun`, 2 m 44 s). The failure is **not this session's** — see below. All **98** tests across the ten suites this session touched pass; **16** are new. |
-| **Instrumented / UI** | **WRITTEN, NOT RUN.** `UnmeasuredPercentRenderTest` — 5 assertions + 2 render-pass captures, light and dark. The AVD is held by a live row; see *Held* below. |
+| **JVM unit** | **1015 completed, 0 failed** at 04:56 (the 1-failure run at 04:00 is below, and the failure was a sibling's). Earlier: **1012 completed, 1 failed** (`:app:testDebugUnitTest --rerun`, 2 m 44 s). The failure is **not this session's** — see below. All **98** tests across the ten suites this session touched pass; **16** are new. |
+| **Instrumented / UI** | **14 tests, 0 failures** on `emulator-5554` (`adb install -r` + `am instrument`, 43.7 s). 8 assertions + **6 render-pass captures** — list row, goal header ×2, life-area row, analytics bar — all in **light and dark**, all pulled and looked at. Two of them failed first and correctly; see the revision below. |
 | **Endpoints / functions** | No change. `functions/src/index.ts` puts the goals payload into the prompt with a bare `JSON.stringify`, so omitting `progressPercent` client-side needs no deploy and no function edit. |
 | **Firestore rules** | No change. Nothing here reads or writes a new path, and `loggedEntryCount` is derived — `Goal.toDto()` does not write it, exactly as it does not write `currentValue`. |
 | **Database** | No change; no migration. That is the point of branching on `measure == null`. |
@@ -182,14 +186,85 @@ asserts a whole-tree count of `"%"` against a measured control in the same tree,
 vacuously in either direction. (`substring = true` alone is not enough either: `"40%"` **contains**
 `"0%"`, so the control value is `55` and the digits are load-bearing.)
 
+---
+
+# Revision, 04:58 — the pass ran, and looking at it was not a formality
+
+`60-calendar-surface` released in `5d5e2a3`, freeing `emulator-5554` and the Gradle daemon, and
+`a3e91c5` fixed the seventh site this session had reported on the board. Both of the things held at
+04:12 stopped being held, so the render pass ran. It did three things.
+
+## 1 · It passed
+
+14 instrumented tests green, via `adb install -r` + `am instrument` — never
+`connectedDebugAndroidTest`. **No sign-in was needed and none was destroyed.** Six PNGs: the list
+row, the goal header (unmeasured and control), the life-area row and the analytics bar, **light and
+dark**, which is the whole of the brief's Exit for this layer.
+
+Before installing, the test APK reported `UP-TO-DATE` — the `look-at-your-own-output.md` §4c-ii
+trap, since a sibling had run the same task. It was verified rather than trusted: the class was
+probed for **inside the built APK's dex**, including a method name that exists only in the rewritten
+version, and again after each rebuild.
+
+## 2 · It found an EIGHTH site, and only by being looked at
+
+Frame 4 rendered `Renovate the flat  45%` with `Other • 45/100 %` underneath — **the same number
+twice on one row** — while **every assertion in the file passed**. A per-node Compose query cannot
+see a relation between two marks, which is §4e's finding arriving on this ticket.
+
+`BuildWidgetSnapshotUseCase.measureLabel()` has dropped exactly that label since `#11`:
+
+> a goal that genuinely chose `PERCENT` still belongs on the tile, but its label would restate the
+> ring digit for digit
+
+The **tile** had the rule. The three surfaces that draw a goal row did not — which is this ticket's
+own opening sentence one step further on: *the reasoning is settled; it was applied at one site and
+not the others.* `Goal.restatesPercent` now carries it, and `GoalCard`, `AreaGoalCard` and
+`GoalHeaderCard` all **suppress** the label.
+
+⚠️ **Suppress, not reformat, and the reason is that the pair can genuinely disagree.**
+`progressPercent` is `currentValue / targetValue`, so a `PERCENT` goal with a target of `50` and
+`45` logged renders **`90%`** beside a label reading **`45/50 %`**. Dropping the label leaves the one
+number the goal's own arithmetic produced. Asserted both ways in `UnmeasuredPercentTest`.
+
+## 3 · The capture helper's own floor was wrong, and its fix fired on first run
+
+`file.length()`, `bitmap.width` and `bitmap.height` all describe the **container**;
+`look-at-your-own-output.md` §4g records this exact helper shape passing over a capture missing two
+of the five states it existed to show. `capture()` now takes a `lastFrameProbe` and asserts it
+**displayed** before capturing — and on its first execution it **failed twice, correctly**: two goal
+headers on one page put the control's ratio below the fold, so the PNG would not have contained it.
+Split to one header per capture.
+
+**Its second failure was mine, and is the more useful one.** The probe was `40/100`, copied from the
+list row — the **header** renders `"$current / $target $unit"`, i.e. `40 / 100`, with spaces. The run
+said *"component is not displayed"* about a card that was rendering perfectly. Same family as §5.4:
+recompute the string the consumer sees, never the one you remember writing. Two different formats
+for one ratio, in one ticket, is itself worth a later look.
+
+## What that cost, and what it bought
+
+Three composables moved from `private` to `internal` (`GoalHeaderCard`, `AreaGoalCard`,
+`ProgressByGoalCard`). The alternatives were driving the real screens — Hilt, Firebase, seeded data,
+a different test — or rebuilding approximations in the test file, which would **exhibit something
+that is not the thing under test**. `GoalDetailScreen.kt` already exposes `AddTaskRow` this way.
+
+## The widget needs no look, and that is a finding rather than a skip
+
+The brief says *"widgets need their own look (site 5) — a snapshot change that renders off-app, so
+check the home screen and not only the test."* There **is** no snapshot change: site 5 was a false
+positive, `BuildWidgetSnapshotUseCase` filters unmeasured goals out before building a `WidgetGoal`,
+and this session's only edit to that file is none. Nothing about the home screen moved, so there is
+nothing there to look at.
+
 ## ⏸️ Held
 
-- **The instrumented run and the render pass.** The Gradle daemon was borrowed and released; the
-  AVD was not touched. `#66` therefore **stays open** with a comment, and this brief stays `active`
-  until the pass runs. No sign-in is needed for it — `UnmeasuredPercentRenderTest` uses a bare
-  `createComposeRule()` with no Hilt and no Firebase — and when it runs it takes the
-  `adb install -r` + `am instrument` path, never `connectedDebugAndroidTest`.
-- **The push**, if the sibling rows are still live at push time. See the board.
+- ~~**The instrumented run and the render pass.**~~ **RUN at 04:45.** 14 tests, 0 failures, six PNGs
+  looked at. `#66` is closed.
+- **The push** — still held. `61-google-calendar`'s row is live and its commits are in
+  `@{u}..HEAD`, so auto-push precondition 5 stops. Precondition 2 stops independently on a rename in
+  the range (`sessions/unmeasured-percent.md` → `sessions/66-unmeasured-percent.md`, in `0a4f012`,
+  which is not a brief close). It needs Ido's word, or that row releasing.
 
 ## Files
 

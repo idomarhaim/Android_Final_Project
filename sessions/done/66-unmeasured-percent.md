@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
-status: active
+status: done
 issue: 66
 owns:
   # Corrected at /kickoff, 2026-08-23 -- see "What the owns list got wrong" below.
@@ -27,15 +27,25 @@ owns:
   #   domain/usecase/BuildWidgetSnapshotUseCase.kt -- site 5 is a FALSE POSITIVE.
 created: 2026-08-23
 result: |
-  Code half SHIPPED in 7de9bc0, 2026-08-23. 1012 JVM unit tests, 1 failure, and the failure is
-  60-calendar-surface's untracked CalendarSurfaceUiTest.kt -- all 98 tests across the ten suites
-  this session touched pass, 16 of them new.
-  STILL OWED, and it is why status is still `active` and #66 is still open:
-    - the instrumented run + render pass (UnmeasuredPercentRenderTest is WRITTEN and has NEVER
-      executed). Blocked twice over: emulator-5554 is 60-calendar-surface's, and a second AVD
-      cannot boot -- 408 MB free of 16 GB, observed 2026-08-23 04:02. No sign-in is needed for
-      it; use `adb install -r` + `am instrument`, never connectedDebugAndroidTest.
-    - the push (auto-push preconditions 5 and 2 both stop; see SESSIONS.md).
+  DONE. Shipped over four commits, 2026-08-23:
+    7de9bc0  the code half -- eight sites, incl. three the brief did not name
+    005d297  board + brief, when the device pass was still blocked
+    efe5f44  KB candidates drained (3 -> C:\Dev\JARVIS\kb, e0a5c52, pushed)
+    99e2070  the render pass RUNS, and found an EIGHTH site by being looked at
+  Tests: 1015 JVM, 0 failures. 14 instrumented on emulator-5554, 0 failures,
+  six render-pass PNGs pulled and looked at (list row, goal header x2,
+  life-area row, analytics bar -- light and dark). `adb install -r` +
+  `am instrument`; no sign-in was needed and none was destroyed.
+  The brief's Exit is met in full. The widget half of it needs no look:
+  site 5 was a false positive and nothing about the widget changed.
+  Corrections to this brief, written into it above: site 5 is a FALSE
+  POSITIVE; three sites it missed; the marker was never on the life-area row.
+  A SEVENTH site (CalendarBuilder) was reported on the board and fixed by
+  `60-calendar-surface` in a3e91c5. The EIGHTH (a chosen PERCENT measure
+  restating its own number) was found by looking at the render.
+  STILL OWED, and it is not this brief's: the push. `61-google-calendar`'s
+  row is live and its commits are in `@{u}..HEAD`, so auto-push precondition
+  5 stops; precondition 2 stops independently on a rename in the range.
 ---
 
 # An unmeasured goal still renders a percentage — on six surfaces, and the app says one out loud
