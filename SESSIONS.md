@@ -15,6 +15,12 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `docs-repair` | Bring all six files under `docs/` **and** `README.md` up to the system as it is, per Ido 2026-08-24. Test counts deleted rather than updated (his call); OPERATIONS §3 decided **by delegation** and recorded as mine | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/PRODUCT_v0.3.md` (status box only), `docs/SETUP.md`, `docs/RELEASING.md`, `README.md`, `CHANGELOG/2026-08-24/docs-repair.md`, `kb-candidates/2026-08-24-docs-repair.md` | **Gradle daemon NEEDED but held by `s25-layout-and-tour`** — verifying with a no-Gradle probe meanwhile | 2026-08-24 |
+> ⚠️ **`s25-layout-and-tour` IS EDITING THE SUBSYSTEMS THIS SESSION DOCUMENTS** — `feature/settings/`,
+> `feature/dashboard/`, `ui/tutorial/`. Nothing of theirs is touched, and the consequence is
+> editorial: the new sections describe **what each subsystem owns**, not the current arrangement of
+> cards and tour steps, because that arrangement is being changed as this is written.
+| `s25-layout-and-tour` | Ido's four defects from his S25 Ultra: the starved row on the success/failure run, the `#` marker nobody can read, the sync cards moving Home -> Settings, and the tour that points at a control it will not let you press. Then ship to his phone + rachil751@gmail.com. | `app/src/main/java/com/idomarhaim/goalpilot/ui/components/SuccessFailureRun.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/components/UnmeasuredMarker.kt`, `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/`, `app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/settings/`, `app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalDetailScreen.kt`, `app/src/main/res/values/`, `app/src/test/`, `app/src/androidTest/`, `app/release-notes.txt`, `app/build.gradle.kts`, `CHANGELOG/2026-08-24/s25-layout-and-tour.md`, `kb-candidates/2026-08-24-s25-layout-and-tour.md` | **emulator-5554**, Gradle daemon | 2026-08-24 |
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
@@ -4853,6 +4859,24 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `tour-refresh` (ingest) — released 2026-08-24, this commit
+
+**No row was taken** — one commit into a free board, which is the ceremony rule's mechanical-sweep
+shape: a claim created and cleared inside one commit protects nothing. The judgment half happened on
+the **JARVIS** board, where the row was claimed, held for Ido's answer, and released (`51a1d5f`).
+
+Entries 1 and 2 of `kb-candidates/2026-08-24-tour-refresh.md` ingested; the file is **fully drained
+and deleted** in this commit — the one deletion the derivable-decision rule permits without asking.
+`kb-candidates/2026-08-24-docs-currency-guard.md` is another session's and is untouched.
+
+⚠️ **One edit superseded a standing KB claim** — always-ask in both modes; asked, and Ido delegated
+the choice back. `copied-options-are-a-silent-no-op.md` §5a said a path-valued property resolves
+against the app module. It resolves against the **repo root**, and the section is *about* that class
+of mistake. Also new: `look-at-your-own-output.md` **§4r** and
+`scanned-files-are-not-task-inputs.md` **§4b**. `Check-KbLinks` CLEAN, 118 pages.
+
+**No singleton held.** No build, no device.
 
 ### 🏁 `docs-currency-guard` — released 2026-08-24, this commit
 

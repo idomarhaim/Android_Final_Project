@@ -288,3 +288,38 @@ live row is **stop and ask**, because that session is mid-unit and un-publishing
 Everything this session owns is **committed** — `243c14b`, `eefb88a`, `4ddbced` — and the earlier
 part of the work is already on `origin/main` through `37794f5`. Only `4ddbced` (this KB
 reconciliation) and the sibling's claim are waiting.
+
+---
+
+## 📥 The candidate file is drained, and the ingest changed shape on contact
+
+Entries 1 and 2 were still `ready` after the follow-on took entry 3. Ingested 2026-08-24 into
+`C:\Dev\JARVIS` (`51a1d5f`), and **the candidate's own proposal was wrong about where they go** —
+which is the derivable-decision rule's *search for the concept, not the shape of the answer* doing
+exactly what it exists for.
+
+The candidate proposed *"a new page, or a section under `look-at-your-own-output.md`"*. Grepping for
+the **concepts** first found that both entries already had homes, and that entry 1 held **two
+separable claims** aimed at different readers. One candidate entry became three edits and no new
+page:
+
+- 📥 **`kb/dev/copied-options-are-a-silent-no-op.md` §5a** — corrected in place. ⚠️ **This
+  supersedes a standing claim**, which is always-ask in both modes: I asked, and Ido delegated the
+  choice back. That section's own code block said `releaseNotesFile` resolves against the **app
+  module**; it resolves against the **repo root**. Its `Inferred:` claim that two releases shipped
+  testers placeholder text is **refuted** by the same measurement.
+- 📥 **`kb/dev/look-at-your-own-output.md` §4r** *(new)* — *a guard written from the same belief as
+  the thing it guards agrees with itself, not with reality.*
+- 📥 **`kb/dev/scanned-files-are-not-task-inputs.md` §4b** *(new)* — the four-state proof is silent
+  about the input you never declared; here it was the build script holding the value under test.
+
+`Check-KbLinks` **CLEAN, 118 pages.**
+
+**The candidate file is deleted, not rewritten** — all three entries are promoted, which is the one
+deletion the derivable-decision rule permits without asking, in the same commit as the promotion.
+`kb-candidates/2026-08-24-docs-currency-guard.md` is a **different session's** file and is left
+alone.
+
+**Worth keeping: the false rule had four copies and every one read as corroboration of the last** —
+a code comment, a test KDoc, `docs/RELEASING.md`, and a KB page other projects read. It was killed
+by running the route once. Nothing else would have.
