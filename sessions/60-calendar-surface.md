@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 issue: 60
 owns:
   # A new feature package plus its route. The Occurrence model is READ, not written --
