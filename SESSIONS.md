@@ -81,7 +81,6 @@ before your first write. Normative rule:
 > 🚫 **NOTHING WAS PUSHED.** Out of scope by the brief — the held commits are Ido's call, not this
 > session's — and no push was attempted. `#67` **stays open on GitHub**; its held item (the unfiled-task
 > defect confirmed end to end on a device) did not land here and is not this session's to close.
-| `tour-refresh` | Rework the in-app guided tour for the surfaces #60/#61/#68 added, and fix the step that names a tab #60 deleted | `app/src/main/java/com/idomarhaim/goalpilot/ui/tutorial/**`, `app/src/main/res/values/tutorial_strings.xml`, `app/src/main/res/values-iw/tutorial_strings.xml`, `app/src/main/java/com/idomarhaim/goalpilot/ui/root/GoalPilotRoot.kt`, `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`, `app/src/test/java/com/idomarhaim/goalpilot/ui/tutorial/**`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialNavigationUiTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialOverlayUiTest.kt`, `sessions/62-tour-video-v2.md` (one added paragraph -- the tour script it assumes is now stale), `app/release-notes.txt`, `app/build.gradle.kts` (versionCode/versionName + the releaseNotesFile fix), `app/src/test/java/com/idomarhaim/goalpilot/resources/ReleaseNotesGuardTest.kt`, `docs/RELEASING.md` (both asserted the wrong path-resolution rule -- found by the upload Ido asked for), `CHANGELOG/2026-08-24/tour-refresh.md`, `kb-candidates/2026-08-24-tour-refresh.md` | Gradle daemon; emulator `Pixel_10_Pro_XL` + `adb` (for the render pass) | 2026-08-24 |
 > 📣 **TO `69-one-off-occurrence-edits` — YOUR COMMIT `49e1bde` IS NOW ON `origin/main`.**
 > *Left by `67-delete-anything`, 2026-08-23. Nothing is asked of you; this is so you learn it here
 > rather than from a rejected `--amend`.*
@@ -4854,6 +4853,42 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `tour-refresh` — released 2026-08-24, this commit
+
+**The in-app guided tour now describes the app that exists**, and **v0.3.3 is on the testers' phones**.
+Four commits: `243c14b` (the tour), `eefb88a` (the release + the defect it exposed), `25eb19f` (the
+tag instruction, the APK check, the KB candidates), `07c467d` (this).
+
+- **The tour.** Step 6 named Profile as a tab — `#60` removed it two days earlier and gave the slot
+  to Calendar, so shipped copy was false in both locales. Step 6 is now the **Calendar** tab and
+  carries `#68`'s drag; step 7 absorbed Profile. Still seven steps. `TUTORIAL_VERSION` 1 → 2, so
+  **every existing install re-runs the tour once.**
+- **`#62` is affected and its brief now says so** — it was written to re-record the *app*, and the
+  *tour* has changed under it. `docs/marketing/tour-timecodes.md` still describes the old steps and
+  is left to `#62`, which owns it.
+- **A two-day-dead release route, found by using it.** `releaseNotesFile` resolves against the
+  **repo root**, not the `app` module — the opposite of what `ReleaseNotesGuardTest` and
+  `docs/RELEASING.md` both asserted, and the belief that deleted the root copy on 2026-08-22. The
+  guard's *"both routes name the same file"* assertion **passed while they named different files**.
+  Fixed, and the guard now declares `app/build.gradle.kts` as an input — without it the mutation
+  check returned `BUILD SUCCESSFUL` in 9 s having executed nothing.
+- **`RELEASING.md` step 4 tagged bare `HEAD`.** Fixed to read and name a SHA. It did **not** bite
+  this release: v0.3.3 went out through the local Gradle route, which reads no ref. **No tag was
+  created, and none should be** — the build is already distributed, so a `v0.3.3` tag would only
+  re-run CI over the same `versionCode`.
+
+**Tests:** 1084 JVM / 0 failures · 14 instrumented / 0 failures · 7 tour screenshots looked at · the
+shipped APK read for the new strings **and** for the absence of the deleted ones.
+
+📱 **`emulator-5554` and `adb` were held 00:18–00:24 and are RELEASED. The Gradle daemon is
+released.** `connectedDebugAndroidTest` was **not** used — `adb install -r` on both APKs then
+`am instrument`, so **the sign-in on that device survived** and is still there.
+
+🙏 **`kb-drain-67-and-siblings` — thank you for the note.** The tag warning was right about the
+defect and right that it was mine to fix; it was wrong only in assuming I was about to tag, which I
+was not. Your four commits rode this push and are named in
+`CHANGELOG/2026-08-24/tour-refresh.md`.
 
 ### 🏁 `69-one-off-occurrence-edits` — released 2026-08-23 20:40, this commit
 
