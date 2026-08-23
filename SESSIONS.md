@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `62-kickoff-refresh` | Bring [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) and its kickoff brief up to date before Ido opens the #62 session -- the app has moved on since both were written, and the OpenArt model policy now has to cover three components (video, voice, image) and report which model was used | `sessions/62-tour-video-v2.md` (**CONTESTED -- `tour-refresh` holds it for one committed paragraph; messaged, waiting**), GitHub issue `#62` body (not a path), `CHANGELOG/2026-08-24/62-kickoff-refresh.md`, `kb-candidates/2026-08-24-62-kickoff-refresh.md` | none -- no build, no device | 2026-08-24 |
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
 > `C:\Dev\JARVIS` (`9753db5`), `Check-KbLinks` **CLEAN** (117 pages). **No singleton held**; no
