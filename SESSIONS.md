@@ -4415,6 +4415,26 @@ Currently unclaimed and ready:
 
 ## 📓 Recently released
 
+### 🏁 `65-measure-proposal` (follow-up) — released 2026-08-23, this commit
+
+Ido asked whether `#65`'s render-pass defect needed its own kickoff. **It does**, and answering
+corrected the report twice: **`#11` is CLOSED**, so the `next:` line pointed at a finished ticket and
+the finding had no home; and it is **six sites**, two of them worse than a stray number.
+
+- `BuildWidgetSnapshotUseCase.measureLabel()` is **already** gated on `hasMeasure`, with a KDoc making
+  exactly this argument. The reasoning is settled in this codebase and was applied at one site only.
+- `RecommendationRepositoryImpl`'s nudge filter is `progressFraction < 0.34f`, and an unmeasured goal
+  sits at exactly `0.0` — so the offline feed **preferentially picks goals with no number** and quotes
+  their percentage.
+
+**Written:** `sessions/unmeasured-percent.md` — brief and ticket body in one file. **The issue is NOT
+posted** (`gh issue create` is outward and stays behind Ido's word), so `issue:` reads `unassigned`
+rather than guessing a number. The one design call — what a row shows where the percentage was — is
+left open, pointing at the `C22` prototype's own drawn answer.
+
+**No code changed. Singletons: none** — prose only, no build, no device, no emulator.
+
+
 > 🏁 **`59-health-metric-mismatch` RELEASED 2026-08-23 — this commit.** `#59` closed: the matcher
 > fix shipped in `a014e36` and **the data repair was run too**, on Ido's explicit approval. Singletons:
 > none held — no AVD, no adb, no `connectedDebugAndroidTest`, and the Gradle daemon was used only

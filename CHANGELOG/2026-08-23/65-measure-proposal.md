@@ -159,3 +159,42 @@ which #65's brief puts explicitly out of scope (`#11` / §1.3). Filed here rathe
 **`#65` is not closed on GitHub.** A `gh issue close` is an outward write, and this project's
 `CLAUDE.md` keeps those behind Ido's word regardless of auto mode. The work is complete and pushed;
 the ticket needs one command.
+
+---
+
+## Follow-up pass, same day — the defect got a brief, and the report of it was wrong twice
+
+Ido asked whether the defect needed its own kickoff. **It does**, and answering it corrected two
+things in the report above.
+
+**1 · `#11` is CLOSED, so "next: on #11" pointed the fix at a finished ticket.** Its brief is already
+in `sessions/done/11-fill-buttons.md`. Of the seven open issues (`#51`, `#59`–`#62`, `#64`, `#65`),
+none covers this. The finding had no home at all, which is exactly the state a `next:` line is
+supposed to rule out.
+
+**2 · It is six sites, not one, and two of them are worse than "a stray number".** Each was verified
+by reading it rather than by grep, and every cited line number was then re-checked mechanically
+against the file:
+
+- `BuildWidgetSnapshotUseCase` is **half-fixed** — `measureLabel()` already gates on `hasMeasure`,
+  with a KDoc making precisely this argument (*"trains the eye to read two numbers as two facts"*),
+  while `percent` is passed unconditionally one line down. So the reasoning is **already settled in
+  this codebase** and was applied at one site and not the rest. That is the strongest single argument
+  in the new brief and it is not mine.
+- `RecommendationRepositoryImpl` **speaks it**, and its filter is
+  `goals.filter { it.progressFraction < 0.34f }`. An unmeasured goal reads `currentValue / 100.0` and
+  a goal nobody has logged against sits at **exactly `0.0`** — so the offline nudge feed
+  **preferentially selects goals that have no number** and then quotes their percentage.
+  `Observed:` by reading the filter and `Goal.progressFraction`. `Untested:` on a live account.
+
+**Written:** `sessions/unmeasured-percent.md`, carrying the brief and the ticket body in one file.
+The ticket is **not posted** — `gh issue create` is an outward write and stays behind Ido's word — so
+the brief's `issue:` field says `unassigned` rather than guessing a number, and the body sits below a
+`---` ready to paste.
+
+**The one design call is left open on purpose:** what a row shows where the percentage was. The `C22`
+prototype's life-area frame already draws one answer (*"no number — 11 sessions logged"*), which is
+why the brief points at it rather than proposing a fourth option.
+
+**No code changed in this pass.** Prose only: no build, no device, no emulator.
+
