@@ -331,7 +331,13 @@ data class CalendarEntry(
      * Google (`SyncCalendarUseCase` line 403) — and condition 2 already excludes the first, so
      * what this third condition actually buys is **the Google-linked one-off**. Fixing it properly
      * means widening that parameter to `LocalDate?`, which is a change to `ScheduleEdits`'
-     * semantics and is out of `#68`'s scope by name.
+     * semantics and was out of `#68`'s scope by name.
+     *
+     * ✅ **It has a ticket:
+     * [#69](https://github.com/idomarhaim/Android_Final_Project/issues/69).** When that lands, this
+     * third condition comes off together with `DragToMoveTest.a one-off that already has a
+     * document…`, and [MoveScope.seriesDateOf]'s KDoc — which explains why its `?: date` fallback
+     * is safe *because* of this guard — needs re-reading rather than left standing.
      */
     val isEditable: Boolean
         get() = isTickable && !isSettled && (seriesDate != null || occurrenceId == null)

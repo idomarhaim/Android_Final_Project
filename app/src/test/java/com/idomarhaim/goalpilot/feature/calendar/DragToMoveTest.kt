@@ -273,7 +273,8 @@ class DragToMoveTest {
         // `ScheduleEdits.apply` looks an instance up by a NON-NULL seriesDate, and a one-off's
         // document carries `seriesDate = null` -- so that lookup can never find it and both scopes
         // go wrong silently (see `CalendarEntry.isEditable`). Guarded here so the day the
-        // parameter widens, this test is what says the guard may come off.
+        // parameter widens, this test is what says the guard may come off -- and that day is
+        // #69 (github.com/idomarhaim/Android_Final_Project/issues/69), which owns the widening.
         val linked = entry(isRepeating = false, occurrenceId = "occ-1", seriesDate = null)
 
         assertThat(linked.isEditable).isFalse()

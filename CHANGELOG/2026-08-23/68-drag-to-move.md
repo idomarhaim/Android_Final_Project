@@ -88,9 +88,15 @@ is what stops the app reaching it.
 **Not fixed here, and deliberately.** The fix is widening that parameter to `LocalDate?`, which is a
 change to `ScheduleEdits`' semantics and is out of `#68`'s scope **by name**. The guard is a
 property with the whole argument in its KDoc, and `DragToMoveTest` pins it with a test whose comment
-says it is what allows the guard to come off. **This is worth a ticket** — it is not urgent, because
-nothing in the shipped app can reach it, and it is a live trap for the next person to touch either
-file.
+says it is what allows the guard to come off.
+
+✅ **Filed as [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69)** on Ido's
+instruction, 2026-08-23, after this entry was first written. Both the KDoc and that test now point
+at it, so the forward pointer resolves to something rather than to a sentence — which is the whole
+of `kb/dev/retracting-a-copied-claim.md` §5, the rule that made this ticket correct
+`CalendarModel.kt:157` in the first place. ⚠️ **`#69` the issue is unrelated to
+`sessions/69-verify-dashboard-average.md`**, whose `69-` is a brief sequence number written by
+`66-unmeasured-percent` and which carries no `issue:` field at all.
 
 ## A second §0.4 hole, found by a failing test rather than by reading
 

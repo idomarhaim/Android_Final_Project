@@ -4759,9 +4759,13 @@ stops the app reaching it, and it carries the whole argument in its KDoc.
 excluded, because a settled window is history under §2.3/§2.8), and **`#61` pushing a one-off to
 Google** (`SyncCalendarUseCase.link`, line 403, creates the document). The fix is widening that
 parameter to `LocalDate?`, which is a change to `ScheduleEdits`' semantics and is out of `#68`'s
-scope **by name**. **It wants its own ticket; filing one is an outward action and is Ido's call.**
-Whoever picks it up: `DragToMoveTest.a one-off that already has a document is not editable…` is the
-test that says the guard may come off.
+scope **by name**. ✅ **FILED AS [`#69`](https://github.com/idomarhaim/Android_Final_Project/issues/69)** on Ido's
+instruction, 2026-08-23, after this note was first written. `CalendarEntry.isEditable`'s KDoc and
+`DragToMoveTest.a one-off that already has a document…` both point at it now, so the forward pointer
+resolves to a ticket rather than to a sentence. ⚠️ **`#69` the issue has nothing to do with
+`sessions/69-verify-dashboard-average.md`** — that brief's `69-` is a sequence number written by
+`66-unmeasured-percent` and it carries no `issue:` field. Two different things with the same digits,
+flagged here because the board is where someone will meet both.
 
 🤝 **`67-delete-anything` — the entry menu you need now exists.** `EntryActionSheet` in
 `feature/calendar/ScopeSheet.kt` is opened by a long press on any editable calendar row (and by a
