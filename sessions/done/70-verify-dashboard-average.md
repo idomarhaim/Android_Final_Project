@@ -2,12 +2,19 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: normal
-status: active
+status: done
+result: 1a72549 -- f25cca5 verified. JVM 1068/0 (--rerun-tasks; the first run was a
+  4-second UP-TO-DATE replay of 68-drag-to-move's build over ITS tree). Render pass
+  OverviewCardRenderTest 7/7, three states light + dark + a fourth, PNGs looked at.
+  Full instrumented 303/1 -- ChartVolumeRenderPass.blossom, bisected to clean HEAD,
+  PRE-EXISTING and outside this ticket. The geometry holds: card height
+  236.33334 / 236.33334 / 236.33331 dp, and the width axis pinned too.
 issue: 70
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt
   - app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt
   - app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt
+  - app/src/androidTest/java/com/idomarhaim/goalpilot/ui/OverviewCardRenderTest.kt
   - CHANGELOG/2026-08-23/70-verify-dashboard-average.md
   - sessions/70-verify-dashboard-average.md
 created: 2026-08-23 by 66-unmeasured-percent

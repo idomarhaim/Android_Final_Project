@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `70-verify-dashboard-average` | `#70` — run the verification `f25cca5` could not: JVM suite + a look at the dashboard *Overall progress* card in its three measured/unmeasured states, light and dark | `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` · `CHANGELOG/2026-08-23/70-verify-dashboard-average.md` · `sessions/70-verify-dashboard-average.md` | **Gradle daemon** · **emulator + `adb`** (render pass; `install -r` + `am instrument` only, never `connectedDebugAndroidTest`) | 2026-08-23 |
 > 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
 > dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
 >
@@ -4724,6 +4723,62 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `70-verify-dashboard-average` — released 2026-08-23, this commit
+
+`#70` shipped in `1a72549`. Brief closed to `sessions/done/` with `status: done`. **`#70` is
+CLOSED** — no sibling brief carries `issue: 70`.
+
+🔓 **BOTH SINGLETONS ARE FREE**: the **Gradle daemon** and **`emulator-5554` (`Pixel_10_Pro_XL`)
++ `adb`**. `Pixel_10_Pro_XL_B` was never booted.
+
+📱 **A DEVICE WAS USED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** `adb install -r` on both APKs plus
+`am instrument` — never `connectedDebugAndroidTest`. `OverviewCardRenderTest` uses a bare
+`createComposeRule()` with no Hilt and no Firebase, so it needed no account in the first place.
+
+⚠️ **THE AVD WAS WEDGED AND WAS RECOVERED — after all this ticket's device work was finished.**
+`qemu-system-x86_64` pid 17968 was `Responding: False`, up since 2026-08-22 16:21 with ~142,000 s of
+CPU; `adb devices` still reported it as `device` (adb's cached view) while `dumpsys` hung for 120 s,
+and the emulator window showed a blank white app. Recovered with
+`scriptsun-goalpilot.ps1 -Recover -Avd Pixel_10_Pro_XL -SkipInstall` — **AVD-scoped, never a
+blanket `qemu` kill**, and it does not wipe userdata, so the Firebase sign-in survived. **No result
+in this entry depends on the wedged period:** every run reported here completed and was read before
+it hung.
+
+**Tests:** **1068 JVM, 0 failures** (`--rerun-tasks`) · **303 instrumented, 1 failure** across 44
+classes (**7** of them this ticket's, all green) · **3 render-pass PNGs pulled and looked at**.
+
+⚠️ **THE FIRST JVM RESULT WAS NOT THIS SESSION'S RUN, and it read as a pass.**
+`:app:testDebugUnitTest` returned `BUILD SUCCESSFUL in 4s`, every task `UP-TO-DATE` — Gradle
+replaying `68-drag-to-move`'s build over **its** tree. The 88 result XMLs were all stamped
+**16:40:45**, before this session opened, and held **1068** tests where the brief predicted **1018**.
+So the exact §4p failure `f25cca5` refused to risk *by waiting for the daemon* arrived anyway, one
+step later, wearing a green tick and a flatteringly short duration. Worth knowing for any session
+that inherits a shared tree: **a released daemon does not mean a fresh cache.**
+
+🐞 **ONE INSTRUMENTED TEST IS RED ON `main`, AND IT WAS RED BEFORE THIS SESSION.**
+`ChartVolumeRenderPass.blossom_everyMaterialFlatAndRaised` fails with
+`ComposeTimeoutException: Condition still not satisfied after 2000 ms` inside `captureToImage`'s
+`forceRedraw`. `Observed:` **4 reproductions out of 4** — twice with this session's changes, twice
+after moving the new test out, reverting `DashboardScreen.kt` and rebuilding both APKs from clean
+`HEAD` (15:14:17 and 15:15:17). The sibling method `aurora_` passes every time. `Inferred:` the class
+drives a **paused main clock** (`mainClock.advanceTimeBy`, deliberately, because the charts animate)
+while `captureToImage` calls `forceRedraw`, which waits on a frame callback the paused clock never
+delivers — the class's own KDoc already anticipates the family. `Untested:` that diagnosis.
+**`68-drag-to-move` reported this suite as 296 / 0 earlier the same day**; this session cannot tell
+whether the device state differed or it was genuinely passing then, and did not try — the bisect
+answered the only question in scope. **Not fixed:** well outside `#70`, nobody's claimed path. Worth
+its own ticket.
+
+📌 **A fourth reachable state of the card is reported and not fixed.** `DashboardScreen` renders
+`OverviewCard` unconditionally — the `state.goals.isEmpty()` branch is further down the same
+`LazyColumn` — so an account with **no goals at all** is told *"No goal has a number yet"* beside a
+`0` goal count. Not false; aimed at the wrong problem. Captured as `issue-70-overview-no-goals.png`.
+Re-deciding the wording was explicitly out of this session's scope.
+
+📌 **The brief's expected test count was stale on arrival** — it said 1018, the truth is 1068. A
+predicted count in a brief is read as an **assertion** by the session that runs it, and here it was
+one of the two things that could have made the cached 4-second green look like confirmation.
 
 ### 🏁 `68-drag-to-move` — released 2026-08-23, this commit
 
