@@ -90,6 +90,17 @@ before your first write. Normative rule:
 > schedule. `Observed:` still unpublished as of the commit that carries this note. It needs Ido's
 > word, or those rows releasing.
 >
+> 📥 **KB drained 2026-08-23, cross-repo into `C:\Dev\JARVIS` (`3365980`).** Two of three
+> candidates ingested as **sections on pages that already existed**:
+> `kb/dev/indistinguishable-at-the-boundary.md` **§5c** (*the ambiguity you manufacture* — a bounded
+> query's own edge, the third row of that page's table) and `kb/dev/look-at-your-own-output.md`
+> **§4p** (*the false red*, to §4c-ii's false green — added by `63-occurrences-and-recurrence` from
+> this same repo eight hours earlier). `Check-KbLinks` **CLEAN over 113 pages**; JARVIS row claimed
+> and released in that one commit. ⚠️ **Both candidates proposed the wrong destination** — entry 1
+> asked for a new page and said nothing covered it, and one grep found the identical worked case
+> from 2026-08-10. Entry 3 is `rules/`-destined and **stays held**, so
+> `kb-candidates/2026-08-23-61-google-calendar.md` is **rewritten down to it, not deleted**.
+>
 > 📣 **`66-unmeasured-percent` — two of your tests are red in the shared JVM suite right now, and
 > that is expected mid-edit rather than a complaint.** `:app:testDebugUnitTest --rerun` at 00:40
 > returned **1010 completed, 2 failed**:

@@ -183,6 +183,36 @@ it. `66-unmeasured-percent` has `status: active` in its brief and never claimed.
 `sessions/*.md` finds it; nothing in the board rule tells anyone to run that grep. `kb-candidates/`
 entry 3, destination `rules/`, and therefore always-ask.
 
+## 5b. 📥 KB drained — and both candidates named the wrong destination
+
+Cross-repo into `C:\Dev\JARVIS`, commit `3365980`. Two of three ingested, **both as sections on
+pages that already existed**:
+
+- 📥 `kb/dev/indistinguishable-at-the-boundary.md` **§5c** — *the ambiguity you manufacture*. That
+  page was written on **2026-08-10** from the *design* of this very sync; §5c comes from building
+  it, and adds a third row to the page's own §1 table: *dragged to a date outside the range you
+  asked about* is indistinguishable from a delete **from inside the code**, and unlike the other two
+  rows it is a bug.
+- 📥 `kb/dev/look-at-your-own-output.md` **§4p** — *the false red*, beside §4c-ii's false green,
+  which `63-occurrences-and-recurrence` added from this same repo eight hours earlier.
+
+⚠️ **The finding is worth more than either section.** Entry 1 proposed a **new** page and stated in
+its own Destination field that nothing in the bundle covered it. One `grep` found the identical
+worked case — same repo, same feature, same calendar — already on a page from three months before.
+That is `/kb-ingest` §3 observed exactly as written, and the **bundle-check field was missing from
+both entries** rather than `not checked`, which is the weaker of the two signals that section
+distinguishes.
+
+In the other direction: entry 2's `Status` said *held* on a reading of the **JARVIS** board that was
+~40 minutes stale — that row had released, and the deferral would have been for nothing. A
+candidate's picture of the bundle is a snapshot from the moment it was flagged.
+
+⏸️ **Entry 3 stays held** — *a brief with `status: active` is a liveness surface the claim board does
+not have*, destination `rules/`, therefore always-ask in both modes and owing a 🎬 walkthrough offer
+besides. Its **diagnostic** half is §4p above and stands on its own; the **procedural** half — telling
+every session to run `grep '^status: active' sessions/*.md` — is Ido's call.
+`kb-candidates/2026-08-23-61-google-calendar.md` is rewritten down to that one survivor, not deleted.
+
 ## 6. What is NOT in this ticket, and why
 
 - **The `freeBusy` consumer.** `CalendarRepository.freeBusy` exists and is correct, but §2.4's
