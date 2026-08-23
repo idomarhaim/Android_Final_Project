@@ -97,6 +97,7 @@ import com.idomarhaim.goalpilot.ui.components.IconChip
 import com.idomarhaim.goalpilot.ui.components.LocalGpEntrance
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
+import com.idomarhaim.goalpilot.ui.components.UnmeasuredMarker
 import com.idomarhaim.goalpilot.ui.components.rememberGpEntrance
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.TasksConsentNotice
@@ -290,6 +291,7 @@ fun DashboardScreen(
                     OverviewCard(
                         averageProgress = state.averageProgress,
                         goalCount = state.goals.size,
+                        measuredGoalCount = state.measuredGoalCount,
                         doneTasks = state.doneTasks,
                         completedThisWeek = state.completedTasksLast7d,
                         onOpenAnalytics = onOpenAnalytics,
@@ -1215,6 +1217,15 @@ private fun PointsLevelCard(
 private fun OverviewCard(
     averageProgress: Float,
     goalCount: Int,
+    /**
+     * The population [averageProgress] is a mean **over** — `#66` follow-on.
+     *
+     * It is not [goalCount], and the gap between them is the whole reason this
+     * parameter exists: `#66` made `overallCompletionOf` skip goals with no
+     * measure, so a caption reading *"across all your goals"* over that number
+     * names a population it was not taken over.
+     */
+    measuredGoalCount: Int,
     doneTasks: Int,
     completedThisWeek: Int,
     onOpenAnalytics: () -> Unit,
@@ -1223,18 +1234,28 @@ private fun OverviewCard(
     GpCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ProgressRing(
-                    progress = averageProgress,
-                    size = 92.dp,
-                    strokeWidth = 11.dp,
-                    brush = ringBrush,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ) {
-                    Text(
-                        "${(averageProgress * 100).toInt()}%",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
+                if (measuredGoalCount == 0) {
+                    // No goal has a number, so there is no average to draw — and a
+                    // ring reading `0%` would state the one thing `#66` exists to
+                    // stop the app saying: a fraction of a target nobody set,
+                    // here aggregated over goals that were never counting
+                    // anything. The marker instead, at ring size, exactly as the
+                    // goal's own header does one screen over.
+                    UnmeasuredMarker(size = 56.dp, modifier = Modifier.padding(18.dp))
+                } else {
+                    ProgressRing(
+                        progress = averageProgress,
+                        size = 92.dp,
+                        strokeWidth = 11.dp,
+                        brush = ringBrush,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    ) {
+                        Text(
+                            "${(averageProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier
@@ -1243,7 +1264,20 @@ private fun OverviewCard(
                 ) {
                     Text("Overall progress", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Averaged across all your goals",
+                        // Names the population the number is a mean OVER, which
+                        // stopped being "all your goals" when `#66` made
+                        // `overallCompletionOf` skip the ones with no measure.
+                        // `SocialRepositoryImpl` got the same correction in the
+                        // same ticket — "across N goals with a number" — because
+                        // it publishes this figure to other people; this screen
+                        // only shows it to Ido, which makes it less urgent and no
+                        // less wrong.
+                        text = when {
+                            measuredGoalCount == 0 -> "No goal has a number yet"
+                            measuredGoalCount == goalCount -> "Averaged across all your goals"
+                            measuredGoalCount == 1 -> "Averaged across the 1 goal that has a number"
+                            else -> "Averaged across the $measuredGoalCount goals that have a number"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp),

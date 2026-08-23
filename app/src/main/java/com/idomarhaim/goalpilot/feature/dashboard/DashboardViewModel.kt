@@ -899,7 +899,24 @@ data class DashboardUiState(
     val doneTasks: Int = 0,
     val totalTasks: Int = 0,
     val error: String? = null,
-)
+) {
+    /**
+     * How many goals actually have a number — the population [averageProgress] is
+     * a mean **over**, and therefore the one the ring's caption has to name
+     * (`#66` follow-on).
+     *
+     * `#66` moved [DerivedProgress.overallCompletionOf] to skip goals with no
+     * measure, because an unmeasured goal's fraction is against §1.3's `100.0`
+     * default — a target nobody set. That was right and it left the **caption**
+     * behind: *"Averaged across all your goals"* over a mean taken across a
+     * subset is §0.3's *second number that quietly disagrees*, reintroduced by
+     * the fix that removed it. `ProgressSummary.measuredGoals` is the same
+     * accessor, added in the same ticket for the same reason, on the summary that
+     * gets **published**; this screen could not have it then because the file was
+     * another session's.
+     */
+    val measuredGoalCount: Int get() = goals.count { !it.isUnmeasured }
+}
 
 /**
  * §2.5's daily review, as the dashboard holds it (`#56`).

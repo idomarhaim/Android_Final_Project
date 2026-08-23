@@ -15,6 +15,7 @@ import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.User
 import com.idomarhaim.goalpilot.domain.model.withDerivedProgress
 import com.idomarhaim.goalpilot.domain.usecase.BuildWidgetSnapshotUseCase
+import com.idomarhaim.goalpilot.feature.dashboard.DashboardUiState
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
 import com.idomarhaim.goalpilot.domain.usecase.TimeTrend
 import org.junit.Test
@@ -311,6 +312,40 @@ class UnmeasuredPercentTest {
 
         assertThat(before.map { it.id }).containsExactly("m1", "m2", "fresh")
         assertThat(after.map { it.id }).containsExactly("m1", "m2")
+    }
+
+    // --------------------------- the caption `#66` itself made wrong, and its fix
+
+    @Test
+    fun `the dashboard names the population its average is actually taken over`() {
+        // `#66` moved `overallCompletionOf` to skip unmeasured goals — right — and
+        // left the screen saying *"Averaged across all your goals"* over a mean
+        // across a subset, because that file was another session's at the time.
+        // A label naming a population the number is not taken over is §0.3, in
+        // the ticket that exists to remove §0.3.
+        val state = DashboardUiState(
+            goals = listOf(measured("a", 100.0), unmeasured("b"), unmeasured("c")),
+        )
+        assertThat(state.goals).hasSize(3)
+        assertThat(state.measuredGoalCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `an account where every goal has a number reads exactly as it always did`() {
+        // The caption only changes where the two counts differ, so the common
+        // case is untouched — otherwise this is a behaviour change dressed as a
+        // bug fix, the same guard `DerivedProgressTest` keeps over the clamp.
+        val state = DashboardUiState(goals = listOf(measured("a", 20.0), measured("b", 60.0)))
+        assertThat(state.measuredGoalCount).isEqualTo(state.goals.size)
+    }
+
+    @Test
+    fun `an account whose goals all lack a number has nothing to average`() {
+        // The state the ring used to render as `0%`: an aggregate over goals that
+        // were never counting anything, against targets nobody set.
+        val state = DashboardUiState(goals = listOf(unmeasured("a"), unmeasured("b")))
+        assertThat(state.measuredGoalCount).isEqualTo(0)
+        assertThat(DerivedProgress.overallCompletionOf(state.goals)).isEqualTo(0f)
     }
 
     // ------------------------------------------------ the site the brief got wrong

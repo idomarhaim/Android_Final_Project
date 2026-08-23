@@ -280,3 +280,72 @@ nothing there to look at.
 `androidTest/…/ui/UnmeasuredPercentRenderTest.kt` *(new, 7)* ·
 `test/…/progress/DerivedProgressTest.kt` · `test/…/domain/BuildSummaryUseCaseTest.kt` ·
 `test/…/data/RecommendationRepositoryFallbackTest.kt` *(2 new)*
+
+---
+
+# Second revision, 15:05 — the one defect this ticket left open, and half of it was mine
+
+`61-google-calendar` released `feature/dashboard/`, so the item `#66` closed with — *the dashboard
+would show a `0 %` ring for an account whose goals all lack a number* — became reachable. Reading it
+at `HEAD` showed it was **worse than recorded**, and the extra half is this ticket's own regression.
+
+## What `#66` broke on its way past
+
+`#66` moved `DerivedProgress.overallCompletionOf` to average **measured goals only**. That is right,
+and it is exactly the same correction the ticket made to `ProgressSummary.averageProgress`. But on
+the summary it also moved the **denominator** — the shared post now says *"across N goals with a
+number"* — and on the dashboard it could not, because the screen was another session's file. So
+`main` has carried, for eleven hours:
+
+> **Overall progress**
+> *Averaged across all your goals*
+
+over a number that is **not** averaged across all your goals. A caption naming a population the
+number is not taken over is §0.3's *second number that quietly disagrees* — reintroduced by the fix
+that removed it, on the most-visited screen in the app.
+
+**The general shape is worth more than the instance.** A correction that changes what a number
+**means** has to move every label that names its population, and those labels are usually in
+different files from the arithmetic — so a session that fixes the arithmetic and cannot reach the
+label ships a *worse* disagreement than the one it removed. `#66` got this right where the file was
+its own and wrong where it was not, in the same commit.
+
+## What shipped
+
+| | |
+|---|---|
+| `DashboardUiState.measuredGoalCount` | the population the mean is taken over, as a derived accessor — the twin of `ProgressSummary.measuredGoals`, added in the same ticket for the same reason |
+| the caption | `Averaged across all your goals` only when the two counts agree; otherwise `Averaged across the N goals that have a number`; and `No goal has a number yet` when none do |
+| the ring | replaced by `UnmeasuredMarker` at 56 dp when nothing is measured — a ring reading `0 %` there states an aggregate over goals that were never counting anything, which is this ticket's own defect at the top of the app |
+
+## ⚠️ UNVERIFIED — and this section is the point of the entry
+
+**No test ran on this change, and no build.** `68-drag-to-move` is live, owns `feature/calendar/**`,
+declares the **Gradle daemon** as its singleton, and was **actively building** when this was written
+— `.gradle/file-system.probe` 41 s old and two JVMs at `+2.2 s` and `+2.3 s` CPU over a 15 s sample.
+Its uncommitted calendar work is in this shared tree, so a run here would compile **its** sources and
+report about **its** tree, which is `look-at-your-own-output.md` §4p.
+
+**The reachable prefix that was run**, and it is static only:
+
+- `DashboardUiState` is `public` (a JVM test can import it) — checked at the declaration.
+- `UnmeasuredMarker(modifier, size)` — the call uses named arguments matching the declared signature.
+- `OverviewCard`'s call site and signature agree on all six parameters.
+- `feature/dashboard` is **unswept** by `AnalyticsLiteralSweepTest` (`SWEPT_PACKAGES` is
+  `feature/analytics` + `ui/components`), so the new plain-English literals are legal; re-checked
+  mechanically over both swept packages, which stay clean.
+- No dialog was added, so `DialogLocaleGuardTest` is untouched.
+
+**What the first real run will most likely fail on, in order:**
+
+1. **Nothing at all** — this is three literals, one accessor and one `if`. The honest expectation is
+   green, which is exactly why it must be said rather than assumed.
+2. **The `Row`'s vertical alignment around the marker.** `UnmeasuredMarker` at 56 dp inside 18 dp of
+   padding is 92 dp square, chosen to match the ring it replaces; if that arithmetic is off the card
+   changes height and the render will show it. **Nothing asserts it**, and only a look would.
+3. **The three new JVM cases** in `UnmeasuredPercentTest`, which import `DashboardUiState` from a
+   `feature/` package for the first time in that suite.
+
+**Owed:** `:app:testDebugUnitTest` and a look at the dashboard, once `68-drag-to-move` releases the
+daemon. Neither is blocked on anything but that row.
+
