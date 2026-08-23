@@ -16,7 +16,50 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `69-one-off-occurrence-edits` | `#69` — `ScheduleEdits.apply` cannot address a one-off's document (`seriesDate = null`), so `THIS_OCCURRENCE` duplicates it and `THIS_AND_FUTURE` silently no-ops. Widen the parameter to `LocalDate?`, then remove the `isEditable` guard and the test that pins it, in the same commit. | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Schedule.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` · `CHANGELOG/2026-08-23/69-one-off-occurrence-edits.md` · `sessions/69-one-off-occurrence-edits.md` | **none held** — the Gradle daemon and `Pixel_10_Pro_XL`/`adb` are declared by `67-delete-anything` (`3173202`, claimed one minute before this row). This session writes code and tests first and contends for the daemon only when its run comes; see the ⏳ note below. | 2026-08-23 18:49 |
-| **`67-delete-anything`** | [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67) — every entity needs a **reachable** delete, and an unfiled task has none. Brief: `sessions/67-delete-anything.md`. The capability already exists (three repository deletes); the gap is **reach**. |<br>`app/src/main/java/com/idomarhaim/goalpilot/ui/components/DeleteConfirm.kt` *(new)*<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalsScreen.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/goals/GoalsViewModel.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/LifeAreaDetailScreen.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/lifeareas/LifeAreaDetailViewModel.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`<br>`app/src/main/java/com/idomarhaim/goalpilot/ui/components/SuccessFailureRun.kt`<br>`app/src/main/res/values/components_strings.xml`<br>`app/src/main/res/values-iw/components_strings.xml`<br>`app/src/test/java/com/idomarhaim/goalpilot/domain/DeletionReachTest.kt` *(new)*<br>`app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DeleteAnythingUiTest.kt` *(new)*<br>`kb-candidates/2026-08-23-67-delete-anything.md`<br>`CHANGELOG/2026-08-23/67-delete-anything.md`<br>`sessions/67-delete-anything.md` | **Gradle daemon**; **`Pixel_10_Pro_XL`** (AVD) + **`adb`** | 2026-08-23 |
+> 🏁 **`67-delete-anything` RELEASED 2026-08-23 — this commit.** `#67` shipped in **`c11c629`**
+> (the reach, the confirm, two repository fixes) and **`ec9996e`** (the device run). Brief closed to
+> `sessions/done/` with `status: done`.
+>
+> ⚠️ **THE PUSH IS HELD, AND IT IS MINE TO ASK ABOUT — precondition 5.** `git log @{u}..HEAD` carries
+> **`49e1bde`**, which belongs to `69-one-off-occurrence-edits`, whose row is **still live on this
+> board**. Every path in it is theirs (`Schedule.kt`, `CalendarModel.kt`, `DragToMoveTest.kt`,
+> `DragToMoveUiTest.kt`, their changelog). A `git push` is branch-scoped, so it would publish their
+> mid-unit work on my schedule and un-publishing needs a force-push, which is always-ask. So: five
+> commits sit unpushed, **and still unpublished as of this commit** — the branch was re-read at the
+> moment this note was written, not when the decision was taken.
+>
+> 🧪 **JVM 1084 / 0 failures** (`--rerun-tasks`, over a shared tree — see the changelog, the 4-test
+> remainder is `#69`'s). **Instrumented 320 / 0 failures** across 41 classes, of which
+> `DeleteAnythingUiTest` is 15. **6 render-pass PNGs**, read by eye.
+>
+> 📱 **A DEVICE WAS USED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** `adb install -r` on both APKs then
+> `am instrument` — never `connectedDebugAndroidTest`. **Singletons released:** the **Gradle daemon**
+> and **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`**. `Pixel_10_Pro_XL_B` never booted.
+>
+> 🐛 **One defect found and NOT fixed, deliberately.** Deleting a task leaves its Google Calendar
+> events on Google — `CalendarSync` emits a `Cancel` only for an entry that still exists, and a
+> deleted task produces no entry. **Pre-existing and unchanged by `#67`**; fixing it needs a
+> tombstone, which is a storage design the ticket explicitly does not build. It wants its own ticket
+> beside §2.7.
+>
+> ⚠️ **Two repository deletes were quietly orphaning documents, and one was manufacturing `#67`'s own
+> defect.** `deleteGoal` deleted one document — leaving every task's edge pointing at it (reading as
+> *filed* while listed nowhere) and its `progressEntries` subcollection with no reader. `deleteTask`
+> left every row in `users/{uid}/occurrences`. Both are fixed and both are worth knowing about by
+> anyone touching `data/firestore/`.
+>
+> 📥 **KB candidates are WRITTEN AND NOT DRAINED** — `kb-candidates/2026-08-23-67-delete-anything.md`,
+> 4 entries, committed in `ec9996e`. The drain is **cross-repo** into `C:\Dev\JARVIS` and owes that
+> board a row of its own, which is a unit this session did not open. Entry 1 (a bidi isolate splits
+> every substring matcher spanning a number) is the one that generalises beyond this repo; entry 4 is
+> thin and marked ask-before-promoting. Each entry stands alone, so nothing is lost.
+>
+> ⚠️ **`#67` IS LEFT OPEN**, and the item that did not land is named on the ticket: the brief asked
+> for the defect to be confirmed **on a device** — create an unfiled task through smart-add and hunt
+> for it on every surface — and what ran instead was the code path plus `DeletionReachTest`, with the
+> device covering the *components*. The end-to-end check needs a signed-in account and a live
+> Firestore.
+
 > 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
 > dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
 >

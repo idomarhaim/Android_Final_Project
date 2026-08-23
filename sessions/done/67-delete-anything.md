@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 67
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/components/DeleteConfirm.kt
@@ -22,6 +22,15 @@ owns:
   - CHANGELOG/2026-08-23/67-delete-anything.md
   - sessions/67-delete-anything.md
 created: 2026-08-23 by 64-area-success-failure
+done: 2026-08-23 by 67-delete-anything
+commits:
+  - c11c629  # the reach, the confirm, and two repository fixes
+  - ec9996e  # the device run: 15 + 320 instrumented, 6 PNGs
+result: |
+  Shipped and green. The ticket is LEFT OPEN: the brief asked for the unfiled-task
+  defect to be confirmed on a device end to end, and what ran was the code path plus
+  DeletionReachTest, with the device covering the components. The push is HELD on
+  precondition 5 -- a live sibling commit sits in the range.
 ---
 
 # `#67` — *"I need to be able to delete anything"*
