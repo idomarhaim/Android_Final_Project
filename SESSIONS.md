@@ -4774,6 +4774,19 @@ one `OutlinedButton` beside `Skip` plus a callback — which is the ordering `#6
 chosen for, and it held. **`CalendarScreen.kt` is free**; note that `EntryChip` gained an `onHold`
 parameter and an optional `gesture: Modifier?`, and that `DraggableEntry` wraps grid rows.
 
+📥 **KB CANDIDATES: TWO INGESTED, ONE DROPPED, ONE LEFT — the file survives and is not deleted.**
+Both ingests are cross-repo into `C:\Dev\JARVIS` and both are pushed. **№1** → the *silent* third
+case of `android-device-verification.md` §8a (`d6f7dc1`). **№2** → a **supersession** of
+`screen-entry-effects-and-viewmodel-lifetime.md` §4a (`74c021d`), **on Ido's authorisation**: that
+section's *"a new event changes the key"* is false for a structurally **equal** repeat, so its own
+prescribed fix has a hole exactly where its strongest objection was. **№3 was DROPPED as already
+covered by §8c** — re-derived because this session skipped the KB read before its first device
+command, and recorded in the journal rather than binned, because the KB's *read* path failing is
+worth more than a duplicate section. **№4 survives** in
+`kb-candidates/2026-08-23-68-drag-to-move.md`: additive, low value, blocked by nothing, and it wants
+merging into existing prose by whoever next has `look-at-your-own-output.md` open.
+`Check-KbLinks` **CLEAN** (116 pages) after both.
+
 ⚠️ **`AGENTS.md`'s `am instrument` recipe is under-specified and cost one failed run.** It writes
 `<appId>.test/<runner>`, but the debug build sets `applicationIdSuffix = ".debug"`, so the real
 component is **`com.idomarhaim.goalpilot.debug.test/com.idomarhaim.goalpilot.HiltTestRunner`**.
