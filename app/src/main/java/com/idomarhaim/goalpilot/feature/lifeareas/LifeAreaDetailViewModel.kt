@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
 import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
@@ -45,7 +46,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LifeAreaDetailViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
-    lifeAreaRepository: LifeAreaRepository,
+    private val lifeAreaRepository: LifeAreaRepository,
     taskRepository: TaskRepository,
     occurrenceRepository: OccurrenceRepository,
     savedStateHandle: SavedStateHandle,
@@ -93,6 +94,7 @@ class LifeAreaDetailViewModel @Inject constructor(
                 goal.lifeAreaIds.none { id -> areas.any { it.id == id } }
             },
             areaExists = area != null,
+            tasks = tasks,
             // §4.7's run, over THIS area's goals. A task serving two areas is
             // counted whole here and whole under the other one, because each
             // screen asks about its own goals and nothing divides a success.
@@ -149,6 +151,48 @@ class LifeAreaDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Deletes the area this screen is about — `#67`.
+     *
+     * ### It reports nothing on success, and that is deliberate
+     *
+     * The screen navigates back before this runs, so a success message would be posted to a
+     * `SnackbarHostState` that is being torn down and would never be read. What the person needs
+     * to know is the list they land on, which no longer has the area in it. A **failure** is
+     * different and is not silent — but it cannot be shown here either, so it rides
+     * `LifeAreasViewModel.deleteArea`'s own channel on the screen that is still alive. That is
+     * why this returns rather than posting: see the screen's `onConfirm`.
+     *
+     * ### Nothing is unfiled here
+     *
+     * `LifeAreaRepositoryImpl.deleteLifeArea` already strips the area from every goal that
+     * carries it, in the right order and with the reasoning written down. Repeating any of it
+     * here would be a second author for one write.
+     */
+    fun deleteArea() {
+        if (areaId.isBlank()) return
+        viewModelScope.launch { lifeAreaRepository.deleteLifeArea(areaId) }
+    }
+
+    /**
+     * §4.7's `Let it go` for one of this area's goals — `#67`.
+     *
+     * ### Deleting a goal is not the same act as removing it from this area
+     *
+     * [removeGoalFromArea] is one field write and the goal survives; this ends the goal. They sit
+     * on the same screen and must never be reached by the same gesture, which is why one is a row
+     * menu item reading *Remove from this area* and the other is a red button on the run card
+     * reading `Let it go`, behind a confirm that names what goes.
+     */
+    fun deleteGoal(goalId: String) {
+        viewModelScope.launch {
+            _message.value = when (goalRepository.deleteGoal(goalId)) {
+                is Resource.Success -> "Goal deleted"
+                else -> "Could not delete that goal"
+            }
+        }
+    }
+
     /** §4.7's window filter. Re-reads the same history over a different span. */
     fun selectSuccessRange(range: SuccessRange) {
         successRange.update { range }
@@ -164,6 +208,14 @@ data class LifeAreaDetailUiState(
     val goals: List<Goal> = emptyList(),
     /** Goals no area claims, offered for one-tap filing into this one. */
     val unfiledGoals: List<Goal> = emptyList(),
+    /**
+     * Every task the user has — read by the run above, and by `#67`'s confirm.
+     *
+     * The whole list rather than this area's, because `Deletion.ofGoal` counts the tasks filed
+     * under ONE goal and a pre-filtered copy would be a second place that join could be got
+     * wrong. Nothing renders it.
+     */
+    val tasks: List<Task> = emptyList(),
     /**
      * False when the id in the route resolves to nothing — an area deleted on
      * another device, or a stale link. Distinct from `area == null` while loading.

@@ -8,6 +8,8 @@ import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalEdge
 import com.idomarhaim.goalpilot.domain.model.LifeArea
+import com.idomarhaim.goalpilot.domain.model.Deletion
+import com.idomarhaim.goalpilot.domain.model.DeletionImpact
 import com.idomarhaim.goalpilot.domain.model.EditScope
 import com.idomarhaim.goalpilot.domain.model.OccurrenceOutcome
 import com.idomarhaim.goalpilot.domain.model.ScheduleEdit
@@ -60,6 +62,18 @@ data class CalendarUiState(
      * where the sentence is still on screen.
      */
     val notice: CalendarNotice? = null,
+    /**
+     * The delete this surface has **asked about and not yet done** —
+     * [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67).
+     *
+     * On the state rather than remembered in the surface, for the reason [notice] gives one field
+     * up and for a second one: the counts a `DeleteConfirm` says out loud are a join over the task
+     * and the whole occurrence collection, which is the view model's data and not the surface's.
+     * Carrying the finished [DeletionImpact] instead of the entry keeps `CalendarSurface`
+     * stateless and lets an instrumented test drive the dialog from a hand-built state, with no
+     * account and no Firestore — the same seam that whole file exists to preserve.
+     */
+    val pendingDelete: DeletionImpact.OfTask? = null,
 ) {
     val hasAnything: Boolean get() = days.any { !it.isEmpty }
 }
@@ -105,12 +119,16 @@ class CalendarViewModel @Inject constructor(
     private val anchor = MutableStateFlow(LocalDate.now(clock))
     private val notice = MutableStateFlow<CalendarNotice?>(null)
 
+    /** `#67`'s pending confirm — the id being asked about, and the sentences to ask it with. */
+    private val pendingDelete = MutableStateFlow<Pair<String, DeletionImpact.OfTask>?>(null)
+
     /** What the user moved or was told, gathered so [state]'s outer `combine` stays at five arms. */
     private data class Controls(
         val zoom: CalendarZoom,
         val anchor: LocalDate,
         val waking: WakingHours,
         val notice: CalendarNotice?,
+        val pendingDelete: DeletionImpact.OfTask?,
     )
 
     /**
@@ -133,8 +151,15 @@ class CalendarViewModel @Inject constructor(
         goals.observeGoals(),
         lifeAreas.observeLifeAreas(),
         challenges.observeMyChallenges().map { it.map(ChallengeWithStandings::challenge) },
-        combine(zoom, anchor, appPreferences.daySchedule, notice) { z, a, day, notice ->
-            Controls(zoom = z, anchor = a, waking = day.waking, notice = notice)
+        combine(zoom, anchor, appPreferences.daySchedule, notice, pendingDelete) {
+                z, a, day, notice, pending ->
+            Controls(
+                zoom = z,
+                anchor = a,
+                waking = day.waking,
+                notice = notice,
+                pendingDelete = pending?.second,
+            )
         },
     ) { schedules, goals, areas, myChallenges, controls ->
         buildState(schedules, goals, areas, myChallenges, controls)
@@ -151,7 +176,7 @@ class CalendarViewModel @Inject constructor(
         myChallenges: List<Challenge>,
         controls: Controls,
     ): CalendarUiState {
-        val (zoom, anchor, waking, notice) = controls
+        val (zoom, anchor, waking, notice, pendingDelete) = controls
         val today = LocalDate.now(clock)
         return CalendarUiState(
             zoom = zoom,
@@ -173,12 +198,69 @@ class CalendarViewModel @Inject constructor(
             goals = allGoals.filterNot { it.isArchived },
             isLoading = false,
             notice = notice,
+            pendingDelete = pendingDelete,
         )
     }
 
     /** The surface has shown what [notice] held. */
     fun dismissNotice() {
         notice.value = null
+    }
+
+    /**
+     * §4.3's long press asks to delete a row — **`#67`'s calendar instance.**
+     *
+     * ### The scope question is not asked, and that is the design rather than an omission
+     *
+     * `ScopeSheet` exists because §2.1's *"this occurrence, or all future ones?"* has two honest
+     * answers for a **move** and for a **skip**. A delete has one: the subject is the **task**,
+     * not the window, and `#67`'s whole shape is *reach an entity's existing delete*. Offering
+     * *"delete only this one"* would be a third scoped verb that means *skip*, which
+     * `EntryActionSheet` already has one button for and describes correctly as a decision rather
+     * than a failure.
+     *
+     * So the confirm says outright how many occurrences go and how many of them already
+     * happened. That sentence is the whole of what a scope sheet would have communicated, minus
+     * the offer of an operation the app does not have.
+     *
+     * ### It reads the current streams once rather than holding a snapshot
+     *
+     * The counts are taken at the moment the question is asked, from the same flows the calendar
+     * is drawn from. A `first()` and not a stored copy: between the long press and the answer the
+     * user cannot edit anything (a sheet is over the surface), and reading live means the numbers
+     * cannot be a minute stale from another device.
+     */
+    fun askToDelete(entry: CalendarEntry) {
+        val taskId = entry.taskId ?: return
+        val schedule = scheduleOf(taskId) ?: return
+        pendingDelete.value = taskId to Deletion.ofTask(
+            task = schedule.task,
+            occurrences = schedule.stored,
+        )
+    }
+
+    /** The person said no, or dismissed the confirm. */
+    fun cancelDelete() {
+        pendingDelete.value = null
+    }
+
+    /**
+     * The person said yes.
+     *
+     * Cleared **before** the write rather than after it: the row disappears from the calendar the
+     * instant Firestore's cache applies the delete, and a confirm still open over a row that is
+     * gone is a dialog about nothing. A failure is reported through [notice], which is the
+     * channel this surface already has for *legal, but never silent*.
+     */
+    fun confirmDelete() {
+        val taskId = pendingDelete.value?.first ?: return
+        pendingDelete.value = null
+        viewModelScope.launch {
+            val result = tasks.deleteTask(taskId)
+            if (result !is Resource.Success) {
+                notice.value = CalendarNotice.EditFailed
+            }
+        }
     }
 
     fun setZoom(next: CalendarZoom) {

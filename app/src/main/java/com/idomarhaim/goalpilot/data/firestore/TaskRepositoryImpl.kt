@@ -88,6 +88,18 @@ class TaskRepositoryImpl @Inject constructor(
         userDoc(uid).collection(FirestorePaths.COMPLETION_FACTS)
 
     /**
+     * §2.1's occurrence documents — read here **only to delete them with their task** (`#67`).
+     *
+     * Everything else about this collection belongs to `OccurrenceRepositoryImpl`, and nothing
+     * about that split changes: a task's deletion is the one write that has to reach both
+     * collections, for the same reason it already reaches `completionFacts`, and routing it
+     * through the other repository would make a delete depend on an interface whose whole
+     * contract is about scheduling.
+     */
+    private fun occurrencesCol(uid: String): CollectionReference =
+        userDoc(uid).collection(FirestorePaths.OCCURRENCES)
+
+    /**
      * The task as the database currently holds it, completion joined on.
      *
      * Two `get()`s rather than one, and both are cache-served on the path that matters: the
@@ -201,9 +213,53 @@ class TaskRepositoryImpl @Inject constructor(
             }
         }
 
+    /**
+     * Removes the task, its completion fact, **and its occurrence documents** (`#67`).
+     *
+     * ### The occurrences were orphaned, and that was invisible
+     *
+     * `Observed:` 2026-08-23, reading this method against `OccurrenceRepositoryImpl`. Before
+     * `#67` this deleted two documents and left every row in `users/{uid}/occurrences` whose
+     * `taskId` was this one. Nothing rendered them afterwards — every consumer joins the
+     * collection back to the task list (`CalendarViewModel.schedules`,
+     * `BuildSuccessFailureRunUseCase`), so a document whose task is gone is dropped from every
+     * count and every lane. That is exactly what made it hard to notice: no number was wrong,
+     * no screen misbehaved, and the rows accumulated in Firestore for the life of the account
+     * with no reader and no way to remove them.
+     *
+     * The fact's own comment already carries the argument, and it is the same one: *"an orphan
+     * fact would add points the user cannot see, find or remove."* An orphan occurrence adds no
+     * points, and is otherwise the same object — storage the person is paying for, about a task
+     * they deleted, reachable by nobody.
+     *
+     * ### §2.3 is not violated by this, and it is worth saying why
+     *
+     * *"A missed occurrence is never edited — it is history"* governs the **scoped verbs**:
+     * `EditScope` deliberately offers no `ALL` reaching backwards, so no move and no skip can
+     * rewrite what already happened. A delete is not one of those verbs — it is the person
+     * saying the task should not exist — and `DeletionImpact.OfTask` is what makes the app say
+     * so first, naming how many of the windows going with it had already happened.
+     *
+     * ### Chunked rather than refused, unlike `OccurrenceRepository.apply`
+     *
+     * That method returns `SchedulePlan.TooLarge` rather than splitting a plan across batches,
+     * because a half-applied *schedule* is worse than none: the past would exist twice, once as
+     * documents and once as the rule regenerating it. A half-applied **deletion** has neither
+     * property. It is idempotent — re-running removes what is left — and it converges, because
+     * every commit strictly shrinks the set. So a task with more occurrence documents than one
+     * batch holds is deleted in several, and the task document itself goes **last**, so an
+     * interrupted run leaves a task that is still listed and still deletable rather than an
+     * invisible task with a tail of documents.
+     */
     override suspend fun deleteTask(taskId: String): Resource<Unit> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
         try {
+            val mine = occurrencesCol(uid).whereEqualTo(OCCURRENCE_TASK_ID, taskId).get().await()
+            mine.documents.chunked(BATCH_LIMIT).forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { batch.delete(it.reference) }
+                batch.commit().await()
+            }
             // The fact goes with the task. It is tempting to keep it -- §1.4 wants a level
             // that can never fall -- but that clause is about **re-pricing**, which banking
             // the inputs already settles. Deleting a task is a deliberate act about a thing
@@ -233,5 +289,25 @@ class TaskRepositoryImpl @Inject constructor(
             "done" to FieldValue.delete(),
             "completedAt" to FieldValue.delete(),
         )
+
+        /**
+         * `OccurrenceDto.taskId`, as a query key.
+         *
+         * The same literal `OccurrenceRepositoryImpl.observeOccurrences` filters on. Named here
+         * rather than typed twice, because a rename of that field would otherwise leave this
+         * query matching nothing — and a delete that finds no occurrences looks **exactly** like
+         * a task that had none.
+         */
+        const val OCCURRENCE_TASK_ID = "taskId"
+
+        /**
+         * Firestore's cap is 500 writes per batch; this leaves room for the two that follow.
+         *
+         * A repeating task accumulates one document per window the user actually touched, so
+         * reaching this at all takes years of use — the chunking is here because the failure
+         * mode if it were ever reached is a thrown exception on a delete the person has already
+         * confirmed, not because it is expected.
+         */
+        const val BATCH_LIMIT = 450
     }
 }

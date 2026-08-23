@@ -50,6 +50,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,10 +68,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.AnalyticsRange
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
+import com.idomarhaim.goalpilot.domain.model.Deletion
+import com.idomarhaim.goalpilot.domain.usecase.NoNextStepGoal
 import com.idomarhaim.goalpilot.domain.usecase.TimeAllocation
 import com.idomarhaim.goalpilot.domain.usecase.TimeSlice
 import com.idomarhaim.goalpilot.domain.usecase.TimeTrend
 import com.idomarhaim.goalpilot.ui.components.BarItem
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.DonutChart
 import com.idomarhaim.goalpilot.ui.components.DonutSlice
 import com.idomarhaim.goalpilot.ui.components.EmptyState
@@ -101,6 +106,10 @@ fun AnalyticsScreen(
     val backfill by viewModel.backfill.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    // `#67`'s `Let it go`, awaiting its confirm. Not `rememberSaveable`, for the reason
+    // `CalendarSurface` writes down: a delete question restored across process death would be
+    // about a row nobody remembers tapping.
+    var pendingLetGo by remember { mutableStateOf<NoNextStepGoal?>(null) }
 
     // Resolved here rather than inside the effect: stringResource is a composable
     // read, and LaunchedEffect's body is not a composition.
@@ -210,6 +219,9 @@ fun AnalyticsScreen(
                     onSelectRange = viewModel::selectSuccessRange,
                     onOpenGoal = onOpenGoal,
                     showAsymmetryNote = true,
+                    // `#67`'s `Let it go`. This screen can perform it, so the button exists here
+                    // -- the card draws nothing where the host passes `null`.
+                    onLetGo = { pendingLetGo = it },
                 )
 
                 TimeTrendCard(
@@ -223,6 +235,23 @@ fun AnalyticsScreen(
             }
         }
     }
+
+    // `#67`'s `Let it go`, behind the same confirm every other delete opens. The goal is looked
+    // up by id rather than carried on `NoNextStepGoal`: that type is §4.7's row and carries what
+    // the ROW needs, and widening it so a dialog could read a measure would make one ticket's
+    // render model answerable for another's arithmetic.
+    pendingLetGo?.let { row ->
+        state.goals.firstOrNull { it.id == row.goalId }?.let { goal ->
+            DeleteConfirm(
+                impact = Deletion.ofGoal(goal = goal, tasks = state.tasks),
+                onConfirm = {
+                    viewModel.deleteGoal(goal.id)
+                    pendingLetGo = null
+                },
+                onDismiss = { pendingLetGo = null },
+            )
+        }
+    }
 }
 
 /** Turns a [AnalyticsMessage] into words, with its count direction-isolated. */
@@ -234,6 +263,9 @@ private fun AnalyticsMessage.resolve(): String = when (this) {
 
     AnalyticsMessage.UpdateFailed ->
         stringResource(R.string.analytics_update_failed)
+
+    AnalyticsMessage.DeleteFailed ->
+        stringResource(R.string.analytics_delete_failed)
 
     is AnalyticsMessage.Updated ->
         pluralStringResource(R.plurals.analytics_updated, count, count.isolated())

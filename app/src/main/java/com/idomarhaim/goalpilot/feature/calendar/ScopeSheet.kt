@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -139,7 +140,7 @@ fun ScopeSheet(
 }
 
 /**
- * What a long press on an entry offers — **§2.1's *skip*, and where `#67`'s delete will go**.
+ * What a long press on an entry offers — **§2.1's *skip*, and `#67`'s delete**.
  *
  * ### Why a long press, and why it shares the gesture with the drag
  *
@@ -157,12 +158,33 @@ fun ScopeSheet(
  *
  * It would be a second author for the same fact, and a worse one — a *when* picked out of a dialog
  * rather than pointed at on the calendar the person is already looking at. §4.3 asked for a drag.
+ *
+ * ### `Delete` **is** an item, and it is scoped to the whole task rather than to this window
+ *
+ * `#67`: every entity needs a delete reachable from where the person is looking at it, and for a
+ * dated task this is that place. It is deliberately **not** offered a [ScopeSheet]: the two
+ * answers that sheet asks between exist because a *move* and a *skip* can honestly apply to one
+ * instance or to the rest of a series, and *"delete only this occurrence"* is not a third such
+ * answer — it is `Skip`, one button up, which `OccurrenceOutcome.Skipped` already records as a
+ * decision rather than a failure. So `Delete` names the task, and `DeleteConfirm` says how many
+ * occurrences go with it and how many of those already happened.
+ *
+ * It is **absent for a row with no task** — a challenge window, an `EXTERNAL` Google event. Those
+ * are drawn here and owned elsewhere, and a delete on one would either do nothing or delete
+ * something the person was not looking at.
+ *
+ * ### `Skip` stays first and `Delete` is last, with a divider between them
+ *
+ * They are not two strengths of one verb. A skip drops a window and keeps the task; a delete ends
+ * the task and takes its record. Putting the destructive one at the bottom, past a rule, is what
+ * stops a hurried thumb finding it where `Skip` was a moment ago.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryActionSheet(
     entry: CalendarEntry,
     onSkip: () -> Unit,
+    onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     AppModalBottomSheet(onDismissRequest = onDismiss) {
@@ -198,6 +220,27 @@ fun EntryActionSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            if (entry.taskId != null) {
+                HorizontalDivider()
+                OutlinedButton(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag(TAG_ACTION_DELETE),
+                ) {
+                    Text("Delete task")
+                }
+                // It says *task*, not *this*, because that is what it does -- and the sentence
+                // below is the one thing that stops it reading as a stronger Skip. The counts
+                // themselves are `DeleteConfirm`'s; this is what makes someone open it.
+                Text(
+                    text = "Removes the task itself, on every day it appears.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
@@ -218,5 +261,6 @@ const val TAG_SCOPE_FUTURE = "calendar_scope_future"
 const val TAG_SCOPE_CANCEL = "calendar_scope_cancel"
 const val TAG_ACTION_SHEET = "calendar_action_sheet"
 const val TAG_ACTION_SKIP = "calendar_action_skip"
+const val TAG_ACTION_DELETE = "calendar_action_delete"
 const val TAG_ACTION_CANCEL = "calendar_action_cancel"
 const val TAG_NOTICE = "calendar_notice"

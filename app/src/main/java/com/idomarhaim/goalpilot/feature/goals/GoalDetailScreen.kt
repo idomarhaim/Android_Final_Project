@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.Deletion
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationEntry
 import com.idomarhaim.goalpilot.domain.model.Occurrence
@@ -77,6 +78,7 @@ import com.idomarhaim.goalpilot.domain.model.ProgressEntry
 import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.TaskScoring
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -108,6 +110,10 @@ fun GoalDetailScreen(
     var menuOpen by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogDialog by remember { mutableStateOf(false) }
+    // `#67`'s task confirm. Not `rememberSaveable`, for `CalendarSurface`'s reason: a `Task` is a
+    // render-time value and a delete question restored across process death would be about a row
+    // nobody remembers tapping.
+    var pendingTaskDelete by remember { mutableStateOf<Task?>(null) }
 
     // Keyed on the goal AND its task count: the goal arrives before its tasks do,
     // and §3.4's branch is chosen by the task counts -- keyed on the goal alone,
@@ -246,7 +252,11 @@ fun GoalDetailScreen(
                             TaskRow(
                                 task = task,
                                 onToggle = { viewModel.toggleTask(task) },
-                                onDelete = { viewModel.deleteTask(task.id) },
+                                // `#67`: this icon used to delete on the first tap, with no
+                                // confirm anywhere — the only irreversible act in the app that
+                                // asked nothing. It now opens the same dialog every other delete
+                                // opens, with this task's own counts.
+                                onDelete = { pendingTaskDelete = task },
                             )
                         }
                     }
@@ -281,20 +291,34 @@ fun GoalDetailScreen(
         )
     }
 
+    // `#67`. What stood here was an `AppAlertDialog` saying *"this permanently removes the goal"*
+    // and nothing else — true, and silent about the two things a person would actually want to
+    // know: how many tasks are filed under it, and whether they go too. They do not.
     if (showDeleteDialog) {
-        AppAlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete goal?") },
-            text = { Text("This permanently removes the goal. This cannot be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
+        state.goal?.let { goal ->
+            DeleteConfirm(
+                impact = Deletion.ofGoal(
+                    goal = goal,
+                    tasks = state.tasks,
+                    entryCount = state.entries.size,
+                ),
+                onConfirm = {
                     showDeleteDialog = false
                     viewModel.deleteGoal(onDeleted = onBack)
-                }) { Text("Delete") }
+                },
+                onDismiss = { showDeleteDialog = false },
+            )
+        }
+    }
+
+    pendingTaskDelete?.let { task ->
+        DeleteConfirm(
+            impact = Deletion.ofTask(task = task, occurrences = state.occurrences),
+            onConfirm = {
+                viewModel.deleteTask(task.id)
+                pendingTaskDelete = null
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
-            },
+            onDismiss = { pendingTaskDelete = null },
         )
     }
 }

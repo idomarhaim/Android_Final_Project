@@ -160,6 +160,7 @@
     <!-- ── Messages ────────────────────────────────────────────── -->
     <string name="analytics_error_all_estimated">לכל המשימות כבר יש הערכת משך זמן מהבינה המלאכותית.</string>
     <string name="analytics_update_failed">לא ניתן היה לעדכן את משכי הזמן האלה</string>
+    <string name="analytics_delete_failed">לא ניתן היה לוותר על היעד הזה</string>
     <plurals name="analytics_updated">
         <item quantity="one">עודכן משך הזמן של %1$s משימה</item>
         <item quantity="two">עודכנו משכי הזמן של %1$s משימות</item>

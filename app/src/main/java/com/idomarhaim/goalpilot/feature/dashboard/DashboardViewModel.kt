@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.core.util.SummaryPeriod
 import com.idomarhaim.goalpilot.data.tasks.GoogleTasksClient
 import com.idomarhaim.goalpilot.data.tasks.TasksImportResult
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
+import com.idomarhaim.goalpilot.domain.model.Deletion
 import com.idomarhaim.goalpilot.domain.model.DerivedProgress
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.DurationSource
@@ -33,6 +34,7 @@ import com.idomarhaim.goalpilot.domain.repository.AuthRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.domain.repository.StorageRepository
@@ -77,6 +79,7 @@ class DashboardViewModel @Inject constructor(
     private val googleTasksClient: GoogleTasksClient,
     private val healthRepository: HealthRepository,
     private val lifeAreaRepository: LifeAreaRepository,
+    private val occurrenceRepository: OccurrenceRepository,
     private val buildSummary: BuildSummaryUseCase,
     private val syncHealthData: SyncHealthDataUseCase,
     private val syncCalendar: SyncCalendarUseCase,
@@ -214,7 +217,11 @@ class DashboardViewModel @Inject constructor(
         authRepository.authState(),
         goalRepository.observeGoals(),
         taskRepository.observeTasks(null),
-    ) { user, goals, tasks ->
+        // `#67`: the occurrence collection is here for ONE reason -- a task with a stored
+        // occurrence is drawn on the calendar even with no anchor of its own, so it is reachable
+        // and must not be listed as lost. Nothing else on this screen reads it.
+        occurrenceRepository.observeOccurrences(),
+    ) { user, goals, tasks, occurrences ->
         lastGoals = goals
         lastTasks = tasks
         val windowStart = DateTimeUtils.windowStart(SummaryPeriod.WEEKLY)
@@ -240,6 +247,11 @@ class DashboardViewModel @Inject constructor(
             completedTasksLast7d = completedLast7d,
             doneTasks = tasks.count { it.isDone },
             totalTasks = tasks.size,
+            unreachableTasks = Deletion.unreachableTasks(
+                tasks = tasks,
+                goals = goals,
+                occurrences = occurrences,
+            ),
         )
     }.catch { emit(DashboardUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -439,6 +451,33 @@ class DashboardViewModel @Inject constructor(
             }
             receipt.createdGoalId?.let { goalRepository.deleteGoal(it) }
             _message.value = "Undone"
+        }
+    }
+
+    /**
+     * Deletes one of [DashboardUiState.unreachableTasks] — `#67`'s first item.
+     *
+     * ### Why the dashboard is where this lives
+     *
+     * The reach gap is not evenly spread: `GoalDetailScreen` and `CalendarScreen` each list
+     * tasks and each can grow a delete, but a task that is filed under nothing *and* dated
+     * nothing appears on neither, so there is no row anywhere to hang a control on. It gets a
+     * card here because this is the screen that **creates** them — `classifyForSmartAdd` files
+     * a `FilingDecision.NoGoal` with no `occurrence`, and [undoFiling]'s snackbar was the only
+     * control that has ever been able to remove one.
+     *
+     * ### It removes the task and offers nothing else, deliberately
+     *
+     * Filing it, dating it or renaming it from here would be a second author for edits that
+     * already have screens, which is the *"second way to do one thing"* §0.3 keeps naming.
+     * `#67` is about **reach**, and the missing reach is a delete.
+     */
+    fun deleteUnreachableTask(taskId: String) {
+        viewModelScope.launch {
+            _message.value = when (taskRepository.deleteTask(taskId)) {
+                is Resource.Success -> "Task deleted"
+                else -> "Could not delete that task"
+            }
         }
     }
 
@@ -898,6 +937,16 @@ data class DashboardUiState(
     val completedTasksLast7d: Int = 0,
     val doneTasks: Int = 0,
     val totalTasks: Int = 0,
+    /**
+     * **The tasks no screen lists** — `#67`'s founding defect, surfaced here.
+     *
+     * Computed by [Deletion.unreachableTasks] rather than filtered here, because *"which tasks
+     * are on no screen"* is a claim about every screen at once and belongs where it can be
+     * JVM-tested (`DeletionReachTest`). This screen renders it; it does not decide it.
+     *
+     * Almost always empty, and that is the point — an empty list draws no card at all.
+     */
+    val unreachableTasks: List<Task> = emptyList(),
     val error: String? = null,
 ) {
     /**

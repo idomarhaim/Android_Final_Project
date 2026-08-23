@@ -74,10 +74,15 @@ import java.time.format.DateTimeFormatter
  *
  * So [WindowDot] distinguishes by **form** — fill, stroke, dash, pip — and the accent is one
  * colour used at four weights rather than four colours. The run therefore reads in dark neo, in
- * greyscale, and to a colour-blind eye. **There is no red in this file**, which §4.7 calls *"a
- * tone decision as much as an accessibility one"*; there is no error colour, no
- * `MaterialTheme.colorScheme.error`, and nothing a later edit could tint red without deleting
- * this paragraph first.
+ * greyscale, and to a colour-blind eye.
+ *
+ * ⚠️ **This paragraph used to say *"there is no red in this file"* flatly, and `#67` made that
+ * false — so it is narrowed here rather than left to rot.** §4.7's ban is on **outcome state**
+ * riding on hue: no window, no dot, no count and no run may be tinted, and nothing below has
+ * changed. What `#67` added is `Let it go`, which is a **destructive control** and not an
+ * outcome — the same class as every `Delete` in the app, drawn the same way. The invariant that
+ * survives, and the one to check an edit against, is *no colour here carries information about
+ * how the person is doing*; a button that ends a goal is not saying anything about that.
  *
  * ## Two numbers, never a rate
  *
@@ -102,6 +107,17 @@ fun SuccessFailureRunCard(
     accent: Color = MaterialTheme.colorScheme.primary,
     /** §4.7: the asymmetry sentence belongs beside the time donut **and nowhere else**. */
     showAsymmetryNote: Boolean = false,
+    /**
+     * §4.7's `Let it go`, wired — `C19`'s third offer, delivered by
+     * [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67).
+     *
+     * **`null` means the host cannot perform it, and then the button is absent** rather than
+     * present and inert. That is not defensive plumbing: `#64` shipped this card *without*
+     * `Let it go` on exactly that reasoning — *"a button proposing a goal is over while doing
+     * nothing is worse than the honest silence"* — so a default that drew a dead control would
+     * reintroduce the thing the omission was protecting against.
+     */
+    onLetGo: ((NoNextStepGoal) -> Unit)? = null,
 ) {
     GpCard(modifier = modifier.fillMaxWidth().testTag(TAG_RUN_CARD)) {
         Column(
@@ -155,6 +171,7 @@ fun SuccessFailureRunCard(
                     goals = run.noNextStep,
                     accent = accent,
                     onOpenGoal = onOpenGoal,
+                    onLetGo = onLetGo,
                 )
             }
         }
@@ -388,28 +405,35 @@ private fun OutcomeDot(outcome: WindowOutcome, accent: Color, diameter: Int) {
  * differ in the **sentence**, which is the part that is about this goal; inventing a second
  * route would be re-speccing a feature the ticket says to reuse.
  *
- * ⚠️ **`Let it go` is absent, and it is WANTED — it waits on a capability, not on a decision.**
+ * ✅ **`Let it go` is here now** — `#67`, and it is a **command**, which is the whole condition
+ * `#64` left it waiting on.
  *
  * §4.7 draws it beside the offer and says it *"stays a command, never an inference"* — `C4`
- * forbids the app asserting an intrinsic edge by itself. `#64` shipped without it because there
- * is no command behind it, and a button proposing a goal is over **while doing nothing** is
- * worse than the honest silence.
+ * forbids the app asserting an intrinsic edge by itself. `#64` shipped without it for a reason
+ * that has since expired: *"there is no command behind it, and a button proposing a goal is over
+ * while doing nothing is worse than the honest silence."* `#67` gave every entity a reachable
+ * delete, so there is a command behind it, and this is the goal's own instance of it.
  *
- * **Ido asked for it on 2026-08-23, and asked for something wider than it:** the ability to
- * delete **any** entity — goals, tasks, milestones, life areas. That is its own ticket, because
- * the gap is *reach* rather than capability: every repository already has its delete, and each is
- * wired to exactly **one** screen. When that lands, this is where the goal's own instance of it
- * belongs, behind a confirm.
+ * ⚠️ **Nothing about `C4` is relaxed by its arrival.** The button says `Let it go` and the app
+ * still never *suggests* that a goal is over: the row it sits on says `no next step`, which is a
+ * statement about what is scheduled and not about whether the goal matters. `#67` is explicit
+ * that this decision stays taken — *"the button may exist; the app may never suggest that a goal
+ * is over, and no copy anywhere may imply it."*
  *
- * ⚠️ **Do not read this paragraph as licence to add the button.** Wiring a delete into a summary
- * card is deletion-class and stays always-ask, and the wider ticket is what decides where these
- * controls live. Until then the honest silence still applies.
+ * ⚠️ **It is last in the row and it is not the offer.** The two `NextStepOffer` buttons are what
+ * §4.7 puts here; `Let it go` is the escape from them, and drawing it with equal weight would
+ * make *give up* look like one of two equally recommended next steps. It is a text button in the
+ * error colour, after the offer — and the **only** thing in this file that is not the accent, at
+ * one deliberate cost: §4.7's *"there is no red on this screen at all"* is about **outcome
+ * state**, the four window forms, and this is a destructive **control**, which every other
+ * screen in the app already draws that way.
  */
 @Composable
 private fun NoNextStepSection(
     goals: List<NoNextStepGoal>,
     accent: Color,
     onOpenGoal: (String) -> Unit,
+    onLetGo: ((NoNextStepGoal) -> Unit)?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -449,6 +473,17 @@ private fun NoNextStepSection(
                     modifier = Modifier.testTag(offerTag(goal.offer)),
                 ) {
                     Text(stringResource(goal.offer.labelRes))
+                }
+                onLetGo?.let { letGo ->
+                    TextButton(
+                        onClick = { letGo(goal) },
+                        modifier = Modifier.testTag(letGoTag(goal.goalId)),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.components_run_let_it_go),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
         }
@@ -608,3 +643,6 @@ const val TAG_NO_NEXT_STEP_FOOTER = "successRunNoNextStep"
 fun rangeTag(range: SuccessRange): String = "successRunRange_" + range.name
 
 fun offerTag(offer: NextStepOffer): String = "successRunOffer_" + offer.name
+
+/** `#67`'s `Let it go`, per goal, so a test can name the row it is letting go of. */
+fun letGoTag(goalId: String): String = "successRunLetGo_" + goalId

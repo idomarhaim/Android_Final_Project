@@ -169,7 +169,12 @@ fun LazyListScope.lifeAreaRows(
     onMove: (from: Int, to: Int) -> Unit,
     onOpen: (LifeArea) -> Unit,
     onEdit: (LifeArea) -> Unit,
-    onDelete: (LifeArea) -> Unit,
+    /**
+     * `#67`: the ROW, not the area — the confirm has to say how many goals stay, and that
+     * count is already on this card. Handing back the area alone would make the dialog re-derive
+     * a number the row above it is already showing, which is §0.3's second copy in miniature.
+     */
+    onDelete: (LifeAreaRow) -> Unit,
 ) {
     val rows = state.order
     itemsIndexed(rows, key = { _, row -> row.area.id }) { index, row ->
@@ -189,7 +194,7 @@ fun LazyListScope.lifeAreaRows(
             onMoveUp = if (index > 0) ({ onMove(index, index - 1) }) else null,
             onMoveDown = if (index < rows.lastIndex) ({ onMove(index, index + 1) }) else null,
             onEdit = { onEdit(row.area) },
-            onDelete = { onDelete(row.area) },
+            onDelete = { onDelete(row) },
         )
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Person
@@ -76,6 +77,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils.formatMinutes
+import com.idomarhaim.goalpilot.domain.model.Deletion
+import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.FilingDecision
 import com.idomarhaim.goalpilot.notifications.FilingNotificationEffect
@@ -89,6 +92,7 @@ import com.idomarhaim.goalpilot.domain.usecase.MissedOccurrence
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.ui.components.Avatar
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.GoalCard
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
@@ -131,6 +135,11 @@ fun DashboardScreen(
     val disappearances by viewModel.calendarDisappearances.collectAsStateWithLifecycle()
     val missReview by viewModel.missReview.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
+    // `#67`'s pending confirm. Deliberately NOT `rememberSaveable`: a `Task` is a render-time
+    // value this screen is handed, and restoring a delete question across process death would
+    // ask about a row the person no longer remembers tapping -- the same reasoning
+    // `CalendarSurface` writes down for its own `PendingEdit`.
+    var pendingDelete by remember { mutableStateOf<Task?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.ensureRecommendations()
@@ -297,6 +306,17 @@ fun DashboardScreen(
                         onOpenAnalytics = onOpenAnalytics,
                     )
                 }
+                // `#67`, immediately above the quick-add that creates them -- the leftovers
+                // come before the box that makes more. Absent whenever the list is empty,
+                // which is almost every open.
+                if (state.unreachableTasks.isNotEmpty()) {
+                    item {
+                        UnfiledTasksCard(
+                            tasks = state.unreachableTasks,
+                            onDelete = { pendingDelete = it },
+                        )
+                    }
+                }
                 item {
                     SmartAddCard(
                         state = smartAdd,
@@ -372,6 +392,21 @@ fun DashboardScreen(
             onToggle = viewModel::toggleImportProposal,
             onConfirm = viewModel::confirmImport,
             onDismiss = viewModel::dismissImport,
+        )
+    }
+
+    pendingDelete?.let { task ->
+        DeleteConfirm(
+            // `emptyList()` is not a shortcut: every task in this list is there BECAUSE it has
+            // no stored occurrence -- that is half of `Deletion.unreachableTasks`' predicate --
+            // so the collection could only ever contribute zero here. Passing the live one
+            // would be a second read that cannot change the answer.
+            impact = Deletion.ofTask(task = task, occurrences = emptyList()),
+            onConfirm = {
+                viewModel.deleteUnreachableTask(task.id)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 
@@ -784,6 +819,87 @@ internal fun DailyMissReviewCard(misses: List<MissedOccurrence>, onDismiss: () -
         }
     }
 }
+
+/**
+ * **The tasks that no screen lists, and the delete they never had** —
+ * [`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67).
+ *
+ * ### Why this card is on the dashboard and not somewhere tidier
+ *
+ * A task filed under no goal and dated no day is rendered by nothing: `GoalDetailScreen` lists
+ * one goal's tasks, `CalendarScreen` draws what has a *when*, and neither describes it. So
+ * unlike the other two entities in `#67`, the gap could not be closed by adding a control to a
+ * row — there was no row. It belongs here because this is the screen that **makes** them:
+ * [DashboardViewModel.classifyForSmartAdd] files a `FilingDecision.NoGoal` with no occurrence,
+ * and the undo snackbar was the only control that could ever remove one.
+ *
+ * ### It is absent, not empty
+ *
+ * `DashboardUiState.unreachableTasks` is empty on almost every open, and an empty card here
+ * would be a permanent fixture nagging about a state that is not wrong — being unfiled is
+ * legitimate (`Task.goalEdges`' own KDoc), and it becomes a *problem* only when there is also
+ * no date, which is what the predicate already checks. Same discipline as the miss review
+ * above: an empty review is not an empty card.
+ *
+ * ### One verb, and it is not the row's default action
+ *
+ * `#67`: *"do not make `Delete` the default action of any row"*. The row itself is not
+ * clickable; the delete is its own icon and opens `DeleteConfirm` before anything is written.
+ */
+@Composable
+internal fun UnfiledTasksCard(tasks: List<Task>, onDelete: (Task) -> Unit) {
+    GpCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(UNFILED_TASKS_TAG),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(UNFILED_TASKS_TITLE, style = MaterialTheme.typography.titleMedium)
+            Text(
+                UNFILED_TASKS_SUBTITLE,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            tasks.forEach { task ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        onClick = { onDelete(task) },
+                        modifier = Modifier.testTag(unfiledDeleteTag(task.id)),
+                    ) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "Delete ${task.title}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Its words, shared with the tests so an assertion cannot pass against a stale copy. */
+internal const val UNFILED_TASKS_TITLE = "Filed nowhere"
+internal const val UNFILED_TASKS_SUBTITLE =
+    "These are not under any goal and have no date, so they appear on no other screen. " +
+        "Delete the ones you do not want."
+internal const val UNFILED_TASKS_TAG = "home_unfiled_tasks"
+
+/** One tag per row, so a test can delete a **named** task rather than the first icon it finds. */
+internal fun unfiledDeleteTag(taskId: String): String = "home_unfiled_delete_$taskId"
 
 /**
  * §2.2's table, as the four sentences it actually is.

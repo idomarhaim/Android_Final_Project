@@ -240,6 +240,11 @@
     <string name="components_run_offer_break_down">Break it into steps</string>
     <string name="components_run_offer_schedule">Schedule the first one</string>
 
+    <!-- 4.7's third offer, wired by #67. It is a COMMAND: the app never suggests
+         a goal is over (C4), and the row's own label says 'no next step', which is
+         about what is scheduled rather than about whether the goal matters. -->
+    <string name="components_run_let_it_go">Let it go</string>
+
     <!-- "idle 4 months". The unit is chosen by size so the sentence stays
          readable; null idle prints nothing at all, because "idle 0 days" would
          claim activity that never happened. -->
@@ -263,5 +268,56 @@
     <string name="components_run_window_missed">Missed, %1$s</string>
     <string name="components_run_window_owed">Still owed, %1$s</string>
     <string name="components_run_window_nothing_due">Nothing due, %1$s</string>
+
+    <!-- #67's confirm. Deletion is irreversible and there is no undo, so this
+         dialog is the one moment the app has to say what is about to happen.
+         Two questions, deliberately separate: what goes, and what stays. -->
+    <string name="components_delete_title">Delete “%1$s”?</string>
+    <string name="components_delete_untitled">Untitled</string>
+    <string name="components_delete_goes">WHAT GOES</string>
+    <string name="components_delete_stays">WHAT STAYS</string>
+    <string name="components_delete_irreversible">This cannot be undone.</string>
+    <string name="components_delete_confirm">Delete</string>
+    <string name="components_delete_cancel">Cancel</string>
+
+    <!-- The subject line of each block names what the thing IS rather than
+         repeating its title, which is already in the heading above it. -->
+    <string name="components_delete_goal_itself">This goal, and its measure.</string>
+    <string name="components_delete_task_itself">This task.</string>
+    <string name="components_delete_area_itself">This life area.</string>
+
+    <!-- A goal takes its progress log with it and leaves its tasks standing —
+         §1.1's lossless demotion, "the task underneath is real work he typed in". -->
+    <plurals name="components_delete_goal_entries">
+        <item quantity="one">%1$s entry in its progress log.</item>
+        <item quantity="other">%1$s entries in its progress log.</item>
+    </plurals>
+    <plurals name="components_delete_goal_tasks_kept">
+        <item quantity="one">%1$s task, which stays and becomes unfiled.</item>
+        <item quantity="other">%1$s tasks, which stay and become unfiled.</item>
+    </plurals>
+
+    <!-- A task is the only one of the three whose deletion reaches history, so
+         the windows that already happened are counted separately from the ones
+         still to come (§2.3). -->
+    <plurals name="components_delete_task_occurrences">
+        <item quantity="one">%1$s scheduled occurrence.</item>
+        <item quantity="other">%1$s scheduled occurrences.</item>
+    </plurals>
+    <plurals name="components_delete_task_settled">
+        <item quantity="one">Including %1$s that already happened.</item>
+        <item quantity="other">Including %1$s that already happened.</item>
+    </plurals>
+    <plurals name="components_delete_task_points">
+        <item quantity="one">The %1$s point it earned.</item>
+        <item quantity="other">The %1$s points it earned.</item>
+    </plurals>
+
+    <!-- An area's goals are kept and unfiled, which is what deleteLifeArea has
+         always done. This says so BEFORE the act rather than after it. -->
+    <plurals name="components_delete_area_goals_kept">
+        <item quantity="one">%1$s goal, which stays and becomes unfiled.</item>
+        <item quantity="other">%1$s goals, which stay and become unfiled.</item>
+    </plurals>
 
 </resources>

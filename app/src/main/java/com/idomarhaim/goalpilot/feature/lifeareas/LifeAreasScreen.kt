@@ -65,12 +65,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.R
+import com.idomarhaim.goalpilot.domain.model.DeletionImpact
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.LifeAreaPalette
 import com.idomarhaim.goalpilot.domain.model.TasksConsent
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaProposal
 import com.idomarhaim.goalpilot.domain.usecase.LifeAreaSyncAction
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -100,7 +102,7 @@ fun LifeAreasScreen(
     val tasksConsent by viewModel.tasksConsent.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
-    var pendingDelete by remember { mutableStateOf<LifeArea?>(null) }
+    var pendingDelete by remember { mutableStateOf<LifeAreaRow?>(null) }
     val reorder = rememberLifeAreaReorderState()
 
     // Re-read on every entry, not once: the dashboard grants the same scope, and
@@ -246,25 +248,23 @@ fun LifeAreasScreen(
         )
     }
 
-    pendingDelete?.let { area ->
-        AppAlertDialog(
-            onDismissRequest = { pendingDelete = null },
-            title = { Text("Delete “${area.name}”?") },
-            text = {
-                Text(
-                    "The goals filed under it are kept — they simply become unfiled, " +
-                        "and their time moves to “Unassigned” in your analytics.",
-                )
+    // `#67`. What stood here said the right thing in prose — *"the goals filed under it are
+    // kept"* — and said it without a number, on the one screen that already knows the number.
+    // The shared confirm says it with the count, in the same words every other delete uses.
+    pendingDelete?.let { row ->
+        DeleteConfirm(
+            impact = DeletionImpact.OfLifeArea(
+                name = row.area.name,
+                // Taken from the row rather than recounted, so the dialog cannot disagree with
+                // the card the person tapped. `LifeAreasViewModel` computes it with exactly the
+                // predicate `Deletion.ofLifeArea` uses.
+                unfiledGoalCount = row.goalCount,
+            ),
+            onConfirm = {
+                viewModel.deleteArea(row.area.id)
+                pendingDelete = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteArea(area.id)
-                    pendingDelete = null
-                }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
-            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }

@@ -175,6 +175,7 @@
     <!-- ── Messages (resolved on the screen, never held in the ViewModel) ── -->
     <string name="analytics_error_all_estimated">Every task already has an AI duration estimate.</string>
     <string name="analytics_update_failed">Could not update those durations</string>
+    <string name="analytics_delete_failed">Could not let that goal go</string>
     <plurals name="analytics_updated">
         <item quantity="one">Updated %1$s task duration</item>
         <item quantity="other">Updated %1$s task durations</item>

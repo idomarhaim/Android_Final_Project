@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.domain.model.ScheduledOccurrence
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Occurrence
@@ -19,6 +20,7 @@ import com.idomarhaim.goalpilot.domain.model.TaskCompletion
 import com.idomarhaim.goalpilot.domain.model.TaskDuration
 import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.usecase.ProposeMeasureUseCase
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
 import com.idomarhaim.goalpilot.domain.repository.AppPreferencesRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
@@ -47,6 +49,7 @@ class GoalDetailViewModel @Inject constructor(
     private val recommendationRepository: RecommendationRepository,
     private val preferences: AppPreferencesRepository,
     lifeAreaRepository: LifeAreaRepository,
+    occurrenceRepository: OccurrenceRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -83,8 +86,14 @@ class GoalDetailViewModel @Inject constructor(
         taskRepository.observeTasks(goalId),
         progressRepository.observeEntries(goalId),
         lifeAreaRepository.observeLifeAreas(includeArchived = true),
-        _pendingToggles,
-    ) { goal, tasks, entries, areas, pending ->
+        // `#67`: the toggles and the occurrence documents ride one arm, because `combine` is
+        // typed to five and this screen already used all five. Same move `CalendarViewModel`
+        // makes with its `Controls` -- and it keeps the two things that are *not* about the goal
+        // together, which reads better than a sixth positional parameter would.
+        combine(_pendingToggles, occurrenceRepository.observeOccurrences()) { pending, stored ->
+            pending to stored
+        },
+    ) { goal, tasks, entries, areas, (pending, stored) ->
         // An entry the snapshot listener has caught up with is retired here rather
         // than when setDone returns. That ordering matters: setDone's own
         // completion callback and the snapshot that reflects it arrive on two
@@ -105,6 +114,7 @@ class GoalDetailViewModel @Inject constructor(
             lifeAreas = goal?.lifeAreaIds
                 ?.mapNotNull { id -> areas.firstOrNull { it.id == id } }
                 .orEmpty(),
+            occurrences = stored,
         )
     }.catch { emit(GoalDetailUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -550,6 +560,15 @@ data class GoalDetailUiState(
      * thing to a reader, and §1.2 makes the empty collection the honest answer.
      */
     val lifeAreas: List<LifeArea> = emptyList(),
+    /**
+     * §2.1's stored occurrences, **for one purpose only** — `#67`'s confirm.
+     *
+     * The whole collection, not this goal's: `Deletion.ofTask` takes it whole and filters by
+     * task id, for the reason `BuildSuccessFailureRunUseCase` gives — pre-filtering here would
+     * be a second place the join could be got wrong. Nothing on this screen renders it; a task
+     * row's *when* is still `Task.occurrence`.
+     */
+    val occurrences: List<ScheduledOccurrence> = emptyList(),
     val error: String? = null,
 )
 

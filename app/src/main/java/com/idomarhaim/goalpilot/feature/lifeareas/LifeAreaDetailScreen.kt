@@ -43,13 +43,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.core.util.bidiIsolated
+import com.idomarhaim.goalpilot.domain.model.Deletion
+import com.idomarhaim.goalpilot.domain.model.DeletionImpact
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.usecase.NoNextStepGoal
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.GpLinearProgress
@@ -104,6 +109,9 @@ fun LifeAreaDetailScreen(
 
     val accent = state.area?.colorHex?.toGoalAccent() ?: MaterialTheme.colorScheme.primary
     val ink = state.area?.colorHex?.toGoalInk() ?: MaterialTheme.colorScheme.primary
+    var menuOpen by remember { mutableStateOf(false) }
+    var showDelete by remember { mutableStateOf(false) }
+    var pendingLetGo by remember { mutableStateOf<NoNextStepGoal?>(null) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -121,6 +129,28 @@ fun LifeAreaDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                // `#67`: *"a delete reachable from where the user is looking at it"*. Deleting an
+                // area was possible only from the LIST, so a person standing on the area itself
+                // had to go back to a screen that shows every other area to get rid of this one.
+                // Same overflow-menu shape `GoalDetailScreen` uses, so the two detail screens
+                // answer the same gesture.
+                actions = {
+                    if (state.area != null) {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                        }
+                        AppDropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = { menuOpen = false; showDelete = true },
+                                modifier = Modifier.testTag(TAG_AREA_DELETE),
+                            )
+                        }
                     }
                 },
             )
@@ -165,6 +195,9 @@ fun LifeAreaDetailScreen(
                     // analytics AND NOWHERE ELSE. Revision 1 of the prototype put it
                     // on every area frame and said the same thing twice.
                     showAsymmetryNote = false,
+                    // `#67`'s `Let it go`, on the other of the card's two placements. Both
+                    // hosts wire it, so the card behaves the same wherever it is drawn.
+                    onLetGo = { pendingLetGo = it },
                 )
             }
 
@@ -205,6 +238,44 @@ fun LifeAreaDetailScreen(
                     UnfiledGoalRow(goal = goal, onFile = { viewModel.fileGoalHere(goal) })
                 }
             }
+        }
+    }
+
+    // `#67`. The count is `state.goals.size` — the goals filed HERE, which is the same list the
+    // section above renders, so the dialog and the screen behind it cannot disagree.
+    if (showDelete) {
+        state.area?.let { area ->
+            DeleteConfirm(
+                impact = DeletionImpact.OfLifeArea(
+                    name = area.name,
+                    unfiledGoalCount = state.goals.size,
+                ),
+                onConfirm = {
+                    showDelete = false
+                    // Back FIRST, then the write. The screen is about an area that is about to
+                    // stop existing, and staying on it would land on the *"That life area is
+                    // gone"* empty state — technically correct and a strange thing to show
+                    // someone who just deleted it on purpose.
+                    onBack()
+                    viewModel.deleteArea()
+                },
+                onDismiss = { showDelete = false },
+            )
+        }
+    }
+
+    // `#67`. The goal is looked up in this area's own list, so a row can only ever let go of a
+    // goal this screen is showing.
+    pendingLetGo?.let { row ->
+        state.goals.firstOrNull { it.id == row.goalId }?.let { goal ->
+            DeleteConfirm(
+                impact = Deletion.ofGoal(goal = goal, tasks = state.tasks),
+                onConfirm = {
+                    viewModel.deleteGoal(goal.id)
+                    pendingLetGo = null
+                },
+                onDismiss = { pendingLetGo = null },
+            )
         }
     }
 }
@@ -393,3 +464,6 @@ private fun UnfiledGoalRow(goal: Goal, onFile: () -> Unit) {
  */
 internal fun goalCountLabel(count: Int): String =
     "${"$count".bidiIsolated()} goal" + if (count == 1) "" else "s"
+
+/** `#67`’s overflow item, tagged so an instrumented test names it rather than hunting icons. */
+const val TAG_AREA_DELETE = "area_detail_delete"

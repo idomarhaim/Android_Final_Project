@@ -52,7 +52,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    goalRepository: GoalRepository,
+    private val goalRepository: GoalRepository,
     private val taskRepository: TaskRepository,
     lifeAreaRepository: LifeAreaRepository,
     occurrenceRepository: OccurrenceRepository,
@@ -156,6 +156,26 @@ class AnalyticsViewModel @Inject constructor(
 
     private val _message = MutableStateFlow<AnalyticsMessage?>(null)
     val message = _message.asStateFlow()
+
+    /**
+     * §4.7's `Let it go`, performed — `#67`.
+     *
+     * The screen has already asked, with `DeleteConfirm` and this goal's own counts, so there is
+     * nothing to confirm here. Success says nothing: the row leaves the run the moment the
+     * snapshot arrives, which is the whole message. A failure is not silent (§0.4) and goes
+     * through the channel this screen already has.
+     *
+     * Nothing is unfiled here either — `GoalRepositoryImpl.deleteGoal` strips the goal's edge
+     * from every task that carries it and removes its progress log, in one place with the
+     * reasoning written down.
+     */
+    fun deleteGoal(goalId: String) {
+        viewModelScope.launch {
+            if (goalRepository.deleteGoal(goalId) !is Resource.Success) {
+                _message.value = AnalyticsMessage.DeleteFailed
+            }
+        }
+    }
 
     /**
      * Asks the model how long each un-estimated task really takes, and opens a
@@ -335,6 +355,9 @@ sealed interface AnalyticsMessage {
 
     /** The write failed for every chosen row. */
     data object UpdateFailed : AnalyticsMessage
+
+    /** `#67`'s `Let it go` could not remove the goal. */
+    data object DeleteFailed : AnalyticsMessage
 
     /** [count] task durations were written. Never zero — that is [UpdateFailed]. */
     data class Updated(val count: Int) : AnalyticsMessage

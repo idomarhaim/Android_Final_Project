@@ -220,13 +220,100 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
 
+    /**
+     * Removes the goal, **unfiles its tasks**, and takes its progress log with it (`#67`).
+     *
+     * ### Before `#67` this deleted one document, and both halves of that were defects
+     *
+     * `Observed:` 2026-08-23, mechanically. It removed `goals/{goalId}` and nothing else.
+     *
+     * **The tasks kept an edge to it.** A task whose only edge points at a deleted goal reads
+     * as *filed* — `Task.goalEdges` is not empty — while being listed on no screen: the goal
+     * detail that would show it cannot be opened, and the goals list has nothing to show. That
+     * is `#67`'s founding defect, manufactured by the app's own delete. `Deletion.unreachableTasks`
+     * is the predicate that catches an existing one; this is what stops new ones being made.
+     *
+     * **The progress log became unreachable.** Deleting a Firestore document does not delete
+     * its subcollections, and `entriesFlow` above fans out over *the goals that exist* — so
+     * `goals/{goalId}/progressEntries` had no reader left, and no route to one. The same dead
+     * storage an orphan occurrence is (`TaskRepositoryImpl.deleteTask`).
+     *
+     * ### The tasks are kept, not deleted, and that is derived rather than chosen here
+     *
+     * §1.1's *lossless demotion* — *"the task underneath is real work he typed in"* — is the
+     * clause that already forbids `GoalsScreen`'s suggested-goal banner offering a delete. The
+     * work outlives the objective it was filed under, so the edge goes and the task stays,
+     * which is exactly what `deleteLifeArea` already does one level up when it unfiles an
+     * area's goals rather than taking them down. `DeletionImpact.OfGoal` states both halves
+     * before the act, with the counts.
+     *
+     * ### Order, and what an interrupted run leaves behind
+     *
+     * Edges first, then entries, then the goal document — the same reasoning `deleteLifeArea`
+     * writes down: if a later step fails the goal survives, which is recoverable, whereas
+     * removing the goal first would leave tasks pointing at nothing and a log nobody can reach,
+     * which is the state this method exists to prevent. Chunked for the same reason
+     * `deleteTask` is chunked, and idempotent for the same reason.
+     */
     override suspend fun deleteGoal(goalId: String): Resource<Unit> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
         try {
+            // `TaskDto.goalId` is the indexed projection of the edge list, rewritten from
+            // `goalEdges` on every write -- so it is what a query can filter on, and the edge
+            // array is what has to be corrected. Both are updated together for the reason
+            // `setLifeAreas` gives about its own legacy singular: a document carrying one
+            // answer in the array and another in the projection reads differently through the
+            // mapper than through a query.
+            val filed = tasksCol(uid).whereEqualTo(TASK_GOAL_ID, goalId).get().await()
+            filed.documents.chunked(BATCH_LIMIT).forEach { chunk ->
+                val batch = firestore.batch()
+                val now = System.currentTimeMillis()
+                chunk.forEach { doc ->
+                    val remaining = (doc.get(TASK_GOAL_EDGES) as? List<*>)
+                        .orEmpty()
+                        .filterIsInstance<Map<*, *>>()
+                        .filterNot { it[EDGE_GOAL_ID] == goalId }
+                    batch.update(
+                        doc.reference,
+                        mapOf(
+                            TASK_GOAL_EDGES to remaining,
+                            // The projection follows the array it projects: first surviving
+                            // edge, or absent. `Task.goalId` reads exactly this way.
+                            TASK_GOAL_ID to (remaining.firstOrNull()?.get(EDGE_GOAL_ID)),
+                            "updatedAt" to now,
+                        ),
+                    )
+                }
+                batch.commit().await()
+            }
+
+            val entries = progressCol(uid, goalId).get().await()
+            entries.documents.chunked(BATCH_LIMIT).forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { batch.delete(it.reference) }
+                batch.commit().await()
+            }
+
             goalsCol(uid).document(goalId).delete().await()
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Could not delete goal", e)
         }
+    }
+
+    private companion object {
+        /**
+         * `TaskDto`'s two goal fields and `GoalEdgeDto`'s id, as query and update keys.
+         *
+         * Named rather than typed inline for `TaskRepositoryImpl.OCCURRENCE_TASK_ID`'s reason: a
+         * rename would leave the query matching nothing, and a delete that unfiles no tasks is
+         * indistinguishable from a goal that had none.
+         */
+        const val TASK_GOAL_ID = "goalId"
+        const val TASK_GOAL_EDGES = "goalEdges"
+        const val EDGE_GOAL_ID = "goalId"
+
+        /** Firestore's per-batch write cap, with headroom. See `TaskRepositoryImpl.BATCH_LIMIT`. */
+        const val BATCH_LIMIT = 450
     }
 }

@@ -73,6 +73,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.domain.model.EditScope
 import com.idomarhaim.goalpilot.domain.model.OccurrenceOutcome
+import com.idomarhaim.goalpilot.ui.components.DeleteConfirm
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
 import com.idomarhaim.goalpilot.ui.components.ProgressRing
 import com.idomarhaim.goalpilot.ui.components.toComposeColor
@@ -130,6 +131,9 @@ fun CalendarScreen(
         onCreate = { viewModel.create(it) },
         onMove = { entry, target, scope -> viewModel.move(entry, target, scope) },
         onSkip = { entry, scope -> viewModel.skip(entry, scope) },
+        onAskDelete = viewModel::askToDelete,
+        onConfirmDelete = viewModel::confirmDelete,
+        onCancelDelete = viewModel::cancelDelete,
         onNoticeShown = viewModel::dismissNotice,
     )
 }
@@ -157,6 +161,9 @@ fun CalendarSurface(
     onCreate: (SlotDraft) -> Unit = {},
     onMove: (CalendarEntry, DragToMove.Target, EditScope) -> Unit = { _, _, _ -> },
     onSkip: (CalendarEntry, EditScope) -> Unit = { _, _ -> },
+    onAskDelete: (CalendarEntry) -> Unit = {},
+    onConfirmDelete: () -> Unit = {},
+    onCancelDelete: () -> Unit = {},
     onNoticeShown: () -> Unit = {},
 ) {
     var draft by rememberSaveable(stateSaver = SlotDraftSaver) { mutableStateOf<SlotDraft?>(null) }
@@ -293,6 +300,13 @@ fun CalendarSurface(
                         null
                     }
                 },
+                // The sheet closes and the confirm opens in its place. Two windows over one row
+                // at once is what `PendingEdit`'s own KDoc rules out for the scope sheet, and a
+                // dialog behind a bottom sheet is worse than either alone.
+                onDelete = {
+                    onAskDelete(edit.entry)
+                    pending = null
+                },
                 onDismiss = { pending = null },
             )
 
@@ -309,6 +323,17 @@ fun CalendarSurface(
                 onDismiss = { pending = null },
             )
         }
+    }
+
+    // `#67`. Driven off the STATE and not off `pending`, because the counts it says out loud are
+    // a join the view model owns -- which is also what lets an instrumented test open this dialog
+    // from a hand-built `CalendarUiState`, with no account and no Firestore.
+    state.pendingDelete?.let { impact ->
+        DeleteConfirm(
+            impact = impact,
+            onConfirm = onConfirmDelete,
+            onDismiss = onCancelDelete,
+        )
     }
 }
 

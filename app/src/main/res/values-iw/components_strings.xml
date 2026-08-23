@@ -140,6 +140,7 @@
     </plurals>
     <string name="components_run_offer_break_down">לפרק לצעדים</string>
     <string name="components_run_offer_schedule">לקבוע מועד לראשונה</string>
+    <string name="components_run_let_it_go">לוותר על זה</string>
 
     <plurals name="components_run_idle_days">
         <item quantity="one">%1$s יום ללא תנועה</item>
@@ -161,5 +162,50 @@
     <string name="components_run_window_missed">הוחמץ, %1$s</string>
     <string name="components_run_window_owed">עוד פתוח, %1$s</string>
     <string name="components_run_window_nothing_due">לא נדרש כלום, %1$s</string>
+
+    <string name="components_delete_title">למחוק את “%1$s”?</string>
+    <string name="components_delete_untitled">ללא שם</string>
+    <string name="components_delete_goes">מה נמחק</string>
+    <string name="components_delete_stays">מה נשאר</string>
+    <string name="components_delete_irreversible">אין דרך לבטל את זה.</string>
+    <string name="components_delete_confirm">מחק</string>
+    <string name="components_delete_cancel">בטל</string>
+
+    <string name="components_delete_goal_itself">היעד הזה, והמדד שלו.</string>
+    <string name="components_delete_task_itself">המשימה הזאת.</string>
+    <string name="components_delete_area_itself">תחום החיים הזה.</string>
+
+    <plurals name="components_delete_goal_entries">
+        <item quantity="one">רישום %1$s ביומן ההתקדמות שלו.</item>
+        <item quantity="two">%1$s רישומים ביומן ההתקדמות שלו.</item>
+        <item quantity="other">%1$s רישומים ביומן ההתקדמות שלו.</item>
+    </plurals>
+    <plurals name="components_delete_goal_tasks_kept">
+        <item quantity="one">משימה %1$s, שנשארת והופכת ללא שיוך.</item>
+        <item quantity="two">%1$s משימות, שנשארות והופכות ללא שיוך.</item>
+        <item quantity="other">%1$s משימות, שנשארות והופכות ללא שיוך.</item>
+    </plurals>
+
+    <plurals name="components_delete_task_occurrences">
+        <item quantity="one">מועד %1$s שנקבע לה.</item>
+        <item quantity="two">%1$s מועדים שנקבעו לה.</item>
+        <item quantity="other">%1$s מועדים שנקבעו לה.</item>
+    </plurals>
+    <plurals name="components_delete_task_settled">
+        <item quantity="one">ובתוכם %1$s שכבר התרחש.</item>
+        <item quantity="two">ובתוכם %1$s שכבר התרחשו.</item>
+        <item quantity="other">ובתוכם %1$s שכבר התרחשו.</item>
+    </plurals>
+    <plurals name="components_delete_task_points">
+        <item quantity="one">הנקודה %1$s שהיא הקנתה.</item>
+        <item quantity="two">%1$s הנקודות שהיא הקנתה.</item>
+        <item quantity="other">%1$s הנקודות שהיא הקנתה.</item>
+    </plurals>
+
+    <plurals name="components_delete_area_goals_kept">
+        <item quantity="one">יעד %1$s, שנשאר והופך ללא שיוך.</item>
+        <item quantity="two">%1$s יעדים, שנשארים והופכים ללא שיוך.</item>
+        <item quantity="other">%1$s יעדים, שנשארים והופכים ללא שיוך.</item>
+    </plurals>
 
 </resources>

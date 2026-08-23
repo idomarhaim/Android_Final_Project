@@ -11,6 +11,7 @@ import com.idomarhaim.goalpilot.domain.model.Task
 import com.idomarhaim.goalpilot.domain.model.goalEdgesOf
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
 import com.idomarhaim.goalpilot.domain.repository.LifeAreaRepository
+import com.idomarhaim.goalpilot.domain.repository.OccurrenceRepository
 import com.idomarhaim.goalpilot.domain.repository.ProgressRepository
 import com.idomarhaim.goalpilot.domain.repository.RecommendationRepository
 import com.idomarhaim.goalpilot.domain.repository.TaskRepository
@@ -85,6 +86,10 @@ class GoalDetailViewModelTest {
         every { taskRepository.observeTasks(goalId) } returns observedTasks
         every { progressRepository.observeEntries(goalId) } returns flowOf(emptyList())
         every { lifeAreaRepository.observeLifeAreas(any()) } returns flowOf(emptyList())
+        // `#67`: read only for the delete confirm's occurrence counts, which no assertion
+        // in this suite makes. Empty is the honest fixture -- these tasks have no schedule.
+        val occurrenceRepository = mockk<OccurrenceRepository>()
+        every { occurrenceRepository.observeOccurrences(any()) } returns flowOf(emptyList())
 
         val handle = mockk<SavedStateHandle>()
         every { handle.get<String>(Routes.ARG_GOAL_ID) } returns goalId
@@ -98,6 +103,7 @@ class GoalDetailViewModelTest {
             // state every assertion in this suite was written against.
             preferences = FakeAppPreferences(),
             lifeAreaRepository = lifeAreaRepository,
+            occurrenceRepository = occurrenceRepository,
             savedStateHandle = handle,
         )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
