@@ -15,7 +15,26 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `64-area-success-failure` | `#64` — build `C19`'s success/failure run (`kept · missed · still-owed · nothing-due · no next step`, window filter `30 days · 8 weeks · 6 months`), in both placements — life-area detail and analytics | `ui/components/SuccessFailureRun.kt` (new) · `domain/usecase/BuildSuccessFailureRunUseCase.kt` (new) · `feature/lifeareas/LifeAreaDetailScreen.kt` · `feature/lifeareas/LifeAreaDetailViewModel.kt` · `feature/analytics/AnalyticsScreen.kt` · `feature/analytics/AnalyticsViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/SuccessFailureRunTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/SuccessFailureRunUiTest.kt` (new) · `kb-candidates/2026-08-23-64-area-success-failure.md` · `CHANGELOG/2026-08-23/64-area-success-failure.md` · `sessions/64-area-success-failure.md` | **Gradle daemon** · **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`** — both free at claim time (`66-unmeasured-percent` released them in `72fb296`; `61-google-calendar` released in `1ccdb3e`; board carries zero live rows) | 2026-08-23 |
+> 🏁 **`64-area-success-failure` RELEASED 2026-08-23 — this commit.** `#64` shipped in
+> `9c89144`; brief closed to `sessions/done/` with `status: done`, and the candidate file drained in
+> full and deleted (4 entries, cross-repo into `C:\Dev\JARVIS` — `1736766`). **Singletons free**: the
+> **Gradle daemon** and **`emulator-5554` (`Pixel_10_Pro_XL`) + `adb`**. `Pixel_10_Pro_XL_B` never booted.
+>
+> 📱 **A DEVICE WAS USED AND NO SIGN-IN WAS NEEDED OR DESTROYED.** `adb install -r` on both APKs
+> plus `am instrument` — never `connectedDebugAndroidTest` — so the app's own Firebase auth store
+> survived. `SuccessFailureRunUiTest` uses a bare `createComposeRule()` with no Hilt and no account.
+>
+> ⚠️ **Two KDoc pointers to `#64`, written by earlier sessions, were CORRECTED IN PLACE** —
+> `OccurrenceState.countsAsFailure` (`#56`) said §4.7 was *"the reader it is written for"*, and
+> `OccurrenceOutcome.Done` (`#63`) said points-per-occurrence *"is `#64`'s"*. The first reader arrived
+> and declined; the second was never in `#64`'s ticket text at all. **Neither property's behaviour
+> changed and no test moved** — flagged here because both files are ones other tickets read.
+>
+> ⏸️ **ONE THING IS HELD, and it is not a defect.** The push. Auto-mode precondition 1 wants nothing
+> knowingly unverified going up, and the **full** instrumented suite this session started as a
+> regression check had not reported when the work was committed. `Observed:` both commits still
+> unpublished as of this note; `@{u}..HEAD` carries **no foreign commits**, so nothing else blocks it.
+>
 > 🏁 **`66-unmeasured-percent` RELEASED 2026-08-23 — this commit.** `#66` shipped over four
 > commits (`7de9bc0`, `005d297`, `efe5f44`, `99e2070`), the brief is closed to `sessions/done/`, and
 > the ticket is closed. **Both singletons are free**: the **Gradle daemon** and **`emulator-5554`

@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 # Was `blocked_on: [63]`. Cleared 2026-08-23: #63 shipped in 7c457c4 and closed
 # 2026-08-22T23:37Z; its brief is in sessions/done/ with status: done.
 issue: 64
@@ -28,6 +28,19 @@ owns:
   - CHANGELOG/2026-08-23/64-area-success-failure.md
   - sessions/64-area-success-failure.md
 created: 2026-08-23
+result: |
+  Shipped in 9c89144 (GoalPilot). C19's success/failure run in BOTH placements from ONE
+  component -- BuildSuccessFailureRunUseCase + ui/components/SuccessFailureRun.kt, hosted on
+  LifeAreaDetailScreen and AnalyticsScreen. 1037 JVM tests / 0 failures (22 new), 20
+  instrumented / 0 failures on emulator-5554, 7 render-pass PNGs in
+  docs/render-passes/2026-08-23-64-area-success-failure/.
+
+  HELD, and named rather than dropped: `Let it go`. S4.7 puts it beside the offer; it is NOT
+  rendered, because that same sentence says it "stays a command, never an inference" (C4) and
+  no such command exists in the app. A button proposing a goal is over while doing nothing is
+  worse than the silence. Everything else in the Exit shipped.
+
+  KB candidates drained in full -- 4 entries, cross-repo into C:\Dev\JARVIS (1736766).
 ---
 
 # `#64` — `kept · missed · still-owed`, and never a rate
