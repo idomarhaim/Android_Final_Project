@@ -3,7 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: blocked
-blocked_on: [60, 61]  # was [59, 60, 61]; #59 closed 2026-08-23, see the note below
+blocked_on: [60]  # was [59, 60, 61]; #59 closed and #61 closed 2026-08-23, see the note below
 issue: 62
 owns:
   - docs/marketing/**
@@ -22,8 +22,11 @@ created: 2026-08-23
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 
 📌 **Partly cleared 2026-08-23: [#59](https://github.com/idomarhaim/Android_Final_Project/issues/59)
-has shipped and closed** (`70bf805`, the data repair ran). **Still blocked on #60 and #61**, which are
-`status: ready` and unstarted. The paragraph below is kept as written and still lists all three,
+has shipped and closed** (`70bf805`, the data repair ran). **`#61` has shipped and closed too**
+(`1ccdb3e`, 2026-08-23 — the GoalPilot calendar exists in Ido's account and its banners are
+photographed in Google Calendar's own UI at `docs/render-passes/2026-08-23-61-google-calendar/`,
+which is a shot **this brief wants**). **Still blocked on #60 alone**, whose surface shipped and
+whose ticket stays open for drag-to-move. The paragraph below is kept as written and still lists all three,
 because its instruction is *check them before claiming* — do that; do not take either this note or
 that list as the current state.
 
