@@ -89,3 +89,37 @@ the missing declaration rather than fixing it.
 **Anchors:** `app/build.gradle.kts` `tasks.named("testDebugUnitTest")` input block.
 **Supersedes:** nothing.
 **Status:** ready.
+
+---
+
+## 3 · Product copy is an assertion about other code, and nothing re-runs it
+
+**Claim.** Onboarding tours, coach marks, tooltips, empty-state text and in-app help are claims
+about how the rest of the product is arranged. The described code does not import the describing
+code, so no compiler, rename refactor or test connects them; when the described thing moves, the
+copy keeps rendering perfectly and starts lying. Needs two authors two days apart, neither wrong.
+
+**Why.** This is the finding that opened the session, not one the release exposed. The repo was
+*well* defended at that seam — `TutorialStepsTest` already reads source text to check that every
+anchor a step names is applied by some screen, because no compiler links those two — and it
+**passed**, since the nav bar still existed. What nothing checks is what a step **says** about
+what is inside its own spotlight. Extending the guard to parse body copy against `TopLevelTab.label`
+dies on the first sentence in a human register, so the honest conclusion is *no test layer holds
+this*. The detector was **a person asking a coverage question**, which places the cheap mitigation
+on the ticket that **moves a destination** rather than on a recurring audit of copy (fires
+constantly, no-ops, skipped exactly when the codebase moves fastest). Second-order cost is the
+expensive half: one false sentence had reproduced into the previous build's release notes, `#62`'s
+brief and `docs/marketing/tour-timecodes.md` before anyone read it.
+
+**Rejected.** Folding it into `describing-is-not-exhibiting.md` — that page's remedy is *render and
+look*, and here rendering shows a beautifully rendered lie, so it is the mirror case and links to
+it rather than joining it.
+
+**Destination:** `C:\Dev\JARVIS` `kb/dev/product-copy-describes-code.md` (new page).
+**Anchors:** `243c14b`; `#60` `7452122`; `CHANGELOG/2026-08-24/tour-refresh.md`.
+**Supersedes:** nothing.
+**Status:** ✅ **INGESTED 2026-08-24** — JARVIS `d906b25`, index row added beside
+`describing-is-not-exhibiting.md`, tie in `kb/log/2026-08-24.md`, `Check-KbLinks` CLEAN (118 pages).
+Kept here rather than removed: §1 and §2 above are still held, and a partly-drained file is
+rewritten down to its survivors, never deleted — the record of what already landed is what stops
+the next session ingesting it twice.

@@ -15,6 +15,13 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `docs-currency-guard` | Audit `docs/` against `HEAD` (done -- 6 files, ~15 false claims found), then build the mechanical guard that makes the drift fail a build rather than wait for somebody to notice | `app/src/test/java/com/idomarhaim/goalpilot/docs/DocsCurrencyTest.kt` (new), `CHANGELOG/2026-08-24/docs-currency-guard.md`, `kb-candidates/2026-08-24-docs-currency-guard.md` | **NEEDS the Gradle daemon -- held by `tour-refresh`, waiting; nothing run yet** | 2026-08-24 |
+> ⚠️ **`app/build.gradle.kts` IS OWED AND I AM NOT TAKING IT — `tour-refresh` holds it.**
+> The guard reads `docs/`, `functions/src/index.ts`, `gradle.properties` and `README.md`, and
+> `testDebugUnitTest` tracks none of them, so without four `inputs.file` lines in that file's
+> existing block (~L300) the task answers **UP-TO-DATE and the guard reports green having never
+> run** — the exact failure `ReleaseNotesGuardTest`'s KDoc records from 2026-08-22. Until those
+> lines land, the guard only re-runs when `src/main/**` changes. Named here so it is not lost.
 | `62-kickoff-refresh` | Bring [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) and its kickoff brief up to date before Ido opens the #62 session -- the app has moved on since both were written, and the OpenArt model policy now has to cover three components (video, voice, image) and report which model was used | `sessions/62-tour-video-v2.md` (**CONTESTED -- `tour-refresh` holds it for one committed paragraph; messaged, waiting**), GitHub issue `#62` body (not a path), `CHANGELOG/2026-08-24/62-kickoff-refresh.md`, `kb-candidates/2026-08-24-62-kickoff-refresh.md` | none -- no build, no device | 2026-08-24 |
 > 🏁 **`kb-drain-67-and-siblings` (follow-on) RELEASED 2026-08-24 — this commit.** The held
 > entry is drained, so **`kb-candidates/` is now EMPTY** — 11 of 11 entries ingested, 0 held. Pages in
@@ -4885,6 +4892,16 @@ shipped APK read for the new strings **and** for the absence of the deleted ones
 📱 **`emulator-5554` and `adb` were held 00:18–00:24 and are RELEASED. The Gradle daemon is
 released.** `connectedDebugAndroidTest` was **not** used — `adb install -r` on both APKs then
 `am instrument`, so **the sign-in on that device survived** and is still there.
+
+📥 **One KB page landed after that release note was written, cross-repo.**
+[`kb/dev/product-copy-describes-code.md`](file:///C:/Dev/JARVIS/kb/dev/product-copy-describes-code.md)
+in `C:\Dev\JARVIS` (`d906b25`) — *product copy is an assertion about other code, and nothing
+re-runs it*, the finding this session opened with. Row claimed and released on the JARVIS board in
+that same commit; `Check-KbLinks` **CLEAN** (118 pages). The candidate file here now carries it as
+№3, marked ingested; №1 and №2 are still **held** for Ido, so the file is not deleted.
+
+💤 **`sessions/62-tour-video-v2.md` is free** — this session's one paragraph landed in
+`243c14b` and nothing here needs it again. `62-kickoff-refresh` asked; the answer is yes, go ahead.
 
 🙏 **`kb-drain-67-and-siblings` — thank you for the note.** The tag warning was right about the
 defect and right that it was mine to fix; it was wrong only in assuming I was about to tag, which I

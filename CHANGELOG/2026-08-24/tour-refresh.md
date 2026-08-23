@@ -228,3 +228,36 @@ Both always-ask shapes in the range were checked mechanically rather than assume
 - **One rename**, `sessions/kb-drain-67-and-siblings.md` → `sessions/done/`, and the **same commit**
   sets `status: active` → `status: done`. That is the brief-close carve-out. A move without the
   status change still stops, and this one has it.
+
+---
+
+## 📥 KB
+
+`kb-candidates/2026-08-24-tour-refresh.md` carried **two** entries, both always-ask and both still
+**held**: №1 (a doc and the test guarding it encode the same wrong rule, and the test passes
+*because* both sides are wrong) supersedes a standing claim in `docs/RELEASING.md`; №2 (a guard
+that parses a file must declare it as a task input — the build script being the case nobody
+declares) extends the standing page `kb/dev/scanned-files-are-not-task-inputs.md`, which is
+precisely its subject. Neither is dropped; both wait for Ido.
+
+A **third** entry is added here and is already drained, because it is the finding this session
+opened with rather than one the release exposed:
+
+📥 **Ingested:** *product copy is an assertion about other code, and nothing re-runs it* →
+`C:\Dev\JARVIS` [`kb/dev/product-copy-describes-code.md`](file:///C:/Dev/JARVIS/kb/dev/product-copy-describes-code.md)
+(`d906b25`; index row placed beside `describing-is-not-exhibiting.md`; tie in `kb/log/2026-08-24.md`;
+`Check-KbLinks` **CLEAN**, 118 pages; row claimed and released on the JARVIS board in the same
+commit).
+
+**Why it is a page and not a line on an existing one.** The repo was *well* defended at that exact
+seam — `TutorialStepsTest` already reads source text to check that every anchor a step names is
+applied by some screen, precisely because no compiler links the two — and it **passed**, because the
+nav bar still existed. What nothing checks is what a step **says** about what is inside its own
+spotlight, and no reasonable test could: parsing body copy against `TopLevelTab.label` dies on the
+first sentence written in a human register. So the honest finding is *no test layer holds this*, the
+detector was **a person asking a coverage question**, and the mitigation belongs on the ticket that
+**moves a destination** rather than on a recurring audit of the copy.
+
+The expensive half is second-order and is why it earned a page: that one false sentence had already
+reproduced into **three** downstream artifacts — the previous build's release notes, `#62`'s brief,
+and `docs/marketing/tour-timecodes.md` — before anyone read it.
