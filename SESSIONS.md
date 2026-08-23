@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `70-verify-dashboard-average` | `#70` — run the verification `f25cca5` could not: JVM suite + a look at the dashboard *Overall progress* card in its three measured/unmeasured states, light and dark | `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardScreen.kt` · `app/src/main/java/com/idomarhaim/goalpilot/feature/dashboard/DashboardViewModel.kt` · `app/src/test/java/com/idomarhaim/goalpilot/domain/UnmeasuredPercentTest.kt` · `CHANGELOG/2026-08-23/70-verify-dashboard-average.md` · `sessions/70-verify-dashboard-average.md` | **Gradle daemon** · **emulator + `adb`** (render pass; `install -r` + `am instrument` only, never `connectedDebugAndroidTest`) | 2026-08-23 |
 > 🏁 **`66-unmeasured-percent` (follow-on) RELEASED 2026-08-23 15:10 — this commit.** The
 > dashboard caption is fixed in `f25cca5`. **No singletons were held or used.**
 >
