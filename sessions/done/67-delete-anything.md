@@ -27,10 +27,18 @@ commits:
   - c11c629  # the reach, the confirm, and two repository fixes
   - ec9996e  # the device run: 15 + 320 instrumented, 6 PNGs
 result: |
-  Shipped and green. The ticket is LEFT OPEN: the brief asked for the unfiled-task
-  defect to be confirmed on a device end to end, and what ran was the code path plus
-  DeletionReachTest, with the device covering the components. The push is HELD on
-  precondition 5 -- a live sibling commit sits in the range.
+  Shipped and green. The ticket was LEFT OPEN for one reason: the brief asked for the
+  unfiled-task defect to be confirmed on a device end to end, and what ran was the code
+  path plus DeletionReachTest, with the device covering the components. The push was HELD
+  on precondition 5 -- a live sibling commit sat in the range.
+
+  RESOLVED 2026-08-24 by session `67-close-or-finish`, and #67 IS NOW CLOSED. That session
+  had the signed-in account and live Firestore this one lacked, and c11c629 was already
+  inside the installed APK, so it needed no build: smart-add produced a genuinely unfiled
+  task, `Filed nowhere` caught it, the confirm showed WHAT GOES with no WHAT STAYS block,
+  and deleting it removed it with the goal counts unchanged. The push was long since
+  carried (tour-refresh's 07c467d). See CHANGELOG/2026-08-24/67-close-or-finish.md --
+  including a near-miss on a real goal, which #67's own confirm requirement is what caught.
 ---
 
 # `#67` — *"I need to be able to delete anything"*

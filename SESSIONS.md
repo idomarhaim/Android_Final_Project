@@ -15,7 +15,6 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `67-close-or-finish` | Decide `#67` on evidence and act: its code shipped but its own changelog marks the acceptance test `Untested:` end to end. Run that check on a signed-in device, then close the ticket or finish it | `CHANGELOG/2026-08-24/67-close-or-finish.md`, `sessions/done/67-delete-anything.md` (the result block, if the verdict moves it), plus whatever the run turns out to need -- declared here before writing it | emulator `Pixel_10_Pro_XL` (`emulator-5554`) + `adb`. **NOT the Gradle daemon** -- `docs-currency-guard` holds it and this needs no build: `c11c629` is an ancestor of the APK already installed, verified by reading `#67`'s strings out of it | 2026-08-24 |
 | `docs-currency-guard` | Audit `docs/` against `HEAD` (done -- 6 files, ~15 false claims found), then build the mechanical guard that makes the drift fail a build rather than wait for somebody to notice | `app/src/test/java/com/idomarhaim/goalpilot/docs/DocsCurrencyTest.kt` (new), `CHANGELOG/2026-08-24/docs-currency-guard.md`, `kb-candidates/2026-08-24-docs-currency-guard.md` | **Gradle daemon — TAKEN 2026-08-24 after `tour-refresh` released it (`37794f5`); no device** | 2026-08-24 |
 > ⚠️ **`app/build.gradle.kts` IS OWED AND I AM NOT TAKING IT — `tour-refresh` holds it.**
 > The guard reads `docs/`, `functions/src/index.ts`, `gradle.properties` and `README.md`, and
@@ -4861,6 +4860,37 @@ Currently unclaimed and ready:
   what `time-insights` already landed.
 
 ## 📓 Recently released
+
+### 🏁 `67-close-or-finish` — released 2026-08-24, this commit
+
+**[`#67`](https://github.com/idomarhaim/Android_Final_Project/issues/67) is CLOSED.** No code was
+written — the work had shipped in `c11c629`/`ec9996e`; what was missing was the **evidence**. That
+session marked scope item 1 `Untested:` end to end because the path needs a signed-in account and
+live Firestore. This one had both, and `c11c629` was already inside the installed APK, so **no build
+was needed and the Gradle daemon was never contended** — `docs-currency-guard` keeps it.
+
+Smart-add produced a genuinely unfiled task → `Filed nowhere` caught it → the confirm showed
+`WHAT GOES` with **no** `WHAT STAYS` block → deleting it removed it, with 9 goals / 5 tasks done / 1
+this week unchanged.
+
+⚠️ **A near-miss, and it is recorded rather than buried.** A stray coordinate tap opened the
+`Let it go` confirm for the real goal *Prepare for upcoming exam*. **Cancelled; nothing deleted.**
+Cause: bounds computed from a `uiautomator` dump taken in a *previous tool call*, describing a screen
+no longer in front of me. Fixed method — dump and tap in the **same** call, and echo the target
+node's `content-desc` before tapping. **`#67`'s own scope items 2 and 3 are what made a stray tap
+survivable**, and it incidentally verified both on real data with a live count.
+
+🔎 **The feature found a real instance of its own bug.** `Filed nowhere` still holds
+`בדיקה - לימודים` — a pre-existing task of Ido's, under no goal, no date, listed on no other
+screen. **Left in place: it is real data and deleting it is his call.**
+
+📌 **`docs-currency-guard`, one for you.** `docs/RELEASING.md` §3 was corrected by
+`tour-refresh` a few hours ago (`eefb88a`) — the `releaseNotesFile` resolution rule was stated
+backwards there and in `ReleaseNotesGuardTest`. Your audit has that file open now; the corrected
+paragraph is current, not drift.
+
+📱 **`emulator-5554` was used and NO sign-in was needed or destroyed** — no install, no build,
+no `connectedDebugAndroidTest`. Released. **The Gradle daemon was never taken.**
 
 ### 🏁 `62-kickoff-refresh` — released 2026-08-24, this commit
 
