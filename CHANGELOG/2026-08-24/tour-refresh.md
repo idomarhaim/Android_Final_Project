@@ -202,3 +202,29 @@ which a merely-stale artefact could not manage. The APK is byte-identical in siz
 build (`5,871,269`), and that is correct rather than suspicious: everything changed between the two
 builds (a `build.gradle.kts` comment, a test source, the notes file, docs) is absent from a release
 APK.
+
+## ⬆️ This push carries four commits from `kb-drain-67-and-siblings`
+
+`git push` is branch-scoped, so their commits sit under mine and go up with them. Named here because
+a reply scrolls away and this file does not:
+
+| Commit | |
+|---|---|
+| `5197664` | Claim: drain all four `kb-candidates/` files, cross-repo |
+| `9f13611` | Folder drained, row released — and the brief closed to `sessions/done/` |
+| `691eca7` | Claim (follow-on): the held entry, decided by delegation |
+| `ffd44be` | The last entry drained — `kb-candidates/` is empty |
+
+**Adjudicated, not waved through.** That session's row is **absent from Active claims** and it left
+an **explicit release note** — *"I am released and touched none of your files"* — which is a
+positive signal written by that session about itself, so §5.3(c)'s transcript escalation does not
+apply; only silence needs escalating.
+
+Both always-ask shapes in the range were checked mechanically rather than assumed:
+
+- **Four deletions**, every one a `kb-candidates/` file removed by the commit that drained it
+  (`9f13611` × 3, `ffd44be` × 1). That is the drained-candidates carve-out, so it does not stop the
+  push. No non-candidate deletion anywhere in the range.
+- **One rename**, `sessions/kb-drain-67-and-siblings.md` → `sessions/done/`, and the **same commit**
+  sets `status: active` → `status: done`. That is the brief-close carve-out. A move without the
+  status change still stops, and this one has it.
