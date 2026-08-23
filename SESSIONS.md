@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `68-drag-to-move` | `#68` — drag to move on the calendar + the scope sheet that makes `#63`'s *this occurrence or all future ones?* reachable, plus Skip | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt` · `…/calendar/CalendarViewModel.kt` · `…/calendar/CalendarModel.kt` · `…/calendar/ScopeSheet.kt` (new) · `app/src/main/res/values/strings.xml` · `app/src/main/res/values-iw/strings.xml` · `app/src/test/java/com/idomarhaim/goalpilot/feature/calendar/DragToMoveTest.kt` (new) · `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/DragToMoveUiTest.kt` (new) · `kb-candidates/2026-08-23-68-drag-to-move.md` · `CHANGELOG/2026-08-23/68-drag-to-move.md` · `sessions/68-drag-to-move.md` | **Gradle daemon** · **AVD + `adb`** (a drag cannot be verified any other way) | 2026-08-23 |
 > 🏁 **`64-area-success-failure` RELEASED 2026-08-23 — this commit.** `#64` shipped in
 > `9c89144`; brief closed to `sessions/done/` with `status: done`, and the candidate file drained in
 > full and deleted (4 entries, cross-repo into `C:\Dev\JARVIS` — `1736766`). **Singletons free**: the
