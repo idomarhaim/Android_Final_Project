@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: active
 # Was `blocked_on: [60]`, and before that `[59, 60, 61]`. ALL THREE ARE CLOSED as of
 # 2026-08-23 (#60 closed with the calendar surface shipped), so the declared blocker is
 # stale and cleared -- same repair as c14435b made for #61. Verify rather than trust this.
