@@ -1,5 +1,10 @@
 # `manual-demo-script` — 2026-08-24
 
+> **Summary:** The running order Ido reads while recording a feature-review screencast of the
+> app himself — thirteen acts, the exact taps, the line to say, the prep traps that already
+> cost a take, and three ordering departures from the automated tour, which is optimised for
+> unattended capture rather than for a viewer.
+
 Ido is recording a feature-review screencast of the app **himself**, on the mirrored phone,
 and asked for the running order to read while he does it. One new document:
 [`docs/marketing/manual-demo-script.md`](../../docs/marketing/manual-demo-script.md).
