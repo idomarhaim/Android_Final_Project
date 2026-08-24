@@ -15,7 +15,26 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `s25-verify-on-real-phone` | Ido's Galaxy S25 Ultra is reachable over wireless debugging for the first time. Verify the four v0.4.0 fixes on the REAL device at its REAL settings (384dp / font_scale 1.15), not at the approximation I reproduced them on, and answer his question about whether anything needs uninstalling. | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt`, `app/build.gradle.kts`, `app/release-notes.txt`, `CHANGELOG/2026-08-24/s25-verify-on-real-phone.md`, `kb-candidates/2026-08-24-s25-verify-on-real-phone.md`, and `SESSIONS.md` | **`SM_S938B` (Ido's phone, serial `R5CY21NM30D`, wireless) ONLY.** ⚠️ Explicitly **NOT** `emulator-5554` and **NOT** `adb` as a whole — `62-tour-assembly` holds those for a re-shoot. A device is the singleton, not the adb server, and this is a different device. I use `-s <serial>` on every call and will **never** run `adb kill-server` / `start-server`, which is the one thing that would break their recording from here. **Gradle daemon NOT held** — nothing here builds; v0.4.0 is already on the phone. | 2026-08-24 |
+| `s25-verify-on-real-phone` | Ido's Galaxy S25 Ultra is reachable over wireless debugging for the first time. Verify the four v0.4.0 fixes on the REAL device at its REAL settings (384dp / font_scale 1.15), not at the approximation I reproduced them on, and answer his question about whether anything needs uninstalling. | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialOverlayUiTest.kt`, `app/build.gradle.kts`, `app/release-notes.txt`, `CHANGELOG/2026-08-24/s25-verify-on-real-phone.md`, `kb-candidates/2026-08-24-s25-verify-on-real-phone.md`, and `SESSIONS.md` | **`SM_S938B` (Ido's phone, serial `R5CY21NM30D`, wireless) ONLY.** ⚠️ Explicitly **NOT** `emulator-5554` and **NOT** `adb` as a whole — `62-tour-assembly` holds those for a re-shoot. A device is the singleton, not the adb server, and this is a different device. I use `-s <serial>` on every call and will **never** run `adb kill-server` / `start-server`, which is the one thing that would break their recording from here. **Gradle daemon NOT held** — nothing here builds; v0.4.0 is already on the phone. | 2026-08-24 |
+> 🚨 **`62-tour-assembly` — `emulator-5554` IS NOT YOUR AVD ANY MORE. READ THIS BEFORE YOU USE IT.**
+> *(From `s25-verify-on-real-phone`, 2026-08-24.)*
+>
+> Your `Pixel_10_Pro_XL` was **shut down** (no `qemu-system-x86_64` process at all, checked before
+> I did anything). Ido's phone then dropped its wireless-debugging connection mid-verification, so
+> I booted the **other** AVD — `Pixel_10_Pro_XL_B`, which nobody claims — and **it took port 5554,
+> because that port was free.**
+>
+> So the serial in your row now resolves to a **different machine**: `adb -s emulator-5554 …`
+> reaches `Pixel_10_Pro_XL_B`, mine, not `Pixel_10_Pro_XL`, yours. Confirmed with
+> `adb -s emulator-5554 emu avd name` → `Pixel_10_Pro_XL_B`.
+>
+> **Nothing of yours was touched** — your AVD is off, its disk is untouched, and Step 0 (reverting
+> the Count measures seeded on Ido's live account) is exactly as you left it. Boot yours and it
+> will take **5556**; check `emu avd name` before you address a serial rather than trusting the
+> number, which is what this note exists to stop you doing.
+>
+> 🔓 I release `Pixel_10_Pro_XL_B` the moment this verification is done, and I say so here.
+
 > 🏁 **`exam-qa-pack` ROUND 3 RELEASED 2026-08-24 — this commit.** Two asks, and the second is a **different document**, not a mode.
 > 🗺️ **Real node-and-arrow diagrams.** Round 2's were CSS boxes — right for a tree, unable to draw a *flow*, since an arrow that forks or loops back has no CSS form. New `flows.py` SVG primitive + **6 diagrams**: module dependency graph, one screen's data pipeline, the auth gate, ticking a task offline-first, smart add **with its failure branch**, build and release. Plus a **gallery directly under the stat tiles** — the complaint was that the diagrams were missing when 8 already existed, buried in a 96-question scroll.
 > 📇 **New file — [`docs/exam-prep/GoalPilot-Glance-Card.html`](docs/exam-prep/GoalPilot-Glance-Card.html)**, for answering live: **96 cards, 395 keyword bullets, none over 95 chars**, 66 with one quotable line. Nothing collapses (a click is a delay), two columns, sticky search, section chips, `/` and `1`–`9` and `Esc`. 381 KB, self-contained. **Coverage asserted both ways** — reword a question and the build fails rather than losing its card.

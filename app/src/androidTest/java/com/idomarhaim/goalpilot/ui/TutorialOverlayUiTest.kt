@@ -244,6 +244,38 @@ class TutorialOverlayUiTest {
             .performTouchInput { click(Offset(350f, 550f)) }
 
         assertThat(appTaps).isEqualTo(0)
+        // ⚠️ AND IT DOES NOT ADVANCE EITHER. This assertion read `isEqualTo(1)`
+        // until 2026-08-24 and the change that broke it was deliberate.
+        //
+        // `Observed:` Ido, on his first run of the tour — *"when it marked me to
+        // press certain buttons (for example the calendar), I did not see it open
+        // what I pressed on."* A pulsing ring around a real control reads as
+        // *press me*; the blockers covered the hole; and the tap landed on the
+        // scrim, whose informational behaviour was **advance**. So pressing the
+        // thing the tour was pointing at moved the tour on and never opened the
+        // tab — an affordance that lied, and then swallowed the gesture it had
+        // invited.
+        //
+        // Tap-anywhere-to-advance now fires **only where the step points at
+        // nothing**. Where there is a ring, the ring means *look here* and Next
+        // means *go on*, and the two no longer compete for one tap.
+        assertThat(next).isEqualTo(0)
+    }
+
+    @Test
+    fun aStepThatPointsAtNothingStillAdvancesOnATapAnywhere() {
+        // The surviving half of the old behaviour, and the reason it survives:
+        // with no ring on screen there is no control being pointed at, so a tap
+        // cannot be mistaken for pressing one. It is the gesture people try
+        // first and the welcome step is where they try it.
+        val anchorless = TutorialStep.entries.first { it.anchor == null }
+
+        show(anchorless, target = null)
+
+        composeRule.onNodeWithTag(TAG_TUTORIAL_OVERLAY)
+            .performTouchInput { click(Offset(350f, 550f)) }
+
+        assertThat(appTaps).isEqualTo(0)
         assertThat(next).isEqualTo(1)
     }
 }

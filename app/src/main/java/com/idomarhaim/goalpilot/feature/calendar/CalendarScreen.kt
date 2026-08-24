@@ -62,6 +62,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
@@ -383,7 +384,8 @@ private fun ZoomControl(zoom: CalendarZoom, onZoom: (CalendarZoom) -> Unit, modi
  * §4.3's measurement is what fixes the column widths: seven columns on a 390 dp phone is ~46 dp
  * each, at which *"no Hebrew title and no time range survives"*, so [WEEK] stacks its times **start
  * over end** and [THREE_DAYS] (~110 dp) writes them on one line. Both are handled by
- * [TimeColumn]'s `stacked` flag rather than by two grids.
+ * [TimeColumn]'s form flag rather than by two grids. Since 2026-08-24 that flag is
+ * [ChipForm] and it carries three answers rather than two — see [chipFormFor].
  */
 @Composable
 private fun DayColumns(
@@ -394,7 +396,11 @@ private fun DayColumns(
     onHold: (CalendarEntry) -> Unit,
     onDrop: (CalendarEntry, DragToMove.Target) -> Unit,
 ) {
-    val stacked = state.zoom == CalendarZoom.WEEK
+    // Decided ONCE, here, where the zoom and the screen width are both in scope --
+    // and deliberately not inside each chip. See [laneWidthDp] for why a chip may
+    // not measure itself: this grid asks for intrinsic measurements, and a
+    // `BoxWithConstraints` underneath one crashes the app.
+    val form = chipFormFor(state.zoom, LocalConfiguration.current.screenWidthDp)
     val days = state.days
     // Measured on the Row that lays the grids out, and divided by the column count -- so this is
     // the PITCH, centre to centre, and not one column's drawn width. `DragToMove.Geometry`'s KDoc
@@ -425,13 +431,13 @@ private fun DayColumns(
         if (days.any { it.allDay.isNotEmpty() }) {
             Band(days) { day ->
                 Column(modifier = Modifier.padding(top = 6.dp)) {
-                    day.allDay.forEach { EntryChip(it, stacked, onOpen, onTick, onHold) }
+                    day.allDay.forEach { EntryChip(it, form, onOpen, onTick, onHold) }
                 }
             }
         }
         if (days.any { it.untimed.isNotEmpty() }) {
             Band(days) { day ->
-                if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, stacked, onOpen, onTick, onHold)
+                if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, form, onOpen, onTick, onHold)
             }
         }
         Spacer(Modifier.height(6.dp))
@@ -444,7 +450,7 @@ private fun DayColumns(
                 Box(modifier = Modifier.weight(1f).padding(horizontal = 2.dp)) {
                     HourGrid(
                         day = day,
-                        stacked = stacked,
+                        form = form,
                         onOpen = onOpen,
                         onTick = onTick,
                         onTapSlot = onTapSlot,
@@ -577,7 +583,7 @@ private fun LoadBar(load: DayLoad, modifier: Modifier = Modifier) {
 @Composable
 private fun UntimedStrip(
     entries: List<CalendarEntry>,
-    stacked: Boolean,
+    form: ChipForm,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onHold: (CalendarEntry) -> Unit,
@@ -589,7 +595,7 @@ private fun UntimedStrip(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
         )
-        entries.forEach { EntryChip(it, stacked, onOpen, onTick, onHold) }
+        entries.forEach { EntryChip(it, form, onOpen, onTick, onHold) }
     }
 }
 
@@ -604,7 +610,7 @@ private fun UntimedStrip(
 @Composable
 private fun HourGrid(
     day: CalendarDay,
-    stacked: Boolean,
+    form: ChipForm,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onTapSlot: (LocalDate, Int) -> Unit,
@@ -636,7 +642,7 @@ private fun HourGrid(
             Box(modifier = Modifier.offset(y = top.dp).fillMaxWidth()) {
                 DraggableEntry(
                     entry = entry,
-                    stacked = stacked,
+                    form = form,
                     geometry = geometry,
                     onOpen = onOpen,
                     onTick = onTick,
@@ -679,9 +685,9 @@ private fun AgendaColumn(
         // carries no *when*, and a drag would only ever mean *reorder*, which is not a thing this
         // app has. The long press still reaches the entry menu, so `Skip` is available at every
         // zoom -- see `CalendarEntry.isDraggable`.
-        day.allDay.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick, onHold = onHold) }
-        if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, false, onOpen, onTick, onHold)
-        day.timed.forEach { EntryChip(it, stacked = false, onOpen = onOpen, onTick = onTick, onHold = onHold) }
+        day.allDay.forEach { EntryChip(it, form = ChipForm.WIDE, onOpen = onOpen, onTick = onTick, onHold = onHold) }
+        if (day.untimed.isNotEmpty()) UntimedStrip(day.untimed, ChipForm.WIDE, onOpen, onTick, onHold)
+        day.timed.forEach { EntryChip(it, form = ChipForm.WIDE, onOpen = onOpen, onTick = onTick, onHold = onHold) }
         Spacer(Modifier.height(96.dp))
     }
 }
@@ -698,7 +704,7 @@ private fun AgendaColumn(
 @Composable
 private fun EntryChip(
     entry: CalendarEntry,
-    stacked: Boolean,
+    form: ChipForm,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
     onHold: (CalendarEntry) -> Unit = {},
@@ -733,7 +739,11 @@ private fun EntryChip(
         .padding(horizontal = 4.dp, vertical = 4.dp)
         .testTag(entryTag(entry))
 
-    if (stacked) StackedChip(entry, accent, box) else WideChip(entry, accent, box, onTick)
+    when (form) {
+        ChipForm.STACKED -> StackedChip(entry, accent, box)
+        ChipForm.NARROW -> NarrowChip(entry, accent, box, onTick)
+        ChipForm.WIDE -> WideChip(entry, accent, box, onTick)
+    }
 }
 
 /**
@@ -763,7 +773,7 @@ private fun EntryChip(
 @Composable
 private fun DraggableEntry(
     entry: CalendarEntry,
-    stacked: Boolean,
+    form: ChipForm,
     geometry: DragToMove.Geometry,
     onOpen: (CalendarEntry) -> Unit,
     onTick: (CalendarEntry, Boolean) -> Unit,
@@ -771,7 +781,7 @@ private fun DraggableEntry(
     onDrop: (CalendarEntry, DragToMove.Target) -> Unit,
 ) {
     if (!entry.isDraggable) {
-        EntryChip(entry, stacked, onOpen, onTick, onHold)
+        EntryChip(entry, form, onOpen, onTick, onHold)
         return
     }
     var travel by remember(entry.key) { mutableStateOf(Offset.Zero) }
@@ -817,7 +827,7 @@ private fun DraggableEntry(
     ) {
         EntryChip(
             entry = entry,
-            stacked = stacked,
+            form = form,
             onOpen = onOpen,
             onTick = onTick,
             onHold = onHold,
@@ -907,7 +917,33 @@ private fun StackedChip(entry: CalendarEntry, accent: Color, box: Modifier) {
     }
 }
 
-/** The [CalendarZoom.THREE_DAYS] and [CalendarZoom.AGENDA] chip: time beside title, and a tick. */
+/**
+ * Time beside title, and a tick — for a lane that is **measured** to have room for it.
+ *
+ * ⚠️ **It used to be chosen by zoom, and that is the defect.** [EntryChip] picked
+ * this whenever the zoom was not `WEEK`, which lumped [CalendarZoom.AGENDA] — one
+ * column, the full width of the screen — together with
+ * [CalendarZoom.THREE_DAYS], which is a third of it. The chrome here is fixed and
+ * unavoidable: `TIME_COLUMN_DP` (42) + a 4 dp spacer + a 20 dp tick + 8 dp of chip
+ * padding = **74 dp before the title gets anything**.
+ *
+ * `Observed:` 2026-08-24, on Ido's Galaxy S25 Ultra over wireless debugging — the
+ * first time this app had been driven on his actual phone rather than on an
+ * emulator. 384 dp wide, three columns, so each lane is ~101 dp and the title got
+ * **125 px (44 dp)**: *Write the project book chapter* rendered as `Write` /
+ * `the p…` over three lines, with its life area cut to `Stu…`.
+ *
+ * **[StackedChip]'s KDoc had already recorded this exact failure one zoom over** —
+ * *"every time clipped to `07:0`, `09:3`, and every title reduced to an ellipsis or
+ * to nothing"* — and fixed it for `WEEK` only. The lesson was written down and
+ * applied at one width. What was missing is that **the enum is a proxy for width
+ * and the proxy is wrong on a narrow phone**: `THREE_DAYS` is ~128 dp per lane on a
+ * 390 dp device and ~180 dp on a wide one, and only the second has room for this.
+ *
+ * So the choice is [chipFormFor], which divides the screen by the column count
+ * rather than asking the enum. See its KDoc for why that is arithmetic and not a
+ * `BoxWithConstraints`.
+ */
 @Composable
 private fun WideChip(
     entry: CalendarEntry,
@@ -1046,6 +1082,103 @@ private fun TimeColumn(entry: CalendarEntry, accent: Color) {
     }
 }
 
+/**
+ * The same information as [WideChip], in a lane too narrow to put it side by side:
+ * **the time goes above the title instead of beside it.**
+ *
+ * ## Why this is not just [StackedChip]
+ *
+ * [StackedChip] solves the identical problem at `WEEK`'s ~46 dp and pays two
+ * prices to do it: it **drops the tick** and it drops the life area. Both are
+ * right at 46 dp and both are wrong here — a three-day lane is ~101 dp on a
+ * 384 dp phone, which is more than twice the room, and *ticking work off is the
+ * main thing a person does on a three-day view*. Reusing `StackedChip` would have
+ * fixed the clipping by removing the control Ido uses.
+ *
+ * So the tick stays and the life area stays; only the **time** moves, from a fixed
+ * 42 dp column beside the title to a line above it. That buys the title
+ * ~74 dp of a ~101 dp lane instead of ~35 dp, because the leading rail is 3 dp
+ * where the time column was 42 dp.
+ *
+ * The rung is still carried by **form** — a rail for a window, a dot for a
+ * deadline, a rounded capsule for a span — exactly as at every other width, so no
+ * new symbol vocabulary appears here. That is `TimeColumn`'s rule and it is the
+ * reason this is a third body rather than a flag on one of the other two.
+ */
+@Composable
+private fun NarrowChip(
+    entry: CalendarEntry,
+    accent: Color,
+    box: Modifier,
+    onTick: (CalendarEntry, Boolean) -> Unit,
+) {
+    val form = entry.timeColumnForm
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = box) {
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(if (form == TimeColumnForm.RAIL) 26.dp else 20.dp)
+                .clip(if (form == TimeColumnForm.CAPSULE) RoundedCornerShape(4.dp) else CircleShape)
+                .background(accent.copy(alpha = if (form == TimeColumnForm.CAPSULE) 0.45f else 1f)),
+        )
+        Spacer(Modifier.width(4.dp))
+        Column(modifier = Modifier.weight(1f).testTag(formTag(form))) {
+            // One line, not two. `StackedChip` splits a window's start and end over
+            // two lines because 46 dp cannot hold `07:00-09:30`; ~74 dp can, and a
+            // range read left to right is what a person expects a time to look like.
+            Text(
+                text = narrowTimeLabel(entry),
+                style = stackedLabel(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = entry.title,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            entry.lifeArea?.let { LifeAreaDot(it) }
+            if (entry.carriedForward) {
+                Text(
+                    text = "overdue since " + entry.date.format(DAY_MONTH),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (entry.isTickable) {
+            TickBox(
+                checked = entry.outcome is OccurrenceOutcome.Done,
+                onCheck = { onTick(entry, it) },
+                accent = accent,
+            )
+        }
+    }
+}
+
+/**
+ * The time, on one line, for [NarrowChip].
+ *
+ * A separate function rather than a `when` inside the composable, so
+ * `CalendarChipWidthTest` can assert the four forms on the JVM. Every branch is
+ * the same information [TimeColumn] draws in its 42 dp column, laid out
+ * horizontally: an en dash for a range, the word `due` in front of a deadline so a
+ * bare `20:00` cannot be read as a start time, a day count for a span.
+ */
+internal fun narrowTimeLabel(entry: CalendarEntry): String = when (entry.timeColumnForm) {
+    TimeColumnForm.RAIL ->
+        entry.occurrence.opensAt.toLocalTime().format(HH_MM) + "–" +
+            entry.occurrence.closesAt.toLocalTime().format(HH_MM)
+    TimeColumnForm.POINT -> "due " + entry.occurrence.opensAt.toLocalTime().format(HH_MM)
+    TimeColumnForm.CAPSULE -> spanDays(entry).let { "$it " + if (it == 1L) "day" else "days" }
+    TimeColumnForm.WORDS -> "all-day"
+}
+
 /** §4.3's chip, and the whole of it: a colour dot and its name. No second axis. */
 @Composable
 private fun LifeAreaDot(chip: LifeAreaChip) {
@@ -1106,6 +1239,81 @@ private fun hoursLabel(minutes: Int): String = when {
  * all give a little back, and the title drops one step on the type scale, so an ordinary word fits
  * on one line at the width §4.3 chose the default for.
  */
+/**
+ * Which of the three chip bodies a lane can carry.
+ *
+ * One value, decided once per surface by [chipFormFor] and threaded down, rather
+ * than a `Boolean` that answers a different question than the one the chip has.
+ */
+internal enum class ChipForm { STACKED, NARROW, WIDE }
+
+/**
+ * How wide one day's lane is, in dp — **arithmetic, not a measurement, and that is
+ * forced.**
+ *
+ * ⚠️ **The first fix for this used `BoxWithConstraints` and it CRASHED THE APP.**
+ * `Observed:` 2026-08-24 — `IllegalStateException: Asking for intrinsic
+ * measurements of SubcomposeLayout layouts is not supported. This includes
+ * components that are built on top of SubcomposeLayout, such as lazy lists,
+ * BoxWithConstraints, TabRow, etc.` The calendar grid asks for intrinsic
+ * measurements, so a chip that subcomposes to learn its own width takes the whole
+ * screen down with it.
+ *
+ * Worth stating plainly: measuring is the *right instinct* and it is unavailable
+ * here. It also would not have been caught by the JVM suite, by a screenshot, or
+ * by reading the diff — the instrumented run found it on its first execution,
+ * which is the entire argument for having run it.
+ *
+ * So the width is computed from the two paddings [DayColumns] actually applies —
+ * [GRID_H_PADDING_DP] on the scrolling column, [COLUMN_H_PADDING_DP] on each side
+ * of every day — and [CalendarZoom.dayCount]. A number *derived* from a layout can
+ * drift from that layout, which is what `CalendarChipWidthTest` exists to catch.
+ */
+internal fun laneWidthDp(zoom: CalendarZoom, screenWidthDp: Int): Int =
+    (screenWidthDp - GRID_H_PADDING_DP * 2) / zoom.dayCount - COLUMN_H_PADDING_DP * 2
+
+/**
+ * The chip body a zoom gets at a given screen width.
+ *
+ * [CalendarZoom.AGENDA] is a **list**, not a grid: one row the full width of the
+ * screen, so it never goes through [laneWidthDp] and is always [ChipForm.WIDE].
+ * [CalendarZoom.WEEK] is always [ChipForm.STACKED] for the reason [StackedChip]
+ * records — 46 dp holds neither a title nor a time range, whatever the phone. Only
+ * [CalendarZoom.THREE_DAYS] genuinely depends on the device, which is exactly why
+ * it is the one that shipped broken.
+ */
+internal fun chipFormFor(zoom: CalendarZoom, screenWidthDp: Int): ChipForm = when (zoom) {
+    CalendarZoom.WEEK -> ChipForm.STACKED
+    CalendarZoom.AGENDA -> ChipForm.WIDE
+    else -> if (laneWidthDp(zoom, screenWidthDp) < WIDE_CHIP_MIN_DP) {
+        ChipForm.NARROW
+    } else {
+        ChipForm.WIDE
+    }
+}
+
+/** [DayColumns]' own horizontal padding, on the scrolling column. */
+internal const val GRID_H_PADDING_DP = 8
+
+/** Each day column's padding, applied on BOTH sides inside the band. */
+internal const val COLUMN_H_PADDING_DP = 2
+
+/**
+ * Below this, a chip uses [NarrowChip] instead of [WideChip].
+ *
+ * **Derived, not tuned.** [WideChip]'s chrome is fixed: [TIME_COLUMN_DP] (42) + a
+ * 4 dp spacer + a 20 dp tick + 8 dp of chip padding = 74 dp that the title never
+ * sees. 155 dp leaves it ~80 dp, which is about a dozen characters of
+ * `labelMedium` and the point below which a title stops being a title.
+ *
+ * The numbers this has to land on either side of, measured rather than assumed:
+ * `THREE_DAYS` on Ido's 384 dp phone is **~101 dp** per lane (narrow), and
+ * `AGENDA` on the same phone is the **full width** (wide). A tablet, or a phone in
+ * landscape, gets the wide form at three days as well -- which is the behaviour
+ * the zoom-based check was silently promising and could not deliver.
+ */
+internal const val WIDE_CHIP_MIN_DP = 155
+
 private const val TIME_COLUMN_DP = 42
 
 /** How many whole days a span covers. `closesAt` is the day AFTER the last, so this is the count. */

@@ -23,8 +23,8 @@ unweighted `TextButton`s. A Compose `Row` measures **unweighted children first,
 against the full incoming constraints**, and hands the remainder to the weighted
 ones. *Schedule the first one* + *Let it go* will take everything they want.
 
-**Reproduced on the emulator at Ido's exact geometry** (`wm size 1080x2340`,
-`wm density 480` → `sw360dp w360dp`, confirmed in `dumpsys window displays`),
+**Reproduced on the emulator at 360 dp** (`wm size 1080x2340`, `wm density 480` →
+`sw360dp w360dp`, confirmed in `dumpsys window displays`),
 against the **pre-fix APK already installed**, via `uiautomator dump`:
 
 | node | before | after |
@@ -205,7 +205,15 @@ manual verification below, and `connectedDebugAndroidTest` uninstalls the app,
 which would have destroyed the signed-in state every one of these checks needed.
 **Open, and named as such in the reply.**
 
-**Manual, on a device, at Ido's geometry — 6 checks, all pass.** This is the
+⚠️ **CORRECTED 2026-08-24 by `s25-verify-on-real-phone`: this said *"Ido's exact
+geometry"* and it was not his.** His Galaxy S25 Ultra is **384 dp at 450 dpi with
+font scale 1.15**, read off the device once it was reachable over wireless
+debugging; the reproduction above was 360 dp at 480 dpi and scale 1.0. The bug
+reproduces pixel-for-pixel on both, so nothing below is withdrawn — but *equivalent
+or worse* is what it was, and only the measured one is a fact. All four fixes have
+since been re-verified at the real numbers.
+
+**Manual, on a device, at a 360 dp reproduction — 6 checks, all pass.** This is the
 layer that mattered, because every defect here was invisible to the suite:
 
 1. Pre-fix APK at 360dp reproduces his screenshot exactly (measured above).

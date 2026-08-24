@@ -223,6 +223,52 @@ class CalendarSurfaceUiTest {
         composeRule.onNodeWithText("Call the plumber").assertIsDisplayed()
     }
 
+    // ── The narrow lane, which is where Ido's phone found the defect ─────────────────────
+
+    /**
+     * §4.3's chip in a **three-day lane on a real phone's width**, measured rather than looked at.
+     *
+     * `Observed:` 2026-08-24, Ido's Galaxy S25 Ultra (`SM_S938B`, 384 dp at 450 dpi, font scale
+     * 1.15), driven over wireless debugging — the first time this app had been run on his actual
+     * device rather than on an emulator. A three-day lane is ~101 dp there, and `WideChip`'s
+     * chrome is 74 dp before the title gets anything: a 42 dp time column, a 4 dp spacer, a
+     * 20 dp tick, 8 dp of chip padding. The title got **44 dp**, so *Write the project book
+     * chapter* rendered as `Write` / `the p…` down three lines with its life area cut to `Stu…`.
+     *
+     * **`theChipCarriesTheLifeAreaName` above passed throughout**, and that is the finding worth
+     * keeping: it asserts the name is *displayed*, and a node clipped to `Stu…` is displayed. An
+     * assertion about presence cannot see a defect about **size**, so this one is about size.
+     *
+     * It measures a node width in dp rather than photographing the screen, because the failure it
+     * guards is 44 dp against 74 dp — a difference a person scanning a screenshot can miss and a
+     * number cannot.
+     */
+    @Test
+    fun aTitleInAThreeDayLaneGetsAUsableShareOfIt() {
+        setSurface()
+
+        // The untimed strip is exactly the lane Ido's entries were in: a DEADLINE, POINT form,
+        // "due 20:00". `Call the plumber` is this fixture's.
+        val node = composeRule.onNodeWithText("Call the plumber").fetchSemanticsNode()
+        val titleDp = with(composeRule.density) { node.size.width.toDp().value }
+
+        assertThat(titleDp).isGreaterThan(MIN_TITLE_DP)
+    }
+
+    /**
+     * The same measurement, photographed, so the number above has a picture beside it.
+     *
+     * `describing-is-not-exhibiting.md`'s rule cuts both ways: a frame proves nothing on its own,
+     * and a number with no frame cannot show that the *rest* of the chip survived the change.
+     */
+    @Test
+    fun theNarrowChipIsPhotographedAtThreeDayWidth() {
+        setSurface()
+
+        composeRule.onNodeWithText("Call the plumber").assertIsDisplayed()
+        write("calendar-narrow-lane.png")
+    }
+
     @Test
     fun theChipCarriesTheLifeAreaName() {
         setSurface()
@@ -248,7 +294,21 @@ class CalendarSurfaceUiTest {
 
         // #61's slot. Nothing in the app can produce one yet, so this is fed by hand -- which is
         // the point: the day #61 ships, the change is a flow, not a lane.
-        composeRule.onNodeWithText("Dentist").assertIsDisplayed()
+        //
+        // ⚠️ `performScrollTo` FIRST, and that is a repair rather than a flourish.
+        // `Dentist` is a 15:00 block in an hour grid that is 44 dp per hour inside a
+        // `verticalScroll`, so on a screen shorter than about 900 dp it starts below the
+        // fold -- and `assertIsDisplayed` does not scroll, it just fails.
+        //
+        // `Observed:` 2026-08-24. This was the only red in the suite when it was run at
+        // Ido's own geometry (384 x 832 dp, his Galaxy S25 Ultra) and it looked exactly
+        // like a regression from that day's chip change. It was not, and the cheap
+        // discriminator is worth recording: at 384 x 1064 dp -- **same width, taller
+        // screen** -- it passes, so the variable is height and not the chip. The width
+        // was never in question either way, because `chipFormFor` returns NARROW at both
+        // 384 dp and the emulator's native 448 dp, so both runs were already drawing the
+        // new form.
+        composeRule.onNodeWithText("Dentist").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -390,4 +450,17 @@ class CalendarSurfaceUiTest {
 
         write("issue-60-slot-sheet.png", composeRule.onNodeWithTag(TAG_SHEET))
     }
+
+    private companion object {
+        /**
+         * The floor a goal's name has to clear in a three-day lane, in dp.
+         *
+         * Derived from the failure rather than picked: 44 dp is what shipped and is unreadable;
+         * `NarrowChip` gives the title the lane minus a 3 dp rail, a 4 dp spacer, a 20 dp tick and
+         * 8 dp of padding, so ~74 dp of Ido's ~101 dp. 60 sits between the two with room on both
+         * sides, so it fails the old layout on any phone and passes the new one on a narrow one.
+         */
+        const val MIN_TITLE_DP = 60f
+    }
+
 }
