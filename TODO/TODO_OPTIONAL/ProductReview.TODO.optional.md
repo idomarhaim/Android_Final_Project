@@ -26,6 +26,14 @@ a v2 backlog.
 ## 🐞 Defects
 
 - [ ] **D1 · ~~Shared challenge does not sync with my tasks or Health Connect~~ → not a defect, it is an undecided model** (`R1`)
+  ✅ **NO LONGER UNDECIDED — Ido answered it 2026-08-24** (he asked again, from his own
+  phone, why *August Steps Race* still reads `0 steps`). The model is settled and the work
+  is briefed at [`sessions/challenge-scoring.md`](../../sessions/challenge-scoring.md);
+  `C14` carries the decision. **The sentence below still stands for anyone arriving before
+  that brief is worked** — the symptom is real and building a Health-Connect→challenge pipe
+  directly is still the wrong fix, now because §6 routes it through the goal rather than
+  because nobody had chosen.
+
   **Do not open this as a bug.** The symptom is exactly as reported, and it is not
   a wiring that broke — it is a wiring that was **never specified**, so building one
   now would pick an answer by accident. Established 2026-08-06, statically and then

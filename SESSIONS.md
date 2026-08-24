@@ -15,7 +15,44 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `s25-verify-on-real-phone` | Ido's Galaxy S25 Ultra is reachable over wireless debugging for the first time. Verify the four v0.4.0 fixes on the REAL device at its REAL settings (384dp / font_scale 1.15), not at the approximation I reproduced them on, and answer his question about whether anything needs uninstalling. | `app/src/main/java/com/idomarhaim/goalpilot/feature/calendar/CalendarScreen.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/CalendarSurfaceUiTest.kt`, `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/TutorialOverlayUiTest.kt`, `app/build.gradle.kts`, `app/release-notes.txt`, `CHANGELOG/2026-08-24/s25-verify-on-real-phone.md`, `kb-candidates/2026-08-24-s25-verify-on-real-phone.md`, and `SESSIONS.md` | **`SM_S938B` (Ido's phone, serial `R5CY21NM30D`, wireless) ONLY.** ⚠️ Explicitly **NOT** `emulator-5554` and **NOT** `adb` as a whole — `62-tour-assembly` holds those for a re-shoot. A device is the singleton, not the adb server, and this is a different device. I use `-s <serial>` on every call and will **never** run `adb kill-server` / `start-server`, which is the one thing that would break their recording from here. **Gradle daemon NOT held** — nothing here builds; v0.4.0 is already on the phone. | 2026-08-24 |
+> 🏁 **`s25-verify-on-real-phone` RELEASED 2026-08-24 — this commit.** Ido's Galaxy S25 Ultra was
+> reachable over wireless debugging for the first time; all four v0.4.0 fixes verified on the real
+> device at its real settings (**384 dp / 450 dpi / font 1.15** — not the 360 dp/1.0 the earlier
+> changelog called *"his exact geometry"*, now corrected there). Commits `afe8225`, and the calendar
+> fix is **v0.4.1** (`versionCode` 10), built and signature-verified.
+>
+> 🐞 **A fifth defect, found on his phone in the first minute, fixed here.** The calendar's 3-day
+> chip starved its title to 44 dp of a ~101 dp lane — same class as the Analytics row, different
+> mechanism: `WideChip`'s chrome is *fixed* at 74 dp and simply larger than the lane. Now
+> `ChipForm { STACKED, NARROW, WIDE }` chosen by `chipFormFor(zoom, screenWidthDp)`.
+>
+> ⚠️ **AND THE FIRST FIX FOR IT CRASHED THE APP** — `BoxWithConstraints` is a `SubcomposeLayout`
+> and this grid asks for intrinsic measurements. *Process crashed*, whole calendar screen. Not
+> caught by the JVM suite, a screenshot, or the diff; the instrumented run found it on its first
+> execution. **If you are about to measure a width inside the calendar, read `laneWidthDp`'s KDoc
+> first.**
+>
+> 🔓 **`Pixel_10_Pro_XL_B` RELEASED, and it is LEFT RUNNING at Ido's request** (he asked for the
+> window to be centred, and it is — 627,138 on the primary screen; it had been at 2320,25 on the
+> second monitor). Geometry **reset to native and confirmed**: 1344x2992 / 480 dpi, `font_scale`
+> 1.0. It carries `v0.4.1-debug` + the androidTest APK, installed with `adb install -r`.
+>
+> 🚨 **`62-tour-assembly`: the `emulator-5554` warning above your row still applies** — that serial
+> is `Pixel_10_Pro_XL_B`, not your `Pixel_10_Pro_XL`, which is still shut down. Check
+> `adb -s <serial> emu avd name` before addressing it. Your Step 0 is untouched.
+>
+> 🔓 **Gradle daemon released.** `docs-repair` and `62-tour-video-v2` were both waiting on it.
+>
+> 📋 **Ido settled `C14` / `#23` mid-session** — a challenge should score from Health Connect *per
+> type* and from tasks, and a **manually reported score must name who reported it and what**. That
+> last part is his own addition and is in neither the ticket nor `PRODUCT_v0.3.md` §6. Briefed at
+> `sessions/challenge-scoring.md` (`/kickoff challenge-scoring`); `C14` and `D1` updated to point
+> at it. **Not built here** — it touches the data model, the join flow, a Cloud Function and the
+> rules, and step 0 of the brief is checking whether `C7` still gates it.
+>
+> 📥 **`kb-candidates/2026-08-24-s25-verify-on-real-phone.md` written, NOT ingested** — the
+> `BoxWithConstraints` crash and the enum-as-a-proxy-for-width finding are the two worth having.
+
 > 🚨 **`62-tour-assembly` — `emulator-5554` IS NOT YOUR AVD ANY MORE. READ THIS BEFORE YOU USE IT.**
 > *(From `s25-verify-on-real-phone`, 2026-08-24.)*
 >

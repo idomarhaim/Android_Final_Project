@@ -108,7 +108,20 @@ These four are one knot; none can be answered alone.
 
 ## Challenges
 
-- [ ] **C14 · What does a challenge score from?** (`R1`) — *added 2026-08-07, moved
+- [ ] **C14 · What does a challenge score from?** (`R1`) — ✅ **ANSWERED BY IDO
+  2026-08-24; the open half is now IMPLEMENTATION, not the decision.** He asked for the
+  challenge to sync from Health Connect *"according to the challenge type"* and *"generally
+  to tasks"*, and added a requirement this ticket never had: **a manually reported score
+  must say who reported it and what they reported.** `PRODUCT_v0.3.md` §6's *"it scores from
+  each participant's goal"* is not a rival answer — a goal is already what Health Connect
+  and task completions both feed, so it is the same outcome through one pipe instead of
+  three. Brief with the reconciliation, the residual question (§6 deletes `ChallengeType`,
+  Ido's phrasing assumes it) and the provenance design:
+  [`sessions/challenge-scoring.md`](../../sessions/challenge-scoring.md) — `/kickoff challenge-scoring`.
+  **Still gated on `C7`**, and that gate is step 0 of the brief.
+
+- [ ] ~~**C14 · What does a challenge score from?**~~ *(original text, kept because the
+  evidence in it is still the evidence)* (`R1`) — *added 2026-08-07, moved
   here from `D1` in [`TODO_OPTIONAL/ProductReview.TODO.optional.md`](../TODO_OPTIONAL/ProductReview.TODO.optional.md)
   on Ido's re-assignment.* Reported as a defect ("a shared challenge does not sync
   with my tasks or Health Connect") and reproduced on the device, but it is not a

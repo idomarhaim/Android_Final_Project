@@ -1,65 +1,48 @@
-GoalPilot 0.4.0 — four things Ido reported, fixed
+GoalPilot 0.4.1 — the calendar's 3-day view, found on Ido's actual phone
 
-Everything in this build came from one message: things looked wrong on a Galaxy
-S25 Ultra that looked fine on the emulator, a "#" nobody could read, two sync
-cards in the wrong place, and a tour that pointed at buttons it would not let
-you press.
+0.4.0 fixed the same class of bug on the Analytics screen. This is the other place
+it was hiding, and it was only found because the app was finally driven on a real
+Galaxy S25 Ultra instead of on an emulator.
 
-1. GOAL NAMES ARE READABLE AGAIN ON A NARROW PHONE
+WHAT WAS WRONG
 
-   On Analytics, under "Window by window", the list of goals with no next step
-   put the goal's name, "Schedule the first one" and "Let it go" all on one row.
-   The two buttons took their full width first and the name got whatever was
-   left — which on a 360dp-wide screen was about one letter, so goal names came
-   out stacked vertically, one character per line, eight times over.
+In Calendar, on the "3 days" view, each day gets about a third of the screen. Every
+entry drew its time in a fixed 42dp column on the left and a tick circle on the
+right, which together take 74dp before the title gets anything at all. On a 384dp
+phone that left the title 44dp — so "Write the project book chapter" rendered as
 
-   The buttons now sit on their own line underneath. Measured on an emulator set
-   to exactly that width: the goal's name went from 13dp wide to 175dp, and it
-   cannot be squeezed again at any font size or on any screen, because there is
-   no longer anything competing with it for the row.
+    Write
+    the p...
+    Stu...
 
-   Nothing about this was visible on a wider screen, which is why it shipped.
+down three lines, with the life area cut off.
 
-2. THE "#" IS GONE
+WHAT CHANGED
 
-   A dashed square with a bold "#" in it meant "this goal has no number yet". It
-   is a symbol that has to be learned, and there was nowhere to learn it.
+When a lane is too narrow to put the time beside the title, the time now goes
+ABOVE it, on one line: "due 20:00", "07:00-09:30", "3 days", "all-day". The title
+gets roughly 74dp of a 101dp lane instead of 44, and the tick circle stays exactly
+where it was, because ticking work off is the main thing you do on that view.
 
-   Where the marker sits in a list, in the slot where a percentage would be, it
-   now says "No number" in words. Where it is large — on a goal's own screen and
-   on the home card — it is simply an empty dashed square, with the sentence
-   that was always beside it doing the explaining: "No number yet — nothing
-   logged". Screen readers are unaffected; they already read the full sentence.
+The wide layout is unchanged wherever there is room for it — Agenda, and 3-day on
+a tablet or in landscape.
 
-3. GOOGLE TASKS AND HEALTH DATA MOVED TO SETTINGS
+The real repair is that this choice is now a MEASUREMENT rather than a guess. It
+used to be decided by which zoom you were on, which is a stand-in for width that
+happens to be right on a wide phone and wrong on a narrow one. Agenda is one column
+the full width of the screen; 3-day is a third of it; both were getting the same
+layout.
 
-   Both cards are now under Settings > Connected apps, and are gone from Home.
-   Nothing about how they work changed, and your Health Connect permission and
-   Google Tasks access are untouched.
+ALSO IN THIS BUILD
 
-   Your steps and sleep still sync automatically every time you open the app.
-   That never lived on the home screen — only the card reporting it did.
+Nothing. 0.4.0's four fixes are unchanged and were re-verified on the real phone
+before this one was built:
 
-4. THE TOUR NOW LETS YOU PRESS WHAT IT POINTS AT
+- Goal names in Analytics render on one line (measured: 13dp wide before, 175dp
+  after, at the phone's own 384dp and font size 1.15).
+- No "#" glyph anywhere; goals without a number say "No number" in words.
+- Google Tasks and Health data are in Settings, not on Home.
+- Settings opens on Help, with "Replay tutorial" first.
 
-   Two problems, and the first one was worse than it looked.
-
-   When the tour spotlighted the Calendar tab, tapping it did nothing to the
-   Calendar — the tap was absorbed and the tour just moved to the next step. A
-   ring around a button that then swallows your press is worse than no ring.
-
-   Now: tap Calendar during the tour and the Calendar actually opens, with your
-   real entries in it, and the tour waits there with its explanation on screen
-   until you press Next. Press Next instead and it moves on as before — you are
-   never made to do it. The only step that still requires a tap is the Goals one,
-   as before.
-
-   Second, "Replay tutorial" was already in Settings but was the fourth section
-   down, below three tall cards. It is now the first thing in Settings, under
-   "Help".
-
-   Because the tour changed, it will run once more even if you have seen it.
-   "Skip tour" ends it for good.
-
-Nothing else changed. No goals, tasks, calendar entries, life areas or settings
-are touched by this update.
+No goals, tasks, calendar entries, life areas or settings are touched by this
+update.
