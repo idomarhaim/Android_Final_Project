@@ -17,6 +17,28 @@
  *
  * What is different here: `--only firestore,functions`. The functions emulator loads
  * `lib/index.js`, so `npm run build` must have run first — `package.json` chains it.
+ *
+ * ### And it needs `FUNCTIONS_DISCOVERY_TIMEOUT`, or EVERY test fails for the wrong reason
+ *
+ * The analyzer's default budget for reading the backend spec out of `lib/index.js` is **10 s**,
+ * and on this machine it is not enough. What you get is one warning line —
+ *
+ *     !! functions: Failed to load function definition from source: FirebaseError: User code
+ *        failed to load. Cannot determine backend specification. Timeout after 10000.
+ *
+ * — and then the suite runs to completion with **no functions registered at all**, so every
+ * trigger assertion times out at 15 s. `Observed:` 2026-08-24, session `challenge-scoring`:
+ * **15 of 17 failed**, the two that passed being the two that assert a trigger does *nothing*.
+ * That reads exactly like "the new trigger broke the old ones" and is nothing of the kind.
+ *
+ * **Refute it in one command before touching any code** — the module itself loads fine:
+ *
+ *     node -e "const t=Date.now();const m=require('./lib/index.js');console.log(Date.now()-t,'ms',Object.keys(m))"
+ *
+ * `Observed:` **212 ms**, all eight exports listed, immediately after that failure. `CLAUDE.md`
+ * records the same trap for `firebase deploy --only functions`, where its message likewise names
+ * the wrong cause; it bites `emulators:exec` identically, and this file is where the fix belongs
+ * so that nobody has to know that twice.
  */
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -28,6 +50,11 @@ const EMULATOR_CMD =
   '"node --test test/triggers.emulator.mjs"'
 
 const env = { ...process.env }
+
+// See the block comment above. Set rather than overridden, so a caller who already knows they
+// need longer keeps their own value.
+env.FUNCTIONS_DISCOVERY_TIMEOUT = env.FUNCTIONS_DISCOVERY_TIMEOUT ?? '120'
+
 const javaHome = env.JAVA_HOME
 const pathKey = Object.keys(env).find((k) => k.toUpperCase() === 'PATH') ?? 'PATH'
 
@@ -46,6 +73,11 @@ if (!javaHome) {
     )
   }
 }
+
+console.log(
+  `[run-emulator-tests] FUNCTIONS_DISCOVERY_TIMEOUT=${env.FUNCTIONS_DISCOVERY_TIMEOUT}s ` +
+  '(the 10s default is not enough on this machine — see the header)',
+)
 
 const child = spawn(EMULATOR_CMD, { stdio: 'inherit', env, shell: true })
 child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))

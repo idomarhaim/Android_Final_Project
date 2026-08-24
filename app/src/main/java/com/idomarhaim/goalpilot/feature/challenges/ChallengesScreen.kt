@@ -58,7 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.ui.components.EmptyState
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
@@ -83,6 +83,7 @@ fun ChallengesScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val editor by viewModel.editor.collectAsStateWithLifecycle()
     val scoreEntry by viewModel.scoreEntry.collectAsStateWithLifecycle()
+    val goalLink by viewModel.goalLink.collectAsStateWithLifecycle()
     val detailId by viewModel.detailId.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
@@ -156,6 +157,7 @@ fun ChallengesScreen(
                         card = card,
                         onOpenStandings = { viewModel.openDetail(card.challenge.id) },
                         onReportScore = { viewModel.openScoreEntry(card) },
+                        onLinkGoal = { viewModel.openGoalLink(card) },
                         onLeave = { pendingLeave = card },
                         onDelete = { pendingDelete = card },
                     )
@@ -179,8 +181,8 @@ fun ChallengesScreen(
             state = editor,
             onTitle = viewModel::onTitleChange,
             onDescription = viewModel::onDescriptionChange,
-            onType = viewModel::onTypeChange,
-            onMetricUnit = viewModel::onMetricUnitChange,
+            onMeasureKind = viewModel::onMeasureKindChange,
+            onMeasureWord = viewModel::onMeasureWordChange,
             onStart = viewModel::onStartChange,
             onEnd = viewModel::onEndChange,
             onSave = viewModel::saveEditor,
@@ -194,6 +196,14 @@ fun ChallengesScreen(
             onValue = viewModel::onScoreChange,
             onSubmit = viewModel::submitScore,
             onDismiss = viewModel::dismissScoreEntry,
+        )
+    }
+
+    if (goalLink.isVisible) {
+        GoalLinkSheet(
+            state = goalLink,
+            onLink = viewModel::linkGoal,
+            onDismiss = viewModel::dismissGoalLink,
         )
     }
 
@@ -256,6 +266,7 @@ internal fun MyChallengeCard(
     card: ChallengeCard,
     onOpenStandings: () -> Unit,
     onReportScore: () -> Unit,
+    onLinkGoal: () -> Unit,
     onLeave: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -264,7 +275,7 @@ internal fun MyChallengeCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = iconFor(card.challenge.type),
+                    imageVector = iconFor(card.challenge.measure?.kind),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -312,17 +323,61 @@ internal fun MyChallengeCard(
                 card.myStanding?.let { standing ->
                     Text(
                         "#${standing.rank} · ${ChallengesViewModel.format(standing.score)} " +
-                            card.challenge.metricUnit,
+                            card.challenge.metricWord,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium,
                     )
                 }
             }
 
+            // WHERE THIS CHALLENGE'S NUMBER COMES FROM, ON THE USER'S OWN CARD.
+            //
+            // §6 makes a linked challenge score itself, which is silent by design -- so the
+            // one place it has to be legible is here, on the card of the person whose score
+            // it is. Not on the standings row: that is a claim about somebody else and only
+            // the exception speaks there (see `ReportedBadge`).
+            if (card.canLinkGoal) {
+                Text(
+                    if (card.isLinked) {
+                        "Scoring itself from your linked goal."
+                    } else {
+                        "Not linked yet — you are typing this score."
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            } else if (card.challenge.isUnmeasured && card.canReportScore) {
+                // A pre-§6 challenge whose `metricUnit` was the "points" default. §6
+                // deletes that rather than re-homing it, so there is no kind to match a
+                // goal against and the honest thing is to say so rather than offer an
+                // empty picker.
+                Text(
+                    "This challenge was made before scores could come from a goal, so " +
+                        "it has no measure. Its owner can set one.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onReportScore, enabled = card.canReportScore) {
-                    Text("Report score")
+                // Linking is the PRIMARY action once it is available: it is what §6 means a
+                // challenge to do, and typing a number is the fallback. Reporting keeps its
+                // place rather than being demoted into a menu -- somebody with no goal of
+                // the right kind still has to be able to compete today.
+                if (card.canLinkGoal) {
+                    Button(onClick = onLinkGoal, enabled = card.canReportScore) {
+                        Text(if (card.isLinked) "Change goal" else "Score from a goal")
+                    }
+                    TextButton(onClick = onReportScore, enabled = card.canReportScore) {
+                        Text("Type a score")
+                    }
+                } else {
+                    Button(onClick = onReportScore, enabled = card.canReportScore) {
+                        Text("Report score")
+                    }
                 }
                 TextButton(onClick = onOpenStandings) { Text("Standings") }
             }
@@ -349,7 +404,7 @@ internal fun DiscoverChallengeCard(entry: DiscoverableChallenge, onJoin: () -> U
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = iconFor(entry.challenge.type),
+                imageVector = iconFor(entry.challenge.measure?.kind),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
@@ -415,29 +470,36 @@ internal fun PhaseChip(phase: ChallengePhase, challenge: Challenge) {
 
 // ── Shared bits ──────────────────────────────────────────────────────
 
-internal fun iconFor(type: ChallengeType): ImageVector = when (type) {
-    ChallengeType.RUNNING -> Icons.AutoMirrored.Filled.DirectionsRun
-    ChallengeType.STEPS -> Icons.AutoMirrored.Filled.DirectionsWalk
-    ChallengeType.SLEEP -> Icons.Filled.NightlightRound
-    ChallengeType.WORKOUTS -> Icons.Filled.FitnessCenter
-    ChallengeType.CUSTOM -> Icons.Filled.EmojiEvents
-}
-
-internal fun labelFor(type: ChallengeType): String = when (type) {
-    ChallengeType.RUNNING -> "Running"
-    ChallengeType.STEPS -> "Steps"
-    ChallengeType.SLEEP -> "Sleep"
-    ChallengeType.WORKOUTS -> "Workouts"
-    ChallengeType.CUSTOM -> "Custom"
+/**
+ * A glyph for a challenge, from its measure **kind**.
+ *
+ * `ChallengeType` used to supply this, and §6 deleted the enum: it was purely
+ * presentational — nothing ever branched on it to source a score — and a [MeasureKind]
+ * covers the half of it that meant anything (`STEPS` is a `COUNT`, `SLEEP` a `DURATION`,
+ * `RUNNING` a `DISTANCE`). One consequence is visible and accepted: a steps race and a
+ * books race are both `COUNT` and now share a glyph, where the old enum gave steps its own.
+ * That is the honest price of deleting a field nothing computed with — the alternative is
+ * keeping a second, decorative classification beside the real one, which is §0.3's
+ * most-repeated finding in miniature.
+ *
+ * A null kind is a pre-§6 challenge with no measure; the trophy is the neutral default the
+ * old `CUSTOM` used, so nothing about it reads as an error.
+ */
+internal fun iconFor(kind: MeasureKind?): ImageVector = when (kind) {
+    MeasureKind.DISTANCE -> Icons.AutoMirrored.Filled.DirectionsRun
+    MeasureKind.COUNT -> Icons.AutoMirrored.Filled.DirectionsWalk
+    MeasureKind.DURATION -> Icons.Filled.NightlightRound
+    MeasureKind.MASS -> Icons.Filled.FitnessCenter
+    else -> Icons.Filled.EmojiEvents
 }
 
 internal fun participantSummary(count: Int): String =
     if (count == 1) "1 person in" else "$count people in"
 
 @Composable
-internal fun TypeIconBadge(type: ChallengeType, modifier: Modifier = Modifier) {
+internal fun MeasureIconBadge(kind: MeasureKind, modifier: Modifier = Modifier) {
     Icon(
-        imageVector = iconFor(type),
+        imageVector = iconFor(kind),
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
         modifier = modifier.size(20.dp),

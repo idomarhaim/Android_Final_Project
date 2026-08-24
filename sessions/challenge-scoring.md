@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
 issue: 23
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Challenge.kt
@@ -20,6 +20,21 @@ singletons:
   - Gradle daemon
   - a device, for the standings render pass
 created: 2026-08-24 by s25-verify-on-real-phone
+result: |
+  Built and committed 2026-08-24. Green at four layers (JVM 1125/1125, functions
+  arithmetic 105/105, real emulator triggers 17/17, security rules 55/55).
+  OWED, each with its own brief rather than as a line in a changelog:
+    - sessions/challenge-scoring-render-pass.md  -- the instrumented suite and the
+      device render pass, blocked because `emulator-5554` was claimed on the board.
+    - sessions/challenge-measure-approval.md     -- section 6's every-participant
+      approval for changing a measure. Nothing today permits OR prevents it.
+    - sessions/challenge-health-gate.md          -- the Health Connect join gate, and
+      section 6's "joining links OR CREATES a goal", of which only linking is built.
+  Step 0 discharged on arrival: C7 (#14) and C3 (#18) are both closed, so the
+  conditional note to Ido this brief made contingent on an open C7 was not owed.
+  The brief's "needs C3's start" turned out to be about a GOAL's baseline, not this:
+  since #49 the entry IS the progress, so movement-since-joining is a windowed sum
+  over the same documents and needs no start field.
 ---
 
 # `C14` / [`#23`](https://github.com/idomarhaim/Android_Final_Project/issues/23) — a challenge scores itself, and says who moved it

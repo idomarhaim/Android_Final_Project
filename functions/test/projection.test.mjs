@@ -31,6 +31,10 @@ import {
   levelForPoints,
   pointsForLevel,
   scoreFromReport,
+  scoreFromProgress,
+  scoringWindow,
+  standingFromFact,
+  linkedGoalId,
 } from "../lib/derived.js";
 
 /**
@@ -103,4 +107,136 @@ test("the level curve is 50*(n-1)*n — L1:0, L2:100, L3:300, L4:600", () => {
     [0, 100, 300, 600, 1000],
   );
   assert.equal(pointsForLevel(0), 0, "clamped at level 1, as Kotlin coerceAtLeast(1) does");
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §6 (`C14` #23): a challenge scores from each participant's GOAL.
+//
+// These cases are NOT in `shared-fixtures/derived-state.json`, and that is deliberate.
+// The fixture exists to pin two implementations of one rule together — §5.2's honest
+// residual is that the points arithmetic lives in Kotlin AND TypeScript and the two can
+// disagree. This arithmetic has **no Kotlin twin**: §6 makes the challenge score
+// server-owned, the client only ever renders what the projection wrote, and inventing a
+// Kotlin mirror to satisfy the fixture's shape would manufacture exactly the duplication
+// the fixture exists to police. If a client ever computes a challenge score, these move
+// into the fixture the same day.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const OPEN = { from: 0, until: null };
+
+test("a fact carries a goal link or a typed number, never both", () => {
+  assert.equal(linkedGoalId({ goalId: "g1" }), "g1");
+  assert.equal(linkedGoalId({ goalId: "  g1  " }), "g1", "trimmed");
+  assert.equal(linkedGoalId({ value: 12 }), null);
+  assert.equal(linkedGoalId({ goalId: "" }), null, "an empty id is not a link");
+  assert.equal(linkedGoalId({ goalId: "   " }), null);
+  assert.equal(linkedGoalId(null), null);
+});
+
+test("the window opens at the later of joining and the challenge starting", () => {
+  // The `joinedAt` half is §6's own words -- "movement since you joined". The `startAt`
+  // half is a DERIVATION from the phase model, documented on `ScoringWindow` in Kotlin:
+  // without it, joining an UPCOMING challenge credits it with what you did beforehand.
+  assert.deepEqual(scoringWindow({ startAt: 0, endAt: 0 }, 500), { from: 500, until: null });
+  assert.deepEqual(scoringWindow({ startAt: 900, endAt: 0 }, 500), { from: 900, until: null });
+  assert.deepEqual(scoringWindow({ startAt: 100, endAt: 0 }, 500), { from: 500, until: null });
+  assert.deepEqual(scoringWindow({ startAt: 0, endAt: 2000 }, 500), { from: 500, until: 2000 });
+});
+
+test("a missing challenge or joinedAt yields a window, never NaN", () => {
+  // `Math.max(NaN, x)` is NaN, and a NaN bound includes NOTHING -- which would read as
+  // "this challenge scores zero" rather than as a failure. The guard is the difference
+  // between a wrong number and no number.
+  assert.deepEqual(scoringWindow(null, null), { from: 0, until: null });
+  assert.deepEqual(scoringWindow(undefined, undefined), { from: 0, until: null });
+  assert.deepEqual(scoringWindow({}, 500), { from: 500, until: null });
+});
+
+test("the score is the movement inside the window, not the goal's whole history", () => {
+  const entries = [
+    { value: 3000, createdAt: 100 }, // before joining
+    { value: 4000, createdAt: 500 }, // the instant of joining -- inclusive
+    { value: 1200, createdAt: 900 },
+    { value: 999, createdAt: 2000 }, // the end bound -- exclusive
+  ];
+  assert.equal(scoreFromProgress(entries, { from: 500, until: 2000 }), 5200);
+  // Joining with a year-old goal imports no history: that is the whole reason §6 sums
+  // timestamped entries instead of storing a delta from a baseline.
+  assert.equal(scoreFromProgress(entries, { from: 2001, until: null }), 0);
+  assert.equal(scoreFromProgress(entries, OPEN), 9199);
+});
+
+test("an entry with no usable timestamp or value contributes nothing", () => {
+  const entries = [
+    { value: 10, createdAt: 100 },
+    { value: 10 }, // no stamp -- cannot be placed in the window
+    { createdAt: 100 }, // no value
+    { value: "not a number", createdAt: 100 },
+    null,
+  ];
+  assert.equal(scoreFromProgress(entries, OPEN), 10);
+});
+
+test("projecting a challenge score twice writes the same number", () => {
+  // Structural idempotence, the property §5.2 rejected `FieldValue.increment` for. The
+  // whole entry set is the input and no prior score is, so a redelivered event, a retry
+  // and a manual re-run all agree.
+  const entries = [
+    { value: 5, createdAt: 10 },
+    { value: 7, createdAt: 20 },
+  ];
+  assert.equal(scoreFromProgress(entries, OPEN), scoreFromProgress(entries, OPEN));
+});
+
+test("a downward goal floors at zero rather than sorting below somebody idle", () => {
+  // A weight-loss goal logs downwards, so negative movement is real. §6 does not
+  // adjudicate direction, and a negative score would put a participant BELOW somebody
+  // who has done nothing while the standings offer no way to say why.
+  assert.equal(scoreFromProgress([{ value: -4, createdAt: 10 }], OPEN), 0);
+});
+
+test("a linked fact projects a derived standing with no reported-at at all", () => {
+  const standing = standingFromFact(
+    { goalId: "g1" },
+    [{ value: 8200, createdAt: 600 }],
+    { from: 500, until: null },
+    1_756_000_000_000,
+  );
+  assert.deepEqual(standing, { score: 8200, scoreSource: "DERIVED", reportedAt: 0 });
+});
+
+test("a typed fact projects a reported standing that says when", () => {
+  const standing = standingFromFact({ value: 8200 }, [], OPEN, 1_756_000_000_000);
+  assert.deepEqual(standing, {
+    score: 8200,
+    scoreSource: "REPORTED",
+    reportedAt: 1_756_000_000_000,
+  });
+});
+
+test("a reported standing with no stamp says nothing rather than inventing a date", () => {
+  // A fact written before `reportedAt` existed. The badge drops the date rather than
+  // borrowing the as-of stamp beside it, which would be a claim nobody made.
+  assert.equal(standingFromFact({ value: 5 }, [], OPEN, undefined).reportedAt, 0);
+  assert.equal(standingFromFact({ value: 5 }, [], OPEN, 0).reportedAt, 0);
+});
+
+test("a deleted fact writes NOTHING, and does not zero a standing others are reading", () => {
+  // `null` is a real answer, not an error path -- undoing a report or leaving must not
+  // silently blank a row on everybody else's screen. The last number stands until the
+  // participant row itself is deleted.
+  assert.equal(standingFromFact(null, [], OPEN, 0), null);
+  assert.equal(standingFromFact(undefined, [], OPEN, 0), null);
+  assert.equal(standingFromFact({}, [], OPEN, 0), null, "a fact with neither shape");
+});
+
+test("a link to a goal with no progress yet is a real zero, not a write-nothing", () => {
+  // The one case where the two answers genuinely differ: linking is an act, so the row
+  // should say DERIVED and 0 -- "this is scoring itself and has not moved" -- rather than
+  // leaving whatever number was typed before the link standing there labelled REPORTED.
+  assert.deepEqual(standingFromFact({ goalId: "g1" }, [], OPEN, 0), {
+    score: 0,
+    scoreSource: "DERIVED",
+    reportedAt: 0,
+  });
 });

@@ -12,7 +12,7 @@ import com.idomarhaim.goalpilot.data.firestore.dto.ChallengeDto
 import com.idomarhaim.goalpilot.data.firestore.dto.ChallengeParticipantDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.domain.model.Challenge
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
@@ -103,7 +103,15 @@ class ChallengeRepositoryImpl @Inject constructor(
                 // on the server changes no documents when it stops being served
                 // from cache, so without this the never-loaded state would stick.
                 participantsCol(challengeId).snapshotsFlow(MetadataChanges.INCLUDE),
-            ) { challengeSnap, participantsSnap ->
+                // The caller's OWN fact, so the screen can say whether their score
+                // moves on its own. Private to them: nobody else's link is read
+                // here, and none is published on the world-readable row either.
+                if (uid == null) {
+                    flowOf<com.google.firebase.firestore.DocumentSnapshot?>(null)
+                } else {
+                    reportsCol(uid).document(challengeId).snapshotsFlow().map { it }
+                },
+            ) { challengeSnap, participantsSnap, myFactSnap ->
                 val dto = challengeSnap.toObject(ChallengeDto::class.java)
                     ?: return@combine null
                 val participants = participantsSnap
@@ -114,6 +122,7 @@ class ChallengeRepositoryImpl @Inject constructor(
                     standings = participants.rankedByScore(uid),
                     isOwner = uid != null && dto.ownerUid == uid,
                     hasJoined = participants.any { it.uid == uid },
+                    myLinkedGoalId = myFactSnap?.getString(GOAL_ID).orEmpty(),
                     // Only the participants read is stamped. The challenge document
                     // beside it is cross-boundary too, but it holds owner-authored
                     // title and dates rather than a moving number, so an as-of
@@ -148,14 +157,19 @@ class ChallengeRepositoryImpl @Inject constructor(
     override suspend fun createChallenge(
         title: String,
         description: String,
-        type: ChallengeType,
-        metricUnit: String,
+        measure: Measure,
         startAtEpochMillis: Long,
         endAtEpochMillis: Long,
     ): Resource<String> = withContext(io) {
         val user = auth.currentUser ?: return@withContext Resource.Error("Not signed in")
         val cleanTitle = title.trim()
         if (cleanTitle.isBlank()) return@withContext Resource.Error("Give the challenge a name")
+        // §6: a challenge has NO optional measure -- "there is nothing to compare
+        // without a shared unit" -- and the kind is what a participant's goal is
+        // matched against, so a word on its own is not enough either.
+        if (measure.kind == null || measure.word.isBlank()) {
+            return@withContext Resource.Error("Say what this challenge counts")
+        }
         if (endAtEpochMillis > 0L && startAtEpochMillis > endAtEpochMillis) {
             return@withContext Resource.Error("The challenge would end before it starts")
         }
@@ -171,8 +185,13 @@ class ChallengeRepositoryImpl @Inject constructor(
                         id = ref.id,
                         title = cleanTitle.take(TITLE_MAX),
                         description = description.trim().take(DESCRIPTION_MAX),
-                        type = type.name,
-                        metricUnit = metricUnit.trim().ifBlank { "points" },
+                        measureKind = measure.kind.name,
+                        measureWord = measure.word.trim().take(UNIT_MAX),
+                        // The pre-§6 pair is never written, not even as a courtesy
+                        // for an older client: two fields saying what one number
+                        // counts is §0.3's most-repeated finding.
+                        type = null,
+                        metricUnit = null,
                         ownerUid = user.uid,
                         startAt = startAtEpochMillis,
                         endAt = endAtEpochMillis,
@@ -220,6 +239,40 @@ class ChallengeRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun linkGoal(challengeId: String, goalId: String): Resource<Unit> =
+        withContext(io) {
+            val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            if (goalId.isBlank()) return@withContext Resource.Error("Pick a goal")
+            try {
+                // ONE FACT DOCUMENT, TWO MUTUALLY EXCLUSIVE SHAPES.
+                //
+                // The fact a participant owns is `users/{uid}/challengeReports/{id}`, and
+                // §6 gives it a second shape: a LINK to one of their own goals, instead of
+                // a typed number. `set()` without merge is what makes the exclusion
+                // structural -- writing the link REPLACES the document, so the `value`
+                // that was there is gone rather than shadowed.
+                //
+                // That matters more than tidiness. If both could sit on one fact, the
+                // projection would have to pick, and the standings badge -- the whole of
+                // Ido's third ask -- would be reporting the outcome of a tiebreak rather
+                // than what the participant actually did. Here there is nothing to break:
+                // a fact carries a `goalId` or a `value`, never both.
+                //
+                // The collection keeps its `challengeReports` name. Renaming a live
+                // collection is a migration over every user's documents, for a word.
+                reportsCol(uid).document(challengeId)
+                    .set(
+                        mapOf(
+                            GOAL_ID to goalId,
+                            LINKED_AT to System.currentTimeMillis(),
+                        ),
+                    ).await()
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not link that goal", e)
+            }
+        }
+
     override suspend fun reportScore(challengeId: String, score: Double): Resource<Unit> =
         withContext(io) {
             val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
@@ -254,6 +307,11 @@ class ChallengeRepositoryImpl @Inject constructor(
                 // is stored and simply projects nowhere. The join check that message
                 // used to stand for lives in the UI, which only offers the field to a
                 // participant.
+                //
+                // §6 ADDS ONE THING: this un-links. The unmerged `set` drops any `goalId`
+                // that was on the fact, so typing a number is a deliberate move OFF the
+                // automatic path and not a second number sitting quietly beside it. That
+                // is what the standings badge is then able to say honestly.
                 reportsCol(uid).document(challengeId)
                     .set(
                         mapOf(
@@ -302,11 +360,19 @@ class ChallengeRepositoryImpl @Inject constructor(
         const val DISCOVER_LIMIT = 50L
         const val TITLE_MAX = 80
         const val DESCRIPTION_MAX = 240
-        const val SCORE = "score"
+        const val UNIT_MAX = 24
         const val JOINED_AT = "joinedAt"
 
-        /** Fields of a `users/{uid}/challengeReports/{challengeId}` fact. */
+        /**
+         * Fields of a `users/{uid}/challengeReports/{challengeId}` fact.
+         *
+         * [VALUE] and [GOAL_ID] are the two shapes of the same document and never
+         * appear together — see `linkGoal`. Mirrored by name in
+         * `functions/src/derived.ts`; one document, two languages.
+         */
         const val VALUE = "value"
         const val REPORTED_AT = "reportedAt"
+        const val GOAL_ID = "goalId"
+        const val LINKED_AT = "linkedAt"
     }
 }

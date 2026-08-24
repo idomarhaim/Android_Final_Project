@@ -66,9 +66,123 @@ export function pointsOf(fact: CompletionFact): number {
   return Math.round(Math.round(minutes / 3) * multiplier);
 }
 
-/** A participant's self-reported measurement for one challenge. */
+/**
+ * A participant's fact for one challenge, at `users/{uid}/challengeReports/{challengeId}`.
+ *
+ * **Two shapes, never both** - see `ChallengeRepositoryImpl.linkGoal`, which writes it with
+ * an unmerged `set()` precisely so that the exclusion is structural:
+ *
+ *  - `{ goalId, linkedAt }` - the section-6 scoring path. The score is *movement in that
+ *    goal since you joined*, summed here from the goal's own progress entries.
+ *  - `{ value, reportedAt }` - a number the participant typed.
+ *
+ * The exclusion is what makes the standings badge answerable. If both could sit on one fact
+ * this function would have to pick a winner, and the row would then be labelled with the
+ * outcome of a tiebreak rather than with what the participant actually did.
+ */
 export interface ReportFact {
   value?: number | null;
+  goalId?: string | null;
+  /** When the typed number was written. Meaningless on the linked shape, and unread there. */
+  reportedAt?: number | null;
+}
+
+/**
+ * One `users/{uid}/goals/{goalId}/progress/{entryId}` document, as this projection reads it.
+ *
+ * `createdAt` is what puts an entry inside or outside the scoring window; `value` is what it
+ * contributes. Nothing else on the entry matters here - a note, an image and a `sourceKey`
+ * are the client's business, and `sourceKey` has already done its job upstream by stopping a
+ * Health Connect re-sync writing the same day twice (#49, spec §6).
+ */
+export interface ProgressFact {
+  value?: number | null;
+  createdAt?: number | null;
+}
+
+/**
+ * The window a participant's movement is counted over. Mirrors `ScoringWindow` in
+ * `domain/model/Challenge.kt` - one rule, two languages.
+ *
+ * `from` is `max(joinedAt, startAt)` and `until` is `endAt` or null for open-ended. Both
+ * bounds are documented on the Kotlin side, including which half is §6's own words
+ * and which is a derivation from the phase model.
+ */
+export interface ScoringWindow {
+  from: number;
+  until: number | null;
+}
+
+/** Whether the participant's fact points at a goal - the automatic path, not a typed number. */
+export function linkedGoalId(report: ReportFact | null | undefined): string | null {
+  const id = report?.goalId;
+  return typeof id === "string" && id.trim().length > 0 ? id.trim() : null;
+}
+
+/**
+ * The window `challenge` scores a participant who joined at `joinedAt` over.
+ *
+ * Mirrors `Challenge.scoringWindowFor`. A `startAt` of `0` means *no start date*, so it must
+ * not become a lower bound by accident - `Math.max` over a non-finite or absent value is
+ * exactly the arithmetic that silently produces `NaN`, which would then include nothing at
+ * all and read as *this challenge scores zero*.
+ */
+export function scoringWindow(
+  challenge: { startAt?: number | null; endAt?: number | null } | null | undefined,
+  joinedAt: number | null | undefined,
+): ScoringWindow {
+  const joined = Number(joinedAt);
+  const startAt = Number(challenge?.startAt);
+  const endAt = Number(challenge?.endAt);
+  const from = Math.max(
+    Number.isFinite(joined) ? joined : 0,
+    Number.isFinite(startAt) ? startAt : 0,
+  );
+  return { from, until: Number.isFinite(endAt) && endAt > 0 ? endAt : null };
+}
+
+/**
+ * §6's score: **movement in the linked goal since you joined**, not the goal's
+ * current value.
+ *
+ * > Summed from timestamped entries rather than stored as a delta, so **relink, unlink,
+ * > backfill and dedup all fall out**, and joining with a year-old goal **imports no
+ * > history**.
+ *
+ * That is the whole reason this takes the entry list rather than a `currentValue`: a stored
+ * delta would need a baseline captured at join time, and every one of those four cases is a
+ * baseline going stale. Here there is no baseline to go stale - re-linking a different goal
+ * re-sums a different list, unlinking sums nothing, a backfilled entry lands inside or
+ * outside the window on its own timestamp, and a de-duplicated `sourceKey` never produced a
+ * second entry to sum in the first place.
+ *
+ * **Structurally idempotent**, like every other projection here: the whole entry set is the
+ * input and no prior score is, so a redelivered event and a manual re-run write the same
+ * number (§5.2's ground for rejecting `FieldValue.increment`).
+ *
+ * **Floored at zero, and that floor is load-bearing rather than defensive.** A weight-loss
+ * goal logs *downwards*, so a real participant's movement is genuinely negative, and a
+ * negative score would sort them **below** somebody who has done nothing while the standings
+ * offer no way to say why. §6 does not adjudicate direction, so the honest reading is
+ * that a challenge ranks on *how far you moved it the way the challenge counts*; the
+ * losing-weight race is the case that needs a direction, and it is named as owed work in
+ * `CHANGELOG/2026-08-24/challenge-scoring.md` rather than guessed at here.
+ */
+export function scoreFromProgress(
+  entries: readonly ProgressFact[],
+  window: ScoringWindow,
+): number {
+  let total = 0;
+  for (const entry of entries) {
+    const at = Number(entry?.createdAt);
+    if (!Number.isFinite(at)) continue;
+    if (at < window.from) continue;
+    if (window.until !== null && at >= window.until) continue;
+    const value = Number(entry?.value);
+    if (!Number.isFinite(value)) continue;
+    total += value;
+  }
+  return Math.max(0, total);
 }
 
 /**
@@ -141,4 +255,55 @@ export function scoreFromReport(report: ReportFact | null | undefined): number |
   const value = Number(report.value);
   if (!Number.isFinite(value)) return null;
   return Math.max(0, value);
+}
+
+/** What a participant row says about where its number came from - mirrors `ScoreSource`. */
+export type ScoreSource = "NONE" | "DERIVED" | "REPORTED";
+
+/** The score plus its provenance, as one participant row's projection. */
+export interface Standing {
+  score: number;
+  scoreSource: ScoreSource;
+  /** When the typed number was reported; `0` for anything not typed. */
+  reportedAt: number;
+}
+
+/**
+ * The whole of one participant row's projection, as a pure function of their fact.
+ *
+ * `null` means **write nothing**, and it is a real answer rather than an error path - the
+ * same semantics `scoreFromReport` already had, kept because the reason is unchanged:
+ * deleting a fact (undoing a report, or leaving) must not silently zero a standing other
+ * people are reading. The last number stands until the participant row itself is deleted.
+ *
+ * The `scoreSource` is written by the server and pinned by `firestore.rules`, and that is
+ * not belt-and-braces. A participant who could write their own label could type a number
+ * and mark it `DERIVED` - the label would then assert exactly the thing it exists to deny.
+ * What it can still never be is *evidence about the walk*: §6's honest residual is
+ * that this stops a win being **typed**, not a reading being **forged**.
+ */
+export function standingFromFact(
+  report: ReportFact | null | undefined,
+  progress: readonly ProgressFact[],
+  window: ScoringWindow,
+  reportedAt: number | null | undefined,
+): Standing | null {
+  if (report === null || report === undefined) return null;
+  if (linkedGoalId(report) !== null) {
+    return {
+      score: scoreFromProgress(progress, window),
+      scoreSource: "DERIVED",
+      // Zero, always: there is no typed number behind this, so the badge has no date to
+      // show and must not borrow the link's own timestamp to invent one.
+      reportedAt: 0,
+    };
+  }
+  const score = scoreFromReport(report);
+  if (score === null) return null;
+  const at = Number(reportedAt);
+  return {
+    score,
+    scoreSource: "REPORTED",
+    reportedAt: Number.isFinite(at) && at > 0 ? at : 0,
+  };
 }

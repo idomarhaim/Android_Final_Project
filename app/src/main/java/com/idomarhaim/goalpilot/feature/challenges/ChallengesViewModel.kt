@@ -7,11 +7,17 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Freshness
+import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
+import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.feature.goals.label
+import com.idomarhaim.goalpilot.feature.goals.wordHint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,18 +31,28 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Competitive challenges (spec §6 nice-to-have, §7): the ones you are in with
- * live standings, the ones you could join, and the flows that move you between
- * those two lists.
+ * Competitive challenges — `docs/PRODUCT_v0.3.md` §6 (`C14` #23).
  *
  * Every write here goes through [ChallengeRepository], which aims each one at
  * whichever document `firestore.rules` actually permits — joining is a write to
  * your own participant row, never an edit to the challenge. See
  * `CHANGELOG/2026-08-04/challenges.md`.
+ *
+ * ### It reads goals, and that is §6's whole shape rather than a convenience
+ *
+ * > **A challenge scores from nothing of its own: it scores from each
+ * > participant's goal.**
+ *
+ * So a challenge screen has to be able to show the user their own goals, because
+ * picking one is the act that makes the number move. What it must **not** do is
+ * grow a second pipe from Health Connect to a challenge: everything already flows
+ * into a goal, and §6's fix *deletes one representation of the walk rather than
+ * building a second one*.
  */
 @HiltViewModel
 class ChallengesViewModel @Inject constructor(
     private val repository: ChallengeRepository,
+    private val goalRepository: GoalRepository,
 ) : ViewModel() {
 
     /**
@@ -57,12 +73,14 @@ class ChallengesViewModel @Inject constructor(
     val uiState: StateFlow<ChallengesUiState> = combine(
         repository.observeMyChallenges(),
         repository.observeDiscoverable(),
-    ) { mine, discoverable ->
+        goalRepository.observeGoals(),
+    ) { mine, discoverable, goals ->
         val now = clock()
         ChallengesUiState(
             isLoading = false,
             mine = mine.map { ChallengeCard(it, it.challenge.phaseAt(now)) },
             discoverable = discoverable.map { DiscoverableChallenge(it, it.phaseAt(now)) },
+            goals = goals,
         )
     }.catch { emit(ChallengesUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -76,6 +94,9 @@ class ChallengesViewModel @Inject constructor(
 
     private val _scoreEntry = MutableStateFlow(ScoreEntryState())
     val scoreEntry = _scoreEntry.asStateFlow()
+
+    private val _goalLink = MutableStateFlow(GoalLinkState())
+    val goalLink = _goalLink.asStateFlow()
 
     /** Which challenge the standings sheet is showing, if any. */
     private val _detailId = MutableStateFlow<String?>(null)
@@ -129,6 +150,63 @@ class ChallengesViewModel @Inject constructor(
 
     fun dismissDetail() { _detailId.value = null }
 
+    // ── Linking a goal — §6's actual scoring path ─────────────────────
+
+    /**
+     * Opens the goal picker for [card], offering only the goals that can score it.
+     *
+     * **An empty list is a real state and gets its own message**, not a picker
+     * with nothing in it. §6 says *joining links **or creates** a goal*, so a user
+     * with no goal of the right kind has to be told what to make rather than left
+     * looking at a blank sheet. Creating it from here is the half this session did
+     * not build — [GoalLinkState.eligible] being empty is where that lands.
+     */
+    fun openGoalLink(card: ChallengeCard) {
+        _goalLink.value = GoalLinkState(
+            isVisible = true,
+            challengeId = card.challenge.id,
+            challengeTitle = card.challenge.title,
+            metricWord = card.challenge.metricWord,
+            kindLabel = card.challenge.measure?.kind?.label().orEmpty(),
+            linkedGoalId = card.data.myLinkedGoalId,
+            eligible = eligibleGoalsFor(card.challenge),
+        )
+    }
+
+    /**
+     * The goals that may score [challenge] — matched on the measure **kind**, never
+     * on the word. See `Challenge.canBeScoredFrom` for why: the word is user
+     * content in the user's own language, and matching on it would keep a Hebrew
+     * user out of an English steps race for a reason that has nothing to do with
+     * what is being counted.
+     */
+    @VisibleForTesting
+    internal fun eligibleGoalsFor(challenge: Challenge): List<Goal> =
+        uiState.value.goals.filter { challenge.canBeScoredFrom(it) }
+
+    fun linkGoal(goalId: String) {
+        val current = _goalLink.value
+        if (current.isSaving) return
+        viewModelScope.launch {
+            _goalLink.update { it.copy(isSaving = true, error = null) }
+            when (val result = repository.linkGoal(current.challengeId, goalId)) {
+                is Resource.Success -> {
+                    _goalLink.value = GoalLinkState()
+                    // Says what changed, not that a write succeeded: the point of
+                    // linking is that nobody has to type a number again.
+                    _message.value = "Linked — this challenge now scores itself"
+                }
+
+                is Resource.Error ->
+                    _goalLink.update { it.copy(isSaving = false, error = result.message) }
+
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun dismissGoalLink() { _goalLink.value = GoalLinkState() }
+
     // ── Reporting a score ─────────────────────────────────────────────
 
     fun openScoreEntry(card: ChallengeCard) {
@@ -136,7 +214,12 @@ class ChallengesViewModel @Inject constructor(
             isVisible = true,
             challengeId = card.challenge.id,
             challengeTitle = card.challenge.title,
-            metricUnit = card.challenge.metricUnit,
+            metricWord = card.challenge.metricWord,
+            // Whether typing this number will switch the challenge OFF its linked
+            // goal. Said before the write, not after it — a linked challenge is
+            // scoring itself, and silently replacing that with a typed number is
+            // the one outcome nobody would have chosen deliberately.
+            replacesLink = card.data.myScoreIsLinked,
             // Pre-filled with what they already reported, so "add a bit more" does
             // not mean retyping it. Blank at zero — a pre-filled 0 reads as noise.
             value = card.myStanding?.score?.takeIf { it > 0.0 }?.let { format(it) }.orEmpty(),
@@ -186,20 +269,25 @@ class ChallengesViewModel @Inject constructor(
     fun onDescriptionChange(value: String) = _editor.update { it.copy(description = value) }
 
     /**
-     * Picking a type re-suggests the unit — but only while the user has not typed
+     * Picking a kind re-suggests the word — but only while the user has not typed
      * one themselves, the same rule the life-area editor uses for its icon.
+     *
+     * The suggestion is `MeasureKind.wordHint()`, so the challenge editor and the
+     * goal editor offer the same example for the same kind rather than keeping two
+     * tables that drift.
      */
-    fun onTypeChange(type: ChallengeType) {
+    fun onMeasureKindChange(kind: MeasureKind) {
         _editor.update {
             it.copy(
-                type = type,
-                metricUnit = if (it.unitTouched) it.metricUnit else defaultUnitFor(type),
+                measureKind = kind,
+                measureWord = if (it.wordTouched) it.measureWord else kind.wordHint(),
+                error = null,
             )
         }
     }
 
-    fun onMetricUnitChange(value: String) =
-        _editor.update { it.copy(metricUnit = value, unitTouched = true) }
+    fun onMeasureWordChange(value: String) =
+        _editor.update { it.copy(measureWord = value, wordTouched = true, error = null) }
 
     /** Both dates are optional; pass null to clear one. Zero means "not set". */
     fun onStartChange(epochMillis: Long?) =
@@ -215,6 +303,13 @@ class ChallengesViewModel @Inject constructor(
             _editor.update { it.copy(error = "Give the challenge a name") }
             return
         }
+        // §6: a challenge has no optional measure. Checked here as well as in the
+        // repository, because the dialog is where the kind was (not) picked.
+        val kind = current.measureKind
+        if (kind == null || current.measureWord.isBlank()) {
+            _editor.update { it.copy(error = "Say what this challenge counts") }
+            return
+        }
         // Checked here as well as in the repository: the dialog is where the two
         // dates were picked, so it is where the complaint belongs.
         if (current.endAtEpochMillis > 0L &&
@@ -228,8 +323,7 @@ class ChallengesViewModel @Inject constructor(
             val result = repository.createChallenge(
                 title = current.title,
                 description = current.description,
-                type = current.type,
-                metricUnit = current.metricUnit.ifBlank { defaultUnitFor(current.type) },
+                measure = Measure(kind = kind, word = current.measureWord.trim()),
                 startAtEpochMillis = current.startAtEpochMillis,
                 endAtEpochMillis = current.endAtEpochMillis,
             )
@@ -252,15 +346,6 @@ class ChallengesViewModel @Inject constructor(
     fun consumeMessage() { _message.value = null }
 
     companion object {
-        /** What each challenge type is naturally measured in. */
-        fun defaultUnitFor(type: ChallengeType): String = when (type) {
-            ChallengeType.RUNNING -> "km"
-            ChallengeType.STEPS -> "steps"
-            ChallengeType.SLEEP -> "hours"
-            ChallengeType.WORKOUTS -> "workouts"
-            ChallengeType.CUSTOM -> "points"
-        }
-
         /** Trims the trailing `.0` so whole numbers do not read as measurements. */
         fun format(score: Double): String =
             if (score % 1.0 == 0.0) score.toLong().toString() else score.toString()
@@ -271,6 +356,11 @@ data class ChallengesUiState(
     val isLoading: Boolean = true,
     val mine: List<ChallengeCard> = emptyList(),
     val discoverable: List<DiscoverableChallenge> = emptyList(),
+    /**
+     * The user's own live goals — the pool a challenge is linked to. Not rendered
+     * as a list anywhere on this screen; it is what the goal picker filters.
+     */
+    val goals: List<Goal> = emptyList(),
     val error: String? = null,
 )
 
@@ -293,8 +383,21 @@ data class ChallengeCard(
     /** What the *participants* read knows about itself — the as-of caption (#50). */
     val standingsFreshness: Freshness get() = data.standingsFreshness
 
+    /** Whether the current user's score moves on its own (§6). */
+    val isLinked: Boolean get() = data.myScoreIsLinked
+
     /** Scoring an upcoming challenge, or one that is over, is not a thing. */
     val canReportScore: Boolean get() = phase == ChallengePhase.ACTIVE
+
+    /**
+     * Whether the *link a goal* action is offered.
+     *
+     * Gated on the challenge having a measure at all: a pre-§6 challenge whose
+     * `metricUnit` was the `"points"` default has no kind to match a goal
+     * against, and offering an empty picker would blame the user for a document
+     * the migration deliberately would not guess at.
+     */
+    val canLinkGoal: Boolean get() = canReportScore && !challenge.isUnmeasured
 }
 
 /** A challenge the user is not in yet. */
@@ -306,14 +409,18 @@ data class DiscoverableChallenge(
     val canJoin: Boolean get() = phase != ChallengePhase.ENDED
 }
 
-/** The create sheet. [unitTouched] stops the type-driven unit guess once the user types. */
+/**
+ * The create sheet. [wordTouched] stops the kind-driven word guess once the user
+ * types, the same rule the goal editor uses.
+ */
 data class ChallengeEditorState(
     val isVisible: Boolean = false,
     val title: String = "",
     val description: String = "",
-    val type: ChallengeType = ChallengeType.CUSTOM,
-    val metricUnit: String = "points",
-    val unitTouched: Boolean = false,
+    /** Null until picked — there is no sensible default kind, and §6 forbids `"points"`. */
+    val measureKind: MeasureKind? = null,
+    val measureWord: String = "",
+    val wordTouched: Boolean = false,
     val startAtEpochMillis: Long = 0L,
     val endAtEpochMillis: Long = 0L,
     val isSaving: Boolean = false,
@@ -325,8 +432,24 @@ data class ScoreEntryState(
     val isVisible: Boolean = false,
     val challengeId: String = "",
     val challengeTitle: String = "",
-    val metricUnit: String = "",
+    val metricWord: String = "",
+    /** Whether saving this will switch the challenge off its linked goal. */
+    val replacesLink: Boolean = false,
     val value: String = "",
+    val isSaving: Boolean = false,
+    val error: String? = null,
+)
+
+/** The "score this from a goal" picker for one challenge — §6's scoring path. */
+data class GoalLinkState(
+    val isVisible: Boolean = false,
+    val challengeId: String = "",
+    val challengeTitle: String = "",
+    val metricWord: String = "",
+    val kindLabel: String = "",
+    /** The goal already linked, so the picker can show which one is current. */
+    val linkedGoalId: String = "",
+    val eligible: List<Goal> = emptyList(),
     val isSaving: Boolean = false,
     val error: String? = null,
 )

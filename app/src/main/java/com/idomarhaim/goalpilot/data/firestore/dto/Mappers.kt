@@ -6,7 +6,7 @@ import com.idomarhaim.goalpilot.domain.model.Block
 import com.idomarhaim.goalpilot.domain.model.BlockPlacement
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Deadline
@@ -567,24 +567,77 @@ fun SharedItemDto.toDomain(): SharedItem = SharedItem(
 )
 
 // ── Challenge ──────────────────────────────────────────────────────
+/**
+ * The measure of a challenge, migrating a pre-§6 document on READ.
+ *
+ * Same shape and the same reasoning as `GoalDto.resolvedMeasure`: no backfill write, so
+ * nothing in `goalpilot-56e30` is rewritten to discover what a challenge already says.
+ *
+ * ### What it recovers
+ *
+ * The live fields win outright. Failing those, the legacy pair is read together: the
+ * **word** comes from `metricUnit`, which is user content and survives verbatim, and the
+ * **kind** from `ChallengeType`, which is the one thing that ever said what the number
+ * meant — `STEPS`/`WORKOUTS` are a `COUNT`, `RUNNING` a `DISTANCE`, `SLEEP` a `DURATION`.
+ *
+ * ### What it refuses to recover, and why that is the point
+ *
+ * `metricUnit` defaulted to **`"points"`**, and §6 rules that points may never be a
+ * challenge metric: points are a *view of effort* (`C3` §1) and ranking on them ranks by
+ * **time logged**, which is the wrong race for every challenge that is about an outcome.
+ * §6 therefore **deletes that default rather than re-homing it**, and a challenge carrying
+ * it comes back **unmeasured** — its owner is asked what it counts. Guessing `COUNT` +
+ * `"points"` here would silently keep the exact number #23 was filed about.
+ *
+ * `CUSTOM` is treated the same way for the same reason: it is the type that means *nobody
+ * said*, so it can name a kind only when a real word sits beside it — and even then only
+ * as `COUNT`, which is the kind §1.3 gives a bare tally.
+ */
+private fun ChallengeDto.resolvedMeasure(): Measure? {
+    val stored = Measure.of(MeasureKind.fromName(measureKind), measureWord)
+    if (stored != null || !measureWord.isNullOrBlank() || measureKind != null) return stored
+
+    val legacyWord = metricUnit?.trim().orEmpty()
+    // §6: `metricUnit = "points"`, the default that produced the ticket, is deleted rather
+    // than re-homed. Absent is the recoverable direction — the owner is asked.
+    if (legacyWord.isEmpty() || legacyWord.equals("points", ignoreCase = true)) return null
+
+    val kind = when (type?.uppercase()) {
+        "STEPS", "WORKOUTS" -> MeasureKind.COUNT
+        "RUNNING" -> MeasureKind.DISTANCE
+        "SLEEP" -> MeasureKind.DURATION
+        // CUSTOM, an unrecognised name, or no type at all: a bare tally in the user's own
+        // word. Never a match on that word — #11's brief forbids inventing a kind from a
+        // string, and the word may be in any language, abbreviated or misspelt.
+        else -> MeasureKind.COUNT
+    }
+    return Measure.of(kind, legacyWord)
+}
+
 fun ChallengeDto.toDomain(): Challenge = Challenge(
     id = id,
     title = title,
     description = description,
-    type = ChallengeType.fromName(type),
-    metricUnit = metricUnit.ifBlank { "points" },
+    measure = resolvedMeasure(),
     ownerUid = ownerUid,
     startAtEpochMillis = startAt,
     endAtEpochMillis = endAt,
     createdAtEpochMillis = createdAt,
 )
 
+/**
+ * The live shape only. `type` and `metricUnit` are written as **null**, so a challenge that
+ * is touched at all sheds its legacy pair — leaving them populated is precisely the map's
+ * most-repeated finding, *a second number that quietly disagrees* (§0.3).
+ */
 fun Challenge.toDto(): ChallengeDto = ChallengeDto(
     id = id,
     title = title,
     description = description,
-    type = type.name,
-    metricUnit = metricUnit,
+    measureKind = measure?.kind?.name,
+    measureWord = measure?.word,
+    type = null,
+    metricUnit = null,
     ownerUid = ownerUid,
     startAt = startAtEpochMillis,
     endAt = endAtEpochMillis,
@@ -597,6 +650,10 @@ fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticip
     photoUrl = photoUrl,
     score = score,
     joinedAtEpochMillis = joinedAt,
+    // An absent field reads as NONE, which is the honest state of every row written before
+    // §6: nobody has said where its number came from, so nothing claims anything.
+    source = ScoreSource.fromName(scoreSource),
+    reportedAtEpochMillis = reportedAt,
 )
 
 // `PublicProfileDto.resolvedLevel()` used to live here. `C20` (#42, spec §5.2) deleted

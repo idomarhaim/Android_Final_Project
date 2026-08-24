@@ -10,13 +10,16 @@ import com.google.common.truth.Truth.assertThat
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
 import com.idomarhaim.goalpilot.feature.challenges.ChallengeCard
 import com.idomarhaim.goalpilot.feature.challenges.DiscoverChallengeCard
 import com.idomarhaim.goalpilot.feature.challenges.DiscoverableChallenge
 import com.idomarhaim.goalpilot.feature.challenges.MyChallengeCard
+import com.idomarhaim.goalpilot.feature.challenges.ReportedBadge
 import com.idomarhaim.goalpilot.feature.challenges.ScoreEntryDialog
 import com.idomarhaim.goalpilot.feature.challenges.ScoreEntryState
 import com.idomarhaim.goalpilot.ui.theme.GoalPilotTheme
@@ -39,14 +42,13 @@ class ChallengesUiTest {
 
     private fun challenge(
         title: String = "Most km this week",
-        metricUnit: String = "km",
+        measure: Measure? = Measure(MeasureKind.DISTANCE, "km"),
         description: String = "",
     ) = Challenge(
         id = "c1",
         title = title,
         description = description,
-        type = ChallengeType.RUNNING,
-        metricUnit = metricUnit,
+        measure = measure,
         ownerUid = "me",
     )
 
@@ -54,12 +56,14 @@ class ChallengesUiTest {
         phase: ChallengePhase,
         standings: List<ChallengeParticipant> = emptyList(),
         isOwner: Boolean = true,
+        linkedGoalId: String = "",
     ) = ChallengeCard(
         data = ChallengeWithStandings(
             challenge = challenge(),
             standings = standings.rankedByScore(currentUid = "me"),
             isOwner = isOwner,
             hasJoined = true,
+            myLinkedGoalId = linkedGoalId,
         ),
         phase = phase,
     )
@@ -129,6 +133,7 @@ class ChallengesUiTest {
                     card = card(ChallengePhase.UPCOMING),
                     onOpenStandings = {},
                     onReportScore = {},
+                    onLinkGoal = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -146,6 +151,7 @@ class ChallengesUiTest {
                     card = card(ChallengePhase.ENDED),
                     onOpenStandings = {},
                     onReportScore = {},
+                    onLinkGoal = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -170,6 +176,7 @@ class ChallengesUiTest {
                     ),
                     onOpenStandings = {},
                     onReportScore = {},
+                    onLinkGoal = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -190,6 +197,7 @@ class ChallengesUiTest {
                     card = card(ChallengePhase.ACTIVE),
                     onOpenStandings = { opened++ },
                     onReportScore = {},
+                    onLinkGoal = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -211,7 +219,7 @@ class ChallengesUiTest {
                     state = ScoreEntryState(
                         isVisible = true,
                         challengeTitle = "Most km this week",
-                        metricUnit = "km",
+                        metricWord = "km",
                         value = "12.5",
                     ),
                     onValue = {},
@@ -236,7 +244,7 @@ class ChallengesUiTest {
                     state = ScoreEntryState(
                         isVisible = true,
                         challengeTitle = "Most km this week",
-                        metricUnit = "km",
+                        metricWord = "km",
                         value = "lots",
                         error = "Enter a number",
                     ),
@@ -249,5 +257,98 @@ class ChallengesUiTest {
 
         composeRule.onNodeWithText("Enter a number").assertIsDisplayed()
         composeRule.onNodeWithText("lots").assertIsDisplayed()
+    }
+
+    // ── §6: the card says how this challenge is scored ───────────────
+
+    @Test
+    fun myCard_offersScoringFromAGoalAndSaysItIsNotLinkedYet() {
+        composeRule.setContent {
+            GoalPilotTheme {
+                MyChallengeCard(
+                    card = card(ChallengePhase.ACTIVE),
+                    onOpenStandings = {},
+                    onReportScore = {},
+                    onLinkGoal = {},
+                    onLeave = {},
+                    onDelete = {},
+                )
+            }
+        }
+
+        // §6's path is the primary action; typing stays available for somebody with no
+        // goal of the right kind yet.
+        composeRule.onNodeWithText("Score from a goal").assertIsDisplayed()
+        composeRule.onNodeWithText("Type a score").assertIsDisplayed()
+        composeRule.onNodeWithText("Not linked yet — you are typing this score.")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun myCard_saysWhenTheChallengeIsScoringItself() {
+        composeRule.setContent {
+            GoalPilotTheme {
+                MyChallengeCard(
+                    card = card(ChallengePhase.ACTIVE, linkedGoalId = "g1"),
+                    onOpenStandings = {},
+                    onReportScore = {},
+                    onLinkGoal = {},
+                    onLeave = {},
+                    onDelete = {},
+                )
+            }
+        }
+
+        // A linked challenge moves silently by design, so the one place it has to be
+        // legible is the card of the person whose score it is.
+        composeRule.onNodeWithText("Scoring itself from your linked goal.").assertIsDisplayed()
+        composeRule.onNodeWithText("Change goal").assertIsDisplayed()
+    }
+
+    // ── §6 / Ido's third ask: a typed score says so, a derived one does not ──
+
+    @Test
+    fun standingsRow_saysWhoTypedTheScoreAndWhat() {
+        composeRule.setContent {
+            GoalPilotTheme {
+                ReportedBadge(
+                    standing = ChallengeParticipant(
+                        uid = "other",
+                        displayName = "Ann",
+                        score = 8200.0,
+                        source = ScoreSource.REPORTED,
+                        reportedAtEpochMillis = 1_756_000_000_000L,
+                    ).let { listOf(it).rankedByScore(currentUid = "me").single() },
+                    metricWord = "steps",
+                )
+            }
+        }
+
+        // Factual and unarguable -- WHO, WHAT, WHEN -- and nothing that reads as an
+        // accusation. `C4`'s register: the app never asserts an intrinsic edge by itself.
+        composeRule.onNodeWithText("Reported by Ann", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("8200 steps", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun standingsRow_saysNothingAtAllWhenTheScoreCameFromAGoal() {
+        composeRule.setContent {
+            GoalPilotTheme {
+                ReportedBadge(
+                    standing = ChallengeParticipant(
+                        uid = "other",
+                        displayName = "Ann",
+                        score = 8200.0,
+                        source = ScoreSource.DERIVED,
+                    ).let { listOf(it).rankedByScore(currentUid = "me").single() },
+                    metricWord = "steps",
+                )
+            }
+        }
+
+        // THE ABSENCE OF A BADGE IS THE HONEST DEFAULT. A challenge is meant to score
+        // itself, so a derived row is the ordinary case; a badge on every row would be
+        // noise, and only the exception speaks.
+        composeRule.onNodeWithText("Reported by", substring = true).assertDoesNotExist()
     }
 }

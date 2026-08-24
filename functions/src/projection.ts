@@ -49,8 +49,12 @@ import * as logger from "firebase-functions/logger";
 import {
   CompletionFact,
   LegacyTaskFact,
+  ProgressFact,
+  ReportFact,
+  linkedGoalId,
   pointsFromFacts,
-  scoreFromReport,
+  scoringWindow,
+  standingFromFact,
 } from "./derived";
 
 /** Mirrors `core/util/FirestorePaths` on the client — one name, two languages. */
@@ -62,6 +66,9 @@ const PUBLIC_PROFILES = "publicProfiles";
 const CHALLENGES = "challenges";
 const PARTICIPANTS = "participants";
 const CHALLENGE_REPORTS = "challengeReports";
+/** `FirestorePaths.GOALS` / `.PROGRESS` -- where a goal's timestamped entries live (#49). */
+const GOALS = "goals";
+const PROGRESS = "progress";
 /** `FirestoreExt.UPDATED_AT` — the server-set as-of stamp both cross-boundary rows carry. */
 const UPDATED_AT = "updatedAt";
 
@@ -150,44 +157,169 @@ export const projectPointsOnTaskWrite = onDocumentWritten(
 );
 
 /**
- * **Trigger 2 — a report fact moved.**
+ * Re-project one participant's standing. Shared by both challenge triggers.
  *
- * The participant's own measurement lives at `users/{uid}/challengeReports/{challengeId}`,
- * which they own and can write offline like any other fact. This projects it onto the
- * public standing, which they no longer may write themselves — `firestore.rules` now pins
- * `score` on the participant row, and that is the first field-level condition in the file.
+ * ### Why this reads four documents and stores no baseline
+ *
+ * §6's score is **movement in the linked goal since you joined**, not the goal's current
+ * value — without which a weight-loss race would rank by *who is heaviest*. That could have
+ * been a stored delta with a baseline captured at join time; §6 chose a **sum over
+ * timestamped entries** instead, and the reason is that all four of the awkward cases stop
+ * being cases at all: re-linking a different goal re-sums a different list, unlinking sums
+ * nothing, a backfilled entry lands inside or outside the window on its own timestamp, and
+ * `ProgressEntry.sourceKey` already stopped a Health Connect re-sync writing a second entry
+ * for the same day. A baseline would have had to be repaired in every one of them.
+ *
+ * So: the **fact** says which goal (or which typed number), the **participant row** says
+ * when they joined, the **challenge** says when it runs, and the **progress collection** is
+ * the movement. The arithmetic itself is in `derived.ts` with no Firebase imports, so
+ * `test/projection.test.mjs` runs it with no emulator.
+ *
+ * ### Reading the whole entry set is the design, not a cost oversight
+ *
+ * Same property as points, for the same reason: no prior score is an input, so a redelivered
+ * event, a retried invocation and a manual re-run all write the same number. §5.2 rejected
+ * `FieldValue.increment` on exactly this ground.
+ */
+async function republishStanding(
+  uid: string,
+  challengeId: string,
+  trigger: string,
+): Promise<void> {
+  const db = getFirestore();
+  const factRef = db
+    .collection(USERS)
+    .doc(uid)
+    .collection(CHALLENGE_REPORTS)
+    .doc(challengeId);
+  const rowRef = db
+    .collection(CHALLENGES)
+    .doc(challengeId)
+    .collection(PARTICIPANTS)
+    .doc(uid);
+
+  const [factSnap, challengeSnap, rowSnap] = await Promise.all([
+    factRef.get(),
+    db.collection(CHALLENGES).doc(challengeId).get(),
+    rowRef.get(),
+  ]);
+
+  const report = (factSnap.exists ? factSnap.data() : null) as ReportFact | null;
+  const goalId = linkedGoalId(report);
+
+  let progress: ProgressFact[] = [];
+  if (goalId !== null) {
+    // The whole collection, filtered in `derived.ts` rather than by a `where` clause. It is
+    // one user's entries for one goal, the arithmetic has to be testable without an
+    // emulator, and a range query here would need a composite index for a bound that costs
+    // nothing to apply in memory.
+    const entries = await db
+      .collection(USERS)
+      .doc(uid)
+      .collection(GOALS)
+      .doc(goalId)
+      .collection(PROGRESS)
+      .get();
+    progress = entries.docs.map((d) => d.data() as ProgressFact);
+  }
+
+  const window = scoringWindow(
+    challengeSnap.exists ? (challengeSnap.data() as { startAt?: number; endAt?: number }) : null,
+    rowSnap.exists ? (rowSnap.data() as { joinedAt?: number }).joinedAt : null,
+  );
+  const standing = standingFromFact(report, progress, window, report?.reportedAt as number);
+
+  // `null` means *write nothing* — see `standingFromFact`. Removing the fact must not zero a
+  // standing other people are reading.
+  if (standing === null) {
+    logger.info("projectChallengeScore: no report, row left alone", {
+      uid,
+      challengeId,
+      trigger,
+    });
+    return;
+  }
+
+  try {
+    await rowRef.update({
+      score: standing.score,
+      // Written by the server and pinned by `firestore.rules`, because a participant who
+      // could write their own label could type a number and mark it DERIVED — the label
+      // would then assert the one thing it exists to deny (Ido's third ask on #23).
+      scoreSource: standing.scoreSource,
+      reportedAt: standing.reportedAt,
+      [UPDATED_AT]: FieldValue.serverTimestamp(),
+    });
+    logger.info("projectChallengeScore", {
+      uid,
+      challengeId,
+      trigger,
+      score: standing.score,
+      scoreSource: standing.scoreSource,
+      entryCount: progress.length,
+    });
+  } catch (e) {
+    // NOT_FOUND is the ordinary case, not a failure: reporting into a challenge you never
+    // joined, or one you have since left. `update()` is what makes it a no-op instead of a
+    // resurrected participant row with no mirror edge.
+    logger.info("projectChallengeScore: no participant row, nothing written", {
+      uid,
+      challengeId,
+      reason: String(e),
+    });
+  }
+}
+
+/**
+ * **Trigger 2a — a participant's own fact moved.**
+ *
+ * The participant's fact lives at `users/{uid}/challengeReports/{challengeId}`, which they
+ * own and can write offline like any other fact. Since §6 it carries one of **two** shapes,
+ * never both — a `goalId` link, or a typed `value` — and this fires for either.
  */
 export const projectChallengeScore = onDocumentWritten(
   USERS + "/{uid}/" + CHALLENGE_REPORTS + "/{challengeId}",
+  async (event) =>
+    republishStanding(event.params.uid, event.params.challengeId, CHALLENGE_REPORTS),
+);
+
+/**
+ * **Trigger 2b — progress was logged against a goal, so every challenge linked to it moves.**
+ *
+ * This is the trigger that makes `R1` go away: *"a shared challenge does not sync with my
+ * tasks or with my Health Connect."* It never mentions Health Connect, and that is the whole
+ * point — `SyncHealthDataUseCase` writes a `ProgressEntry` against a **goal**, a completed
+ * task writes one, a manual log writes one, and all three arrive here identically. Building a
+ * Health-Connect-to-challenge path instead would be the second representation of the same
+ * walk that §6 exists to delete.
+ *
+ * ### The fan-out is over the user's own facts, and is bounded by their challenges
+ *
+ * One `where(goalId ==)` over `users/{uid}/challengeReports` — a handful of documents for a
+ * real user, and a collection they own, so no cross-boundary read is involved. A user in no
+ * challenge, or one whose challenges point at other goals, does one empty query per logged
+ * entry and writes nothing.
+ *
+ * ### It does not try to work out whether the entry was relevant
+ *
+ * A delete, an edit and a create all re-sum the same set to the same number, so there is
+ * nothing to be careful about — the property projecting from whole fact sets buys. An entry
+ * that falls outside the scoring window is filtered by the arithmetic, not by this trigger,
+ * so a backfilled entry with an old timestamp correctly changes nothing.
+ */
+export const projectChallengeScoreOnProgress = onDocumentWritten(
+  USERS + "/{uid}/" + GOALS + "/{goalId}/" + PROGRESS + "/{entryId}",
   async (event) => {
-    const { uid, challengeId } = event.params;
-    const score = scoreFromReport(event.data?.after?.data());
-
-    // `null` means *write nothing* — see `scoreFromReport`. Removing the fact must not
-    // zero a standing other people are reading.
-    if (score === null) {
-      logger.info("projectChallengeScore: no report, row left alone", { uid, challengeId });
-      return;
-    }
-
-    const ref = getFirestore()
-      .collection(CHALLENGES)
-      .doc(challengeId)
-      .collection(PARTICIPANTS)
-      .doc(uid);
-
-    try {
-      await ref.update({ score, [UPDATED_AT]: FieldValue.serverTimestamp() });
-      logger.info("projectChallengeScore", { uid, challengeId, score });
-    } catch (e) {
-      // NOT_FOUND is the ordinary case, not a failure: reporting into a challenge you
-      // never joined, or one you have since left. `update()` is what makes it a no-op
-      // instead of a resurrected participant row with no mirror edge.
-      logger.info("projectChallengeScore: no participant row, nothing written", {
-        uid,
-        challengeId,
-        reason: String(e),
-      });
-    }
+    const { uid, goalId } = event.params;
+    const linked = await getFirestore()
+      .collection(USERS)
+      .doc(uid)
+      .collection(CHALLENGE_REPORTS)
+      .where("goalId", "==", goalId)
+      .get();
+    if (linked.empty) return;
+    await Promise.all(
+      linked.docs.map((d) => republishStanding(uid, d.id, PROGRESS)),
+    );
   },
 );

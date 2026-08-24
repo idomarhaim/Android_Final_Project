@@ -472,12 +472,35 @@ data class SharedItemDto(
     var createdAt: Long = 0L,
 )
 
+/**
+ * `challenges/{challengeId}` — spec §6 (`C14` #23).
+ *
+ * **Four fields, two eras.** [measureKind] + [measureWord] are the live shape; [type] and
+ * [metricUnit] are the pre-§6 one and are read-only here — nothing writes them any more.
+ * See [resolvedMeasure] for what the migration recovers and what it deliberately refuses to.
+ */
 data class ChallengeDto(
     @DocumentId var id: String = "",
     var title: String = "",
     var description: String = "",
-    var type: String = "CUSTOM",
-    var metricUnit: String = "points",
+    /**
+     * The measure's closed kind — a `MeasureKind` name, or null on a pre-§6 document.
+     * App logic, translated at the point of display (§1.3).
+     */
+    var measureKind: String? = null,
+    /** The user's own word for the unit — user content, never translated (§5.1 `C15b`). */
+    var measureWord: String? = null,
+    /**
+     * **Legacy, read-only.** `ChallengeType` was purely presentational and §6 deleted it;
+     * this field survives on documents written before that, and is the only thing that can
+     * still say a 2026-08 "August Steps Race" counted *steps* rather than *kilometres*.
+     */
+    var type: String? = null,
+    /**
+     * **Legacy, read-only.** Free text with `Goal.unit`'s exact disease (`A3`), defaulted to
+     * `"points"` — which is the default that produced #23 in the first place.
+     */
+    var metricUnit: String? = null,
     var ownerUid: String = "",
     var startAt: Long = 0L,
     var endAt: Long = 0L,
@@ -495,6 +518,18 @@ data class ChallengeParticipantDto(
     var photoUrl: String? = null,
     var score: Double = 0.0,
     var joinedAt: Long = 0L,
+    /**
+     * Where [score] came from — a `ScoreSource` name. **Server-written**, like [score]
+     * itself: `firestore.rules` pins it against every client write, because a participant
+     * who could set their own label could write `DERIVED` over a number they typed, and the
+     * label would then say the one thing it exists to deny.
+     */
+    var scoreSource: String? = null,
+    /**
+     * When the typed number behind [score] was reported, or `0`. **Server-written**, and
+     * zero for a derived score — see `ChallengeParticipant.reportedAtEpochMillis`.
+     */
+    var reportedAt: Long = 0L,
     /**
      * When the owner last wrote this row — the *as-of* stamp (#50, spec §5.3 §3).
      *

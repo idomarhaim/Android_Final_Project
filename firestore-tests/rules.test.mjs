@@ -234,6 +234,72 @@ test('C20: the projection reads a report fact the standings reader cannot see', 
   )
 })
 
+// -- spec 6 (`C14` #23): the PROVENANCE of the score is the server's too --------------
+//
+// Ido, 2026-08-24: "If someone updated manually and it was not updated through HEALTH
+// CONNECT, then it should say there who performed the update and what they updated."
+//
+// So a participant row now carries `scoreSource` and `reportedAt` beside `score`. Both are
+// pinned here for a reason `score` alone does not cover: a participant who could write
+// their own label could TYPE a number and mark it DERIVED, and the label would then assert
+// exactly the thing it exists to deny.
+
+test('spec6: a participant cannot label their own score DERIVED', async () => {
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await assertFails(updateDoc(ref, { scoreSource: 'DERIVED' }))
+})
+
+test('spec6: nor move the date their score was reported', async () => {
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await assertFails(updateDoc(ref, { reportedAt: 1 }))
+})
+
+test('spec6: a participant may still edit the identity fields beside them', async () => {
+  // The pin is field-level, not row-level. Renaming yourself is yours; the three server
+  // fields are not, and this is what proves the block did not simply close the row.
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await assertSucceeds(updateDoc(ref, { displayName: 'Joiner Renamed' }))
+})
+
+test('spec6: a whole-document set that drops the provenance is refused', async () => {
+  // The same trap `score` already has, one field over: this write does not CHANGE
+  // `scoreSource`, it REMOVES it -- and `affectedKeys()` catches a removal where an
+  // equality comparison would not.
+  const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
+  await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE, 'participants', JOINER),
+      { displayName: 'Joiner', score: 8200, scoreSource: 'REPORTED', reportedAt: 7 },
+    )
+  })
+  await assertFails(setDoc(ref, { displayName: 'Joiner', score: 8200 }))
+})
+
+test('spec6: the goal link is a fact the reporter owns, and nobody else can read it', async () => {
+  // The second shape of the same fact document -- a LINK instead of a typed number. It
+  // sits under users/{uid}/**, so the goal a competitor is scoring from stays private:
+  // publishing it would put a goal's identity on a world-readable row for a badge that
+  // only ever needed to say *derived*.
+  await assertSucceeds(
+    setDoc(doc(asUser(JOINER), 'users', JOINER, 'challengeReports', CHALLENGE), {
+      goalId: 'g1',
+      linkedAt: 1,
+    }),
+  )
+  await assertFails(
+    getDoc(doc(asUser(OWNER), 'users', JOINER, 'challengeReports', CHALLENGE)),
+  )
+  await assertFails(
+    setDoc(doc(asUser(OWNER), 'users', JOINER, 'challengeReports', CHALLENGE), {
+      goalId: 'someone-elses-goal',
+    }),
+  )
+})
+
 test('a participant can leave by deleting their own row', async () => {
   const ref = doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER)
   await assertSucceeds(setDoc(ref, { displayName: 'Joiner', score: 0 }))

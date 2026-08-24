@@ -23,7 +23,37 @@ before your first write. Normative rule:
 > after it.** I am blocked until `challenge-scoring` releases anyway, so there is time; if your film is meant to
 > ship against the new look, say so on this board and I will hold, and if it is meant to ship now, land it before
 > I start. Ido has not been asked to adjudicate this — it is flagged, not decided.
-| `challenge-scoring` | Build `C14`/[`#23`](https://github.com/idomarhaim/Android_Final_Project/issues/23)'s decision -- spec §6: a challenge carries a **measure** (`kind`+`word`) instead of free-text `metricUnit`, joining **links or creates a goal** of that kind, and the score becomes **movement in that goal since you joined**, summed server-side from `ProgressEntry`. Plus Ido's own third ask (2026-08-24): a **typed** score is labelled as one, with **who** and **what**, on the standings row. Deferred to their own briefs and named in the changelog: the Health-Connect join gate, and the `pendingMeasure`/`approvedChangeId` every-participant approval flow | `app/src/main/java/com/idomarhaim/goalpilot/domain/model/Challenge.kt`, `.../domain/repository/ChallengeRepository.kt`, `.../data/firestore/ChallengeRepositoryImpl.kt`, `.../data/firestore/dto/ChallengeDto*`, `.../feature/challenges/**`, `functions/src/derived.ts`, `functions/src/projection.ts`, `functions/src/index.ts`, `functions/test/**`, `shared-fixtures/**`, `firestore.rules`, `firestore-tests/**`, `app/src/test/java/com/idomarhaim/goalpilot/{domain,feature/challenges}/Challenge*`, `docs/PRODUCT_v0.3.md` (§6 status only, if it needs a note), `sessions/challenge-scoring.md`, `CHANGELOG/2026-08-24/challenge-scoring.md`, `kb-candidates/2026-08-24-challenge-scoring.md` | **Gradle daemon NEEDED** (JVM suite) · **`node` for `functions/test`** · **a device WANTED but not yet claimed** for the standings render pass -- `Pixel_10_Pro_XL_B` was released by `s25-verify-on-real-phone` and left running; `emulator-5554` is held by `62-tour-assembly` and is **not** the one I will use | 2026-08-24 |
+> 🏁 **`challenge-scoring` RELEASED 2026-08-24 — this commit.** `C14`/[`#23`](https://github.com/idomarhaim/Android_Final_Project/issues/23)
+> is built: a challenge carries a **measure** (`kind` + `word`) instead of free-text
+> `metricUnit`, `ChallengeType` is **deleted**, joining **links a goal**, and the score is
+> **movement in that goal since you joined**, summed server-side by a new trigger on
+> `users/{uid}/goals/{goalId}/progress/{entryId}`. Plus Ido's own third ask: a **typed** score
+> is labelled `REPORTED` with who / what / when on the standings row, on a field
+> `firestore.rules` pins against the client. Green at four layers — JVM **1125/1125**,
+> functions arithmetic **105/105**, **real triggers 17/17**, rules **55/55**.
+>
+> ⏳ **TWO LAYERS ARE OWED, NOT SKIPPED — the instrumented suite and the device render pass.**
+> They are `sessions/challenge-scoring-render-pass.md`; the reason is the note to
+> `62-tour-assembly` below. Also owed and briefed: `sessions/challenge-measure-approval.md`
+> (§6's every-participant approval) and `sessions/challenge-health-gate.md` (the Health
+> Connect join gate, plus §6's *joining **creates** a goal*, which is half built).
+>
+> ⚠️ **If you are about to run `npm run test:emulator` in `functions/`, read
+> `run-emulator-tests.mjs`'s header first.** The analyzer's 10 s discovery budget is not
+> enough on this machine: it prints ONE warning line, registers NO functions, and then
+> **15 of 17 trigger tests fail** for a reason that looks exactly like your change. Fixed
+> here — the runner now sets `FUNCTIONS_DISCOVERY_TIMEOUT=120` and says so — but the same
+> trap bites `firebase deploy --only functions`, which `CLAUDE.md` already records.
+>
+> 📣 **`62-tour-assembly`: is `emulator-5554` still yours?** Your row claims it with `adb`,
+> and it also says you still owe *Step 0 — reverting the demo data seeded on Ido's live
+> account 2026-08-24 11:07*. Meanwhile `s25-verify-on-real-phone` released
+> `Pixel_10_Pro_XL_B` at 19:57 and its own 🚨 line establishes that **`emulator-5554` IS
+> `Pixel_10_Pro_XL_B`** — so the board now carries two statements about one serial that
+> disagree. I read that as *unresolved counts as live*, left the device alone, and reported
+> my two device layers `unverified` rather than take it. Your last commit is `0737a18`
+> (16:56) and your last transcript turn 08:44. **If you are done with it, please release the
+> serial on your row** and `sessions/challenge-scoring-render-pass.md` can run.
 > 🏁 **`s25-verify-on-real-phone` RELEASED 2026-08-24 — this commit.** Ido's Galaxy S25 Ultra was
 > reachable over wireless debugging for the first time; all four v0.4.0 fixes verified on the real
 > device at its real settings (**384 dp / 450 dpi / font 1.15** — not the 360 dp/1.0 the earlier

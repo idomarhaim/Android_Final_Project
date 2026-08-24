@@ -11,8 +11,15 @@ service cloud.firestore {
     }
 
     /**
-     * True when this write does not touch `field` — the file's first field-level
+     * True when this write touches NONE of `fields` — the file's first field-level
      * condition (`C20` #42, spec 5.2).
+     *
+     * It takes a LIST rather than one name because §6 (`C14` #23) added two fields that
+     * are owned by the same writer for the same reason as the first: `scoreSource` and
+     * `reportedAt` on a participant row. A participant who could write their own
+     * `scoreSource` could type a number and label it `DERIVED`, which is precisely the
+     * claim the label exists to deny — so pinning `score` alone would have left the
+     * provenance self-asserted in the one direction that matters.
      *
      * `diff().affectedKeys()` is the whole reason this is expressible: it reports the
      * keys that actually change between the stored document and the one this write
@@ -30,9 +37,9 @@ service cloud.firestore {
      * emulator log is indistinguishable from a rule that is actually broken, and this
      * file is where the next person will come looking.
      */
-    function serverOwns(field) {
+    function serverOwns(fields) {
       return resource != null
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([field]);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
 
     // ── Private per-user data: goals, tasks, progress, friends ──────
@@ -71,7 +78,7 @@ service cloud.firestore {
       // the one clause it costs to be certain.
       allow create: if isOwner(uid)
         && (request.resource.data.points == 0 || request.resource.data.points == 0.0);
-      allow update: if isOwner(uid) && serverOwns('points');
+      allow update: if isOwner(uid) && serverOwns(['points']);
       allow delete: if isOwner(uid);
     }
 
@@ -85,8 +92,17 @@ service cloud.firestore {
     }
 
     // ── Challenges (nice-to-have) ──────────────────────────────────
-    // The challenge document itself is owner-only: title, dates and type are
-    // the owner's to set. Joining is NOT an edit to it — see participants.
+    // The challenge document itself is owner-only: title, dates and the MEASURE are
+    // the owner's to set. Joining is NOT an edit to it -- see participants.
+    //
+    // The measure is one document's worth of `measureKind` + `measureWord` (spec 6,
+    // `C7` #14) and it replaced the free-text `metricUnit` whose "points" default is
+    // what produced #23. Changing it after a challenge has started needs every
+    // participant's approval -- owner writes `pendingMeasure`, each participant writes
+    // `approvedChangeId` in the one document they may write, the function applies it
+    // when every row agrees. THAT IS NOT BUILT YET and nothing here permits it: an
+    // owner may still edit `measureKind` outright. Named as owed in
+    // `sessions/challenge-measure-approval.md`.
     match /challenges/{challengeId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
@@ -103,9 +119,10 @@ service cloud.firestore {
       // is the one place this ruling genuinely makes the rules harder:
       //
       //   * the participant   -- creates the row, deletes it to leave, and edits the
-      //                          identity fields on it. NOT `score`.
-      //   * the projection    -- owns `score` and `updatedAt`, and reaches them
-      //     function             through the Admin SDK, which bypasses these rules.
+      //                          identity fields on it. NOT the three server fields.
+      //   * the projection    -- owns `score`, `scoreSource`, `reportedAt` and
+      //     function             `updatedAt`, and reaches them through the Admin SDK,
+      //                          which bypasses these rules.
       //   * the challenge     -- reads only. There is still no "kick a participant";
       //     owner                see the test below for why granting it is expensive.
       //
@@ -114,6 +131,21 @@ service cloud.firestore {
       // at `users/{uid}/challengeReports/{challengeId}` that it is projected from.
       // That is 5.2's test, and it is why this field survived when five of the map's
       // seven derived quantities needed no stored writer at all.
+      //
+      // SPEC 6 (`C14` #23) ADDED THE OTHER TWO, AND THEY ARE NOT DECORATION.
+      // `scoreSource` says whether the number was summed from the participant's linked
+      // goal or TYPED BY THEM, and `reportedAt` says when it was typed. Ido asked for
+      // that on 2026-08-24: on a shared leaderboard a reading and a typed number are not
+      // the same claim, and until now they were pixel identical. A participant who could
+      // write their own `scoreSource` could type a number and mark it derived -- the
+      // label would then assert the one thing it exists to deny -- so it is pinned here
+      // beside `score` rather than trusted to the client that benefits from it.
+      //
+      // What it still is NOT: evidence about the walk. A participant writes their own
+      // fact, so `DERIVED` means "this person pointed the challenge at a goal of
+      // theirs". Spec 6's own honest residual is that server-owned scoring stops a win
+      // being TYPED, not a reading being FORGED. The badge is a label, never an
+      // attestation -- `ChallengeParticipant`'s KDoc says so in the same words.
       match /participants/{uid} {
         allow read: if isSignedIn();
 
@@ -121,7 +153,8 @@ service cloud.firestore {
         // spellings of zero are accepted.
         allow create: if isOwner(uid)
           && (request.resource.data.score == 0 || request.resource.data.score == 0.0);
-        allow update: if isOwner(uid) && serverOwns('score');
+        allow update: if isOwner(uid)
+          && serverOwns(['score', 'scoreSource', 'reportedAt']);
         allow delete: if isOwner(uid);
       }
     }

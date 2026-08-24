@@ -30,6 +30,8 @@ import { CATEGORIES } from "../lib/classify.js";
 
 const UID = "uid_runner";
 const CHALLENGE = "challenge_run_streak";
+/** The goal a challenge is scored from (§6). One user, one goal, one progress collection. */
+const GOAL = "goal_steps";
 const DEADLINE_MS = 15_000;
 
 let app;
@@ -58,12 +60,16 @@ beforeEach(async () => {
     `users/${UID}/tasks`,
     `users/${UID}/challengeReports`,
     `challenges/${CHALLENGE}/participants`,
+    // §6 sums the WHOLE progress collection over a window, so a leftover entry from the
+    // previous case is counted exactly as a leftover task fact would be.
+    `users/${UID}/goals/${GOAL}/progress`,
   ]) {
     const snap = await db.collection(path).get();
     await Promise.all(snap.docs.map((d) => d.ref.delete()));
   }
   await db.doc(`users/${UID}`).delete();
   await db.doc(`publicProfiles/${UID}`).delete();
+  await db.doc(`challenges/${CHALLENGE}`).delete();
 });
 
 /** Waits for `read()` to satisfy `ok`, and reports the last value seen when it never does. */
@@ -146,6 +152,10 @@ test("a report fact projects onto the participant row the reporter may not write
   const row = await eventually("participant score", standing, (v) => v?.score === 12.5);
   assert.ok(row.updatedAt, "the as-of stamp rides this write too");
   assert.equal(row.displayName, "Ido", "update() leaves the identity fields alone");
+  // §6 / Ido's third ask: a typed number is LABELLED as one, by the server, on a field the
+  // participant may not write.
+  assert.equal(row.scoreSource, "REPORTED");
+  assert.equal(row.reportedAt, 1, "and it says when — that is the 'what they updated' half");
 });
 
 test("a negative report is clamped to zero rather than stored", async () => {
@@ -176,6 +186,129 @@ test("deleting the report leaves the last standing alone", async () => {
   await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).delete();
   await new Promise((r) => setTimeout(r, 3000));
   assert.equal((await standing()).score, 7, "the last reported number stands");
+});
+
+// ── projectChallengeScoreOnProgress — §6 (`C14` #23) ─────────────────
+//
+// THIS IS THE TRIGGER THAT MAKES `R1` GO AWAY: *"a shared CHALLENGE does not sync with my tasks
+// or with my Health Connect."* Nothing below mentions Health Connect, and that is the point —
+// `SyncHealthDataUseCase` writes a `ProgressEntry` against a GOAL, a completed task writes one,
+// a manual log writes one, and all three arrive at this trigger identically. A
+// Health-Connect-to-challenge path would be the second representation of the same walk that §6
+// exists to delete.
+//
+// `projection.test.mjs` proves the arithmetic. Only this file can prove the path pattern
+// matches a THREE-segment subcollection, that the `where(goalId ==)` fan-out finds the fact, and
+// that the write lands on a row the writer may not touch.
+
+/** Links this user's challenge to [GOAL] and gives them a participant row joined at `joinedAt`. */
+async function joinAndLink(joinedAt, { startAt = 0, endAt = 0 } = {}) {
+  await db.doc(`challenges/${CHALLENGE}`).set({ title: "Steps", startAt, endAt });
+  await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).set({
+    displayName: "Ido",
+    score: 0,
+    joinedAt,
+  });
+  await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).set({
+    goalId: GOAL,
+    linkedAt: joinedAt,
+  });
+}
+
+const logProgress = (id, value, createdAt) =>
+  db.doc(`users/${UID}/goals/${GOAL}/progress/${id}`).set({ goalId: GOAL, value, createdAt });
+
+test("logging progress against a linked goal moves the challenge on its own", async () => {
+  await joinAndLink(1_000);
+  await eventually("linked at zero", standing, (v) => v?.scoreSource === "DERIVED");
+
+  await logProgress("p1", 4_000, 1_500);
+
+  const row = await eventually("derived score", standing, (v) => v?.score === 4_000);
+  assert.equal(row.scoreSource, "DERIVED");
+  assert.equal(row.reportedAt, 0, "nothing was typed, so the badge has no date to show");
+  assert.equal(row.displayName, "Ido", "update() leaves the identity fields alone");
+});
+
+test("a second entry adds to it, and a deleted one comes back off", async () => {
+  // Re-summing the whole collection, not accumulating — so a delete is handled by the same
+  // code path as an insert and needs no compensating write of its own.
+  await joinAndLink(1_000);
+  await logProgress("p1", 4_000, 1_500);
+  await logProgress("p2", 1_200, 1_600);
+  await eventually("summed", standing, (v) => v?.score === 5_200);
+
+  await db.doc(`users/${UID}/goals/${GOAL}/progress/p2`).delete();
+  await eventually("and back down", standing, (v) => v?.score === 4_000);
+});
+
+test("joining with a year-old goal imports no history", async () => {
+  // §6's whole reason for summing timestamped entries rather than a stored delta. The entry
+  // exists BEFORE the link, so this also proves the initial link projects the right number
+  // without waiting for the next log.
+  await logProgress("ancient", 999_999, 10);
+  await joinAndLink(1_000);
+
+  const row = await eventually("derived", standing, (v) => v?.scoreSource === "DERIVED");
+  assert.equal(row.score, 0, "movement SINCE you joined, not the goal's whole history");
+});
+
+test("the challenge's own dates bound the window at both ends", async () => {
+  // The lower bound is a DERIVATION from the phase model rather than §6's words — see
+  // `ScoringWindow` in Kotlin. The upper bound stops a DERIVED score climbing after a
+  // challenge has ended, which `canReportScore` already forbids for a typed one.
+  await joinAndLink(500, { startAt: 1_000, endAt: 2_000 });
+  await logProgress("early", 50, 700); // joined, but the challenge had not started
+  await logProgress("inside", 30, 1_500);
+  await logProgress("late", 70, 2_000); // the end bound is exclusive
+
+  await eventually("only the middle one counts", standing, (v) => v?.score === 30);
+});
+
+test("progress against an UNLINKED goal moves nothing", async () => {
+  // The fan-out is `where(goalId ==)`, so a user logging against a goal no challenge points at
+  // must not cost a write. This is the common case for every user in no challenge at all.
+  await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).set({
+    displayName: "Ido",
+    score: 3,
+    joinedAt: 1_000,
+  });
+  await logProgress("p1", 4_000, 1_500);
+
+  await new Promise((r) => setTimeout(r, 3000)); // nothing to poll FOR; give it time to misbehave
+  assert.equal((await standing()).score, 3, "an unlinked challenge is untouched");
+});
+
+test("typing a number over a link takes the challenge off the goal, and says so", async () => {
+  // The two shapes of one fact are mutually exclusive by construction: the client writes the
+  // fact with an unmerged `set()`, so the `goalId` is GONE rather than shadowed. That is what
+  // makes the badge answerable — there is never a tiebreak to report the outcome of.
+  await joinAndLink(1_000);
+  await logProgress("p1", 4_000, 1_500);
+  await eventually("derived first", standing, (v) => v?.score === 4_000);
+
+  await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).set({ value: 8_200, reportedAt: 77 });
+
+  const row = await eventually("switched to typed", standing, (v) => v?.score === 8_200);
+  assert.equal(row.scoreSource, "REPORTED");
+  assert.equal(row.reportedAt, 77);
+});
+
+test("linking a goal over a typed number switches back, and clears the date", async () => {
+  await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).set({
+    displayName: "Ido",
+    score: 0,
+    joinedAt: 1_000,
+  });
+  await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).set({ value: 8_200, reportedAt: 77 });
+  await eventually("typed first", standing, (v) => v?.scoreSource === "REPORTED");
+
+  await logProgress("p1", 500, 1_500);
+  await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).set({ goalId: GOAL, linkedAt: 2 });
+
+  const row = await eventually("switched to derived", standing, (v) => v?.score === 500);
+  assert.equal(row.scoreSource, "DERIVED");
+  assert.equal(row.reportedAt, 0, "the old typed date must not survive the switch");
 });
 
 // ── classifyTask (#6, spec §3.3 D / §3.4) ────────────────────────────

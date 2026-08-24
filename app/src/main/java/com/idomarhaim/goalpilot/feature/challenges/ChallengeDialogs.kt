@@ -40,7 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
-import com.idomarhaim.goalpilot.domain.model.ChallengeType
+import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
+import com.idomarhaim.goalpilot.feature.goals.label
 import com.idomarhaim.goalpilot.ui.components.Avatar
 import com.idomarhaim.goalpilot.ui.components.FreshnessNote
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
@@ -55,8 +57,8 @@ internal fun ChallengeEditorDialog(
     state: ChallengeEditorState,
     onTitle: (String) -> Unit,
     onDescription: (String) -> Unit,
-    onType: (ChallengeType) -> Unit,
-    onMetricUnit: (String) -> Unit,
+    onMeasureKind: (MeasureKind) -> Unit,
+    onMeasureWord: (String) -> Unit,
     onStart: (Long?) -> Unit,
     onEnd: (Long?) -> Unit,
     onSave: () -> Unit,
@@ -86,8 +88,13 @@ internal fun ChallengeEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                // §6: a challenge names a MEASURE, and it is not optional — "there is
+                // nothing to compare without a shared unit". The closed kind is what a
+                // participant's goal is matched against; the word beside it is theirs.
+                // This is the same two-field shape the goal editor uses, deliberately:
+                // a challenge and a goal are the same object measured the same way.
                 Text(
-                    "Type",
+                    "What does it count?",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
                 )
@@ -95,24 +102,37 @@ internal fun ChallengeEditorDialog(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    ChallengeType.entries.forEach { type ->
+                    MeasureKind.entries.forEach { kind ->
                         FilterChip(
-                            selected = type == state.type,
-                            onClick = { onType(type) },
-                            label = { Text(labelFor(type)) },
-                            leadingIcon = { TypeIconBadge(type) },
+                            selected = kind == state.measureKind,
+                            onClick = { onMeasureKind(kind) },
+                            label = { Text(kind.label()) },
+                            leadingIcon = { MeasureIconBadge(kind) },
                         )
                     }
                 }
 
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
-                    value = state.metricUnit,
-                    onValueChange = onMetricUnit,
+                    value = state.measureWord,
+                    onValueChange = onMeasureWord,
                     label = { Text("Measured in") },
                     singleLine = true,
-                    supportingText = { Text("Scores are reported in this unit — km, hours, reps…") },
+                    // Deliberately not "points". §6 deletes that default rather than
+                    // re-homing it: points rank by TIME LOGGED, and that is the wrong
+                    // race for anything about an outcome.
+                    supportingText = {
+                        Text("Everyone's score is in this unit — steps, km, hours…")
+                    },
                     modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    "Each person scores this from one of their own goals, so it moves " +
+                        "on its own — from Health Connect, from tasks, from anything " +
+                        "that already logs progress.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
 
                 Text(
@@ -241,7 +261,7 @@ internal fun ScoreEntryDialog(
                 OutlinedTextField(
                     value = state.value,
                     onValueChange = onValue,
-                    label = { Text("Total ${state.metricUnit}") },
+                    label = { Text("Total ${state.metricWord}") },
                     singleLine = true,
                     isError = state.error != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -253,6 +273,20 @@ internal fun ScoreEntryDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+                // Said BEFORE the write, not after it. A linked challenge is scoring
+                // itself; replacing that with a typed number is a real decision, and
+                // discovering it afterwards from a badge on your own row would be the
+                // app having made it for you.
+                if (state.replacesLink) {
+                    Text(
+                        "This challenge is currently scoring itself from one of your " +
+                            "goals. Typing a number takes it off that goal, and your " +
+                            "row will say the score was reported.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
                 state.error?.let {
                     Text(
                         it,
@@ -292,8 +326,15 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
                 )
             }
             Text(
-                "${participantSummary(card.participantCount)} · scored in " +
-                    card.challenge.metricUnit,
+                if (card.challenge.isUnmeasured) {
+                    // A pre-§6 challenge whose `metricUnit` was the "points" default.
+                    // §6 deletes that rather than re-homing it, so the honest caption
+                    // says the measure is missing instead of inventing a unit.
+                    "${participantSummary(card.participantCount)} · no measure set"
+                } else {
+                    "${participantSummary(card.participantCount)} · scored in " +
+                        card.challenge.metricWord
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
@@ -339,25 +380,182 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
                             name = standing.displayName.ifBlank { "?" },
                             size = 32.dp,
                         )
-                        Text(
-                            text = standing.displayName.ifBlank { "Someone" } +
-                                if (standing.isCurrentUser) " (you)" else "",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (standing.isCurrentUser) {
-                                FontWeight.Bold
-                            } else {
-                                FontWeight.Normal
-                            },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 12.dp).weight(1f),
-                        )
+                        Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
+                            Text(
+                                text = standing.displayName.ifBlank { "Someone" } +
+                                    if (standing.isCurrentUser) " (you)" else "",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (standing.isCurrentUser) {
+                                    FontWeight.Bold
+                                } else {
+                                    FontWeight.Normal
+                                },
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            ReportedBadge(standing, card.challenge.metricWord)
+                        }
                         Text(
                             ChallengesViewModel.format(standing.score),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The provenance line under a standings row — Ido's third ask on `#23`, 2026-08-24:
+ *
+ * > *"If someone updated manually and it was not updated through HEALTH CONNECT, then it
+ * > should say there who performed the update and what they updated."*
+ *
+ * **It draws nothing at all unless the score was typed**, and that way round is the whole
+ * design. A challenge is *meant* to score itself from each participant's goal (§6), so a
+ * derived row is the ordinary case and a badge on it would be noise on every row; a row
+ * nobody has scored yet has nothing to say either. Only the exception speaks.
+ *
+ * ⚠️ **The register is factual and never accusatory.** It says *what happened* — this person
+ * typed this number on this day — and stops. `C4`'s rule is the one to match: the app never
+ * asserts an intrinsic edge by itself, and it must not here either, because this is a claim
+ * about *another user* rendered to everyone in the challenge. Two things follow:
+ *
+ *  * no icon that reads as a warning, no error colour, no "unverified" — the row is drawn in
+ *    `onSurfaceVariant` like every other secondary caption on this screen;
+ *  * the number is **not re-ranked**. A typed score sorts exactly where its value puts it.
+ *
+ * And what it is **not**: proof. A participant writes only their own row, so this is
+ * self-asserted by construction — see `ChallengeParticipant`'s KDoc. It is a **label on a
+ * number**, not an attestation about a person. §6's own honest residual is that server-owned
+ * scoring stops a win being *typed*, not a reading being *forged*.
+ */
+@Composable
+internal fun ReportedBadge(standing: ChallengeStanding, metricWord: String) {
+    if (!standing.isReported) return
+    val who = if (standing.isCurrentUser) {
+        "You reported"
+    } else {
+        "Reported by ${standing.displayName.ifBlank { "this member" }}"
+    }
+    // "what they updated" is the number itself, in the challenge's own word. The date is
+    // dropped rather than faked when the projection wrote no stamp -- an older row, or one
+    // written before this field existed, has no reported-at to show and must not borrow the
+    // as-of stamp beside it.
+    val what = buildString {
+        append(who)
+        append(" · ")
+        append(ChallengesViewModel.format(standing.score))
+        if (metricWord.isNotBlank()) {
+            append(' ')
+            append(metricWord)
+        }
+        if (standing.reportedAtEpochMillis > 0L) {
+            append(" · ")
+            append(DateTimeUtils.formatDay(standing.reportedAtEpochMillis))
+        }
+    }
+    Text(
+        what,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+// ── Link a goal ──────────────────────────────────────────────────────
+
+/**
+ * §6's scoring path, as a sheet: *each participant links one of their own goals of the same
+ * kind*, and the challenge then moves on its own.
+ *
+ * **The empty case is a first-class state, not a blank list.** §6 says joining links **or
+ * creates** a goal, so a user with no goal of the right kind is told what to make rather
+ * than shown a picker with nothing in it. Creating one from here is the half this session
+ * did not build; the message names the kind so the trip to the goals screen is one step.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun GoalLinkSheet(
+    state: GoalLinkState,
+    onLink: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    AppModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+            Text("Score this from a goal", style = MaterialTheme.typography.titleLarge)
+            Text(
+                state.challengeTitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            Text(
+                "Your score becomes how far you move that goal from the moment you " +
+                    "joined — so Health Connect, a completed task and a manual log all " +
+                    "count, and nothing before you joined does.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+
+            if (state.eligible.isEmpty()) {
+                Text(
+                    "None of your goals measures ${state.kindLabel.lowercase()} in " +
+                        "${state.metricWord}. Make one on the Goals screen and come " +
+                        "back — the challenge will pick it up.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 20.dp),
+                )
+            }
+
+            LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
+                items(state.eligible, key = { it.id }) { goal ->
+                    val isLinked = goal.id == state.linkedGoalId
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                goal.title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (isLinked) FontWeight.Bold else FontWeight.Normal,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                if (isLinked) {
+                                    "Currently scoring this challenge"
+                                } else {
+                                    "Measured in ${goal.measureWord}"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        TextButton(
+                            onClick = { onLink(goal.id) },
+                            enabled = !state.isSaving && !isLinked,
+                        ) { Text(if (isLinked) "Linked" else "Use this") }
+                    }
+                }
+            }
+
+            state.error?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
             }
         }
     }
