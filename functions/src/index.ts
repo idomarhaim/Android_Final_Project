@@ -560,6 +560,64 @@ export const fileGoal = onCall(async (request: CallableRequest) => {
  * this call is one the user pressed a button for, and a failure they can act on (press it
  * again) must not be silent.
  */
+/**
+ * Whether a thrown error is GROQ rejecting **its own model's** output as invalid JSON while
+ * reporting **nothing** it generated.
+ *
+ * ```
+ * GROQ HTTP 400: {"code":"json_validate_failed", "failed_generation":""}
+ * ```
+ *
+ * `Observed:` 2026-08-24, immediately after `planGoal` first deployed — **two of three** live
+ * calls for the same goal failed this way while the third returned a clean ten-item plan, and a
+ * Hebrew call succeeded throughout. The empty `failed_generation` is the tell: the model
+ * (`openai/gpt-oss-20b`, a reasoning model) spent its budget reasoning and emitted no content at
+ * all, so `response_format: json_object` had nothing to validate. It is a property of a long
+ * generation on this model, not of the request — which is why the same request succeeds on the
+ * next attempt.
+ *
+ * `Untested:` whether the other four callables can hit it. None has been seen to, and all four
+ * ask for far shorter answers; `plan` is by a wide margin the longest generation in this file.
+ */
+function isEmptyJsonGeneration(e: unknown): boolean {
+  const message = e instanceof Error ? e.message : String(e);
+  return message.includes("json_validate_failed") && message.includes('"failed_generation":""');
+}
+
+/**
+ * [answer], with **one** extra attempt when the model returns nothing at all.
+ *
+ * ## Why this is not the retry §3.4 forbids
+ *
+ * §3.4's `transport` class — *"no key, `5xx`, timeout, `429`, a retired model id"* — is
+ * **silent, no retry**, and that rule stands untouched: every one of those means the request did
+ * not get through, and repeating it spends a second call against a 30-RPM ceiling to learn the
+ * same thing. This is a different event. The request got through, the provider answered `400`,
+ * and what it is complaining about is **its own output being empty** — a per-generation dice
+ * roll (see [isEmptyJsonGeneration]) which the next attempt genuinely re-rolls.
+ *
+ * ## Why only here, and why only once
+ *
+ * `plan` is the one call in this file with **no fallback of any kind** on the client — there is
+ * no arithmetic that produces a plan — and it is the one the user pressed a button for. The
+ * other four all degrade into something usable, so a retry would buy them nothing they do not
+ * already have. And once, not until-it-works: two attempts turn a measured ~1-in-3 failure into
+ * ~1-in-9, while an unbounded loop would spend the user's whole quota on a bad minute.
+ */
+async function answerRetryingEmptyJson(
+  request: CallableRequest,
+  system: string,
+  user: string,
+): Promise<Answered> {
+  try {
+    return await answer(request, system, user);
+  } catch (e) {
+    if (!isEmptyJsonGeneration(e)) throw e;
+    logger.warn("planGoal: the model returned no content; retrying once");
+    return await answer(request, system, user);
+  }
+}
+
 export const planGoal = onCall(async (request: CallableRequest) => {
   const { language = "en", goalTitle = "", goalDescription = "", measureWord = "" } =
     request.data ?? {};
@@ -570,7 +628,12 @@ export const planGoal = onCall(async (request: CallableRequest) => {
     `\"label\":\"${LABELS.join("|")}\",` +
     `\"difficulty\":\"${PLAN_DIFFICULTIES.join("|")}\",` +
     "\"estimatedMinutes\":number,\"dayOffset\":number,\"timeOfDay\":string}]}. " +
-    `At most ${MAX_ITEMS} items, ordered from soonest to latest. ` +
+    `Give between 5 and ${MAX_ITEMS} items, ordered from soonest to latest -- ${MAX_ITEMS} is a ` +
+    "hard ceiling and a long plan is not a better one. " +
+    // The ceiling is an OUTPUT-TOKEN budget as much as a design choice: a 19-item plan
+    // truncated mid-JSON and GROQ rejected its own reply with `json_validate_failed`
+    // (2026-08-24, live). Short titles are the other half of the same budget.
+    "Keep every title under eight words. " +
     "label is STATE_YOU_REACH for a milestone -- a state the person reaches, which is not " +
     "work and is never priced -- or WORK_YOU_DO for a thing they actually sit down and do. " +
     "difficulty, estimatedMinutes and timeOfDay are for WORK_YOU_DO items ONLY and MUST be " +
@@ -580,6 +643,16 @@ export const planGoal = onCall(async (request: CallableRequest) => {
     "never how long it takes. " +
     `dayOffset is a whole number of days from TODAY, 0-${MAX_DAY_OFFSET}: 0 is today, 1 is ` +
     "tomorrow. NEVER answer with a calendar date -- the app owns the calendar. " +
+    // ⚠️ **Measured, not guessed.** The first live call after deploying this function returned a
+    // 19-step marathon plan in which all 7 STATE_YOU_REACH items carried NO `dayOffset` -- so
+    // every milestone landed undated while every WORK_YOU_DO item got a date. The sentence above
+    // about the three leaf-only fields is what caused it: the model generalised "omit these on a
+    // container" to include `dayOffset`, which is not on that list. The validator could not
+    // catch it, because a step with no date is legal (§2.2) -- it is exactly what
+    // `Task.occurrence = null` means. It is a PROMPT defect and only reading the real answer
+    // finds it.
+    "EVERY item needs a dayOffset, INCLUDING a STATE_YOU_REACH item -- a milestone is a date " +
+    "you reach it by, and a plan whose milestones have no dates is not a schedule. " +
     "timeOfDay is \"HH:MM\" on a 24-hour clock, and only for a step that genuinely wants a " +
     "slot in the day; omit it for a step that is simply due that day. " +
     "Spread the plan realistically over time rather than piling it into one week. " +
@@ -590,7 +663,7 @@ export const planGoal = onCall(async (request: CallableRequest) => {
     (measureWord ? `What it counts: "${measureWord}". ` : "");
 
   try {
-    const a = await answer(request, system, user);
+    const a = await answerRetryingEmptyJson(request, system, user);
     return { ...validatePlan(a.json), ...provenance(a) };
   } catch (e) {
     logger.error("planGoal failed", e);

@@ -249,7 +249,7 @@ device was claimed this session.
 | **JVM unit (`:app:testDebugUnitTest`)** | **1146 / 1147** — 20 new in `GoalPlanTest`; the one red is `DocsCurrencyTest`, see below |
 | **Compose UI / instrumented** | **not run** — no device claimed this session; `GoalPlanSheet` carries `testTag`s (`goal_plan_steps`, `goal_plan_apply`) so a pass can reach the gate without matching on English |
 | **Firestore rules** | **not run, and not affected** — no new collection, no rules change; a plan step is an ordinary task |
-| **Live end-to-end against GROQ** | **not run** — `Untested:` neither callable has been deployed or called for real; see §8 |
+| **Live end-to-end against GROQ** | **run, and it found two defects** — both callables deployed and called for real, English and Hebrew; see §10 |
 
 ### The one red test, and why it is not fixed here
 
@@ -272,16 +272,14 @@ on one word from them.
 
 ## 8 · What is not done, and what has not been proven
 
-- ⚠️ **Neither callable is deployed.** `firebase deploy --only functions` was **not** run, so
-  `fileGoal` and `planGoal` return `NOT_FOUND` against the live backend until it is. The client
-  degrades correctly on that — an unfiled goal and a `Failed` sheet — which means **the failure
-  is quiet in exactly the way that hides it**. This is the next action, and it is inside the
-  standing authorisation (`docs/OPERATIONS.md`): it costs nothing and reaches nobody.
-- ⚠️ **`Untested:` no live call has ever been made.** Every claim above about *what the model
-  answers* is a claim about the **schema**, proved by 69 validator tests over synthetic inputs.
-  Whether GROQ actually produces a sensible six-step plan for *"run a marathon"* — and whether it
-  spreads the offsets rather than piling them into week one, which the prompt asks for and
-  nothing validates — is **unobserved**. That is a device-and-network run, not a unit test.
+- ⚠️ **The app has not been run.** Both callables are deployed and verified by direct HTTPS call
+  (§10), but **no build was installed on a device this session** — no instrumented pass, no render
+  pass, and no one has watched the sheet open on a phone. What is proven is the wire and the
+  arithmetic; what is unproven is the screen.
+- ⚠️ **`planGoal` fails roughly one call in six, and the client is right about it.** `Observed:`
+  §10. The sheet says *"could not be fetched"* and offers a retry, which is the correct behaviour
+  for a user-invoked call — but a user who presses once and gets that will reasonably conclude the
+  feature is broken.
 - ⚠️ **Hebrew is owed for the whole goal form, not for this feature.** Every string added is
   hard-coded English, which matches `AddEditGoalScreen` around it — that screen contains **no
   `stringResource` call at all**. §0.8 (*"not finished until seen in Hebrew"*) and §5.1 are owed
@@ -313,3 +311,102 @@ on one word from them.
 - `app/…/feature/goals/AddEditGoalViewModel.kt` — silent filing, `PlanState`, the two touched flags
 - `app/…/feature/goals/AddEditGoalScreen.kt` — the sheet, the filing notice, the plan button
 - `SESSIONS.md` — claim, two addressed notes, daemon borrowed and released
+
+---
+
+## 10 · Deployed, then actually called — which is where the real defects were
+
+The commit above (`90ee0fd`) was written with both callables **undeployed and never called**, and
+that changelog said so. Then they were deployed under the standing authorisation
+(`docs/OPERATIONS.md` — a functions deploy costs nothing and reaches nobody) and called for real.
+**Looking at the output found three things, and no test could have found any of them.**
+
+### 10.1 · The deploy carried a foreign function, and that is disclosed rather than noticed later
+
+`firebase deploy --only functions` created **three** functions, not two:
+
+```
++ functions[fileGoal(us-central1)]                        Successful create
++ functions[planGoal(us-central1)]                        Successful create
++ functions[projectChallengeScoreOnProgress(us-central1)] Successful create   <-- NOT MINE
+```
+
+`projectChallengeScoreOnProgress` is **`challenge-scoring`'s**, committed earlier today and never
+deployed. `firebase deploy --only functions` is whole-target, not per-symbol — there is no
+pathspec form of it, so this is the deploy layer's version of *"`git push` is branch-scoped"*: it
+publishes a sibling's work on my schedule, whatever I stage. It is **wanted** work (their
+changelog treats the trigger as shipped), it is additive, and their own tests are green — but it
+went live because of my deploy, so it is named here. **A later `--only functions:<name>` was used
+for every redeploy below**, which is the pathspec form and does not carry anyone.
+
+### 10.2 · Every milestone came back with no date
+
+The first live plan — *"Run a marathon successfully"*, 19 items — was structurally perfect on
+every invariant the 69 validator tests check: offsets ascending, no priced container, no id, under
+the cap. And **all 7 `STATE_YOU_REACH` items had no `dayOffset` at all**, so every milestone would
+have landed on the goal's list undated while every ordinary step got a date. Ido asked for *"a
+work plan with tasks **and timings**"*; the items that mark progress had none.
+
+**The validator could not have caught it, and this is the interesting part.** A step with no date
+is **legal** — §2.2, and it is exactly what `Task.occurrence = null` means. There is no rule to
+violate. It is a **prompt** defect: the sentence *"difficulty, estimatedMinutes and timeOfDay are
+for `WORK_YOU_DO` items ONLY and MUST be omitted on a `STATE_YOU_REACH` item"* was generalised by
+the model to cover `dayOffset`, which is not on that list. The fix is one sentence saying so
+explicitly. This is `kb/dev/look-at-your-own-output.md` exactly: the failure was in a
+transformation nothing re-runs, and only reading the real answer finds it.
+
+### 10.3 · And then two calls in three failed outright
+
+```
+GROQ HTTP 400: {"code":"json_validate_failed","failed_generation":""}
+```
+
+Not visible in `firebase functions:log` — which returned **2 lines** for `planGoal` — and read out
+of `gcloud logging read` instead. Two separate causes, both real:
+
+1. **Length.** A 19-item plan overran the output budget and truncated mid-object, so GROQ rejected
+   its own reply. `MAX_ITEMS` is now **12**, which is a *budget* and not a taste — and twelve steps
+   fit a sheet the user has to read and tick, where nineteen do not.
+2. **Empty generations.** `openai/gpt-oss-20b` is a **reasoning** model: with a long system prompt
+   it can spend its whole budget reasoning and emit **no content**, which is what
+   `"failed_generation":""` says. It is a per-generation dice roll, not a property of the request —
+   the same request succeeds next time.
+
+So `planGoal` — and **only** `planGoal` — retries **once** on that specific error.
+`answerRetryingEmptyJson` argues its case against §3.4 in its KDoc: §3.4's `transport` class is
+*no key, `5xx`, timeout, `429`, a retired model id*, all of which mean the request did not get
+through and repeating it learns nothing. This is a `400` about the provider's **own output being
+empty**, which the next attempt genuinely re-rolls. Once, not until-it-works.
+
+### 10.4 · Measured, before and after
+
+| | before | after |
+|---|---|---|
+| `planGoal` success, same goal | **1 / 3** | **5 / 6** |
+| items per plan | 19 | 8–12 |
+| undated milestones | **7 of 7** | **0**, across all 5 |
+| offsets ascending · no priced milestone · no id | ✅ | ✅ across all 5 |
+
+`fileGoal`, first call, no fix needed:
+
+```json
+{ "suggestedLifeAreaId": "a1", "suggestedCategory": "FITNESS", "confidence": 0.95,
+  "rationale": "Running a marathon is a physical training and endurance goal, directly
+                related to health and fitness. It does not align with career, family,
+                or finance life areas." }
+```
+
+Given four areas — Health, Career, Family, Finance — for *"Run a marathon successfully"*. That is
+Ido's first ask, working, from the goal's name alone.
+
+**Hebrew works and is authored in Hebrew** — `language: "he"` for *"ללמוד לנגן בגיטרה"* returned
+9 items with Hebrew titles (`d+0 יש לי גיטרה`, `d+1 למד את התווים הבסיסיים`, `d+13 נגן שיר ראשון
+בהצלחה`). Those titles are **content** and are stored as authored, never re-rendered (§3.5,
+`C15b`). The **chrome** around them is still English — see §8.
+
+### 10.5 · What is still not proven
+
+`Untested:` **nobody has seen this on a phone.** No APK was built or installed this session, so the
+sheet, the checkbox row, the dates as rendered, and the tasks appearing on the calendar are all
+unobserved. The wire is verified end to end and the arithmetic is JVM-tested; the **screen** is
+not. That is the next session's, and it wants a device.

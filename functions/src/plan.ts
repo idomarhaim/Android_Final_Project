@@ -72,8 +72,20 @@ export const MAX_TITLE = 120;
 /** Longest `changeNotes` entry. Speech, and a runaway one is still not a sentence. */
 const MAX_NOTE = 200;
 
-/** How many steps one plan may carry. Past this it is not a plan, it is a list. */
-export const MAX_ITEMS = 20;
+/**
+ * How many steps one plan may carry.
+ *
+ * ⚠️ **12, and it was 20 until a live call proved 20 unreachable.** *Observed 2026-08-24:* the
+ * first real `planGoal` call for *"Run a marathon successfully"* produced **19** items and the
+ * second failed outright with
+ * `GROQ HTTP 400: {"code":"json_validate_failed", "failed_generation":""}` — the model ran out
+ * of output tokens mid-object, so `response_format: json_object` rejected its own truncated
+ * reply. Nothing in this validator could have caught that: the response never arrived.
+ *
+ * The ceiling is therefore **a budget, not a taste**. It is also the better plan: twelve steps
+ * fit a bottom sheet the user has to read and tick, and nineteen do not.
+ */
+export const MAX_ITEMS = 12;
 
 /** How many `changeNotes` survive. */
 const MAX_NOTES = 10;
