@@ -1,6 +1,6 @@
 # exam-qa-pack — 2026-08-24
 
-> **Summary:** A 96-question examiner Q&A pack for the final-project defence, as a Word file and a self-contained searchable HTML file in `docs/exam-prep/`. Every answer is drawn from `HEAD` rather than from `docs/`. Round 2 added the visual layer Ido asked for — 8 inline-SVG diagrams, 3 charts, 12 section icons and 18 real app screenshots from `docs/render-passes/` embedded as webp data URIs — and, with it, a **headless-Edge render pass**, which caught four layout defects that 35 structural checks had passed.
+> **Summary:** A 96-question examiner Q&A pack for the final-project defence, in **three** builds from one content source: a Word file, a searchable study HTML, and — round 3 — a **glance card** for answering live while presenting (keyword bullets, never sentences to read aloud). Also 6 real node-and-arrow SVG architecture/flow diagrams and a gallery that makes them findable. The headless-Edge render pass is now standing procedure and caught four more layout defects plus a duplicate-SVG-id bug.
 
 ## What Ido asked for
 
@@ -231,3 +231,100 @@ words** (up 201 from the new question).
 for where to put it surfaced a real gap: points and levels are a **core requirement** with no
 question of their own. It carries the derive-don't-store rule and the one-sentence answer to *why
 store `points` and not `level`*.
+
+---
+
+# Round 3 — real flow diagrams, and a second file for answering live
+
+> *"חסר לי HTML גרפים של ארכיטקטורות, פלואים וכו'. אני צריך שתהיה גרסה של הקובץ הזאת שהיא יותר
+> פשוטה — תוך כדי שאני מציג והמרצים שואלים, שבהינף מבט אני אוכל לראות את התשובה ולענות. אני לא
+> אמור להקריא משפטים שלמים מילה במילה מהדף."*
+
+Two asks, and the second is a **different document**, not a mode: revising and answering-under-fire
+want opposite things from the same content.
+
+## 1 · Real node-and-arrow diagrams
+
+Round 2's diagrams were **CSS boxes**, which is right for a tree or a table and cannot draw a
+*flow* — an arrow that forks, rejoins or loops back has no CSS form, so those could only ever be a
+column of cards. `flows.py` adds a small SVG primitive (nodes on a grid, arrows with heads, elbow
+and go-around connectors, bands, notes) and six diagrams built on it:
+
+| | |
+|---|---|
+| **Module dependency graph** | the one picture that answers *describe the architecture*, because the **arrows are the claim**: everything points inward at `domain/`, nothing points out |
+| **One screen's data pipeline** | Firestore → repository → ViewModel → screen, with the event edge returning underneath |
+| **The auth gate** | one Flow, three states, two graphs |
+| **Ticking a task** | 7 steps, offline-first, with the local half separated from the server half |
+| **Smart add** | the AI flow *and its failure branch* — the fork that made a real diagram necessary |
+| **Build and release** | Kotlin → R8 → keystore → App Distribution → testers |
+
+**And a gallery at the top of the study file**, because the complaint was that the diagrams were
+*missing* when 8 of them were already there — buried in a 96-question scroll. It lists every
+figure-bearing question as a jump link and sits directly under the stat tiles.
+
+## 2 · `GoalPilot-Glance-Card.html` — the live-answer build
+
+**A separate file, deliberately.** The study build is prose you read beforehand. This one is for the
+moment someone has just asked you something and you need the shape of the answer in one look, then
+your own words.
+
+- **96 cards**, one per question, **395 keyword bullets** — none over 95 characters.
+- **66 cards carry one quotable line** (the green `"` block): the soundbite worth saying close to
+  verbatim, if you want one. The rest of the card is triggers, not sentences.
+- **Nothing collapses.** A click is a delay, so there is no `<details>` anywhere.
+- Two columns, big type, sticky search bar, **section chips**, `/` to search, **`1`–`9` to jump**,
+  `Esc` to reset. All 10 diagrams sit at the top under their own chip.
+- 381 KB, self-contained, still openable from a USB stick with no network.
+
+**The house rule for writing a bullet is in `glance.py`'s docstring**, because the compression *is*
+the product: a bullet is a trigger of ≤ ~8 words; numbers beat adjectives, so every measured one
+survives; and never a bullet that only makes sense if you already read the prose.
+
+**Coverage is asserted both ways** — every question has a card and every card a question — so a
+reworded question fails the build instead of silently losing its glance answer.
+
+## 🧪 Tests
+
+**No project test layer in the diff** — `docs/exam-prep/` plus this file and the board.
+`:app:testDebugUnitTest` **not run**: the Gradle daemon is claimed by `docs-repair`, and
+`62-tour-assembly` holds the emulator and `adb`.
+
+**85 automated checks (`verify.py`), all green** — up from 63, with 20 new ones over the glance
+build. The one worth naming is a guard on **the property that document exists for**: bullet length.
+`0 of 395` over 95 characters, ≤ 3 % allowed. A card whose bullets drift back into prose has quietly
+become the study build again, and nothing else would notice.
+
+### The render pass earned its place a second time — four more defects, and one that only luck hid
+
+1. **Diagrams rendered a full screen each** in the glance build — a 700-unit SVG stretched to a
+   1440 px column. That is the opposite of a glance document. Two-up and capped.
+2. **`_axis_ticks`-class bug in `elbow`:** `via` sat *outside* the two x coordinates, so the last
+   leg **doubled back** and the arrowhead pointed away from the box it was entering.
+3. **The state-pipeline return edge ran straight through two boxes**, label and all, because
+   `elbow` routes at the nodes' own y. Added `updown`, which goes *around* the row.
+4. **Three descriptor labels were faked with spaces inside one centred string** and rendered as a
+   run-on. They are now three positioned labels, moved above the row — below, the ViewModel's label
+   sat exactly where the return edge drops out of that same box.
+
+**And the one the verifier caught rather than the eye — every diagram emitted `<marker id="ah">`.**
+Six diagrams meant **six duplicate ids in one document**, and `url(#ah)` resolves to the *first*
+match, so every arrowhead in the file was diagram one's. It rendered perfectly **because the markers
+happened to be identical** — it would have broken silently the moment one differed, and the ids were
+invalid either way. Marker ids are now per-canvas, and the verifier asserts uniqueness in both
+files.
+
+That is the same shape as round 2's `{document=**}`: *correct output for the wrong reason*, which no
+amount of looking finds.
+
+**Rendered and looked at:** the glance build top, its card grid and its dark mode; all six new
+diagrams light and dark; the study file's new gallery. The `.docx` re-opened in Word — **28 pages,
+11,945 words**, unchanged, as Ido scoped it.
+
+## Two files now, and which to open when
+
+| | |
+|---|---|
+| `GoalPilot-Examiner-QA.html` | **before** — read it, follow the reasoning, print it |
+| `GoalPilot-Glance-Card.html` | **during** — search, glance, answer in your own words |
+| `GoalPilot-Examiner-QA.docx` | the printable/annotatable copy of the first |
