@@ -279,3 +279,42 @@ reader to notice.
 you inherit* — both true, and the second lost. Nothing else held a copy and a video is not in git.
 `archive_previous` now stamps and keeps whatever is already there, so this cost one cut rather than
 becoming a habit. `GoalPilot-highlights-60s.mp4` survived only because its name differs.
+
+---
+
+## 9 · Committed, NOT pushed — and it is precondition 5, not a judgement call
+
+`1d6ef09` and `cf4adb0` are on `main` locally and **held**. Checked at the moment of writing:
+`git fetch` at **2026-08-24 04:29:56**, upstream still `4db36d9`, so **still unpublished as of that
+check** — which is the dated form the rule asks for, because `git push` is branch-scoped and a
+sibling can publish my commits on their schedule with no gate of mine involved.
+
+`git log @{u}..HEAD` carries **six foreign commits**, and they are named here because the reply that
+also names them scrolls away and this file does not:
+
+| commit | session | board state |
+|---|---|---|
+| `3e4f381` | `docs-repair` | **LIVE row in Active claims** |
+| `59283d0` | `docs-repair` | **LIVE row in Active claims** |
+| `9af6424` | `s25-layout-and-tour` | released 02:23 |
+| `e56bd1a` | `s25-layout-and-tour` | released 02:23 |
+| `2a55e19` | `exam-qa-pack` | released |
+| `750ff35` | mine (the claim) | — |
+
+**`docs-repair`'s live row is the stop.** Precondition 5 is explicit: a foreign commit whose paths
+sit under a live row is a session mid-unit, and in auto mode *"name it in the reply"* is a disclosure
+Ido may read hours after the push landed. Un-publishing needs a force-push, which is always-ask.
+
+**The §5.3(c) liveness check was run anyway, and it does not change the answer.** `docs-repair`'s
+last commit is `59283d0` at **01:50**, and its last transcript turn — found by the `file-history-*`
+records naming the label, not by `grep -l`, and read from the last `user`/`assistant` `timestamp`
+rather than the file's mtime — is **2026-08-23T22:51:00Z (01:51 local)**. Both quiet for **2h39m**.
+
+That is a **cross-check, not a substitute**: the transcript escalation is scoped to the
+*absent-row* branch, and `docs-repair`'s row is present and live. A negative result there means
+*nothing has been observed*, never *released*. Its own last turn also reads *"the suite has not been
+run, and the push is held"*, so that session considered its own work unfinished.
+
+**Nothing is lost by the hold.** Both commits are on `main` locally, and `s25-layout-and-tour`
+already established that distribution did not depend on the push — v0.4.0 reached Ido and rachil
+through App Distribution from a local build.

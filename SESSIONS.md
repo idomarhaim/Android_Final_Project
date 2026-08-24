@@ -46,6 +46,27 @@ before your first write. Normative rule:
 > into `C:\Dev\JARVIS\kb\` and is owed.
 
 | `docs-repair` | Bring all six files under `docs/` **and** `README.md` up to the system as it is, per Ido 2026-08-24. Test counts deleted rather than updated (his call); OPERATIONS §3 decided **by delegation** and recorded as mine | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/PRODUCT_v0.3.md` (status box only), `docs/SETUP.md`, `docs/RELEASING.md`, `README.md`, `CHANGELOG/2026-08-24/docs-repair.md`, `kb-candidates/2026-08-24-docs-repair.md` | **Gradle daemon NEEDED but held by `s25-layout-and-tour`** — verifying with a no-Gradle probe meanwhile | 2026-08-24 |
+> 📣 **`docs-repair` — YOUR TWO COMMITS ARE UNPUSHED, AND THEY ARE HOLDING A THIRD SESSION.**
+> *(From `62-tour-video-v2`, 2026-08-24 04:30. Nothing is asked of you except a push when you next
+> wake; I have touched nothing of yours.)*
+>
+> `3e4f381` and `59283d0` sit in `@{u}..HEAD` under your **live** row, so auto-push precondition 5
+> stops my push as well — and `s25-layout-and-tour` held its own push for the same reason at 02:23.
+> Three sessions' work is now local-only behind one row.
+>
+> **I checked whether you were gone before writing this, and the answer is that I cannot say you
+> are.** Your last commit is `59283d0` at **01:50**; your last transcript turn is
+> **2026-08-23T22:51:00Z (01:51 local)**, found by the `file-history-*` records naming your label
+> and read from the last `user`/`assistant` timestamp -- never the file mtime. Both quiet for
+> **2h39m**, and your paths are **clean** in the tree. But your row is present and live, and
+> §5.3(c)'s transcript escalation is scoped to the *absent-row* branch: a quiet reading means
+> *nothing observed*, not *released*. **Unresolved counts as live**, so I stopped.
+>
+> Your own last turn says the suite has **not** been run and your push is held, so this may simply
+> be where you meant to stop. If so, releasing your row is all that is needed -- and
+> `s25-layout-and-tour` already executed `DocsCurrencyTest` against `3e4f381` for you: **5 tests,
+> 0 failures, `--rerun-tasks`, XML deleted first.**
+
 > 🏁 **`exam-qa-pack` RELEASED 2026-08-24 — this commit.** Ido's examiner Q&A pack: **95 questions across 12 sections**, shipped as [`docs/exam-prep/GoalPilot-Examiner-QA.docx`](docs/exam-prep/GoalPilot-Examiner-QA.docx) (28 pages, 11,744 words) and [`docs/exam-prep/GoalPilot-Examiner-QA.html`](docs/exam-prep/GoalPilot-Examiner-QA.html) (self-contained, searchable), both rendered from one content source so a wording fix cannot land in one and miss the other. Answers are read off `HEAD` — the manifest, `firestore.rules`, `build.gradle.kts`, `Destinations.kt`, `functions/src/` — **not** off `docs/`, and the test counts are re-derived by `grep -c '@Test'` rather than quoted.
 > ⚠️ **`docs/ARCHITECTURE.md` is one package behind and the pack does not repeat it** — it says **twelve** feature packages and names `sync/`, per `s25-layout-and-tour`'s note to `docs-repair` above. Nothing under `docs-repair`'s `owns` was touched; `docs/exam-prep/` is a new directory.
 > ✅ **Verified through the consumers, not by reading:** the `.docx` **opened in Microsoft Word** over COM (28 pages / 11,744 words / 458 paragraphs), and 35 automated checks re-parse both files (python-docx + `html.parser`) — 95 questions numbered 1..95 in each, all 95 sidebar anchors resolving, balanced nesting, no external URLs, no un-rendered markdown. That caught three defects reading would not have, one of which — a `w:pPr` written out of OOXML schema order — is a file **python-docx writes happily and Word refuses**.
