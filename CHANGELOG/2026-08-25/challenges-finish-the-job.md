@@ -437,6 +437,51 @@ accountability the badge relies on is real.
 
 ---
 
+## §6 · On Ido's phone — v0.5.1
+
+He asked for all of this because he wants to **use** it, and the build on his phone was
+`v0.4.1`, which predated every change above. `ai-goal-onboarding` cut `v0.5.0` earlier the
+same night, so this is **`v0.5.1`, versionCode 12**.
+
+### The backend went first, and it had to
+
+§1 and §3 both change `firestore.rules`, and §3 adds two Cloud Functions. Shipping the
+client without them would have reproduced `#55` exactly — a client writing a document shape
+the deployed backend cannot read, which is how Ido's live points once read **40 instead of
+70**. Both are standing-authorised (`docs/OPERATIONS.md` § *Standing authorisation*), so
+they were deployed rather than waited on:
+
+```
+firebase deploy --only firestore:rules   → released rules firestore.rules to cloud.firestore
+FUNCTIONS_DISCOVERY_TIMEOUT=120 firebase deploy --only functions
+   → applyMeasureChangeOnApproval(us-central1)  Successful create operation
+   → applyMeasureChangeOnProposal(us-central1)  Successful create operation
+```
+
+**The rules deploy is the one that was not optional for §1.** Without it, every invite
+listener on every device fails `PERMISSION_DENIED` on the *query*, with nothing in the
+message to say why — which is the trap that clause of `firestore.rules` documents at length.
+
+### The APK was verified, not assumed
+
+`9b595f4` nearly shipped a crash on 2026-08-24 because a build log was trusted over the
+artifact. So the distributed APK was read:
+
+```
+package: name='com.idomarhaim.goalpilot' versionCode='12' versionName='0.5.1'
+```
+
+and its dex searched for one symbol from each section — `challengeInvites` (§1),
+`Create and start scoring` (§2), `pendingMeasureKind` / `approvedChangeId` (§3). **All
+present.** That checks the thing that ships, not the thing that compiled.
+
+⚠️ **It went to the `testers` group, which is Ido AND both examiners** — that is what
+`app/build.gradle.kts` configures and what `v0.5.0` used two hours earlier, and the brief
+named the command explicitly. Recording it because *"put it on Ido's phone"* and *"notify
+two examiners"* are not the same act, and he should know which one happened.
+
+---
+
 ## Open at the time of this entry
 
 - **`DocsCurrencyTest` is red on `main`, 2 of 1160, and I did not fix it.**
