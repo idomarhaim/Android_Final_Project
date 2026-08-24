@@ -323,3 +323,47 @@ results XML. Every new guard confirmed to have executed by name:
 | `panel text stays legible over the worst wallpaper that can exist` | the measured floor |
 | `every declared colour equals the arithmetic it was derived from` | the four new `#C7…` hexes |
 | `assert no material depends on an API-gated primitive` | the glass default's safety on `minSdk` 26 |
+
+---
+
+# Phase 4 — the render pass, and the one difference that is not a defect
+
+**88 frames on `Pixel_10_Pro_XL_B`** — `MaterialRenderPass` (4 materials × 4 grounds × 2
+brightnesses × 2 skins, both skins) and `EntranceRenderPass` (an 8-frame strip). Six are committed
+to `docs/render-passes/2026-08-24-visual-parity/` with a README that says what each one carries.
+
+**The pair that is the whole finding:** `default-before-neo-plain-dark.png` beside
+`default-now-glass-dark.png`. Same build, same code, **one changed constant** — flat and unlit
+against a lit ground with translucent panels and a visible rim.
+
+**The entrance is real and the stagger is visible.** At **96 ms**, block 1 has arrived, block 2 is
+nearly there and block 3 is still faint and low. That is the thing `#57` d warned a single shared
+duration would fail to produce.
+
+## ⚠️ The app's ground is quieter than the prototype's, and it stays that way
+
+Looking at the frames beside `01-styles_glass_dark.png` from the prototype library, the difference
+that remains is **saturation**: the prototype's canvas is vivid, the app's is muted.
+
+That is measured and deliberate, and it is in `MaterialSpec.kt`'s own comment. The prototype
+hard-codes saturated mid hues (`#4E6BFF`, `#00C8B4`, `#A65CF5`, relative luminance
+0.194 / 0.446 / 0.224). The app reads every hue off the `ColorScheme` so the ground tracks the skin
+and the palette transform — and a dark Material 3 scheme's `primary`/`secondary`/`tertiary` are
+**pastels**, 0.564–0.572 here. Same hues, twice the light. The lights therefore run at
+`alpha = 0.42`, which is where `onBackground` clears WCAG's 3:1 non-text floor on the worst lit page
+(**3.96**, against **2.94** at the 0.55 it used to be).
+
+**Left alone on purpose.** Matching the prototype's apparent saturation means either hard-coding its
+hexes — which breaks skin tracking and the dark-neo ramp, and which `#57` b rejected in as many
+words — or failing that contrast floor. It is a taste-versus-accessibility trade a prior session
+already decided **with measurements**, and overturning it at 1 a.m. while Ido sleeps is exactly the
+kind of re-deciding this session's own brief forbids. Flagged for him, not changed.
+
+## What the pass does not prove, said rather than implied
+
+- **`Untested:` the widgets have not been seen on a launcher.** The translucency change is verified
+  by **measurement** — `WidgetPanelContrastTest` — and by the resource test proving the four new
+  `#C7…` hexes equal the arithmetic. No frame here shows a real widget on a real home screen, and
+  placing one is not something this session could automate.
+- **No signed-in app.** The emulator carries no account, so every frame is a surface reachable
+  without one. The dashboard's cards appear via the entrance strip, which composes them directly.
