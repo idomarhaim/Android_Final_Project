@@ -219,3 +219,23 @@ written specifically to hold up a decision that contradicts the spec.
 - **The widgets**, per above.
 - `kb-candidates/2026-08-24-visual-parity.md` — candidate 3 can now be upgraded from `Inferred:` to
   measured, and has gained a second instance (the widget's copy of the same false premise).
+
+## 📤 What this push carried that was not mine
+
+Auto-push precondition 5 — named here because a reply scrolls away and this file does not. Three
+commits in the range belong to **`challenge-scoring`**, not to this session:
+
+- `f493bbf` — their claim
+- `cdd7ae4` — their work, `C14`/`#23`
+- `b4eb284` — their four KB candidates
+
+They ride along because `git push` is **branch-scoped, not commit-scoped**, and nothing short of a
+worktree per session changes that. They were adjudicated rather than merely noticed: their row left
+Active claims with an **explicit release note** written by that session about itself, and their
+paths are quiet in the tree — which is the one signal §5.3 says settles the question without a
+transcript check. Their three new briefs (`challenge-health-gate`, `challenge-measure-approval`,
+`challenge-scoring-render-pass`) go up with them.
+
+⚠️ **The first read of that release was wrong and is worth keeping.** When their row disappeared,
+their source was still dirty and their changelog was **staged** — mid-commit, not finished. An
+absent row is not proof a session is done, and here the proof was one `git status` away.
