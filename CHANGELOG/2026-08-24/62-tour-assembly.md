@@ -374,3 +374,90 @@ Every silent failure here was caught by **reading the artifact back**, never by 
 reporting success: four renames that "saved" and changed nothing; a take that "succeeded" with
 4 m 43 s missing; a revert that closed its form and kept its value; a rename that would have
 written an empty name. In each case the tool said `OK`. Only the read-back disagreed.
+
+---
+
+# Part 5 — the marketing film, and the model report
+
+Ido redirected the deliverable: not a voiceover on a product tour, but *"a marketing film with a
+story around the need for the product and the problem it answers"*, using the full potential of
+OpenArt. That is a different film, and this is it.
+
+## Correction owed: OpenArt HAS audio; the MCP does not expose it
+
+The reply that said there is no TTS *"anywhere"* was too broad. Verified precisely: the MCP has
+exactly two generate tools — `openart_generate_image` and `openart_generate_video`. **There is no
+`openart_generate_audio`.** Audio appears only as an *input* (`openart_upload_sign` accepts
+`mediaType: audio`) and as a list filter (`openart_creation_list`). OpenArt's Audio tab is real and
+reachable in the browser; it is simply not wired into the connector.
+
+## The film — `GoalPilot-marketing-film.mp4`, 1080×1920, 2:08
+
+**Structure: every problem shot is answered by the same object, later.**
+
+| # | segment | source | len |
+|---|---|---|---|
+| 1 | laptop closes, shoes gather dust, sax stays cased | generated | 12 s |
+| 2 | the over-full calendar | generated (patch) | 5 s |
+| 3 | the phone is picked up | generated | 4 s |
+| 4 | **smart add** — a sentence, filed, shown before it saves | real footage | 19 s |
+| 5 | the AI estimates the work | real | 10.5 s |
+| 6 | goals as time | real | 11.5 s |
+| 7 | drag it where it should have been | real | 11 s |
+| 8 | the parts of your life | real | 8.7 s |
+| 9 | where your time actually went | real | 17 s |
+| 10 | **payoff** — the shoes go out the door | generated | 8 s |
+| 11 | **payoff** — the saxophone is played | generated | 8 s |
+| 12 | **payoff** — the evening comes back | generated | 8 s |
+| 13 | closing card | ffmpeg `drawtext` | 5 s |
+
+**The app footage is 78 s of the 11:00 tour, chosen off the 68 measured beats** — which is what the
+beat map is for. **Every segment sits outside the privacy window** (`6:54.1`–`7:55.2`), so no
+email, friend code or friend's name is in the marketing cut, even though Ido cleared the full tour
+for course submission. The marketing film is the one that might travel.
+
+### Two craft decisions, both derived
+
+- **9:16 vertical.** The phone footage is 1080×2340 and the b-roll 1080×1920; anything else
+  letterboxes the product. Not asked, recorded as mine.
+- **Blur-fill rather than crop.** The tour is taller than 9:16. Cropping to 1920 would cut either
+  the status bar or the **tab bar**, and the tab bar is product UI. So the phone footage is scaled
+  to height and the sides filled with a blurred, darkened copy of itself.
+- **The status bar IS cropped** (`crop=1080:2080:0:140`) — it carried the real clock, the battery,
+  and a **red screen-recording indicator**, because SystemUI demo mode does not apply on the
+  Samsung. Found by extracting a frame and looking at it, not by reasoning about it.
+- **The closing card's text is drawn by ffmpeg, never generated.** Generated typography is exactly
+  what produced `TANEES DAHDAY`.
+
+## 📋 The model report — the deliverable `#62` asks for
+
+| component | exact OpenArt model string | why | cost |
+|---|---|---|---|
+| 🎬 **video** | **`byte-plus-seedance-2-5`** (Seedance 2.5) | newest Seedance; single-shot up to 30 s, 1080p, synchronized audio, largest reference budget. The prior survived the roster call | **14,146** total |
+| 🖼️ **image** | **`nano-banana-pro`** — *selected, never called* | the prior (`FLUX.2 Pro`) **does not exist on this roster**; picked by derivation from the brief's own rule (typography is the only thing that would select `gpt-image-2`, and no frame carries any). In the event every shot came from text-to-video, so no still was needed | 0 |
+| 🗣️ **voice** | **not reached — the MCP exposes no audio-generation tool** | verified against the tool list, not inferred: only `generate_image` and `generate_video` exist. Ido drives OpenArt's Audio tab in the browser | 0 |
+
+### Generations, in order
+
+| what | model | mode | config | charged |
+|---|---|---|---|---|
+| opening b-roll | `byte-plus-seedance-2-5` | `text2video` | 1080p · 20 s · 9:16 · audio | 5,774 |
+| calendar patch | `byte-plus-seedance-2-5` | `text2video` | 1080p · 5 s · 9:16 · audio | 1,445 |
+| payoff ×3 | `byte-plus-seedance-2-5` | `text2video` | 1080p · 8 s · 9:16 · audio | 6,927 |
+
+**Balance 24,000 → 9,854. Total 14,146.** Every charge matched
+`round(listCredits × 0.9)` exactly, so these are measured, not estimated.
+
+**Re-rolls: one.** The opening's calendar shot came back covered in garbled pseudo-text
+(`TANEES DAHDAY`, `Menday`, `Bommtias`) because the prompt banned text *and* asked for dense
+handwriting — a contradiction the model resolves by inventing letterforms. The patch describes the
+ink as abstract marks on a defocused plane and cost 1,445 instead of 5,774 to re-roll the whole
+20 s. **The three payoff shots needed no re-roll**, because that lesson was applied to the calendar
+one up front.
+
+## What is left
+
+The **voiceover**. The narration is written and timed to these exact segments in
+[`docs/marketing/marketing-film-cut.md`](../../docs/marketing/marketing-film-cut.md); Ido generates
+it in OpenArt's Audio tab and it gets muxed in. The film stands on its own without it — the
+generated shots carry their own ambient audio.
