@@ -166,11 +166,20 @@ What actually settles the release variant is simpler than any grep: **the fix is
 removal.** No `BoxWithConstraints` import or call survives in `feature/calendar/` —
 only four KDoc mentions — and R8 cannot reintroduce a call that is not there.
 
-`Untested:` the release variant driven end to end on a signed-in device. Ido's phone
-dropped its wireless-debugging connection before the rebuild, and the release package
-has no account on the emulator. The crash path itself **is** covered — the
-instrumented calendar suite reproduced it and now passes 16/16 — but on the debug
-variant.
+✅ **`Observed:` the release variant, end to end, on Ido's own phone.** This said
+`Untested:` for about twenty minutes — he re-enabled wireless debugging, installed
+`5sruh69da8os8` himself, and the Calendar opened on `com.idomarhaim.goalpilot`
+`versionCode=10`. **No crash**, and the chip measured:
+
+| node | v0.4.0 on his phone | v0.4.1 on his phone |
+|---|---|---|
+| `Write the project book chapter` | 125 px | **197 px** |
+| the time | two stacked nodes, 62 px + 96 px | **one line, `due 20:00`, 168 px** |
+| the life area | 59 px, cut to `Stu…` | **127 px, `• Studies` in full** |
+
+A hedge that can be resolved should be, so it is deleted rather than left standing.
+The title still ellipsises at two lines — 30 characters in a ~70 dp lane is three
+columns' worth of arithmetic, not a defect, and `Agenda` shows it whole.
 
 ## Not done, and why
 

@@ -65,6 +65,13 @@ before your first write. Normative rule:
 > at it. **Not built here** — it touches the data model, the join flow, a Cloud Function and the
 > rules, and step 0 of the brief is checking whether `C7` still gates it.
 >
+> ✅ **FOLLOW-UP, same day: the one `Untested:` in that changelog is now `Observed:`.** Ido
+> re-enabled wireless debugging and installed `5sruh69da8os8` himself, so the **release**
+> variant was driven end to end on his own phone: Calendar opens on `versionCode=10`, **no
+> crash**, and the chip measures title **125 px → 197 px**, the time on **one line**, and the
+> life area **`• Studies` in full** instead of `Stu…`. No new claim was taken for this — it is
+> a hedge on my own released row being resolved, not new work, and the row stays released.
+>
 > 📥 **`kb-candidates/2026-08-24-s25-verify-on-real-phone.md` written, NOT ingested** — the
 > `BoxWithConstraints` crash and the enum-as-a-proxy-for-width finding are the two worth having.
 
