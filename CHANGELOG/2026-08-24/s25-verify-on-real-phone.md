@@ -144,6 +144,34 @@ emulator's native 448 dp, so *both* runs were already drawing the new form.)
 fold on a phone-shaped screen; `assertIsDisplayed` does not scroll. Fixed with
 `performScrollTo()`.
 
+## Shipped
+
+`versionCode` 9 → 10, `versionName` 0.4.0 → **0.4.1**. Firebase App Distribution
+release **`5sruh69da8os8`**, to the existing `testers` group — Ido and
+`rachil751@gmail.com`, both already members, so nobody was invited.
+
+⚠️ **The APK on disk was stale and rebuilding it was not optional.** It had been
+built at 19:23, *before* the `BoxWithConstraints` crash fix; distributing it would
+have shipped the crash to both phones. Rebuilt at 20:03, key `e7d5534c…9062`,
+`versionCode` 10 — all three re-read rather than assumed.
+
+⚠️ **And the check I reached for first was broken.** Grepping the release dex for
+`ChipForm` / `NarrowChip` / `chipFormFor` returned **0** for every symbol — which
+reads exactly like *the APK is stale*. It is not: `isMinifyEnabled = true`, so R8
+renames private composables. **The control is what caught it**: `WideChip` and
+`StackedChip` shipped long before today and also returned 0. The debug APK, which is
+not minified, has all seven (`ChipForm` ×7, `NarrowChip` ×12, `chipFormFor` ×1).
+
+What actually settles the release variant is simpler than any grep: **the fix is a
+removal.** No `BoxWithConstraints` import or call survives in `feature/calendar/` —
+only four KDoc mentions — and R8 cannot reintroduce a call that is not there.
+
+`Untested:` the release variant driven end to end on a signed-in device. Ido's phone
+dropped its wireless-debugging connection before the rebuild, and the release package
+has no account on the emulator. The crash path itself **is** covered — the
+instrumented calendar suite reproduced it and now passes 16/16 — but on the debug
+variant.
+
 ## Not done, and why
 
 **The Health Connect ↔ challenge question Ido asked mid-session is answered, not

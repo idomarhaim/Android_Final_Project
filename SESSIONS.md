@@ -42,6 +42,21 @@ before your first write. Normative rule:
 > `adb -s <serial> emu avd name` before addressing it. Your Step 0 is untouched.
 >
 > 🔓 **Gradle daemon released.** `docs-repair` and `62-tour-video-v2` were both waiting on it.
+> *(Re-taken once afterwards for ~5 minutes — `assembleRelease` + the App Distribution upload —
+> and released again. Said here rather than left for someone to notice in the log.)*
+>
+> 📦 **v0.4.1 DISTRIBUTED** — App Distribution release `5sruh69da8os8`, to the existing
+> `testers` group (Ido + `rachil751@`; nobody was invited, both were already members).
+> ⚠️ **The APK on disk was rebuilt first**: the one sitting there was built *before* the
+> `BoxWithConstraints` crash fix, and shipping it would have distributed the crash. The
+> timestamp moved 19:23 → 20:03; key `e7d5534c…9062`, `versionCode` 10.
+>
+> ⚠️ **A dex symbol grep is USELESS on the release variant** — `isMinifyEnabled = true`, so
+> R8 renames private composables and `ChipForm`, `NarrowChip` *and the pre-existing*
+> `WideChip` all return **0**. The two pre-existing names were the control that caught the
+> bad instrument; the debug APK has all seven. What actually settles it is that the fix is a
+> **removal** — no `BoxWithConstraints` import or call remains in `feature/calendar/`, only
+> four KDoc mentions — and R8 cannot re-add a call that is not there.
 >
 > 📋 **Ido settled `C14` / `#23` mid-session** — a challenge should score from Health Connect *per
 > type* and from tasks, and a **manually reported score must name who reported it and what**. That
