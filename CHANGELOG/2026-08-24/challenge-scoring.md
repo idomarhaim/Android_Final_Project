@@ -360,3 +360,105 @@ information or as an accusation, which no green assertion can answer.
 `visual-parity`, claimed at `77a32f1` **queued behind this one** and reserves `ui/theme`,
 `ui/components`, `ui/widget`, `feature/dashboard`, `feature/analytics` — it states that
 `feature/challenges/**` is this session's, and no path is contended in either direction.
+
+---
+
+# Round 2 — the two device layers, run
+
+Ido said *"I've just finished with 62"* mid-turn. That released `emulator-5554`, which is
+the only thing §6 above was waiting on, so the run happened in the same session rather than
+in the brief it had been deferred to.
+
+## 8 · Both layers are now green, and the render pass earned its keep
+
+| Layer | Result |
+|---|---|
+| **Instrumented UI** (`app/src/androidTest`, `adb install -r` + `am instrument`) | ✅ **327 / 327**, 0 failed. `ChallengesUiTest` alone is **13 / 13** |
+| **Device render pass** | ✅ 6 frames, `docs/render-passes/2026-08-24-challenge-scoring/` |
+| JVM unit, re-run after the fixes below | ✅ **1127 / 1127** — was 1125; **the +2 are `visual-parity`'s `AppMaterialTest`**, which arrived with `21ad2e0`, not this session's |
+
+`connectedDebugAndroidTest` was **not** used, per `kb/dev/android-device-verification.md` §8
+— it uninstalls the app and takes any Google account with it. Both APKs went on with
+`adb install -r` and the runner was driven directly.
+
+**`#58`'s order-dependence did not fire.** The full suite ran twice, in one order each time,
+green both times.
+
+## 9 · The defect the render pass found, and three ways the instrument nearly lied
+
+### 9.1 The defect: a badged row broke the list's baseline
+
+The badge lived in a `Column` beside the name, inside a `verticalAlignment =
+CenterVertically` row — so for the one participant with a badge the row centred on a
+**two-line** block while everybody else centred on one. Their **name floated up** and their
+rank, avatar and score drifted down.
+
+Every assertion was green. The words were right, the ranks were right, and the only thing
+that showed it was opening the PNG.
+
+**It matters beyond tidiness, which is why it was fixed rather than noted.** A row shaped
+differently from its neighbours is *marked* — and this badge is a claim about another person.
+`C4`'s register is that the app never asserts an intrinsic edge by itself, and singling a row
+out by **geometry** does exactly that in a way no wording review can catch. The badge now
+hangs below the row, indented to the name, and every row's first line shares a baseline.
+
+**Also changed while looking:** the stamp was `formatDay` — *"Aug 24, 2025"* — which spends a
+third of the line on a year nobody is in doubt about. Now `DateTimeUtils.relative`, so it
+reads *"1d ago"* and falls back to a full date only when that is genuinely what you want.
+
+### 9.2 Three instrument failures, each of which passed its own assertions
+
+Worth more than the defect, because each one produced a **green** result that was false.
+
+1. **A 71 px capture.** `AppModalBottomSheet` renders in a window of its own, so `onRoot()`
+   matches two roots. Caught by the size floor inherited from `DurationBoxRenderTest`.
+2. **A 1344×2992 rectangle of flat `#d3e3fb`.** Selecting the *tallest* root fixed (1) and
+   introduced this: the tallest root is the **host** window, which — once the sheet has taken
+   the content away — is empty. It passed **every** floor: big enough, wide enough, 22 kB on
+   disk. **Nothing but opening the file caught it**, twice.
+   - The fix is structural, not a better selector: `StandingsList` is now split out of
+     `StandingsSheet`, so the thing under review renders in an ordinary window. **A surface
+     that cannot be photographed cannot be reviewed**, which makes that seam part of the
+     feature rather than a favour to a test.
+   - And the floor is raised to the property a blank frame cannot have: **more than one
+     colour**, sampled on a coarse grid.
+3. **A dark frame that was light.** `StandingsList` paints no background — in the app a sheet
+   does — so rendered bare it put dark-theme *foreground* colours on the host's *light*
+   background. That reads as a real, serious product defect (*"the badge is unreadable in dark
+   mode"*) and is false: the app never draws it there. Fixed by wrapping the pass in a
+   `Surface`. **A render pass that photographs a composable out of its container measures the
+   container's absence.**
+
+### 9.3 A fourth, and it is the family `CLAUDE.md` already names
+
+`StandingsList` was added to the **app** APK, and only the **androidTest** APK was rebuilt and
+installed. The run died with `NoSuchMethodError: No static method StandingsList(...)`. Same
+family as the `${PIPESTATUS[0]}` trap: the thing you install is not the thing you just built.
+Both APKs go on together, every time.
+
+## 10 · What was looked at, and the verdict
+
+Six frames — standings, card-linked, card-unlinked — in **both** brightnesses:
+
+- **Does the badged row read as information, or as an accusation?** Information. It is
+  `labelSmall` in `onSurfaceVariant`, below the name, with no icon, no error colour and no
+  word like *unverified*. Beside three unbadged rows it reads as a footnote, not a mark.
+- **Is the absence of a badge the honest default?** Yes — `#1`, `#3` and `#4` say nothing at
+  all and read as the ordinary case, which is what §6 means a standing to be.
+- **Is it re-ranked?** No. Ann's **typed** 8200 sits at `#2`, above a derived 6050.
+- **Long names?** `Yonatan Ben-Shimon` fits at 1344 px with room to spare; the badge is one
+  line and ellipsizes rather than wrapping.
+- **Both brightnesses?** Legible in both, after 9.2's third fix.
+
+**Not done, and it stays owed:** the **Hebrew** look. `ReportedBadge` builds its sentence by
+**concatenation**, which is the shape that breaks first under bidi, and
+`feature/challenges` is unswept (`AGENTS.md` §0.8) so its literals are English by rule. It
+belongs to [`#51`](https://github.com/idomarhaim/Android_Final_Project/issues/51) and is
+named in §5 above rather than swept here as a favour, which that test explicitly forbids.
+
+**Also still owed, unchanged by this round:** the run on **Ido's S25** at its real geometry
+(384 dp / 450 dpi / font 1.15). He chose that instrument and he is right — the last four
+layout defects were found there and not on an emulator — but it needs him to reconnect the
+phone, and `visual-parity` is mid-way through changing what every screen looks like, so the
+frames above would not survive their landing anyway.
+`sessions/challenge-scoring-render-pass.md` stays **ready** for exactly that.

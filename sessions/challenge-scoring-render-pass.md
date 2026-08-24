@@ -16,7 +16,23 @@ singletons:
 created: 2026-08-24 by challenge-scoring
 ---
 
-# Run the two layers `challenge-scoring` could not: the instrumented suite, and a look at the badge
+# Run the render pass on Ido's S25 — the emulator half is done
+
+> ⚠️ **NARROWED 2026-08-24, same evening.** Ido released `#62` mid-session, so
+> `challenge-scoring` took `emulator-5554` and ran **both** layers there: the full
+> instrumented suite **327 / 327**, and a six-frame render pass that found and fixed a
+> real defect (a badged row broke the list's baseline). See
+> `CHANGELOG/2026-08-24/challenge-scoring.md` §8–10 and
+> `docs/render-passes/2026-08-24-challenge-scoring/`.
+>
+> **What is left is §2's look and §3's Hebrew, on the REAL phone.** Ido chose the S25 and
+> the reason stands: the last four layout defects were found at 384 dp / 450 dpi / font
+> 1.15 and did **not** reproduce on an emulator. §1 below is **done** — do not re-run it
+> as though it were owed.
+>
+> **And wait for `visual-parity`.** They are changing what every screen looks like
+> (`21ad2e0`, glassmorphism defaults and entrance motion); frames shot before that lands
+> will not match the app after it.
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 

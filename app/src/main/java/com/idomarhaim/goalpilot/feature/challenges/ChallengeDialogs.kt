@@ -315,7 +315,29 @@ internal fun ScoreEntryDialog(
 internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     AppModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+        StandingsList(card)
+    }
+}
+
+/**
+ * The standings themselves, without the sheet around them.
+ *
+ * **Split out for a reason that is not style.** `AppModalBottomSheet` renders in a
+ * **window of its own**, so nothing in a Compose test can photograph it: `onRoot()`
+ * refuses with *"expected exactly 1 node but found 2 that satisfy (isRoot)"*, and every
+ * other root selector lands on the host window, which — once the sheet has taken the
+ * content away — is a full-screen rectangle of flat background. `Observed:` 2026-08-24,
+ * twice: a 1344x2992 blank that passed every size floor a render pass had.
+ *
+ * The badge below is a claim about **another user** shown to everyone in the challenge,
+ * so *"does it read as information or as an accusation?"* is the question this feature is
+ * actually risky for — and it is answerable only by looking. A surface that cannot be
+ * photographed cannot be reviewed, which makes this seam part of the feature rather than
+ * a favour to a test. `ChallengeProvenanceRenderPass` is the camera.
+ */
+@Composable
+internal fun StandingsList(card: ChallengeCard, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
             Text(card.challenge.title, style = MaterialTheme.typography.titleLarge)
             if (card.challenge.description.isNotBlank()) {
                 Text(
@@ -361,26 +383,44 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
             }
             LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
                 items(card.standings, key = { it.uid }) { standing ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Ranks arrive already stamped, with ties sharing one —
-                        // 1, 1, 3. Nothing here re-derives them from position.
-                        Text(
-                            "#${standing.rank}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(width = 38.dp, height = 24.dp),
-                        )
-                        Avatar(
-                            photoUrl = standing.photoUrl,
-                            name = standing.displayName.ifBlank { "?" },
-                            size = 32.dp,
-                        )
-                        Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
+                    // THE BADGE HANGS BELOW THE ROW; IT IS NOT INSIDE IT.
+                    //
+                    // Putting the badge in a Column beside the name is the obvious
+                    // arrangement and it is wrong, because a centred Row then centres on a
+                    // block that is two lines tall for one participant and one line tall
+                    // for everybody else — so the badged person's NAME floats up and their
+                    // rank, avatar and score drift down, and the list loses the single
+                    // baseline that makes standings scannable.
+                    //
+                    // `Observed:` 2026-08-24, the first frame of
+                    // `ChallengeProvenanceRenderPass` — `Ann`'s name sat visibly higher
+                    // than `Yonatan Ben-Shimon`'s and `Ido (you)`'s in the same list. Every
+                    // assertion was green: the words were right, the ranks were right, and
+                    // nothing but the picture showed it.
+                    //
+                    // It matters beyond tidiness. A row that is shaped differently from its
+                    // neighbours is *marked*, and this badge is a claim about another
+                    // person — `C4`'s register is that the app never asserts an intrinsic
+                    // edge by itself, and singling a row out by geometry does exactly that
+                    // in a way no wording review would catch.
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            // Ranks arrive already stamped, with ties sharing one —
+                            // 1, 1, 3. Nothing here re-derives them from position.
+                            Text(
+                                "#${standing.rank}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(width = 38.dp, height = 24.dp),
+                            )
+                            Avatar(
+                                photoUrl = standing.photoUrl,
+                                name = standing.displayName.ifBlank { "?" },
+                                size = 32.dp,
+                            )
                             Text(
                                 text = standing.displayName.ifBlank { "Someone" } +
                                     if (standing.isCurrentUser) " (you)" else "",
@@ -392,19 +432,25 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
                                 },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(start = 12.dp).weight(1f),
                             )
-                            ReportedBadge(standing, card.challenge.metricWord)
+                            Text(
+                                ChallengesViewModel.format(standing.score),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
                         }
-                        Text(
-                            ChallengesViewModel.format(standing.score),
-                            style = MaterialTheme.typography.titleMedium,
+                        // Indented to the name, so it reads as a footnote to this row
+                        // rather than as a second row of its own.
+                        ReportedBadge(
+                            standing = standing,
+                            metricWord = card.challenge.metricWord,
+                            modifier = Modifier.padding(start = 82.dp),
                         )
                     }
                 }
             }
         }
     }
-}
 
 /**
  * The provenance line under a standings row — Ido's third ask on `#23`, 2026-08-24:
@@ -432,7 +478,11 @@ internal fun StandingsSheet(card: ChallengeCard, onDismiss: () -> Unit) {
  * scoring stops a win being *typed*, not a reading being *forged*.
  */
 @Composable
-internal fun ReportedBadge(standing: ChallengeStanding, metricWord: String) {
+internal fun ReportedBadge(
+    standing: ChallengeStanding,
+    metricWord: String,
+    modifier: Modifier = Modifier,
+) {
     if (!standing.isReported) return
     val who = if (standing.isCurrentUser) {
         "You reported"
@@ -453,7 +503,11 @@ internal fun ReportedBadge(standing: ChallengeStanding, metricWord: String) {
         }
         if (standing.reportedAtEpochMillis > 0L) {
             append(" · ")
-            append(DateTimeUtils.formatDay(standing.reportedAtEpochMillis))
+            // `relative`, not `formatDay`: a challenge runs for weeks, so "yesterday" is
+            // what a competitor actually wants to know and "Aug 24, 2025" spends a third
+            // of the line on a year nobody is in doubt about. `Observed:` the first render
+            // frame, where the full date pushed the sentence to two-thirds of the row.
+            append(DateTimeUtils.relative(standing.reportedAtEpochMillis))
         }
     }
     Text(
@@ -462,6 +516,7 @@ internal fun ReportedBadge(standing: ChallengeStanding, metricWord: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
     )
 }
 
