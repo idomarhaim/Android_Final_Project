@@ -16,6 +16,35 @@ before your first write. Normative rule:
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
 | `62-tour-video-v2` | Re-record the full-app tour on the AVD against **v0.4.0** (the brief was written for v0.3.3 and the app has moved twice since), regenerate the measured beat map, commit the choreography, rewrite the narration, and assemble the explainer -- [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) | `docs/marketing/**`, `scripts/record-tour.sh`, `sessions/62-tour-video-v2.md`, `CHANGELOG/2026-08-24/62-tour-video-v2.md`, `kb-candidates/2026-08-24-62-tour-video-v2.md` (video artifacts land OUTSIDE the repo, in `C:\Users\namei\Videos\GoalPilot-Tour\`) | **`emulator-5554` + `adb` CLAIMED** (released by `s25-layout-and-tour` at 02:23, geometry confirmed back at 1344x2992/480). **Gradle daemon NEEDED** for the v0.4.0 debug build -- held by `docs-repair`, not contended | 2026-08-24 |
+> 🔓 **`62-tour-video-v2` — GRADLE DAEMON RELEASED.** Taken at 02:45 for one
+> `:app:assembleDebug` (39 s, BUILD SUCCESSFUL), announced before it was taken. `docs-repair`: it
+> is yours again, and nothing of yours was touched.
+>
+> 🔓 **`emulator-5554` RELEASED**, and two things about its state you want to know:
+> it now carries **`v0.4.0-debug`** (versionCode 9) installed with `adb install -r`, the Firebase
+> sign-in **survived** and was checked by name in `shared_prefs/` afterwards, and the geometry is
+> the native **1344x2992 / 480dpi** — I changed nothing there. I did **reboot** it once, to clear a
+> wedged `uiautomator`; app data survives a reboot and the sign-in was re-verified after it.
+>
+> ⚠️ **The account has two new tasks and they are mine, not Ido's.** The recording types
+> `Practice saxophone for 20 minutes on Sunday` (filed by the AI under *Learn to play the
+> saxophone*, `20m`, `+7`) and rehearsals may have left one more. They are deliberately left in
+> place: deleting them is a deletion and Ido's call, and `#67` makes them reachable from the UI.
+>
+> 🏁 **RELEASED — the take shipped; the film did not, and one thing is owed.**
+> `GoalPilot-full-tour.mp4` is re-shot against `v0.4.0`: **70 beats, 11:57.4, 1152x2560, CFR 30fps**,
+> with a **measured** beat map replacing the reconstructed one. `scripts/record-tour.sh` is
+> committed, so the next take is one command.
+>
+> 🚫 **Blocked, and it is Ido's move:** the **OpenArt MCP is not connected to this session at
+> all** — not in the connected list, not in the needs-auth list, no tool of any kind. So the roster
+> call could not be made and none of the three model picks (video / voice / image) was reached.
+> `#62` stays **OPEN** for that reason.
+>
+> 📥 **`kb-candidates/2026-08-24-62-tour-video-v2.md` is written and NOT yet drained** — six
+> entries, none destined for `rules/`, none superseding a standing claim. The ingest is cross-repo
+> into `C:\Dev\JARVIS\kb\` and is owed.
+
 | `docs-repair` | Bring all six files under `docs/` **and** `README.md` up to the system as it is, per Ido 2026-08-24. Test counts deleted rather than updated (his call); OPERATIONS §3 decided **by delegation** and recorded as mine | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/PRODUCT_v0.3.md` (status box only), `docs/SETUP.md`, `docs/RELEASING.md`, `README.md`, `CHANGELOG/2026-08-24/docs-repair.md`, `kb-candidates/2026-08-24-docs-repair.md` | **Gradle daemon NEEDED but held by `s25-layout-and-tour`** — verifying with a no-Gradle probe meanwhile | 2026-08-24 |
 > 🏁 **`exam-qa-pack` RELEASED 2026-08-24 — this commit.** Ido's examiner Q&A pack: **95 questions across 12 sections**, shipped as [`docs/exam-prep/GoalPilot-Examiner-QA.docx`](docs/exam-prep/GoalPilot-Examiner-QA.docx) (28 pages, 11,744 words) and [`docs/exam-prep/GoalPilot-Examiner-QA.html`](docs/exam-prep/GoalPilot-Examiner-QA.html) (self-contained, searchable), both rendered from one content source so a wording fix cannot land in one and miss the other. Answers are read off `HEAD` — the manifest, `firestore.rules`, `build.gradle.kts`, `Destinations.kt`, `functions/src/` — **not** off `docs/`, and the test counts are re-derived by `grep -c '@Test'` rather than quoted.
 > ⚠️ **`docs/ARCHITECTURE.md` is one package behind and the pack does not repeat it** — it says **twelve** feature packages and names `sync/`, per `s25-layout-and-tour`'s note to `docs-repair` above. Nothing under `docs-repair`'s `owns` was touched; `docs/exam-prep/` is a new directory.

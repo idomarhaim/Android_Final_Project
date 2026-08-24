@@ -52,28 +52,48 @@ Veo does well. Prompts for it are in [§5](#5--google-flow-prompts--the-opening-
 
 ## 1 · The footage
 
-Three files, all in `C:\Users\namei\Videos\GoalPilot-Tour\` — outside the repo, because they
-are binaries.
+Files in `C:\Users\namei\Videos\GoalPilot-Tour\` — outside the repo, because they are binaries.
+
+**Re-shot 2026-08-24 by session `62-tour-video-v2`, against `v0.4.0`.**
 
 | file | what it is |
 |---|---|
-| **`GoalPilot-full-tour.mp4`** | **the deliverable.** `6:40.7`, 1080 × 2400, H.264, **constant 30 fps**, 21 MB, silent. Use this one. |
-| `GoalPilot-full-tour-raw.mp4` | the untouched `screenrecord` output, same picture and length but **variable frame rate** (1 676 frames, because `screenrecord` emits a frame only when the screen changes). Kept as the original; some editors and most AI tools mishandle VFR, which is why the CFR file exists. |
-| `GoalPilot-highlights-60s.mp4` | a **60-second** chronological cut of seven moments — home, smart add, a goal, scheduling, the analytics donut, the theme switch. Deliberately skips the Profile and Social beats, so it carries **no email, no friend code and nobody else's name**. |
+| **`GoalPilot-full-tour.mp4`** | **the deliverable.** `11:57.4`, **1152 × 2560**, H.264, **constant 30 fps**, 21 522 frames, 44 MB, silent. Use this one. |
+| `GoalPilot-full-tour-raw.mp4` | the untouched `screenrecord` output, same picture and length but **variable frame rate** (5 275 frames, because `screenrecord` emits a frame only when the screen changes). Most editors and essentially every AI video tool mishandle VFR, which is why the CFR file exists. |
+| `GoalPilot-highlights-60s.mp4` | the **2026-08-22** 60-second cut, kept. It is of `v0.3.2` and therefore predates the calendar, the Google Calendar sync, `#64`'s run and the `No number` chips — but it carries **no email, no friend code and nobody else's name**, which the full tour does. |
 
 | | |
 |---|---|
-| **Recorded** | 2026-08-22, `emulator-5554` (`sdk_gphone64_x86_64`, Android 15), app `v0.3.2` |
+| **Recorded** | 2026-08-24, `emulator-5554` (`sdk_gphone64_x86_64`, Android 15), app **`v0.4.0`** (versionCode 9, debug variant) |
 | **Account** | Ido's real account — 9 goals, 4 life areas, a friend, a live leaderboard |
-| **Beat map** | [`tour-timecodes.md`](tour-timecodes.md) — all 63 beats with their second |
+| **Beat map** | [`tour-timecodes.md`](tour-timecodes.md) — **70 beats, every one measured** rather than reconstructed |
+| **Produced by** | `scripts/record-tour.sh`, committed. The next take is one command. |
 
-⚠️ **Before this goes anywhere public**, read the last section of `tour-timecodes.md`: the
-full tour shows Ido's email address, his friend code, and a friend's real name, and it names
-the two timecode ranges where. The 60-second cut does not.
+⚠️ **The 2026-08-22 cut was overwritten and is gone.** Its filename was this file's own Exit
+criterion, so a new take wrote over it; nothing outside this folder held a copy, and a video is not
+in git. `archive_previous` in the script now stamps and keeps whatever is already there, so this
+costs one cut and not two. The 60-second highlights file survived only because its name differs.
 
-The status bar is in SystemUI demo mode (a clean 9:00 clock, full wifi, full battery) so
-no clutter or notification dates date the video. Everything below the status bar is the
-shipping app.
+⚠️ **Before this goes anywhere public**, read the last section of `tour-timecodes.md`: the full tour
+shows Ido's email address, his friend code and a friend's real name, and it names the timecodes
+where. The 60-second cut does not.
+
+⚠️ **The UI is English; the data on screen is not.** The four life areas are named in Hebrew
+(בריאות · לימודים · קריירה · זוגיות, synced from Ido's Google Tasks lists), the home screen greets
+him in Hebrew, and the friend in the leaderboard has a Hebrew name. See §7 — this is a fact about
+the footage, not about the app.
+
+**Known gap in this take.** Act 5's add-task sub-flow did not fire: the AI estimate, the date picker
+and the submit were all missed, because the measure-proposal hunt earlier in that act scrolls to the
+bottom of the goal screen and the add-task row is at the **top** of it. Fixed in the script
+(`scroll_to_top` before the hunt) but **not re-shot** — so the scheduling beat in the current file is
+the goal screen and a date picker rather than a task being estimated and scheduled end to end.
+Act 2's smart-add is unaffected and worked: the AI filed *"Practice saxophone for 20 minutes on
+Sunday"* under *Learn to play the saxophone* at `20m · +7`, and it is visible on the goal screen
+later in the same recording.
+
+The status bar is in SystemUI demo mode (a clean 9:00 clock, full wifi, full battery) so no clutter
+or notification dates the video. Everything below the status bar is the shipping app.
 
 ---
 
@@ -100,9 +120,15 @@ feel.**
 
 ## 3 · The narration script
 
-Written to be read at a calm ~145 words per minute. Each block names the on-screen beat
-it belongs over; the second-by-second timecodes are in
-[`tour-timecodes.md`](tour-timecodes.md), generated from the recording itself.
+**Rewritten 2026-08-24 by session `62-tour-video-v2`, against `v0.4.0`.** The version this
+replaced was written on 2026-08-22 against `v0.3.2`, and by the time it was read again seven
+tickets had shipped. Two of its paragraphs were not merely dated, they were **false**: Act 3
+narrated the Google Tasks and Health Connect cards as living on the home screen, and Act 5 was
+worded around the app having no calendar grid and no Google Calendar sync. It has both.
+
+Written to be read at a calm ~145 words per minute. Each block names the on-screen beat it belongs
+over; the second-by-second timecodes are in [`tour-timecodes.md`](tour-timecodes.md), generated by
+`scripts/record-tour.sh` from the recording itself.
 
 ### Act 0 — the problem *(no screen recording; b-roll or a title card)*
 
@@ -145,16 +171,25 @@ it belongs over; the second-by-second timecodes are in
 
 ### Act 3 — the rest of the home screen
 
-> The tasks you already keep somewhere else come in the same way. Pull your open Google
-> Tasks across and GoalPilot sorts each one under the right goal — you review everything
-> before a single item is saved.
+> Sometimes it cannot tell. A task that belongs to no goal and has no date used to vanish —
+> filed nowhere, listed on no screen, and impossible to delete because there was nowhere to
+> delete it from. Now the app says so, in those words, and hands you the two questions
+> separately: what goes, and what stays.
 >
-> Connect Health Connect and your steps and your sleep stop being a separate app you have
-> to remember to open. They become progress on the goals you already set.
+> That is a small thing to build and a large thing to promise. Nothing you put into this app
+> can end up somewhere you cannot reach.
 >
-> And the coach answers with something you could do today, rather than a motivational
-> poster — and if you would rather it answered in your own model, you can hand it your own
-> key. Everything works without one.
+> The coach answers with something you could do today, rather than a motivational poster —
+> and if you would rather it answered in your own model, you can hand it your own key.
+> Everything works without one.
+>
+> And a week's progress is something you post, rather than something you have to explain.
+
+⚠️ **What changed here, and why the old paragraph could not stay.** Until 2026-08-24 the Google
+Tasks import and the Health Connect card were on this screen, and this act narrated them. Ido moved
+both into Settings under *Connected apps* (`s25-layout-and-tour`, his own placement call), so they
+are narrated in **Act 12** now. A narration that promises them here sends the viewer to a screen
+that does not have them.
 
 ### Act 4 — goals, grouped by life area
 
@@ -163,11 +198,19 @@ it belongs over; the second-by-second timecodes are in
 > They sit under **life areas** — the parts of your life you have decided are worth
 > investing in. Health. Studies. Career. Relationships. Every goal belongs to one, and
 > that single decision is what makes everything later possible.
+>
+> And where a goal has no number yet, it says *no number* — not nought per cent. An app that
+> prints a zero for something you have simply not measured is lying to you in a way you will
+> not notice, and this one refuses to.
 
 ### Act 5 — one goal, and how work actually gets scheduled
 
 > Open a goal and you get the whole thing in one screen: the measure, the progress against
 > it, the life area it serves, and every task underneath.
+>
+> If it has no measure, the app offers one — measure it in sessions, in kilometres, in pages
+> — drawn from what you have actually been logging. You are not asked to invent a metric
+> before you are allowed to start.
 >
 > Add a task and the AI estimates it for you — how demanding it is, how long it will
 > take, and what it is worth. Three hours of your time, sixty points.
@@ -175,17 +218,63 @@ it belongs over; the second-by-second timecodes are in
 > Then schedule it. Pick the day, and it is due that day.
 > Add a time, and it becomes a real deadline — because GoalPilot knows the difference
 > between *the day passed* and *late, and still owed.*
->
-> That is the task on your calendar, attached to the goal it serves — which is the join
-> no other app makes.
 
-### Act 6 — life areas
+### Act 6 — the calendar *(new; this is the join)*
+
+> And here is where that hour goes.
+>
+> Everything with a time on it lands on the calendar. Not a separate calendar app holding a
+> separate list — the same tasks, under the same goals, on the hours you gave them.
+>
+> The bar across the top of each day is how full that day already is, before you add to it.
+> When it turns, that is the app telling you that you have promised away more hours than the
+> day has in it.
+>
+> Press and hold a block and you can pick it up and move it. And when the thing you moved
+> repeats, it asks the only question that matters: did you mean this one, or this one and
+> every one after it?
+>
+> That is the join no other app makes. The task, the goal it serves and the hour it costs
+> are the same object — so moving one of them moves all three.
+
+### Act 7 — and it is your real calendar
+
+> It is also *your* calendar. GoalPilot writes to Google Calendar — onto a calendar of its
+> own, so it never touches anything you already keep there — and the hours turn up beside
+> your lectures and your meetings, which is where they have to be if they are ever going to
+> compete with them.
+>
+> And when something disappears from that calendar, the app notices, and asks you whether
+> you meant it.
+
+*Shot note:* this act's proof shot is **Google Calendar's own UI** with the GoalPilot entries in
+it, not GoalPilot's. Stills already exist at
+`docs/render-passes/2026-08-23-61-google-calendar/`. Showing this from inside GoalPilot *asserts*
+the sync; showing it from inside Google Calendar *demonstrates* it, and that difference is the
+whole value of the beat.
+
+### Act 8 — life areas, and the record of what you kept
 
 > Life areas are yours to define. Name them, order them, or pull them straight from the
 > lists you already keep in Google Tasks — because those list names already *are* the
 > areas of your life.
+>
+> And under each one is the honest record: window by window, what you kept, what you missed,
+> and what is **still owed**.
+>
+> Not a score. Not a streak you can break once and never repair. Three different things,
+> drawn as three different shapes — because a single percentage would have averaged away the
+> only distinction worth keeping: that a window you have not reached yet is not a window you
+> failed.
 
-### Act 7 — analytics
+⚠️ **Three things the voiceover on this beat must not do**, because `#64` was built specifically to
+avoid them: do not call it a **score**, do not call it a **rate**, and do not describe any part of
+it as **red**. The run is drawn by *form* — filled, hollow, dashed with a pip, dotted, a dashed ring
+with a plus — and carries no hue coding and no ratio anywhere on screen. A voiceover saying *"your
+success rate"* over it contradicts the picture the viewer is looking at, which is worse than saying
+nothing.
+
+### Act 9 — analytics
 
 > And here is what the whole structure was for.
 >
@@ -195,9 +284,12 @@ it belongs over; the second-by-second timecodes are in
 > Two thirds of this year went into studies. A fifth into health. And thirteen percent
 > went somewhere that was never filed at all.
 >
+> Goals with no number are named here rather than charted as a zero — the same refusal as
+> everywhere else. The app would rather show you a gap than a wrong number.
+>
 > That is not a judgement. It is just the first honest number you have had.
 
-### Act 8 — social and challenges
+### Act 10 — social and challenges
 
 > None of this has to be done alone.
 >
@@ -207,13 +299,18 @@ it belongs over; the second-by-second timecodes are in
 > And challenges. Pick a measure, invite people, and let the standings say what a promise
 > to yourself never could.
 
-### Act 9 — profile
+### Act 11 — profile
 
 > Your profile holds your level, your points, and a six-character code so a friend can add
 > you without either of you typing an email address.
 
-### Act 10 — settings
+### Act 12 — settings
 
+> Everything the app connects to lives in one place. Your Google Tasks, brought across and
+> filed under the right goals — and you review every one of them before a single item is
+> saved. Health Connect, so your steps and your sleep stop being a separate app you have to
+> remember to open; they become progress on the goals you already set.
+>
 > The app looks how you want it to look. Four materials — frosted glass, liquid glass, a
 > soft raised surface, and a dark one. Colour themes, background treatments, light or dark.
 >
@@ -222,10 +319,19 @@ it belongs over; the second-by-second timecodes are in
 > Tell it your waking hours and it knows when your day is genuinely full — and when to ask
 > you to plan tomorrow.
 
-### Act 11 — the guided tour
+### Act 13 — the guided tour
 
 > And nobody has to be taught any of it, because the app teaches itself. Seven steps over
 > the real screen, on first launch — and replayable, from Settings, forever.
+>
+> It does not only point at things, either. When it rings a control and asks you to press
+> it, pressing it opens what it opened — and the tour waits there while you look, instead of
+> pulling you straight back.
+
+⚠️ **That last sentence is only true from `v0.4.0`.** Before 2026-08-24 the spotlight ringed the
+Calendar tab and then swallowed the press it had invited; the first fix opened the Calendar for
+about one frame before steering back to Home. If this film is ever re-cut from older footage, that
+line comes out with it.
 
 ### Close
 
@@ -366,24 +472,51 @@ rebuild.
 Written down because a narration that promises a feature the examiner then cannot find is
 worse than one that promises less.
 
+**Re-checked 2026-08-24 against `v0.4.0` by session `62-tour-video-v2`.** Two entries in the
+"not in the app" list below were **false** by then and have been moved up: the calendar surface
+(`#60`) and Google Calendar sync (`#61`) both shipped on 2026-08-23. That is the failure mode this
+section exists to prevent, arriving from the other direction — a narration that promises *less*
+than the app does is a narration that throws away its two strongest beats.
+
 **In the recording, and real:** life areas · goals with a measure and progress · tasks
 with AI-estimated difficulty, duration and points · plain-language task filing (the AI
 reads a sentence and files it under the right goal) · scheduling a task to a **date**, and
-to a **date and time** as a deadline · Google Tasks import for tasks *and* for life-area
-names · Health Connect · the AI coach · points, levels · friends leaderboard, friends
-feed, photo posts, challenges · friend codes · the time-share analytics with day / week /
-month / quarter / year · four materials, colour themes, background treatments, light/dark
-· waking hours and a planning time · the seven-step guided tour.
+to a **date and time** as a deadline · **a three-day and week calendar grid, with an all-day strip
+and a per-day load bar** · **press-and-hold drag to move a block, and a scope sheet where the thing
+repeats** · **two-way Google Calendar sync onto GoalPilot's own calendar, and a card when an entry
+disappears from it** · Google Tasks import for tasks *and* for life-area names · Health Connect ·
+the AI coach · points, levels · friends leaderboard, friends feed, photo posts, challenges · friend
+codes · the time-share analytics with day / week / month / quarter / year · **a per-life-area record
+of kept, missed and still-owed windows** · **a measure the app proposes for a goal that has none** ·
+**an explicit `No number` wherever a goal has no measure, instead of a fabricated nought** ·
+**deleting anything, including a task filed under no goal and no date** · four materials, colour
+themes, background treatments, light/dark · waking hours and a planning time · the seven-step
+guided tour.
 
 **Not in the app, and therefore not in the narration:**
 
-- ❌ **There is no calendar grid, and no Google Calendar sync.** Scheduling exists — a task
-  takes a date, and adding a time promotes it to a deadline — but there is no month or
-  week view to look at, and nothing is written to Google Calendar. The in-app calendar
-  surface is [`#26`](https://github.com/idomarhaim/Android_Final_Project/issues/26) and is
-  still a prototype; the only Google integration that ships is **Tasks**, read-only.
-  The narration in §3 Act 5 is worded to say exactly what the app does — *"the task on
-  your calendar"* means the task carries its day and hour, and nothing stronger.
 - ❌ **Hebrew is deferred.** The language picker offers English and System only; `#51` is
-  parked open by decision, so the video is English and the UI in it is English.
+  parked open by Ido's own decision, so the video is English and the UI in it is English.
+  ⚠️ **The UI is English; the *data* on the account being filmed is not.** Ido's four life areas
+  are named in Hebrew (בריאות · לימודים · קריירה · זוגיות, synced from his Google Tasks lists),
+  the home screen greets him in Hebrew, and the friend in the leaderboard has a Hebrew name. That
+  is a fact about the footage, not about the app, and it is settled before a take rather than
+  after.
 - ❌ Milestones (`E14`) are modelled in the brief but are not a screen.
+
+**In the app, but with nothing on this account to show it with.** A third category, added
+2026-08-24, because it is the one that actually bit: the feature ships, the narration is true, and
+the footage shows an empty state. Measured on `emulator-5554` against Ido's live account:
+
+| feature | what the screen actually says today |
+|---|---|
+| Overall progress (home) | *"No goal has a number yet"* — **no goal on the account carries a measure**, so there is no ring and no percentage |
+| `#64`'s kept / missed / still-owed run | *"Nothing has been due here yet"* on **every** life area — no occurrence has a due window, so the run renders its empty state |
+| The calendar (`#60`) | **one** entry, and the day reads *free*. Enough to show the grid and the drag; not enough to show a load bar filling |
+| The scope sheet (`#68`) | needs a **recurring** block to appear at all, and there is not one |
+| Analytics by **week** or **month** | *"Nothing completed in this week yet"* — **only the Year view has data** (67 % / 20 % / 13 % over 3h 45m), which is what the narration in §3 Act 9 describes and what the recording therefore shoots |
+
+None of that is a bug and none of it is a doc error: it is an account that has not been used for
+two weeks. It matters here only because a **marketing film** of an app is a film of its *data*, and
+these five beats are the ones where this account has none.
+
