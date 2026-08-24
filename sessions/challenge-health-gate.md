@@ -3,6 +3,7 @@ repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
 status: ready
+superseded_by: sessions/challenges-finish-the-job.md
 issue: 23
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/domain/model/Challenge.kt
@@ -21,6 +22,13 @@ created: 2026-08-24 by challenge-scoring
 ---
 
 # Joining a challenge: the Health Connect gate, and the goal it is supposed to create
+
+> ⛔ **SUPERSEDED 2026-08-24 by `sessions/challenges-finish-the-job.md` — run that instead.**
+> Ido asked for the four open challenge briefs to become **one** session he does not have to
+> be present for. This brief's content is folded into that one (§4), together with the
+> decision it left open, which is **taken there** rather than left for him. Kept rather than
+> deleted so the reasoning stays diffable — deletions are always-ask.
+
 
 **Repo** `c:\Dev\Android_Final_Project`, branch `main` · **Mode** `auto`
 
