@@ -1,59 +1,46 @@
-GoalPilot 0.5.0 — a new goal now files itself, and offers you a plan
+GoalPilot 0.5.2 — the app finally looks like it was designed to
 
-This is the release where creating a goal stops being a form you fill in and starts
-being a conversation. Two things are new, and the second one is the big one.
+Everything in this release was already built. None of it was switched on.
 
-1. THE GOAL FILES ITSELF
+1. THE APP OPENS AS GLASS, NOT AS GREY
 
-Type a title and press Create. The app reads the title and puts the goal under the
-right life area and the right category on its own — you do not pick them.
+GoalPilot has shipped four surface materials for a while — glassmorphism, liquid
+glass, soft (neo) and soft dark — each with its own lit background, and 3D volume
+on the charts. You could pick them in Settings > Appearance.
 
-"Run a marathon successfully" goes to Health, as Fitness.
+The problem was the starting point. A fresh install opened on the flat one, over a
+plain unlit ground, with flat charts — so unless you went hunting through Settings,
+you never saw any of it. Three defaults that were each defensible on their own added
+up to an app that looked like nothing had been designed.
 
-It is silent on purpose: filing a goal is bookkeeping, not a decision about your
-life, and it is one tap to change if it gets it wrong. If you DO pick a life area
-yourself — including tapping "None" — the app leaves your choice alone and does not
-second-guess it.
+It now opens on glassmorphism, over its own lit background: translucent panels with
+a bright rim, the colour showing through from behind. All four materials are still
+there in Settings > Appearance, and you can still combine any material with any
+background and turn 3D volume on or off.
 
-2. A WORK PLAN YOU APPROVE, THAT LANDS ON YOUR CALENDAR
+2. THE CARDS ARRIVE INSTEAD OF APPEARING
 
-Straight after the goal is created, a sheet slides up with a proposed plan: real
-steps, with real dates, spread over real weeks. For "Run a marathon successfully"
-that is around ten items over about three months — easy runs, long runs, a 10K, a
-half marathon, and the marathon itself.
+Blocks rise and fade in as a screen opens, one after another rather than all at once.
 
-Every step has a tick. Untick anything you do not want. Press "Add N steps" and
-what is left becomes:
+This existed too — on the home screen only. Every other screen in the app had no
+motion at all, because the animation is opt-in and only the dashboard had opted in.
+Goals, Calendar, Analytics, Challenges, Social, Life areas, Profile and Settings all
+have it now.
 
-  - tasks on the goal, each with its own date and duration
-  - entries on GoalPilot's own Calendar screen
-  - events in the GOALPILOT calendar inside Google Calendar, if you have connected it
+3. THE HOME-SCREEN WIDGETS ARE PANELS, NOT PLATES
 
-Nothing is written until you press that button. The plan is a proposal until then,
-and closing the sheet writes nothing at all.
+The widgets were opaque grey rectangles sitting on your wallpaper. They are now
+translucent, so the wallpaper shows through — which is what the design always
+called for.
 
-Two details worth knowing. Milestones — "Run 20 miles", "Finish marathon" — are
-states you reach, so they get a date but no duration and no points: they are not
-work you sit down and do. And work with a time of day is placed as a provisional
-block, which means if you miss it, the app says nothing. A plan you accepted and
-then did not follow is not going to turn into a wall of failures.
+They stay readable on any wallpaper you have. The panel is exactly as transparent
+as it can be while keeping its own text above the accessibility contrast floor
+against the worst case in both directions: a pure black wallpaper and a pure white
+one. That limit is measured and there is a test holding it.
 
-You can also ask for a plan on a goal you already have: open it for editing and
-press "Suggest a work plan".
+WHAT HAS NOT CHANGED
 
-ALSO IN THIS BUILD
-
-The visual work that has been landing over the last day comes with it — the
-glassmorphism look is now the default rather than something you had to turn on, and
-screens animate in. Challenge scoring now reads from your goals instead of waiting
-for someone to type a number, and it says who reported a score when a person did.
-
-KNOWN, AND SAID OUT LOUD
-
-The plan call fails roughly one time in six, and when it does the sheet tells you so
-and offers a retry. Press it again — it works. That is the free AI tier being
-unreliable rather than the app being broken, and it is being worked on.
-
-The new sheet is in English even if the rest of your app is in Hebrew. The plan
-STEPS themselves come back in your language — Hebrew goal, Hebrew steps — but the
-buttons and headings around them are not translated yet.
+Your data, your goals, your points and your settings. If you have already chosen a
+material, a background or a relief in Settings, that choice is yours and this
+release does not touch it — only the starting point for someone who has never
+chosen moves.
