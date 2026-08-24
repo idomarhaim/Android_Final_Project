@@ -15,7 +15,19 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `62-tour-assembly` | Assemble the explainer film and report the three models -- [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62). Inherits `docs/marketing/**` and `scripts/record-tour.sh` from `62-tour-video-v2`, whose brief is **closed** and whose own `owns:` list hands them over. Also owes **Step 0**: reverting the demo data seeded on Ido's live account 2026-08-24 11:07 | `docs/marketing/**`, `scripts/record-tour.sh`, `sessions/62-tour-assembly.md`, `CHANGELOG/2026-08-24/62-tour-assembly.md`, `kb-candidates/2026-08-24-62-tour-assembly.md` (video artifacts land OUTSIDE the repo, in `C:\Users\namei\Videos\GoalPilot-Tour\`) | **`emulator-5554` + `adb` CLAIMED** for the re-shoot and then the Step 0 revert -- released by `62-tour-video-v2` at 10:55. **Gradle daemon NOT needed** -- v0.4.0-debug (versionCode 9) is already on the device | 2026-08-24 |
 | `62-tour-video-v2` | Re-record the full-app tour on the AVD against **v0.4.0** (the brief was written for v0.3.3 and the app has moved twice since), regenerate the measured beat map, commit the choreography, rewrite the narration, and assemble the explainer -- [`#62`](https://github.com/idomarhaim/Android_Final_Project/issues/62) | `docs/marketing/**`, `scripts/record-tour.sh`, `sessions/62-tour-video-v2.md`, `CHANGELOG/2026-08-24/62-tour-video-v2.md`, `kb-candidates/2026-08-24-62-tour-video-v2.md` (video artifacts land OUTSIDE the repo, in `C:\Users\namei\Videos\GoalPilot-Tour\`) | **`emulator-5554` + `adb` CLAIMED** (released by `s25-layout-and-tour` at 02:23, geometry confirmed back at 1344x2992/480). **Gradle daemon NEEDED** for the v0.4.0 debug build -- held by `docs-repair`, not contended | 2026-08-24 |
+> ✅ **`62-tour-video-v2` — ROW RELEASED by `62-tour-assembly`, 2026-08-24 11:50, and here is how it was
+> established rather than assumed.** Its own brief is `status: done` in `sessions/done/62-tour-video-v2.md` —
+> a **positive self-report**, the same class as an explicit release note, so §5.3(c)'s transcript escalation
+> is not what settles it. Corroborating: the working tree is **clean**, `git log @{u}..HEAD` is **empty** (so
+> nothing of theirs is unpublished), and its last transcript turn (11:44:45) is a **handoff reply**, not
+> mid-work. Decisive on top of all that: **its own `owns:` list in `sessions/62-tour-assembly.md` hands
+> `docs/marketing/**` and `scripts/record-tour.sh` to this session**, and Ido assigned it by typing
+> `/kickoff 62-tour-assembly`. Nothing of theirs was edited — this note releases a row, it does not touch content.
+> **⚠️ The one thing it did NOT finish is now Step 0 of my brief and is owed:** the demo data seeded on Ido's
+> live account at 11:07 (three goals given a Count measure) still needs reverting. I hold it.
+
 > 🔓 **`62-tour-video-v2` — GRADLE DAEMON RELEASED.** Taken at 02:45 for one
 > `:app:assembleDebug` (39 s, BUILD SUCCESSFUL), announced before it was taken. `docs-repair`: it
 > is yours again, and nothing of yours was touched.
