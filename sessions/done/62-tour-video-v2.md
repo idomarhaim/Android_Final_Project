@@ -2,7 +2,18 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: active
+status: done
+result: |
+  Shipped 2026-08-24 in commit 1d6ef09. The take is re-shot against v0.4.0 --
+  70 beats, 11:57.4, 1152x2560, CFR 30fps -- with a MEASURED beat map replacing
+  the reconstructed one, scripts/record-tour.sh committed so the next take is one
+  command, and the narration rewritten (two of its paragraphs were false, not
+  merely dated).
+  NOT DONE, and it is one cause: the OpenArt MCP is not connected to this session
+  at all, so the roster call could not be made and none of the three model picks
+  was reached. #62 stays OPEN. Follow-on: sessions/62-tour-assembly.md.
+  Also owed: sessions/kb-drain-62.md (the candidates file is written and committed,
+  not yet drained).
 # Was `blocked_on: [60]`, and before that `[59, 60, 61]`. ALL THREE ARE CLOSED as of
 # 2026-08-23 (#60 closed with the calendar surface shipped), so the declared blocker is
 # stale and cleared -- same repair as c14435b made for #61. Verify rather than trust this.
