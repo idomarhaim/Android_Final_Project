@@ -131,6 +131,14 @@ class ChallengeRepositoryImpl @Inject constructor(
                     isOwner = uid != null && dto.ownerUid == uid,
                     hasJoined = participants.any { it.uid == uid },
                     myLinkedGoalId = myFactSnap?.getString(GOAL_ID).orEmpty(),
+                    // §3's quorum inputs, taken from the rows already read above rather
+                    // than from a second query: every participant's vote, and this user's
+                    // own. A bare list of ids, never a field on a standings row -- see
+                    // `ChallengeWithStandings.approvals` for why a count answers the only
+                    // question anybody has without naming who is holding out.
+                    approvals = participants.map { it.approvedChangeId },
+                    myApprovedChangeId = participants
+                        .firstOrNull { it.uid == uid }?.approvedChangeId.orEmpty(),
                     // Only the participants read is stamped. The challenge document
                     // beside it is cross-boundary too, but it holds owner-authored
                     // title and dates rather than a moving number, so an as-of
@@ -330,6 +338,103 @@ class ChallengeRepositoryImpl @Inject constructor(
                 Resource.Success(Unit)
             } catch (e: Exception) {
                 Resource.Error(e.message ?: "Could not report your score", e)
+            }
+        }
+
+    // ── Changing the measure, with everybody's consent ─────────────
+
+    override suspend fun proposeMeasureChange(
+        challengeId: String,
+        measure: Measure,
+    ): Resource<Unit> = withContext(io) {
+        val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+        if (measure.kind == null || measure.word.isBlank()) {
+            return@withContext Resource.Error("Say what it should count")
+        }
+        try {
+            val snap = challengeDoc(challengeId).get().await()
+            val dto = snap.toObject(ChallengeDto::class.java)
+                ?: return@withContext Resource.Error("That challenge no longer exists")
+            // Owner-only, and `firestore.rules` enforces it independently. Checked here so
+            // the refusal can say why in a sentence instead of PERMISSION_DENIED.
+            if (dto.ownerUid != uid) {
+                return@withContext Resource.Error("Only the owner can change the measure")
+            }
+            if (dto.measureKind == measure.kind.name &&
+                dto.measureWord?.trim() == measure.word.trim()
+            ) {
+                return@withContext Resource.Error("That is what it counts already")
+            }
+            val changeId = firestore.collection(FirestorePaths.CHALLENGES).document().id
+            val now = System.currentTimeMillis()
+            // ONE BATCH: THE PROPOSAL AND THE OWNER'S OWN VOTE.
+            //
+            // The owner is a participant like anybody else, so their agreement is needed
+            // for the quorum -- and asking them to vote for the proposal they have just
+            // typed reads as the app not trusting them to mean it. Batched so a solo
+            // challenge cannot end up with a proposal its only member has not approved,
+            // which would wait forever with nothing left to write.
+            firestore.batch().apply {
+                update(
+                    challengeDoc(challengeId),
+                    mapOf(
+                        PENDING_CHANGE_ID to changeId,
+                        PENDING_MEASURE_KIND to measure.kind.name,
+                        PENDING_MEASURE_WORD to measure.word.trim().take(UNIT_MAX),
+                        PENDING_PROPOSED_AT to now,
+                    ),
+                )
+                update(
+                    participantsCol(challengeId).document(uid),
+                    mapOf(APPROVED_CHANGE_ID to changeId),
+                )
+            }.commit().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not propose that change", e)
+        }
+    }
+
+    override suspend fun approveMeasureChange(
+        challengeId: String,
+        changeId: String,
+    ): Resource<Unit> = withContext(io) {
+        val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+        if (changeId.isBlank()) return@withContext Resource.Error("There is nothing to approve")
+        try {
+            // ONE FIELD, ON THE ONE DOCUMENT THIS USER MAY WRITE.
+            //
+            // `update`, never `set` -- a merging set would create a participant row for
+            // somebody who has left, which is the same resurrection `reportScore` and the
+            // projection both document. Somebody who has left is not in the quorum, and
+            // approving on their way out must not put them back in it.
+            participantsCol(challengeId).document(uid)
+                .update(APPROVED_CHANGE_ID, changeId).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not record your approval", e)
+        }
+    }
+
+    override suspend fun withdrawMeasureChange(challengeId: String): Resource<Unit> =
+        withContext(io) {
+            auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
+            try {
+                // The votes are deliberately left behind. Each names a proposal that no
+                // longer exists, so none can satisfy the next one -- and clearing every
+                // participant's row would be a write into documents this client may not
+                // touch. The function clears them when a change actually lands.
+                challengeDoc(challengeId).update(
+                    mapOf(
+                        PENDING_CHANGE_ID to null,
+                        PENDING_MEASURE_KIND to null,
+                        PENDING_MEASURE_WORD to null,
+                        PENDING_PROPOSED_AT to null,
+                    ),
+                ).await()
+                Resource.Success(Unit)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Could not withdraw that change", e)
             }
         }
 
@@ -541,6 +646,17 @@ class ChallengeRepositoryImpl @Inject constructor(
          * [TO_UID] and [FROM_UID] are **what `firestore.rules` reads**, so every query
          * here filters on one of them or is denied — see `observeIncomingInvites`.
          */
+        /**
+         * §3's fields. The pending trio is written by the owner and pinned by nothing; the
+         * live `measureKind` / `measureWord` beside them are pinned against every client
+         * write and are the function's alone.
+         */
+        const val PENDING_CHANGE_ID = "pendingChangeId"
+        const val PENDING_MEASURE_KIND = "pendingMeasureKind"
+        const val PENDING_MEASURE_WORD = "pendingMeasureWord"
+        const val PENDING_PROPOSED_AT = "pendingProposedAt"
+        const val APPROVED_CHANGE_ID = "approvedChangeId"
+
         const val TO_UID = "toUid"
         const val FROM_UID = "fromUid"
         const val CHALLENGE_ID = "challengeId"

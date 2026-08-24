@@ -13,6 +13,7 @@ import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.InviteCandidate
 import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureChangeConsequence
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
@@ -344,6 +345,123 @@ class ChallengesViewModel @Inject constructor(
     }
 
     fun dismissGoalLink() { _goalLink.value = GoalLinkState() }
+
+    // ── §3 · changing the measure, with everybody's consent ───────────
+    //
+    // §6: "the owner writes `pendingMeasure` on the challenge document, each participant
+    // writes `approvedChangeId` in the one document they are permitted to write, and the
+    // Function applies it when every row agrees."
+    //
+    // The measure is the unit every participant's score is expressed in, so an owner who
+    // could change it alone would silently re-denominate other people's numbers. As of
+    // 2026-08-25 `firestore.rules` pins the live measure against every client write, so
+    // this is the only path there is -- there is no "edit the challenge" that bypasses it.
+
+    private val _measureChange = MutableStateFlow(MeasureChangeState())
+    val measureChange = _measureChange.asStateFlow()
+
+    fun openMeasureChange(card: ChallengeCard) {
+        _measureChange.value = MeasureChangeState(
+            isVisible = true,
+            challengeId = card.challenge.id,
+            challengeTitle = card.challenge.title,
+            currentKind = card.challenge.measure?.kind,
+            currentWord = card.challenge.metricWord,
+            // Seeded with what it counts NOW, so the owner edits rather than retypes -- and
+            // so the dialog can say, live, which of the two consequences their edit has.
+            kind = card.challenge.measure?.kind,
+            word = card.challenge.metricWord,
+            participantCount = card.participantCount,
+        )
+    }
+
+    fun onChangeKind(kind: MeasureKind) =
+        _measureChange.update { it.copy(kind = kind, error = null) }
+
+    fun onChangeWord(value: String) =
+        _measureChange.update { it.copy(word = value, error = null) }
+
+    fun dismissMeasureChange() { _measureChange.value = MeasureChangeState() }
+
+    fun proposeMeasureChange() {
+        val current = _measureChange.value
+        if (current.isSaving) return
+        val kind = current.kind
+        if (kind == null || current.word.isBlank()) {
+            _measureChange.update { it.copy(error = "Say what it should count") }
+            return
+        }
+        if (!current.isAChange) {
+            _measureChange.update { it.copy(error = "That is what it counts already") }
+            return
+        }
+        viewModelScope.launch {
+            _measureChange.update { it.copy(isSaving = true, error = null) }
+            val result = repository.proposeMeasureChange(
+                current.challengeId,
+                Measure(kind = kind, word = current.word.trim()),
+            )
+            when (result) {
+                is Resource.Success -> {
+                    _measureChange.value = MeasureChangeState()
+                    // Says what happens NEXT, not that a write succeeded. The owner has not
+                    // changed anything yet -- they have asked -- and on a solo challenge
+                    // the function has already applied it by the time this is read, which
+                    // is why the wording works for both.
+                    _message.value = if (current.participantCount > 1) {
+                        "Proposed — it changes when everyone agrees"
+                    } else {
+                        "Measure updated"
+                    }
+                }
+
+                is Resource.Error ->
+                    _measureChange.update { it.copy(isSaving = false, error = result.message) }
+
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    /** Which challenge's pending change is mid-vote, so only that banner goes quiet. */
+    private val _approvingChallengeId = MutableStateFlow<String?>(null)
+    val approvingChallengeId = _approvingChallengeId.asStateFlow()
+
+    /**
+     * Records this user's agreement.
+     *
+     * The `changeId` comes from the card the user is looking at, not from a re-read, so a
+     * stale screen cannot approve a proposal they never saw — the function compares it
+     * against the challenge's own and an approval of a withdrawn proposal counts for
+     * nothing rather than carrying over to its replacement.
+     */
+    fun approveMeasureChange(card: ChallengeCard) {
+        if (_approvingChallengeId.value != null) return
+        val challengeId = card.challenge.id
+        val changeId = card.challenge.pendingChangeId
+        viewModelScope.launch {
+            _approvingChallengeId.value = challengeId
+            when (val result = repository.approveMeasureChange(challengeId, changeId)) {
+                // Deliberately silent. The banner it was on either disappears (the change
+                // landed) or re-renders saying who is still to agree -- both of which say
+                // more than a snackbar would, and neither needs one.
+                is Resource.Success -> Unit
+                is Resource.Error -> _message.value = result.message
+                Resource.Loading -> Unit
+            }
+            _approvingChallengeId.value = null
+        }
+    }
+
+    fun withdrawMeasureChange(challengeId: String) {
+        viewModelScope.launch {
+            _message.value = when (val r = repository.withdrawMeasureChange(challengeId)) {
+                is Resource.Success -> "Change withdrawn"
+                is Resource.Error -> r.message
+                Resource.Loading -> null
+            }
+        }
+    }
 
     // ── Reporting a score ─────────────────────────────────────────────
 
@@ -686,6 +804,23 @@ data class ChallengeCard(
     /** Whether the current user's score moves on its own (§6). */
     val isLinked: Boolean get() = data.myScoreIsLinked
 
+    /** §3: a measure change is waiting on the participants. */
+    val hasPendingMeasureChange: Boolean get() = challenge.hasPendingMeasureChange
+
+    /** How many have agreed, out of everyone who is still here. */
+    val pendingApprovals: Int get() = data.pendingApprovals
+
+    /** Whether this user has already voted, so the banner offers a button or a wait. */
+    val iApprovedPending: Boolean get() = data.iApprovedPending
+
+    /**
+     * What the pending change would do — **derived from the change**, not chosen.
+     *
+     * See `Challenge.pendingConsequence`: a kind change cannot be adapted without a unit
+     * conversion this app does not perform, and a word-only change needs no adapting.
+     */
+    val pendingConsequence: MeasureChangeConsequence get() = challenge.pendingConsequence
+
     /** Scoring an upcoming challenge, or one that is over, is not a thing. */
     val canReportScore: Boolean get() = phase == ChallengePhase.ACTIVE
 
@@ -793,4 +928,44 @@ data class InviteState(
      * screen (add a friend), and a blank sheet does not say so.
      */
     val hasNoFriends: Boolean get() = candidates.isEmpty()
+}
+
+/**
+ * §3's propose dialog — the **only** way a challenge's measure ever changes.
+ *
+ * Seeded with what the challenge counts now, so the owner edits rather than retypes, and so
+ * the dialog can say **live** which of the two consequences their edit carries.
+ */
+data class MeasureChangeState(
+    val isVisible: Boolean = false,
+    val challengeId: String = "",
+    val challengeTitle: String = "",
+    /** What it counts today — kept so [consequence] and [isAChange] can compare. */
+    val currentKind: MeasureKind? = null,
+    val currentWord: String = "",
+    val kind: MeasureKind? = null,
+    val word: String = "",
+    /** How many people would have to agree, so the dialog can say so before they ask. */
+    val participantCount: Int = 0,
+    val isSaving: Boolean = false,
+    val error: String? = null,
+) {
+    /** Whether the edit differs from what the challenge already counts. */
+    val isAChange: Boolean
+        get() = kind != currentKind || word.trim() != currentWord.trim()
+
+    /**
+     * What proposing this would do — the same derivation `Challenge.pendingConsequence`
+     * makes, but on a measure that has not been written yet, so the owner sees the
+     * consequence **before** they ask everybody to agree to it.
+     */
+    val consequence: MeasureChangeConsequence
+        get() = if (currentKind == null || currentKind == kind) {
+            MeasureChangeConsequence.RELABEL
+        } else {
+            MeasureChangeConsequence.RESET
+        }
+
+    /** Whether anybody else has to agree, or the owner is alone and it just happens. */
+    val needsOthers: Boolean get() = participantCount > 1
 }

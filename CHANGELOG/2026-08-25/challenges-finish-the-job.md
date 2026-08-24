@@ -234,6 +234,209 @@ replaced — and it took putting it above a form somebody actually reads to noti
 
 ---
 
+## §3 · The measure-change approval flow
+
+§6, verbatim, and the shape was not mine to re-open:
+
+> the owner writes `pendingMeasure` on the challenge document, **each participant writes
+> `approvedChangeId` in the one document they are permitted to write**, and the Function
+> applies it when every row agrees.
+
+It exists because a challenge's measure is **the unit every participant's score is expressed
+in**. A leaderboard that said *8200 steps* yesterday and *8200 km* today has not been
+corrected, it has been **falsified**, and nobody who is not looking for it will notice.
+
+**As of this commit there is no other path.** `firestore.rules` pins `measureKind` and
+`measureWord` against every client write — the file's *second* field-level condition, the
+same shape `publicProfiles.points` and the participant's `score` already use. The comment
+that said *"THAT IS NOT BUILT YET ... an owner may still edit `measureKind` outright"* is
+gone, replaced by what actually ships.
+
+### The three things §6 left open, and how each is settled
+
+**1 - What "adapt" means, and the answer is that it is not a choice.**
+
+`C7` §5 offered the owner *reset* or *adapt*. Working out what **adapt** could mean is what
+settles the design:
+
+- **A change of `kind`** invalidates every participant's link, because `canBeScoredFrom`
+  matches on kind. Adapting it needs either a **unit conversion** — which `Measure`'s own
+  KDoc records this app deliberately does **not** perform — or a **re-link**, which
+  necessarily restarts the number in the new unit. So a kind change **is** a reset. There is
+  no second option to offer.
+- **A change of `word` alone** changes no arithmetic at all. That **is** "adapt", and it is
+  free.
+
+So the consequence is **derived from the change**, not read off a mode the owner picked —
+`Challenge.pendingConsequence` in Kotlin, `consequenceOf` in TypeScript, one rule in two
+languages. The owner is *told* which one their edit carries, live, as they type.
+
+⚠️ **Both still need unanimous approval, and the relabel is the one that can lie hardest.**
+Renaming `km` to `miles` leaves every stored number alone while changing what all of them
+claim. **The gate is on the claim, not on the arithmetic** — which is why a word-only change
+is not waved through, tempting as that was.
+
+**2 - While pending, the challenge keeps scoring in the OLD unit.** The pending fields sit
+*beside* the live measure, never on top of it, and nothing on the scoring path reads them. A
+JVM test asserts the whole of it: with a change pending, the card still says `km`, still
+offers linking, still offers reporting, and still filters goals by the old kind.
+
+**3 - Leaving during a pending change.** The quorum is **everyone who is still here**. A
+participant who leaves has no row to write `approvedChangeId` in, so counting them would let
+one person walking away freeze the challenge forever. The function reads whatever rows exist
+when it runs — and **a departure re-triggers it**, because the last hold-out leaving is
+exactly the event that completes agreement. Written into the rule's comment, as the brief
+asked.
+
+### Two registrations, and the second is not optional
+
+`applyMeasureChangeOnApproval` fires on a participant row; `applyMeasureChangeOnProposal`
+fires on the challenge document. The last act before a change applies is **sometimes the
+owner proposing** — a solo challenge has one row, approved in the proposal's own batch, so
+nothing further is ever written to a participant row and the first registration alone would
+wait forever. There is an emulator test for exactly that case.
+
+### Why this is a Function when §1's invites deliberately were not
+
+The same test, answered opposite ways in one session, which is worth recording:
+
+| | invites (§1) | measure change (§3) |
+|---|---|---|
+| what the write needs to see | one document, two named parties | **every participant's row**, then the challenge document |
+| does a client have that reach? | yes — the rules partition models it | **no**, and no single client can |
+| verdict | rules, no Function | Function, `C20`'s own criterion |
+
+### 🧪 Tests
+
+| layer | result |
+|---|---|
+| **JVM unit** — `ChallengesViewModelTest` | **74 pass, 0 fail** (was 61; **+13** for §3) |
+| **JVM unit** — whole suite | **1181 tests, 2 failing** — both `DocsCurrencyTest`, see *Open* |
+| **Functions arithmetic** — `functions/test/*` | **190 pass, 0 fail** (**+17**, `measureChange.test.mjs`) |
+| **Functions emulator triggers** — `triggers.emulator.mjs` | **23 pass, 0 fail** (**+6**) |
+| **Security rules** — `firestore-tests/rules.test.mjs` | **83 pass, 0 fail** (was 73; **+10**) |
+| **Instrumented render pass** — `ChallengeMeasureChangeRenderPass` | **1 test, 6 frames, green** |
+| **Deployed** | `firestore:rules` released; `functions` deployed — `applyMeasureChangeOnApproval` and `applyMeasureChangeOnProposal` both *"Successful create operation"* |
+
+### 📸 Render pass, and the two things only pictures found
+
+`docs/render-passes/2026-08-25-challenges-finish/challenge-measure-change/`. The risky
+question: **does *"every score restarts at zero"* arrive in time to stop somebody doing it
+by accident?** This is the one action in the app that destroys other people's numbers.
+
+1. ⚠️ **`Agree` was a filled primary button, directly under the red warning.** Same visual
+   weight as *Change goal* two rows above it. §1's own principle is that the balance a user
+   reads off a row is *which action looks like the default* — and a filled button made
+   agreeing look like the default for the one action that wipes your score. The red sentence
+   was doing all the work and the button was quietly undoing it. Now the button's weight
+   **follows the consequence**: outlined on a `RESET`, filled on a `RELABEL`. A relabel
+   costs nobody anything, and making a harmless yes/no look grave is the other way to train
+   people to ignore it.
+2. ⚠️ **A dialog cannot be photographed the way a sheet can, and the flat-colour floor is
+   the only thing that said so.** The pass first composed the whole `MeasureChangeDialog`
+   and captured `isRoot() and hasAnyDescendant(hasText(...))` — the selector that *does*
+   rescue a sheet's content — and got back **one flat colour**, the scrim. The frame was
+   full-screen, 1344 px wide and weighed something on disk; only *"1 distinct colour,
+   expected at least 3"* caught it. The body was split into `MeasureChangeContent` in the
+   same commit, which is the rule this repo learned on 2026-08-24: **a surface that cannot
+   be photographed cannot be reviewed.**
+
+### ⚠️ And a third finding, in the test layer, worth more than either
+
+The emulator suite's first fixture wrote `score: 3000` onto a participant row **by hand**,
+and also gave that participant a `goalId` link. Writing the link fires
+`projectChallengeScore`, which sums that user's own progress against the goal — of which
+there is none — and correctly republishes **0** over the hand-written 3000. The RELABEL case
+then failed `0 !== 3000`, reading as a bug in a code path that was behaving perfectly. The
+first fix aimed at the wrong cause (a cascade from the previous test) and did not help.
+
+The fixture now writes a **typed report**, waits for the projection to publish it, and only
+then proposes — so the numbers under test are ones the system actually produced.
+
+**The general shape:** *in a suite whose whole subject is a projection, a hand-written
+derived value is a fixture the system is entitled to overwrite.*
+
+It also exposed that the `RESET` case alone proves nothing — `0` is what the projection
+produces anyway from a deleted report. `RELABEL` is the discriminating half of the pair:
+`3000` survives only because `participantUpdate("RELABEL")` deliberately writes nothing but
+`approvedChangeId`.
+
+---
+
+## §4 · The Health Connect gate — a decision paper, and the deliverable is this section
+
+**§4 is not "not done".** The brief scoped it as a paper rather than a feature, and this is
+it. It concerns a call **Ido made himself**, recorded in §6:
+
+> *"No Health Connect connection → you cannot join a health-sourced challenge —
+> comparability over inclusion."*
+
+**Recommendation: delete the gate. Do not build it.** That reverses his own call, so it is
+his to reverse back, and the argument is below in full so he can.
+
+### 1. Its premise was weakened by §6 itself
+
+The gate was decided when the model was *score from a raw health metric*, where a **reading**
+and a **typed number** genuinely were not comparable — one is a measurement of a walk, the
+other is an assertion about one. §6 changed the model underneath it: every score now routes
+through **a goal of the same kind**, whatever feeds that goal. So the quantity being
+compared is already the same quantity, and the incomparability the gate existed to prevent
+is largely gone.
+
+### 2. The residual difference is now LABELLED rather than excluded
+
+Ido's own third ask shipped on 2026-08-24: a typed score says *"Reported by Ann · 8200
+steps · 1d ago"*, and a derived one says nothing, because the absence of a badge is the
+honest default.
+
+**The gate and the badge adjudicate the same risk** — *is this number a reading or a
+claim?* — and **one of them is already in the product**. Building the other would exclude
+people from a race in order to prevent something the app now simply **says**. That is the
+strongest of the three points: it is not that the gate is hard, it is that it is
+**redundant against shipped behaviour**.
+
+### 3. Its subject no longer exists
+
+`ChallengeType` is deleted, and **nothing left on a challenge means *health***. Three
+candidates and why each fails:
+
+| candidate | why it cannot carry the gate |
+|---|---|
+| the measure `kind` | A `COUNT` of **books** and a `COUNT` of **steps** are the same kind. Gating on `COUNT` would lock somebody out of a reading challenge for not having Health Connect. |
+| the linked goal's `healthSourceKey` | Knowable only **after** linking, and the gate has to fire at **join**. It also describes the joiner's own goal, not the challenge. |
+| an owner-ticked boolean | Knowable at join, and **self-asserted** — the owner ticks *"this is a health challenge"* with none of the authority the gate was supposed to have. A gate whose input is a claim is a badge with extra steps. |
+
+### The two options, stated fairly
+
+**A — owner-declared flag.** Add `isHealthSourced` to the challenge, tick it in the create
+dialog, and refuse `joinChallenge` when it is set and Health Connect is not connected.
+*Cost:* a model field, a rules clause, a create-dialog control, a join-time permission
+check, and a new failure mode on the one action the product most wants to succeed.
+*Honest value:* it enforces a rule whose input the owner asserts, against a difference the
+badge already reports.
+
+**B — delete the gate; the badge supersedes it.** Nothing is built. `#23`'s §6 line is
+marked superseded with this reasoning, so the next reader finds the decision rather than
+the gap.
+
+### Recommendation, and what would change it
+
+**B.** The gate would exclude people from a race to prevent something the app already
+labels, using a flag its own owner asserts, on a model that no longer distinguishes health
+from anything else.
+
+**What would change my mind, concretely:** if challenges ever become **public and
+competitive between strangers** — a leaderboard people do not personally know each other
+on — then a label stops being enough, because a label works by social accountability and
+strangers have none. At that point the right answer is still probably not this gate but
+**server-side verification of the reading**, which is a different and much larger piece of
+work. Today every challenge is reached through Discover or an invite from a friend, so the
+accountability the badge relies on is real.
+
+**Nothing was coded for §4, deliberately.** No model field, no rules clause, no UI.
+
+---
+
 ## Open at the time of this entry
 
 - **`DocsCurrencyTest` is red on `main`, 2 of 1160, and I did not fix it.**

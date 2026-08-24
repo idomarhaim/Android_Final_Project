@@ -620,6 +620,12 @@ fun ChallengeDto.toDomain(): Challenge = Challenge(
     title = title,
     description = description,
     measure = resolvedMeasure(),
+    // The pending trio is read straight through with NO legacy fallback, unlike the live
+    // measure above: a proposal is only ever written by a client that already understands
+    // §3, so there is no older shape it could have taken.
+    pendingMeasure = resolvedPendingMeasure(),
+    pendingChangeId = pendingChangeId.orEmpty(),
+    pendingProposedAtEpochMillis = pendingProposedAt,
     ownerUid = ownerUid,
     startAtEpochMillis = startAt,
     endAtEpochMillis = endAt,
@@ -645,6 +651,21 @@ fun Challenge.toDto(): ChallengeDto = ChallengeDto(
     createdAt = createdAtEpochMillis,
 )
 
+/**
+ * The proposed measure, or `null` when there is no complete proposal.
+ *
+ * **All three fields or nothing**, mirroring `functions/src/measureChange.ts#pendingFrom`
+ * exactly — one document, two languages. A half-written proposal must read as *no
+ * proposal* on both sides, or the client draws an approval banner for a change the
+ * function will never apply.
+ */
+private fun ChallengeDto.resolvedPendingMeasure(): Measure? {
+    val kind = MeasureKind.fromName(pendingMeasureKind) ?: return null
+    val word = pendingMeasureWord?.trim().orEmpty()
+    if (word.isBlank() || pendingChangeId.isNullOrBlank()) return null
+    return Measure(kind = kind, word = word)
+}
+
 fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticipant(
     uid = uid,
     displayName = displayName,
@@ -655,6 +676,7 @@ fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticip
     // §6: nobody has said where its number came from, so nothing claims anything.
     source = ScoreSource.fromName(scoreSource),
     reportedAtEpochMillis = reportedAt,
+    approvedChangeId = approvedChangeId.orEmpty(),
 )
 
 fun ChallengeInviteDto.toDomain(): ChallengeInvite = ChallengeInvite(

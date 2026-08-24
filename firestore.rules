@@ -156,17 +156,43 @@ service cloud.firestore {
     //
     // The measure is one document's worth of `measureKind` + `measureWord` (spec 6,
     // `C7` #14) and it replaced the free-text `metricUnit` whose "points" default is
-    // what produced #23. Changing it after a challenge has started needs every
-    // participant's approval -- owner writes `pendingMeasure`, each participant writes
-    // `approvedChangeId` in the one document they may write, the function applies it
-    // when every row agrees. THAT IS NOT BUILT YET and nothing here permits it: an
-    // owner may still edit `measureKind` outright. Named as owed in
-    // `sessions/challenge-measure-approval.md`.
+    // what produced #23.
+    //
+    // CHANGING IT AFTER A CHALLENGE HAS STARTED NEEDS EVERY PARTICIPANT'S APPROVAL, AND
+    // THAT IS NOW BUILT (2026-08-25). The measure is the unit every participant's score is
+    // expressed in, so an owner who could edit it alone would silently re-denominate other
+    // people's numbers: a leaderboard reading "8200 steps" yesterday and "8200 km" today
+    // has not been corrected, it has been falsified.
+    //
+    // `serverOwns(['measureKind', 'measureWord'])` on update is what enforces it, and it
+    // is the file's SECOND field-level condition -- the same shape `publicProfiles.points`
+    // and the participant's `score` already use, for the same reason. The owner writes
+    // `pendingMeasureKind` / `pendingMeasureWord` / `pendingChangeId` (ordinary owner
+    // fields, unpinned); each participant writes `approvedChangeId` on the one document
+    // they are permitted to write; and `functions/src/challenges.ts` applies the change
+    // through the Admin SDK, which bypasses these rules -- so the live measure has no
+    // client writer at all after creation.
+    //
+    // THE QUORUM IS EVERYONE WHO IS STILL HERE. A participant who leaves has no row to
+    // write `approvedChangeId` in, so counting them would let one person walking away
+    // freeze the challenge forever. The function reads whatever rows exist when it runs
+    // and asks nothing about who used to be there -- and a departure re-triggers it,
+    // because the last hold-out leaving is exactly the event that completes agreement.
+    //
+    // WHILE A CHANGE IS PENDING THE CHALLENGE KEEPS SCORING IN THE OLD UNIT. The pending
+    // fields sit beside the live measure, never on top of it, and nothing on the scoring
+    // path reads them. A half-approved change must not stop the race.
+    //
+    // `create` is deliberately NOT pinned: a challenge is born with its measure, and
+    // there is nobody yet to ask.
     match /challenges/{challengeId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if isSignedIn()
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && serverOwns(['measureKind', 'measureWord']);
+      allow delete: if isSignedIn()
         && resource.data.ownerUid == request.auth.uid;
 
       // One row per participant, id = their uid. This is what makes joining
@@ -177,8 +203,19 @@ service cloud.firestore {
       // The row now has writers with different rights (`C20` #42, spec 5.2), which
       // is the one place this ruling genuinely makes the rules harder:
       //
-      //   * the participant   -- creates the row, deletes it to leave, and edits the
-      //                          identity fields on it. NOT the three server fields.
+      //   * the participant   -- creates the row, deletes it to leave, edits the identity
+      //                          fields on it, and (since 2026-08-25) writes
+      //                          `approvedChangeId` -- their vote on a pending measure
+      //                          change. NOT the three server fields.
+      //
+      // `approvedChangeId` is deliberately NOT pinned, and it is the one field here a
+      // participant writes that somebody else reads. That is exactly why it lives on THIS
+      // document: it is the only one in the whole challenge tree a participant is
+      // permitted to write, which is what §6 means by "each participant writes
+      // `approvedChangeId` in the one document they are permitted to write". Writing a
+      // stale or invented value achieves nothing -- the function compares it against the
+      // challenge's own `pendingChangeId`, so consent cannot be replayed onto a later
+      // proposal, and the function clears it whenever a change lands.
       //   * the projection    -- owns `score`, `scoreSource`, `reportedAt` and
       //     function             `updatedAt`, and reaches them through the Admin SDK,
       //                          which bypasses these rules.

@@ -12,6 +12,7 @@ import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.Measure
+import com.idomarhaim.goalpilot.domain.model.MeasureChangeConsequence
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
@@ -1115,4 +1116,274 @@ class ChallengesViewModelTest {
 
             assertThat(link.eligible.map { it.id }).containsExactly("g1")
         }
+
+    // ── §3 · changing the measure, with everybody's consent ─────────────
+    //
+    // §6: "the owner writes `pendingMeasure` on the challenge document, each participant
+    // writes `approvedChangeId` in the one document they are permitted to write, and the
+    // Function applies it when every row agrees."
+    //
+    // The three things §6 left open are settled here and asserted below: what "adapt"
+    // means (nothing -- the consequence is DERIVED, not chosen), that the challenge keeps
+    // scoring in the old unit while a change is pending, and that the quorum is everyone
+    // who is STILL HERE.
+
+    private fun pending(
+        changeId: String = "chg-1",
+        kind: MeasureKind = MeasureKind.COUNT,
+        word: String = "steps",
+    ) = challenge().copy(
+        pendingChangeId = changeId,
+        pendingMeasure = Measure(kind, word),
+        pendingProposedAtEpochMillis = now,
+    )
+
+    @Test
+    fun `while a change is pending the challenge still scores in the OLD unit`() = runTest {
+        // §6's second open question, and the one a half-built version gets wrong: a
+        // half-approved change must not stop the race. The pending fields sit BESIDE the
+        // live measure, and nothing on the scoring path reads them.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = pending(kind = MeasureKind.COUNT, word = "steps"),
+                    approvals = listOf("chg-1"),
+                ),
+            ),
+            goals = listOf(goal(id = "g1")),
+        )
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.hasPendingMeasureChange).isTrue()
+        // Still km, still DISTANCE, still linkable to a km goal, still reportable.
+        assertThat(card.challenge.metricWord).isEqualTo("km")
+        assertThat(card.canLinkGoal).isTrue()
+        assertThat(card.canReportScore).isTrue()
+        assertThat(vm.eligibleGoalsFor(card.challenge).map { it.id }).containsExactly("g1")
+    }
+
+    @Test
+    fun `a KIND change is a reset, because there is no conversion to adapt with`() = runTest {
+        // `C7` §5 offered the owner "reset or adapt". Adapt would need either a unit
+        // conversion -- which `Measure`'s KDoc records this app deliberately does NOT do --
+        // or a re-link, which restarts the number anyway. So a kind change IS a reset and
+        // there is no second option to offer.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(challenge = pending(kind = MeasureKind.COUNT)),
+            ),
+        )
+
+        assertThat(vm.loaded().mine.single().pendingConsequence)
+            .isEqualTo(MeasureChangeConsequence.RESET)
+    }
+
+    @Test
+    fun `a WORD-only change is a relabel -- every number and link survives`() = runTest {
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = pending(kind = MeasureKind.DISTANCE, word = "kilometres"),
+                ),
+            ),
+        )
+
+        assertThat(vm.loaded().mine.single().pendingConsequence)
+            .isEqualTo(MeasureChangeConsequence.RELABEL)
+    }
+
+    @Test
+    fun `the quorum counts everyone who is STILL HERE, not who used to be`() = runTest {
+        // §6's third open question. A participant who leaves has no row to write
+        // `approvedChangeId` in, so counting them would let one person walking away freeze
+        // the challenge forever. Two rows, both agreeing.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = pending(),
+                    standings = listOf(
+                        ChallengeParticipant(uid = "me", displayName = "Ido"),
+                        ChallengeParticipant(uid = "b", displayName = "Boaz"),
+                    ).rankedByScore("me"),
+                    approvals = listOf("chg-1", "chg-1"),
+                    myApprovedChangeId = "chg-1",
+                ),
+            ),
+        )
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.participantCount).isEqualTo(2)
+        assertThat(card.pendingApprovals).isEqualTo(2)
+        assertThat(card.iApprovedPending).isTrue()
+    }
+
+    @Test
+    fun `an approval of a DIFFERENT change does not count`() = runTest {
+        // The replay defence, and the reason `pendingChangeId` exists at all: without it,
+        // withdrawing and re-proposing would inherit consent nobody gave to the second one.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = pending(changeId = "chg-2"),
+                    standings = listOf(
+                        ChallengeParticipant(uid = "me"),
+                        ChallengeParticipant(uid = "b"),
+                    ).rankedByScore("me"),
+                    approvals = listOf("chg-1", "chg-1"),
+                    myApprovedChangeId = "chg-1",
+                ),
+            ),
+        )
+
+        val card = vm.loaded().mine.single()
+
+        assertThat(card.pendingApprovals).isEqualTo(0)
+        assertThat(card.iApprovedPending).isFalse()
+    }
+
+    @Test
+    fun `a HALF-written proposal reads as NO proposal, exactly as the function reads it`() =
+        runTest {
+            // `functions/src/measureChange.ts#pendingFrom` refuses all-three-or-nothing.
+            // If the client disagreed it would draw an approval banner for a change the
+            // function will never apply -- one document, two languages, and they have to
+            // read it the same way.
+            val vm = viewModel(
+                mine = listOf(
+                    ChallengeWithStandings(
+                        challenge = challenge().copy(pendingChangeId = "chg-1"),
+                    ),
+                ),
+            )
+
+            assertThat(vm.loaded().mine.single().hasPendingMeasureChange).isFalse()
+        }
+
+    @Test
+    fun `the propose dialog opens seeded with what it counts NOW`() = runTest {
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge())),
+        )
+        val card = vm.loaded().mine.single()
+
+        vm.openMeasureChange(card)
+        val d = vm.measureChange.value
+
+        assertThat(d.isVisible).isTrue()
+        assertThat(d.kind).isEqualTo(MeasureKind.DISTANCE)
+        assertThat(d.word).isEqualTo("km")
+        // Seeded, so it is not yet a change and the button is inert.
+        assertThat(d.isAChange).isFalse()
+    }
+
+    @Test
+    fun `the dialog says which consequence the edit carries, BEFORE anybody is asked`() =
+        runTest {
+            // "Everyone's score restarts at zero" is a thing to find out before asking four
+            // people to agree to it, not after.
+            val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+            vm.openMeasureChange(vm.loaded().mine.single())
+
+            vm.onChangeWord("kilometres")
+            assertThat(vm.measureChange.value.consequence)
+                .isEqualTo(MeasureChangeConsequence.RELABEL)
+
+            vm.onChangeKind(MeasureKind.COUNT)
+            assertThat(vm.measureChange.value.consequence)
+                .isEqualTo(MeasureChangeConsequence.RESET)
+        }
+
+    @Test
+    fun `proposing nothing is refused before anything is written`() = runTest {
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        vm.openMeasureChange(vm.loaded().mine.single())
+
+        vm.proposeMeasureChange()
+
+        assertThat(vm.measureChange.value.error).isEqualTo("That is what it counts already")
+        coVerify(exactly = 0) { repository.proposeMeasureChange(any(), any()) }
+    }
+
+    @Test
+    fun `proposing on a shared challenge says it has to be agreed, not that it changed`() =
+        runTest {
+            coEvery { repository.proposeMeasureChange(any(), any()) } returns
+                Resource.Success(Unit)
+            val vm = viewModel(
+                mine = listOf(
+                    ChallengeWithStandings(
+                        challenge = challenge(id = "c1"),
+                        standings = listOf(
+                            ChallengeParticipant(uid = "me"),
+                            ChallengeParticipant(uid = "b"),
+                        ).rankedByScore("me"),
+                    ),
+                ),
+            )
+            vm.openMeasureChange(vm.loaded().mine.single())
+            vm.onChangeWord("miles")
+
+            vm.proposeMeasureChange()
+
+            coVerify {
+                repository.proposeMeasureChange("c1", Measure(MeasureKind.DISTANCE, "miles"))
+            }
+            assertThat(vm.message.value).isEqualTo("Proposed — it changes when everyone agrees")
+        }
+
+    @Test
+    fun `on a SOLO challenge it just happens, and the wording says so`() = runTest {
+        // The owner's approval rides in the proposal's own batch, so a one-row challenge is
+        // unanimous the instant it is proposed -- which is why the function also triggers
+        // on the challenge document and not only on participant rows.
+        coEvery { repository.proposeMeasureChange(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(),
+                    standings = listOf(ChallengeParticipant(uid = "me")).rankedByScore("me"),
+                ),
+            ),
+        )
+        vm.openMeasureChange(vm.loaded().mine.single())
+        vm.onChangeWord("miles")
+
+        assertThat(vm.measureChange.value.needsOthers).isFalse()
+        vm.proposeMeasureChange()
+
+        assertThat(vm.message.value).isEqualTo("Measure updated")
+    }
+
+    @Test
+    fun `approving passes the change id from the card, never a re-read`() = runTest {
+        // So a stale screen cannot approve a proposal the user never saw: the function
+        // compares this against the challenge's own `pendingChangeId`, and an approval of a
+        // withdrawn proposal counts for nothing rather than carrying to its replacement.
+        coEvery { repository.approveMeasureChange(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = pending(changeId = "chg-7"))),
+        )
+        val card = vm.loaded().mine.single()
+
+        vm.approveMeasureChange(card)
+
+        coVerify { repository.approveMeasureChange("c1", "chg-7") }
+        // Deliberately silent: the banner either disappears or re-renders with a new count,
+        // and both say more than a snackbar would.
+        assertThat(vm.message.value).isNull()
+    }
+
+    @Test
+    fun `withdrawing is the owner's, and says so`() = runTest {
+        coEvery { repository.withdrawMeasureChange(any()) } returns Resource.Success(Unit)
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = pending())))
+        vm.loaded()
+
+        vm.withdrawMeasureChange("c1")
+
+        coVerify { repository.withdrawMeasureChange("c1") }
+        assertThat(vm.message.value).isEqualTo("Change withdrawn")
+    }
 }

@@ -54,6 +54,25 @@ data class Challenge(
      * what the migration can and cannot recover.
      */
     val measure: Measure? = null,
+    /**
+     * A measure change the owner has proposed and everybody has not yet agreed to — §6's
+     * *"changing it after a challenge has started needs every participant's approval"*.
+     *
+     * **It sits BESIDE [measure], never on top of it.** Nothing on the scoring path reads
+     * this, so a half-approved change does not stop the race: the challenge keeps scoring
+     * in the old unit until the moment every row agrees, and then changes in one write.
+     */
+    val pendingMeasure: Measure? = null,
+    /**
+     * Identifies **this** proposal, so an approval cannot be replayed against the next one.
+     *
+     * Without it, a participant who agreed to change A would still count as agreeing to
+     * change B: the owner could withdraw, propose something else, and inherit consent
+     * nobody gave. `functions/src/measureChange.ts` compares each row's `approvedChangeId`
+     * against this and nothing else.
+     */
+    val pendingChangeId: String = "",
+    val pendingProposedAtEpochMillis: Long = 0L,
     val ownerUid: String = "",
     val startAtEpochMillis: Long = 0L,
     val endAtEpochMillis: Long = 0L,
@@ -68,6 +87,59 @@ data class Challenge(
      * joined until its owner says what it counts.
      */
     val isUnmeasured: Boolean get() = measure?.kind == null
+
+    /** Whether a measure change is waiting on the participants. */
+    val hasPendingMeasureChange: Boolean
+        get() = pendingChangeId.isNotBlank() && pendingMeasure?.kind != null
+
+    /**
+     * What applying [pendingMeasure] would do to everybody's numbers — **derived, never
+     * chosen by the owner**, and computed here as well as in
+     * `functions/src/measureChange.ts` so the UI can say it *before* anyone votes.
+     *
+     * `C7` §5 offered the owner *reset* or *adapt*, and working out what **adapt** could
+     * mean is what settles it into one answer per change rather than a choice:
+     *
+     * - **A change of [MeasureKind]** invalidates every participant's link, because
+     *   [canBeScoredFrom] matches on kind. Adapting it would need a **unit conversion** —
+     *   which [Measure]'s KDoc records this app deliberately does **not** perform — or a
+     *   **re-link**, which necessarily restarts the number in the new unit. So a kind
+     *   change *is* a reset, and there is no second option to offer.
+     * - **A change of word alone** changes no arithmetic at all: the kind is what the
+     *   scoring matches on, so every link and every number survives. That is "adapt", and
+     *   it is free.
+     *
+     * ⚠️ **Both still need unanimous approval, and the relabel is the one that can lie
+     * hardest.** Renaming `km` to `miles` leaves every stored number alone while changing
+     * what all of them claim. The gate is on the **claim**, not on the arithmetic.
+     *
+     * A challenge that never had a kind is *gaining* one rather than changing it, so it
+     * relabels: there is nothing scored in an old unit to invalidate.
+     */
+    val pendingConsequence: MeasureChangeConsequence
+        get() = when {
+            measure?.kind == null -> MeasureChangeConsequence.RELABEL
+            measure.kind == pendingMeasure?.kind -> MeasureChangeConsequence.RELABEL
+            else -> MeasureChangeConsequence.RESET
+        }
+}
+
+/**
+ * What applying a proposed measure change does to the standings.
+ *
+ * Two values and no third, because the design has no third — see
+ * [Challenge.pendingConsequence] for why *adapt* and *reset* are not two options an owner
+ * picks between but two consequences a change **has**.
+ */
+enum class MeasureChangeConsequence {
+    /** The word changes; the kind does not. Every number and every link survives. */
+    RELABEL,
+
+    /**
+     * The kind changes. Every link is invalidated and every score restarts at zero, because
+     * the only non-converting way to adapt is for everybody to re-link.
+     */
+    RESET,
 }
 
 /**
@@ -133,6 +205,18 @@ data class ChallengeParticipant(
     /** Server-written. See [ScoreSource]. */
     val source: ScoreSource = ScoreSource.NONE,
     /**
+     * This participant's vote on a pending measure change — §6's *"each participant writes
+     * `approvedChangeId` in the one document they are permitted to write"*.
+     *
+     * **The one field on this row a participant writes that somebody else reads**, and the
+     * reason it lives here rather than anywhere tidier: this is the only document in the
+     * whole challenge tree they are permitted to write at all. It is deliberately **not**
+     * pinned by `firestore.rules`, unlike the three fields above it — writing a stale or
+     * invented value achieves nothing, because the function compares it against the
+     * challenge's own [Challenge.pendingChangeId] and clears it whenever a change lands.
+     */
+    val approvedChangeId: String = "",
+    /**
      * When the typed number behind [score] was reported, or `0` when it was not
      * typed. Server-written, and **`0` whenever [source] is not
      * [ScoreSource.REPORTED]** — so the badge never has a date to show for a
@@ -187,8 +271,37 @@ data class ChallengeWithStandings(
      * anyone can be misled about.
      */
     val standingsFreshness: Freshness = Freshness(),
+    /**
+     * Every participant's vote, in no particular order — the raw input [pendingApprovals]
+     * counts.
+     *
+     * It is a bare list of ids rather than a field on [ChallengeStanding] on purpose: a
+     * standings row is what the leaderboard renders, and putting *"has Ann agreed yet?"* on
+     * it would invite a surface to draw a per-person vote tally. Whether the change is
+     * unanimous is the only question anybody needs answered, and a count answers it without
+     * naming who is holding out.
+     */
+    val approvals: List<String> = emptyList(),
+    /** The signed-in user's own vote, so the banner knows whether to offer the button. */
+    val myApprovedChangeId: String = "",
 ) {
     val participantCount: Int get() = standings.size
+
+    /**
+     * How many participants have agreed to the pending change, and whether **I** have.
+     *
+     * Counted from the rows that exist **now**, exactly as the function does: the quorum is
+     * *everyone who is still here*, so a participant who leaves is not counted and one
+     * person walking away cannot freeze the challenge forever.
+     */
+    val pendingApprovals: Int
+        get() = if (!challenge.hasPendingMeasureChange) 0
+        else approvals.count { it == challenge.pendingChangeId }
+
+    /** Whether the signed-in user has already voted on the pending change. */
+    val iApprovedPending: Boolean
+        get() = challenge.hasPendingMeasureChange &&
+            myApprovedChangeId == challenge.pendingChangeId
 
     /** The current user's own row, if they are in this challenge. */
     val myStanding: ChallengeStanding? get() = standings.firstOrNull { it.isCurrentUser }

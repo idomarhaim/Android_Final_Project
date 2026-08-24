@@ -911,3 +911,140 @@ test('the invitee joining for themselves still works, invite or no invite', asyn
     ),
   )
 })
+
+// ── §3 · the measure-change approval quorum ──────────────────────────
+//
+// The measure is the unit every participant's score is expressed in, so an owner who could
+// edit it alone would silently re-denominate other people's numbers. This is the layer that
+// proves the rules actually stop them -- the Kotlin suites cannot reach it, and the
+// function's own arithmetic tests (functions/test/measureChange.test.mjs) run with no
+// Firestore at all and so cannot see this half either.
+
+test('the owner CANNOT edit the live measure any more -- this is the whole feature', async () => {
+  await assertFails(
+    updateDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), { measureKind: 'DISTANCE' }),
+  )
+})
+
+test('nor the measure word, which is the half that can lie hardest', async () => {
+  // Relabelling `km` as `miles` leaves every stored number alone while changing what all
+  // of them claim. Pinning only the kind would have left exactly that open.
+  await assertFails(
+    updateDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), { measureWord: 'miles' }),
+  )
+})
+
+test('nor by dropping the field on a whole-document write', async () => {
+  // `diff().affectedKeys()` catches a REMOVAL as well as an edit, which is the reason
+  // `serverOwns` is written that way rather than comparing the two values.
+  //
+  // ⚠️ THE SEED HAS TO BE GIVEN A MEASURE FIRST, AND THE FIRST DRAFT OF THIS TEST DID NOT.
+  // The shared fixture at the top of this file is a PRE-§6 document -- `type` and
+  // `metricUnit`, no `measureKind` -- so dropping a field that was never there changes no
+  // affected key and the write is correctly allowed. The draft asserted a failure, got a
+  // success, and read as a hole in the rule. It was a hole in the fixture.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE),
+      { title: '7-day run streak', ownerUid: OWNER, measureKind: 'COUNT', measureWord: 'km' },
+    )
+  })
+  await assertFails(
+    setDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), {
+      title: '7-day run streak',
+      ownerUid: OWNER,
+    }),
+  )
+})
+
+test('a PRE-§6 challenge with no measure is not protected by a pin on nothing', async () => {
+  // The honest limit of the clause above, asserted rather than left implicit. A document
+  // that never carried `measureKind` has no key for `affectedKeys()` to find, so an owner
+  // writing a whole document without one is allowed -- there is no measure to preserve.
+  // Setting one for the first time is still blocked (the test two above), which is the
+  // half that matters: such a challenge cannot be linked to a goal at all until its owner
+  // proposes a measure and the quorum lands.
+  await assertSucceeds(
+    setDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), {
+      title: '7-day run streak',
+      ownerUid: OWNER,
+    }),
+  )
+})
+
+test('the owner CAN still propose one -- the pending fields are theirs', async () => {
+  await assertSucceeds(
+    updateDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), {
+      pendingChangeId: 'chg-1',
+      pendingMeasureKind: 'DISTANCE',
+      pendingMeasureWord: 'km',
+      pendingProposedAt: 1,
+    }),
+  )
+})
+
+test('a non-owner cannot propose one', async () => {
+  await assertFails(
+    updateDoc(doc(asUser(JOINER), 'challenges', CHALLENGE), {
+      pendingChangeId: 'chg-1',
+      pendingMeasureKind: 'DISTANCE',
+      pendingMeasureWord: 'km',
+    }),
+  )
+})
+
+test('the owner can still edit the title and dates, which nobody had to approve', async () => {
+  // The pin is on the MEASURE, not on the document. A challenge's prose is owner-authored
+  // and re-denominates nothing.
+  await assertSucceeds(
+    updateDoc(doc(asUser(OWNER), 'challenges', CHALLENGE), { title: 'Renamed' }),
+  )
+})
+
+test('a participant writes approvedChangeId on their OWN row', async () => {
+  // §6's own words: "each participant writes `approvedChangeId` in the one document they
+  // are permitted to write". This test is that sentence.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE, 'participants', JOINER),
+      { uid: JOINER, displayName: 'Joiner', score: 0, joinedAt: 1 },
+    )
+  })
+  await assertSucceeds(
+    updateDoc(doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER), {
+      approvedChangeId: 'chg-1',
+    }),
+  )
+})
+
+test('a participant cannot vote on SOMEBODY ELSE’s row', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE, 'participants', JOINER),
+      { uid: JOINER, displayName: 'Joiner', score: 0, joinedAt: 1 },
+    )
+  })
+  await assertFails(
+    updateDoc(doc(asUser(OWNER), 'challenges', CHALLENGE, 'participants', JOINER), {
+      approvedChangeId: 'chg-1',
+    }),
+  )
+})
+
+test('approving still cannot smuggle a score past the pin', async () => {
+  // The interesting composition: `approvedChangeId` is unpinned and `score` is pinned, on
+  // the same document, in the same write. If `serverOwns` were checked per-field rather
+  // than over the whole diff, this would slip through.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(
+      doc(ctx.firestore(), 'challenges', CHALLENGE, 'participants', JOINER),
+      { uid: JOINER, displayName: 'Joiner', score: 0, joinedAt: 1 },
+    )
+  })
+  await assertFails(
+    updateDoc(doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER), {
+      approvedChangeId: 'chg-1',
+      score: 9999,
+    }),
+  )
+})

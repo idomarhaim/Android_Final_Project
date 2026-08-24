@@ -227,6 +227,10 @@ class ChallengeInviteRenderPass {
                 onReportScore = {},
                 onLinkGoal = {},
                 onInvite = {},
+                onChangeMeasure = {},
+                onApproveMeasure = {},
+                onWithdrawMeasure = {},
+                isApproving = false,
                 onLeave = {},
                 onDelete = {},
             )

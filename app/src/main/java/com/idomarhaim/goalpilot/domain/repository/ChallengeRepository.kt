@@ -81,6 +81,51 @@ interface ChallengeRepository {
     /** Owner-only. Deletes the challenge document; see the impl for what it cannot reach. */
     suspend fun deleteChallenge(challengeId: String): Resource<Unit>
 
+    // ── Changing the measure, with everybody's consent ────────────────
+    //
+    // §6: "the owner writes `pendingMeasure` on the challenge document, each participant
+    // writes `approvedChangeId` in the one document they are permitted to write, and the
+    // Function applies it when every row agrees."
+    //
+    // It exists because a challenge's measure is THE UNIT EVERY PARTICIPANT'S SCORE IS
+    // EXPRESSED IN, so changing it mid-flight silently re-denominates other people's
+    // numbers. Since 2026-08-25 `firestore.rules` pins `measureKind` and `measureWord`
+    // against every client write, so this is the only path there is.
+
+    /**
+     * Proposes a new measure, and records the owner's own approval in the same batch.
+     *
+     * Owner-only, and the rules say so. The owner's approval rides along because they are
+     * a participant like anybody else and would otherwise have to vote for their own
+     * proposal in a second step — which reads as the app not trusting them to mean what
+     * they just typed.
+     *
+     * **On a solo challenge this is the whole flow**: one row, already approved, and the
+     * function applies it on the proposal's own write. That is why
+     * `functions/src/challenges.ts` registers a trigger on the challenge document as well
+     * as on the participant rows.
+     */
+    suspend fun proposeMeasureChange(challengeId: String, measure: Measure): Resource<Unit>
+
+    /**
+     * Records the signed-in user's agreement to the pending change.
+     *
+     * [changeId] is passed rather than read from the challenge so that a stale screen
+     * cannot approve a proposal the user never saw: the function compares it against the
+     * challenge's own `pendingChangeId`, so an approval of a withdrawn proposal counts for
+     * nothing rather than carrying over to its replacement.
+     */
+    suspend fun approveMeasureChange(challengeId: String, changeId: String): Resource<Unit>
+
+    /**
+     * Owner-only. Clears the proposal, leaving the live measure exactly as it was.
+     *
+     * Everybody's `approvedChangeId` is left behind on purpose — it names a proposal that
+     * no longer exists, so it can never satisfy the next one, and clearing every
+     * participant's row is a write into documents this client may not touch.
+     */
+    suspend fun withdrawMeasureChange(challengeId: String): Resource<Unit>
+
     // ── Invites ───────────────────────────────────────────────────────
     //
     // Ido's own report, 2026-08-24: he could create a challenge and could not ask

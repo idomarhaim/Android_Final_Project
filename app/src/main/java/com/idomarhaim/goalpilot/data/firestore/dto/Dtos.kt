@@ -501,6 +501,18 @@ data class ChallengeDto(
      * `"points"` — which is the default that produced #23 in the first place.
      */
     var metricUnit: String? = null,
+    /**
+     * §6's proposed measure, waiting on unanimous approval. Owner-written and, unlike
+     * [measureKind] / [measureWord] beside them, **not** pinned by `firestore.rules` —
+     * proposing is the owner's act; applying is the function's.
+     *
+     * All three or nothing: `functions/src/measureChange.ts` refuses a half-written
+     * proposal rather than applying a measure with a missing half.
+     */
+    var pendingChangeId: String? = null,
+    var pendingMeasureKind: String? = null,
+    var pendingMeasureWord: String? = null,
+    var pendingProposedAt: Long = 0L,
     var ownerUid: String = "",
     var startAt: Long = 0L,
     var endAt: Long = 0L,
@@ -525,6 +537,14 @@ data class ChallengeParticipantDto(
      * label would then say the one thing it exists to deny.
      */
     var scoreSource: String? = null,
+    /**
+     * This participant's vote on the challenge's pending measure change.
+     *
+     * **The one field on this row the participant writes and somebody else reads**, and the
+     * only one here `firestore.rules` does not pin — see `ChallengeParticipant
+     * .approvedChangeId`.
+     */
+    var approvedChangeId: String? = null,
     /**
      * When the typed number behind [score] was reported, or `0`. **Server-written**, and
      * zero for a derived score — see `ChallengeParticipant.reportedAtEpochMillis`.

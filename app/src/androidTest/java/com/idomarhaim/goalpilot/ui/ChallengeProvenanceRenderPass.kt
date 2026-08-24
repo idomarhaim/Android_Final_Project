@@ -194,6 +194,10 @@ class ChallengeProvenanceRenderPass {
                 onReportScore = {},
                 onLinkGoal = {},
                 onInvite = {},
+                onChangeMeasure = {},
+                onApproveMeasure = {},
+                onWithdrawMeasure = {},
+                isApproving = false,
                 onLeave = {},
                 onDelete = {},
             )
@@ -204,6 +208,10 @@ class ChallengeProvenanceRenderPass {
                 onReportScore = {},
                 onLinkGoal = {},
                 onInvite = {},
+                onChangeMeasure = {},
+                onApproveMeasure = {},
+                onWithdrawMeasure = {},
+                isApproving = false,
                 onLeave = {},
                 onDelete = {},
             )

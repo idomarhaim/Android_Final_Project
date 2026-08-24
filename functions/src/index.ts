@@ -40,6 +40,26 @@ export {
   projectChallengeScoreOnProgress,
 } from "./projection";
 
+/**
+ * §6's measure-change approval quorum (`C14` #23) — the second family of Firestore triggers
+ * in this file, and the second thing `C20`'s rule sends to the server.
+ *
+ * Same test as the projection: **the write has to see documents the writer cannot.**
+ * Deciding a change is unanimous means reading every participant's row and then writing the
+ * challenge document, and `firestore.rules` gives no single client both. §1's invites went
+ * the other way in the same session — the rules partition already modelled two named
+ * parties, so a Function there would have been a second write path for nothing.
+ *
+ * BOTH registrations are needed and neither is optional. The last act before a change
+ * applies is sometimes a participant approving and sometimes the OWNER PROPOSING — a solo
+ * challenge has one row and it is approved in the proposal's own batch, so nothing further
+ * is ever written to a participant row and registration 1 alone would wait forever.
+ */
+export {
+  applyMeasureChangeOnApproval,
+  applyMeasureChangeOnProposal,
+} from "./challenges";
+
 // `classify`'s validator (spec §3.4), in its own Firebase-free module so
 // `test/classify.test.mjs` can run it with no emulator — same arrangement as
 // `derived.ts`. `CATEGORIES` lives there too: the list the prompt offers and the

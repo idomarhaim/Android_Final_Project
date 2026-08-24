@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
+import com.idomarhaim.goalpilot.domain.model.MeasureChangeConsequence
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
 import com.idomarhaim.goalpilot.domain.model.InviteCandidate
@@ -953,6 +954,288 @@ private fun CreateGoalForThisChallenge(
             // not scoring it" reachable by closing the sheet in between -- and a button
             // saying only "Create" would describe half of what happens.
             Text(if (state.isSaving) "Creating…" else "Create and start scoring")
+        }
+    }
+}
+
+// ── §3 · changing what a challenge counts ────────────────────────────
+
+/**
+ * The **only** way a challenge's measure ever changes — §6's approval flow, proposed.
+ *
+ * `firestore.rules` pins `measureKind` and `measureWord` against every client write as of
+ * 2026-08-25, so there is no "edit the challenge" that bypasses this. The owner asks; the
+ * participants agree; a Cloud Function applies it.
+ *
+ * ### The consequence is stated before anybody is asked, and it is derived
+ *
+ * `C7` §5 offered the owner *reset* or *adapt*. This dialog offers **neither**, because
+ * working out what *adapt* could mean collapses the choice: a change of **kind** cannot be
+ * adapted without a unit conversion this app deliberately does not perform, so it *is* a
+ * reset; a change of **word** alone touches no arithmetic, so there is nothing to adapt.
+ * The dialog therefore *reports* which one the owner's edit carries, live, as they type —
+ * and the alarming one is spelled out in full, because "everyone's score restarts at zero"
+ * is a thing to find out **before** asking four people to agree to it, not after.
+ */
+@Composable
+internal fun MeasureChangeDialog(
+    state: MeasureChangeState,
+    onKind: (MeasureKind) -> Unit,
+    onWord: (String) -> Unit,
+    onPropose: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Change what this counts") },
+        text = { MeasureChangeContent(state = state, onKind = onKind, onWord = onWord) },
+        confirmButton = {
+            TextButton(onClick = onPropose, enabled = !state.isSaving && state.isAChange) {
+                Text(
+                    when {
+                        state.isSaving -> "Saving…"
+                        state.needsOthers -> "Ask everyone"
+                        else -> "Change it"
+                    },
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.isSaving) { Text("Cancel") }
+        },
+    )
+}
+
+/**
+ * The dialog's body, without the dialog around it.
+ *
+ * **Split out for the reason [StandingsList], [InviteList] and [GoalLinkContent] were, and
+ * the instrument is what forced it.** An `AppAlertDialog` renders in a **window of its
+ * own**, exactly like a modal sheet — and unlike a sheet, the selector that rescues a
+ * sheet's content does **not** rescue this one. `ChallengeMeasureChangeRenderPass` first
+ * tried `onNode(isRoot() and hasAnyDescendant(hasText("Change what this counts")))`, the
+ * same selector `ChallengeProvenanceRenderPass` uses, and got back a **single flat colour**
+ * — the scrim. `Observed:` 2026-08-25, `dialog-reset-light`, *"1 distinct colour, expected
+ * at least 3"*.
+ *
+ * That failure is the whole argument for this seam. The frame **looked** like it worked —
+ * it was full-screen, it was 1344 px wide, it weighed something on disk — and only the
+ * more-than-one-colour floor said otherwise. Had the pass carried a size assertion alone,
+ * as this repo's did until 2026-08-24, it would have filed a picture of a grey rectangle as
+ * evidence that the warning copy reads clearly.
+ *
+ * And the copy is what has to be reviewed: this is the one action in the app that destroys
+ * other people's numbers. A surface that cannot be photographed cannot be reviewed.
+ */
+@Composable
+internal fun MeasureChangeContent(
+    state: MeasureChangeState,
+    onKind: (MeasureKind) -> Unit,
+    onWord: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    run {
+        run {
+            Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    state.challengeTitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    // WHY ANYBODY HAS TO AGREE AT ALL, IN ONE SENTENCE. Without it the
+                    // approval step reads as bureaucracy; with it, it reads as the reason
+                    // the leaderboard can be trusted.
+                    "The measure is the unit everyone's score is written in, so changing " +
+                        "it re-labels other people's numbers as well as yours. That is " +
+                        "why they all have to agree.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+
+                Text(
+                    "What does it count?",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    MeasureKind.entries.forEach { kind ->
+                        FilterChip(
+                            selected = kind == state.kind,
+                            onClick = { onKind(kind) },
+                            label = { Text(kind.label()) },
+                            leadingIcon = { MeasureIconBadge(kind) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = state.word,
+                    onValueChange = onWord,
+                    label = { Text("Measured in") },
+                    singleLine = true,
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                if (state.isAChange) {
+                    Spacer(Modifier.height(14.dp))
+                    when (state.consequence) {
+                        MeasureChangeConsequence.RESET -> Text(
+                            // The alarming one, said in full and in the error colour. This
+                            // is the sentence that stops somebody discovering after the
+                            // fact that they wiped four people's scores.
+                            "This changes the kind, so every score restarts at zero and " +
+                                "everyone re-picks a goal. There is no way to convert " +
+                                "${state.currentWord.ifBlank { "the old unit" }} into " +
+                                "${state.word.trim().ifBlank { "the new one" }}, so the " +
+                                "race starts again from here.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+
+                        MeasureChangeConsequence.RELABEL -> Text(
+                            "This only changes the word. Every score and every linked " +
+                                "goal stays exactly as it is.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        if (state.needsOthers) {
+                            "All ${state.participantCount} of you have to agree before " +
+                                "anything changes."
+                        } else {
+                            "You are the only one in this challenge, so it changes " +
+                                "straight away."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+
+                state.error?.let {
+                    Text(
+                        it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The pending-change banner, on the card of everybody who has to agree.
+ *
+ * ### It is on the card, not in a dialog, and that is the decision
+ *
+ * A modal would demand an answer the moment the screen opened, from somebody who came to
+ * log their steps. A banner on the challenge it concerns is **there until it is answered**,
+ * and answering it is one tap — which is the right weight for a question that is real but
+ * not urgent. Nothing is blocked while it waits: the challenge keeps scoring in the old
+ * unit, which is the whole reason the pending fields sit beside the live measure rather
+ * than on top of it.
+ *
+ * ### It names the count, never the hold-outs
+ *
+ * *"2 of 4 agreed"*, never *"waiting for Ann and Boaz"*. The count answers the only
+ * question anybody has — *is this going to happen?* — and naming names turns a unit change
+ * into a thing people are seen to be blocking.
+ */
+@Composable
+internal fun PendingMeasureBanner(
+    card: ChallengeCard,
+    isBusy: Boolean,
+    onApprove: () -> Unit,
+    onWithdraw: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pending = card.challenge.pendingMeasure ?: return
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+    ) {
+        HorizontalDivider()
+        Text(
+            if (card.isOwner) {
+                "You asked to change this to ${pending.word}."
+            } else {
+                "${card.challenge.title} would be scored in ${pending.word} instead."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+        Text(
+            when (card.pendingConsequence) {
+                // Said to the people who would lose the number, in their own terms: the
+                // dialog told the owner, and everybody else finds out here.
+                MeasureChangeConsequence.RESET ->
+                    "Every score restarts at zero and everyone re-picks a goal — the old " +
+                        "unit cannot be converted into the new one."
+
+                MeasureChangeConsequence.RELABEL ->
+                    "Only the wording changes. Every score and every linked goal stays."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = if (card.pendingConsequence == MeasureChangeConsequence.RESET) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            // The count, never the hold-outs.
+            "${card.pendingApprovals} of ${card.participantCount} agreed",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            if (!card.iApprovedPending) {
+                // THE BUTTON'S WEIGHT FOLLOWS THE CONSEQUENCE, AND A FRAME IS WHAT SHOWED
+                // IT HAD TO.
+                //
+                // `banner-reset-light.png`, 2026-08-25: a FILLED `Agree` sat directly under
+                // "Every score restarts at zero", carrying the same visual weight as
+                // "Change goal" two rows above it. §1's own principle is that the balance a
+                // user reads off a row is which action LOOKS like the default -- and a
+                // filled button makes agreeing look like the default for the one action in
+                // this app that destroys other people's numbers. The red sentence was doing
+                // all the work and the button was quietly undoing it.
+                //
+                // An outlined button on a RESET is still perfectly findable -- there is
+                // nothing else to press -- and it stops the row reading as a prompt. A
+                // relabel keeps the filled one: it costs nobody anything, and making a
+                // harmless yes/no look grave is the other way to train people to ignore it.
+                if (card.pendingConsequence == MeasureChangeConsequence.RESET) {
+                    OutlinedButton(onClick = onApprove, enabled = !isBusy) { Text("Agree") }
+                } else {
+                    Button(onClick = onApprove, enabled = !isBusy) { Text("Agree") }
+                }
+            } else {
+                Text(
+                    "You agreed — waiting for the others.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                )
+            }
+            if (card.isOwner) {
+                TextButton(onClick = onWithdraw, enabled = !isBusy) { Text("Withdraw") }
+            }
         }
     }
 }

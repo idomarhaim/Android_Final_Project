@@ -87,6 +87,8 @@ fun ChallengesScreen(
     val goalLink by viewModel.goalLink.collectAsStateWithLifecycle()
     val invite by viewModel.invite.collectAsStateWithLifecycle()
     val invitePendingId by viewModel.invitePendingId.collectAsStateWithLifecycle()
+    val measureChange by viewModel.measureChange.collectAsStateWithLifecycle()
+    val approvingId by viewModel.approvingChallengeId.collectAsStateWithLifecycle()
     val detailId by viewModel.detailId.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
@@ -187,6 +189,12 @@ fun ChallengesScreen(
                         onReportScore = { viewModel.openScoreEntry(card) },
                         onLinkGoal = { viewModel.openGoalLink(card) },
                         onInvite = { viewModel.openInvite(card) },
+                        onChangeMeasure = { viewModel.openMeasureChange(card) },
+                        onApproveMeasure = { viewModel.approveMeasureChange(card) },
+                        onWithdrawMeasure = {
+                            viewModel.withdrawMeasureChange(card.challenge.id)
+                        },
+                        isApproving = approvingId == card.challenge.id,
                         onLeave = { pendingLeave = card },
                         onDelete = { pendingDelete = card },
                     )
@@ -236,6 +244,16 @@ fun ChallengesScreen(
             onCreateTarget = viewModel::onCreateTargetChange,
             onCreate = viewModel::createAndLinkGoal,
             onDismiss = viewModel::dismissGoalLink,
+        )
+    }
+
+    if (measureChange.isVisible) {
+        MeasureChangeDialog(
+            state = measureChange,
+            onKind = viewModel::onChangeKind,
+            onWord = viewModel::onChangeWord,
+            onPropose = viewModel::proposeMeasureChange,
+            onDismiss = viewModel::dismissMeasureChange,
         )
     }
 
@@ -308,6 +326,10 @@ internal fun MyChallengeCard(
     onReportScore: () -> Unit,
     onLinkGoal: () -> Unit,
     onInvite: () -> Unit,
+    onChangeMeasure: () -> Unit,
+    onApproveMeasure: () -> Unit,
+    onWithdrawMeasure: () -> Unit,
+    isApproving: Boolean,
     onLeave: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -362,6 +384,20 @@ internal fun MyChallengeCard(
                             onClick = { menuOpen = false; onLeave() },
                         )
                         if (card.isOwner) {
+                            // THE OVERFLOW IS RIGHT FOR THIS ONE AND WAS WRONG FOR THE
+                            // INVITE, and the difference is not consistency.
+                            //
+                            // Ido's report was that he could not FIND a way to invite
+                            // anybody, so that affordance had to be visible. Changing what
+                            // a challenge counts is a rare, owner-only, consequential act
+                            // that nobody has reported being unable to find -- and putting
+                            // it on the card beside "Type a score" would invite a mis-tap
+                            // that asks four people to reset their scores.
+                            DropdownMenuItem(
+                                text = { Text("Change what this counts") },
+                                onClick = { menuOpen = false; onChangeMeasure() },
+                                enabled = !card.hasPendingMeasureChange,
+                            )
                             DropdownMenuItem(
                                 text = { Text("Delete") },
                                 onClick = { menuOpen = false; onDelete() },
@@ -438,6 +474,19 @@ internal fun MyChallengeCard(
                 }
                 TextButton(onClick = onOpenStandings) { Text("Standings") }
             }
+            // §3's banner sits BELOW the actions, not above them. A pending measure
+            // change is real but not urgent -- the challenge is still scoring in the old
+            // unit while it waits -- so it must not push the thing the user came to do off
+            // the bottom of the card.
+            if (card.hasPendingMeasureChange) {
+                PendingMeasureBanner(
+                    card = card,
+                    isBusy = isApproving,
+                    onApprove = onApproveMeasure,
+                    onWithdraw = onWithdrawMeasure,
+                )
+            }
+
             if (!card.canReportScore) {
                 Text(
                     when (card.phase) {

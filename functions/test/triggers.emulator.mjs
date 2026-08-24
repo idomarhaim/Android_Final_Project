@@ -30,6 +30,8 @@ import { CATEGORIES } from "../lib/classify.js";
 
 const UID = "uid_runner";
 const CHALLENGE = "challenge_run_streak";
+/** §3 needs a SECOND participant, or every quorum is trivially unanimous. */
+const OTHER = "uid_rival";
 /** The goal a challenge is scored from (§6). One user, one goal, one progress collection. */
 const GOAL = "goal_steps";
 const DEADLINE_MS = 15_000;
@@ -70,6 +72,10 @@ beforeEach(async () => {
   await db.doc(`users/${UID}`).delete();
   await db.doc(`publicProfiles/${UID}`).delete();
   await db.doc(`challenges/${CHALLENGE}`).delete();
+  // §3's second participant and their link. Both are outside the loop above because they
+  // belong to a different uid, and a leftover row would join the next case's quorum.
+  await db.doc(`challenges/${CHALLENGE}/participants/${OTHER}`).delete();
+  await db.doc(`users/${OTHER}/challengeReports/${CHALLENGE}`).delete();
 });
 
 /** Waits for `read()` to satisfy `ok`, and reports the last value seen when it never does. */
@@ -370,4 +376,208 @@ test("classifyTask cannot echo a goal id when no goals were sent — and a failu
   if ("suggestedCategory" in result) {
     assert.ok(CATEGORIES.includes(result.suggestedCategory), "category must be a declared enum");
   }
+});
+
+// ── §3 · the measure-change approval quorum ──────────────────────────
+//
+// `measureChange.test.mjs` proves the arithmetic with no Firestore at all, and
+// `../firestore-tests/rules.test.mjs` proves the client can no longer write the live
+// measure. ONLY THIS FILE can prove the trigger is actually wired: that both registrations
+// fire, that the batch reaches a challenge document the approving participant may not
+// write, and that a RESET deletes links in another user's private space.
+
+/**
+ * A pending change with two participants, one of whom has already agreed.
+ *
+ * ⚠️ **THE SCORES ARE LET IN BY THE PROJECTION, NEVER WRITTEN BY HAND, AND THE FIRST DRAFT
+ * OF THIS HELPER GOT THAT WRONG.**
+ *
+ * It seeded `score: 3000` directly on the rival's row and also gave them a `goalId` link.
+ * Writing that link fires `projectChallengeScore`, which sums the rival's OWN progress
+ * against that goal — of which there is none — and correctly republishes **0** over the
+ * hand-written 3000. The RELABEL case below then failed with `0 !== 3000`, reading as a
+ * bug in a code path that was behaving perfectly. `Observed:` 2026-08-25, twice, the second
+ * time after a wrong fix aimed at a cascade from the previous test.
+ *
+ * So the fixture now writes a **typed report**, waits for the projection to publish it, and
+ * only then proposes. Two things fall out of that, both wanted: the scores under test are
+ * ones the system actually produced, and the wait removes any leftover projection from an
+ * earlier case before the change is proposed.
+ *
+ * The general shape is worth remembering: **in a suite whose whole subject is a projection,
+ * a hand-written derived value is a fixture the system is entitled to overwrite.**
+ */
+async function proposeWithTwo(pendingKind, pendingWord) {
+  await db.doc(`challenges/${CHALLENGE}`).set({
+    title: "Steps",
+    ownerUid: UID,
+    measureKind: "COUNT",
+    measureWord: "steps",
+  });
+  await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).set({
+    displayName: "Ido",
+    score: 0,
+    joinedAt: 1,
+  });
+  await db.doc(`challenges/${CHALLENGE}/participants/${OTHER}`).set({
+    displayName: "Rival",
+    score: 0,
+    joinedAt: 1,
+  });
+  // Typed, not linked: a report carries its own number, so the projection publishes
+  // something non-zero without either user needing a goal with progress on it.
+  await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).set({ value: 5_000, reportedAt: 1 });
+  await db.doc(`users/${OTHER}/challengeReports/${CHALLENGE}`).set({ value: 3_000, reportedAt: 1 });
+
+  await eventually("both scores published", rivalRow, (v) => v?.score === 3_000);
+  await eventually(
+    "my score published",
+    async () => (await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).get()).data(),
+    (v) => v?.score === 5_000,
+  );
+
+  // Only now propose, so nothing from the seeding is still in flight.
+  await db.doc(`challenges/${CHALLENGE}`).update({
+    pendingChangeId: "chg-1",
+    pendingMeasureKind: pendingKind,
+    pendingMeasureWord: pendingWord,
+    pendingProposedAt: 1,
+  });
+  await db
+    .doc(`challenges/${CHALLENGE}/participants/${UID}`)
+    .update({ approvedChangeId: "chg-1" });
+}
+
+const challengeDoc = async () => (await db.doc(`challenges/${CHALLENGE}`).get()).data();
+const rivalRow = async () =>
+  (await db.doc(`challenges/${CHALLENGE}/participants/${OTHER}`).get()).data();
+
+test("one hold-out leaves the measure exactly as it was", async () => {
+  await proposeWithTwo("DISTANCE", "km");
+  // Give both registrations time to fire and decide against applying. Asserting a
+  // NON-event needs a wait, not a poll -- there is nothing to converge to.
+  await new Promise((r) => setTimeout(r, 3_000));
+  const c = await challengeDoc();
+  assert.equal(c.measureKind, "COUNT");
+  assert.equal(c.measureWord, "steps");
+  assert.equal(c.pendingChangeId, "chg-1");
+});
+
+test("the last approval applies it, and clears the proposal in the same write", async () => {
+  await proposeWithTwo("DISTANCE", "km");
+  await db
+    .doc(`challenges/${CHALLENGE}/participants/${OTHER}`)
+    .update({ approvedChangeId: "chg-1" });
+
+  const c = await eventually(
+    "measure applied",
+    challengeDoc,
+    (v) => v?.measureKind === "DISTANCE",
+  );
+  assert.equal(c.measureWord, "km");
+  // Left behind, these would have every client render a change still waiting for approval
+  // -- the one it has just applied.
+  assert.equal(c.pendingChangeId, null);
+  assert.equal(c.pendingMeasureKind, null);
+  assert.equal(c.pendingMeasureWord, null);
+});
+
+test("a RESET zeroes every score and deletes every link, in both users' spaces", async () => {
+  await proposeWithTwo("DISTANCE", "km");
+  await db
+    .doc(`challenges/${CHALLENGE}/participants/${OTHER}`)
+    .update({ approvedChangeId: "chg-1" });
+
+  await eventually("rival reset", rivalRow, (v) => v?.score === 0);
+  const rival = await rivalRow();
+  assert.equal(rival.scoreSource, "NONE");
+  assert.equal(rival.approvedChangeId, null);
+  // The identity fields are the participant's and must survive.
+  assert.equal(rival.displayName, "Rival");
+
+  // The link lives under `users/{uid}` -- a document only the Admin SDK can reach from the
+  // function. Leaving it would have the projection keep summing steps into a race now
+  // measured in kilometres, which is the falsification the whole feature exists to stop.
+  await eventually(
+    "links cleared",
+    async () => ({
+      mine: (await db.doc(`users/${UID}/challengeReports/${CHALLENGE}`).get()).exists,
+      theirs: (await db.doc(`users/${OTHER}/challengeReports/${CHALLENGE}`).get()).exists,
+    }),
+    (v) => !v.mine && !v.theirs,
+  );
+
+  // ⚠️ LET THIS TEST'S OWN CASCADE FINISH BEFORE THE NEXT ONE STARTS.
+  //
+  // Deleting those two links fires `projectChallengeScore` twice, and that trigger
+  // outlives the assertion above. `Observed:` 2026-08-25 -- without this wait, the RELABEL
+  // case below read a rival score of 0 where it had just written 3000, because a
+  // projection from THIS test landed after the next test's `beforeEach` had cleaned up and
+  // re-seeded. The failure names the wrong test and looks like a product bug in a code
+  // path that is behaving correctly.
+  //
+  // Contained here rather than in `beforeEach`, deliberately: a settle in `beforeEach`
+  // taxes all 23 cases for a cascade only this one creates. Not a product race -- after a
+  // reset a late projection writes zero onto a row that is already zero.
+  await new Promise((r) => setTimeout(r, 2_000));
+});
+
+test("a RELABEL keeps every score and every link", async () => {
+  await proposeWithTwo("COUNT", "paces");
+  await db
+    .doc(`challenges/${CHALLENGE}/participants/${OTHER}`)
+    .update({ approvedChangeId: "chg-1" });
+
+  await eventually("word applied", challengeDoc, (v) => v?.measureWord === "paces");
+  const rival = await rivalRow();
+  // THE DISCRIMINATING ASSERTION OF THE PAIR. `RESET` above asserts 0, which is also what
+  // the projection would produce on its own from a deleted report -- so that case alone
+  // could not tell a working batch from a no-op. This one can: 3000 survives only because
+  // `participantUpdate("RELABEL")` deliberately writes nothing but `approvedChangeId`.
+  assert.equal(rival.score, 3_000);
+  assert.equal(rival.scoreSource, "REPORTED");
+  assert.equal(rival.approvedChangeId, null);
+  assert.equal(
+    (await db.doc(`users/${OTHER}/challengeReports/${CHALLENGE}`).get()).exists,
+    true,
+  );
+});
+
+test("the OWNER'S OWN PROPOSAL applies it on a solo challenge", async () => {
+  // The reason `applyMeasureChangeOnProposal` exists. One row, approved in the proposal's
+  // own batch, so NOTHING further is ever written to a participant row -- the approval
+  // registration alone would wait forever.
+  await db.doc(`challenges/${CHALLENGE}/participants/${UID}`).set({
+    displayName: "Ido",
+    score: 5_000,
+    joinedAt: 1,
+    approvedChangeId: "chg-9",
+  });
+  await db.doc(`challenges/${CHALLENGE}`).set({
+    title: "Steps",
+    ownerUid: UID,
+    measureKind: "COUNT",
+    measureWord: "steps",
+    pendingChangeId: "chg-9",
+    pendingMeasureKind: "DURATION",
+    pendingMeasureWord: "hours",
+    pendingProposedAt: 1,
+  });
+
+  const c = await eventually(
+    "solo change applied",
+    challengeDoc,
+    (v) => v?.measureKind === "DURATION",
+  );
+  assert.equal(c.measureWord, "hours");
+});
+
+test("an approval naming a DIFFERENT change is not consent to this one", async () => {
+  await proposeWithTwo("DISTANCE", "km");
+  await db
+    .doc(`challenges/${CHALLENGE}/participants/${OTHER}`)
+    .update({ approvedChangeId: "chg-0" });
+
+  await new Promise((r) => setTimeout(r, 3_000));
+  assert.equal((await challengeDoc()).measureKind, "COUNT");
 });
