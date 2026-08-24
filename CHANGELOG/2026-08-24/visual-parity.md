@@ -367,3 +367,45 @@ kind of re-deciding this session's own brief forbids. Flagged for him, not chang
   placing one is not something this session could automate.
 - **No signed-in app.** The emulator carries no account, so every frame is a surface reachable
   without one. The dashboard's cards appear via the entrance strip, which composes them directly.
+
+---
+
+# Phase 5 — distributed
+
+**v0.5.2, `versionCode` 13, App Distribution release `4jj8f6l3mmh5g`**, to the existing `testers`
+group. Ido asked for this before going to sleep; nobody was invited and no group was changed.
+
+⚠️ **The APK was verified fresh before it was uploaded, and that check earned its keep.** A stale
+`app-release.apk` from **02:05** was sitting at the output path while the real build was still
+running at 23:52 — the same trap `CLAUDE.md` records for `grep`-swallowed build failures, in its
+general form: *the artifact path is not evidence the artifact is current*. Checked with `aapt2 dump
+badging` after the build finished: `versionCode='13' versionName='0.5.2'`, and the file's mtime
+moved to 02:55.
+
+`docs/RELEASING.md`'s own trap held too — `releaseNotesFile` is **repo-root-relative**
+(`app/release-notes.txt`), which is what it already says after a session lost two days to the other
+reading.
+
+## The whole session, in the order it happened
+
+| phase | what |
+|---|---|
+| 1 | 103 prototype renders; found `#57`, closed as shipped, with the same complaint in it |
+| 2 | the defaults compose to nothing; the entrance is on one screen — both fixed |
+| 3 | widgets made translucent against a measured contrast floor; §4.9 corrected; a red `DocsCurrencyTest` that was not this session's |
+| 4 | 88 render frames; the before/after pair; the one difference that is not a defect |
+| 5 | v0.5.2 built, verified and distributed |
+
+## What is still open, and none of it is silent
+
+1. **The ground's saturation** — quieter than the prototype by a measured, documented trade
+   (skin-tracking hues + a WCAG 3:1 floor at `alpha = 0.42`). **Ido's call**, flagged in phase 4.
+2. **`Untested:` the widgets on a real launcher.** Held by measurement, not by eye.
+3. **`kb-candidates/2026-08-24-visual-parity.md`** — six entries, none ingested. Cross-repo
+   (`C:\Dev\JARVIS`), whose board this session never read.
+4. **An unowned dirty tree**: `scripts/README.md` and `scripts/create-desktop-shortcuts.ps1` are
+   modified with `CHANGELOG/2026-08-24/phone-mirror.md` and
+   `kb-candidates/2026-08-24-phone-mirror.md` untracked, and **`phone-mirror` has no board row**.
+   Its last transcript turn was **19:15Z**, roughly five hours before this note. Flagged on the
+   board rather than adopted — nothing here touched those paths, and every commit this session made
+   named its paths explicitly.
