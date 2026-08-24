@@ -23,7 +23,12 @@
   reach every material still holds. The formula, per skin and brightness:
 
       primary = colorSchemeFor(skin, isDark).primary
-      ground  = neoGround.mix(primary, isDark ? 0.10 : 0.06)
+      ground  = neoGround.mix(primary, isDark ? 0.10 : 0.06).alpha(0.78)
+                the alpha is WidgetPalette.WIDGET_PANEL_ALPHA, added 2026-08-24: a widget
+                panel is TRANSLUCENT over the launcher wallpaper, as the prototype’s is.
+                0.78 is measured, not chosen — 0.72 is the lowest alpha that still holds
+                WCAG AA on onSurface and 3:1 on onSurfaceVariant against a pure black AND
+                a pure white wallpaper. WidgetPanelContrastTest enforces the floor.
       onVar   = neoInk.alpha(isDark ? 0.62 : 0.60)
       accent  = primary.mute(isDark)          // saturation down, lightness clamped
 
@@ -37,13 +42,13 @@
 <resources>
 
     <!-- Aurora — the default skin. Ocean blue, muted into neo. -->
-    <color name="gp_widget_aurora_ground">#FFE1E8F2</color>
+    <color name="gp_widget_aurora_ground">#C7E1E8F2</color>
     <color name="gp_widget_aurora_on_surface">#FF16202B</color>
     <color name="gp_widget_aurora_on_surface_variant">#9916202B</color>
     <color name="gp_widget_aurora_accent">#FF325E9E</color>
 
     <!-- Blossom — sunset rose, the same transform applied. -->
-    <color name="gp_widget_blossom_ground">#FFECE5EC</color>
+    <color name="gp_widget_blossom_ground">#C7ECE5EC</color>
     <color name="gp_widget_blossom_on_surface">#FF16202B</color>
     <color name="gp_widget_blossom_on_surface_variant">#9916202B</color>
     <color name="gp_widget_blossom_accent">#FF9E4164</color>

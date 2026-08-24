@@ -239,3 +239,87 @@ transcript check. Their three new briefs (`challenge-health-gate`, `challenge-me
 ⚠️ **The first read of that release was wrong and is worth keeping.** When their row disappeared,
 their source was still dirty and their changelog was **staged** — mid-commit, not finished. An
 absent row is not proof a session is done, and here the proof was one `git status` away.
+
+---
+
+# Phase 3 — the widgets, the spec, and a red test that was not mine
+
+Ido, ~23:35, answering the picker: **glassmorphism stands**, *"do everything — I don't care in
+what order, and when you finish distribute the current version of the app. I'm going to sleep so I
+won't be in the loop, so make sure you finish the task."* Everything below ran unattended.
+
+## 1 · The widgets are panels now, not plates
+
+`WidgetPalette`'s ground was **opaque**, and an opaque rectangle on a launcher is the whole of
+*"the widgets look very bad"*. The prototype's widgets (`02-widgets_*` in the render library) are
+panels you can see the wallpaper through.
+
+**The reason they were opaque is the same false premise §4.9 used**, one file over:
+
+> glassmorphism and liquid glass are *made of* blur and refraction
+
+They are not, in this app. Glance cannot blur — true, and beside the point, because **neither does
+the app**: `#57` b drew glass as a translucent panel because Compose has no backdrop filter either.
+
+**What genuinely separates a widget from the app is contrast, not blur.** The app affords alpha
+`0.13` because it draws its own ground underneath (`Modifier.gpPage`). A widget composites over an
+**arbitrary wallpaper** it can neither choose nor read, so the panel must stay dominant enough to
+keep its own text legible on any of them.
+
+**`WIDGET_PANEL_ALPHA = 0.78`, measured rather than chosen.** Against the two worst wallpapers that
+can exist — pure black and pure white — the lowest alpha holding WCAG AA on `onSurface` and 3:1 on
+`onSurfaceVariant`, across all four skin×brightness grounds, is **0.72** (5.26 and 3.08). `0.78`
+takes that to **6.42 and 3.31**. The margin is deliberate: it covers the two things the arithmetic
+cannot see — a launcher that tints behind widgets, and a skin added later.
+
+Two points of rigour worth keeping:
+
+- **Black and white are a proof, not a sample.** Contrast is monotonic in composited luminance and
+  every wallpaper pixel lies between them, so the two extremes bound every wallpaper there is.
+- **`onSurfaceVariant` composites twice** — ink over panel over wallpaper — because it is *already*
+  translucent (`#99…`). Treating it as opaque is the mistake that makes such a test pass while the
+  widget is unreadable.
+
+`WidgetPanelContrastTest` also asserts the panel is **actually translucent**, separately from the
+contrast maths. Without that, a later change restoring alpha `1.0` would pass every contrast
+assertion — opaque is the easiest way to pass a contrast test and the one thing this change exists
+to prevent.
+
+⚠️ **The colour resources are a projection and the guard caught it for free.** `WidgetPaletteResourceTest`
+recomputes all sixteen values from the live arithmetic, so the four new `#C7…` grounds in
+`values/` and `values-night/` are **mechanically confirmed** to equal `ground.alpha(0.78f)` rather
+than to be hand-typed hexes that happen to look right.
+
+## 2 · §4.9's defaults table corrected
+
+The row now reads **glassmorphism**, with the old text quoted, the measurement that refutes it, and
+what the old default cost. Ido ratified the change; the correction records it as his ratification
+of the session's decision, not as his idea.
+
+## 3 · 🐞 A red test on `main` that this session did not cause
+
+`DocsCurrencyTest` was failing **before this session touched anything** — two assertions:
+
+- `challengeInvites` missing from `ARCHITECTURE.md`'s data-model tree (the challenges work)
+- `fileGoal`, `planGoal` missing from its callables section (`ai-goal-onboarding`)
+
+Both features shipped without the doc edit their own guard demands. It matters here because it
+**blocks the release guard**, and Ido had asked for a build to be distributed.
+
+`docs/ARCHITECTURE.md` belongs to `docs-repair`. That row last committed at **01:49** the same day
+(`3e4f381`), holds nothing dirty, and has no live transcript on this machine — read as **gone**, so
+the three names were added rather than waited for. The edit is three names copied from
+`FirestorePaths` and `functions/src/index.ts`, with a note in the file saying who added them and
+why; the prose about *what those callables do* is still the owning sessions' to write.
+
+## 🧪 Tests
+
+**JVM unit: 1183 tests, 0 failures, 0 errors, 0 skipped, across 93 suites** — counted from the
+results XML. Every new guard confirmed to have executed by name:
+
+| test | what it holds |
+|---|---|
+| `the panel is actually translucent…` | the feature, independent of the maths |
+| `panel text stays legible over the worst wallpaper that can exist` | the measured floor |
+| `every declared colour equals the arithmetic it was derived from` | the four new `#C7…` hexes |
+| `assert no material depends on an API-gated primitive` | the glass default's safety on `minSdk` 26 |

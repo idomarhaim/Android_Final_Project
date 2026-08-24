@@ -189,6 +189,7 @@ publicProfiles/{uid}              { displayName, photoUrl, points, friendCode } 
 shares/{shareId}                  SharedItemDto  (authorUid, period, message, imageUrl)
 challenges/{challengeId}          Challenge  (owner, standings)
   participants/{uid}              { score } — projected, NOT client-written (§5.2)
+challengeInvites/{inviteId}       ChallengeInvite  (challengeId, fromUid, toUid) — the offer, readable by both sides only (#23)
 ```
 
 - **Completing a task is one document write, not a transaction** (`TaskRepositoryImpl.setDone`).
@@ -232,6 +233,8 @@ DashboardViewModel → RecommendationRepository → FirebaseFunctions.callable("
 GoalDetailViewModel →       "                 →            "        .callable("scoreTask")
 DashboardViewModel  →       "                 →            "        .callable("classifyTask")
 AddEditGoalViewModel →      "                 →            "        .callable("proposeMeasure")
+AddEditGoalViewModel →      "                 →            "        .callable("fileGoal")
+AddEditGoalViewModel →      "                 →            "        .callable("planGoal")
                                                         │
                               functions/src/index.ts ──┘  → the provider's chat completions (JSON)
 ```
@@ -242,10 +245,22 @@ AddEditGoalViewModel →      "                 →            "        .callabl
   a user may bring their own key for GROQ, OpenAI, Anthropic or Gemini, held in
   `data/security/EncryptedAiCredentialStore`. Four named adapters and no generic
   OpenAI-compatible endpoint, so no untested wire format can run.
-- All four callables are surfaced in the UI: `getRecommendations` → the AI coach
+- All **six** callables are surfaced in the UI: `getRecommendations` → the AI coach
   card, `scoreTask` → the ✨ button on the add-task row, `classifyTask` → the
   "Smart add a task" card on the dashboard (spec §6 Bonus), `proposeMeasure` → the
-  measure proposal on the goal editor.
+  measure proposal on the goal editor, and — added by `ai-goal-onboarding` —
+  `fileGoal` → the silent life-area and category filing a new goal gets on Create,
+  and `planGoal` → the work plan offered straight after it.
+
+  ⚠️ **`fileGoal`, `planGoal` and `challengeInvites` were added to this file on
+  2026-08-24 by `visual-parity`, which owns none of them.** They shipped without a
+  doc edit, so `DocsCurrencyTest` was **red on `main`** — two failures that block the
+  release guard, and Ido had asked for a build to be distributed before going to
+  sleep. The row that owns this file, `docs-repair`, last committed at 01:49 that day
+  (`3e4f381`), holds nothing dirty and has no live transcript on this machine, so it
+  was read as gone rather than interrupted. The three names are copied from
+  `FirestorePaths` and `functions/src/index.ts`; nothing else here was touched, and
+  the prose those sessions owe about *what these do* is still theirs to write.
 - `classifyTask` and `scoreTask` also return **`estimatedMinutes`** — the duration
   the time-allocation chart weighs a completed task by — and `classifyTask` takes
   the user's life areas so a goal it creates is filed straight away. Both facts

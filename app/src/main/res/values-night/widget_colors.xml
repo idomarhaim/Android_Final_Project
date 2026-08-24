@@ -16,12 +16,12 @@
 -->
 <resources>
 
-    <color name="gp_widget_aurora_ground">#FF1C2736</color>
+    <color name="gp_widget_aurora_ground">#C71C2736</color>
     <color name="gp_widget_aurora_on_surface">#FFEAF0F6</color>
     <color name="gp_widget_aurora_on_surface_variant">#9EEAF0F6</color>
     <color name="gp_widget_aurora_accent">#FFA4B4DB</color>
 
-    <color name="gp_widget_blossom_ground">#FF242531</color>
+    <color name="gp_widget_blossom_ground">#C7242531</color>
     <color name="gp_widget_blossom_on_surface">#FFEAF0F6</color>
     <color name="gp_widget_blossom_on_surface_variant">#9EEAF0F6</color>
     <color name="gp_widget_blossom_accent">#FFDBA6B5</color>

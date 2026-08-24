@@ -123,12 +123,54 @@ data class WidgetPalette(
                 else NEO_LIGHT_GROUND.mix(primary, 0.06f)
 
             return NeoScheme(
-                ground = ground,
+                // TRANSLUCENT since 2026-08-24 (`visual-parity`). It was opaque, and
+                // an opaque plate on a launcher is the whole of Ido's "the widgets
+                // look very bad": the prototype's widgets
+                // (`docs/prototypes/2026-08-10-charts-presentation`, widgets view)
+                // are panels you can see the wallpaper through.
+                //
+                // The reason they were opaque is recorded in this file's header and
+                // it is the SAME false premise spec §4.9 used for the app default --
+                // "glassmorphism and liquid glass are made of blur and refraction".
+                // They are not, in this app: `#57` b drew them as translucent panels
+                // over a gradient backdrop because Compose has no backdrop filter
+                // either. Glance cannot blur, which is true and beside the point;
+                // Glance can be translucent, and translucency is what the material
+                // actually is here.
+                //
+                // What DOES separate a widget from the app, and it is a contrast
+                // argument rather than a blur one: the app draws its own ground under
+                // its glass (`Modifier.gpPage`), so it can afford alpha 0.13. A widget
+                // composites over an ARBITRARY wallpaper, so the panel has to stay
+                // dominant enough to keep its own text legible on any of them.
+                //
+                // 0.78 is measured, not chosen. Against the two worst wallpapers that
+                // exist -- pure black and pure white -- the lowest alpha that holds
+                // WCAG AA for `onSurface` and 3:1 for `onSurfaceVariant` across all
+                // four skin/brightness grounds is 0.72 (4.5:1 exactly at 5.26, and
+                // 3.08 on the variant). 0.78 takes that to 6.42 and 3.31, buying
+                // headroom for the two things this arithmetic cannot see: a launcher
+                // that tints wallpapers behind widgets, and a future skin.
+                // `WidgetPanelContrastTest` recomputes the whole table and fails if a
+                // later change eats the margin.
+                ground = ground.alpha(WIDGET_PANEL_ALPHA),
                 onSurface = if (isDark) NEO_DARK_ON else NEO_LIGHT_ON,
                 onSurfaceVariant = if (isDark) NEO_DARK_ON.alpha(0.62f) else NEO_LIGHT_ON.alpha(0.60f),
                 accent = primary.mute(isDark),
             )
         }
+
+        /**
+         * How opaque a widget panel is over the launcher wallpaper.
+         *
+         * Public so [WidgetPanelContrastTest] asserts the *shipped* constant
+         * rather than a copy of it — a floor proved against a duplicate of the
+         * number is a floor proved against nothing.
+         *
+         * See the derivation beside `ground` above: 0.72 is the measured
+         * minimum, this is the shipped value, and the gap is deliberate margin.
+         */
+        const val WIDGET_PANEL_ALPHA = 0.78f
 
         /** Neo's light page. Warm rather than pure white — a flat white ground makes an extrusion read as a cut-out. */
         private val NEO_LIGHT_GROUND = 0xFFEFF1F5.toInt()
