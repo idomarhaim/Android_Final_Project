@@ -117,3 +117,112 @@ was touched. Full reasoning is in the note under its row on `SESSIONS.md`.
 No test layer applies to this unit — it is a roster query, a board claim, and a changelog.
 The project's test layers (server unit, endpoints, database, client component, UI E2E) are
 untouched; nothing in `app/` or `functions/` changed.
+
+---
+
+# Part 2 — Ido's four answers, and three findings that changed the plan
+
+| question | answer |
+|---|---|
+| b-roll spend | **Seedance 2.5, 1×20s, ~5,774** — my `wan2-7`/630 recommendation was **overruled**. Recorded as his call; he optimises for quality over credits, evidence I use again below |
+| privacy | **Course submission only** — the 62 s window (`7:46.5`–`8:48.1`) stays in, no redaction pass |
+| Hebrew data | **Rename the life areas to English first** |
+| `#64` data | **Delegated** — *choose the best solution; filling in data for the demo is no problem, just don't change the software itself only for the video.* Data yes, app code no |
+
+## Finding 1 — the `#64` seeding needs NO Firestore surgery, and the brief's claim is FALSE
+
+The brief states the app's UI *cannot* create a missed past window, and concludes the only route is
+writing occurrence documents directly into live Firestore. **That is wrong**, and it is what makes
+the delegated answer cheap and safe.
+
+`Observed:` there is **no `selectableDates` constraint anywhere in `app/src/main/`** — the grep
+returns nothing. `WhenPicker.kt:124` calls `rememberDatePickerState(initialSelectedDateMillis = …)`
+with **no** `selectableDates` argument, and Compose's default selects **every** date. A task can
+therefore be given a past due date through the app's own form.
+
+**Consequence:** `#64` is seedable exactly as Step 0's measures were — through the UI, creating only
+documents the app itself creates, revertible through `#67`'s delete. Strictly the best of the three
+routes offered, and precisely the boundary Ido drew: **data, not software.**
+
+## Finding 2 — the life-area rename is safe, and does NOT need Ido to touch Google Tasks
+
+The picker option said *I would need you to rename the four lists in Google Tasks*. The app can do
+it instead, and the rename **sticks**:
+
+- `LifeAreaRepository.linkGoogleList` exists to point an area at a list *without touching the name,
+  colour or icon the user chose* — the sync is designed not to overwrite a name.
+- `BuildLifeAreaProposalsUseCase` builds `linkedListIds` from existing areas' `googleListId` and
+  filters those lists out **before** any name matching. An already-linked list produces **no
+  proposal at all**, so a renamed area cannot generate a duplicate.
+- Nothing is written without confirmation.
+
+**So the rename is app-side only — Ido's real Google Tasks lists stay Hebrew and nothing on his
+Google account changes.** A strictly smaller blast radius than the option he picked described, so I
+am taking it: decision recorded as mine, his to overturn.
+
+## Finding 3 — the Hebrew greeting is NOT app data and is not mine to change
+
+`DashboardViewModel.kt:219` reads the **Google account profile name**, not a GoalPilot document.
+Editing it changes Ido's real account identity, so it is his alone. **The home greeting stays
+Hebrew** unless he changes it. The English-UI answer is therefore partly satisfiable and partly not,
+and saying so is better than quietly delivering three quarters of it. Same for the friend's Hebrew
+name in the leaderboard — another person's name, and the *course submission only* answer means it
+was staying anyway.
+
+## The rehearsal — 62 beats, zero selector failures
+
+`--dry-run --no-writes` walked all thirteen acts: 62 beats against the take's 70, the difference
+being the three write beats it skips. **Three `MISS desc=Back`, all benign** — the script taps Back
+twice from two-deep screens and the second is a no-op at root.
+
+⚠️ **The seeding cost a beat, measured rather than predicted.** `GOAL_TO_OPEN=saxophone` is one of
+the three goals given a measure, so `#65`'s measure-offer card no longer fires there — the rehearsal
+shows no such beat between 17 and 18. Net trade is clearly positive (six Act 5 beats plus progress
+rings, for one beat). I am **not** repointing the script at an unmeasured goal: that would write a
+real task to a different real goal and make the saxophone-themed narration incoherent.
+
+## ⚠️ `--dry-run --no-writes` is NOT inert, and its own header says it is
+
+The header promises it *leaves the account exactly as it found it* — true of the **account**, false
+of the **output directory**. It ran `archive_previous` (renaming `GoalPilot-full-tour.mp4` to
+`GoalPilot-full-tour-20260824-0421.mp4`) and **overwrote `beats.tsv`**, so the take's original
+70-beat `beats.tsv` is gone. Nothing that matters was lost: the cut is renamed rather than deleted,
+and `docs/marketing/tour-timecodes.md` still holds all 70 measured beats, because the timecodes doc
+is only regenerated at the post-encode step that `--dry-run` skips.
+
+## The b-roll — generated, verified by LOOKING at it, and four fifths good
+
+`byte-plus-seedance-2-5`, `text2video`, 1080p / 20 s / 9:16 / audio, seed `-1`, `historyId`
+`IofDeywRTvGxBino279M`. **Charged 5,774 credits** — balance 24,000 → 18,226, matching
+`round(6415 × 0.9)` exactly and validating the pricing formula behind every quote above. Saved to
+`GoalPilot-Tour\opening-broll-seedance25.mp4`, 1080×1920, 20.064 s, 24 fps, AAC stereo.
+
+**Checked by extracting a frame per shot and looking at them, not by reading metadata.**
+
+| shot | t | verdict |
+|---|---|---|
+| 1 laptop | 2 s | good mood; **a visible Apple logo**, and the laptop is being *used* rather than closed |
+| 2 shoes | 6 s | excellent, matches Clip 2; **visible ASICS-style branding** |
+| 3 sax case | 10 s | excellent, matches Clip 3 exactly |
+| 4 calendar | 14 s | **BROKEN** — garbled pseudo-text: `TANEES DAHDAY`, `Menday`, `Bommtias`, `Tuesdar` |
+| 5 phone | 18 s | good; **the screen renders dark, no fake app UI** — the brief's biggest stated risk |
+
+**The failure this ticket was most likely to walk into did not happen** — nothing generative
+re-rendered GoalPilot.
+
+**Shot 4 is my authoring error, not the model's.** The prompt said *no text anywhere* **and** *every
+weekday block dense with handwriting*. Those contradict: the second forces lettering, so the model
+invented some. A prompt that bans text must not also describe writing.
+
+**Patch rather than re-roll:** one 5 s replacement at 1,605 list → **1,445 charged**, against 5,774
+to regenerate the whole 20 s. `historyId` `XbEZmvLiNJwYy0vROOFm`, prompted so no lettering is
+representable (heavy defocus, ink as abstract strokes, explicit ban on letters/numbers/day names).
+Spending it is derived from his own b-roll answer: he took 5,774 over my 630, which is evidence he
+buys quality over credits.
+
+## 🧪 Tests
+
+No test layer applies — no file under `app/` or `functions/` was modified. The verification that did
+run is the one that fits the artifact: the choreography re-run against the live app (62 beats, 0
+selector failures), and the generated video checked by extracting and viewing frames rather than by
+trusting its metadata.
