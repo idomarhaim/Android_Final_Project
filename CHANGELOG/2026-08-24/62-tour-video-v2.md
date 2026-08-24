@@ -318,3 +318,86 @@ run, and the push is held"*, so that session considered its own work unfinished.
 **Nothing is lost by the hold.** Both commits are on `main` locally, and `s25-layout-and-tour`
 already established that distribution did not depend on the push — v0.4.0 reached Ido and rachil
 through App Distribution from a local build.
+
+### The hold was lifted by Ido, and the push happened
+
+*(Appended after §9, which stands as the record of why it was held in the first place.)*
+
+Asked, per precondition 5, and answered: *"if you can push without it harming anything, then do
+it."* That is a **conditional** authorisation, so the condition was checked rather than assumed:
+
+- **No secrets.** A regex sweep over the whole range for key/token/private-key shapes returns only
+  **prose about** key handling — `exam-qa-pack`'s Q53 on `google-services.json`, `docs/`'s notes on
+  `firebase functions:secrets:set`. No `AIza…`, no `ghp_…`, no PEM block.
+- **No deletions**, and the single rename is `sessions/62-tour-video-v2.md` →
+  `sessions/done/62-tour-video-v2.md` **with `status: done` in the same commit** — the one rename
+  shape the push gate exempts by name.
+- **One binary**, `docs/exam-prep/GoalPilot-Examiner-QA.docx` at 75 KB, committed deliberately by its
+  own session. Not large.
+- **`docs-repair`'s only stated reservation is answered.** Its last turn held its push because the
+  suite had not been run; `s25-layout-and-tour` had already executed `DocsCurrencyTest` against
+  `3e4f381` — 5 tests, 0 failures, `--rerun-tasks`.
+
+**Pushed `4db36d9..b750dd6` at 10:38:52**, plain `git push`, fast-forward, nothing wider. **Six
+foreign commits rode along and each is named**: `3e4f381` and `59283d0` (`docs-repair`), `9af6424`
+and `e56bd1a` (`s25-layout-and-tour`), `2a55e19` (`exam-qa-pack`), plus my own claim `750ff35`.
+
+---
+
+## 10 · Demo data seeded on Ido's live account — what changed, and exactly how to undo it
+
+Ido chose *"seed demo data, then revert"* over shooting the empty account. Seeding is done; the
+**re-shoot and the revert are not**, and both belong to `sessions/62-tour-assembly.md`.
+
+**Seeded through the app's own UI, never through Firestore.** That was the whole design decision:
+the app maintains its own invariants, every write goes through the same path a user's would, and the
+undo is a control that is visibly present on the same screen. A direct Firestore write would have
+been faster and could have corrupted live data in a way no screen would show.
+
+### What changed — three goals, one field each
+
+| goal | before | after |
+|---|---|---|
+| `Strength Training` | *no number yet* | **Count · target 20 · unit `sessions`** → reads `1 / 20 sessions`, **5 %** |
+| `Learn to play the saxophone` | *no number yet* | **Count · target 50 · unit `sessions`** → reads `0 / 50 sessions`, **0 %** |
+| `Sleep 7 hours` | *no number yet* | **Count · target 30 · unit `nights`** → reads `0 / 30 nights`, **0 %** |
+
+**Nothing else was written.** No tasks created, no progress logged, no occurrences, no calendar
+entries — so nothing touched Google Calendar, and the revert is three edits rather than a hunt.
+
+### The effect, verified on the home screen
+
+`Overall progress` read **"No goal has a number yet"** with an empty dashed square. It now reads
+**1 %**, *"Averaged across the 3 goals that have a number"*. `#65`'s measure-proposal card also
+surfaced on `Strength Training` — a beat the tour wanted and the empty account could not show.
+
+### The revert, per goal — three taps
+
+1. Goals tab → the goal → **More** → **Edit**
+2. Tap the **`Nothing yet`** chip under *What does this goal count?*
+3. Dismiss the keyboard with **Gboard's own tick** (never `keyevent 4` — trap 1), then **Save
+   changes**, and **wait** (see below)
+
+That restores *no number yet* everywhere. The target and unit fields are hidden once the measure is
+`Nothing yet`, so no other field has to be put back.
+
+### ⚠️ Two things that will waste a session if they are not known
+
+- **The save takes up to ~2 minutes and the spinner REPLACES the button label.** Navigating away
+  before it settles **cancels the write silently** — the log says "saved", the screen says *no
+  number yet*, and nothing reports an error. Two of the three goals were seeded twice for this
+  reason. Wait until the `Save changes` label comes back before pressing Back.
+- **The Unit field pre-fills, so it must be cleared before typing.** `Learn to play the saxophone`
+  carried a residual `books`; typing `sessions` into it produced `bookssessions`, and typing into
+  what looked like the right field produced an empty target and an untouched unit. Tap the field by
+  **measured pixel position**, `keyevent 123` (MOVE_END), then a run of `keyevent 67` (DEL), then
+  type — and **look at a screenshot before saving**, because every one of these failures rendered
+  perfectly plausibly in the hierarchy dump.
+
+### The seeding that was NOT done, and why
+
+`#64`'s kept / missed / still-owed run still has nothing to draw: it needs **occurrences with due
+windows in the past**, some met and some not. The app's own UI cannot create a *missed past window*
+— that is a state time produces, not a form. Writing them directly into Firestore is the only route
+and it was **deliberately not taken** on a live account at the end of a long session. Flagged in
+`sessions/62-tour-assembly.md` as a decision for Ido rather than done quietly.

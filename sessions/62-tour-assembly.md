@@ -50,6 +50,45 @@ Director prompt), §7 (what is and is not in the app, and what the account has n
   as **red**; and Act 13's *"the tour waits where you pressed"* is only true from `v0.4.0`.
 - **`scripts/record-tour.sh`** — the choreography. A re-shoot is one command.
 
+## ⚠️ Step 0 — DEMO DATA IS SEEDED ON IDO'S LIVE ACCOUNT AND MUST BE REVERTED
+
+Ido chose *"seed demo data, then revert"* on 2026-08-24. **The seeding happened; the revert did
+not.** It is the first thing this session owes, and it is owed whether or not anything else here
+runs.
+
+Three goals were given a measure, through the app's own UI, nothing else:
+
+| goal | set to | now reads |
+|---|---|---|
+| `Strength Training` | Count · 20 · `sessions` | `1 / 20 sessions`, 5 % |
+| `Learn to play the saxophone` | Count · 50 · `sessions` | `0 / 50 sessions`, 0 % |
+| `Sleep 7 hours` | Count · 30 · `nights` | `0 / 30 nights`, 0 % |
+
+All three were **`no number yet`** before. Nothing else was written — no tasks, no progress entries,
+no occurrences — so nothing reached Google Calendar and the revert is three edits.
+
+**To revert each:** Goals tab → the goal → **More** → **Edit** → tap the **`Nothing yet`** chip →
+dismiss the keyboard with Gboard's tick → **Save changes** → **wait for the label to come back**.
+
+⚠️ **The save takes up to two minutes and the spinner replaces the button label. Navigating away
+before it settles cancels the write silently** — the screen goes back to *no number yet* and nothing
+reports an error. Two of the three goals had to be seeded twice for exactly this reason.
+
+**Re-shoot before reverting, obviously** — the seeding exists so the film has progress rings in it.
+Order: re-shoot (step 1), then revert, then confirm on the home screen that `Overall progress` reads
+*"No goal has a number yet"* again.
+
+### The seeding that was deliberately NOT done
+
+`#64`'s kept / missed / still-owed run **still has nothing to draw**. It needs occurrences with due
+windows **in the past**, some met and some not — and the app's UI cannot create a missed past
+window, because that is a state time produces rather than a form. The only route is writing
+occurrences directly into Firestore, which was **not** done on a live account unprompted.
+
+**That is a decision for Ido**, not a task to pick up: it means writing documents the app did not
+create, into the collection the whole `#63` occurrence model hangs off, on his real data. If he
+wants it, do it with a script that records every document id it writes so the revert is exact.
+
 ## Step 1 — decide whether to re-shoot, and it is cheap either way
 
 **One act of the current take is degraded.** Act 5's add-task sub-flow did not fire — no AI

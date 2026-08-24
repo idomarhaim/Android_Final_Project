@@ -510,8 +510,8 @@ the footage shows an empty state. Measured on `emulator-5554` against Ido's live
 
 | feature | what the screen actually says today |
 |---|---|
-| Overall progress (home) | *"No goal has a number yet"* — **no goal on the account carries a measure**, so there is no ring and no percentage |
-| `#64`'s kept / missed / still-owed run | *"Nothing has been due here yet"* on **every** life area — no occurrence has a due window, so the run renders its empty state |
+| Overall progress (home) | ~~*"No goal has a number yet"*~~ — **SEEDED 2026-08-24 on Ido's instruction.** Three goals were given a Count measure through the app's UI, and it now reads **1 %**, *"Averaged across the 3 goals that have a number"*. `#65`'s measure-proposal card surfaced with it. **This is demo data and is owed a revert** — see `sessions/62-tour-assembly.md` Step 0 |
+| `#64`'s kept / missed / still-owed run | *"Nothing has been due here yet"* on **every** life area — no occurrence has a due window, so the run renders its empty state. **Still true after the 2026-08-24 seeding:** a *missed past window* is a state time produces, not a form, so the app's own UI cannot create one and only a direct Firestore write would |
 | The calendar (`#60`) | **one** entry, and the day reads *free*. Enough to show the grid and the drag; not enough to show a load bar filling |
 | The scope sheet (`#68`) | needs a **recurring** block to appear at all, and there is not one |
 | Analytics by **week** or **month** | *"Nothing completed in this week yet"* — **only the Year view has data** (67 % / 20 % / 13 % over 3h 45m), which is what the narration in §3 Act 9 describes and what the recording therefore shoots |

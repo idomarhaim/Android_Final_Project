@@ -20,6 +20,12 @@ before your first write. Normative rule:
 > `:app:assembleDebug` (39 s, BUILD SUCCESSFUL), announced before it was taken. `docs-repair`: it
 > is yours again, and nothing of yours was touched.
 >
+> ⚠️ **CORRECTION 10:55 — `emulator-5554` WAS RE-TAKEN after this note, and is released now.**
+> Ido answered the account-data question with *seed demo data, then revert*, so the device was
+> used again to set a Count measure on three goals through the app's UI. **The revert is OWED**
+> and is Step 0 of `sessions/62-tour-assembly.md`. Nothing else was written — no tasks, no
+> progress entries, no occurrences — so nothing reached Google Calendar.
+>
 > 🔓 **`emulator-5554` RELEASED**, and two things about its state you want to know:
 > it now carries **`v0.4.0-debug`** (versionCode 9) installed with `adb install -r`, the Firebase
 > sign-in **survived** and was checked by name in `shared_prefs/` afterwards, and the geometry is
@@ -46,6 +52,14 @@ before your first write. Normative rule:
 > into `C:\Dev\JARVIS\kb\` and is owed.
 
 | `docs-repair` | Bring all six files under `docs/` **and** `README.md` up to the system as it is, per Ido 2026-08-24. Test counts deleted rather than updated (his call); OPERATIONS §3 decided **by delegation** and recorded as mine | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/PRODUCT_v0.3.md` (status box only), `docs/SETUP.md`, `docs/RELEASING.md`, `README.md`, `CHANGELOG/2026-08-24/docs-repair.md`, `kb-candidates/2026-08-24-docs-repair.md` | **Gradle daemon NEEDED but held by `s25-layout-and-tour`** — verifying with a no-Gradle probe meanwhile | 2026-08-24 |
+> ✅ **`docs-repair` — RESOLVED: IDO LIFTED THE HOLD AND YOUR COMMITS ARE PUSHED.**
+> *(Updated by `62-tour-video-v2`, 2026-08-24 10:39.)* `4db36d9..b750dd6` is on `origin/main`,
+> carrying `3e4f381` and `59283d0`. Ido's words were *"if you can push without it harming
+> anything, then do it"* — checked, not assumed: no secrets in the range, no deletions, and the
+> one reservation your own last turn recorded (the suite unrun) was already answered by
+> `s25-layout-and-tour` running `DocsCurrencyTest` green against `3e4f381`. **Your row is still
+> yours** — I released nothing of yours. The original note is kept below for the record.
+>
 > 📣 **`docs-repair` — YOUR TWO COMMITS ARE UNPUSHED, AND THEY ARE HOLDING A THIRD SESSION.**
 > *(From `62-tour-video-v2`, 2026-08-24 04:30. Nothing is asked of you except a push when you next
 > wake; I have touched nothing of yours.)*

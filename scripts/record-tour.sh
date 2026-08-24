@@ -331,6 +331,53 @@ wait_for() {
 
 tap_xy() { sh_ input tap "$1" "$2" >/dev/null 2>&1; }
 
+# node_center_exact matches the WHOLE label, not a substring.
+#
+# Substring matching is the right default -- Compose composes labels out of
+# several strings and an exact match breaks when somebody adds a word. But it has
+# bitten three times in one session, always the same way: a short label that is a
+# substring of a longer one on the same screen.
+#   `Goals`  matched the friends feed's "avg 24% across 7 goals"
+#   `Count`  matched the section header "What does this goal count?"
+#   `Soft`   matches "Soft dark"
+# Use the exact form for short generic words; keep the substring form for
+# sentences and for anything a designer might extend.
+node_center_exact() {
+  python - "$1" "$2" "$TMP/ui.xml" <<'PY'
+import io, re, sys
+attr, value, path = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    s = io.open(path, encoding='utf-8', errors='replace').read()
+except OSError:
+    sys.exit(0)
+for node in re.findall(r'<node[^>]*?/?>', s):
+    m = re.search(attr + r'="([^"]*)"', node)
+    if not m or m.group(1).strip() != value:
+        continue
+    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
+    if not b:
+        continue
+    x1, y1, x2, y2 = map(int, b.groups())
+    if x2 <= x1 or y2 <= y1:
+        continue
+    print((x1 + x2) // 2, (y1 + y2) // 2)
+    break
+PY
+}
+
+tap_text_exact() {
+  local pos deadline
+  deadline=$(( $(date +%s) + ${2:-10} ))
+  while [ "$(date +%s)" -le "$deadline" ]; do
+    if dump_ui; then
+      pos=$(node_center_exact text "$1")
+      if [ -n "$pos" ]; then tap_xy $pos; say "tap exact text='$1' at $pos"; return 0; fi
+    fi
+    sleep 0.4
+  done
+  say "MISS exact text='$1'"; return 1
+}
+
 tap_text() {
   local pos; pos=$(wait_for text "$1" "${2:-12}") || { say "MISS text='$1'"; return 1; }
   tap_xy $pos; say "tap text='$1' at $pos"
