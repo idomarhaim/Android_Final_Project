@@ -1,6 +1,6 @@
 # exam-qa-pack — 2026-08-24
 
-> **Summary:** A 95-question examiner Q&A pack for the final-project defence, as a Word file and a self-contained searchable HTML file in `docs/exam-prep/`. Every answer is drawn from `HEAD` — the code, the rules file, the manifest and the build script — not from the product plan, and the `.docx` was verified by opening it in Word rather than by reading the bytes back.
+> **Summary:** A 96-question examiner Q&A pack for the final-project defence, as a Word file and a self-contained searchable HTML file in `docs/exam-prep/`. Every answer is drawn from `HEAD` rather than from `docs/`. Round 2 added the visual layer Ido asked for — 8 inline-SVG diagrams, 3 charts, 12 section icons and 18 real app screenshots from `docs/render-passes/` embedded as webp data URIs — and, with it, a **headless-Edge render pass**, which caught four layout defects that 35 structural checks had passed.
 
 ## What Ido asked for
 
@@ -141,3 +141,93 @@ Claimed as `exam-qa-pack`, owning `docs/exam-prep/`, this file, and
 is why this could run beside `docs-repair` at all. `docs/exam-prep/` is a new directory and
 intersects nothing on the board: `docs-repair` owns six named files under `docs/` and `README.md`,
 none of them here.
+
+---
+
+# Round 2 — the visual layer *(same session, Ido 2026-08-24)*
+
+> *"אני רוצה שבקובץ HTML יהיה יותר גרפים וויזואליזציה אייקונים ותמונות"* — more charts,
+> visualisation, icons and images, **in the HTML file**. The `.docx` was not in scope and its
+> layout is unchanged.
+
+## What was added
+
+| | |
+|---|---|
+| **8 inline-SVG / CSS diagrams** | the layer stack · the Firestore model · unidirectional data flow · the LLM path with its fallback · the points write **before/after** · the Activity lifecycle · the two navigation graphs · the feature tiers |
+| **3 charts** | test methods by layer (1,093 / 319 / 53) · the level curve `50·(n−1)·n` over L1–L10 · questions per section |
+| **12 section icons** | stroke SVG on `currentColor`, in both the sidebar and each `h2` |
+| **18 real app screenshots** | from `docs/render-passes/`, downscaled to webp data URIs — a 6-up hero filmstrip, an 8-up appearance grid (Aurora/Blossom × glass/liquid/neo/dark-neo), and 5 attached to the questions they answer |
+| **6 stat tiles**, a **click-to-enlarge lightbox**, and a **hover tooltip on every plotted mark** | |
+
+**The file stays self-contained** — 180 KB → **692 KB**, no external request, still openable from a
+USB stick with no network. Images are Pillow-downscaled to 520px (250px for the grid) at webp q74:
+**246 KB of pixels for 18 screenshots**, where the originals total 3.9 MB.
+
+**Charts follow `C:\Dev\JARVIS\skills\dataviz`.** One measure → one hue for every bar (never a
+value-ramp on categories), ≤24px marks with 4px rounded data-ends, hairline solid grid, values in
+text tokens rather than the series colour, no legend where there is one series. The palette is the
+reference instance **validated against this page's own surfaces** rather than the skill's defaults:
+`validate_palette.js "#2a78d6,#eb6834,#1baf7a" --surface "#ffffff"` and the dark trio against
+`#161a21` — all checks PASS, with one WARN (aqua at 2.82:1 on white) whose documented mitigation is
+a visible label, which every use of it carries. The architecture layers deliberately take **ordinal
+steps of one hue** rather than categorical slots, because they are ordered and a categorical set
+would assert they are unordered peers.
+
+**Figures are bound to questions by a distinctive substring, and the build asserts each key matches
+exactly one question.** Reword a question and the build fails rather than silently dropping its
+diagram.
+
+## 🧪 Tests
+
+**Still no project test layer in the diff** — `docs/exam-prep/` plus this file and the board.
+`:app:testDebugUnitTest` was **not run**: the Gradle daemon is claimed by `docs-repair` and
+`62-tour-video-v2` announced taking it for an `assembleDebug`.
+
+**63 automated checks (`verify.py`), all green** — 35 from round 1 plus 28 new ones over the visual
+layer: 3 SVG charts present, every plotted mark carrying a tooltip, no bar value label overflowing
+its `viewBox`, 22 screenshots all with `alt` and intrinsic `width`/`height`, every image a webp data
+URI, 33 inline icons, the sidebar figure marker and the card figure marker agreeing, and every
+element the JS targets existing in the DOM. **The `95` literals were replaced by a count derived from
+the content** — a guard that reddens on every legitimate edit gets its number bumped without being
+read, which is how it stops guarding.
+
+### ✅ The visual gap from round 1 is CLOSED — and it found four defects
+
+Round 1 shipped with one open issue: *neither file has been looked at.* This machine has Edge, so
+`--headless=new --screenshot` closes it, and **`look-at-your-own-output.md` §1 is vindicated
+immediately** — 35 structural checks had passed over every one of these:
+
+1. **An inline `<svg>` with no width/height fills its container.** `.ic` was sized only inside
+   `h2`/`h3`/`nav`, so the demo card's play icon rendered as a **~900px circle** occupying a whole
+   screen. Nothing in the markup is wrong; nothing in a DOM assertion can see it.
+2. **`_axis_ticks` stopped at the last tick *below* the max**, so the axis was shorter than the
+   data: the 1,093 bar was scaled against 900 and ran a fifth of its length past the plot, taking
+   its value label off the edge, and the line chart's 4,500 endpoint sat above the top gridline with
+   its label clipped away. **Both charts looked entirely plausible** — that is the whole hazard.
+3. **Five of twelve category labels were cropped** by a fixed 168px left gutter
+   (*"he product…"*, *"ase, the data model…"*), which reads as a typo rather than as a layout fault.
+   The gutter is now measured from the longest label.
+4. **The hero filmstrip wrapped 5 + 1** at 1280px, and captures of wildly different aspect ratios
+   made a ragged row. Fixed image height plus an explicit 6-column grid.
+
+Defects 2 and 3 are `anti-patterns.md` entries by name — *a label clipped by its own mark*, and an
+axis that does not contain its data. Both are now **regression-guarded**: the verifier unit-tests
+`_axis_ticks` over nine maxima and asserts no `bval` label exceeds its `viewBox`.
+
+**The instrument needed its own fix, which is §4 of that same page.** Capturing the real page at a
+`#q7` fragment returned a **blank 7 KB image** three times — the scroll races the screenshot — and
+three identical file sizes were the tell. The working instrument is the skill's own prescription: a
+**probe page** rendering only the figures, seven of them, captured at 1000×1400 in light **and**
+dark. Reading a blank capture as *"the diagrams are fine"* was one careless glance away.
+
+**Rendered and looked at, in both themes:** all 8 diagrams, all 3 charts, the appearance grid and
+the hero strip, plus the full page top. The `.docx` was re-opened in Word — **28 pages, 11,945
+words** (up 201 from the new question).
+
+## One question added, and it is not decoration
+
+**Q4, *"How do points and levels work?"*** — the level curve needed a home, and re-reading the pack
+for where to put it surfaced a real gap: points and levels are a **core requirement** with no
+question of their own. It carries the derive-don't-store rule and the one-sentence answer to *why
+store `points` and not `level`*.
