@@ -176,3 +176,86 @@ Check the board's singleton column"* — the column is not enough if the name in
 tool's.
 
 **Status.** ⛔ **Always-ask — destination `rules/`.** Stays on this list until Ido rules.
+
+---
+
+## 5 · A render pass's floor must assert what a BLANK cannot satisfy — size never is
+
+**Claim.** GoalPilot's render passes inherit `DurationBoxRenderTest`'s floor: the PNG is
+non-empty on disk, wider than N, taller than N. `Observed:` 2026-08-24, twice in one
+session — a **1344×2992 rectangle of flat `#d3e3fb`** passed all three, 22 kB on disk, every
+assertion green. It was the empty **host** window: `AppModalBottomSheet` renders in a window
+of its own, so the content under review was not in the frame at all. **Only a person opening
+the file caught it.** The floor is now *more than one colour*, sampled on a coarse grid —
+the one property a blank frame cannot have.
+
+**Why.** This is `look-at-your-own-output.md` one turn further on. That page's lesson is
+*re-run the consumer, don't read the artifact*; here the consumer **was** re-run, it **did**
+produce an artifact, and the artifact was checked by assertions that could not fail. The
+generalisation: **a floor must assert the property whose absence is the failure mode**, and
+for a screenshot that is *content*, never *dimensions* — dimensions are what a blank has most
+of. Same family as §4k's *print `wc -l` beside every count*: a plausible number is the
+dangerous output, not a missing one.
+
+**Two siblings found in the same hour, both of which also produced green-looking lies:**
+
+- **A composable photographed out of its container measures the container's absence.**
+  `StandingsList` paints no background — in the app a sheet does — so rendered bare with
+  `darkTheme = true` it put dark **foreground** colours on the host's **light** background.
+  That reads as a serious product defect (*"the badge is unreadable in dark mode"*) and is
+  false. Wrap a render pass in a `Surface`, or photograph the thing where it actually lives.
+- **A surface that cannot be photographed cannot be reviewed** — and that is a **design**
+  finding, not a test inconvenience. A modal sheet's own window defeats every root selector,
+  so the list was split out of the sheet as `StandingsList`. Where the acceptance criterion is
+  visual, *reviewability* is a property of the component, and a seam that buys it is part of
+  the feature.
+
+**Rejected:** a better root selector (`onRoot()` refuses; *tallest root* is what produced the
+blank; *the root containing the title* still landed on the host); raising the size floor
+(a blank is full-screen — the floor rewards it); comparing against a golden image (nothing to
+compare on a first run, which is exactly when this fires).
+
+**Destination.** `kb/dev/look-at-your-own-output.md` — a clause under §4, beside §4k.
+
+**Anchors.** `app/src/androidTest/java/com/idomarhaim/goalpilot/ui/ChallengeProvenanceRenderPass.kt`
+(the selector comment and the flat-colour floor); `feature/challenges/ChallengeDialogs.kt`
+(`StandingsList`'s KDoc); `CHANGELOG/2026-08-24/challenge-scoring.md` §9.
+
+**Supersedes.** Nothing. Extends `look-at-your-own-output.md`.
+
+**Status.** Ready.
+
+---
+
+## 6 · The render pass found a defect that was invisible to every assertion — and it was about *register*, not layout
+
+**Claim.** `ReportedBadge` sat in a `Column` beside the participant's name inside a
+`CenterVertically` row, so a **badged** row centred on a two-line block while every other row
+centred on one: the badged person's name floated up, their rank, avatar and score drifted
+down. 13 instrumented assertions and 18 JVM assertions were green — the words, the ranks and
+the ordering were all correct.
+
+**Why it is worth a page rather than a changelog line.** The instinct is to file it as a
+layout nit. It is not: the badge is **a claim about another person, shown to everyone in the
+challenge**, and a row shaped differently from its neighbours is **marked**. GoalPilot's `C4`
+rule — *the app never asserts an intrinsic edge by itself* — was being violated by
+**geometry** while every word on the screen obeyed it. So: **when a surface makes a claim
+about a person, the review has to cover its shape, not only its wording**, and no assertion
+over text can reach that. It is the strongest concrete argument for the render-pass habit
+that this repo has produced.
+
+**Rejected:** reserving an empty badge line on every row (pays the cost on every row to fix
+one); aligning the row to `Top` (moves the rank and avatar off the name's baseline instead).
+The fix is that the badge hangs **below** the row, indented to the name, so every row's first
+line shares a baseline and the badge reads as a footnote.
+
+**Destination.** `kb/product/` or `kb/design/`, beside candidate 3 — same page, this is the
+*layout* half of "a label about a person".
+
+**Anchors.** `feature/challenges/ChallengeDialogs.kt`, the `items(card.standings)` comment;
+`docs/render-passes/2026-08-24-challenge-scoring/standings-light.png`;
+`CHANGELOG/2026-08-24/challenge-scoring.md` §9.1.
+
+**Supersedes.** Nothing.
+
+**Status.** Ready.
