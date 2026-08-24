@@ -7,6 +7,7 @@ import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
@@ -15,6 +16,7 @@ import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Freshness
+import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
@@ -23,6 +25,7 @@ import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.slot
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -952,4 +955,164 @@ class ChallengesViewModelTest {
 
         assertThat(vm.message.value).isEqualTo("Offline")
     }
+
+    // ── §2 · joining CREATES a goal, not only links one ─────────────────
+    //
+    // §6: "joining links or creates a goal, so a challenge hands you tracking you did not
+    // have." Only the linking half shipped; a user with no goal of the challenge's kind
+    // got a message and a trip to the Goals screen. §1 made the gap urgent -- the point of
+    // inviting a friend is that they can compete, and a friend asked into a Steps Race may
+    // well have no steps goal.
+
+    private suspend fun ChallengesViewModel.openedLink(card: ChallengeCard): GoalLinkState {
+        openGoalLink(card)
+        return goalLink.value
+    }
+
+    @Test
+    fun `the create form starts from the challenge's own title and measure`() = runTest {
+        // Somebody joining "Most km this week" wants a km goal, and naming it after the
+        // race is what they would have typed. The measure is carried whole so §2 can copy
+        // it rather than make the user pick a matching kind out of a dropdown.
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+
+        val link = vm.openedLink(card)
+
+        assertThat(link.createTitle).isEqualTo("Most km this week")
+        assertThat(link.measure).isEqualTo(Measure(MeasureKind.DISTANCE, "km"))
+        // Blank on purpose: a challenge names a UNIT, never a finish line, so any
+        // pre-filled number would be the app inventing an ambition on the user's behalf.
+        assertThat(link.createTarget).isEmpty()
+        assertThat(link.eligible).isEmpty()
+    }
+
+    @Test
+    fun `creating copies the challenge's measure, so the new goal can score it`() = runTest {
+        val saved = slot<Goal>()
+        coEvery { goalRepository.upsertGoal(capture(saved)) } returns Resource.Success("g-new")
+        coEvery { repository.linkGoal(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+        vm.onCreateTargetChange("100")
+
+        vm.createAndLinkGoal()
+
+        // The whole point: scoreable BY CONSTRUCTION. If this ever diverges, the user gets
+        // a goal that cannot score the challenge it was made for and nothing says why.
+        assertThat(saved.captured.measure).isEqualTo(challenge().measure)
+        assertThat(challenge().canBeScoredFrom(saved.captured)).isTrue()
+        assertThat(saved.captured.title).isEqualTo("Most km this week")
+        assertThat(saved.captured.targetValue).isEqualTo(100.0)
+        // They typed it and pressed Create, so they declared it (§1.1, `#6`). Nothing else
+        // may claim that.
+        assertThat(saved.captured.declaredBy).isEqualTo(DeclaredBy.USER)
+    }
+
+    @Test
+    fun `creating and linking are ONE act -- the link follows in the same call`() = runTest {
+        coEvery { goalRepository.upsertGoal(any()) } returns Resource.Success("g-new")
+        coEvery { repository.linkGoal(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge(id = "c1"))))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+        vm.onCreateTargetChange("100")
+
+        vm.createAndLinkGoal()
+
+        // Two acts would leave "a goal made for a challenge that is not scoring it"
+        // reachable by closing the sheet in between.
+        coVerify { repository.linkGoal("c1", "g-new") }
+        assertThat(vm.goalLink.value.isVisible).isFalse()
+        assertThat(vm.message.value).isEqualTo("Goal created — this challenge now scores itself")
+    }
+
+    @Test
+    fun `a create that saves but fails to link says BOTH halves`() = runTest {
+        // The half-done state, said out loud. Reporting success would leave somebody
+        // looking at a challenge that is not scoring and a Goals screen that gained a row
+        // they did not ask for, with nothing connecting the two.
+        coEvery { goalRepository.upsertGoal(any()) } returns Resource.Success("g-new")
+        coEvery { repository.linkGoal(any(), any()) } returns Resource.Error("Offline")
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+        vm.onCreateTargetChange("100")
+
+        vm.createAndLinkGoal()
+
+        val state = vm.goalLink.value
+        assertThat(state.isVisible).isTrue()
+        assertThat(state.error).isEqualTo("Goal created, but linking it failed: Offline")
+        assertThat(state.isSaving).isFalse()
+    }
+
+    @Test
+    fun `a blank name is refused before anything is written`() = runTest {
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+        vm.onCreateTitleChange("   ")
+        vm.onCreateTargetChange("100")
+
+        vm.createAndLinkGoal()
+
+        assertThat(vm.goalLink.value.error).isEqualTo("Give the goal a name")
+        coVerify(exactly = 0) { goalRepository.upsertGoal(any()) }
+    }
+
+    @Test
+    fun `a target of zero or nonsense is refused, and nothing is written`() = runTest {
+        // `Goal.progressFraction` divides by the target, and `hasMeasure` is false at zero
+        // -- a goal created here with no target would render as unmeasured on the Goals
+        // screen, which is the opposite of "tracking you did not have".
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+
+        vm.onCreateTargetChange("0")
+        vm.createAndLinkGoal()
+        assertThat(vm.goalLink.value.error).isEqualTo("Set a target above zero")
+
+        vm.onCreateTargetChange("banana")
+        vm.createAndLinkGoal()
+        assertThat(vm.goalLink.value.error).isEqualTo("Set a target above zero")
+
+        coVerify(exactly = 0) { goalRepository.upsertGoal(any()) }
+    }
+
+    @Test
+    fun `a comma decimal target is a real number, as on the score field`() = runTest {
+        // A keypad on a Hebrew or European locale offers a comma, and "12,5" parsing to
+        // null reads as the app rejecting a number the user can see is fine.
+        val saved = slot<Goal>()
+        coEvery { goalRepository.upsertGoal(capture(saved)) } returns Resource.Success("g")
+        coEvery { repository.linkGoal(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+        vm.openedLink(card)
+        vm.onCreateTargetChange("12,5")
+
+        vm.createAndLinkGoal()
+
+        assertThat(saved.captured.targetValue).isEqualTo(12.5)
+    }
+
+    @Test
+    fun `an existing goal of the right kind is still offered, and no form is needed`() =
+        runTest {
+            // §2 changes the EMPTY branch only. A user who already has a suitable goal must
+            // still land on the picker -- creating a second one for the same walk is the
+            // duplicate `#47` is about.
+            val vm = viewModel(
+                mine = listOf(ChallengeWithStandings(challenge = challenge())),
+                goals = listOf(goal(id = "g1", title = "Run 100 km")),
+            )
+            val card = vm.loaded().mine.single()
+
+            val link = vm.openedLink(card)
+
+            assertThat(link.eligible.map { it.id }).containsExactly("g1")
+        }
 }

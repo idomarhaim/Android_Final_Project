@@ -3,6 +3,8 @@
 > **Summary:** Ido can invite a friend to a challenge — a top-level `challengeInvites`
 > collection, an offer-shaped row at the top of the Challenges screen, and the rules
 > partition that makes both reachable without ever writing into somebody else's space.
+> Joining now **creates** the goal it needs, too, so an invited friend with no steps goal
+> is one form away from racing rather than one screen away.
 
 One brief replacing four (`sessions/challenges-finish-the-job.md`, `#23`). **Ido was
 unavailable for this entire session** — *"I'll be driving, so I need this to be in one
@@ -159,6 +161,76 @@ swallowed the rest of the file; the compiler reported `Missing '}'` at line 80 a
 `users/{friendUid}/{document=**}` and annotated in place. Checked **mechanically**
 afterwards, not by eye — a depth-counting scan over all ten touched files, which is what
 found it and confirmed the fix.
+
+---
+
+## §2 · Joining creates a goal — §6's half-built promise, finished
+
+> **Joining links or creates a goal**, so a challenge hands you tracking you did not have.
+
+Linking shipped with `challenge-scoring`; creating did not. A user with no goal of the
+challenge's kind got a sentence naming the kind and a trip to the Goals screen — honest,
+and one screen short.
+
+**§1 is what made it urgent.** The whole point of inviting a friend is that they can
+actually compete, and a friend asked into a Steps Race may well have no steps goal. The
+shortest path from *"someone invited me"* to *"I am racing"* must not detour through
+another screen.
+
+`GoalLinkSheet`'s empty branch is now a **form** rather than a message: a title seeded from
+the challenge, a target, and one button.
+
+### The three decisions in it, all mine to overturn
+
+1. **The measure is not a field.** It is the challenge's, **copied whole**, which makes the
+   new goal scoreable *by construction* rather than by the user picking a matching kind out
+   of a dropdown — the one thing they could get wrong here with no way to diagnose it. A
+   test asserts `challenge.canBeScoredFrom(theCreatedGoal)` directly, so a future
+   divergence fails loudly instead of producing a goal that silently cannot score the
+   challenge it was made for.
+2. **The target starts blank.** A challenge names a **unit**, never a finish line —
+   *"most steps this month"* has no target in it — so a pre-filled number would be the app
+   inventing an ambition on the user's behalf, on the one object §1.1 says needs their
+   declaration. They typed it and pressed Create, so `declaredBy = USER`, the same value
+   `AddEditGoalScreen` stamps and for the same reason.
+3. **Creating and linking are one act, not two.** Two would leave *"a goal made for a
+   challenge that is not scoring it"* reachable by closing the sheet in between. So the
+   link follows the create in the same call — and the half-done state is **said out loud**
+   rather than reported as success: *"Goal created, but linking it failed: …"*, with the
+   picker re-derived so the new goal is now in it and one tap finishes the job.
+
+It goes through **`GoalRepository.upsertGoal`**, not a second creation path. The repository
+is where a goal's id, ownership and defaults are decided, and a challenge screen inventing
+its own would be a second writer of the same object — §0.3's most-repeated finding.
+
+### 🧪 Tests
+
+| layer | result |
+|---|---|
+| **JVM unit** — `ChallengesViewModelTest` | **61 pass, 0 fail** (was 53; **+8** for §2) |
+| **Instrumented render pass** — `ChallengeGoalCreateRenderPass` | **1 test, 6 frames, green** |
+| Security rules | **unchanged and untouched by §2** — creating a goal writes `users/{uid}/goals`, already covered by `isOwner(uid)`, and linking writes the `challengeReports` fact §6 already built. No rules change, and that is the point: this feature needed none. |
+
+### 📸 Render pass — `docs/render-passes/2026-08-25-challenges-finish/challenge-goal-create/`
+
+Three frames in both brightnesses, all opened. The risky question here is not a string
+either: **does a form appearing where a message used to be read as *help*, or as
+*paperwork*?** The user came to join a race, not to fill in a goal editor.
+
+**Verdict: help.** Three controls, the unit shown rather than typed, and one button whose
+verb names the whole act. `goal-link-picker` is in the pass to prove the **non**-empty
+branch still reads as a picker — this session edited the composable those rows live in, and
+a frame is the only thing that shows it.
+
+⚠️ **And the pass found a defect no test would have.** The empty-branch sentence read
+
+> *"None of your goals measures **count** in steps."*
+
+— `MeasureKind.COUNT.label()` lowercased and dropped into prose. It is app machinery and it
+reads as a typo. Now *"None of your goals is measured in steps."* The **kind** is still what
+the matching is done on; that precision moved into a comment, where it belongs, rather than
+into the user's sentence. Pre-existing wording, inherited from the message this form
+replaced — and it took putting it above a form somebody actually reads to notice.
 
 ---
 

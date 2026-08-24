@@ -14,6 +14,7 @@ import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.InviteCandidate
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
@@ -186,10 +187,17 @@ class ChallengesViewModel @Inject constructor(
             isVisible = true,
             challengeId = card.challenge.id,
             challengeTitle = card.challenge.title,
+            measure = card.challenge.measure,
             metricWord = card.challenge.metricWord,
             kindLabel = card.challenge.measure?.kind?.label().orEmpty(),
             linkedGoalId = card.data.myLinkedGoalId,
             eligible = eligibleGoalsFor(card.challenge),
+            // §2: the empty branch is now a FORM, not a message, so it needs a title to
+            // start from. The challenge's own is the right seed -- somebody joining
+            // "August Steps Race" wants a steps goal, and naming it after the race is what
+            // they would have typed. Editable, because it is their goal and it will
+            // outlive the challenge.
+            createTitle = card.challenge.title,
         )
     }
 
@@ -219,6 +227,116 @@ class ChallengesViewModel @Inject constructor(
 
                 is Resource.Error ->
                     _goalLink.update { it.copy(isSaving = false, error = result.message) }
+
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    fun onCreateTitleChange(value: String) =
+        _goalLink.update { it.copy(createTitle = value, error = null) }
+
+    fun onCreateTargetChange(value: String) =
+        _goalLink.update { it.copy(createTarget = value, error = null) }
+
+    /**
+     * §6's other half, and the one that did not ship with the first: *"joining links **or
+     * creates** a goal, so a challenge hands you tracking you did not have."*
+     *
+     * Until now a user with no goal of the challenge's kind got a message naming the kind
+     * and a trip to the Goals screen. Honest, and one screen short — and §1 makes it
+     * urgent, because the whole point of inviting a friend is that they can actually
+     * compete, and a friend asked into a Steps Race may well have no steps goal.
+     *
+     * **Creating and linking are one act, not two.** Two would leave a state nobody wants
+     * — a goal made *for* a challenge that is not scoring it — reachable by closing the
+     * sheet in between. So the link follows the create in the same call, and a failure to
+     * link says so rather than reporting success because half of it worked.
+     *
+     * ⚠️ **It goes through `GoalRepository.upsertGoal`, not a second creation path.** The
+     * repository is where a goal's id, ownership and defaults are decided, and a challenge
+     * screen inventing its own would be a second writer of the same object — §0.3's
+     * most-repeated finding. The only fields this screen supplies are the ones the
+     * challenge actually determines: the **measure** (copied whole, so the kind matches by
+     * construction and `canBeScoredFrom` cannot fail on a goal made for the purpose) and
+     * the title and target the user just typed.
+     */
+    fun createAndLinkGoal() {
+        val current = _goalLink.value
+        if (current.isSaving) return
+        val title = current.createTitle.trim()
+        if (title.isBlank()) {
+            _goalLink.update { it.copy(error = "Give the goal a name") }
+            return
+        }
+        val measure = current.measure
+        if (measure?.kind == null) {
+            // Unreachable from the UI -- `canLinkGoal` is false without a measure -- but
+            // stated rather than assumed, because a goal created with no kind could never
+            // score the challenge it was made for and nothing downstream would say why.
+            _goalLink.update { it.copy(error = "This challenge has no measure to copy") }
+            return
+        }
+        // Accept a comma decimal, the same as the score field: a keypad on a Hebrew or
+        // European locale offers one, and "12,5" parsing to null reads as the app
+        // rejecting a real number.
+        val target = current.createTarget.trim().replace(',', '.').toDoubleOrNull()
+        if (target == null || target <= 0.0) {
+            _goalLink.update { it.copy(error = "Set a target above zero") }
+            return
+        }
+        viewModelScope.launch {
+            _goalLink.update { it.copy(isSaving = true, error = null) }
+            val created = goalRepository.upsertGoal(
+                Goal(
+                    title = title,
+                    // Copied whole from the challenge. The KIND is what the scoring match
+                    // is made on, and the WORD is the user's own language for it (§1.3) --
+                    // taking the challenge's word means a Hebrew user joining an English
+                    // race gets the race's word, which is the honest default for a goal
+                    // created to run in it, and is one edit away on the Goals screen.
+                    measure = measure,
+                    targetValue = target,
+                    // The user typed the title and the target and pressed Create, so this
+                    // is a goal they declared. `AddEditGoalScreen` stamps the same value
+                    // for the same reason; nothing else may claim it (§1.1, `#6`).
+                    declaredBy = DeclaredBy.USER,
+                ),
+            )
+            when (created) {
+                is Resource.Success -> when (
+                    val linked = repository.linkGoal(current.challengeId, created.data)
+                ) {
+                    is Resource.Success -> {
+                        _goalLink.value = GoalLinkState()
+                        // Names what the user now has, in the order they care about: a
+                        // goal that exists, and a challenge that scores itself from it.
+                        _message.value = "Goal created — this challenge now scores itself"
+                    }
+
+                    // THE HALF-DONE STATE, SAID OUT LOUD. The goal exists; the link does
+                    // not. Reporting success here would leave somebody looking at a
+                    // challenge that is not scoring and a Goals screen that gained a row
+                    // they did not ask for, with nothing connecting the two.
+                    is Resource.Error -> _goalLink.update {
+                        it.copy(
+                            isSaving = false,
+                            error = "Goal created, but linking it failed: ${linked.message}",
+                            // Re-derived so the new goal is now IN the picker: the user can
+                            // finish the job by tapping it, instead of making a second one.
+                            eligible = eligibleGoalsFor(
+                                uiState.value.mine
+                                    .firstOrNull { c -> c.challenge.id == current.challengeId }
+                                    ?.challenge ?: Challenge(),
+                            ),
+                        )
+                    }
+
+                    Resource.Loading -> Unit
+                }
+
+                is Resource.Error ->
+                    _goalLink.update { it.copy(isSaving = false, error = created.message) }
 
                 Resource.Loading -> Unit
             }
@@ -627,11 +745,26 @@ data class GoalLinkState(
     val isVisible: Boolean = false,
     val challengeId: String = "",
     val challengeTitle: String = "",
+    /**
+     * The challenge's measure, carried whole so §2 can **copy** it onto a goal it creates.
+     *
+     * [metricWord] and [kindLabel] beside it are for display and are derived from this;
+     * they are kept because the sheet renders both in sentences and re-deriving a label in
+     * a composable would put a `when` over a domain enum inside the UI.
+     */
+    val measure: Measure? = null,
     val metricWord: String = "",
     val kindLabel: String = "",
     /** The goal already linked, so the picker can show which one is current. */
     val linkedGoalId: String = "",
     val eligible: List<Goal> = emptyList(),
+    /**
+     * §2's create form, shown where the *"you have no goal of this kind"* message used to
+     * be. Seeded from the challenge's title on open; the target starts blank because there
+     * is nothing to guess from — a challenge names a unit, never a finish line.
+     */
+    val createTitle: String = "",
+    val createTarget: String = "",
     val isSaving: Boolean = false,
     val error: String? = null,
 )

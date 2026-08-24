@@ -529,21 +529,62 @@ internal fun ReportedBadge(
  * §6's scoring path, as a sheet: *each participant links one of their own goals of the same
  * kind*, and the challenge then moves on its own.
  *
- * **The empty case is a first-class state, not a blank list.** §6 says joining links **or
- * creates** a goal, so a user with no goal of the right kind is told what to make rather
- * than shown a picker with nothing in it. Creating one from here is the half this session
- * did not build; the message names the kind so the trip to the goals screen is one step.
+ * **The empty case is where §6's other half lives**, and as of 2026-08-25 it is a **form**
+ * rather than a message. §6 says joining links **or creates** a goal — *"so a challenge
+ * hands you tracking you did not have"* — and until now only the linking half shipped: a
+ * user with no goal of the challenge's kind got a sentence naming the kind and a trip to
+ * the Goals screen. Honest, and one screen short.
+ *
+ * §1 is what made it urgent. The whole point of inviting a friend is that they can
+ * actually compete, and a friend asked into a Steps Race may well have no steps goal —
+ * so the shortest path from *"someone invited me"* to *"I am racing"* must not detour
+ * through another screen.
+ *
+ * The measure is **not** offered as a choice here: it is the challenge's, copied whole, so
+ * the goal is scoreable by construction rather than by the user getting a dropdown right.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun GoalLinkSheet(
     state: GoalLinkState,
     onLink: (String) -> Unit,
+    onCreateTitle: (String) -> Unit,
+    onCreateTarget: (String) -> Unit,
+    onCreate: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     AppModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+        GoalLinkContent(
+            state = state,
+            onLink = onLink,
+            onCreateTitle = onCreateTitle,
+            onCreateTarget = onCreateTarget,
+            onCreate = onCreate,
+        )
+    }
+}
+
+/**
+ * The picker and §2's create form, without the sheet around them.
+ *
+ * **Split out for the reason [StandingsList] and [InviteList] were**, and in the same
+ * commit as the change that made it worth photographing: `AppModalBottomSheet` renders in
+ * a window of its own, so nothing inside it can be captured — `onRoot()` matches two nodes
+ * and refuses, and every other root selector lands on the host window the sheet has just
+ * emptied. `ChallengeGoalCreateRenderPass` is the camera.
+ */
+@Composable
+internal fun GoalLinkContent(
+    state: GoalLinkState,
+    onLink: (String) -> Unit,
+    onCreateTitle: (String) -> Unit,
+    onCreateTarget: (String) -> Unit,
+    onCreate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    run {
+        Column(modifier = modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
             Text("Score this from a goal", style = MaterialTheme.typography.titleLarge)
             Text(
                 state.challengeTitle,
@@ -563,12 +604,11 @@ internal fun GoalLinkSheet(
             HorizontalDivider()
 
             if (state.eligible.isEmpty()) {
-                Text(
-                    "None of your goals measures ${state.kindLabel.lowercase()} in " +
-                        "${state.metricWord}. Make one on the Goals screen and come " +
-                        "back — the challenge will pick it up.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 20.dp),
+                CreateGoalForThisChallenge(
+                    state = state,
+                    onTitle = onCreateTitle,
+                    onTarget = onCreateTarget,
+                    onCreate = onCreate,
                 )
             }
 
@@ -827,6 +867,92 @@ internal fun ChallengeInviteRow(
                 Button(onClick = onJoin, enabled = !isBusy) { Text("Join") }
                 TextButton(onClick = onDismiss, enabled = !isBusy) { Text("Dismiss") }
             }
+        }
+    }
+}
+
+/**
+ * §2's create-and-link form — *"joining links **or creates** a goal"*.
+ *
+ * ### Why this is three controls and not a goal editor
+ *
+ * The measure is **not** a field. It is the challenge's, copied whole, which is what makes
+ * the new goal scoreable by construction instead of by the user picking a matching kind
+ * out of a dropdown — the one thing they could get wrong here and would have no way to
+ * diagnose. Only the title and the target are theirs, because only those two are things
+ * the challenge cannot know.
+ *
+ * The target starts **blank** rather than at a guess. A challenge names a **unit**, never a
+ * finish line — *"most steps this month"* has no target in it — so any pre-filled number
+ * would be the app inventing an ambition on the user's behalf, on an object §1.1 says
+ * needs their declaration.
+ *
+ * The sentence above the fields says the goal is **theirs and outlives the race**, because
+ * that is the part a user cannot see and would reasonably fear: a goal quietly made by a
+ * challenge, that vanishes with it, is not tracking they can rely on.
+ */
+@Composable
+private fun CreateGoalForThisChallenge(
+    state: GoalLinkState,
+    onTitle: (String) -> Unit,
+    onTarget: (String) -> Unit,
+    onCreate: () -> Unit,
+) {
+    Column(modifier = Modifier.padding(top = 16.dp)) {
+        // THE KIND NAME IS NOT A WORD FOR A SENTENCE, AND A FRAME IS WHAT SHOWED IT.
+        //
+        // This line read "None of your goals measures count in steps" until 2026-08-25 --
+        // `MeasureKind.COUNT.label()` lowercased, dropped into prose. It is app machinery
+        // and it reads as a typo. The user's own word for the unit is the half they
+        // recognise, so that is the half the sentence uses; the KIND is still what the
+        // matching is actually done on (`Challenge.canBeScoredFrom`), which is why the
+        // picker can be empty while a goal counting something else in the same kind would
+        // have filled it. That precision belongs in this comment, not in the sentence.
+        Text(
+            "None of your goals is measured in ${state.metricWord}. Make one here and " +
+                "it will start scoring straight away.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            "It is an ordinary goal on your Goals screen — yours to edit, and it stays " +
+                "when the challenge ends.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Spacer(Modifier.height(14.dp))
+        OutlinedTextField(
+            value = state.createTitle,
+            onValueChange = onTitle,
+            label = { Text("Goal name") },
+            singleLine = true,
+            enabled = !state.isSaving,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(10.dp))
+        OutlinedTextField(
+            value = state.createTarget,
+            onValueChange = onTarget,
+            label = { Text("Target") },
+            // The unit is the challenge's word, shown rather than typed -- it is not the
+            // user's to choose here, and showing it is what tells them what number to put.
+            suffix = { Text(state.metricWord) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            singleLine = true,
+            enabled = !state.isSaving,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(14.dp))
+        Button(
+            onClick = onCreate,
+            enabled = !state.isSaving,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            // ONE VERB FOR ONE ACT. Creating and linking are a single call in the view
+            // model for a reason -- two would leave "a goal made for a challenge that is
+            // not scoring it" reachable by closing the sheet in between -- and a button
+            // saying only "Create" would describe half of what happens.
+            Text(if (state.isSaving) "Creating…" else "Create and start scoring")
         }
     }
 }
