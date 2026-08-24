@@ -94,6 +94,23 @@ object CloudFunctions {
      * which is the only thing that makes the call resolve.
      */
     const val PROPOSE_MEASURE = "proposeMeasure"
+
+    /**
+     * Where a **goal** belongs, from its title alone (§3.3 D's schema, §0.7; Ido 2026-08-24).
+     *
+     * Reuses `classify`'s validator on the far side with an empty `goals[]` rather than adding
+     * a sixth schema — see `RecommendationRepository.fileGoal`. The name matches
+     * `export const fileGoal` in `functions/src/index.ts`, which is the only thing that makes
+     * the call resolve.
+     */
+    const val FILE_GOAL = "fileGoal"
+
+    /**
+     * §3.3 B's `plan` — a proposed work plan for one goal (§3.7, `C8` #24).
+     *
+     * Matches `export const planGoal` in `functions/src/index.ts`.
+     */
+    const val PLAN_GOAL = "planGoal"
 }
 
 /** Firebase Storage folder layout. */

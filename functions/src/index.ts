@@ -60,6 +60,20 @@ import {
   validateProposals,
 } from "./measure";
 
+// `plan`'s validator (spec §3.3 B, §3.7) -- `C8` #24's schema, Firebase-free like the two
+// above so `test/plan.test.mjs` runs under plain `node --test`. `LABELS`, `DIFFICULTIES` and
+// the two bounds live there so the list the prompt OFFERS and the list the response is CHECKED
+// against are one list, exactly as `CATEGORIES` and `MEASURE_KINDS` already are.
+import {
+  LABELS,
+  DIFFICULTIES as PLAN_DIFFICULTIES,
+  MAX_DAY_OFFSET,
+  MAX_ITEMS,
+  MIN_MINUTES as PLAN_MIN_MINUTES,
+  MAX_MINUTES as PLAN_MAX_MINUTES,
+  validatePlan,
+} from "./plan";
+
 // `C13`'s four provider adapters (#54, decided in #32). Firebase-free for the same
 // reason `classify.ts` is: `test/providers.test.mjs` runs them under plain
 // `node --test` with no emulator.
@@ -453,5 +467,136 @@ export const proposeMeasure = onCall(async (request: CallableRequest) => {
     // call that did not happen produced.
     logger.error("proposeMeasure failed", e);
     return { proposals: [], ...nothingAnswered(e) };
+  }
+});
+
+/**
+ * `fileGoal` — which life area a **goal** belongs to, from its title alone (spec §3.3 D's
+ * schema, §0.7's silence rule; Ido 2026-08-24).
+ *
+ * ## Why this is `classify`'s schema and not a new one
+ *
+ * §3.3 D already answers *"which goal, **which life area**, or a new goal"* — for a **task**.
+ * The question asked here is that schema's middle third asked about a goal, so it reuses
+ * `classify.ts`'s validator unchanged rather than growing a second copy of the same membership
+ * test. The lists arrive the same way: `goals[]` is simply absent, so `goalIds` is empty, every
+ * `suggestedGoalId` fails membership and the field can never appear. That is the reuse being
+ * safe **structurally** rather than by a promise not to send one.
+ *
+ * ## It is silent, and that is §0.7 rather than a UX preference
+ *
+ * > The app may act silently on **instrumental** structure, but must ask before asserting an
+ * > **intrinsic** edge.
+ *
+ * Filing a goal under a life area is instrumental — it decides which column of the time chart
+ * the goal reports into, and it is one tap to change. Deciding the goal **exists** is intrinsic,
+ * and that is the user's own act here: they typed the title. So no dialog, no toggle, and no
+ * default to configure, exactly as `SmartFiling` already decided for tasks.
+ *
+ * ## What the client does with an absent field
+ *
+ * Nothing. An absent `suggestedLifeAreaId` leaves the goal **unfiled**, which §1.2 makes a
+ * legitimate state — not a degraded one — and an absent `suggestedCategory` leaves whatever the
+ * form already had. There is no branch here that speaks, and that is the whole of §3.4's
+ * treatment of this call.
+ */
+export const fileGoal = onCall(async (request: CallableRequest) => {
+  const { goalTitle = "", lifeAreas = [] } = request.data ?? {};
+  const lists = listsFromRequest(request.data);
+
+  const system =
+    "File a personal goal under one of the user's own life areas, and pick the category " +
+    "that best fits it. Reply ONLY with a JSON object: " +
+    "{\"suggestedLifeAreaId\":string|null," +
+    `\"suggestedCategory\":\"${CATEGORIES.join("|")}\",` +
+    "\"confidence\":number,\"rationale\":string}. " +
+    "suggestedLifeAreaId MUST be one of the given life area ids, or null if none of them " +
+    "genuinely fits -- never invent an id and never adapt one. " +
+    "Judge from the goal's title alone; the user has not said where it belongs. " +
+    "confidence is 0..1. The title may be in any language, including Hebrew.";
+  const user =
+    `Goal: "${goalTitle}". Life areas: ${JSON.stringify(lifeAreas)}.`;
+
+  try {
+    const a = await answer(request, system, user);
+    return { ...validateClassification(a.json, lists), ...provenance(a) };
+  } catch (e) {
+    // §3.4's transport class: silent, no retry. An OBJECT rather than a throw, and the
+    // difference from `classifyTask` is that this call has no fallback on the client to hand
+    // the whole response to -- there is nothing to keyword-match a life area against that
+    // would not be a second, worse copy of this judgement. An empty object leaves the goal
+    // unfiled, which is a state §1.2 already calls legitimate, so nothing is fabricated and
+    // nothing is lost but the suggestion.
+    logger.error("fileGoal failed", e);
+    return { ...nothingAnswered(e) };
+  }
+});
+
+/**
+ * `planGoal` — §3.3 **B**'s `plan`, and §3.7's proposed draft (`C8` #24).
+ *
+ * ## The draft gate is the reason the model is allowed this much latitude
+ *
+ * §3.7: *"nothing the model decides here may reach Firestore without passing his eyes."* This
+ * function therefore returns a **proposal** and writes nothing; the client shows it as a draft
+ * with a keep/drop per step, and only what survives that sheet becomes a task. Every other
+ * restraint in this file exists because a call writes something; this one is loose on purpose
+ * and gated at the other end.
+ *
+ * ## Two things the model may not author, both enforced in `plan.ts`
+ *
+ * - **No ids.** A new step carries none and is identified by its **position** (§3.3 B). The
+ *   client mints the id, which makes a truncated or duplicated id unrepresentable rather than
+ *   merely checked.
+ * - **No dates.** It answers in `dayOffset` — days from the day the plan is applied — and the
+ *   app resolves that against its own clock and zone. §0.5, and the practical half: a draft
+ *   §3.7 says has **no expiry** would otherwise carry dates that were true when it was drawn.
+ *
+ * ## Failure is reported, not swallowed
+ *
+ * Unlike `proposeMeasure`, whose empty list is exactly what the client's mechanical fallback
+ * wants, there is no arithmetic that produces a plan. So a transport failure **throws**, the
+ * client records `AiAnswer.Local` and the sheet says the plan could not be fetched — §0.4:
+ * this call is one the user pressed a button for, and a failure they can act on (press it
+ * again) must not be silent.
+ */
+export const planGoal = onCall(async (request: CallableRequest) => {
+  const { language = "en", goalTitle = "", goalDescription = "", measureWord = "" } =
+    request.data ?? {};
+
+  const system =
+    "Propose a short, concrete work plan for one personal goal. " +
+    "Reply ONLY with a JSON object: {\"items\":[{\"title\":string," +
+    `\"label\":\"${LABELS.join("|")}\",` +
+    `\"difficulty\":\"${PLAN_DIFFICULTIES.join("|")}\",` +
+    "\"estimatedMinutes\":number,\"dayOffset\":number,\"timeOfDay\":string}]}. " +
+    `At most ${MAX_ITEMS} items, ordered from soonest to latest. ` +
+    "label is STATE_YOU_REACH for a milestone -- a state the person reaches, which is not " +
+    "work and is never priced -- or WORK_YOU_DO for a thing they actually sit down and do. " +
+    "difficulty, estimatedMinutes and timeOfDay are for WORK_YOU_DO items ONLY and MUST be " +
+    "omitted entirely on a STATE_YOU_REACH item. " +
+    `estimatedMinutes is ${PLAN_MIN_MINUTES}-${PLAN_MAX_MINUTES}, for one sitting of the step. ` +
+    "difficulty is exactly one of LIGHT, ROUTINE or DEMANDING -- how demanding the work is, " +
+    "never how long it takes. " +
+    `dayOffset is a whole number of days from TODAY, 0-${MAX_DAY_OFFSET}: 0 is today, 1 is ` +
+    "tomorrow. NEVER answer with a calendar date -- the app owns the calendar. " +
+    "timeOfDay is \"HH:MM\" on a 24-hour clock, and only for a step that genuinely wants a " +
+    "slot in the day; omit it for a step that is simply due that day. " +
+    "Spread the plan realistically over time rather than piling it into one week. " +
+    "Write every title in the language named below, and write it as the person would.";
+  const user =
+    `Language: ${language}. Goal: "${goalTitle}". ` +
+    (goalDescription ? `Description: "${goalDescription}". ` : "") +
+    (measureWord ? `What it counts: "${measureWord}". ` : "");
+
+  try {
+    const a = await answer(request, system, user);
+    return { ...validatePlan(a.json), ...provenance(a) };
+  } catch (e) {
+    logger.error("planGoal failed", e);
+    // A THROW, like `classifyTask` and unlike `proposeMeasure`. There is no arithmetic on the
+    // client that produces a plan, so an empty `items` here would be indistinguishable from a
+    // model that had nothing to propose -- and the user pressed a button. See the KDoc above.
+    throw e;
   }
 });

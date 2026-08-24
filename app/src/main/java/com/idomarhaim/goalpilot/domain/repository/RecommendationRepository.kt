@@ -2,6 +2,8 @@ package com.idomarhaim.goalpilot.domain.repository
 
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.GoalFiling
+import com.idomarhaim.goalpilot.domain.model.GoalPlan
 import com.idomarhaim.goalpilot.domain.model.GoalStructure
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.MeasureProposal
@@ -78,4 +80,49 @@ interface RecommendationRepository {
         goals: List<Goal>,
         structures: Map<String, GoalStructure>,
     ): Resource<List<MeasureProposal>>
+
+    /**
+     * Where a **goal** belongs, from its title alone (§3.3 D's schema, §0.7; Ido 2026-08-24).
+     *
+     * ## It reuses `classify`'s schema rather than growing a sixth one
+     *
+     * §3.3 D already answers *"which goal, **which life area**, or a new goal"* — for a task.
+     * The question here is that schema's middle third asked about a goal, so the Cloud Function
+     * runs `classify`'s validator unchanged with an empty `goals[]`, which makes
+     * `suggestedGoalId` **structurally** unreachable rather than merely unused.
+     *
+     * ## Failure is an empty [GoalFiling], and the goal stays unfiled
+     *
+     * There is no offline substitute worth having: matching a goal title against life-area names
+     * is a worse copy of the judgement being asked for, and §1.2 already makes *unfiled* a
+     * legitimate state. So a failed call returns [GoalFiling] with both fields null and the form
+     * keeps whatever the user chose — which for a user who chose nothing is *unfiled*, honestly.
+     *
+     * @param lifeAreas the areas the model may choose from; an empty list makes every answer
+     *   fail membership, which is correct — a user with no areas cannot have a goal filed
+     */
+    suspend fun fileGoal(
+        goalTitle: String,
+        lifeAreas: List<LifeArea>,
+    ): Resource<GoalFiling>
+
+    /**
+     * §3.3 B's `plan` — a proposed work plan for one goal (§3.7, `C8` #24).
+     *
+     * ## What comes back is a **draft**, and nothing here writes
+     *
+     * §3.7: *"nothing the model decides here may reach Firestore without passing his eyes."* The
+     * caller shows the returned [GoalPlan] as a sheet with a keep/drop per step, and only what
+     * survives it is written — by
+     * [com.idomarhaim.goalpilot.domain.usecase.ApplyGoalPlanUseCase], which is the only code that
+     * turns a step into a task.
+     *
+     * ## Failure is an **error**, not an empty plan — and that is §0.4
+     *
+     * Unlike [proposeMeasures], whose empty list is exactly what its mechanical fallback wants,
+     * there is no arithmetic that produces a plan. The user pressed a button, so a failure is one
+     * they can act on (press it again) and must not be silent. An empty plan and a failed call
+     * are therefore two different results here, and the caller can tell them apart.
+     */
+    suspend fun planGoal(goal: Goal): Resource<GoalPlan>
 }

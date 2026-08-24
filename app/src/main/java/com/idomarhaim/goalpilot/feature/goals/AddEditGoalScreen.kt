@@ -19,6 +19,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,10 +51,23 @@ fun AddEditGoalScreen(
 ) {
     val form by viewModel.form.collectAsStateWithLifecycle()
     val lifeAreas by viewModel.lifeAreas.collectAsStateWithLifecycle()
+    val plan by viewModel.plan.collectAsStateWithLifecycle()
 
     LaunchedEffect(form.saved) {
         if (form.saved) onDone()
     }
+
+    // §3.7's draft gate. It opens **after** the goal is written and closes the screen when it is
+    // answered either way, which is why `form.saved` is set by the view model's plan path rather
+    // than by the save itself: leaving on the save would take the sheet with it.
+    GoalPlanSheet(
+        state = plan,
+        goalTitle = form.title,
+        onToggleStep = viewModel::onStepKeepToggle,
+        onApply = viewModel::applyPlan,
+        onRetry = { viewModel.requestPlan() },
+        onDismiss = viewModel::dismissPlan,
+    )
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -122,11 +136,19 @@ fun AddEditGoalScreen(
                 )
             } else {
                 Text(
-                    if (form.lifeAreaIds.size > 1) {
-                        "This goal serves ${form.lifeAreaIds.size} areas. Finishing its work " +
-                            "counts in every one of them; the time it takes is split between them."
-                    } else {
-                        "Pick as many as the goal really serves — or none, to leave it unfiled."
+                    when {
+                        form.lifeAreaIds.size > 1 ->
+                            "This goal serves ${form.lifeAreaIds.size} areas. Finishing its work " +
+                                "counts in every one of them; the time it takes is split between them."
+                        // §0.7: filing is instrumental, so the app does it silently rather than
+                        // asking — but it SAYS it will, before the fact, on a form where leaving
+                        // the row alone is otherwise indistinguishable from declining. Tapping
+                        // any chip, "None" included, takes the decision back.
+                        !form.lifingTouched && !form.isEdit ->
+                            "Leave this alone and the app files the goal from its title when " +
+                                "you save. Tap any chip — including None — to decide yourself."
+                        else ->
+                            "Pick as many as the goal really serves — or none, to leave it unfiled."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -254,6 +276,20 @@ fun AddEditGoalScreen(
                     )
                 } else {
                     Text(if (form.isEdit) "Save changes" else "Create goal")
+                }
+            }
+
+            // On a NEW goal the plan is offered automatically the moment it is saved, which is
+            // what Ido asked for. On an existing one it is a button, and never automatic: a plan
+            // is an offer about work that does not exist yet, so re-proposing one every time a
+            // title is corrected is the over-eager agent §2.3 warns about.
+            if (form.isEdit) {
+                OutlinedButton(
+                    onClick = { viewModel.requestPlan() },
+                    enabled = !form.isSaving && form.title.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Suggest a work plan")
                 }
             }
         }

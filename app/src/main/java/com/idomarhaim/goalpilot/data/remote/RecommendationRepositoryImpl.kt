@@ -10,11 +10,15 @@ import com.idomarhaim.goalpilot.domain.model.AiCredential
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Goal
 import com.idomarhaim.goalpilot.domain.model.GoalCategory
+import com.idomarhaim.goalpilot.domain.model.GoalFiling
+import com.idomarhaim.goalpilot.domain.model.GoalPlan
 import com.idomarhaim.goalpilot.domain.model.GoalStructure
 import com.idomarhaim.goalpilot.domain.model.LifeArea
 import com.idomarhaim.goalpilot.domain.model.MeasureBasis
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.MeasureProposal
+import com.idomarhaim.goalpilot.domain.model.PlanStep
+import com.idomarhaim.goalpilot.domain.model.PlanStepKind
 import com.idomarhaim.goalpilot.domain.model.ProposalOrigin
 import com.idomarhaim.goalpilot.domain.model.Recommendation
 import com.idomarhaim.goalpilot.domain.model.RecommendationType
@@ -30,6 +34,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -255,6 +260,177 @@ class RecommendationRepositoryImpl @Inject constructor(
             // Empty, never a substitute. §3.4's mechanical proposal is the caller's.
             Resource.Success(emptyList())
         }
+    }
+
+    /**
+     * `fileGoal` — where a goal belongs, from its title alone (§3.3 D's schema, §0.7).
+     *
+     * ⚠️ **There is no `fallbackGoalFiling` beside the three fallbacks below, and that is a
+     * decision.** The obvious offline heuristic — match the goal's words against the life-area
+     * names — is a worse copy of the exact judgement being asked for, and it would be
+     * indistinguishable downstream from a real answer, which is the cost
+     * `classifyTask`'s catch block already spends a paragraph on. §1.2 makes *unfiled* a
+     * legitimate state, so an empty [GoalFiling] is both the honest report of a call that did
+     * not happen and a state the app already knows how to be in.
+     *
+     * ⚠️ **Nothing here logs**, like every call above: the payload carries the user's key.
+     */
+    override suspend fun fileGoal(
+        goalTitle: String,
+        lifeAreas: List<LifeArea>,
+    ): Resource<GoalFiling> = withContext(io) {
+        if (goalTitle.isBlank() || lifeAreas.isEmpty()) {
+            return@withContext Resource.Success(GoalFiling())
+        }
+        val credential = aiProvider.credential.value
+        try {
+            val payload = hashMapOf<String, Any>(
+                "language" to preferences.language.value.id,
+                "goalTitle" to goalTitle,
+                "lifeAreas" to lifeAreas.map { mapOf("id" to it.id, "name" to it.name) },
+                // Deliberately NOT sent, and the omission is the design: with no `goals[]` the
+                // Cloud Function's `listsFromRequest` yields an empty goal-id list, so every
+                // `suggestedGoalId` fails membership and the field cannot appear. Reusing
+                // `classify`'s validator is therefore safe by construction rather than by a
+                // promise about what this payload contains.
+            ).withCredential(credential)
+            val result = functions.getHttpsCallable(CloudFunctions.FILE_GOAL)
+                .call(payload).await()
+            val data = result.getData()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(data, credential))
+            Resource.Success(parseFiling(data))
+        } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
+            Resource.Success(GoalFiling())
+        }
+    }
+
+    /**
+     * `planGoal` — §3.3 B's `plan`, and §3.7's proposed draft (`C8` #24).
+     *
+     * ## The one call in this file whose failure is an [Resource.Error]
+     *
+     * The other four all succeed with something: a local nudge feed, a keyword classification,
+     * a neutral estimate, an empty proposal list. Each has a real offline answer to the question
+     * it asks. This one does not — there is no arithmetic over the user's data that produces a
+     * plan for *"run a marathon"* — and the user pressed a button for it. §0.4: *speak about a
+     * failure the user can act on*, and pressing it again is an action. So a dead network here
+     * says so, rather than handing back an empty plan that reads as *the model had nothing to
+     * suggest*.
+     *
+     * ⚠️ **Nothing here logs**, for the same reason as every call above.
+     */
+    override suspend fun planGoal(goal: Goal): Resource<GoalPlan> = withContext(io) {
+        val credential = aiProvider.credential.value
+        try {
+            val payload = hashMapOf<String, Any>(
+                // The language every step TITLE is authored in. Content, like `measure`'s
+                // `word`: written once in whatever language is current and never re-rendered
+                // (§3.5, `C15b`). It has to travel for the same reason — the model cannot infer
+                // it from a goal title that may be in either language, or in neither.
+                "language" to preferences.language.value.id,
+                "goalTitle" to goal.title,
+                "goalDescription" to goal.description,
+                // §1.3's word, when the goal has one. It is what the plan should add up to, and
+                // it is the only part of the measure the prompt can use: the TARGET is a number
+                // and §0.5 keeps numbers on this side of the wire.
+                "measureWord" to goal.measureWord,
+            ).withCredential(credential)
+            val result = functions.getHttpsCallable(CloudFunctions.PLAN_GOAL)
+                .call(payload).await()
+            val data = result.getData()
+            aiProvider.recordAnswer(AiCallEnvelope.answeredBy(data, credential))
+            Resource.Success(parsePlan(data, goal.id))
+        } catch (e: Exception) {
+            aiProvider.recordAnswer(AiAnswer.Local())
+            Resource.Error(e.message ?: "The plan could not be fetched.")
+        }
+    }
+
+    /**
+     * Reads a `fileGoal` response.
+     *
+     * **`category` is read nullably**, unlike everywhere else in this file. `GoalCategory.fromName`
+     * resolves an unknown name to `OTHER`, which is right for a *stored* value and wrong here: it
+     * would let a call that said nothing about the category overwrite one the user picked by hand
+     * with `OTHER` — a silent downgrade wearing an answer's clothes. Absent stays absent, and the
+     * caller keeps what it had.
+     */
+    private fun parseFiling(data: Any?): GoalFiling {
+        val m = data as? Map<*, *> ?: return GoalFiling()
+        val categoryName = m["suggestedCategory"] as? String
+        return GoalFiling(
+            // Read, not re-checked — membership is the Cloud Function's job and only its
+            // (§3.4). What happens on this side is RESOLUTION: an id naming no area of the
+            // user's simply finds nothing, and the goal stays unfiled.
+            lifeAreaId = m["suggestedLifeAreaId"] as? String,
+            category = GoalCategory.entries.firstOrNull { it.name.equals(categoryName, true) },
+            confidence = (m["confidence"] as? Number)?.toFloat() ?: 0f,
+            rationale = (m["rationale"] as? String).orEmpty(),
+        )
+    }
+
+    /**
+     * Reads a `plan` response into a draft.
+     *
+     * **The index is assigned here**, walking the list the Cloud Function returned in order —
+     * §3.3 B's *"a new step … is identified by its position; the client assigns the id on
+     * receipt"*. Nothing echoed from the model is read as an identifier, and there is no `id`
+     * field to read even if one arrived.
+     *
+     * A step with no title is dropped rather than defaulted: the validator already rejects one,
+     * so reaching this branch means the response did not come from the validator at all.
+     */
+    private fun parsePlan(data: Any?, goalId: String): GoalPlan {
+        val m = data as? Map<*, *> ?: return GoalPlan(goalId = goalId)
+        val raw = m["items"] as? List<*> ?: emptyList<Any?>()
+        val steps = raw.mapNotNull { it as? Map<*, *> }
+            .mapNotNull { item ->
+                val title = (item["title"] as? String)?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: return@mapNotNull null
+                val kind = PlanStepKind.fromName(item["label"] as? String)
+                PlanStep(
+                    // Placeholder; replaced by the real position below, after the drops.
+                    index = 0,
+                    title = title,
+                    kind = kind,
+                    // A milestone is never priced (`C18`'s container rule). The Cloud Function
+                    // already strips these three from one, so this is belt-and-braces on a rule
+                    // that would be invisible if it broke — and ROUTINE is ×1.0, the absence of
+                    // a judgement rather than a guess at one.
+                    difficulty = if (kind == PlanStepKind.MILESTONE) {
+                        Difficulty.ROUTINE
+                    } else {
+                        Difficulty.fromName(item["difficulty"] as? String)
+                    },
+                    estimatedMinutes = if (kind == PlanStepKind.MILESTONE) {
+                        null
+                    } else {
+                        TaskDuration.sanitize((item["estimatedMinutes"] as? Number)?.toInt())
+                    },
+                    dayOffset = (item["dayOffset"] as? Number)?.toInt()?.takeIf { it >= 0 },
+                    timeOfDay = if (kind == PlanStepKind.MILESTONE) {
+                        null
+                    } else {
+                        parseTimeOfDay(item["timeOfDay"] as? String)
+                    },
+                )
+            }
+            .mapIndexed { index, step -> step.copy(index = index) }
+        val notes = (m["changeNotes"] as? List<*>).orEmpty().mapNotNull { it as? String }
+        return GoalPlan(goalId = goalId, steps = steps, changeNotes = notes)
+    }
+
+    /**
+     * `HH:MM` into a [LocalTime], or `null`.
+     *
+     * `LocalTime.parse` **throws** on a malformed value, and this one runs inside a `map` over
+     * every step — so an unparseable time would cost the whole plan rather than the one step's
+     * slot. The validator already rejects anything this could throw on; catching is what makes
+     * that a belt rather than a dependency.
+     */
+    private fun parseTimeOfDay(value: String?): LocalTime? = value?.let {
+        runCatching { LocalTime.parse(it.trim()) }.getOrNull()
     }
 
     /**
