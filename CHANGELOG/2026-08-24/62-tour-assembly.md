@@ -226,3 +226,56 @@ No test layer applies — no file under `app/` or `functions/` was modified. The
 run is the one that fits the artifact: the choreography re-run against the live app (62 beats, 0
 selector failures), and the generated video checked by extracting and viewing frames rather than by
 trusting its metadata.
+
+## The patch — generated, looked at, and it worked
+
+`historyId` `XbEZmvLiNJwYy0vROOFm`, 1080×1920, 5.056 s, 24 fps, saved to
+`GoalPilot-Tour\opening-broll-calendar-patch.mp4`. **Charged 1,445** — balance 18,226 → 16,781,
+matching `round(1605 × 0.9)` exactly. That is the **second** exact hit for the discount formula, so
+the credit numbers quoted in this changelog are measured, not estimated.
+
+**Verified by extracting frames and looking, the same way the defect was found.** At `t=1 s` and
+`t=3 s` the ink is abstract grey scribble with **no legible words anywhere** — the `TANEES DAHDAY` /
+`Menday` / `Bommtias` failure is gone. The day *numbers* (19, 25, 26) render as clean real numerals
+rather than gibberish, which is better than the ban asked for: it reads as a calendar without
+inventing vocabulary. The crowded-left / empty-right contrast that carries the meaning survived, and
+the pen lands a stroke in a square on camera.
+
+**The lesson, which is the reusable part:** a generative prompt that forbids text must not also
+describe writing. *No text anywhere* + *dense with handwriting* is a contradiction, and the model
+resolves it by inventing letterforms. Describe the ink as **abstract marks** and defocus the plane it
+sits on, and the same shot comes back clean for a quarter of the price of a full re-roll.
+
+### Running total
+
+| item | model | charged |
+|---|---|---|
+| opening b-roll, 20 s | `byte-plus-seedance-2-5` | 5,774 |
+| calendar patch, 5 s | `byte-plus-seedance-2-5` | 1,445 |
+| **total** | | **7,219** |
+
+Balance 24,000 → **16,781**. Re-rolls remain affordable.
+
+## What is left, and why it stopped here
+
+The two generated assets are done and verified. The remaining work is **one continuous device
+session**, and it must run in this order because each step depends on the last:
+
+1. **Rename the four life areas to English** through the app UI, recording the Hebrew originals
+   (בריאות · לימודים · קריירה · זוגיות) for the revert. Safe per Finding 2.
+2. **Seed `#64`** through the app UI — tasks with past due dates across several life areas, some
+   completed and some not, so the run card shows kept / missed / still-owed instead of an empty
+   state. Possible per Finding 1; every created task recorded for the revert.
+3. **Re-shoot** — `bash scripts/record-tour.sh`, about twelve minutes. One take covering both the
+   rename and the `#64` data, plus Act 5 whole and the progress rings.
+4. **Revert everything** — the `#64` tasks, the life-area names, and Step 0's three goal measures.
+   Then confirm the home screen reads *No goal has a number yet* again.
+
+`scripts/record-tour.sh` is **sourceable** (its `main` is guarded at line 1170), so steps 1 and 2
+should reuse its helpers — `tap_text`, `tap_desc`, `scroll_to_text`, `scroll_to_top`, `type_text`,
+`commit_text` — rather than re-deriving the traps it already encodes (the Back key exiting the app,
+Git Bash rewriting device paths, fixed swipe counts).
+
+⚠️ **Step 4 is owed whatever else happens.** Ido's live account currently carries three seeded
+measures from `62-tour-video-v2` and will carry renamed life areas and seeded tasks after steps 1–2.
+Nothing has reached Google Calendar.
