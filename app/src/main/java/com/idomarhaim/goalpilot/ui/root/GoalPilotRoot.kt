@@ -45,7 +45,9 @@ import com.idomarhaim.goalpilot.feature.settings.SettingsScreen
 import com.idomarhaim.goalpilot.feature.social.SocialScreen
 import com.idomarhaim.goalpilot.notifications.NotificationDeepLink
 import com.idomarhaim.goalpilot.ui.components.LoadingBox
+import com.idomarhaim.goalpilot.ui.components.LocalGpEntrance
 import com.idomarhaim.goalpilot.ui.components.gpCardContainerColor
+import com.idomarhaim.goalpilot.ui.components.rememberGpEntrance
 import com.idomarhaim.goalpilot.ui.navigation.Routes
 import com.idomarhaim.goalpilot.ui.navigation.TopLevelTab
 import com.idomarhaim.goalpilot.ui.tutorial.LocalTutorialAnchors
@@ -193,6 +195,29 @@ private fun MainScaffold() {
                     }
                 },
             ) { inner ->
+                // #57 d shipped the staggered rise-and-fade, and then provided it
+                // in exactly ONE place -- inside `DashboardScreen`. `LocalGpEntrance`
+                // defaults to `null` and `Modifier.gpEntrance()` returns the modifier
+                // unchanged when it reads null, so every other screen in the app has
+                // been arriving with no motion at all since the day it landed. That
+                // is the "the cards don't fade in" half of Ido's 2026-08-24 report,
+                // and it is a no-op rather than a bug, which is why nothing caught it.
+                //
+                // Providing it HERE covers every destination in one place. The key is
+                // the back-stack entry's id, not `Unit`: `NavHost` holds one
+                // composition position for whichever destination is current, so an
+                // unkeyed `remember` would hand the whole session a single arrival --
+                // the first screen would animate, its window would close, and every
+                // screen after it would be static. That failure looks exactly like
+                // success on the screen you happen to test first.
+                //
+                // `DashboardScreen` still provides its own inside itself and still
+                // wins for its subtree, deliberately: it puts the provider below its
+                // loading gate so the wave is not spent behind a spinner, which is a
+                // finer placement than anything reachable from out here.
+                CompositionLocalProvider(
+                    LocalGpEntrance provides rememberGpEntrance(key = backStackEntry?.id),
+                ) {
                 NavHost(
                     navController = navController,
                     startDestination = Routes.DASHBOARD,
@@ -298,6 +323,7 @@ private fun MainScaffold() {
                         )
                     }
                 }
+                } // CompositionLocalProvider(LocalGpEntrance)
             }
 
             // A sibling ABOVE the scaffold, not content inside it. Two of the

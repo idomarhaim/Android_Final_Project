@@ -135,9 +135,30 @@ val LocalGpEntrance = staticCompositionLocalOf<GpEntrance?> { null }
  * Android does too.
  */
 @Composable
-fun rememberGpEntrance(): GpEntrance {
+fun rememberGpEntrance(): GpEntrance = rememberGpEntrance(key = Unit)
+
+/**
+ * As [rememberGpEntrance], but starting a **genuinely new arrival** whenever
+ * [key] changes.
+ *
+ * Added 2026-08-24 by `visual-parity`. The no-argument form remembers on the
+ * content resolver alone, which is stable for the whole process — correct when
+ * the provider sits *inside* the screen, as `DashboardScreen` puts it, because
+ * the screen's own composition is then the thing that comes and goes.
+ *
+ * It is **wrong** one level up. `NavHost` keeps a single composition position
+ * for whichever destination is current, so a provider wrapped around it would
+ * remember one [GpEntrance] for the whole session: the first screen would
+ * arrive, its window would close, and **every screen after it would be simply
+ * there** — the same silent no-op as having no provider at all, and harder to
+ * notice because the first screen looks right.
+ *
+ * Pass the current back-stack entry's id and each navigation gets its own wave.
+ */
+@Composable
+fun rememberGpEntrance(key: Any?): GpEntrance {
     val resolver = LocalContext.current.contentResolver
-    return remember(resolver) {
+    return remember(resolver, key) {
         val scale = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
         GpEntrance(motion = scale != 0f)
     }

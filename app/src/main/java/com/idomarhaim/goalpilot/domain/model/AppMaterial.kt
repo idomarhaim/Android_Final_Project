@@ -88,17 +88,58 @@ enum class AppMaterial(
     companion object {
 
         /**
-         * §4.9's defaults table: **neo**.
+         * **Glassmorphism** — changed from [NEO] on 2026-08-24 by `visual-parity`,
+         * because §4.9's stated reason for neo is **false about the code that
+         * actually shipped**, and the cost of it was the whole of Ido's report.
          *
-         * > the only material with **both** a light and a dark scheme **and**
-         * > no blur under it. Glass and liquid glass are `Modifier.blur` /
+         * §4.9's defaults table says neo is
+         *
+         * > the only material with **both** a light and a dark scheme **and** no
+         * > blur under it. Glass and liquid glass are `Modifier.blur` /
          * > `RenderEffect` — API 31+, with a fallback below that changes the
          * > look — and §4.1 already states that **a widget has none of those
          * > primitives**, so neo's hand-drawn shadow pair is the only one a
          * > widget can approximate. Dark neo is brightness-locked, so it cannot
          * > be a default at all.
+         *
+         * **The first clause describes a port that was never built.** `#57` b
+         * deliberately did *not* use either primitive: `GpMaterialSpec`'s own
+         * header records that "Compose has no backdrop filter, and
+         * `Modifier.blur` blurs a composable's *own* content", so glass and
+         * liquid glass are **translucent panels over a gradient backdrop** —
+         * `MaterialSpec.kt`'s `backdrop`, drawn by `Modifier.gpPage`. Verified
+         * mechanically 2026-08-24: `Modifier.blur`, `RenderEffect` and
+         * `BlurMaskFilter` have **zero** call sites in `app/src/main`, and every
+         * `SDK_INT` gate in the app is in `notifications/`. So glass renders
+         * **identically on `minSdk` 26 and on 35**, and there is no fallback to
+         * change the look.
+         *
+         * **The third clause is still true and is deliberately not being
+         * honoured here.** A widget genuinely cannot blur — but it never had to,
+         * since neither does the app, and a Glance panel can be translucent. The
+         * app's default and the widget's renderer do not have to agree, and the
+         * prototype's own widgets (`docs/prototypes/2026-08-10-charts-presentation`,
+         * widgets view) are translucent panels over the launcher wallpaper.
+         *
+         * ## What this one line was costing
+         *
+         * With `DEFAULT = NEO`, [AppBackground.MATCH] — itself the default —
+         * resolves neo to [AppBackground.PLAIN], *"one flat tone, no lights at
+         * all"*, and `AppRelief.FLAT` is the third default. So a fresh install
+         * was **opaque, unlit and flat by construction**, and every one of the
+         * four presentation features `#57` shipped was off until the user went
+         * looking for a picker they did not know existed. Ido reported the app
+         * as not looking like the prototypes on 2026-08-21 and **again on
+         * 2026-08-24**, after all four had shipped.
+         *
+         * ⚠️ **This contradicts a committed spec table, so it is a decision and
+         * not a fix.** Taken by the session, recorded as the session's, and
+         * Ido's to overturn in one word — the picker still offers all four, so
+         * overturning it costs one line and no feature. If it stands, §4.9's
+         * table and its justification both need correcting; that edit is **not**
+         * made here because `docs/PRODUCT_v0.3.md` is held by other sessions.
          */
-        val DEFAULT: AppMaterial = NEO
+        val DEFAULT: AppMaterial = GLASS
 
         /** Tolerant lookup: unknown/absent ids fall back to [DEFAULT] rather than throwing. */
         fun fromId(id: String?): AppMaterial =

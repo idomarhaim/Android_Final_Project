@@ -2,7 +2,7 @@
 repo: C:\Dev\Android_Final_Project
 branch: main
 mode: AUTO MODE
-status: ready
+status: in-progress
 issue: "#57 (closed) — see 'Read this before you build anything' below"
 owns:
   - app/src/main/java/com/idomarhaim/goalpilot/ui/theme/**
@@ -33,6 +33,25 @@ Ido, 2026-08-24, having installed the app and compared it with the prototypes:
 
 He also instructed: another session is on the app in parallel, so **take the prototype screenshots
 now and do nothing else**; when that session finishes, **continue automatically, without him**.
+
+## ✅ PHASE 2 PART 1 HAS LANDED — read `CHANGELOG/2026-08-24/visual-parity.md` first
+
+*(Appended 2026-08-24, after the watch fired and this session resumed.)*
+
+Leads 1 and 2 below are **no longer `Untested:` — both are confirmed in the code, and both are
+fixed.** `AppMaterial.DEFAULT` is now `GLASS` (it was `NEO`, which `AppBackground.MATCH` resolved to
+`PLAIN`, so a fresh install was opaque, unlit and flat), and the entrance is now provided around the
+root `NavHost` keyed on the back-stack entry, so it reaches every destination instead of only the
+dashboard. JVM suite **1127/1127**.
+
+**Lead 3 (the widgets) is the next unit and is now well-founded**: `WidgetPalette.kt` renders neo
+only, justified by the *same* false premise as §4.9 — *"glassmorphism and liquid glass are made of
+blur and refraction"* — which is untrue of this app, whose glass is a **translucent** panel and
+whose Glance widget could be one too.
+
+**What is NOT done, and it is the acceptance criterion:** none of this has been *seen*. There is no
+JVM-level Compose renderer in this repo, so it needs a device, and the device was blocked — see
+the board note to `62-tour-assembly`. Start there.
 
 ## ⛔ Read this before you build anything — the ticket he thinks vanished is `#57`, and it is CLOSED as SHIPPED
 
