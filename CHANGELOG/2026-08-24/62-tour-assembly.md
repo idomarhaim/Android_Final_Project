@@ -279,3 +279,98 @@ Git Bash rewriting device paths, fixed swipe counts).
 ⚠️ **Step 4 is owed whatever else happens.** Ido's live account currently carries three seeded
 measures from `62-tour-video-v2` and will carry renamed life areas and seeded tasks after steps 1–2.
 Nothing has reached Google Calendar.
+
+---
+
+# Part 4 — the film was shot on Ido's real phone, and the emulator was the problem all along
+
+## The root cause of everything above: the emulator could not reach Firestore
+
+Ido asked why his phone showed *nothing yet* on goals the emulator showed as measured, and why
+Save spun forever there. That question found the bug.
+
+`Observed:` the emulator has raw IP connectivity (`ping 8.8.8.8` → 0% loss) but **broken DNS** —
+`ping firestore.googleapis.com` → *unknown host*. So every write went into Firestore's **offline
+cache** and never reached the server:
+
+- The endless spinner is a save waiting for a server confirmation that can never arrive.
+- His phone, reading the real server, showed the true state throughout.
+- **Nothing done on the emulator ever touched his account** — confirmed by reading his phone: life
+  areas still Hebrew, every goal still *no number yet*. The unintended `Drink 4 Liters` measure
+  recorded in Part 3 **never left the emulator**.
+
+⚠️ **And it explains the "un-automatable" chips.** Part 3 concluded Compose chips could not be
+driven. On the phone the identical helper drove them first time (`Count took: Target/Unit are
+present`). The chips were never the problem; the dead backend was.
+
+**Neutralised:** `pm clear com.idomarhaim.goalpilot.debug` on the emulator discarded the cache and
+its **8 pending writes**, so they can never sync if its DNS is ever fixed; then the AVD was shut
+down to free RAM. Ido delegated this decision with a hardware-resources hint, and both halves were
+taken rather than one.
+
+## The phone as a recording device
+
+USB never worked — Windows enumerated the S25 Ultra as MTP only (`VID_04E8&PID_6860`, `MI_00`),
+with **no ADB interface**, despite USB debugging being on. **Wireless debugging** was already
+enabled and paired first try. An `adb-phone.sh` wrapper pins `-s` on every call and reports a
+single device to `preflight`, which requires exactly one.
+
+## ✅ The take — 68 beats, and the recording actually covers it
+
+`1080×2340`, 30 fps CFR, **11:00 (660.3 s)**, 60 MB, against a last beat at 667.2 s — a **6.9 s
+tail**, versus the emulator take's **4 m 43 s hole**.
+
+⚠️ **The emulator take of the same day is unusable and is why this one exists.** `screenrecord`
+stopped at **13:05** while the choreography ran to **17:48**, so its last 4 m 43 s had no video and
+its beat map addressed frames that did not exist — including a privacy range that named the wrong
+seconds. `--time-limit 0` was set and did not hold. The tell is arithmetic and nothing else reports
+it: **compare the last beat's timestamp against the encoded duration, every take.**
+
+**Act 5 is whole** — the act that motivated the re-shoot: task field → typed → *the AI estimates
+it* → *how demanding, how long, what it is worth* → *the date picker* → *late and still owed* →
+*the task, added, with its points*. Five misses, all benign: three root-level `Back`, one optional
+`Add a time`, one cosmetic material label.
+
+**Verified by looking**: the English life areas render (`Health · 3 goals`, `Studies · 4 goals`,
+`Career · 0 goals`), and the home screen carries real progress.
+
+**Privacy window: `6:54.1` → `7:55.2`** (61 s). Ido chose *course submission only*, so it stays in.
+
+⚠️ **SystemUI demo mode did not apply on the Samsung.** The status bar shows the real clock, the
+real battery, and a **screen-recording indicator**, where the emulator take had a fixed 9:00 and a
+clean bar. Cosmetic, and not fixable after the fact.
+
+## The phone's real data beat the seeding
+
+Two goals already carried real Health Connect measures the emulator never had —
+**`65982/70000 steps` (94 %)** and **`42.5/56 hours` (75 %)**. Seeding stopped there: two measures
+were added (`Sleep 7 hours` → 30 nights, which reads **5.5/30, 18 %** from real sleep data, and the
+saxophone goal → 50 sessions), and several goals were deliberately left unmeasured so the *No
+number* beat and `#65`'s offer card still fire.
+
+## ⚠️ What could NOT be reverted, and why — this is owed to Ido
+
+| item | state | why |
+|---|---|---|
+| 4 life-area names | **still English** | `adb shell input text` is **ASCII-only and cannot type Hebrew**. The field cleared, nothing typed, and the guard refused to save an empty name — which is the only reason four names were not wiped to blank |
+| `Sleep 7 hours` → 30 nights | **still set** | `Nothing yet` selects (the *How do you log it?* section disappears, which is the real signal — checking for `Target` was the wrong test) and *Save changes* closes the form, but the value persists. Cause not established |
+| saxophone → 50 sessions | **still set** | same |
+| the tour's own writes | **present** | one smart-add task, one task on a goal, one calendar drag — this take reached **Google Calendar**, unlike the emulator's |
+
+`Untested:` whether the app refuses to clear a measure with progress logged. The saxophone goal
+reads `0/50` with no progress and failed identically, which weakens that theory; and
+`Fitness • no number — 3 entries logged` proves *no number* can coexist with entries. Recorded as
+unexplained rather than guessed.
+
+**A second wrong-signal check, worth naming.** The `Nothing yet` guard originally required the
+`Target` field to disappear. It does not — Target and Unit stay visible so their values survive
+switching back. The section that actually disappears is *How do you log it?*. Reading the wrong
+signal produced *"the app is broken"* as a conclusion twice; the diff that settled it was two
+dumps, before and after, printed side by side.
+
+## The lesson this session paid for twice
+
+Every silent failure here was caught by **reading the artifact back**, never by the action
+reporting success: four renames that "saved" and changed nothing; a take that "succeeded" with
+4 m 43 s missing; a revert that closed its form and kept its value; a rename that would have
+written an empty name. In each case the tool said `OK`. Only the read-back disagreed.

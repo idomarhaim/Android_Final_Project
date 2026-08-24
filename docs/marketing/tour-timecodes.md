@@ -8,10 +8,10 @@ Every beat in the recording and the second it happens, so a narration line from
 
 | | |
 |---|---|
-| **Duration** | `11:57.4` (717.400000 s) |
-| **Picture** | 1152 x 2560, H.264, **constant 30 fps**, 21522 frames |
+| **Duration** | `11:00.3` (660.300000 s) |
+| **Picture** | 1080 x 2340, H.264, **constant 30 fps**, 19809 frames |
 | **Audio** | none -- the recording is silent by design; the narration is added on the timeline |
-| **Source** | `GoalPilot-full-tour-raw.mp4` beside it is the untouched `screenrecord` output, **variable frame rate** (5275 frames over the same duration). Use the CFR file. |
+| **Source** | `GoalPilot-full-tour-raw.mp4` beside it is the untouched `screenrecord` output, **variable frame rate** (14885 frames over the same duration). Use the CFR file. |
 
 ## How these numbers were produced
 
@@ -28,84 +28,82 @@ cutting on a single frame.
 
 | # | timecode | on-screen beat |
 |---|---|---|
-| 1 | `0:01.9` | launcher |
-| 2 | `0:09.1` | splash |
-| 3 | `0:14.2` | dashboard lands |
-| 4 | `0:17.3` | points and level |
-| 5 | `0:20.4` | overall progress, averaged across all your goals |
-| 6 | `0:28.4` | the smart-add field, focused |
-| 7 | `0:33.3` | a sentence, in plain words |
-| 8 | `0:36.9` | keyboard away |
-| 9 | `0:40.5` | the AI reads it |
-| 10 | `0:45.7` | filed under the right goal, with points and an estimate |
-| 11 | `0:48.8` | nothing is saved until you have seen where it went |
-| 12 | `0:58.4` | Filed nowhere: the tasks no other screen could list |
-| 13 | `1:06.6` | what goes, and what stays, asked separately |
-| 14 | `1:14.6` | cancelled: nothing was deleted |
-| 15 | `1:17.7` | the coach answers with something you could do today |
-| 16 | `1:24.2` | your goals, on the home screen |
-| 17 | `1:39.2` | share this week's progress |
-| 18 | `1:50.5` | the goals tab, grouped by life area |
-| 19 | `1:58.4` | No number: a goal without a measure says so instead of printing 0 per cent |
-| 20 | `2:04.7` | more goals, more areas |
-| 21 | `2:13.6` | goal detail: the measure, the progress, the life area, the tasks |
-| 22 | `3:21.4` | the task field |
-| 23 | `3:25.5` | a task, typed |
-| 24 | `3:41.0` | the date picker |
-| 25 | `3:53.6` | late and still owed is a different thing from the day passed |
-| 26 | `4:06.8` | the task, added, with its points |
-| 27 | `4:26.0` | the calendar: your goals, as time |
-| 28 | `4:35.3` | the load bar, on a day with room left in it |
-| 29 | `4:38.4` | the all-day strip: what is due today with no hour on it |
-| 30 | `4:44.5` | forward three days |
-| 31 | `4:50.7` | back to today |
-| 32 | `4:55.0` | the whole week at once |
-| 33 | `5:02.2` | back to three days |
-| 34 | `5:05.7` | press and hold a block to pick it up, then drag it where it should have been |
-| 35 | `5:29.2` | the avatar opens your profile |
-| 36 | `5:33.8` | life areas: the parts of your life you decided are worth investing in |
-| 37 | `5:43.2` | one life area |
-| 38 | `5:47.9` | the run, in its EMPTY state -- nothing has been due in this area yet |
-| 39 | `6:36.9` | where your time goes |
-| 40 | `6:46.3` | by year: the share of a life, per area |
-| 41 | `6:50.9` | and the thirteen per cent that was never filed at all |
-| 42 | `7:13.1` | goals with no number are named, not charted as zero |
-| 43 | `7:17.9` | how it moves |
-| 44 | `7:46.5` | PRIVACY -- the leaderboard: a friend's real name is on screen from here |
-| 45 | `7:55.3` | and everyone, not only friends |
-| 46 | `8:03.1` | the friends feed, with a photo if the week deserved one |
-| 47 | `8:12.3` | challenges |
-| 48 | `8:43.5` | PRIVACY -- profile: the email address and the friend code are legible from here |
-| 49 | `8:48.1` | PRIVACY ENDS -- everything after this beat is safe to publish |
-| 50 | `9:18.4` | settings, and Help is the first thing in it now |
-| 51 | `9:23.8` | connected apps: Google Tasks and Health Connect live here now |
-| 52 | `9:37.4` | four materials |
-| 53 | `9:44.6` | material: Glass |
-| 54 | `9:49.6` | material: Liquid glass |
-| 55 | `9:54.7` | material: Soft |
-| 56 | `9:59.8` | material: Soft dark |
-| 57 | `10:05.6` | background treatments |
-| 58 | `10:17.8` | language and region |
-| 59 | `10:29.2` | your waking hours, so it knows when your day is genuinely full |
-| 60 | `10:58.5` | tour step 1 of 7: welcome to GoalPilot |
-| 61 | `11:04.1` | step 2: your progress, at a glance |
-| 62 | `11:09.7` | step 3: add anything, instantly |
-| 63 | `11:15.3` | step 4: everything you are working on, and it asks you to tap Goals |
-| 64 | `11:21.0` | the tour follows you to the tab you pressed |
-| 65 | `11:26.6` | step 5: every goal starts here |
-| 66 | `11:32.3` | step 6: your goals, as time |
-| 67 | `11:38.9` | the ringed tab actually opens, and the tour stays put while you look at it |
-| 68 | `11:47.9` | step 7: your profile, and this tour |
-| 69 | `11:53.8` | tour done, home again |
-| 70 | `11:58.4` | END |
+| 1 | `0:01.8` | launcher |
+| 2 | `0:04.2` | splash |
+| 3 | `0:09.3` | dashboard lands |
+| 4 | `0:12.4` | points and level |
+| 5 | `0:15.5` | overall progress, averaged across all your goals |
+| 6 | `0:23.4` | the smart-add field, focused |
+| 7 | `0:25.1` | a sentence, in plain words |
+| 8 | `0:29.1` | keyboard away |
+| 9 | `0:32.9` | the AI reads it |
+| 10 | `0:37.9` | filed under the right goal, with points and an estimate |
+| 11 | `0:41.0` | nothing is saved until you have seen where it went |
+| 12 | `1:02.3` | the coach answers with something you could do today |
+| 13 | `1:08.6` | your goals, on the home screen |
+| 14 | `1:14.4` | share this week's progress |
+| 15 | `1:24.2` | the goals tab, grouped by life area |
+| 16 | `1:31.5` | No number: a goal without a measure says so instead of printing 0 per cent |
+| 17 | `1:37.6` | more goals, more areas |
+| 18 | `1:45.8` | goal detail: the measure, the progress, the life area, the tasks |
+| 19 | `2:27.8` | the task field |
+| 20 | `2:32.0` | a task, typed |
+| 21 | `2:35.9` | the AI estimates it |
+| 22 | `2:40.5` | how demanding, how long, and what it is worth |
+| 23 | `2:45.1` | the date picker |
+| 24 | `2:58.4` | late and still owed is a different thing from the day passed |
+| 25 | `3:03.3` | the task, added, with its points |
+| 26 | `3:21.9` | the calendar: your goals, as time |
+| 27 | `3:31.6` | the load bar, on a day with room left in it |
+| 28 | `3:34.7` | the all-day strip: what is due today with no hour on it |
+| 29 | `3:41.1` | forward three days |
+| 30 | `3:47.5` | back to today |
+| 31 | `3:52.0` | the whole week at once |
+| 32 | `3:59.5` | back to three days |
+| 33 | `4:03.0` | press and hold a block to pick it up, then drag it where it should have been |
+| 34 | `4:25.6` | the avatar opens your profile |
+| 35 | `4:30.7` | life areas: the parts of your life you decided are worth investing in |
+| 36 | `4:40.3` | one life area |
+| 37 | `4:45.4` | the run, in its EMPTY state -- nothing has been due in this area yet |
+| 38 | `5:33.3` | where your time goes |
+| 39 | `5:43.0` | by year: the share of a life, per area |
+| 40 | `5:47.6` | and the thirteen per cent that was never filed at all |
+| 41 | `6:21.1` | goals with no number are named, not charted as zero |
+| 42 | `6:25.9` | how it moves |
+| 43 | `6:54.1` | PRIVACY -- the leaderboard: a friend's real name is on screen from here |
+| 44 | `7:03.2` | and everyone, not only friends |
+| 45 | `7:11.4` | the friends feed, with a photo if the week deserved one |
+| 46 | `7:21.0` | challenges |
+| 47 | `7:50.6` | PRIVACY -- profile: the email address and the friend code are legible from here |
+| 48 | `7:55.2` | PRIVACY ENDS -- everything after this beat is safe to publish |
+| 49 | `8:24.6` | settings, and Help is the first thing in it now |
+| 50 | `8:30.3` | connected apps: Google Tasks and Health Connect live here now |
+| 51 | `8:47.9` | four materials |
+| 52 | `8:55.3` | material: Glass |
+| 53 | `9:00.7` | material: Liquid glass |
+| 54 | `9:06.1` | material: Soft |
+| 55 | `9:18.4` | background treatments |
+| 56 | `9:34.4` | language and region |
+| 57 | `9:46.1` | your waking hours, so it knows when your day is genuinely full |
+| 58 | `10:13.9` | tour step 1 of 7: welcome to GoalPilot |
+| 59 | `10:18.8` | step 2: your progress, at a glance |
+| 60 | `10:23.7` | step 3: add anything, instantly |
+| 61 | `10:28.5` | step 4: everything you are working on, and it asks you to tap Goals |
+| 62 | `10:33.7` | the tour follows you to the tab you pressed |
+| 63 | `10:38.6` | step 5: every goal starts here |
+| 64 | `10:43.5` | step 6: your goals, as time |
+| 65 | `10:49.3` | the ringed tab actually opens, and the tour stays put while you look at it |
+| 66 | `10:57.5` | step 7: your profile, and this tour |
+| 67 | `11:02.6` | tour done, home again |
+| 68 | `11:07.2` | END |
 
 ## The beats to look at before this is published anywhere
 
 The recording is of a real account, and these rows are where that shows:
 
-- **`7:46.5`** -- the leaderboard: a friend's real name is on screen from here
-- **`8:43.5`** -- profile: the email address and the friend code are legible from here
-- **`8:48.1`** -- everything after this beat is safe to publish
+- **`6:54.1`** -- the leaderboard: a friend's real name is on screen from here
+- **`7:50.6`** -- profile: the email address and the friend code are legible from here
+- **`7:55.2`** -- everything after this beat is safe to publish
 
 Fine for a course submission. For anything public, trim or blur those ranges: one pass in
 any editor, and these are the timecodes for it.
