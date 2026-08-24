@@ -193,6 +193,7 @@ class ChallengeProvenanceRenderPass {
                 onOpenStandings = {},
                 onReportScore = {},
                 onLinkGoal = {},
+                onInvite = {},
                 onLeave = {},
                 onDelete = {},
             )
@@ -202,6 +203,7 @@ class ChallengeProvenanceRenderPass {
                 onOpenStandings = {},
                 onReportScore = {},
                 onLinkGoal = {},
+                onInvite = {},
                 onLeave = {},
                 onDelete = {},
             )

@@ -91,6 +91,65 @@ service cloud.firestore {
         && resource.data.authorUid == request.auth.uid;
     }
 
+    // ── Challenge invites ──────────────────────────────────────────
+    // Ido, 2026-08-24: "in the version I have on my phone I can create a CHALLENGE but
+    // I cannot invite a friend I have in the app to the CHALLENGE". He was right -- there
+    // was no invite mechanism at all, and the only route into somebody else's challenge
+    // was Discover, which lists every challenge in the database to every signed-in user.
+    //
+    // WHY THIS IS TOP-LEVEL AND NOT SOMEWHERE TIDIER. An invite names two people, and
+    // every tidier home is unreachable BY THIS FILE'S OWN PARTITION:
+    //
+    //   * `users/{friendUid}/**` is isOwner(friendUid) -- you cannot write into your
+    //     friend's space at all, which is the property the rest of the app depends on.
+    //   * `challenges/{id}/participants/{friendUid}` is isOwner too -- and a row conjured
+    //     for somebody who never joined would put a competitor in the standings who never
+    //     agreed to compete.
+    //
+    // So it takes the one shape this file already has for a document two different users
+    // must each reach on their own account: `shares/{shareId}`, one level up.
+    //
+    // NOT isSignedIn() ON READ, WHICH IS THE ONE THING THAT MAKES THIS DIFFERENT FROM
+    // `shares`. A share is published to a feed; an invite names two people and is nobody
+    // else's business. Reading `resource.data` is what expresses that -- and it has a
+    // consequence the client cannot ignore:
+    //
+    // ⚠️ A READ RULE THAT INSPECTS `resource.data` CONSTRAINS EVERY QUERY, NOT ONLY EVERY
+    // GET. Firestore will not evaluate a query document-by-document; it rejects up front
+    // any query it cannot PROVE is inside the rule. So a listener here must always carry
+    // `whereEqualTo("toUid", myUid)` or `whereEqualTo("fromUid", myUid)`, and an
+    // unconstrained `collection('challengeInvites')` listener fails with PERMISSION_DENIED
+    // on the query itself -- with nothing in the message to say the filter was missing.
+    // `firestore-tests/rules.test.mjs` asserts both the filtered success and the
+    // unfiltered denial, because that is the trap this design buys.
+    match /challengeInvites/{inviteId} {
+      allow read: if isSignedIn()
+        && (resource.data.toUid == request.auth.uid
+          || resource.data.fromUid == request.auth.uid);
+
+      // You may only send in your own name, and never to yourself. What this CANNOT
+      // check is whether the sender is in the challenge -- a rule sees this document and
+      // nothing else -- so `ChallengeRepositoryImpl.inviteToChallenge` does that, and
+      // says so in a sentence rather than in a PERMISSION_DENIED. The residual risk is
+      // an offer to join a challenge the recipient could already have found in Discover.
+      allow create: if isSignedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid != request.auth.uid;
+
+      // Either party may remove it: the invitee accepts or declines, the inviter
+      // withdraws. All three leave exactly the same absence behind, which is why there
+      // is one verb rather than three.
+      allow delete: if isSignedIn()
+        && (resource.data.toUid == request.auth.uid
+          || resource.data.fromUid == request.auth.uid);
+
+      // An invite is not edited; it is created and consumed. Permitting an update would
+      // let a sender repoint a standing offer at a different challenge after the fact,
+      // which is the one thing the copied `challengeTitle` caption must not be able to
+      // start lying about.
+      allow update: if false;
+    }
+
     // ── Challenges (nice-to-have) ──────────────────────────────────
     // The challenge document itself is owner-only: title, dates and the MEASURE are
     // the owner's to set. Joining is NOT an edit to it -- see participants.

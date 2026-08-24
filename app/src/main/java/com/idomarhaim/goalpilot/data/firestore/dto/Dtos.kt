@@ -540,3 +540,27 @@ data class ChallengeParticipantDto(
      */
     @ServerTimestamp var updatedAt: Timestamp? = null,
 )
+
+/**
+ * `challengeInvites/{inviteId}` — see `ChallengeInvite` for why this is a top-level
+ * collection rather than something nested under either party.
+ *
+ * ⚠️ **[toUid] and [fromUid] are not decoration: they are what the security rule reads,
+ * and therefore what every query here MUST filter on.** A read rule that inspects
+ * `resource.data` constrains queries as well as gets, so a listener without
+ * `whereEqualTo` on one of them is denied outright. See [FirestorePaths.CHALLENGE_INVITES].
+ *
+ * [challengeTitle], [fromName] and [fromPhotoUrl] are **copied at send time**. They are
+ * captions, not sources of truth — the row has to render one sentence without resolving
+ * two more documents, and `acceptInvite` reads the real challenge anyway.
+ */
+data class ChallengeInviteDto(
+    @DocumentId var id: String = "",
+    var challengeId: String = "",
+    var challengeTitle: String = "",
+    var fromUid: String = "",
+    var fromName: String = "",
+    var fromPhotoUrl: String? = null,
+    var toUid: String = "",
+    var createdAt: Long = 0L,
+)

@@ -2,6 +2,7 @@ package com.idomarhaim.goalpilot.domain.repository
 
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import kotlinx.coroutines.flow.Flow
@@ -79,4 +80,67 @@ interface ChallengeRepository {
 
     /** Owner-only. Deletes the challenge document; see the impl for what it cannot reach. */
     suspend fun deleteChallenge(challengeId: String): Resource<Unit>
+
+    // ── Invites ───────────────────────────────────────────────────────
+    //
+    // Ido's own report, 2026-08-24: he could create a challenge and could not ask
+    // anybody into it. Before this the only route in was **Discover**, which lists
+    // every challenge in the database to every signed-in user — so joining was never
+    // impossible, there was just no way to say *"join mine"*.
+    //
+    // Every call below writes `challengeInvites/{inviteId}`, a top-level document both
+    // parties can reach. Nothing is ever written into the invitee's own space, because
+    // nothing may be: see [ChallengeInvite] for the two tidier homes that are
+    // unreachable, and why a Cloud Function would be the wrong reach rather than an
+    // unavailable one.
+
+    /**
+     * Invites waiting for the signed-in user, newest first.
+     *
+     * Reads `challengeInvites` filtered on `toUid` — **the filter is mandatory**, not an
+     * optimisation. The read rule inspects `resource.data`, which constrains queries as
+     * well as gets, so an unfiltered listener is denied outright.
+     */
+    fun observeIncomingInvites(): Flow<List<ChallengeInvite>>
+
+    /**
+     * Invites the signed-in user has **sent** and nobody has answered yet.
+     *
+     * One listener for all of them rather than one per challenge: a user has a handful
+     * of outstanding invites in total, and the invite sheet only needs to know which of
+     * their friends already hold one.
+     */
+    fun observeSentInvites(): Flow<List<ChallengeInvite>>
+
+    /**
+     * Asks [toUid] into [challengeId].
+     *
+     * The sender must be in the challenge themselves — inviting somebody into a race you
+     * are not running is not a thing the product means, and the rule cannot express it
+     * (it can only see the invite document), so this is the layer that says so.
+     *
+     * A **second** invite to the same person for the same challenge is refused rather
+     * than duplicated: an invite is an offer, and repeating an offer is nagging.
+     */
+    suspend fun inviteToChallenge(challengeId: String, toUid: String): Resource<Unit>
+
+    /**
+     * Joins the challenge the invite names and consumes the invite, in one batch.
+     *
+     * Joining is still the invitee's **own** act — this runs the same participant-row
+     * write [joinChallenge] does, under their own uid. Nothing about an invite lets
+     * anybody else put them in a challenge, which is what keeps the participants
+     * partition honest.
+     */
+    suspend fun acceptInvite(inviteId: String): Resource<Unit>
+
+    /**
+     * Deletes an invite without joining.
+     *
+     * Used by both parties, which is why it is one call and not two: the invitee
+     * declines, the sender withdraws, and the rule permits either. Nothing is recorded
+     * about a decline — a refusal that leaves a trace is a refusal somebody has to
+     * explain.
+     */
+    suspend fun dismissInvite(inviteId: String): Resource<Unit>
 }

@@ -5,26 +5,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.InviteCandidate
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.feature.goals.label
 import com.idomarhaim.goalpilot.feature.goals.wordHint
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -49,10 +55,22 @@ import javax.inject.Inject
  * into a goal, and §6's fix *deletes one representation of the walk rather than
  * building a second one*.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ChallengesViewModel @Inject constructor(
     private val repository: ChallengeRepository,
     private val goalRepository: GoalRepository,
+    /**
+     * Only ever read, and only for **who your friends are** — the invite sheet has to
+     * offer people by name and photo, and `publicProfiles` is where those live.
+     *
+     * `observeLeaderboard(friendsOnly = true)` is reused rather than a new
+     * `observeFriendProfiles()` being added, because it already does exactly the join
+     * this needs: friend uids from the private `users/{me}/friends` edges, resolved
+     * against `publicProfiles` **by document id** rather than filtered out of a global
+     * top-N. Its points and ranks are simply not read here.
+     */
+    private val socialRepository: SocialRepository,
 ) : ViewModel() {
 
     /**
@@ -74,13 +92,15 @@ class ChallengesViewModel @Inject constructor(
         repository.observeMyChallenges(),
         repository.observeDiscoverable(),
         goalRepository.observeGoals(),
-    ) { mine, discoverable, goals ->
+        repository.observeIncomingInvites(),
+    ) { mine, discoverable, goals, invites ->
         val now = clock()
         ChallengesUiState(
             isLoading = false,
             mine = mine.map { ChallengeCard(it, it.challenge.phaseAt(now)) },
             discoverable = discoverable.map { DiscoverableChallenge(it, it.phaseAt(now)) },
             goals = goals,
+            invites = invites,
         )
     }.catch { emit(ChallengesUiState(isLoading = false, error = it.message)) }
         .stateIn(
@@ -260,6 +280,159 @@ class ChallengesViewModel @Inject constructor(
 
     fun dismissScoreEntry() { _scoreEntry.value = ScoreEntryState() }
 
+    // ── Invites — Ido's own report, and the first thing this session built ──
+    //
+    // > *"in the version I have on my phone I can create a CHALLENGE but I cannot invite
+    // > a friend I have in the app to the CHALLENGE"* — 2026-08-24.
+    //
+    // Two halves, deliberately asymmetric. **Sending** is a sheet you go and open, so it
+    // is state driven by [openInvite]. **Receiving** is a section that is simply there at
+    // the top of the screen, so it rides on [uiState] like any other data — there is no
+    // badge, no count and no notification, because an invite is an offer and an offer
+    // that follows you around is a demand.
+
+    /** Which challenge the invite sheet is offering, or null when it is closed. */
+    private val _inviteTargetId = MutableStateFlow<String?>(null)
+
+    /** The one row that is mid-write, so only its button spins. */
+    private val _inviteBusyUid = MutableStateFlow<String?>(null)
+
+    private val _inviteError = MutableStateFlow<String?>(null)
+
+    /**
+     * The invite sheet: this user's friends, each already knowing why they cannot be
+     * asked, if they cannot.
+     *
+     * **`flatMapLatest` on the target id, not `combine` into [uiState]**, so the friends
+     * read only runs while the sheet is actually open. It is a `publicProfiles` listener
+     * over every friend, and keeping it alive for the whole time the Challenges screen is
+     * on screen would buy nothing — nothing outside this sheet renders a friend.
+     */
+    val invite: StateFlow<InviteState> = _inviteTargetId.flatMapLatest { targetId ->
+        if (targetId == null) {
+            flowOf(InviteState())
+        } else {
+            combine(
+                socialRepository.observeLeaderboard(friendsOnly = true),
+                repository.observeSentInvites(),
+                uiState,
+                _inviteBusyUid,
+                _inviteError,
+            ) { friends, sent, state, busyUid, error ->
+                val card = state.mine.firstOrNull { it.challenge.id == targetId }
+                val participants = card?.standings?.map { it.uid }.orEmpty().toSet()
+                val invited = sent
+                    .filter { it.challengeId == targetId }
+                    .map { it.toUid }
+                    .toSet()
+                InviteState(
+                    isVisible = true,
+                    challengeId = targetId,
+                    challengeTitle = card?.challenge?.title.orEmpty(),
+                    // `observeLeaderboard(friendsOnly = true)` returns the friends AND the
+                    // signed-in user — it is a leaderboard, and you are on it. Dropping
+                    // yourself here rather than asking Social for a friends-only variant
+                    // keeps one read path; `isCurrentUser` is exactly the flag for it.
+                    candidates = friends.entries
+                        .filterNot { it.isCurrentUser }
+                        .sortedBy { it.displayName.lowercase() }
+                        .map { entry ->
+                            InviteCandidate(
+                                uid = entry.uid,
+                                displayName = entry.displayName,
+                                photoUrl = entry.photoUrl,
+                                isParticipant = entry.uid in participants,
+                                isInvited = entry.uid in invited,
+                            )
+                        },
+                    busyUid = busyUid,
+                    error = error,
+                )
+            }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InviteState())
+
+    fun openInvite(card: ChallengeCard) {
+        _inviteError.value = null
+        _inviteBusyUid.value = null
+        _inviteTargetId.value = card.challenge.id
+    }
+
+    fun dismissInvite() {
+        _inviteTargetId.value = null
+        _inviteBusyUid.value = null
+        _inviteError.value = null
+    }
+
+    /**
+     * Sends one invite.
+     *
+     * The sheet **stays open** afterwards, because inviting three people is one act with
+     * three taps and closing after each would make it three trips. The row the user just
+     * tapped turns into *"Invited"* on the next snapshot — the `observeSentInvites`
+     * listener feeding [invite] is what does that, so the confirmation is the real state
+     * of the database rather than a local flag that could disagree with it.
+     */
+    fun sendInvite(toUid: String) {
+        val challengeId = _inviteTargetId.value ?: return
+        if (_inviteBusyUid.value != null) return
+        viewModelScope.launch {
+            _inviteBusyUid.value = toUid
+            _inviteError.value = null
+            when (val result = repository.inviteToChallenge(challengeId, toUid)) {
+                is Resource.Success -> _message.value = "Invite sent"
+                is Resource.Error -> _inviteError.value = result.message
+                Resource.Loading -> Unit
+            }
+            _inviteBusyUid.value = null
+        }
+    }
+
+    /** Which invite row is mid-write, so only that row's buttons go quiet. */
+    private val _invitePendingId = MutableStateFlow<String?>(null)
+    val invitePendingId = _invitePendingId.asStateFlow()
+
+    /**
+     * Joins from an invite. Still the invitee's own write — see the repository.
+     *
+     * The row does not need dismissing: accepting deletes the invite in the same batch,
+     * so the section it was in loses it on the next snapshot.
+     */
+    fun acceptInvite(inviteId: String) {
+        if (_invitePendingId.value != null) return
+        viewModelScope.launch {
+            _invitePendingId.value = inviteId
+            _message.value = when (val result = repository.acceptInvite(inviteId)) {
+                is Resource.Success -> "You're in"
+                is Resource.Error -> result.message
+                Resource.Loading -> null
+            }
+            _invitePendingId.value = null
+        }
+    }
+
+    /**
+     * Declines, and says nothing to anybody.
+     *
+     * **No confirmation dialog**, unlike leaving or deleting. Those destroy something the
+     * user built; this declines an offer, and the sender can simply make it again. A
+     * dialog here would turn a shrug into a decision.
+     */
+    fun declineInvite(inviteId: String) {
+        if (_invitePendingId.value != null) return
+        viewModelScope.launch {
+            _invitePendingId.value = inviteId
+            when (val result = repository.dismissInvite(inviteId)) {
+                // Deliberately silent on success: a snackbar for "I said no thank you"
+                // is the app being pleased with itself about a non-event.
+                is Resource.Success -> Unit
+                is Resource.Error -> _message.value = result.message
+                Resource.Loading -> Unit
+            }
+            _invitePendingId.value = null
+        }
+    }
+
     // ── Creating ──────────────────────────────────────────────────────
 
     fun openEditor() { _editor.value = ChallengeEditorState(isVisible = true) }
@@ -361,6 +534,15 @@ data class ChallengesUiState(
      * as a list anywhere on this screen; it is what the goal picker filters.
      */
     val goals: List<Goal> = emptyList(),
+    /**
+     * Invites waiting for this user, newest first — rendered as a section at the **top**
+     * of the screen and nowhere else.
+     *
+     * Not a badge, not a count, not a notification. An invite is an offer; a number on a
+     * tab bar turns it into a chore, and `C9a` §6's consent story covers reminders about
+     * the user's *own* work, not inbound requests from other people.
+     */
+    val invites: List<ChallengeInvite> = emptyList(),
     val error: String? = null,
 )
 
@@ -453,3 +635,29 @@ data class GoalLinkState(
     val isSaving: Boolean = false,
     val error: String? = null,
 )
+
+/**
+ * The invite sheet for one challenge — §1's sending half.
+ *
+ * [candidates] carries every friend, including the ones who cannot be asked, each
+ * knowing why. See [InviteCandidate] for why a blocked friend is greyed rather than
+ * filtered: a friend who silently vanishes reads as *the app does not know them*, which
+ * is the one thing the user is certain is false.
+ */
+data class InviteState(
+    val isVisible: Boolean = false,
+    val challengeId: String = "",
+    val challengeTitle: String = "",
+    val candidates: List<InviteCandidate> = emptyList(),
+    /** The one row mid-write, so the rest of the sheet stays usable. */
+    val busyUid: String? = null,
+    val error: String? = null,
+) {
+    /**
+     * Whether there is nobody to offer.
+     *
+     * A real state with its own sentence, not an empty list: the fix is on a different
+     * screen (add a friend), and a blank sheet does not say so.
+     */
+    val hasNoFriends: Boolean get() = candidates.isEmpty()
+}

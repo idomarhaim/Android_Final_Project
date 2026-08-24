@@ -9,9 +9,11 @@ import com.idomarhaim.goalpilot.core.util.FirestorePaths
 import com.idomarhaim.goalpilot.core.util.IoDispatcher
 import com.idomarhaim.goalpilot.data.auth.uidFlow
 import com.idomarhaim.goalpilot.data.firestore.dto.ChallengeDto
+import com.idomarhaim.goalpilot.data.firestore.dto.ChallengeInviteDto
 import com.idomarhaim.goalpilot.data.firestore.dto.ChallengeParticipantDto
 import com.idomarhaim.goalpilot.data.firestore.dto.toDomain
 import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
@@ -68,6 +70,12 @@ class ChallengeRepositoryImpl @Inject constructor(
     private fun reportsCol(uid: String) = firestore.collection(FirestorePaths.USERS)
         .document(uid)
         .collection(FirestorePaths.CHALLENGE_REPORTS)
+
+    /**
+     * `challengeInvites` — top-level, because an invite names two people and neither
+     * one's private space is writable by the other. See [ChallengeInvite].
+     */
+    private val invitesCol get() = firestore.collection(FirestorePaths.CHALLENGE_INVITES)
 
     // ── Reads ──────────────────────────────────────────────────────
 
@@ -325,6 +333,158 @@ class ChallengeRepositoryImpl @Inject constructor(
             }
         }
 
+    // ── Invites ────────────────────────────────────────────
+
+    /**
+     * ⚠️ **`whereEqualTo("toUid", …)` IS THE RULE, NOT AN OPTIMISATION.**
+     *
+     * `firestore.rules` allows a read here only when the document names the reader, and a
+     * read rule that inspects `resource.data` constrains **queries** as well as gets:
+     * Firestore rejects any query it cannot prove, up front, is inside the rule. Drop this
+     * filter and the listener fails with `PERMISSION_DENIED` — on the *query*, before a
+     * single document is considered — and nothing in the message says the filter was the
+     * problem. `firestore-tests/rules.test.mjs` asserts both directions for exactly that
+     * reason.
+     *
+     * Ordering is **client-side**, and that is also not a preference: `whereEqualTo` plus
+     * `orderBy` on a different field needs a composite index, and this list is a handful
+     * of rows.
+     */
+    override fun observeIncomingInvites(): Flow<List<ChallengeInvite>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                invitesCol.whereEqualTo(TO_UID, uid).snapshotsFlow().map { snap ->
+                    snap.toObjects(ChallengeInviteDto::class.java)
+                        .map { it.toDomain() }
+                        .sortedByDescending { it.createdAtEpochMillis }
+                }
+            }
+        }
+
+    /** The mirror of the above, on `fromUid`. Same filter rule, same reason. */
+    override fun observeSentInvites(): Flow<List<ChallengeInvite>> =
+        auth.uidFlow().flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                invitesCol.whereEqualTo(FROM_UID, uid).snapshotsFlow().map { snap ->
+                    snap.toObjects(ChallengeInviteDto::class.java).map { it.toDomain() }
+                }
+            }
+        }
+
+    override suspend fun inviteToChallenge(
+        challengeId: String,
+        toUid: String,
+    ): Resource<Unit> = withContext(io) {
+        val user = auth.currentUser ?: return@withContext Resource.Error("Not signed in")
+        if (toUid == user.uid) return@withContext Resource.Error("You are already in this one")
+        try {
+            val challenge = challengeDoc(challengeId).get().await()
+                .toObject(ChallengeDto::class.java)
+                ?: return@withContext Resource.Error("That challenge no longer exists")
+
+            // THE SENDER MUST BE IN THE CHALLENGE, AND THE RULE CANNOT SAY SO.
+            //
+            // A security rule sees the invite document and nothing else, so it can check
+            // that `fromUid` is the writer and that the two parties differ -- it cannot
+            // reach into `challenges/{id}/participants` to ask whether the sender is
+            // actually running this race. That check belongs to the product rather than
+            // to the partition, so it lives here, where it can also say WHY in a sentence
+            // instead of PERMISSION_DENIED.
+            //
+            // It is a courtesy check, not a defence: a modified client could still write
+            // the invite, and the worst that achieves is an offer to join a challenge the
+            // recipient could already have found in Discover.
+            if (!participantsCol(challengeId).document(user.uid).get().await().exists()) {
+                return@withContext Resource.Error("Join the challenge before inviting anyone")
+            }
+            if (participantsCol(challengeId).document(toUid).get().await().exists()) {
+                return@withContext Resource.Error("They are already in this challenge")
+            }
+
+            // A SECOND INVITE IS NOISE, NOT EMPHASIS.
+            //
+            // Checked against the sender's OWN invites, which is the only slice the rules
+            // let this user query -- so two different people may each invite the same
+            // friend, and that is correct: they are two offers from two people.
+            val existing = invitesCol
+                .whereEqualTo(FROM_UID, user.uid)
+                .whereEqualTo(CHALLENGE_ID, challengeId)
+                .whereEqualTo(TO_UID, toUid)
+                .limit(1)
+                .get()
+                .await()
+            if (!existing.isEmpty) return@withContext Resource.Error("Already invited")
+
+            val ref = invitesCol.document()
+            ref.set(
+                ChallengeInviteDto(
+                    id = ref.id,
+                    challengeId = challengeId,
+                    // Copied, not resolved. See `ChallengeInvite.challengeTitle`: the row
+                    // renders one sentence and should not need two more reads to do it.
+                    challengeTitle = challenge.title,
+                    fromUid = user.uid,
+                    fromName = user.displayName.orEmpty(),
+                    fromPhotoUrl = user.photoUrl?.toString(),
+                    toUid = toUid,
+                    createdAt = System.currentTimeMillis(),
+                ),
+            ).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not send that invite", e)
+        }
+    }
+
+    override suspend fun acceptInvite(inviteId: String): Resource<Unit> = withContext(io) {
+        val user = auth.currentUser ?: return@withContext Resource.Error("Not signed in")
+        try {
+            val inviteRef = invitesCol.document(inviteId)
+            val invite = inviteRef.get().await().toObject(ChallengeInviteDto::class.java)
+                ?: return@withContext Resource.Error("That invite is no longer there")
+            // The caption on the invite is a caption. The challenge is the truth, and it
+            // may have been deleted between the offer and the answer.
+            if (!challengeDoc(invite.challengeId).get().await().exists()) {
+                // Consume it anyway: an offer to join something that no longer exists is
+                // not a row anybody should have to keep dismissing.
+                inviteRef.delete().await()
+                return@withContext Resource.Error("That challenge no longer exists")
+            }
+            val now = System.currentTimeMillis()
+            // JOINING IS STILL THE INVITEE'S OWN WRITE.
+            //
+            // These are the same two documents `joinChallenge` writes, under this user's
+            // own uid, plus the invite's deletion. Batched so that accepting cannot leave
+            // an invite standing beside the membership it already produced.
+            firestore.batch().apply {
+                set(participantsCol(invite.challengeId).document(user.uid), meAsParticipant(now))
+                set(myEdgesCol(user.uid).document(invite.challengeId), mapOf(JOINED_AT to now))
+                delete(inviteRef)
+            }.commit().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not join from that invite", e)
+        }
+    }
+
+    override suspend fun dismissInvite(inviteId: String): Resource<Unit> = withContext(io) {
+        auth.currentUser ?: return@withContext Resource.Error("Not signed in")
+        try {
+            // One call for both parties: the rule permits a delete by either, and a
+            // decline and a withdrawal leave exactly the same absence behind. Nothing
+            // records that it happened -- a refusal with a trace is one somebody has to
+            // explain.
+            invitesCol.document(inviteId).delete().await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Could not dismiss that invite", e)
+        }
+    }
+
     override suspend fun deleteChallenge(challengeId: String): Resource<Unit> = withContext(io) {
         val uid = auth.currentUser?.uid ?: return@withContext Resource.Error("Not signed in")
         try {
@@ -374,5 +534,15 @@ class ChallengeRepositoryImpl @Inject constructor(
         const val REPORTED_AT = "reportedAt"
         const val GOAL_ID = "goalId"
         const val LINKED_AT = "linkedAt"
+
+        /**
+         * Fields of a `challengeInvites/{inviteId}` document.
+         *
+         * [TO_UID] and [FROM_UID] are **what `firestore.rules` reads**, so every query
+         * here filters on one of them or is denied — see `observeIncomingInvites`.
+         */
+        const val TO_UID = "toUid"
+        const val FROM_UID = "fromUid"
+        const val CHALLENGE_ID = "challengeId"
     }
 }

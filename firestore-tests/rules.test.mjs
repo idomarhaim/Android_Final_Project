@@ -26,7 +26,17 @@ import {
   assertSucceeds,
   assertFails,
 } from '@firebase/rules-unit-testing'
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore'
 import {
   ref as storageRef,
   uploadBytes,
@@ -42,6 +52,20 @@ const OWNER = 'uid_owner'
 const JOINER = 'uid_joiner'
 const CHALLENGE = 'challenge_run_streak'
 const SHARE = 'share_weekly_owner'
+const STRANGER = 'uid_stranger'
+const INVITE = 'invite_owner_to_joiner'
+
+// What ChallengeRepositoryImpl.inviteToChallenge writes. `toUid` and `fromUid` are the
+// only two fields any rule reads; the rest are captions the row renders.
+const inviteFixture = (fromUid, toUid) => ({
+  challengeId: CHALLENGE,
+  challengeTitle: '7-day run streak',
+  fromUid,
+  fromName: 'Ido',
+  fromPhotoUrl: null,
+  toUid,
+  createdAt: 1,
+})
 
 // What SocialRepositoryImpl.shareSummary writes, minus the fields no rule reads.
 const shareFixture = (authorUid) => ({
@@ -90,6 +114,10 @@ beforeEach(async () => {
       metricUnit: 'km',
     })
     await setDoc(doc(ctx.firestore(), 'shares', SHARE), shareFixture(OWNER))
+    await setDoc(
+      doc(ctx.firestore(), 'challengeInvites', INVITE),
+      inviteFixture(OWNER, JOINER),
+    )
     await uploadBytes(storageRef(ctx.storage(), imagePath(OWNER)), aJpeg(), {
       contentType: 'image/jpeg',
     })
@@ -706,5 +734,180 @@ test('a user cannot delete someone else’s image', async () => {
 test('a signed-out visitor cannot delete an image', async () => {
   await assertFails(
     deleteObject(storageRef(storageAsVisitor(), imagePath(OWNER))),
+  )
+})
+
+// ── §1 · challenge invites (Ido, 2026-08-24) ─────────────────────────
+//
+// "in the version I have on my phone I can create a CHALLENGE but I cannot invite a
+// friend I have in the app to the CHALLENGE." He was right: there was no invite
+// mechanism at all, and the only route into somebody else's challenge was Discover,
+// which lists every challenge in the database to every signed-in user.
+//
+// This section is the design argument, executable — the same job the "regression" and
+// "the fix" pair above does for joining. The invite is a TOP-LEVEL document because
+// every tidier home is unreachable: `users/{friendUid}/**` is isOwner(friendUid), and so
+// is `challenges/{id}/participants/{friendUid}`. This is the only layer that can prove
+// the resulting rule actually partitions between the two parties and everybody else.
+
+test('the invitee can read an invite that names them', async () => {
+  await assertSucceeds(
+    getDoc(doc(asUser(JOINER), 'challengeInvites', INVITE)),
+  )
+})
+
+test('the sender can read the invite they sent', async () => {
+  await assertSucceeds(getDoc(doc(asUser(OWNER), 'challengeInvites', INVITE)))
+})
+
+test('an invite is nobody else\u2019s business, unlike a share', async () => {
+  // The one line that makes this collection different from `shares` one block up: that
+  // one is `allow read: if isSignedIn()`, because a share is published to a feed. An
+  // invite names two people, so it reads `resource.data`.
+  await assertFails(getDoc(doc(asUser(STRANGER), 'challengeInvites', INVITE)))
+})
+
+test('a signed-out visitor cannot read an invite', async () => {
+  await assertFails(getDoc(doc(asVisitor(), 'challengeInvites', INVITE)))
+})
+
+// ── The trap this design buys, asserted in both directions ───────────
+//
+// A read rule that inspects `resource.data` constrains every QUERY, not only every get:
+// Firestore refuses up front any query it cannot PROVE is inside the rule, rather than
+// filtering document by document. So the client MUST always carry the `where`, and an
+// unconstrained listener fails with PERMISSION_DENIED on the query itself — with nothing
+// in the message to say the missing filter was the cause. Both halves are asserted
+// because only the pair is informative: the success alone would pass just as happily
+// against a rule that let everybody read everything.
+
+test('the invitee\u2019s FILTERED query is what the rule permits', async () => {
+  await assertSucceeds(
+    getDocs(
+      query(
+        collection(asUser(JOINER), 'challengeInvites'),
+        where('toUid', '==', JOINER),
+      ),
+    ),
+  )
+})
+
+test('the sender\u2019s FILTERED query on fromUid is permitted too', async () => {
+  await assertSucceeds(
+    getDocs(
+      query(
+        collection(asUser(OWNER), 'challengeInvites'),
+        where('fromUid', '==', OWNER),
+      ),
+    ),
+  )
+})
+
+test('the SAME user\u2019s UNFILTERED query is denied \u2014 the filter is the rule', async () => {
+  // The invitee, who is permitted to read the one document this collection contains,
+  // and is still denied. That is what makes this a statement about the QUERY rather
+  // than about the documents, and it is the failure mode a new listener will hit.
+  await assertFails(getDocs(collection(asUser(JOINER), 'challengeInvites')))
+})
+
+test('a query filtered on SOMEBODY ELSE is denied', async () => {
+  await assertFails(
+    getDocs(
+      query(
+        collection(asUser(STRANGER), 'challengeInvites'),
+        where('toUid', '==', JOINER),
+      ),
+    ),
+  )
+})
+
+// ── Sending ──────────────────────────────────────────────────────────
+
+test('a user can send an invite in their own name', async () => {
+  await assertSucceeds(
+    setDoc(
+      doc(asUser(JOINER), 'challengeInvites', 'invite_joiner_to_stranger'),
+      inviteFixture(JOINER, STRANGER),
+    ),
+  )
+})
+
+test('a user cannot send an invite attributed to somebody else', async () => {
+  // The same test `shares` has, and for the same reason: without it, anybody could
+  // put an offer in front of you signed with a name you trust.
+  await assertFails(
+    setDoc(
+      doc(asUser(STRANGER), 'challengeInvites', 'invite_forged'),
+      inviteFixture(OWNER, JOINER),
+    ),
+  )
+})
+
+test('a user cannot invite themselves', async () => {
+  // Not tidiness: a self-invite would render as a row offering to join a challenge you
+  // are already in, and it is the shape a buggy client produces most easily.
+  await assertFails(
+    setDoc(
+      doc(asUser(JOINER), 'challengeInvites', 'invite_self'),
+      inviteFixture(JOINER, JOINER),
+    ),
+  )
+})
+
+// ── Consuming ────────────────────────────────────────────────────────
+//
+// Accept, decline and withdraw are ONE verb in the rules, because all three leave
+// exactly the same absence behind.
+
+test('the invitee can delete the invite \u2014 accepting or declining', async () => {
+  await assertSucceeds(deleteDoc(doc(asUser(JOINER), 'challengeInvites', INVITE)))
+})
+
+test('the sender can delete it too \u2014 withdrawing', async () => {
+  await assertSucceeds(deleteDoc(doc(asUser(OWNER), 'challengeInvites', INVITE)))
+})
+
+test('a stranger cannot delete somebody else\u2019s invite', async () => {
+  await assertFails(deleteDoc(doc(asUser(STRANGER), 'challengeInvites', INVITE)))
+})
+
+test('an invite cannot be EDITED, not even by the person who sent it', async () => {
+  // `allow update: if false`. The stakes are the copied `challengeTitle`: an editable
+  // invite would let a sender repoint a standing offer at a different challenge after
+  // the fact, and the caption is exactly what the invitee is reading when they decide.
+  await assertFails(
+    updateDoc(doc(asUser(OWNER), 'challengeInvites', INVITE), {
+      challengeId: 'somewhere_else',
+    }),
+  )
+})
+
+test('nor by the invitee, who cannot promote their own offer', async () => {
+  await assertFails(
+    updateDoc(doc(asUser(JOINER), 'challengeInvites', INVITE), { fromName: 'Nobody' }),
+  )
+})
+
+// ── What an invite does NOT buy (the partition it must not break) ────
+
+test('an invite does not let the SENDER write the invitee\u2019s participant row', async () => {
+  // The whole reason invites are a separate collection rather than a conjured
+  // participant row: joining stays the invitee's own act. A standings list that can
+  // contain somebody who never agreed to compete is the bug this prevents, and it is
+  // why `acceptInvite` runs under the INVITEE's uid and not the sender's.
+  await assertFails(
+    setDoc(
+      doc(asUser(OWNER), 'challenges', CHALLENGE, 'participants', JOINER),
+      { uid: JOINER, displayName: 'Joiner', score: 0, joinedAt: 1 },
+    ),
+  )
+})
+
+test('the invitee joining for themselves still works, invite or no invite', async () => {
+  await assertSucceeds(
+    setDoc(
+      doc(asUser(JOINER), 'challenges', CHALLENGE, 'participants', JOINER),
+      { uid: JOINER, displayName: 'Joiner', score: 0, joinedAt: 1 },
+    ),
   )
 })

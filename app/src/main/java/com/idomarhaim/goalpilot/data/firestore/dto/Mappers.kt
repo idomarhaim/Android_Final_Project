@@ -5,6 +5,7 @@ import com.idomarhaim.goalpilot.domain.model.AllDay
 import com.idomarhaim.goalpilot.domain.model.Block
 import com.idomarhaim.goalpilot.domain.model.BlockPlacement
 import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.CompletionFact
@@ -654,6 +655,17 @@ fun ChallengeParticipantDto.toDomain(): ChallengeParticipant = ChallengeParticip
     // §6: nobody has said where its number came from, so nothing claims anything.
     source = ScoreSource.fromName(scoreSource),
     reportedAtEpochMillis = reportedAt,
+)
+
+fun ChallengeInviteDto.toDomain(): ChallengeInvite = ChallengeInvite(
+    id = id,
+    challengeId = challengeId,
+    challengeTitle = challengeTitle,
+    fromUid = fromUid,
+    fromName = fromName,
+    fromPhotoUrl = fromPhotoUrl,
+    toUid = toUid,
+    createdAtEpochMillis = createdAt,
 )
 
 // `PublicProfileDto.resolvedLevel()` used to live here. `C20` (#42, spec §5.2) deleted

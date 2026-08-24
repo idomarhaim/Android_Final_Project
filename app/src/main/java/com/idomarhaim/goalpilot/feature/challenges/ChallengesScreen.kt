@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NightlightRound
+import androidx.compose.material.icons.filled.PersonAddAlt1
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -84,6 +85,8 @@ fun ChallengesScreen(
     val editor by viewModel.editor.collectAsStateWithLifecycle()
     val scoreEntry by viewModel.scoreEntry.collectAsStateWithLifecycle()
     val goalLink by viewModel.goalLink.collectAsStateWithLifecycle()
+    val invite by viewModel.invite.collectAsStateWithLifecycle()
+    val invitePendingId by viewModel.invitePendingId.collectAsStateWithLifecycle()
     val detailId by viewModel.detailId.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
@@ -138,7 +141,12 @@ fun ChallengesScreen(
                 }
             }
 
-            if (state.mine.isEmpty() && state.discoverable.isEmpty()) {
+            // `invites` counts here too: a screen that says "No challenges yet"
+            // above a live invitation is telling the user the opposite of what the
+            // row beneath it says.
+            if (state.mine.isEmpty() && state.discoverable.isEmpty() &&
+                state.invites.isEmpty()
+            ) {
                 item {
                     EmptyState(
                         title = "No challenges yet",
@@ -146,6 +154,26 @@ fun ChallengesScreen(
                             "here and join. Whoever reports the highest score leads.",
                         icon = Icons.Outlined.EmojiEvents,
                         modifier = Modifier.heightIn(min = 320.dp),
+                    )
+                }
+            }
+
+            // INVITES GO FIRST, AND NOWHERE ELSE (§1's receiving half).
+            //
+            // An invite is somebody asking you a question, so it outranks the list of
+            // things you are already doing -- but it is an OFFER, so it gets no badge, no
+            // count and no notification. It is a row that is there, and then is not.
+            //
+            // No section header when there is exactly one: "Invites" above a single row
+            // that already says who invited you to what is a label for a list of one.
+            if (state.invites.isNotEmpty()) {
+                if (state.invites.size > 1) item { SectionHeader("Invites") }
+                items(state.invites, key = { it.id }) { invitation ->
+                    ChallengeInviteRow(
+                        invite = invitation,
+                        isBusy = invitePendingId == invitation.id,
+                        onJoin = { viewModel.acceptInvite(invitation.id) },
+                        onDismiss = { viewModel.declineInvite(invitation.id) },
                     )
                 }
             }
@@ -158,6 +186,7 @@ fun ChallengesScreen(
                         onOpenStandings = { viewModel.openDetail(card.challenge.id) },
                         onReportScore = { viewModel.openScoreEntry(card) },
                         onLinkGoal = { viewModel.openGoalLink(card) },
+                        onInvite = { viewModel.openInvite(card) },
                         onLeave = { pendingLeave = card },
                         onDelete = { pendingDelete = card },
                     )
@@ -204,6 +233,14 @@ fun ChallengesScreen(
             state = goalLink,
             onLink = viewModel::linkGoal,
             onDismiss = viewModel::dismissGoalLink,
+        )
+    }
+
+    if (invite.isVisible) {
+        InviteSheet(
+            state = invite,
+            onInvite = viewModel::sendInvite,
+            onDismiss = viewModel::dismissInvite,
         )
     }
 
@@ -267,6 +304,7 @@ internal fun MyChallengeCard(
     onOpenStandings: () -> Unit,
     onReportScore: () -> Unit,
     onLinkGoal: () -> Unit,
+    onInvite: () -> Unit,
     onLeave: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -290,6 +328,22 @@ internal fun MyChallengeCard(
                         participantSummary(card.participantCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                // AN ICON BUTTON IN THE HEADER, NOT A FOURTH BUTTON IN THE ACTION ROW
+                // AND NOT A MENU ITEM.
+                //
+                // Ido's complaint was that he *could not find a way* to invite anybody, so
+                // burying this behind the overflow would answer the letter of the report
+                // and not its substance. The action row below is the other candidate and
+                // it is already at its width limit on his own phone (384 dp, font 1.15):
+                // "Score from a goal" + "Type a score" + "Standings" is three, and a
+                // fourth wraps. An icon costs no row width and sits where the card's other
+                // affordance already is.
+                IconButton(onClick = onInvite) {
+                    Icon(
+                        Icons.Filled.PersonAddAlt1,
+                        contentDescription = "Invite a friend to “${card.challenge.title}”",
                     )
                 }
                 Box {

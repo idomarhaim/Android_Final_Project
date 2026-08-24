@@ -5,8 +5,11 @@ import com.idomarhaim.goalpilot.core.result.Resource
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
+import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.Leaderboard
+import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ScoreSource
@@ -16,6 +19,7 @@ import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.SocialRepository
 import com.idomarhaim.goalpilot.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -38,6 +42,7 @@ class ChallengesViewModelTest {
 
     private val repository = mockk<ChallengeRepository>(relaxed = true)
     private val goalRepository = mockk<GoalRepository>(relaxed = true)
+    private val socialRepository = mockk<SocialRepository>(relaxed = true)
 
     private val now = 1_000_000_000L
 
@@ -63,15 +68,31 @@ class ChallengesViewModelTest {
         archived: Boolean = false,
     ) = Goal(id = id, title = title, measure = measure, isArchived = archived)
 
+    private fun friend(uid: String, name: String) = LeaderboardEntry(uid = uid, displayName = name)
+
     private fun viewModel(
         mine: List<ChallengeWithStandings> = emptyList(),
         discoverable: List<Challenge> = emptyList(),
         goals: List<Goal> = emptyList(),
+        invites: List<ChallengeInvite> = emptyList(),
+        sent: List<ChallengeInvite> = emptyList(),
+        friends: List<LeaderboardEntry> = emptyList(),
     ): ChallengesViewModel {
         every { repository.observeMyChallenges() } returns flowOf(mine)
         every { repository.observeDiscoverable() } returns flowOf(discoverable)
         every { goalRepository.observeGoals(any()) } returns flowOf(goals)
-        return ChallengesViewModel(repository, goalRepository).apply { clock = { now } }
+        // ⚠️ EVERY FLOW `uiState` COMBINES MUST BE STUBBED, RELAXED OR NOT.
+        //
+        // `mockk(relaxed = true)` hands back a Flow that never emits, and `combine` waits
+        // for a first value from all four -- so forgetting this line does not fail, it
+        // HANGS, and `loaded()` times out with a message about the coroutine rather than
+        // about the stub.
+        every { repository.observeIncomingInvites() } returns flowOf(invites)
+        every { repository.observeSentInvites() } returns flowOf(sent)
+        every { socialRepository.observeLeaderboard(any()) } returns
+            flowOf(Leaderboard(entries = friends))
+        return ChallengesViewModel(repository, goalRepository, socialRepository)
+            .apply { clock = { now } }
     }
 
     private suspend fun ChallengesViewModel.loaded() = uiState.first { !it.isLoading }
@@ -600,7 +621,8 @@ class ChallengesViewModelTest {
             kotlinx.coroutines.flow.flow { throw IllegalStateException("PERMISSION_DENIED") }
         every { repository.observeDiscoverable() } returns flowOf(emptyList())
         every { goalRepository.observeGoals(any()) } returns flowOf(emptyList())
-        val vm = ChallengesViewModel(repository, goalRepository)
+        every { repository.observeIncomingInvites() } returns flowOf(emptyList())
+        val vm = ChallengesViewModel(repository, goalRepository, socialRepository)
 
         val state = vm.uiState.first { !it.isLoading }
 
@@ -702,5 +724,232 @@ class ChallengesViewModelTest {
 
         assertThat(card.standingsFreshness.neverLoaded).isFalse()
         assertThat(card.standingsFreshness.hasStamp).isFalse()
+    }
+
+    // ── §1 · inviting a friend to a challenge ───────────────────────────
+    //
+    // Ido, 2026-08-24: *"in the version I have on my phone I can create a CHALLENGE but I
+    // cannot invite a friend I have in the app to the CHALLENGE"*. These are the
+    // behaviours that report turns into, minus the two that only a picture can settle
+    // (does the row read as an offer? is the icon findable?) — those are
+    // `ChallengeInviteRenderPass`.
+
+    private fun invite(
+        id: String = "i1",
+        challengeId: String = "c1",
+        challengeTitle: String = "Most km this week",
+        fromUid: String = "friend-a",
+        fromName: String = "Ann",
+        toUid: String = "me",
+    ) = ChallengeInvite(
+        id = id,
+        challengeId = challengeId,
+        challengeTitle = challengeTitle,
+        fromUid = fromUid,
+        fromName = fromName,
+        toUid = toUid,
+        createdAtEpochMillis = now,
+    )
+
+    private suspend fun ChallengesViewModel.openedInvite(card: ChallengeCard): InviteState {
+        openInvite(card)
+        return invite.first { it.isVisible }
+    }
+
+    @Test
+    fun `an invite waiting for me reaches the screen state`() = runTest {
+        val vm = viewModel(invites = listOf(invite()))
+
+        val state = vm.loaded()
+
+        assertThat(state.invites.map { it.id }).containsExactly("i1")
+        assertThat(state.invites.single().senderLabel).isEqualTo("Ann")
+    }
+
+    @Test
+    fun `a sender who never set a name still reads as somebody, not as a blank`() = runTest {
+        val vm = viewModel(invites = listOf(invite(fromName = "")))
+
+        assertThat(vm.loaded().invites.single().senderLabel).isEqualTo("Someone")
+    }
+
+    @Test
+    fun `the invite sheet offers my friends and never me`() = runTest {
+        // `observeLeaderboard(friendsOnly = true)` returns the friends AND the signed-in
+        // user, because it is a leaderboard and you are on it. Inviting yourself into a
+        // challenge you are already in is the one row that must never appear.
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge())),
+            friends = listOf(
+                friend("f1", "Ann"),
+                friend("f2", "Boaz"),
+                LeaderboardEntry(uid = "me", displayName = "Ido", isCurrentUser = true),
+            ),
+        )
+        val card = vm.loaded().mine.single()
+
+        val sheet = vm.openedInvite(card)
+
+        assertThat(sheet.candidates.map { it.uid }).containsExactly("f1", "f2").inOrder()
+        assertThat(sheet.challengeTitle).isEqualTo("Most km this week")
+    }
+
+    @Test
+    fun `a friend already in the challenge is shown blocked, not filtered away`() = runTest {
+        // A friend who silently vanishes reads as "the app does not know them", which is
+        // the one thing the user is certain is false. See `InviteCandidate`.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(),
+                    standings = listOf(
+                        ChallengeParticipant(uid = "f1", displayName = "Ann"),
+                    ).rankedByScore("me"),
+                ),
+            ),
+            friends = listOf(friend("f1", "Ann"), friend("f2", "Boaz")),
+        )
+        val card = vm.loaded().mine.single()
+
+        val sheet = vm.openedInvite(card)
+
+        val ann = sheet.candidates.single { it.uid == "f1" }
+        assertThat(ann.isParticipant).isTrue()
+        assertThat(ann.canInvite).isFalse()
+        assertThat(sheet.candidates.single { it.uid == "f2" }.canInvite).isTrue()
+    }
+
+    @Test
+    fun `a friend I already invited cannot be invited again`() = runTest {
+        // A second invite is noise, not emphasis.
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge())),
+            sent = listOf(invite(id = "s1", fromUid = "me", toUid = "f1")),
+            friends = listOf(friend("f1", "Ann")),
+        )
+        val card = vm.loaded().mine.single()
+
+        val ann = vm.openedInvite(card).candidates.single()
+
+        assertThat(ann.isInvited).isTrue()
+        assertThat(ann.canInvite).isFalse()
+    }
+
+    @Test
+    fun `an invite I sent for a DIFFERENT challenge does not block this one`() = runTest {
+        // `observeSentInvites` is one listener for every outstanding invite, so the
+        // per-challenge filter is this layer's job and is the thing that would silently
+        // over-block if it were dropped.
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge(id = "c1"))),
+            sent = listOf(invite(id = "s1", challengeId = "other", fromUid = "me", toUid = "f1")),
+            friends = listOf(friend("f1", "Ann")),
+        )
+        val card = vm.loaded().mine.single()
+
+        assertThat(vm.openedInvite(card).candidates.single().canInvite).isTrue()
+    }
+
+    @Test
+    fun `no friends at all is a state with a sentence, not an empty list`() = runTest {
+        val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+        val card = vm.loaded().mine.single()
+
+        assertThat(vm.openedInvite(card).hasNoFriends).isTrue()
+    }
+
+    @Test
+    fun `sending an invite aims it at the open challenge and keeps the sheet up`() = runTest {
+        // Inviting three people is one act with three taps; closing after each would make
+        // it three trips.
+        coEvery { repository.inviteToChallenge(any(), any()) } returns Resource.Success(Unit)
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge(id = "c1"))),
+            friends = listOf(friend("f1", "Ann"), friend("f2", "Boaz")),
+        )
+        val card = vm.loaded().mine.single()
+        vm.openedInvite(card)
+
+        vm.sendInvite("f2")
+
+        coVerify { repository.inviteToChallenge("c1", "f2") }
+        assertThat(vm.invite.value.isVisible).isTrue()
+        assertThat(vm.message.value).isEqualTo("Invite sent")
+    }
+
+    @Test
+    fun `a refused invite says why in the sheet, not in a snackbar behind it`() = runTest {
+        coEvery { repository.inviteToChallenge(any(), any()) } returns
+            Resource.Error("They are already in this challenge")
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge())),
+            friends = listOf(friend("f1", "Ann")),
+        )
+        val card = vm.loaded().mine.single()
+        vm.openedInvite(card)
+
+        vm.sendInvite("f1")
+
+        assertThat(vm.invite.value.error).isEqualTo("They are already in this challenge")
+        assertThat(vm.message.value).isNull()
+    }
+
+    @Test
+    fun `closing the sheet clears the error it was showing`() = runTest {
+        coEvery { repository.inviteToChallenge(any(), any()) } returns Resource.Error("no")
+        val vm = viewModel(
+            mine = listOf(ChallengeWithStandings(challenge = challenge())),
+            friends = listOf(friend("f1", "Ann")),
+        )
+        val card = vm.loaded().mine.single()
+        vm.openedInvite(card)
+        vm.sendInvite("f1")
+
+        vm.dismissInvite()
+
+        assertThat(vm.invite.value.isVisible).isFalse()
+        assertThat(vm.invite.value.error).isNull()
+    }
+
+    @Test
+    fun `accepting an invite joins through the invite, not through a bare join`() = runTest {
+        // The distinction is the whole point: `acceptInvite` batches the participant row
+        // with the invite's deletion, so accepting cannot leave the offer standing beside
+        // the membership it just produced.
+        coEvery { repository.acceptInvite(any()) } returns Resource.Success(Unit)
+        val vm = viewModel(invites = listOf(invite(id = "i1")))
+        vm.loaded()
+
+        vm.acceptInvite("i1")
+
+        coVerify { repository.acceptInvite("i1") }
+        coVerify(exactly = 0) { repository.joinChallenge(any()) }
+        assertThat(vm.message.value).isEqualTo("You're in")
+    }
+
+    @Test
+    fun `declining says nothing at all when it works`() = runTest {
+        // A snackbar for "I said no thank you" is the app being pleased with itself about
+        // a non-event. A failure still speaks.
+        coEvery { repository.dismissInvite(any()) } returns Resource.Success(Unit)
+        val vm = viewModel(invites = listOf(invite(id = "i1")))
+        vm.loaded()
+
+        vm.declineInvite("i1")
+
+        coVerify { repository.dismissInvite("i1") }
+        assertThat(vm.message.value).isNull()
+        assertThat(vm.invitePendingId.value).isNull()
+    }
+
+    @Test
+    fun `a decline that fails does speak`() = runTest {
+        coEvery { repository.dismissInvite(any()) } returns Resource.Error("Offline")
+        val vm = viewModel(invites = listOf(invite(id = "i1")))
+        vm.loaded()
+
+        vm.declineInvite("i1")
+
+        assertThat(vm.message.value).isEqualTo("Offline")
     }
 }

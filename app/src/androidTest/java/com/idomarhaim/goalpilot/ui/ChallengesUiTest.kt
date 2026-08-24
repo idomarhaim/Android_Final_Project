@@ -134,6 +134,7 @@ class ChallengesUiTest {
                     onOpenStandings = {},
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -152,6 +153,7 @@ class ChallengesUiTest {
                     onOpenStandings = {},
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -177,6 +179,7 @@ class ChallengesUiTest {
                     onOpenStandings = {},
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -198,6 +201,7 @@ class ChallengesUiTest {
                     onOpenStandings = { opened++ },
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -270,6 +274,7 @@ class ChallengesUiTest {
                     onOpenStandings = {},
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )
@@ -293,6 +298,7 @@ class ChallengesUiTest {
                     onOpenStandings = {},
                     onReportScore = {},
                     onLinkGoal = {},
+                onInvite = {},
                     onLeave = {},
                     onDelete = {},
                 )

@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,9 +43,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
+import com.idomarhaim.goalpilot.domain.model.InviteCandidate
 import com.idomarhaim.goalpilot.feature.goals.label
 import com.idomarhaim.goalpilot.ui.components.Avatar
 import com.idomarhaim.goalpilot.ui.components.FreshnessNote
+import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.locale.AppAlertDialog
 import com.idomarhaim.goalpilot.ui.locale.AppDatePickerDialog
 import com.idomarhaim.goalpilot.ui.locale.AppModalBottomSheet
@@ -611,6 +614,218 @@ internal fun GoalLinkSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 12.dp),
                 )
+            }
+        }
+    }
+}
+
+// ── Invite a friend ──────────────────────────────────────────────────
+
+/**
+ * §1's sending half: *"join mine"*, as a sheet.
+ *
+ * Ido, 2026-08-24: *"in the version I have on my phone I can create a CHALLENGE but I
+ * cannot invite a friend I have in the app to the CHALLENGE"*. Before this there was no
+ * invite mechanism at all — a friend could only arrive through **Discover**, which lists
+ * every challenge in the database to everybody, so there was no way to point at one.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun InviteSheet(
+    state: InviteState,
+    onInvite: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    AppModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        InviteList(state = state, onInvite = onInvite)
+    }
+}
+
+/**
+ * The invite list itself, without the sheet around it.
+ *
+ * **Split out for the same reason [StandingsList] is, and in the same commit** — that is
+ * the rule this file learned on 2026-08-24, not a favour to a test.
+ * `AppModalBottomSheet` renders in a **window of its own**, so `onRoot()` matches two
+ * nodes and refuses, while every other root selector lands on the host window, which the
+ * sheet has already emptied. Two frames got as far as being filed before that was
+ * understood: a **71 px** strip, and a **1344x2992 rectangle of flat colour** that passed
+ * every size floor a render pass had.
+ *
+ * And the question this surface is risky for is not a string either:
+ *
+ * > **Does an invite row read as an *offer*, or as an *obligation*?**
+ *
+ * It must read as an offer. Only a picture settles that, so
+ * `ChallengeInviteRenderPass` photographs this composable directly.
+ */
+@Composable
+internal fun InviteList(
+    state: InviteState,
+    onInvite: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
+        Text("Invite a friend", style = MaterialTheme.typography.titleLarge)
+        Text(
+            state.challengeTitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            // Says what the other person gets, not what this button does. An invite is an
+            // offer, so the sentence that introduces it should sound like one — and the
+            // second half is load-bearing rather than reassurance: nothing is written to
+            // the invitee, and joining stays their own act.
+            "They will see an invite at the top of their own Challenges screen, and can " +
+                "join or ignore it. Nothing is added to their account either way.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        HorizontalDivider()
+
+        if (state.hasNoFriends) {
+            // A real state with its own sentence, and the fix is on another screen — a
+            // blank list would not say so. See `InviteState.hasNoFriends`.
+            Text(
+                "You have not added anyone yet. Add a friend from their friend code on " +
+                    "the Profile tab, and they will show up here.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(vertical = 20.dp),
+            )
+        }
+
+        LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
+            items(state.candidates, key = { it.uid }) { candidate ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Avatar(
+                        photoUrl = candidate.photoUrl,
+                        name = candidate.label,
+                        size = 36.dp,
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 12.dp),
+                    ) {
+                        Text(
+                            candidate.label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        // WHY A BLOCKED FRIEND IS GREYED AND NOT FILTERED OUT.
+                        //
+                        // A friend who silently vanishes from this list reads as "the app
+                        // does not know them", which is the one thing the user is certain
+                        // is false. A line saying "Already in" answers the question they
+                        // actually had -- and it keeps the list's length stable, so
+                        // inviting three people in a row does not make it jump under the
+                        // finger. See `InviteCandidate`.
+                        val note = when {
+                            candidate.isParticipant -> "Already in this challenge"
+                            candidate.isInvited -> "Invited — waiting for them"
+                            else -> null
+                        }
+                        note?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    TextButton(
+                        onClick = { onInvite(candidate.uid) },
+                        // Only the row being written to goes quiet, not the sheet: this is
+                        // a list somebody taps three times in a row.
+                        enabled = candidate.canInvite && state.busyUid == null,
+                    ) {
+                        Text(
+                            when {
+                                state.busyUid == candidate.uid -> "Sending…"
+                                candidate.isParticipant -> "In"
+                                candidate.isInvited -> "Invited"
+                                else -> "Invite"
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        state.error?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+    }
+}
+
+/**
+ * §1's receiving half: one inbound invite, at the top of the Challenges screen.
+ *
+ * **Not in a sheet, and that is the point** — it is a row that is simply there, and then
+ * is not. It is also why this one needs no `…List` split: it renders in the host window
+ * like any other card and photographs directly.
+ *
+ * ### It must read as an offer, not as an obligation
+ *
+ * Everything here is chosen against that one criterion, so none of it is arbitrary:
+ *
+ *  * **`Join` is a filled button and `Dismiss` a text button**, because the balance a
+ *    user reads off a row is which action looks like the default. Two filled buttons
+ *    would make it a decision to be got right; two text buttons would bury an offer they
+ *    might want.
+ *  * **No badge, no count, no red dot, no notification.** Those turn an offer into a
+ *    chore. `C9a` §6's consent story covers reminders about the user's *own* work.
+ *  * **Dismiss asks nothing.** Leaving and deleting get confirmation dialogs because they
+ *    destroy something the user built; declining an offer destroys nothing and the sender
+ *    can make it again. A dialog would turn a shrug into a decision.
+ *  * **The sender is named and the challenge is named**, in that order, because *who is
+ *    asking* is what decides the answer. An unattributed *"You have been invited to X"*
+ *    is a system notice; this is a person.
+ */
+@Composable
+internal fun ChallengeInviteRow(
+    invite: com.idomarhaim.goalpilot.domain.model.ChallengeInvite,
+    isBusy: Boolean,
+    onJoin: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GpCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Avatar(photoUrl = invite.fromPhotoUrl, name = invite.senderLabel, size = 36.dp)
+                Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
+                    Text(
+                        // One sentence, both names, sender first. Built by concatenation,
+                        // so a long display name is the shape that breaks it -- which is
+                        // why `ChallengeInviteRenderPass` photographs one.
+                        "${invite.senderLabel} invited you to “${invite.challengeTitle}”",
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onJoin, enabled = !isBusy) { Text("Join") }
+                TextButton(onClick = onDismiss, enabled = !isBusy) { Text("Dismiss") }
             }
         }
     }

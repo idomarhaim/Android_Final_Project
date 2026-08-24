@@ -78,6 +78,33 @@ object FirestorePaths {
      * offline cache: reporting a score works with the radio off, like every other fact.
      */
     const val CHALLENGE_REPORTS = "challengeReports"
+
+    /**
+     * `challengeInvites/{inviteId}` — one person asking one other person to join one
+     * challenge (Ido's own report, 2026-08-24: *"I cannot invite a friend I have in the
+     * app to the CHALLENGE"*).
+     *
+     * **Top-level, like [SHARES], and for the same reason**: it is a document two
+     * different users must each be able to reach on their own account. Everywhere tidier
+     * is unreachable — `users/{friendUid}/{document=**}` is `isOwner(friendUid)`, and so
+     * is their participant row. See `ChallengeInvite` for the full derivation.
+     *
+     * *(That path is spelt out in full rather than abbreviated on purpose: the short
+     * form ends in a slash-star pair, which OPENS A NESTED BLOCK COMMENT in Kotlin and
+     * takes the rest of the file with it. `Observed:` 2026-08-25, this very line — the
+     * compiler reported `Missing '}'` at line 80 and `Unclosed comment` at the last line
+     * of the file, naming neither the KDoc nor the token. Same family as the `--`-in-XML
+     * and backslash-in-`.properties` traps this repo's `CLAUDE.md` already records.)*
+     *
+     * ⚠️ **Its read rule inspects `resource.data`, which constrains every QUERY and not
+     * only every get.** Firestore rejects a query it cannot prove is inside the rule, so
+     * a listener here must always carry `whereEqualTo("toUid", myUid)` or
+     * `whereEqualTo("fromUid", myUid)`. An unconstrained `collection(CHALLENGE_INVITES)`
+     * listener fails with `PERMISSION_DENIED` and the message does not say why —
+     * `firestore-tests/rules.test.mjs` asserts both directions so the next person finds
+     * out from a test rather than from a device.
+     */
+    const val CHALLENGE_INVITES = "challengeInvites"
 }
 
 /** Names of the Firebase Cloud Functions the client calls (callable HTTPS). */
