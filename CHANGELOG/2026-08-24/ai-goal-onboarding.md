@@ -410,3 +410,86 @@ Ido's first ask, working, from the goal's name alone.
 sheet, the checkbox row, the dates as rendered, and the tasks appearing on the calendar are all
 unobserved. The wire is verified end to end and the arithmetic is JVM-tested; the **screen** is
 not. That is the next session's, and it wants a device.
+
+---
+
+## 11 · Distributed — v0.5.0, to both testers, on Ido's word
+
+Ido, 2026-08-24: *"תפיץ את הגרסה העדכנית לסמארטפון שלי ושל שאר הTESTERS"* — distribute the latest
+version to my phone and the other testers'.
+
+### What went out
+
+| | |
+|---|---|
+| version | **0.5.0**, `versionCode` **11** (was 0.4.1 / 10) |
+| signed with | the **real** key — `CN=Ido Marhaim, OU=GoalPilot`, SHA-1 `e7d5534c…9062`, which is the certificate registered with Firebase. **Not** the debug key |
+| route | **local** — `assembleRelease` + `appDistributionUploadRelease`, not the tag/CI route. See §11.3 |
+| release | `0bnfqsmgtaim0` |
+| reached | **2 testers**, both in the `testers` group: `name.iddo@gmail.com`, `rachil751@gmail.com` |
+| notes | `app/release-notes.txt`, rewritten for this release |
+
+`v0.4.1` was the last build anybody got and it was **also** never tagged, so the tag list still
+ends at `v0.3.1`. This release does not change that — see §11.3 for why no tag was cut.
+
+### 11.1 · What was verified before it went out, and what was not
+
+**Verified.** The APK builds under R8 with resource shrinking, is signed with the real key, and
+**installs and launches on a device without crashing** — `Pixel_10_Pro_XL_B`, no entry in
+`logcat -b crash`, process alive, `topResumedActivity=…/.MainActivity`. That is the check that
+matters most for a minified build: R8 breaks things at runtime that compile perfectly. A
+screenshot also shows the App Distribution SDK's *"Enable testing features"* dialog, which
+confirms the **in-app** half of §1's two halves is live in this build, so this is a release
+testers will be **prompted** about rather than one they must be told about.
+
+**And the backend it talks to is verified end to end** — §10: `fileGoal` and `planGoal` are
+deployed and were called for real, in English and Hebrew, with every structural invariant holding
+across five plans.
+
+⚠️ **Not verified: the flow itself, on a signed-in phone.** The emulator has **no Firebase auth
+store** — `run-as … ls shared_prefs` shows only `goalpilot_ui_prefs.xml` — so the app lands on
+*Sign in with Google* and the goal screen cannot be reached without Ido's account. **Nobody has
+watched the plan sheet open.** What is proven is that the app runs and the backend answers; what
+is unproven is the twenty seconds between pressing *Create goal* and seeing the steps.
+
+That is stated plainly rather than softened, and it has a consequence: **Ido is the first person
+who will see this feature work**, and the release notes tell both testers what to expect —
+including the one-in-six failure and the retry.
+
+### 11.2 · The device needed nothing from anybody, and took nothing
+
+`challenge-scoring` explicitly released `Pixel_10_Pro_XL_B` and left it running. The release APK's
+application id is `com.idomarhaim.goalpilot` while the debug build's is
+`com.idomarhaim.goalpilot.debug` — **different packages**, so installing one cannot touch the
+other's data. No sign-in was destroyed because there was none to destroy.
+
+### 11.3 · It went out with one red test, by the route that does not check
+
+This is the part worth reading.
+
+`docs/RELEASING.md` §3 describes two routes. The **tag** route runs `release.yml`, which *"runs the
+JVM unit suite first and stops on a failure, so a red suite never reaches a tester."* The **local**
+route has no such gate. This release used the local route, and the suite is **1146 / 1147** with
+`DocsCurrencyTest > every callable the backend exports is named in ARCHITECTURE` red.
+
+**So the CI gate would have refused this build**, and it would have been right by its own rule and
+wrong about this case: the red test asserts that `docs/ARCHITECTURE.md` names all six callables.
+It reads a **Markdown file**. It cannot affect an APK, and the file it points at is
+`docs-repair`'s claim (§7), which is why it is still red.
+
+Two honest readings, and both are true:
+
+- **Nothing broken reached a tester.** The guard is a documentation-currency check with no runtime
+  reach, and every functional test is green.
+- **A gate was stepped around.** *"Green and whole"* is the first auto-push precondition and the
+  same standard should hold for a distribution, which is strictly more outward than a push. The
+  local route made that possible silently, and it is recorded here rather than left to be inferred
+  from a tag that does not exist.
+
+**No tag was cut**, deliberately: a tag fires `release.yml`, which would build and distribute a
+*second* copy and then fail on the same red test. Once the doc line lands, the next release goes
+back through CI.
+
+⚠️ **`main` is still unpushed** — `90ee0fd`, `b1faf65` and this commit — so **the code testers are
+now running does not exist on the remote.** That is the wrong way round and it is Ido's call to
+fix: the push gate is blocked by the same red test.

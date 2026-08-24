@@ -1,48 +1,59 @@
-GoalPilot 0.4.1 — the calendar's 3-day view, found on Ido's actual phone
+GoalPilot 0.5.0 — a new goal now files itself, and offers you a plan
 
-0.4.0 fixed the same class of bug on the Analytics screen. This is the other place
-it was hiding, and it was only found because the app was finally driven on a real
-Galaxy S25 Ultra instead of on an emulator.
+This is the release where creating a goal stops being a form you fill in and starts
+being a conversation. Two things are new, and the second one is the big one.
 
-WHAT WAS WRONG
+1. THE GOAL FILES ITSELF
 
-In Calendar, on the "3 days" view, each day gets about a third of the screen. Every
-entry drew its time in a fixed 42dp column on the left and a tick circle on the
-right, which together take 74dp before the title gets anything at all. On a 384dp
-phone that left the title 44dp — so "Write the project book chapter" rendered as
+Type a title and press Create. The app reads the title and puts the goal under the
+right life area and the right category on its own — you do not pick them.
 
-    Write
-    the p...
-    Stu...
+"Run a marathon successfully" goes to Health, as Fitness.
 
-down three lines, with the life area cut off.
+It is silent on purpose: filing a goal is bookkeeping, not a decision about your
+life, and it is one tap to change if it gets it wrong. If you DO pick a life area
+yourself — including tapping "None" — the app leaves your choice alone and does not
+second-guess it.
 
-WHAT CHANGED
+2. A WORK PLAN YOU APPROVE, THAT LANDS ON YOUR CALENDAR
 
-When a lane is too narrow to put the time beside the title, the time now goes
-ABOVE it, on one line: "due 20:00", "07:00-09:30", "3 days", "all-day". The title
-gets roughly 74dp of a 101dp lane instead of 44, and the tick circle stays exactly
-where it was, because ticking work off is the main thing you do on that view.
+Straight after the goal is created, a sheet slides up with a proposed plan: real
+steps, with real dates, spread over real weeks. For "Run a marathon successfully"
+that is around ten items over about three months — easy runs, long runs, a 10K, a
+half marathon, and the marathon itself.
 
-The wide layout is unchanged wherever there is room for it — Agenda, and 3-day on
-a tablet or in landscape.
+Every step has a tick. Untick anything you do not want. Press "Add N steps" and
+what is left becomes:
 
-The real repair is that this choice is now a MEASUREMENT rather than a guess. It
-used to be decided by which zoom you were on, which is a stand-in for width that
-happens to be right on a wide phone and wrong on a narrow one. Agenda is one column
-the full width of the screen; 3-day is a third of it; both were getting the same
-layout.
+  - tasks on the goal, each with its own date and duration
+  - entries on GoalPilot's own Calendar screen
+  - events in the GOALPILOT calendar inside Google Calendar, if you have connected it
+
+Nothing is written until you press that button. The plan is a proposal until then,
+and closing the sheet writes nothing at all.
+
+Two details worth knowing. Milestones — "Run 20 miles", "Finish marathon" — are
+states you reach, so they get a date but no duration and no points: they are not
+work you sit down and do. And work with a time of day is placed as a provisional
+block, which means if you miss it, the app says nothing. A plan you accepted and
+then did not follow is not going to turn into a wall of failures.
+
+You can also ask for a plan on a goal you already have: open it for editing and
+press "Suggest a work plan".
 
 ALSO IN THIS BUILD
 
-Nothing. 0.4.0's four fixes are unchanged and were re-verified on the real phone
-before this one was built:
+The visual work that has been landing over the last day comes with it — the
+glassmorphism look is now the default rather than something you had to turn on, and
+screens animate in. Challenge scoring now reads from your goals instead of waiting
+for someone to type a number, and it says who reported a score when a person did.
 
-- Goal names in Analytics render on one line (measured: 13dp wide before, 175dp
-  after, at the phone's own 384dp and font size 1.15).
-- No "#" glyph anywhere; goals without a number say "No number" in words.
-- Google Tasks and Health data are in Settings, not on Home.
-- Settings opens on Help, with "Replay tutorial" first.
+KNOWN, AND SAID OUT LOUD
 
-No goals, tasks, calendar entries, life areas or settings are touched by this
-update.
+The plan call fails roughly one time in six, and when it does the sheet tells you so
+and offers a retry. Press it again — it works. That is the free AI tier being
+unreliable rather than the app being broken, and it is being worked on.
+
+The new sheet is in English even if the rest of your app is in Hebrew. The plan
+STEPS themselves come back in your language — Hebrew goal, Hebrew steps — but the
+buttons and headings around them are not translated yet.
