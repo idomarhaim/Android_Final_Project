@@ -1,7 +1,7 @@
 <!-- Written 2026-08-24 by session `presentation-source`. -->
 <!-- Purpose: a single self-contained source document to drop into a Gemini / NotebookLM notebook,
-     from which a presentation about GoalPilot can be generated. Everything a deck needs is here;
-     no other file has to be uploaded alongside it. -->
+     from which a presentation about GoalPilot can be generated. Everything a deck needs is in this
+     file and in the sixteen screenshots in images/ beside it (Part 13 is their manifest). -->
 
 # GoalPilot — presentation source
 
@@ -12,7 +12,8 @@ it — feature by feature, with each feature tied back to the specific gap it cl
 **What it is for.** Feeding to an AI notebook (Gemini / NotebookLM) so it can generate a
 presentation. Part 9 contains a ready-made slide-by-slide outline; Parts 1–8 contain the
 substance the slides draw on; Parts 10–12 contain the phrasing, the vocabulary and the
-accuracy guardrails.
+accuracy guardrails; **Part 13 is the screenshot manifest** — sixteen real captures of the app,
+in `images/` beside this file, with the slide and the caption for each.
 
 ---
 
@@ -33,6 +34,11 @@ Read this section before generating anything.
    of the product and are what separate it from the category. They deserve slides.
 5. **Read Part 12 before writing a single caption.** It lists the six things that must not
    be said about this product, each for a specific reason.
+6. **The screenshots are real and they are in `images/` beside this file.** Sixteen of them,
+   every one a capture of the shipping app on a real phone with real data — no mock-ups, no
+   renders, nothing staged. **Part 13 is the manifest**: which file goes on which slide, the
+   caption to put under it, and what each one actually proves. Use only these; do not generate
+   or imagine app screens.
 
 ---
 
@@ -178,6 +184,10 @@ Each feature below is written as: **what it is → what you see → which gap it
 
 ### 4.1 Smart add — a sentence becomes a filed, priced, scheduled task
 
+![Smart add reading a sentence](images/02-smart-add-reading.png)
+![The task filed, with Undo](images/03-smart-add-filed.png)
+*`images/02-smart-add-reading.png` · `images/03-smart-add-filed.png`*
+
 - **What it is.** A single text field. You type *"Practice saxophone for twenty minutes on
   Sunday."* The AI reads it and returns: which of your existing goals it belongs to (or a
   proposal for a new one), which life area, how demanding it is, how long it will take, and
@@ -188,6 +198,9 @@ Each feature below is written as: **what it is → what you see → which gap it
   model free to maintain. The user does zero filing and gets full structure.
 
 ### 4.2 AI estimation — difficulty, duration and value
+
+![The AI estimate on a task](images/06-ai-estimate.png)
+*`images/06-ai-estimate.png`*
 
 - **What it is.** For any task, the model judges **how demanding** it is (one of three words)
   and **how long** it takes in minutes. The app then **computes** the point value from those
@@ -200,6 +213,9 @@ Each feature below is written as: **what it is → what you see → which gap it
   (minutes) and real difficulty, so the gamification is measuring the thing it claims to.
 
 ### 4.3 The AI coach — five distinct capabilities, not a chatbot
+
+![A goal, with the AI estimate and the task row](images/05-goal-detail.png)
+*`images/05-goal-detail.png`*
 
 GoalPilot's AI is not a conversation window. It is five narrow, structured capabilities, each
 with a defined input and a validated output shape:
@@ -221,6 +237,10 @@ with a defined input and a validated output shape:
   from fabricating the numbers.
 
 ### 4.4 The calendar — goals become hours
+
+![The three-day calendar with the load line](images/07-calendar-three-day.png)
+![The whole week at once](images/08-calendar-week.png)
+*`images/07-calendar-three-day.png` · `images/08-calendar-week.png`*
 
 - **What it is.** Everything with a time on it lands on a real calendar grid inside the app.
   Not a separate calendar holding a separate list — the **same** tasks, under the **same**
@@ -258,6 +278,9 @@ with a defined input and a validated output shape:
 
 ### 4.6 Google Tasks import — your existing list, filed
 
+![Connected apps: Google Tasks and Health Connect](images/14-connected-apps.png)
+*`images/14-connected-apps.png` — the same shot serves §4.7*
+
 - **What it is.** Pulls your open Google Tasks in and files each one under the right goal
   using the same classifier as smart add. Deduped against what is already there. You review
   every item before a single one is saved.
@@ -279,6 +302,11 @@ with a defined input and a validated output shape:
 
 ### 4.8 Life areas and the record of what you kept
 
+![Goals grouped by life area, with “No number” chips](images/04-goals-by-life-area.png)
+![Life areas](images/09-life-areas.png)
+![The run: window by window, kept / missed / still owed](images/10-life-area-run.png)
+*`images/04-goals-by-life-area.png` · `images/09-life-areas.png` · `images/10-life-area-run.png` — the first also carries the *No number* refusal (Part 5 §1)*
+
 - **What it is.** Your own division of your life, defined by you (or synced from Google
   Tasks). Every goal is filed under one. Goals are grouped by area everywhere in the app,
   because your life is not a flat list.
@@ -296,6 +324,9 @@ with a defined input and a validated output shape:
 
 ### 4.9 "Where your time goes" — the payoff feature
 
+![Where your time goes, by year](images/11-where-your-time-goes.png)
+*`images/11-where-your-time-goes.png` — Studies 67 %, Health 20 %, **Unassigned 13 %***
+
 - **What it is.** An interactive donut chart showing what **share of your actual life** went
   into each life area, computed from the AI's duration estimate for every task you completed.
 - **What you can do with it.** Switch between day / week / month / quarter / year. Tap a slice
@@ -310,6 +341,10 @@ with a defined input and a validated output shape:
 
 ### 4.10 Points, levels and the leaderboard
 
+![The home screen: points, level, overall progress](images/01-home-dashboard.png)
+![The leaderboard](images/12-leaderboard.png)
+*`images/01-home-dashboard.png` · `images/12-leaderboard.png`*
+
 - **What it is.** Completed work banks points computed from real minutes and real difficulty
   (§4.2). Points accumulate into levels with visible level progress.
 - **Friends.** A six-character **friend code** adds a friend without either person typing an
@@ -320,6 +355,9 @@ with a defined input and a validated output shape:
   on actual effort spent on goals you chose.
 
 ### 4.11 Challenges — a shared measure
+
+![A live challenge with standings](images/13-challenges.png)
+*`images/13-challenges.png`*
 
 - **What it is.** Create a challenge with a title, a start, and a **unit everyone is measured
   in**; invite people; report your total; read the standings. `Observed:` the demonstration
@@ -339,6 +377,9 @@ with a defined input and a validated output shape:
 
 ### 4.12 The guided tour — the app teaches itself
 
+![Step 2 of 7, over the real screen](images/16-guided-tour.png)
+*`images/16-guided-tour.png`*
+
 - **What it is.** Seven coach marks over the **real** app on first launch: the screen dims and
   a hole is cut over the thing being described, one step at a time. Skippable from any step,
   and replayable forever from *Settings → Help*.
@@ -349,6 +390,9 @@ with a defined input and a validated output shape:
   onboarding risk; the tour pays that debt inside the app rather than in a manual nobody reads.
 
 ### 4.13 Appearance, language and personal fit
+
+![Four materials, on the Settings screen](images/15-materials.png)
+*`images/15-materials.png`*
 
 - **Seven appearance axes**, all on one Settings screen and applied instantly: skin (*Aurora*,
   *Blossom*), brightness, background, **material**, relief, language and region.
@@ -474,25 +518,29 @@ Fourteen slides. Each carries **one** message; the second column is the message,
 
 | # | Slide | The one thing it says |
 |---|---|---|
-| 1 | **GoalPilot** — *Pilot your life goals* | title, logo, one line |
+| 1 | **GoalPilot** — *Pilot your life goals* | title, logo, one line · `01-home-dashboard.png` as a quiet backdrop |
 | 2 | **The list everyone has** | get fit, learn the instrument, finish the degree, be better to the people you love |
 | 3 | **None of it is due on Tuesday** | goals that matter fail by never being scheduled — not by being abandoned |
 | 4 | **The apps each hold one piece** | the to-do list has the task but not the reason; the calendar has the hour but not the goal; the habit tracker has the streak but not the outcome *(use the table in §2.1)* |
 | 5 | **So the real question goes unanswered** | *is my life moving where I chose?* — nobody can answer it, because answering it needs all three pieces at once |
-| 6 | **The answer: one structure** | life area → goal → task → hour, unbroken *(use the diagram in §3.2)* |
-| 7 | **Say it in a sentence** | smart add — the AI does the filing, so the structure costs nothing *(§4.1, §4.2)* |
-| 8 | **Goals become hours** | the calendar, the load bar, drag-to-reschedule, and the sync into the calendar you already use *(§4.4, §4.5)* |
-| 9 | **Your data, already yours** | Google Tasks and Health Connect become progress on goals you set *(§4.6, §4.7)* |
-| 10 | **The honest record** | kept · missed · still owed — three shapes, no rate, no red *(§4.8)* |
-| 11 | **Where your time actually went** | the donut, by year, including the share that was never filed at all *(§4.9)* |
-| 12 | **Not alone** | points, levels, friends, challenges scored on movement since you joined *(§4.10, §4.11)* |
-| 13 | **Built to refuse to lie to you** | the honesty rules — pick three from Part 5 |
-| 14 | **Close** | *your life areas, your goals, your tasks and your hours — in one place, so progress is something you can see instead of something you have to feel* |
+| 6 | **The answer: one structure** | life area → goal → task → hour, unbroken *(diagram in §3.2)* · `04-goals-by-life-area.png` |
+| 7 | **Say it in a sentence** | smart add — the AI does the filing, so the structure costs nothing *(§4.1, §4.2)* · `02-smart-add-reading.png` → `03-smart-add-filed.png` → `06-ai-estimate.png` |
+| 8 | **Goals become hours** | the calendar, the load line, drag-to-reschedule, and the sync into the calendar you already use *(§4.4, §4.5)* · `07-calendar-three-day.png`, `08-calendar-week.png` |
+| 9 | **Your data, already yours** | Google Tasks and Health Connect become progress on goals you set *(§4.6, §4.7)* · `14-connected-apps.png` |
+| 10 | **The honest record** | kept · missed · still owed — three shapes, no rate, no red *(§4.8)* · `10-life-area-run.png`, `09-life-areas.png` |
+| 11 | **Where your time actually went** | the donut, by year, including the share that was never filed at all *(§4.9)* · `11-where-your-time-goes.png` |
+| 12 | **Not alone** | points, levels, friends, and a challenge with real standings *(§4.10, §4.11)* · `12-leaderboard.png`, `13-challenges.png` |
+| 13 | **Built to refuse to lie to you** | the honesty rules — pick three from Part 5 · `04-goals-by-life-area.png` (the *No number* chips) |
+| 14 | **Close** | *your life areas, your goals, your tasks and your hours — in one place, so progress is something you can see instead of something you have to feel* · `01-home-dashboard.png` |
 
 **If a shorter deck is wanted (7 slides):** 1, 3, 4, 6, 7+8 merged, 11, 14.
 
 **If a technical deck is wanted:** insert Part 6 as two slides between 12 and 13 — one on the
 layered architecture, one on the facts-versus-derived-numbers split.
+
+**Two optional slides**, if there is room: the guided tour (`16-guided-tour.png`) and the
+appearance system (`15-materials.png`). Both are real differentiators and neither is load-bearing
+for the argument.
 
 ---
 
@@ -568,3 +616,57 @@ area) · **load** (how many promised hours a given day already carries).
 6. **Do not present this as a concept or a prototype.** It is a working, installed Android
    application with a backend, security rules and a test suite. Equally, do not claim it is
    published on the Play Store — it is a course project.
+
+---
+
+## Part 13 · The screenshots
+
+Sixteen PNGs in **`images/`**, beside this file. Every one is the shipping app, **v0.4.0**, on a
+real Android phone, signed in to a real account with real data. Nothing is a mock-up, a render
+or a design comp.
+
+### 13.1 The manifest
+
+| File | Slide | Caption to put under it | What it actually proves |
+|---|---|---|---|
+| `01-home-dashboard.png` | 1, 14 | *The home screen: points, level, and one number for overall progress* | The summary is honest by construction — it says *"averaged across the 4 goals that have a number"*, so the user knows what the 47 % is over |
+| `02-smart-add-reading.png` | 7 | *You write a sentence. The app reads it.* | The plain-language input, mid-flight: *"Filing 'Practice saxophone for twenty minutes…'"* |
+| `03-smart-add-filed.png` | 7 | *Filed under the right goal — with one tap to undo* | *Added to "Learn to play the saxophone" · Undo* — the classification worked and is reversible |
+| `04-goals-by-life-area.png` | 6, 13 | *Goals grouped by life area — and several of them say "No number"* | Both the grouping **and** the refusal to print 0 % for an unmeasured goal, in one frame |
+| `05-goal-detail.png` | 7 | *One goal: the measure, the progress, the life area, the tasks* | The whole four-level chain visible on a single screen |
+| `06-ai-estimate.png` | 7 | *The AI estimates how long and how demanding — the app computes what it is worth* | *"AI estimate: about 30m of your time"* beside **Light · Routine · Demanding**: judgement from the model, arithmetic from the app |
+| `07-calendar-three-day.png` | 8 | *Goals become hours, on a real calendar* | Tasks sitting on days with times and a per-day load line reading **free** |
+| `08-calendar-week.png` | 8 | *The whole week at once* | The same objects at a second zoom level |
+| `09-life-areas.png` | 10 | *Your own division of your life — or pulled straight from your Google Tasks lists* | The life-area editor and the *Sync from Google Tasks* card |
+| `10-life-area-run.png` | 10 | *Window by window: what you kept, what you missed, what is still owed* | **30 days / 8 weeks / 6 months**, the words *"nothing has been due here yet"*, and *Schedule the first one · Let it go* instead of a failure |
+| `11-where-your-time-goes.png` | 11 | *Where your time actually went — including the 13 % that was never filed* | Studies **67 %**, Health **20 %**, **Unassigned 13 %**, with *"durations inferred from task difficulty"* stated on screen |
+| `12-leaderboard.png` | 12 | *A leaderboard with your friends* | Real ranked standings from real point totals |
+| `13-challenges.png` | 12 | *And a challenge, with standings* | *August Steps Race · 2 people in · Open-ended · #2 · Report score · Standings* |
+| `14-connected-apps.png` | 9 | *Google Tasks and Health Connect, in one place* | Both integration cards, including *"synced 8 minutes ago"* — the sync is live, not a setting |
+| `15-materials.png` | optional | *Four materials. Make it yours.* | Glass · Liquid glass · Soft · Soft dark, each with its own spec line |
+| `16-guided-tour.png` | optional | *The app teaches itself — seven steps, over the real screen* | *Step 2 of 7* dimming the real dashboard, with **Skip tour · Back · Next** |
+
+### 13.2 How they were made, and the one edit
+
+- **Two sources, one device and one build.** Twelve are frames lifted from the continuous tour
+  recording of the app; four (`01`, `07`, `12`, and the framing of `14`) are live screen captures
+  taken from the phone directly. Same phone, same `v0.4.0`, same account.
+- **Cropped identically** — `crop=1080:2130:0:95` — which removes the Android status bar at the
+  top and the system navigation bar at the bottom, so all sixteen line up on a slide. The app's
+  own bottom navigation is inside every frame and was not touched.
+- **One edit, and it is the only one:** on `12-leaderboard.png` the **second person's name and
+  avatar are blurred**. They are a real person who did not agree to appear in a deck. Everything
+  else on that screen — the ranks, the levels, the point totals, the account holder's own name —
+  is untouched. **No other image has been retouched in any way.**
+- **What is deliberately not here:** the profile screen, which shows an email address and a
+  friend code. If a slide needs the friend-code feature, describe it in words (§4.10) rather
+  than screenshotting it.
+
+### 13.3 Using them
+
+- The deck tool needs the **image files**, not this document's links — upload `images/` alongside
+  this file, or drop the PNGs straight into the slide tool.
+- They are **1080 × 2130** portrait. Two or three side by side reads far better on a 16:9 slide
+  than one blown up; the phone shape is doing work, so do not crop them to squares.
+- **Never put a caption on a screenshot that the screenshot does not show.** The captions in
+  §13.1 were each written against the actual frame and are safe to use verbatim.

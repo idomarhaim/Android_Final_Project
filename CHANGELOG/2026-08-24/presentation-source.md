@@ -80,3 +80,72 @@ files and `README.md`). Singletons: **none**.
 present, all other sessions' — `2026-08-24-62-tour-video-v2.md`,
 `2026-08-24-docs-currency-guard.md`, `2026-08-24-s25-layout-and-tour.md`. None of them mine to
 drain. This session produced no KB candidate of its own.
+
+---
+
+# Round 2 — the screenshots
+
+## 📌 What was asked
+
+Ido: *"add relevant screenshots that will be in the presentation"*, followed by a reminder that
+**his phone is reachable from here**.
+
+## ✅ What shipped
+
+**16 PNGs in [`docs/presentation/images/`](../../docs/presentation/images/)** *(new)*, plus
+**Part 13** of the source document — the manifest that makes them usable: which file goes on
+which slide, the caption to put under each, and what each one actually proves. Every feature
+section in Part 4 now carries its own screenshot inline, and every row of the Part 9 slide table
+names its image.
+
+**Two sources, one device, one build.** Twelve are frames lifted from the continuous tour
+recording; four (`01`, `07`, `12`, and the framing that produced `14`) are **live
+`adb exec-out screencap`** captures taken from Ido's phone this session. Same phone, same
+`v0.4.0` (versionCode 9, confirmed by `dumpsys package`), same account — so the two sources are
+indistinguishable in the deck.
+
+**Device use was read-only in the sense that matters:** the app was launched and the bottom
+navigation was tapped. Nothing was typed, no task was created, no data was written, and the
+Gradle daemon and `emulator-5554` — held by `62-tour-assembly` — were never touched.
+
+## 🔒 The one edit, and what was left out
+
+- `12-leaderboard.png` has the **second person's name and avatar blurred**. They are a real
+  person who did not agree to appear in a deck. Ranks, levels, point totals and the account
+  holder's own name are untouched. **No other image was retouched.**
+- **The profile screen is deliberately absent** — it carries an email address and a friend code.
+  §4.10 describes the friend code in words instead.
+
+## 🔎 Three things caught by looking rather than by trusting
+
+1. **Three timecodes were converted wrong and the frames were silently plausible.** `1:24.2` and
+   `1:31.5` were extracted as `25.4 s` and `32.7 s` — a dropped minute — and the tutorial beat
+   as `1219 s` against a **660 s** file. `ffmpeg` exits 0 on the first two and hands back a real
+   screenshot of the *wrong* screen; only the third failed loudly, by producing nothing. Caught
+   by re-deriving every conversion against `tour-timecodes.md` rather than by reading the frames.
+2. **The first blur landed in the gap between two rows and the name stayed fully legible.** The
+   filter also silently failed to crop — a `filter_complex` consuming one labelled output twice.
+   `Observed:` the rendered file was still `1080×2340` with the status bar on it and
+   the friend's name readable underneath (deliberately not reproduced here — this repo is
+   public, and writing it in the changelog would undo the blur it is describing). Fixed with an explicit `split`, coordinates re-measured off
+   the rendered crop, and **verified by looking at the result** — which is the only check that
+   could have caught it.
+3. **A caption said "two of them say No number" and the frame shows three.** Softened to
+   "several". The rule in §13.3 — *never put a caption on a screenshot that the screenshot does
+   not show* — was written because of this one.
+
+## 🧪 Tests
+
+**No test layer applies** — Markdown and PNGs, no code. Verification was visual and is the only
+kind available here: every frame was rendered and **looked at** (a 21-up contact sheet for the
+candidate set, then individually for the two that mattered), and the three defects above are what
+that pass found. Beat timecodes were re-derived arithmetically against the committed beat map
+rather than trusted.
+
+## 📦 Size, decided rather than asked
+
+The sixteen PNGs are **13 MB** at native `1080 × 2130`. Lossless recompression recovered 1 MB and
+was discarded; JPEG was rejected because it rings on UI text; downscaling was rejected because a
+projector may want the native pixels. Recorded as **my** decision, per the derivable-decision
+rule — this is a deliberate, requested deliverable rather than a stray binary, and it is Ido's to
+overturn.
