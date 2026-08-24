@@ -401,3 +401,45 @@ windows in the past**, some met and some not. The app's own UI cannot create a *
 — that is a state time produces, not a form. Writing them directly into Firestore is the only route
 and it was **deliberately not taken** on a live account at the end of a long session. Flagged in
 `sessions/62-tour-assembly.md` as a decision for Ido rather than done quietly.
+
+---
+
+## 11 · The connector was added mid-session, which does not help a running session
+
+Ido connected the OpenArt MCP while this session was live: `https://mcp.openart.ai/mcp`, a custom
+web connector, Interactive and Read-only tool groups both set to *Always allow*.
+
+**This session still cannot use it, and that is a property of MCP rather than of the connector.**
+Connectors are loaded when a session **starts**. This one had been running for hours, so no
+`openart` tool ever entered its roster — confirmed by a tool search returning nothing after the
+connector was live. There is no in-session reload from this side. A fresh session picks it up, which
+is what `sessions/62-tour-assembly.md` is for.
+
+**Worth saying because the failure looks like the user's mistake and is not.** He did exactly the
+right thing and the answer was still *"I cannot see it"*.
+
+### His screenshots settled the voice question better than the roster call would have
+
+The connector's own permission list — **his UI, a better source than any vendor page the ticket
+cited**:
+
+| | tools |
+|---|---|
+| **Interactive (6)** | `List creations` · `Show creation` · **`Generate image`** · **`Generate video`** · `List uploads` · `Choose a file` |
+| **Read-only (7)** | `Get account` · *(rest below the fold)* |
+
+- 🎬 **Video — reachable.** `Generate video` exists.
+- 🖼️ **Image — reachable.** `Generate image` exists.
+- 🗣️ **Voice — NOT reachable, now observed rather than inferred.** No TTS, no audio, no narration
+  tool, and no Director timeline control anywhere in the list. The ticket predicted this
+  (*"probably Ido's to drive in Director's browser UI"*); his own connector confirms it. **`not
+  reached — the MCP exposes no TTS surface` is a complete answer for that row**, which is what the
+  ticket's own rule says: a component you did not reach still owes its row.
+
+So the assembly lands on the ticket's **middle row**: b-roll and reference frames through MCP, Ido
+driving Director in the browser for the timeline and the voiceover.
+
+⚠️ **And a roster tool is not confirmed to exist.** The ticket makes *discover available models* the
+session's first model call; only one of the seven read-only tools was visible. If there is no roster
+call, the model report names **the string actually passed** to `Generate video` / `Generate image`,
+not the marketing name that was intended. Recorded in the brief as a check rather than an assumption.

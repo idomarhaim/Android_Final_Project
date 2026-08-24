@@ -4,7 +4,7 @@ branch: main
 mode: auto
 status: ready
 issue: 62
-blocked_on_human: "Ido must connect the OpenArt MCP connector in his claude.ai connector settings. Nothing in this brief can start until `openart` tools are visible to the session -- check FIRST and stop if they are not."
+connector: "OpenArt MCP CONNECTED by Ido 2026-08-24 (https://mcp.openart.ai/mcp, custom, always-allow). It was added mid-session, and MCP connectors load at session START -- so 62-tour-video-v2 never saw it. A fresh session does. Verify with a tool search for openart before starting."
 owns:
   - docs/marketing/**
   - scripts/record-tour.sh
@@ -24,13 +24,47 @@ created: 2026-08-24 by 62-tour-video-v2
 The footage exists. This brief is the half `62-tour-video-v2` could not do, and it could not do it
 for exactly one reason: **the OpenArt MCP is not connected**.
 
-## ⛔ Check this before anything else
+## ✅ The connector is CONNECTED — Ido added it 2026-08-24
 
-Enumerate the session's tools for `openart`. On 2026-08-24 there was **no `openart` tool of any
-kind** — not connected, not even listed as needing authorisation. If that is still true, **stop and
-say so**: every model call below is unreachable and there is nothing here that can be worked around.
-OAuth needs a browser and cannot be driven from a tool shell, so this is Ido's move, in his claude.ai
-connector settings.
+`OpenArt` · `https://mcp.openart.ai/mcp` · custom web connector, **Interactive tools** and
+**Read-only tools** both set to *Always allow*.
+
+⚠️ **`62-tour-video-v2` still could not use it, and the reason is not the connector.** MCP
+connectors are loaded when a session **starts**; that session had already been running for hours
+when the connector was added, so it never saw an `openart` tool. **A fresh session picks it up —
+which is this one.** Confirm with a tool search for `openart` before doing anything else; if it
+still returns nothing, say so rather than working around it.
+
+### What the connector's own tool list proves, before any call is made
+
+From Ido's connector settings on 2026-08-24 — **his UI, not a vendor page**, which is a better
+source than anything the original ticket cited:
+
+| | tools |
+|---|---|
+| **Interactive (6)** | `List creations` · `Show creation` · **`Generate image`** · **`Generate video`** · `List uploads` · `Choose a file` |
+| **Read-only (7)** | `Get account` · *(the rest were below the fold)* |
+
+**This settles the three-component question that the ticket left open:**
+
+- 🎬 **Video — reachable.** `Generate video` exists.
+- 🖼️ **Image — reachable.** `Generate image` exists.
+- 🗣️ **Voice — NOT reachable, and this is now observed rather than predicted.** There is no
+  text-to-speech, audio or narration tool anywhere in the list, and no Director timeline control
+  either. The original brief called this *"probably Ido's to drive in Director's browser UI"*; his
+  own connector confirms it. **The voice row of the model report is therefore `not reached — the MCP
+  exposes no TTS surface`, and that is a complete answer**, not a gap to apologise for.
+
+So the assembly lands squarely on **the middle row of Step 3's table**: generate the opening b-roll
+and its reference frames through MCP, and Ido drives Director in the browser for the timeline and
+the voiceover.
+
+⚠️ **A roster tool is NOT confirmed to exist.** The ticket assumes a *discover available models*
+call and makes it the session's first model call. Only one of the seven read-only tools was visible
+in the screenshot (`Get account`). **Enumerate the read-only tools first**; if there is no roster
+call, then the video and image model choices are whatever `Generate video` / `Generate image`
+expose as parameters, and the report says *which* string was actually passed rather than which
+marketing name was intended.
 
 **Read first:** [`AGENTS.md`](../AGENTS.md) ·
 [`docs/marketing/explainer-video-brief.md`](../docs/marketing/explainer-video-brief.md) —
