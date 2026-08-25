@@ -482,7 +482,7 @@ two examiners"* are not the same act, and he should know which one happened.
 
 ---
 
-## Open at the time of this entry
+## Open at the time of the §6 commit — both now CLOSED, see below
 
 - **`DocsCurrencyTest` is red on `main`, 2 of 1160, and I did not fix it.**
   `docs/ARCHITECTURE.md` is under a **live board claim** by `docs-repair`, so it is not
@@ -495,3 +495,52 @@ two examiners"* are not the same act, and he should know which one happened.
 
   Naming all three anywhere in that file closes both tests — the guard is a `contains`
   check. A note saying exactly that is on `SESSIONS.md` below `docs-repair`'s row.
+
+---
+
+## Close-out — after a machine reboot, and both remaining layers are green
+
+Ido rebooted the machine mid-session; the full instrumented run was in flight and died with
+it. Re-run from a cold start, and everything below is measured after the reboot rather than
+carried over.
+
+### Both open items above are closed, and neither by me
+
+- ✅ **`DocsCurrencyTest` is green.** `visual-parity` edited `docs/ARCHITECTURE.md` and added
+  all three names — `challengeInvites` (mine), `fileGoal` and `planGoal` (not mine). They
+  read `docs-repair` as gone by the §5.4 test — last commit `3e4f381` at **01:49**, nothing
+  dirty, no transcript on this machine — where I had read the same evidence as *unresolved,
+  therefore live*, and left a note instead. **Both readings were defensible on the same
+  facts**; theirs unblocked the release guard and mine did not. Recorded because it is the
+  more useful half: an *unresolved* liveness check is a judgement call, and two sessions
+  hours apart can honestly land either side of it.
+- ✅ **§6 is on the phones twice over.** `visual-parity` cut **v0.5.2 / versionCode 13** on
+  top of my v0.5.1 and distributed it, and their note says my §6 now needs **14**. It does
+  not: `git merge-base --is-ancestor ed86951 f578ec9` confirms my §6 commit is *inside*
+  v0.5.2, and the shipped artifact's dex carries `challengeInvites`,
+  `Create and start scoring`, `pendingMeasureKind` and `approvedChangeId`. **So no further
+  release was cut** — burning versionCode 14 on a build whose content is already on the
+  testers' phones would be a notification with nothing behind it.
+
+### 🧪 Final numbers, all after the reboot
+
+| layer | result |
+|---|---|
+| **JVM unit** — whole suite | **1183 / 1183, 0 failing** (was 1181 with 2 red) |
+| **Instrumented** — whole suite on `emulator-5554` | **330 / 330, 0 failing**, 455 s |
+| **Security rules** — `firestore-tests/rules.test.mjs` | **83 / 83** |
+| **Functions arithmetic** | **190 / 190** |
+| **Functions emulator triggers** | **23 / 23** |
+| **Render passes** | 22 frames across three passes, every one opened and looked at |
+| **Deployed** | `firestore:rules` released; `applyMeasureChangeOnApproval` + `applyMeasureChangeOnProposal` live |
+| **Shipped** | v0.5.1 (mine, versionCode 12) then v0.5.2 (`visual-parity`, 13) — both carry §1–§3 |
+
+The instrumented suite was run with `am instrument`, never `connectedDebugAndroidTest`,
+which uninstalls the app and would take a Google account with it.
+
+### What this session did NOT do
+
+- **§5's S25 render pass** — the brief scopes it to Ido's own phone at 384 dp / font 1.15,
+  and that device is not attached here. The three render passes above are AVD-only.
+- **§4 built nothing, deliberately** — it is a decision paper, and the paper is above.
+- **No notification, badge or count for invites.** Named as owed in §1's decision 2.
