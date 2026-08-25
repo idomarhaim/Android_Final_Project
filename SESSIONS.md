@@ -15,7 +15,41 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `docs-currency-refresh` | **ACTIVE.** Ido, 2026-08-25 (Hebrew): *תעדכן את הקבצים האלה בהתאם לגרסה העדכנית של המערכת* — bring all six `docs/` files up to **v0.5.4 / versionCode 15**. Inherits `docs-repair`'s scope (released below, session gone). Documentation only — no app code | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/SETUP.md`, `docs/RELEASING.md`, `docs/PRODUCT_v0.3.md` (§6 override note + status box only), `CHANGELOG/2026-08-25/docs-currency-refresh.md`, `kb-candidates/2026-08-25-docs-currency-refresh.md` | **Gradle daemon NEEDED** for one `:app:testDebugUnitTest` (`DocsCurrencyTest` guards three of these files). **No device, no emulator, no `adb`** | 2026-08-25 |
+> 🏁 **`docs-currency-refresh` RELEASED — the six `docs/` files are current to v0.5.4, and three
+> sentences that were flatly false are gone.** Committed as `48004a1`, **unpushed** (normal mode).
+>
+> **23 findings.** The seven the guard could reach were omissions — twelve feature packages
+> documented as eleven, six callables as four, six triggers as three, no challenges section at all.
+> The three that could have cost somebody real time were **wrong sentences**, which
+> `DocsCurrencyTest` cannot see because every assertion it makes is a presence check:
+> `SETUP.md` told a reader to keep OAuth in **Testing** mode (the project left it on 2026-08-09,
+> and `OPERATIONS.md` says so 400 lines away); `RELEASING.md` §2.1a contradicted its own status
+> line four paragraphs above it; and §1's tag route has not been used since `v0.3.1`, nine
+> `versionCode` bumps ago.
+>
+> 🧪 **JVM 1197/1197** (0 failures, 93 suites), `DocsCurrencyTest` **5/5** and it **executed**
+> rather than reporting `UP-TO-DATE`, `ReleaseNotesGuardTest` **4/4**, `Assert-NoControlChars`
+> clean. Instrumented / rules / functions **not run — no code changed at any of those layers**.
+>
+> 📣 **`docs-repair` released by me**, with the evidence below. `README.md` is in its scope and
+> **not** in mine — Ido named the six `docs/` files — so **`README.md` is unclaimed and was never
+> audited this session.** Whoever takes it should expect the same class of drift.
+>
+> ⚠️ **One defect found and left for a code session:**
+> `.github/workflows/instrumented-tests.yml` says in its header that there is *"no `push:` trigger
+> yet"* and that the block below should be enabled once a green run is on the record — and that
+> block, twenty lines down, **is enabled**, with its own dated comment. `docs/CLOUD-DEVICE.md` §3
+> is right; the workflow's own comment is wrong. A one-line deletion. Not touched here because
+> Ido confirmed mid-session that this session changes **documents only**.
+>
+> 📌 **KB candidates written and NOT ingested** —
+> `kb-candidates/2026-08-25-docs-currency-refresh.md`, 4 entries: 3 ready, **1 parked** because
+> its destination is `rules/` (the `file-history` grep cannot identify a session's transcript;
+> filtering on the write records can). Normal mode, so the ingest is still Ido's to approve.
+>
+> 🔓 **Gradle daemon RELEASED.** No device, no emulator, no `adb` — nothing was installed
+> anywhere, and no sign-in was touched.
+
 > 🏁 **`narrow-screen-agnostic` RELEASED — v0.5.4 (versionCode 15) is with the testers.**
 > Ido's S25 photo: `Standings` rendering one letter per line. **Seven** `Row`s app-wide could
 > do it; all seven are now `FlowRow`s with single-line labels.
