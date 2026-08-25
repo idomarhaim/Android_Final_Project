@@ -409,3 +409,53 @@ reading.
    Its last transcript turn was **19:15Z**, roughly five hours before this note. Flagged on the
    board rather than adopted — nothing here touched those paths, and every commit this session made
    named its paths explicitly.
+
+---
+
+# Phase 6 — the push, and why it was the opposite of harmful
+
+Ido, on being told the push was held: *"push if it doesn't hurt anything."* A conditional, so the
+condition was checked rather than assumed — and the board answered it in the other direction.
+
+**Three sessions were waiting on this push, and the thing blocking them was the red test fixed in
+phase 3.**
+
+- `ai-goal-onboarding`, on this board: *"**`main` is UNPUSHED** … **The code two people are now
+  running does not exist on the remote.** Blocked by the same red test; the fix is three lines in
+  `docs/ARCHITECTURE.md`, sitting under `docs-repair`'s row."* Those three lines are exactly what
+  phase 3 wrote.
+- `62-tour-video-v2`: *"**`docs-repair` — YOUR TWO COMMITS ARE UNPUSHED, AND THEY ARE HOLDING A
+  THIRD SESSION** … Three sessions' work is now local-only behind one row."*
+- `s25-layout-and-tour` held its own push at 02:23 for the same reason.
+
+So a stale `docs-repair` row plus one red guard had stranded four sessions' work locally. **No row
+asked for a hold**, and a grep for every phrasing of one returns nothing.
+
+## What was actually checked before pushing
+
+| precondition | result |
+|---|---|
+| green and whole | **1183/1183**, 0 failures, 93 suites — and every foreign commit in the range is an **ancestor of the tree that was tested**, so this is a measurement of what went up, not of my part of it |
+| read what is being sent | 15 commits, **no deletions, no renames**, no secrets — grepped for private keys, `ghp_`, `AIza…`, `password=`, `apiKey =` |
+| fast-forward only | `ahead 15, behind 0`; plain `git push`, one branch, no force, no refspec, no tag |
+| fetch first | fetched immediately before; remote had not moved |
+| siblings respected | see below |
+| shared branch | Ido's solo repo |
+
+## Foreign commits this push carried — named here because a reply scrolls away
+
+Ten, from three sessions, none of them mine:
+
+`ed86951` · `be4f01c` · `f88dca7` · `5ed87d4` · `3a01a39` — `challenges-finish-the-job`
+`103c383` · `6777ede` — `manual-demo-script`
+`34a0dbd` · `b1faf65` · `90ee0fd` — `ai-goal-onboarding`
+
+They ride along because **`git push` is branch-scoped, not commit-scoped** — there is no pathspec
+form of it, and nothing short of a worktree per session changes that.
+
+**Precondition 5 normally stops exactly here**, and it did on the previous turn: foreign commits
+under live rows, so *stop and ask*. Ido was asked, answered *"if it doesn't hurt anything"*, and the
+honest reading of the board is that **holding** was the harmful option: two of those three sessions
+have already **distributed APKs built from these very commits** (v0.5.0 and v0.5.1 are on real
+phones), so the work is finished units whose effects are already public — while the code producing
+them existed nowhere but this disk.
