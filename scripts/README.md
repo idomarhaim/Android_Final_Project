@@ -16,6 +16,7 @@ run `powershell -File scripts\Install-GitHooks.ps1` once.**
 | `Start Emulator Only.cmd` | Boots `Pixel_10_Pro_XL` and stops. No Gradle, so `app\build\` is never touched. |
 | `Run On Phone.cmd` | Same as *Run*, but fails fast if no authorized physical device is attached. |
 | `Run GoalPilot on Second Device.cmd` | Boots `Pixel_10_Pro_XL_B` **alongside** the first emulator and installs there. The second-account half of the spec §7 demo. |
+| `Mirror Phone.cmd` | Puts the **phone's screen on this monitor**, with mouse and keyboard control. Builds nothing, installs nothing. See [Mirroring the phone](#mirroring-the-phone). |
 
 Each window stays open at the end (`pause`) so you can read the output.
 
@@ -25,8 +26,63 @@ Each window stays open at the end (`pause`) so you can read the output.
 .\scripts\create-desktop-shortcuts.ps1
 ```
 
-Creates four `.lnk` shortcuts on the Desktop pointing at the `.cmd` files above.
+Creates five `.lnk` shortcuts on the Desktop pointing at the `.cmd` files above.
 Delete the `.lnk` files to undo — nothing else is modified.
+
+## Mirroring the phone
+
+`Mirror Phone.cmd` → `mirror-phone.ps1` shows the phone's screen in a resizable
+window you can click and type into. It is what Android Studio's **Running
+Devices** pane does, and it is the last reason this repo had to open Android
+Studio at all — see [Why avoid opening the project in Android Studio](#why-avoid-opening-the-project-in-android-studio).
+
+```powershell
+.\scripts\mirror-phone.ps1                      # the one phone that is plugged in
+.\scripts\mirror-phone.ps1 -MaxSize 900         # smaller window, smoother
+.\scripts\mirror-phone.ps1 -StayAwake           # phone screen never sleeps
+.\scripts\mirror-phone.ps1 -NoControl           # view only, clicks do not reach the phone
+.\scripts\mirror-phone.ps1 -Record docs\demo.mp4
+.\scripts\mirror-phone.ps1 -Serial R5CY21NM30D  # when more than one is attached
+```
+
+Keys while mirroring, Left-Alt being the modifier: **Alt+F** fullscreen ·
+**Alt+H** HOME · **Alt+B** BACK · **Alt+S** app switcher · **Alt+O** turns the
+*phone's* screen off while the mirror keeps running · **Alt+C** copies the
+phone's clipboard to the PC. Dropping a file on the window pushes it to the phone.
+
+**It builds nothing and installs nothing**, so it is safe to run beside a Gradle
+build or another session's work.
+
+### What it needs, and what it deliberately refuses
+
+- **[scrcpy](https://github.com/Genymobile/scrcpy) at `%LOCALAPPDATA%\Programs\scrcpy`** —
+  portable zip, no admin rights. If it is absent the script prints the download
+  URL and stops; it installs nothing on your behalf. Do **not** reach for
+  `winget` here: on this machine it blocks on an elevation prompt it cannot
+  display and prints nothing at all.
+- **A physical phone.** Emulators are refused unless you pass `-AllowEmulator`,
+  because [SESSIONS.md](../SESSIONS.md) declares each emulator an exclusive
+  singleton and a mirror would adopt one silently. A phone is not a declared
+  singleton, so mirroring it collides with nobody.
+
+### The adb-version trap this script exists to avoid
+
+⚠️ **scrcpy ships its own `adb.exe`, and its version differs from the SDK's** —
+`Observed:` `37.0.0-14910828` bundled against `37.0.1-15733141` in
+`platform-tools`. An adb client whose version disagrees with the running server
+**kills that server and restarts it**, which would drop a sibling session's
+emulator transport mid-run and look to them like the emulator dying.
+
+`Inferred:` that consequence is adb's long-documented version-mismatch
+behaviour, not something reproduced here — reproducing it means deliberately
+letting the wrong client win, which is the outcome the pin exists to prevent.
+`Untested:` what would check it is running `scrcpy.exe` from its own folder with
+`ADB` unset while a second transport is attached, and re-reading `adb version`.
+**Nobody should run that check while a sibling session holds a device.**
+
+`mirror-phone.ps1` sets `$env:ADB` to the SDK binary before launching, so scrcpy
+reuses the server already up. **If you ever run `scrcpy.exe` straight from its
+own folder, export `ADB` first** or you will take the server down.
 
 ## The underlying script
 
