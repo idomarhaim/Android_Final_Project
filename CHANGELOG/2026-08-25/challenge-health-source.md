@@ -149,10 +149,47 @@ The first frame showed three things no test would have caught, all in the same p
 Verdict after the fixes: Health Connect sits at the top with a *"…or score it from a goal of your
 own"* divider under it, and reads as the answer rather than as an option.
 
+## Shipped — v0.5.3, versionCode 14
+
+**Backend first, and it was not optional.** `derived.ts#scoringWindow` is the copy that
+decides the winner — the client's is for display — so shipping the app without redeploying
+would have left every retroactive challenge scoring zero on the server while the card said
+otherwise. All twelve functions redeployed, *Successful update operation*.
+
+`visual-parity` had taken versionCode 13 for v0.5.2, so this is **14 / 0.5.3**, and the
+artifact was read rather than the build log:
+
+```
+package: name='com.idomarhaim.goalpilot' versionCode='14' versionName='0.5.3'
+```
+
+with its dex searched for one symbol per feature — `Straight from Health Connect`,
+`Where your score comes from`, `hc:goal:`, `challengeInvites`, `pendingMeasureKind`. All
+present. Distributed to the `testers` group (Ido **and both examiners**).
+
+## 🧪 Final numbers, all after the changes above
+
+| layer | result |
+|---|---|
+| **JVM unit** — whole suite | **1197 / 1197** |
+| **Instrumented** — whole suite on `emulator-5554` | **331 / 331**, 435 s |
+| **Functions arithmetic** | **195 / 195** |
+| **Functions emulator triggers** | **23 / 23** |
+| **Security rules** | **83 / 83**, unchanged this round |
+| **Render frames** | 8, every one opened |
+
 ## Not done
 
-- **No new release was cut from this entry alone** — see the session's final commit for what
-  shipped and when.
-- **The S25 render pass** (`sessions/challenge-scoring-render-pass.md`) stays open. Ido's phone
-  was attached to this machine while this work ran, so it is now *possible*; it is a different
-  brief and was not taken.
+- **The S25 render pass** (`sessions/challenge-scoring-render-pass.md`) stays open. Ido's
+  phone (`R5CY21NM30D`, `SM_S938B`) was **attached to this machine** while this work ran, so
+  it is now possible for the first time — but it is a different brief and was not taken. Every
+  `adb` call this session targeted `-s emulator-5554` explicitly once two devices were
+  present; nothing was installed on his phone.
+- **`docs/exam-prep/gemini notebook output/`** — four files, **77 MB**, including a 45 MB
+  `.mp4`. Ido said *"push everything"* with the file list on screen, and these are held back
+  anyway pending one explicit word: git keeps them forever, and the push gate names large
+  binaries specifically. Everything else in that dirty set went up.
+- **The retroactive path is proven by tests, not by a real week.** The window arithmetic and
+  the back-dating are covered on both sides, but nobody has yet created a real retroactive
+  challenge, had a second person accept it, and watched the server pick a winner. That needs
+  two accounts and a week of real Health Connect history — named here rather than implied.

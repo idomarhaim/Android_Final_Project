@@ -15,7 +15,36 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `challenge-health-source` | **ACTIVE.** Ido, 2026-08-25, and it **overrides §6 on his explicit word**: *“if I make a steps competition, there should also be an option to pull the logs straight into the CHALLENGE and not only through a personal GOAL of mine”*. Adding **Health Connect as a first-class choice in the goal-link sheet** — pick it and you never author a goal. What does **not** change, because it is a capability and not a preference: the scoring Function runs in the cloud and **cannot read Health Connect**, so readings reach Firestore only as the sync's `ProgressEntry` rows against a goal; the option therefore find-or-creates the canonical `healthSourceKey` goal and links it. Also owed this turn: push **everything** including `phone-mirror`'s orphaned work, and cut a release | `.../domain/usecase/LinkChallengeToHealthUseCase.kt` *(new)*, `.../domain/usecase/BuildHealthProposalsUseCase.kt` (**`HealthMetric` helpers only**), `.../feature/challenges/{ChallengesViewModel,ChallengeDialogs,ChallengesScreen}.kt`, `app/src/test/**/Challenge*`, `app/src/test/**/LinkChallengeToHealth*`, `app/src/androidTest/**/ChallengeHealthSource*`, `app/build.gradle.kts` (**versionCode/versionName only — 14**), `docs/render-passes/2026-08-25-challenge-health-source/**`, `CHANGELOG/2026-08-25/challenge-health-source.md`, `kb-candidates/2026-08-25-challenge-health-source.md` | **Gradle daemon + `emulator-5554` CLAIMED** — both were mine at close-out and are re-taken rather than left ambiguous. ⚠️ **I will also commit `phone-mirror`'s uncommitted work on Ido's explicit instruction (*“push everything”*, with the file list on screen).** Its session has **no board row** and the machine rebooted under it, so it is advanced in a commit of its own with its content untouched — §5.4's *gone* branch, with Ido's word standing in for the liveness check | 2026-08-25 |
+> 🏁 **`challenge-health-source` RELEASED — v0.5.3 (versionCode 14) is with the testers.**
+> Two instructions from Ido, both overriding decisions shipped hours earlier, both on his own
+> word: **Health Connect is now a first-class choice** in a challenge (pick it, author no
+> goal), and **a challenge can be retroactive** — a race for a week that has already finished
+> scores both people over that week and names a winner.
+>
+> **JVM 1197/1197 · instrumented 331/331 · functions 195/195 + 23/23 triggers · rules 83/83 ·
+> 8 render frames.** Functions redeployed BEFORE the app: `derived.ts#scoringWindow` is the
+> copy that decides the winner, so the order was not optional.
+>
+> 🔓 **`emulator-5554` RELEASED and LEFT RUNNING** (debug + androidTest installed with
+> `install -r`, no sign-in touched). 🔓 **Gradle daemon RELEASED.**
+>
+> ⚠️ **TWO DEVICES ARE ATTACHED TO THIS MACHINE.** `R5CY21NM30D` is **Ido's real Galaxy S25
+> Ultra**, alongside the AVD — so a bare `adb` command fails with *more than one
+> device/emulator*, and worse, a lucky one could reach his phone. Every call here used
+> `-s emulator-5554`. **`sessions/challenge-scoring-render-pass.md` is now actually possible**
+> for the first time: it needs exactly that phone at 384 dp / font 1.15, and it is still open.
+>
+> 📣 **`phone-mirror` — I committed your work, and it was Ido's call, not mine.** `7effcac`
+> carries `scripts/mirror-phone.ps1`, the `.cmd` launcher, your README section, your changelog
+> and your KB candidate, **unchanged**. Your last turn said *"all done … not committed yet
+> (normal mode, awaiting your OK)"* at 19:15Z; the machine has rebooted since, you hold no
+> board row, and Ido gave that OK in as many words with your file list on his screen. Nothing
+> of yours was edited.
+>
+> ⚠️ **HELD BACK, and it needs one word from Ido:** `docs/exam-prep/gemini notebook output/` —
+> four files, **77 MB**, including a **45 MB `.mp4`**. Git keeps those forever and the push
+> gate names large binaries specifically, so they did not ride along inside *"push
+> everything"*. Everything else in that dirty set is up.
 
 > ✅ **`main` IS PUSHED — everyone who was blocked behind the red `DocsCurrencyTest` is unblocked.**
 > *(From `visual-parity`, 2026-08-25, on Ido's word: "push if it doesn't hurt anything.")*
