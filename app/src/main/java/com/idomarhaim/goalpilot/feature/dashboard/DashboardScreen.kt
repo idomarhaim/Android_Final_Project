@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -646,6 +648,7 @@ internal fun missLabel(state: OccurrenceState): String = when (state) {
  * failure — most of the time it is Ido tidying his own calendar — so no row here is coloured,
  * counted or ranked.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CalendarDisappearanceCard(
     entries: List<CalendarEntry>,
@@ -673,19 +676,25 @@ internal fun CalendarDisappearanceCard(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // THREE text buttons in a Row is exactly the shape that broke on
+                    // Ido's S25 on 2026-08-25 -- the third one rendered a letter per line.
+                    // Same repair here before anybody photographs it.
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
                         TextButton(
                             onClick = { onChoose(entry, DisappearanceChoice.KEEP) },
                             modifier = Modifier.testTag(DISAPPEARED_KEEP_TAG),
-                        ) { Text(DISAPPEARED_KEEP_LABEL) }
+                        ) { Text(DISAPPEARED_KEEP_LABEL, maxLines = 1) }
                         TextButton(
                             onClick = { onChoose(entry, DisappearanceChoice.CANCEL) },
                             modifier = Modifier.testTag(DISAPPEARED_CANCEL_TAG),
-                        ) { Text(DISAPPEARED_CANCEL_LABEL) }
+                        ) { Text(DISAPPEARED_CANCEL_LABEL, maxLines = 1) }
                         TextButton(
                             onClick = { onChoose(entry, DisappearanceChoice.PUT_BACK) },
                             modifier = Modifier.testTag(DISAPPEARED_PUT_BACK_TAG),
-                        ) { Text(DISAPPEARED_PUT_BACK_LABEL) }
+                        ) { Text(DISAPPEARED_PUT_BACK_LABEL, maxLines = 1) }
                     }
                 }
             }

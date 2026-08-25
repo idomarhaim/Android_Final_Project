@@ -3,6 +3,8 @@ package com.idomarhaim.goalpilot.feature.challenges
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -880,6 +882,7 @@ internal fun InviteList(
  *    asking* is what decides the answer. An unattributed *"You have been invited to X"*
  *    is a system notice; this is a person.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ChallengeInviteRow(
     invite: com.idomarhaim.goalpilot.domain.model.ChallengeInvite,
@@ -905,9 +908,18 @@ internal fun ChallengeInviteRow(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onJoin, enabled = !isBusy) { Text("Join") }
-                TextButton(onClick = onDismiss, enabled = !isBusy) { Text("Dismiss") }
+            // FlowRow for the reason the challenge card learned on 2026-08-25: a Row
+            // gives its last child the leftover width and lets the text stack vertically
+            // when that is under one word. "Join"/"Dismiss" are short, but the sender's
+            // name above them is not, and nothing here bounds the screen width.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Button(onClick = onJoin, enabled = !isBusy) { Text("Join", maxLines = 1) }
+                TextButton(onClick = onDismiss, enabled = !isBusy) {
+                    Text("Dismiss", maxLines = 1)
+                }
             }
         }
     }
@@ -1191,6 +1203,7 @@ internal fun MeasureChangeContent(
  * question anybody has — *is this going to happen?* — and naming names turns a unit change
  * into a thing people are seen to be blocking.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PendingMeasureBanner(
     card: ChallengeCard,
@@ -1241,8 +1254,9 @@ internal fun PendingMeasureBanner(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
         )
-        Row(
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(top = 8.dp),
         ) {
             if (!card.iApprovedPending) {
@@ -1262,9 +1276,13 @@ internal fun PendingMeasureBanner(
                 // relabel keeps the filled one: it costs nobody anything, and making a
                 // harmless yes/no look grave is the other way to train people to ignore it.
                 if (card.pendingConsequence == MeasureChangeConsequence.RESET) {
-                    OutlinedButton(onClick = onApprove, enabled = !isBusy) { Text("Agree") }
+                    OutlinedButton(onClick = onApprove, enabled = !isBusy) {
+                        Text("Agree", maxLines = 1)
+                    }
                 } else {
-                    Button(onClick = onApprove, enabled = !isBusy) { Text("Agree") }
+                    Button(onClick = onApprove, enabled = !isBusy) {
+                        Text("Agree", maxLines = 1)
+                    }
                 }
             } else {
                 Text(
@@ -1275,7 +1293,9 @@ internal fun PendingMeasureBanner(
                 )
             }
             if (card.isOwner) {
-                TextButton(onClick = onWithdraw, enabled = !isBusy) { Text("Withdraw") }
+                TextButton(onClick = onWithdraw, enabled = !isBusy) {
+                    Text("Withdraw", maxLines = 1)
+                }
             }
         }
     }

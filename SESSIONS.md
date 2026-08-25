@@ -15,7 +15,34 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
-| `narrow-screen-agnostic` | **ACTIVE.** Ido, 2026-08-25, with a photo of his **S25 Ultra**: the challenge card's `Standings` button is rendering **one letter per line, vertically**. His ask is the general one — *"the text, and the proportions and shapes and sizes generally, should be agnostic to different screen sizes"*. A mechanical sweep finds **7** `Row`s app-wide holding 2+ buttons with no `weight()`, so a narrow screen crushes the last one instead of wrapping it. `FlowRow` is already this repo's answer (`FillButtonRow.kt` documents why) and these simply never got it. Shipping: the 7 repairs, single-line labels so a button can never render vertically again, and an **instrumented guard at his geometry** (384 dp / font 1.15) so the class cannot come back | `.../feature/challenges/{ChallengesScreen,ChallengeDialogs}.kt`, `.../feature/calendar/SlotSheet.kt`, `.../feature/dashboard/DashboardScreen.kt`, `.../ui/components/SuccessFailureRun.kt`, `app/src/androidTest/**/NarrowScreen*`, `docs/render-passes/2026-08-25-narrow-screen/**`, `app/build.gradle.kts` (**versionCode/versionName only — 15**), `CHANGELOG/2026-08-25/narrow-screen-agnostic.md`, `kb-candidates/2026-08-25-narrow-screen-agnostic.md` | **Gradle daemon + `emulator-5554` CLAIMED.** ⚠️ **TWO DEVICES ATTACHED** — `R5CY21NM30D` is Ido's **real S25 Ultra**, so every `adb` call here carries `-s emulator-5554` and a bare one is a bug, not a nuisance. The emulator is re-sized to his geometry for the verification and **put back afterwards** | 2026-08-25 |
+> 🏁 **`narrow-screen-agnostic` RELEASED — v0.5.4 (versionCode 15) is with the testers.**
+> Ido's S25 photo: `Standings` rendering one letter per line. **Seven** `Row`s app-wide could
+> do it; all seven are now `FlowRow`s with single-line labels.
+> **JVM 1197/1197 · instrumented 335/335 · 4 render frames at his real card width (352 dp /
+> font 1.15), all opened.**
+>
+> ⚠️ **The guard I wrote does NOT catch the regression it was written for, and it says so in
+> its own KDoc.** `maxLines = 1` — the other half of the same repair — means a crushed button
+> truncates instead of stacking, and truncation is invisible to height, to width, and to
+> Compose semantics. Reverting the `FlowRow` leaves `NarrowScreenGuardTest` green. It guards
+> the *other* half (a label added later without `maxLines`, a raised font scale, a long
+> translation); **`NarrowScreenRenderPass` is what verifies this fix.** Read the KDoc before
+> trusting the file's name.
+>
+> 🔓 **`emulator-5554` RELEASED, LEFT RUNNING and RE-CENTRED**; 🔓 **Gradle daemon RELEASED.**
+>
+> ⚠️ **THE EMULATOR'S WINDOW-CAPTURE SURFACE WEDGED MID-SESSION AND IT LOOKS EXACTLY LIKE A
+> CODE REGRESSION.** Six `EntranceAnimationUiTest` cases read *transparent* where they expect
+> red, and a render frame came back one flat colour — on code that had passed **331/331** an
+> hour before. Not the display (awake throughout), not the host window size (restoring it
+> changed nothing), not test ordering (it failed alone). **An emulator restart fixed it
+> completely.** If your pixel tests go red together, restart before you read your diff.
+>
+> ⚠️ **TWO DEVICES STILL ATTACHED** — `R5CY21NM30D` is Ido's real S25 Ultra. Every `adb` call
+> needs `-s emulator-5554`; nothing was installed on his phone.
+>
+> ⚠️ **STILL HELD, and it needs one word from Ido:** `docs/exam-prep/gemini notebook output/`
+> — four files, **77 MB**, including a 45 MB `.mp4`.
 > 🏁 **`challenge-health-source` RELEASED — v0.5.3 (versionCode 14) is with the testers.**
 > Two instructions from Ido, both overriding decisions shipped hours earlier, both on his own
 > word: **Health Connect is now a first-class choice** in a challenge (pick it, author no

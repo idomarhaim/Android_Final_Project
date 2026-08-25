@@ -2,6 +2,8 @@ package com.idomarhaim.goalpilot.feature.calendar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,7 +52,7 @@ import java.util.Locale
  * `ui/locale/` façades escapes the app's own locale, and that defect is **invisible in an English
  * render** — which is exactly why the guard is what catches it rather than a look at the screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SlotSheet(
     draft: SlotDraft,
@@ -108,11 +110,14 @@ fun SlotSheet(
                 GoalPicker(draft = draft, goals = goals, onChange = onChange)
             }
 
-            Row(
+            // FlowRow: Cancel + Save is two short words in English and can be two long
+            // ones elsewhere, and a Row would crush the second rather than wrap it.
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text("Cancel", maxLines = 1) }
                 Button(
                     onClick = { onSave(draft) },
                     enabled = draft.isValid,
@@ -220,6 +225,7 @@ private fun SpanDays(draft: SlotDraft, onChange: (SlotDraft) -> Unit) {
  * contribution in the objective's own word, or contributes nothing"*, and a task nobody filed is
  * the ordinary case, not an omission to nag about.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun GoalPicker(draft: SlotDraft, goals: List<Goal>, onChange: (SlotDraft) -> Unit) {
     Column {
@@ -229,9 +235,15 @@ private fun GoalPicker(draft: SlotDraft, goals: List<Goal>, onChange: (SlotDraft
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // The riskiest row in the file: every chip after the first is a GOAL TITLE, which
+        // the user wrote and which nothing bounds. A Row fits what it can and crushes the
+        // rest; this wraps.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             OutlinedButton(onClick = { onChange(draft.copy(goalId = null)) }) {
-                Text("Nothing", style = MaterialTheme.typography.labelMedium)
+                Text("Nothing", style = MaterialTheme.typography.labelMedium, maxLines = 1)
             }
             goals.take(MAX_GOAL_CHIPS).forEach { goal ->
                 OutlinedButton(

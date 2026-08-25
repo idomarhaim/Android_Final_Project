@@ -461,6 +461,7 @@ private fun OutcomeDot(outcome: WindowOutcome, accent: Color, diameter: Int) {
  * it now has a full row to itself, so a long goal name is legible rather than
  * cut at the first fold.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoNextStepSection(
     goals: List<NoNextStepGoal>,
@@ -511,10 +512,12 @@ private fun NoNextStepSection(
                 // The offer is still first and `Let it go` still last: the order
                 // this function's KDoc defends is about sequence, not about which
                 // line they sit on.
-                Row(
+                // FlowRow, for 2026-08-25's reason: a Row hands its last child the
+                // leftover width, and these labels carry a goal's own title.
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TextButton(
                         onClick = { onOpenGoal(goal.goalId) },

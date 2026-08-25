@@ -3,6 +3,8 @@ package com.idomarhaim.goalpilot.feature.challenges
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -75,7 +77,7 @@ import com.idomarhaim.goalpilot.ui.locale.AppDropdownMenu
  * data layer handles that; see `CHANGELOG/2026-08-04/challenges.md` for why the
  * distinction is load-bearing.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChallengesScreen(
     onBack: () -> Unit,
@@ -320,6 +322,7 @@ fun ChallengesScreen(
 
 // ── Cards ────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MyChallengeCard(
     card: ChallengeCard,
@@ -456,24 +459,52 @@ internal fun MyChallengeCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // ⚠️ FlowRow, NOT Row — AND IDO'S OWN PHONE IS WHAT PROVED IT.
+            //
+            // 2026-08-25, a photo of his S25 Ultra: `Standings` rendered **one letter per
+            // line, vertically**, a blue column down the right of the card. A `Row` gives
+            // its last child whatever width is left, and when that is less than one word
+            // the text has nowhere to go but downwards.
+            //
+            // §1's decision 1 predicted this and got the number wrong. It said a FOURTH
+            // button would wrap at his geometry, and moved the invite affordance into the
+            // header on that basis. THREE already wrap at 384 dp with font 1.15 — the
+            // mechanism was right and the margin was not, which is the kind of thing only a
+            // real device settles. The header decision stands; this is the row it was
+            // measured against being wrong about itself.
+            //
+            // `FillButtonRow` already had the answer and this row never got it: *"FlowRow,
+            // not Row: … a Row would clip the last one rather than wrap it."*
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 // Linking is the PRIMARY action once it is available: it is what §6 means a
                 // challenge to do, and typing a number is the fallback. Reporting keeps its
                 // place rather than being demoted into a menu -- somebody with no goal of
                 // the right kind still has to be able to compete today.
                 if (card.canLinkGoal) {
                     Button(onClick = onLinkGoal, enabled = card.canReportScore) {
-                        Text(if (card.isLinked) "Change goal" else "Score from a goal")
+                        // `maxLines = 1` on every action label is the belt to FlowRow's
+                        // braces: FlowRow stops a row crushing its last child, and this
+                        // stops a single over-long label stacking itself when even one
+                        // button is wider than the card.
+                        Text(
+                            if (card.isLinked) "Change goal" else "Score from a goal",
+                            maxLines = 1,
+                        )
                     }
                     TextButton(onClick = onReportScore, enabled = card.canReportScore) {
-                        Text("Type a score")
+                        Text("Type a score", maxLines = 1)
                     }
                 } else {
                     Button(onClick = onReportScore, enabled = card.canReportScore) {
-                        Text("Report score")
+                        Text("Report score", maxLines = 1)
                     }
                 }
-                TextButton(onClick = onOpenStandings) { Text("Standings") }
+                TextButton(onClick = onOpenStandings) {
+                    Text("Standings", maxLines = 1)
+                }
             }
             // §3's banner sits BELOW the actions, not above them. A pending measure
             // change is real but not urgent -- the challenge is still scoring in the old
