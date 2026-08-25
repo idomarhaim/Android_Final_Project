@@ -275,6 +275,19 @@ class SyncHealthDataUseCase @Inject constructor(
                     value = proposal.value,
                     note = proposal.noteText(),
                     sourceKey = proposal.sourceKey,
+                    // STAMPED WITH THE DAY THAT WAS WALKED, NOT THE MOMENT WE WROTE IT.
+                    //
+                    // The proposal has always known its own `epochDay`; until 2026-08-25
+                    // `ProgressRepositoryImpl` threw the field away and stamped `now`, so
+                    // Monday's sync filed the whole weekend as Monday. Nothing failed and
+                    // the goal's total was right, which is why it survived -- the totals
+                    // are a plain sum and do not care when an entry is dated.
+                    //
+                    // A CHALLENGE does care: `ScoringWindow.includes()` filters by exactly
+                    // this timestamp, so a race for last week saw nothing at all. Noon is
+                    // used rather than midnight so a day lands unambiguously inside its own
+                    // window whichever end a bound falls on.
+                    createdAtEpochMillis = proposal.epochDay * MILLIS_PER_DAY + HALF_DAY_MILLIS,
                 ),
                 imageUri = null,
             )
@@ -318,5 +331,13 @@ class SyncHealthDataUseCase @Inject constructor(
 
         /** Ceiling on each Firestore lookup before the sync gives up unfinished. */
         private const val LOOKUP_TIMEOUT_MS = 5_000L
+
+        /**
+         * `HealthLogProposal.epochDay` is a day count; a `ProgressEntry` wants epoch
+         * millis. Noon, not midnight, so a day lands unambiguously inside its own window
+         * whichever end a challenge's bound falls on.
+         */
+        private const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000
+        private const val HALF_DAY_MILLIS = MILLIS_PER_DAY / 2
     }
 }

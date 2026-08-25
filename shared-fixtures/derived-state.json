@@ -33,94 +33,210 @@
     "    writes it, and the projection must keep counting it or every lifetime total collapses",
     "    on deploy. It is the old source, draining -- not a second source of truth.",
     "A task id appearing in BOTH is counted once, from its fact: that is the task that has been",
-    "re-ticked since the migration, and the fact is what was actually banked."
+    "re-ticked since the migration, and the fact is what was actually banked.",
+    "",
+    "2026-08-25 ADDED `windowCases`, AND THE GAP IT CLOSES IS THE ONE THIS FILE EXISTS FOR.",
+    "  `scoringWindow` is the rule that decides WHICH entries a challenge counts, it exists in",
+    "  Kotlin (Challenge.scoringWindowFor) and TypeScript (derived.ts), and until today it was",
+    "  pinned by NOTHING here -- while being the likeliest of all of them to diverge, because",
+    "  the two are written in different shapes (an if/else against a nested ternary).",
+    "  It changed in both languages on 2026-08-25 (a dated challenge scores its own window, so",
+    "  a RETROACTIVE race can be joined after it ended), which is exactly the moment the header",
+    "  above says to add cases first and let both suites go red."
   ],
   "pointsCases": [
     {
       "name": "no facts at all",
-      "facts": { "tasks": [] },
-      "expected": { "points": 0, "level": 1 }
+      "facts": {
+        "tasks": []
+      },
+      "expected": {
+        "points": 0,
+        "level": 1
+      }
     },
     {
       "name": "legacy: tasks exist but none are done — an undone task contributes nothing",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": false, "points": 40 },
-          { "id": "t2", "done": false, "points": 60 }
+          {
+            "id": "t1",
+            "done": false,
+            "points": 40
+          },
+          {
+            "id": "t2",
+            "done": false,
+            "points": 60
+          }
         ]
       },
-      "expected": { "points": 0, "level": 1 }
+      "expected": {
+        "points": 0,
+        "level": 1
+      }
     },
     {
       "name": "legacy: only the done ones are summed",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true, "points": 40 },
-          { "id": "t2", "done": false, "points": 60 },
-          { "id": "t3", "done": true, "points": 35 }
+          {
+            "id": "t1",
+            "done": true,
+            "points": 40
+          },
+          {
+            "id": "t2",
+            "done": false,
+            "points": 60
+          },
+          {
+            "id": "t3",
+            "done": true,
+            "points": 35
+          }
         ]
       },
-      "expected": { "points": 75, "level": 1 }
+      "expected": {
+        "points": 75,
+        "level": 1
+      }
     },
     {
       "name": "legacy: exactly on a level boundary — L2 begins at 100, inclusive",
-      "facts": { "tasks": [{ "id": "t1", "done": true, "points": 100 }] },
-      "expected": { "points": 100, "level": 2 }
+      "facts": {
+        "tasks": [
+          {
+            "id": "t1",
+            "done": true,
+            "points": 100
+          }
+        ]
+      },
+      "expected": {
+        "points": 100,
+        "level": 2
+      }
     },
     {
       "name": "legacy: one point below a boundary stays on the lower level",
-      "facts": { "tasks": [{ "id": "t1", "done": true, "points": 99 }] },
-      "expected": { "points": 99, "level": 1 }
+      "facts": {
+        "tasks": [
+          {
+            "id": "t1",
+            "done": true,
+            "points": 99
+          }
+        ]
+      },
+      "expected": {
+        "points": 99,
+        "level": 1
+      }
     },
     {
       "name": "legacy: L3 begins at 300",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true, "points": 250 },
-          { "id": "t2", "done": true, "points": 50 }
+          {
+            "id": "t1",
+            "done": true,
+            "points": 250
+          },
+          {
+            "id": "t2",
+            "done": true,
+            "points": 50
+          }
         ]
       },
-      "expected": { "points": 300, "level": 3 }
+      "expected": {
+        "points": 300,
+        "level": 3
+      }
     },
     {
       "name": "legacy: L4 begins at 600, and a big pile does not skip past it",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true, "points": 599 },
-          { "id": "t2", "done": true, "points": 1 }
+          {
+            "id": "t1",
+            "done": true,
+            "points": 599
+          },
+          {
+            "id": "t2",
+            "done": true,
+            "points": 1
+          }
         ]
       },
-      "expected": { "points": 600, "level": 4 }
+      "expected": {
+        "points": 600,
+        "level": 4
+      }
     },
     {
       "name": "legacy: a negative task value cannot drag the total below zero",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true, "points": 10 },
-          { "id": "t2", "done": true, "points": -40 }
+          {
+            "id": "t1",
+            "done": true,
+            "points": 10
+          },
+          {
+            "id": "t2",
+            "done": true,
+            "points": -40
+          }
         ]
       },
-      "expected": { "points": 0, "level": 1 }
+      "expected": {
+        "points": 0,
+        "level": 1
+      }
     },
     {
       "name": "legacy: a task with no points field counts as zero, not as a crash",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true },
-          { "id": "t2", "done": true, "points": 20 }
+          {
+            "id": "t1",
+            "done": true
+          },
+          {
+            "id": "t2",
+            "done": true,
+            "points": 20
+          }
         ]
       },
-      "expected": { "points": 20, "level": 1 }
+      "expected": {
+        "points": 20,
+        "level": 1
+      }
     },
     {
       "name": "legacy: idempotence, stated as data — the same fact set gives the same number",
       "facts": {
         "tasks": [
-          { "id": "t1", "done": true, "points": 120 },
-          { "id": "t2", "done": true, "points": 120 }
+          {
+            "id": "t1",
+            "done": true,
+            "points": 120
+          },
+          {
+            "id": "t2",
+            "done": true,
+            "points": 120
+          }
         ]
       },
-      "expected": { "points": 240, "level": 2 },
+      "expected": {
+        "points": 240,
+        "level": 2
+      },
       "$note": [
         "It models the only way projection could double-credit — two facts of equal weight —",
         "and pins that the answer is arithmetic over whatever the fact set holds, never an",
@@ -139,9 +255,18 @@
     {
       "name": "#55 the anchor survives: 30 routine minutes are still worth 10",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 30,
+            "difficulty": "ROUTINE"
+          }
+        ]
       },
-      "expected": { "points": 10, "level": 1 },
+      "expected": {
+        "points": 10,
+        "level": 1
+      },
       "$note": [
         "§1.4 inverts a constant rather than adding one, precisely so this number does not",
         "move. If this case ever goes red, the inversion has re-priced the user's history."
@@ -151,20 +276,46 @@
       "name": "#55 the three multipliers, on one duration",
       "facts": {
         "completionFacts": [
-          { "taskId": "t1", "minutes": 60, "difficulty": "LIGHT" },
-          { "taskId": "t2", "minutes": 60, "difficulty": "ROUTINE" },
-          { "taskId": "t3", "minutes": 60, "difficulty": "DEMANDING" }
+          {
+            "taskId": "t1",
+            "minutes": 60,
+            "difficulty": "LIGHT"
+          },
+          {
+            "taskId": "t2",
+            "minutes": 60,
+            "difficulty": "ROUTINE"
+          },
+          {
+            "taskId": "t3",
+            "minutes": 60,
+            "difficulty": "DEMANDING"
+          }
         ]
       },
-      "expected": { "points": 65, "level": 1 },
-      "$note": ["round(60/3) = 20, so 20 x 0.75 = 15, 20 x 1.0 = 20, 20 x 1.5 = 30 -> 65."]
+      "expected": {
+        "points": 65,
+        "level": 1
+      },
+      "$note": [
+        "round(60/3) = 20, so 20 x 0.75 = 15, 20 x 1.0 = 20, 20 x 1.5 = 30 -> 65."
+      ]
     },
     {
       "name": "#55 the ceiling is 240 and nothing clamps to it",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 480, "difficulty": "DEMANDING" }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 480,
+            "difficulty": "DEMANDING"
+          }
+        ]
       },
-      "expected": { "points": 240, "level": 2 },
+      "expected": {
+        "points": 240,
+        "level": 2
+      },
       "$note": [
         "480 is the storable duration maximum and DEMANDING is x1.5, so 240 is what the",
         "formula YIELDS rather than a constant anybody wrote down. §1.4's 'the levelling",
@@ -175,9 +326,18 @@
     {
       "name": "#55 the floor is gone: a 15-minute light task is worth 4, not 5",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 15, "difficulty": "LIGHT" }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 15,
+            "difficulty": "LIGHT"
+          }
+        ]
       },
-      "expected": { "points": 4, "level": 1 },
+      "expected": {
+        "points": 4,
+        "level": 1
+      },
       "$note": [
         "round(15/3) = 5, x0.75 = 3.75, rounded = 4. The old MIN_POINTS = 5 would have raised",
         "it, which is half of what 'the 5..50 cap is deleted' means."
@@ -187,11 +347,21 @@
       "name": "#55 an unknown difficulty is ROUTINE — the neutral value, not an error",
       "facts": {
         "completionFacts": [
-          { "taskId": "t1", "minutes": 30, "difficulty": "IMPOSSIBLE" },
-          { "taskId": "t2", "minutes": 30 }
+          {
+            "taskId": "t1",
+            "minutes": 30,
+            "difficulty": "IMPOSSIBLE"
+          },
+          {
+            "taskId": "t2",
+            "minutes": 30
+          }
         ]
       },
-      "expected": { "points": 20, "level": 1 },
+      "expected": {
+        "points": 20,
+        "level": 1
+      },
       "$note": [
         "ROUTINE is x1.0, so an unreadable judgement prices the task on its minutes alone —",
         "which is what a task nobody judged is worth. Mirrors Difficulty.fromName."
@@ -200,10 +370,25 @@
     {
       "name": "#55 migration: banked facts and un-migrated legacy tasks are summed together",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }],
-        "tasks": [{ "id": "t2", "done": true, "points": 40 }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 30,
+            "difficulty": "ROUTINE"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "t2",
+            "done": true,
+            "points": 40
+          }
+        ]
       },
-      "expected": { "points": 50, "level": 1 },
+      "expected": {
+        "points": 50,
+        "level": 1
+      },
       "$note": [
         "The case the deploy turns on. #55 writes no backfill, so on the day it ships every",
         "account is exactly this: some completions banked, most not. Reading only the new",
@@ -213,10 +398,25 @@
     {
       "name": "#55 migration: a re-ticked task is counted once, from its fact",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 30, "difficulty": "ROUTINE" }],
-        "tasks": [{ "id": "t1", "done": true, "points": 40 }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 30,
+            "difficulty": "ROUTINE"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "t1",
+            "done": true,
+            "points": 40
+          }
+        ]
       },
-      "expected": { "points": 10, "level": 1 },
+      "expected": {
+        "points": 10,
+        "level": 1
+      },
       "$note": [
         "Same task id in both halves. The FACT wins — it is what was actually banked at the",
         "tick, and the legacy fields are what the migrating write is about to clear. Summing",
@@ -226,10 +426,25 @@
     {
       "name": "#55 migration: a legacy point value round-trips to itself, losslessly",
       "facts": {
-        "completionFacts": [{ "taskId": "t1", "minutes": 120, "difficulty": "ROUTINE" }],
-        "tasks": [{ "id": "t2", "done": true, "points": 40 }]
+        "completionFacts": [
+          {
+            "taskId": "t1",
+            "minutes": 120,
+            "difficulty": "ROUTINE"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "t2",
+            "done": true,
+            "points": 40
+          }
+        ]
       },
-      "expected": { "points": 80, "level": 1 },
+      "expected": {
+        "points": 80,
+        "level": 1
+      },
       "$note": [
         "40 legacy points reconstruct to 40 x 3 = 120 minutes at ROUTINE (see",
         "TaskDuration.legacyMinutesFromPoints), which prices back at round(120/3) x 1.0 = 40.",
@@ -241,28 +456,125 @@
   "scoreCases": [
     {
       "name": "a report of zero is a report, not an absence",
-      "facts": { "report": { "value": 0 } },
-      "expected": { "score": 0 }
+      "facts": {
+        "report": {
+          "value": 0
+        }
+      },
+      "expected": {
+        "score": 0
+      }
     },
     {
       "name": "the latest absolute report is the score — the UI reports a total, not a delta",
-      "facts": { "report": { "value": 12.5 } },
-      "expected": { "score": 12.5 }
+      "facts": {
+        "report": {
+          "value": 12.5
+        }
+      },
+      "expected": {
+        "score": 12.5
+      }
     },
     {
       "name": "a negative report is clamped rather than stored",
-      "facts": { "report": { "value": -3 } },
-      "expected": { "score": 0 }
+      "facts": {
+        "report": {
+          "value": -3
+        }
+      },
+      "expected": {
+        "score": 0
+      }
     },
     {
       "name": "no report at all leaves the row alone",
-      "facts": { "report": null },
-      "expected": { "score": null },
+      "facts": {
+        "report": null
+      },
+      "expected": {
+        "score": null
+      },
       "$note": [
         "score: null means DO NOT WRITE. Deleting the report fact (leaving the challenge, or an",
         "undo) must not silently zero a standing other people are reading — the projection",
         "writes nothing and the last reported number stands until the row itself is deleted."
       ]
+    }
+  ],
+  "windowCases": [
+    {
+      "name": "a dated challenge scores its own window, whoever joined when",
+      "challenge": {
+        "startAt": 1760000000000,
+        "endAt": 1760604800000
+      },
+      "joinedAt": 1760259200000,
+      "expected": {
+        "from": 1760000000000,
+        "until": 1760604800000
+      }
+    },
+    {
+      "name": "RETROACTIVE: joining a week that already ended still scores that week",
+      "$why": [
+        "Ido, 2026-08-25: a steps race for last week, invited a friend, she accepts",
+        "today. Under the pre-2026-08-25 rule the lower bound was max(joinedAt,",
+        "startAt) = today, which is past endAt, so includes() admitted nothing and the",
+        "race scored zero for everybody. This case is that bug, pinned in both",
+        "languages so neither can drift back to it."
+      ],
+      "challenge": {
+        "startAt": 1760000000000,
+        "endAt": 1760604800000
+      },
+      "joinedAt": 1762592000000,
+      "expected": {
+        "from": 1760000000000,
+        "until": 1760604800000
+      }
+    },
+    {
+      "name": "an OPEN-ENDED challenge still bounds at joinedAt -- §6's own case",
+      "$why": [
+        "What §6's joinedAt rule was actually protecting: 'joining with a year-old goal",
+        "imports a year of history nobody raced for'. With no startAt there is no other",
+        "floor, so this half of the rule is unchanged and must stay unchanged."
+      ],
+      "challenge": {
+        "startAt": 0,
+        "endAt": 0
+      },
+      "joinedAt": 1760259200000,
+      "expected": {
+        "from": 1760259200000,
+        "until": null
+      }
+    },
+    {
+      "name": "a start date with no end is open at the top, bounded at the start",
+      "challenge": {
+        "startAt": 1760000000000,
+        "endAt": 0
+      },
+      "joinedAt": 1760259200000,
+      "expected": {
+        "from": 1760000000000,
+        "until": null
+      }
+    },
+    {
+      "name": "an absent challenge and an absent joinedAt are zero, never NaN",
+      "$why": [
+        "A NaN bound would include nothing at all and read as 'this challenge scores",
+        "zero' -- the same symptom as the retroactive bug, arriving from the other side."
+      ],
+      "challenge": null,
+      "joinedAt": null,
+      "expected": {
+        "from": 0,
+        "until": null
+      }
     }
   ]
 }

@@ -75,7 +75,29 @@ class ProgressRepositoryImpl @Inject constructor(
                     value = entry.value,
                     note = entry.note,
                     imageUrl = imageUrl,
-                    createdAt = System.currentTimeMillis(),
+                    // WHEN THE THING HAPPENED, NOT WHEN IT WAS WRITTEN DOWN.
+                    //
+                    // This read `System.currentTimeMillis()` unconditionally until
+                    // 2026-08-25, which silently discarded the one field a caller might
+                    // legitimately want to set -- and it made a whole class of feature
+                    // impossible without anything ever failing:
+                    //
+                    //  * A Health Connect reading for LAST TUESDAY was stamped with the
+                    //    moment the sync ran. `SyncHealthDataUseCase` knows the reading's
+                    //    own day (`HealthLogProposal.epochDay`) and had no way to say so.
+                    //  * `ScoringWindow.includes()` filters a challenge's score by entry
+                    //    timestamp, so a challenge whose window is in the past scored ZERO
+                    //    for everybody -- which is exactly what Ido asked for on 2026-08-25
+                    //    ("a retroactive challenge for last week") and could not have got.
+                    //  * `ScoringWindow`'s own KDoc already claimed "a backfilled entry
+                    //    with an old timestamp correctly changes nothing", describing a
+                    //    state no entry could reach. The comment was ahead of the code.
+                    //
+                    // Zero still means now, so every existing caller is unchanged: the
+                    // manual log dialog, the task-completion path and the tests all build a
+                    // `ProgressEntry` without a timestamp and get one.
+                    createdAt = entry.createdAtEpochMillis.takeIf { it > 0L }
+                        ?: System.currentTimeMillis(),
                     sourceKey = entry.sourceKey,
                 )
                 ref.set(dto).await()

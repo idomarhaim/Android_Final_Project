@@ -18,7 +18,10 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -43,8 +46,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.MeasureChangeConsequence
 import com.idomarhaim.goalpilot.domain.model.MeasureKind
+import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
 import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
 import com.idomarhaim.goalpilot.domain.model.InviteCandidate
+import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.feature.goals.label
 import com.idomarhaim.goalpilot.ui.components.Avatar
 import com.idomarhaim.goalpilot.ui.components.FreshnessNote
@@ -549,6 +554,7 @@ internal fun ReportedBadge(
 internal fun GoalLinkSheet(
     state: GoalLinkState,
     onLink: (String) -> Unit,
+    onPickHealth: (HealthMetric) -> Unit,
     onCreateTitle: (String) -> Unit,
     onCreateTarget: (String) -> Unit,
     onCreate: () -> Unit,
@@ -559,6 +565,7 @@ internal fun GoalLinkSheet(
         GoalLinkContent(
             state = state,
             onLink = onLink,
+            onPickHealth = onPickHealth,
             onCreateTitle = onCreateTitle,
             onCreateTarget = onCreateTarget,
             onCreate = onCreate,
@@ -579,6 +586,7 @@ internal fun GoalLinkSheet(
 internal fun GoalLinkContent(
     state: GoalLinkState,
     onLink: (String) -> Unit,
+    onPickHealth: (HealthMetric) -> Unit = {},
     onCreateTitle: (String) -> Unit,
     onCreateTarget: (String) -> Unit,
     onCreate: () -> Unit,
@@ -586,23 +594,56 @@ internal fun GoalLinkContent(
 ) {
     run {
         Column(modifier = modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
-            Text("Score this from a goal", style = MaterialTheme.typography.titleLarge)
+            // NOT "Score this from a goal" any more, which is what it said until
+            // 2026-08-25 -- and a render frame is what caught it: the title sat directly
+            // above a Health Connect row that is not a goal, contradicting the first thing
+            // underneath it.
+            Text("Where your score comes from", style = MaterialTheme.typography.titleLarge)
             Text(
                 state.challengeTitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // WAS §6'S RULE, VERBATIM, AND BOTH HALVES OF IT WENT STALE ON 2026-08-25.
+            //
+            // It read "how far you move that goal from the moment you joined". "That goal"
+            // names something the reader may not have chosen now that Health Connect sits
+            // above the list; and "from the moment you joined" is the rule that changed, so
+            // a retroactive race would have been described by its own sheet as scoring
+            // nothing. `GoalLinkState.windowNote` computes the true sentence per challenge.
             Text(
-                "Your score becomes how far you move that goal from the moment you " +
-                    "joined — so Health Connect, a completed task and a manual log all " +
-                    "count, and nothing before you joined does.",
+                state.windowNote,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
+
+            // HEALTH CONNECT FIRST, AND ABOVE THE GOALS ON PURPOSE.
+            //
+            // Ido, 2026-08-25: "if I make a steps competition, there should also be an
+            // option to pull the logs straight into the CHALLENGE and not only through a
+            // personal GOAL of mine." It goes at the TOP because for a steps or sleep race
+            // it is the answer -- it needs nothing of the user, and every goal below it
+            // does. Putting it under the list would make the recommended path the one you
+            // scroll past.
+            if (state.healthOptions.isNotEmpty()) {
+                HealthConnectOptions(
+                    state = state,
+                    onPick = onPickHealth,
+                )
+                Spacer(Modifier.height(4.dp))
+                if (state.eligible.isNotEmpty()) {
+                    Text(
+                        "…or score it from a goal of your own",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    )
+                }
+            }
 
             if (state.eligible.isEmpty()) {
                 CreateGoalForThisChallenge(
@@ -1235,6 +1276,110 @@ internal fun PendingMeasureBanner(
             }
             if (card.isOwner) {
                 TextButton(onClick = onWithdraw, enabled = !isBusy) { Text("Withdraw") }
+            }
+        }
+    }
+}
+
+/**
+ * Health Connect as a way to score a challenge — Ido's instruction of 2026-08-25.
+ *
+ * > *"if I make a steps competition, there should also be an option to pull the logs
+ * > straight into the CHALLENGE and not only through a personal GOAL of mine"*
+ *
+ * ### What the row promises, and what it does
+ *
+ * It promises *"you pick this and never author a goal"*, and it keeps that promise. What it
+ * does underneath is find-or-create the Health-Connect-owned goal for the metric and link
+ * it — because the scoring Function runs in the cloud and **cannot read Health Connect**, so
+ * a reading reaches Firestore only as a progress entry against a goal. A second pipe would
+ * mean writing the same steps into Firestore twice, under two summers that can disagree.
+ *
+ * **That is said in the row rather than hidden**, in one line, when it is about to happen.
+ * A row silently appearing on the Goals screen is the one thing about this design a user
+ * could fairly call a surprise; a row they were told about is just where their steps live.
+ *
+ * ### Availability never removes the choice
+ *
+ * When Health Connect is missing or unpermitted the option **stays**, greyed, with the
+ * reason. A choice that vanishes teaches nothing — the user is left wondering whether the
+ * app can do this at all — and *"Health Connect is not set up on this phone"* is the
+ * sentence that actually helps. It is also why §4 recommended deleting the proposed health
+ * **gate**: the honest move is to say what is true, not to remove the door.
+ */
+@Composable
+private fun HealthConnectOptions(
+    state: GoalLinkState,
+    onPick: (HealthMetric) -> Unit,
+) {
+    Column(modifier = Modifier.padding(top = 14.dp)) {
+        Text(
+            "Straight from Health Connect",
+            style = MaterialTheme.typography.labelLarge,
+        )
+        state.healthOptions.forEach { option ->
+            val blocked = state.healthAvailability != null &&
+                state.healthAvailability != HealthAvailability.AVAILABLE
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MonitorHeart,
+                    contentDescription = null,
+                    tint = if (blocked) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                )
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text(
+                        // "Steps · steps" is what the naive join produced, and the frame is
+                        // where it looked as silly as it reads. The unit is only worth
+                        // saying when it adds something the label does not.
+                        if (option.metric.label.equals(option.metric.unit, ignoreCase = true)) {
+                            option.metric.label
+                        } else {
+                            "${option.metric.label} · ${option.metric.unit}"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        when {
+                            // The reason, when there is one. Never a disappearing row.
+                            state.healthAvailability == HealthAvailability.NOT_SUPPORTED ->
+                                "Health Connect is not set up on this phone."
+
+                            state.healthAvailability ==
+                                HealthAvailability.PROVIDER_UPDATE_REQUIRED ->
+                                "Update Health Connect from Play, then come back."
+
+                            state.healthAvailability ==
+                                HealthAvailability.PERMISSIONS_REQUIRED ->
+                                "Allow GoalPilot to read it in Settings → Sync first."
+
+                            option.isCurrent -> "Already scoring this challenge."
+
+                            // SAID BEFORE IT HAPPENS, NOT DISCOVERED AFTERWARDS.
+                            option.createsGoal ->
+                                "Your readings score this automatically. It sets up your " +
+                                    "“${option.metric.defaultGoalTitle}” goal to hold them."
+
+                            else -> "Your readings score this automatically — nothing to log."
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                TextButton(
+                    onClick = { onPick(option.metric) },
+                    enabled = !state.isSaving && !option.isCurrent && !blocked,
+                ) {
+                    Text(if (option.isCurrent) "In use" else "Use this")
+                }
             }
         }
     }

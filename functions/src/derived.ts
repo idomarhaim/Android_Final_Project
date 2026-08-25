@@ -122,10 +122,28 @@ export function linkedGoalId(report: ReportFact | null | undefined): string | nu
 /**
  * The window `challenge` scores a participant who joined at `joinedAt` over.
  *
- * Mirrors `Challenge.scoringWindowFor`. A `startAt` of `0` means *no start date*, so it must
- * not become a lower bound by accident - `Math.max` over a non-finite or absent value is
- * exactly the arithmetic that silently produces `NaN`, which would then include nothing at
- * all and read as *this challenge scores zero*.
+ * Mirrors `Challenge.scoringWindowFor` — **and this is the copy that decides the winner**,
+ * because scoring runs here and not on the device. The two must agree or the standings and
+ * the card disagree about the same race.
+ *
+ * ⚠️ **THE DATES ON THE TIN WIN; `joinedAt` bounds an OPEN-ENDED challenge only.** Changed
+ * 2026-08-25 with the Kotlin side, on Ido's instruction, and the old rule is why.
+ *
+ * It was `Math.max(joined, startAt)` unconditionally, which made a **retroactive** race
+ * score **zero for everybody**: a challenge for last week, accepted today, got a lower bound
+ * of *today* — past its own `endAt` — so `includes()` admitted nothing. Ido asked for exactly
+ * that race ("a steps challenge from the start of last week to its end … the challenge pulls
+ * both our data for that week and decides the winner").
+ *
+ * What §6's `joinedAt` protected — *"joining with a year-old goal imports a year of history
+ * nobody raced for"* — can only happen with **no start date to bound the window**. Where the
+ * owner set one, `startAt` already excludes everything before the race and `joinedAt` was
+ * adding nothing but the bug.
+ *
+ * A `startAt` of `0` still means *no start date*, and must not become a lower bound by
+ * accident: `Number()` over an absent value yields `NaN`, and a `NaN` bound would include
+ * nothing at all and read as *this challenge scores zero* — the same symptom, from the
+ * other direction.
  */
 export function scoringWindow(
   challenge: { startAt?: number | null; endAt?: number | null } | null | undefined,
@@ -134,10 +152,12 @@ export function scoringWindow(
   const joined = Number(joinedAt);
   const startAt = Number(challenge?.startAt);
   const endAt = Number(challenge?.endAt);
-  const from = Math.max(
-    Number.isFinite(joined) ? joined : 0,
-    Number.isFinite(startAt) ? startAt : 0,
-  );
+  const from =
+    Number.isFinite(startAt) && startAt > 0
+      ? startAt
+      : Number.isFinite(joined) && joined > 0
+        ? joined
+        : 0;
   return { from, until: Number.isFinite(endAt) && endAt > 0 ? endAt : null };
 }
 

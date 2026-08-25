@@ -4,6 +4,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.idomarhaim.goalpilot.core.result.Resource
+import com.idomarhaim.goalpilot.core.util.DateTimeUtils
 import com.idomarhaim.goalpilot.domain.model.Challenge
 import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengePhase
@@ -11,6 +12,7 @@ import com.idomarhaim.goalpilot.domain.model.ChallengeStanding
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.InviteCandidate
 import com.idomarhaim.goalpilot.domain.model.Measure
 import com.idomarhaim.goalpilot.domain.model.MeasureChangeConsequence
@@ -20,7 +22,10 @@ import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
+import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
+import com.idomarhaim.goalpilot.domain.usecase.LinkChallengeToHealthUseCase
 import com.idomarhaim.goalpilot.feature.goals.label
 import com.idomarhaim.goalpilot.feature.goals.wordHint
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -73,6 +78,12 @@ class ChallengesViewModel @Inject constructor(
      * top-N. Its points and ranks are simply not read here.
      */
     private val socialRepository: SocialRepository,
+    /**
+     * Read for **one** thing: whether Health Connect can actually serve this device, so the
+     * option below can say *why* rather than offering a choice that silently never moves.
+     */
+    private val healthRepository: HealthRepository,
+    private val linkChallengeToHealth: LinkChallengeToHealthUseCase,
 ) : ViewModel() {
 
     /**
@@ -199,7 +210,83 @@ class ChallengesViewModel @Inject constructor(
             // they would have typed. Editable, because it is their goal and it will
             // outlive the challenge.
             createTitle = card.challenge.title,
+            healthOptions = healthOptionsFor(card),
+            windowNote = windowNoteFor(card.challenge),
         )
+        // Availability is a suspending device call, so the sheet opens immediately with the
+        // options listed and fills in "why not" a beat later. The alternative -- waiting --
+        // would make the commonest case (Health Connect present and permitted) pay for the
+        // rarest one.
+        viewModelScope.launch {
+            val availability = healthRepository.availability()
+            _goalLink.update {
+                if (it.challengeId == card.challenge.id) {
+                    it.copy(healthAvailability = availability)
+                } else {
+                    it
+                }
+            }
+        }
+    }
+
+    /**
+     * The Health Connect choices for [card] — Ido, 2026-08-25:
+     *
+     * > *"if I make a steps competition, there should also be an option to pull the logs
+     * > straight into the CHALLENGE and not only through a personal GOAL of mine"*
+     *
+     * **Matched on the measure KIND alone, and the row says what it is.** A `COUNT`
+     * challenge might be counting steps or books and the app cannot tell; matching the
+     * measure *word* would be a string match over user content, which §1.3 forbids and
+     * which would shut a Hebrew user's `"צעדים"` out of an English steps race. So the offer
+     * appears whenever the kind fits, labelled *"Steps · from Health Connect"*, and
+     * somebody running a books challenge simply does not take it.
+     *
+     * That is also §4's conclusion arriving from the other side: the app has no honest way
+     * to know a challenge is *a health challenge*, which is why §4 recommended deleting the
+     * proposed health **gate** — and why this is an offer with a label rather than a filter
+     * pretending to knowledge it does not have.
+     */
+    /**
+     * The one sentence that says what will be counted — derived from the challenge's own
+     * dates, because that is what `scoringWindowFor` now derives from.
+     */
+    @VisibleForTesting
+    internal fun windowNoteFor(challenge: Challenge): String = when {
+        challenge.startAtEpochMillis > 0L && challenge.endAtEpochMillis > 0L ->
+            "Everything you count between " +
+                DateTimeUtils.formatDay(challenge.startAtEpochMillis) + " and " +
+                DateTimeUtils.formatDay(challenge.endAtEpochMillis - 1) +
+                " — the same days for everyone, whenever each of you joined."
+
+        challenge.startAtEpochMillis > 0L ->
+            "Everything you count from " +
+                DateTimeUtils.formatDay(challenge.startAtEpochMillis) +
+                " onwards — the same start for everyone, whenever each of you joined."
+
+        // No dates at all, so `joinedAt` is the only floor there is -- §6's original rule,
+        // and the case it was really protecting.
+        else -> "Everything you count from the moment you joined — nothing before it."
+    }
+
+    @VisibleForTesting
+    internal fun healthOptionsFor(card: ChallengeCard): List<HealthLinkOption> {
+        val goals = uiState.value.goals
+        return HealthMetric.forKind(card.challenge.measure?.kind).map { metric ->
+            val its = goals.firstOrNull {
+                it.healthSourceKey == metric.goalSourceKey && !it.isArchived
+            }
+            HealthLinkOption(
+                metric = metric,
+                // Already the one scoring this challenge, so the row says "Scoring this"
+                // rather than offering to do again what is already done.
+                isCurrent = its != null && its.id == card.data.myLinkedGoalId,
+                // Whether picking it will make a goal. Said out loud in the row, because a
+                // new row appearing on the Goals screen unannounced is the one thing about
+                // this design a user could reasonably call a surprise.
+                createsGoal = its == null,
+            )
+        }
     }
 
     /**
@@ -338,6 +425,37 @@ class ChallengesViewModel @Inject constructor(
 
                 is Resource.Error ->
                     _goalLink.update { it.copy(isSaving = false, error = created.message) }
+
+                Resource.Loading -> Unit
+            }
+        }
+    }
+
+    /**
+     * Ido's own ask, granted where he asked for it: **a choice that is not a goal.**
+     *
+     * What it does underneath is find-or-create the canonical Health-Connect-owned goal and
+     * link that — see [LinkChallengeToHealthUseCase] for why *literally* direct is not
+     * available at any price: the scoring Function runs in the cloud and cannot read Health
+     * Connect, so a second pipe would mean writing the same readings into Firestore twice.
+     */
+    fun linkHealthConnect(metric: HealthMetric) {
+        val current = _goalLink.value
+        if (current.isSaving) return
+        val challenge = uiState.value.mine
+            .firstOrNull { it.challenge.id == current.challengeId }
+            ?.challenge
+            ?: return
+        viewModelScope.launch {
+            _goalLink.update { it.copy(isSaving = true, error = null) }
+            when (val result = linkChallengeToHealth(challenge, metric, uiState.value.goals)) {
+                is Resource.Success -> {
+                    _goalLink.value = GoalLinkState()
+                    _message.value = "Scoring from Health Connect — nothing to log"
+                }
+
+                is Resource.Error ->
+                    _goalLink.update { it.copy(isSaving = false, error = result.message) }
 
                 Resource.Loading -> Unit
             }
@@ -900,8 +1018,51 @@ data class GoalLinkState(
      */
     val createTitle: String = "",
     val createTarget: String = "",
+    /**
+     * Health Connect, offered as a **first-class choice beside the goals** — Ido's
+     * instruction of 2026-08-25, which overrides §6's *"a challenge scores from each
+     * participant's goal"* at the product level. Empty when the challenge counts something
+     * Health Connect does not track.
+     */
+    val healthOptions: List<HealthLinkOption> = emptyList(),
+    /** Null until the device has answered; see `openGoalLink` for why the sheet opens first. */
+    val healthAvailability: HealthAvailability? = null,
+    /**
+     * What this challenge actually counts, in one sentence — **computed, not fixed prose.**
+     *
+     * The sheet used to state §6's rule verbatim (*"how far you move that goal from the
+     * moment you joined"*), which stopped being true on 2026-08-25 in two ways at once: a
+     * **dated** challenge now scores its own window for everyone, so a retroactive race can
+     * be joined after it ended; and Health Connect is now a choice beside the goals, so
+     * *"that goal"* names something the reader may not have picked. A render frame is what
+     * showed it — the old sentence sat directly above an option it contradicted.
+     */
+    val windowNote: String = "",
     val isSaving: Boolean = false,
     val error: String? = null,
+)
+
+/**
+ * One Health Connect metric, offered as a way to score a challenge.
+ *
+ * The row exists whenever the metric's kind matches the challenge's; whether it can
+ * actually be taken depends on [GoalLinkState.healthAvailability], which arrives a beat
+ * later and is deliberately **not** allowed to make the row disappear — a choice that
+ * vanishes teaches nothing, and *"Health Connect is not set up on this phone"* is the
+ * sentence the user needs.
+ */
+data class HealthLinkOption(
+    val metric: HealthMetric,
+    /** This metric's goal is already the one scoring this challenge. */
+    val isCurrent: Boolean = false,
+    /**
+     * Taking this will create the Health Connect goal, because the user has never synced.
+     *
+     * Said in the row rather than discovered afterwards: a new row appearing on the Goals
+     * screen unannounced is the one thing about this design somebody could fairly call a
+     * surprise. It is the same goal the sync would have made on its own first run.
+     */
+    val createsGoal: Boolean = false,
 )
 
 /**

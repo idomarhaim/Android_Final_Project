@@ -240,6 +240,7 @@ fun ChallengesScreen(
         GoalLinkSheet(
             state = goalLink,
             onLink = viewModel::linkGoal,
+            onPickHealth = viewModel::linkHealthConnect,
             onCreateTitle = viewModel::onCreateTitleChange,
             onCreateTarget = viewModel::onCreateTargetChange,
             onCreate = viewModel::createAndLinkGoal,

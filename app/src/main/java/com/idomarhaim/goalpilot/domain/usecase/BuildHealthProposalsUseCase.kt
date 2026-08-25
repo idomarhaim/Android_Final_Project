@@ -67,6 +67,31 @@ enum class HealthMetric(
      * [BuildHealthProposalsUseCase.sourceKey], which identifies one *reading*.
      */
     val goalSourceKey: String get() = "hc:goal:${name.lowercase()}"
+
+    companion object {
+        /**
+         * The metrics Health Connect can score a challenge with — Ido, 2026-08-25:
+         * *"if I make a steps competition, there should also be an option to pull the
+         * logs straight into the CHALLENGE and not only through a personal GOAL"*.
+         *
+         * **Matched on [measureKind] alone, and the user is the judge of the rest.** A
+         * `COUNT` challenge might be counting steps or books, and the app cannot tell:
+         * matching the measure **word** would be a string match over user content, which
+         * §1.3 forbids and which would exclude a Hebrew user's `"צעדים"` from an English
+         * steps race for a reason that has nothing to do with what is being counted.
+         *
+         * So the offer is made whenever the kind fits and the row **says what it is** —
+         * *"Steps · from Health Connect"*. Somebody running a books challenge sees an
+         * option that is obviously not theirs and does not take it.
+         *
+         * That is also §4's answer arriving from the other side. §4 recommended deleting
+         * the proposed *health gate* because the app has no honest way to know a
+         * challenge is "a health challenge" — and the same absence of knowledge is why
+         * this is an **offer with a label** rather than a filter that pretends to know.
+         */
+        fun forKind(kind: MeasureKind?): List<HealthMetric> =
+            if (kind == null) emptyList() else entries.filter { it.measureKind == kind }
+    }
 }
 
 /**

@@ -331,15 +331,36 @@ fun Challenge.phaseAt(nowEpochMillis: Long): ChallengePhase = when {
  * Without it a weight-loss race ranks by **who is heaviest**, and joining with a
  * year-old goal imports a year of history nobody raced for.
  *
- * ⚠️ **The lower bound is `max(joinedAt, startAt)`, and the `startAt` half is a
- * DERIVATION, not §6's words.** §6 says *since you joined*, and on its own that
- * would credit a September race with August's walking whenever somebody joins a
- * challenge that has not started yet — which `ChallengePhase.UPCOMING` makes an
- * ordinary thing to do, not a corner case. Taken per the derivable-decision rule
- * from the two things already committed: §6's *movement*, and the phase model's
- * position that a challenge's dates say when it is being run. Recorded here and
- * in `CHANGELOG/2026-08-24/challenge-scoring.md` so it can be overturned in one
- * place if Ido reads it the other way.
+ * ⚠️ **THE DATES ON THE TIN WIN. `joinedAt` bounds an OPEN-ENDED challenge only** —
+ * changed 2026-08-25 on Ido's explicit instruction, and the old rule is why it had
+ * to change.
+ *
+ * It used to read `max(joinedAt, startAt)` unconditionally, which made a
+ * **retroactive** challenge score **zero for everybody**: create a race for last
+ * week, invite a friend, she accepts today, and `max(today, lastMonday)` is today
+ * — past the challenge's own end. Ido asked for exactly that race on 2026-08-25
+ * (*"I created a steps challenge from the start of last week to its end and
+ * invited rachil … the challenge pulls both our data for that week and decides the
+ * winner"*), so the bound had to give way.
+ *
+ * **What §6's `joinedAt` was actually protecting still is.** Its worry was *"joining
+ * with a year-old goal imports a year of history nobody raced for"* — and that can
+ * only happen when there is **no start date to bound the window with**. Where the
+ * owner has set one, `startAt` already excludes every reading before the race, and
+ * `joinedAt` was adding nothing except the retroactive bug. So the rule splits on
+ * the thing that was always doing the work:
+ *
+ * - **`startAt` set** → the window is the challenge's own dates, the same for
+ *   everyone. A race is the dates on the tin; two people compared over one week are
+ *   compared over *that* week whenever each of them said yes.
+ * - **`startAt` unset** → `joinedAt`, exactly as §6 wrote it, because there is no
+ *   other floor and an open-ended challenge would otherwise import a whole history.
+ *
+ * The visible consequence, and it is intended: **joining a dated challenge late
+ * credits you for the whole window.** Join a month-long race on the 20th and your
+ * first three weeks count. That is what "who walked most in August" means, and it
+ * is the only reading under which an invitation to a finished week is worth
+ * accepting.
  *
  * The upper bound is `endAt` for the same reason and with the same authority —
  * `canReportScore` already refuses a typed score once a challenge is `ENDED`, so
@@ -356,9 +377,30 @@ data class ScoringWindow(val fromEpochMillis: Long, val untilEpochMillis: Long?)
 /** The window this challenge scores [participant] over. See [ScoringWindow]. */
 fun Challenge.scoringWindowFor(participant: ChallengeParticipant): ScoringWindow =
     ScoringWindow(
-        fromEpochMillis = maxOf(participant.joinedAtEpochMillis, startAtEpochMillis),
+        // See [ScoringWindow]: a dated challenge scores its own window for everyone, so a
+        // race for a week that has already finished can be joined and still counts. Only
+        // an undated one falls back to `joinedAt`, which is the case §6's rule was really
+        // protecting -- there is no other floor, and without one a year-old goal would
+        // import a year nobody raced for.
+        fromEpochMillis = if (startAtEpochMillis > 0L) {
+            startAtEpochMillis
+        } else {
+            participant.joinedAtEpochMillis
+        },
         untilEpochMillis = endAtEpochMillis.takeIf { it > 0L },
     )
+
+/**
+ * Whether this challenge's whole window is already in the past — a **retroactive** race.
+ *
+ * Ido's own case, 2026-08-25: a steps race for last week, created and joined after it
+ * ended, scored from both participants' readings for those days. It is an ordinary
+ * `ChallengePhase.ENDED` challenge; what makes it worth naming is that the UI must not
+ * discourage joining one, and that `canReportScore` is deliberately still false for it —
+ * a finished week is not something anybody should be typing a number into.
+ */
+fun Challenge.isRetroactive(nowEpochMillis: Long): Boolean =
+    startAtEpochMillis > 0L && endAtEpochMillis in 1 until nowEpochMillis
 
 /**
  * Whether [goal] may be linked to this challenge — §6's *"each participant links

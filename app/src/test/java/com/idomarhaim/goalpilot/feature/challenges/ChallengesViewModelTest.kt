@@ -9,6 +9,7 @@ import com.idomarhaim.goalpilot.domain.model.ChallengeInvite
 import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
 import com.idomarhaim.goalpilot.domain.model.DeclaredBy
 import com.idomarhaim.goalpilot.domain.model.Goal
+import com.idomarhaim.goalpilot.domain.model.HealthAvailability
 import com.idomarhaim.goalpilot.domain.model.Leaderboard
 import com.idomarhaim.goalpilot.domain.model.LeaderboardEntry
 import com.idomarhaim.goalpilot.domain.model.Measure
@@ -18,11 +19,16 @@ import com.idomarhaim.goalpilot.domain.model.ScoreSource
 import com.idomarhaim.goalpilot.domain.model.ChallengeWithStandings
 import com.idomarhaim.goalpilot.domain.model.Freshness
 import com.idomarhaim.goalpilot.domain.model.canBeScoredFrom
+import com.idomarhaim.goalpilot.domain.model.isRetroactive
 import com.idomarhaim.goalpilot.domain.model.phaseAt
 import com.idomarhaim.goalpilot.domain.model.rankedByScore
+import com.idomarhaim.goalpilot.domain.model.scoringWindowFor
 import com.idomarhaim.goalpilot.domain.repository.ChallengeRepository
 import com.idomarhaim.goalpilot.domain.repository.GoalRepository
+import com.idomarhaim.goalpilot.domain.repository.HealthRepository
 import com.idomarhaim.goalpilot.domain.repository.SocialRepository
+import com.idomarhaim.goalpilot.domain.usecase.HealthMetric
+import com.idomarhaim.goalpilot.domain.usecase.LinkChallengeToHealthUseCase
 import com.idomarhaim.goalpilot.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -47,8 +53,25 @@ class ChallengesViewModelTest {
     private val repository = mockk<ChallengeRepository>(relaxed = true)
     private val goalRepository = mockk<GoalRepository>(relaxed = true)
     private val socialRepository = mockk<SocialRepository>(relaxed = true)
+    private val healthRepository = mockk<HealthRepository>(relaxed = true)
+    private val linkToHealth = mockk<LinkChallengeToHealthUseCase>(relaxed = true)
 
     private val now = 1_000_000_000L
+
+    /** One day in millis — the retroactive cases below are all in days. */
+    private val DAY = 24L * 60 * 60 * 1000
+
+    /**
+     * A REAL instant, for the retroactive cases only.
+     *
+     * The class's [now] is the sentinel `1_000_000_000L`, which is about eleven and a half
+     * days after the epoch — so `now - 14.days` is **negative**, and a negative
+     * `startAtEpochMillis` correctly fails `scoringWindowFor`'s `> 0` test for *no start
+     * date set*. The first draft of these cases used it and failed with the window falling
+     * back to `joinedAt`, which reads exactly like the bug they exist to pin. The guard is
+     * right; the fixture was eleven days old.
+     */
+    private val realNow = 1_760_000_000_000L
 
     private fun challenge(
         id: String = "c1",
@@ -81,6 +104,7 @@ class ChallengesViewModelTest {
         invites: List<ChallengeInvite> = emptyList(),
         sent: List<ChallengeInvite> = emptyList(),
         friends: List<LeaderboardEntry> = emptyList(),
+        health: HealthAvailability = HealthAvailability.AVAILABLE,
     ): ChallengesViewModel {
         every { repository.observeMyChallenges() } returns flowOf(mine)
         every { repository.observeDiscoverable() } returns flowOf(discoverable)
@@ -95,8 +119,14 @@ class ChallengesViewModelTest {
         every { repository.observeSentInvites() } returns flowOf(sent)
         every { socialRepository.observeLeaderboard(any()) } returns
             flowOf(Leaderboard(entries = friends))
-        return ChallengesViewModel(repository, goalRepository, socialRepository)
-            .apply { clock = { now } }
+        coEvery { healthRepository.availability() } returns health
+        return ChallengesViewModel(
+            repository,
+            goalRepository,
+            socialRepository,
+            healthRepository,
+            linkToHealth,
+        ).apply { clock = { now } }
     }
 
     private suspend fun ChallengesViewModel.loaded() = uiState.first { !it.isLoading }
@@ -626,7 +656,13 @@ class ChallengesViewModelTest {
         every { repository.observeDiscoverable() } returns flowOf(emptyList())
         every { goalRepository.observeGoals(any()) } returns flowOf(emptyList())
         every { repository.observeIncomingInvites() } returns flowOf(emptyList())
-        val vm = ChallengesViewModel(repository, goalRepository, socialRepository)
+        val vm = ChallengesViewModel(
+            repository,
+            goalRepository,
+            socialRepository,
+            healthRepository,
+            linkToHealth,
+        )
 
         val state = vm.uiState.first { !it.isLoading }
 
@@ -1385,5 +1421,241 @@ class ChallengesViewModelTest {
 
         coVerify { repository.withdrawMeasureChange("c1") }
         assertThat(vm.message.value).isEqualTo("Change withdrawn")
+    }
+
+    // ── Health Connect as a first-class choice (Ido, 2026-08-25) ────────
+    //
+    // > "if I make a steps competition, there should also be an option to pull the logs
+    // > straight into the CHALLENGE and not only through a personal GOAL of mine"
+    //
+    // He named the conflict with §6 himself and ruled the new instruction wins. What could
+    // NOT move is a capability, not a preference: the scoring Function runs in the cloud
+    // and cannot read Health Connect, so the option find-or-creates the canonical
+    // `healthSourceKey` goal. These assert the CHOICE, which is the half he asked about.
+
+    private fun steps(id: String = "hcg") = Goal(
+        id = id,
+        title = "Weekly steps",
+        measure = Measure(MeasureKind.COUNT, "steps"),
+        healthSourceKey = HealthMetric.STEPS.goalSourceKey,
+    )
+
+    @Test
+    fun `a COUNT challenge is offered Health Connect steps`() = runTest {
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.COUNT, "steps")),
+                ),
+            ),
+        )
+        val card = vm.loaded().mine.single()
+
+        val options = vm.healthOptionsFor(card)
+
+        assertThat(options.map { it.metric }).containsExactly(HealthMetric.STEPS)
+        // Nothing of the user's tracks steps yet, so taking it makes the goal -- and the
+        // row has to say so before it happens, not after.
+        assertThat(options.single().createsGoal).isTrue()
+        assertThat(options.single().isCurrent).isFalse()
+    }
+
+    @Test
+    fun `a DURATION challenge is offered sleep, not steps`() = runTest {
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.DURATION, "hours")),
+                ),
+            ),
+        )
+
+        val options = vm.healthOptionsFor(vm.loaded().mine.single())
+
+        assertThat(options.map { it.metric }).containsExactly(HealthMetric.SLEEP)
+    }
+
+    @Test
+    fun `a DISTANCE challenge is offered nothing -- Health Connect does not track it here`() =
+        runTest {
+            val vm = viewModel(mine = listOf(ChallengeWithStandings(challenge = challenge())))
+
+            assertThat(vm.healthOptionsFor(vm.loaded().mine.single())).isEmpty()
+        }
+
+    @Test
+    fun `an existing Health Connect goal is reused, not offered as a new one`() = runTest {
+        // `#47` in miniature: matching on anything the user can edit produced a duplicate
+        // goal on the next sync. `healthSourceKey` is the identity they cannot reach.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.COUNT, "steps")),
+                ),
+            ),
+            goals = listOf(steps()),
+        )
+
+        assertThat(vm.healthOptionsFor(vm.loaded().mine.single()).single().createsGoal)
+            .isFalse()
+    }
+
+    @Test
+    fun `the option knows when it is ALREADY the thing scoring this challenge`() = runTest {
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.COUNT, "steps")),
+                    myLinkedGoalId = "hcg",
+                ),
+            ),
+            goals = listOf(steps(id = "hcg")),
+        )
+
+        assertThat(vm.healthOptionsFor(vm.loaded().mine.single()).single().isCurrent).isTrue()
+    }
+
+    @Test
+    fun `an ARCHIVED health goal is not reused -- it was put away on purpose`() = runTest {
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.COUNT, "steps")),
+                ),
+            ),
+            goals = listOf(steps().copy(isArchived = true)),
+        )
+
+        assertThat(vm.healthOptionsFor(vm.loaded().mine.single()).single().createsGoal)
+            .isTrue()
+    }
+
+    @Test
+    fun `an unavailable Health Connect still OFFERS the row, with the reason`() = runTest {
+        // A choice that vanishes teaches nothing. The row stays, greyed, and the sheet says
+        // "Health Connect is not set up on this phone" -- the sentence that actually helps.
+        val vm = viewModel(
+            mine = listOf(
+                ChallengeWithStandings(
+                    challenge = challenge(measure = Measure(MeasureKind.COUNT, "steps")),
+                ),
+            ),
+            health = HealthAvailability.NOT_SUPPORTED,
+        )
+        val card = vm.loaded().mine.single()
+
+        vm.openGoalLink(card)
+        val link = vm.goalLink.first { it.healthAvailability != null }
+
+        assertThat(link.healthOptions).hasSize(1)
+        assertThat(link.healthAvailability).isEqualTo(HealthAvailability.NOT_SUPPORTED)
+    }
+
+    @Test
+    fun `picking it goes through the use case, with the challenge and the user's goals`() =
+        runTest {
+            coEvery { linkToHealth(any(), any(), any()) } returns Resource.Success(Unit)
+            val vm = viewModel(
+                mine = listOf(
+                    ChallengeWithStandings(
+                        challenge = challenge(
+                            id = "c1",
+                            measure = Measure(MeasureKind.COUNT, "steps"),
+                        ),
+                    ),
+                ),
+                goals = listOf(steps()),
+            )
+            vm.openGoalLink(vm.loaded().mine.single())
+
+            vm.linkHealthConnect(HealthMetric.STEPS)
+
+            coVerify {
+                linkToHealth(
+                    match { it.id == "c1" },
+                    HealthMetric.STEPS,
+                    match { gs -> gs.any { it.healthSourceKey == HealthMetric.STEPS.goalSourceKey } },
+                )
+            }
+            assertThat(vm.message.value).isEqualTo("Scoring from Health Connect — nothing to log")
+            assertThat(vm.goalLink.value.isVisible).isFalse()
+        }
+
+    // ── Retroactive challenges (Ido, 2026-08-25) ────────────────────────
+    //
+    // > "I created a steps challenge from the start of last week to its end and invited
+    // > rachil. If she accepted it, the challenge pulls both our data for that week and
+    // > decides the winner."
+    //
+    // This could not work before: the window opened at max(joinedAt, startAt), so accepting
+    // today gave a lower bound past the challenge's own end and it scored zero for everyone.
+
+    @Test
+    fun `a RETROACTIVE challenge scores its own week, however late you accepted`() {
+        val weekStart = realNow - 14 * DAY
+        val weekEnd = realNow - 7 * DAY
+        val past = Challenge(startAtEpochMillis = weekStart, endAtEpochMillis = weekEnd)
+
+        // rachil accepts today -- a month after the race, in the worst case.
+        val window = past.scoringWindowFor(ChallengeParticipant(joinedAtEpochMillis = realNow))
+
+        assertThat(window.fromEpochMillis).isEqualTo(weekStart)
+        assertThat(window.untilEpochMillis).isEqualTo(weekEnd)
+        // The point of the whole change: that week's readings are inside it.
+        assertThat(window.includes(weekStart + 3 * DAY)).isTrue()
+        // And the week before it still is not -- the race is the dates on the tin.
+        assertThat(window.includes(weekStart - DAY)).isFalse()
+    }
+
+    @Test
+    fun `an OPEN-ENDED challenge still opens at joinedAt -- §6's own protection`() {
+        // What §6's rule was actually for: "joining with a year-old goal imports a year of
+        // history nobody raced for." With no start date there is no other floor, so this
+        // half is unchanged and has to stay unchanged.
+        val open = Challenge(startAtEpochMillis = 0L, endAtEpochMillis = 0L)
+
+        val window = open.scoringWindowFor(ChallengeParticipant(joinedAtEpochMillis = realNow))
+
+        assertThat(window.fromEpochMillis).isEqualTo(realNow)
+        assertThat(window.includes(realNow - DAY)).isFalse()
+    }
+
+    @Test
+    fun `joining a DATED challenge late credits the whole window, deliberately`() {
+        // The visible consequence of the change, asserted so nobody "fixes" it back. Join a
+        // month-long race on the 20th and your first three weeks count -- which is what
+        // "who walked most in August" means, and the only reading under which an invitation
+        // to a finished week is worth accepting at all.
+        val month = Challenge(startAtEpochMillis = realNow - 20 * DAY, endAtEpochMillis = realNow + DAY)
+
+        val window = month.scoringWindowFor(ChallengeParticipant(joinedAtEpochMillis = realNow))
+
+        assertThat(window.fromEpochMillis).isEqualTo(realNow - 20 * DAY)
+        assertThat(window.includes(realNow - 15 * DAY)).isTrue()
+    }
+
+    @Test
+    fun `a retroactive challenge is recognised as one, and is not scoreable by typing`() {
+        val past = Challenge(
+            startAtEpochMillis = realNow - 14 * DAY,
+            endAtEpochMillis = realNow - 7 * DAY,
+        )
+
+        assertThat(past.isRetroactive(realNow)).isTrue()
+        // A finished week is not something anybody should be typing a number into, so
+        // `canReportScore` stays false for it -- the readings are the whole point.
+        assertThat(ChallengeCard(ChallengeWithStandings(past), past.phaseAt(realNow)).canReportScore)
+            .isFalse()
+    }
+
+    @Test
+    fun `a live or upcoming challenge is not retroactive`() {
+        assertThat(Challenge(startAtEpochMillis = realNow - DAY).isRetroactive(realNow)).isFalse()
+        assertThat(
+            Challenge(startAtEpochMillis = realNow + DAY, endAtEpochMillis = realNow + 8 * DAY)
+                .isRetroactive(realNow),
+        ).isFalse()
+        // Undated: nothing to be retroactive about.
+        assertThat(Challenge().isRetroactive(realNow)).isFalse()
     }
 }

@@ -4,6 +4,10 @@ import com.google.common.truth.Truth.assertWithMessage
 import com.idomarhaim.goalpilot.domain.model.Difficulty
 import com.idomarhaim.goalpilot.domain.model.Leveling
 import com.idomarhaim.goalpilot.domain.model.TaskScoring
+import com.idomarhaim.goalpilot.domain.model.Challenge
+import com.idomarhaim.goalpilot.domain.model.ChallengeParticipant
+import com.idomarhaim.goalpilot.domain.model.scoringWindowFor
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -91,6 +95,19 @@ class DerivedStateFixtureTest {
     private val pointsCases: JsonArray = fixture.getValue("pointsCases").jsonArray
     private val scoreCases: JsonArray = fixture.getValue("scoreCases").jsonArray
 
+    /**
+     * The scoring **window**, added 2026-08-25 — and the gap it closes is the one this
+     * whole file exists for.
+     *
+     * `scoringWindow` decides **which entries a challenge counts**. It exists in Kotlin
+     * ([Challenge.scoringWindowFor]) and in TypeScript (`derived.ts`), it is the rule most
+     * likely of all of them to drift — the two are written in different *shapes*, an
+     * `if/else` against a nested ternary — and until 2026-08-25 the fixture pinned
+     * **nothing** about it. It changed in both languages that day, which is precisely when
+     * the fixture header says to add cases first and let both suites go red.
+     */
+    private val windowCases: JsonArray = fixture.getValue("windowCases").jsonArray
+
     private fun JsonObject.name(): String = getValue("name").jsonPrimitive.content
 
     /**
@@ -138,6 +155,8 @@ class DerivedStateFixtureTest {
             .that(pointsCases.size).isGreaterThan(0)
         assertWithMessage("score cases in ${fixtureFile.absolutePath}")
             .that(scoreCases.size).isGreaterThan(0)
+        assertWithMessage("window cases in ${fixtureFile.absolutePath}")
+            .that(windowCases.size).isGreaterThan(0)
     }
 
     @Test
@@ -201,6 +220,40 @@ class DerivedStateFixtureTest {
                 assertWithMessage("score — ${case.name()}")
                     .that(projected).isEqualTo(expectedScore.jsonPrimitive.double)
             }
+        }
+    }
+
+    @Test
+    fun `every fixture case yields the same scoring window on this side`() {
+        // The Kotlin half of the pin. `functions/test/projection.test.mjs` runs the same
+        // rows through `derived.ts`; a change to either language that this file does not
+        // also carry turns one of the two suites red, which is the only mechanism stopping
+        // the standings and the card from disagreeing about the same race.
+        for (element in windowCases) {
+            val case = element.jsonObject
+            // `as?`, not `?.jsonObject`: the "absent challenge" case is JSON `null`,
+            // which parses to JsonNull -- a present element that is not an object -- and
+            // `.jsonObject` THROWS on it rather than returning null. That case is the one
+            // pinning the NaN guard, so losing it would lose the guard.
+            val challenge = case["challenge"] as? JsonObject
+            val expected = case.getValue("expected").jsonObject
+
+            val window = Challenge(
+                startAtEpochMillis = challenge?.get("startAt")?.jsonPrimitive?.long ?: 0L,
+                endAtEpochMillis = challenge?.get("endAt")?.jsonPrimitive?.long ?: 0L,
+            ).scoringWindowFor(
+                ChallengeParticipant(
+                    joinedAtEpochMillis =
+                        case["joinedAt"]?.jsonPrimitive?.longOrNull ?: 0L,
+                ),
+            )
+
+            assertWithMessage("window from — ${case.name()}")
+                .that(window.fromEpochMillis)
+                .isEqualTo(expected.getValue("from").jsonPrimitive.long)
+            assertWithMessage("window until — ${case.name()}")
+                .that(window.untilEpochMillis)
+                .isEqualTo(expected["until"]?.jsonPrimitive?.longOrNull)
         }
     }
 }

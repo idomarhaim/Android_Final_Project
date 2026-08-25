@@ -87,6 +87,21 @@ for (const testCase of fixture.scoreCases) {
   });
 }
 
+// ── The window, pinned in both languages (added 2026-08-25) ──────────
+//
+// `scoringWindow` decides WHICH entries a challenge counts, and it exists twice -- here and
+// in `Challenge.scoringWindowFor`. It was pinned by nothing until today, while being the
+// likeliest of all the shared rules to drift: the two are written in different SHAPES, an
+// if/else against a nested ternary, so an edit to one has no mechanical reason to reach the
+// other. The retroactive case below is a bug that actually shipped.
+for (const testCase of fixture.windowCases) {
+  test(`window: ${testCase.name}`, () => {
+    const w = scoringWindow(testCase.challenge, testCase.joinedAt);
+    assert.equal(w.from, testCase.expected.from, "lower bound");
+    assert.equal(w.until, testCase.expected.until, "upper bound");
+  });
+}
+
 test("projecting twice writes the same number — idempotence, not carefulness", () => {
   // The property §5.2 chose this shape for, and the reason `FieldValue.increment` stays
   // rejected. Asserted as a property rather than as a fixture row because it is about
@@ -133,14 +148,25 @@ test("a fact carries a goal link or a typed number, never both", () => {
   assert.equal(linkedGoalId(null), null);
 });
 
-test("the window opens at the later of joining and the challenge starting", () => {
-  // The `joinedAt` half is §6's own words -- "movement since you joined". The `startAt`
-  // half is a DERIVATION from the phase model, documented on `ScoringWindow` in Kotlin:
-  // without it, joining an UPCOMING challenge credits it with what you did beforehand.
+test("a DATED challenge scores its own window; only an open-ended one uses joinedAt", () => {
+  // ⚠️ THIS TEST ASSERTED THE OPPOSITE UNTIL 2026-08-25, and the line that changed is the
+  // third one. It read `{ startAt: 100 }, 500 -> from: 500` -- the later of the two -- on
+  // the reasoning that "joining an UPCOMING challenge credits it with what you did
+  // beforehand". That reasoning was sound and the rule it produced was still wrong, because
+  // it also made a RETROACTIVE challenge score zero for everybody: a race for last week,
+  // accepted today, got a lower bound of today, which is past its own endAt.
+  //
+  // Ido asked for exactly that race on 2026-08-25, so the rule now splits on whether the
+  // owner set a start date at all -- see `scoringWindow`'s KDoc for why that is the thing
+  // §6's `joinedAt` was really doing. Kept as a rewritten assertion rather than deleted:
+  // the case it used to protect is the FIRST line below, and it still passes.
   assert.deepEqual(scoringWindow({ startAt: 0, endAt: 0 }, 500), { from: 500, until: null });
   assert.deepEqual(scoringWindow({ startAt: 900, endAt: 0 }, 500), { from: 900, until: null });
-  assert.deepEqual(scoringWindow({ startAt: 100, endAt: 0 }, 500), { from: 500, until: null });
+  // The changed one: a start date wins even when the participant joined AFTER it.
+  assert.deepEqual(scoringWindow({ startAt: 100, endAt: 0 }, 500), { from: 100, until: null });
   assert.deepEqual(scoringWindow({ startAt: 0, endAt: 2000 }, 500), { from: 500, until: 2000 });
+  // And the case that was unreachable before: joined long after the race finished.
+  assert.deepEqual(scoringWindow({ startAt: 100, endAt: 200 }, 9999), { from: 100, until: 200 });
 });
 
 test("a missing challenge or joinedAt yields a window, never NaN", () => {
