@@ -4,6 +4,28 @@
 out of RAM. Read [AGENTS.md](../AGENTS.md) first. This file answers one question:
 *where can GoalPilot run when there is no room for an AVD here?*
 
+> ## 📌 Updated 2026-08-25 — read this before the table below
+>
+> **Option D stopped being hypothetical.** Ido owns and uses a **Galaxy S25 Ultra**
+> (`R5CY21NM30D`), it is routinely plugged into this machine, and it is now the *primary*
+> verification surface rather than the fallback the table calls it. `scripts/mirror-phone.ps1`
+> (or the *Mirror Phone* desktop launcher) puts it on screen with mouse and keyboard control —
+> what Android Studio's *Running Devices* pane does, without Android Studio.
+>
+> **And it is the only surface that can find a class of defect the others cannot.** His card
+> width is **384 dp at font scale 1.15**. A render pass at AVD width shipped a button that
+> rendered *one letter per line* on his screen, through a green suite and a six-frame render pass
+> — see *Layout that does not assume a screen width* in [ARCHITECTURE.md](ARCHITECTURE.md).
+> A cloud emulator would not have caught it either.
+>
+> ⚠️ **With a phone attached, every `adb` call must name its target** (`adb -s emulator-5554 …`),
+> or a command meant for the AVD can install over the build Ido is using, or wipe his sign-in.
+> [OPERATIONS.md §2](OPERATIONS.md) has the full rule.
+>
+> **The RAM premise itself still holds.** `Observed:` 2026-08-25 on the machine that replaced the
+> one below — **15.67 GB total, 2.42 GB free**. Same total; the free figure moves with load. So
+> §7's *"just shrink the local AVD"* is still not a fix, and everything below is still live.
+
 ---
 
 ## 1. The problem, measured
@@ -28,12 +50,12 @@ exactly the same data a local one does.
 | **A** | **GitHub Actions emulator** — [§3](#3-option-a--the-emulator-that-is-already-set-up) | Tests run + screenshots of the app | **0** | **Free** (public repo) | nothing — it is built |
 | **B** | **Android Device Streaming** (Studio + Firebase) | A **real** phone, streamed, fully interactive | Studio only (~2 GB) | Free quota, then billed to `goalpilot-56e30` | you, ~5 min in Studio |
 | **C** | **Appetize.io** | An emulator **in a browser tab**, interactive, shareable link | **0** | Free tier, then paid | you, a signup |
-| **D** | **A real Android phone** via App Distribution | The real thing | **0** | **Free** — already wired | owning a phone |
+| **D** | **A real Android phone** — cabled, or via App Distribution | The real thing, at real geometry | **0** | **Free** — already wired | **nothing — Ido has one, see the box above** |
 
-**The short answer:** use **A** for anything automatable (it costs nothing and is
-already done), **B** when you need to touch the app yourself. **D** is free and
-already built if you have an Android phone in your pocket — see
-[RELEASING.md](RELEASING.md).
+**The short answer, as of 2026-08-25:** **D** first — the phone is here, it is free, and it is
+the only surface that renders at the geometry a real user has. Use **A** for anything automatable
+(it costs nothing and is already done). **B** and **C** are still unexercised here and remain
+written up in case the phone is not available.
 
 ---
 

@@ -25,6 +25,33 @@ Distribution is what supplies one.
     │                            │        in-app "Update available" dialog ──► │
 ```
 
+> ## ⚠️ Updated 2026-08-25 — the diagram above is the DESIGNED route, not the route in use
+>
+> **Nothing has gone out by tag since `v0.3.1`.** `git tag` still ends there, while
+> `app/build.gradle.kts` reads **v0.5.4 / `versionCode` 15** and testers are on it. In between are
+> **nine `versionCode` bumps** (7 through 15) and **zero tags** — that half is mechanical, read
+> straight off `git tag` and the history of `app/build.gradle.kts`.
+>
+> `Observed:` **six** of those were distributed, each with a changelog naming the route or the App
+> Distribution release id — v0.4.0, v0.4.1, v0.5.0 (`0bnfqsmgtaim0`), v0.5.2 (`4jj8f6l3mmh5g`),
+> v0.5.3 and v0.5.4. `Inferred:` the remaining bumps (0.3.2, 0.3.3, 0.5.1) were built but not
+> separately distributed; they are not tagged either way. Every distribution was cut **locally**
+> — `assembleRelease` + `appDistributionUploadRelease` — because that is what a session with the
+> keystore in hand and Ido asking for a build before bedtime can actually do.
+>
+> **Both routes work and both are documented here** (§3 for the tag, the *No CI* block at the end
+> of §3 for the local one). What matters is what you lose by taking the local one:
+>
+> - **The tag route runs the JVM suite first and stops on a failure**, so a red suite never
+>   reaches a tester. Locally, nothing does that for you — run the suite yourself.
+> - **No tag means no version marker in git**, so `git tag` is not a release history and
+>   `git log v0.3.1..HEAD` spans nine version bumps rather than one release.
+> - The local route needs the keystore on this machine. It is here (§2.1a), and that was **not**
+>   true between 2026-08-06 and 2026-08-21.
+>
+> Neither route is deprecated. If you want the tag history back, cut the next release by tag and
+> note that the nine versions in between were local.
+
 Two independent halves, and it is worth knowing which is which:
 
 - **The upload half** — the `com.google.firebase.appdistribution` Gradle plugin
@@ -85,15 +112,27 @@ machine failure apart from where it was yesterday.** Copy it somewhere else; see
 the repository**, so git never carried it, and a search of `C:\Dev` and the whole user profile on
 2026-08-21 found no `.jks` at all. Nothing about that was noticed until a release was needed.
 
-**Nothing is broken.** The key survives as the repository secret `RELEASE_KEYSTORE_BASE64`, and
-[`release.yml`](../.github/workflows/release.yml) restores it on every tagged run — `v0.3.0` shipped
-that way. **But it means the tag route is the only one that can produce an installable update**: a
-local `assembleRelease` silently falls back to the *debug* key, and `app/build.gradle.kts` refuses
-to distribute that on purpose.
+**Nothing was broken even then.** The key survives as the repository secret
+`RELEASE_KEYSTORE_BASE64`, and [`release.yml`](../.github/workflows/release.yml) restores it on
+every tagged run — `v0.3.0` shipped that way.
 
-**The risk, stated plainly:** the key is now in **one** place, and that place cannot be read by any
-API. If this repository or that secret is lost, no future build can ever install over what testers
-already have. Every one of them would have to uninstall and lose their local data.
+⚠️ **The two paragraphs that stood here were written BEFORE the recovery and contradicted the
+status line above them. They are corrected rather than deleted, because the corrections are the
+useful part:**
+
+- *"the tag route is the only one that can produce an installable update"* — **false since
+  2026-08-21.** The keystore is on this machine, so a local `assembleRelease` is signed with the
+  real key, and in fact **every release from v0.4.0 to v0.5.4 went out that way** (§1). It was
+  true while the `.jks` was missing: without it the build silently falls back to the *debug* key,
+  and `app/build.gradle.kts` refuses to distribute that on purpose.
+- *"the key is now in **one** place"* — it is in **two**: this machine and the GitHub secret. That
+  is the number the ⚠️ above already gives, and two is still not enough, for the reason it gives:
+  losing the laptop is the scenario that actually happened, and a machine plus a secret in the
+  same repository do not fail independently. §2.1b is the fix and it is **still owed**.
+
+**The risk, stated plainly:** if this repository or that secret is lost, no future build can ever
+install over what testers already have. Every one of them would have to uninstall and lose their
+local data.
 
 #### Step 0 — look for the original first, it is free
 
@@ -315,6 +354,19 @@ Edit `app/release-notes.txt` first — that is what testers see.
 
 **Also bump the version.** The `versionCode` checklist above is not CI-specific: App Distribution
 compares `versionCode`, so a local upload with an unchanged one uploads happily and prompts nobody.
+
+> ⚠️ **Read the APK before you upload it — the output path is not evidence the build is current.**
+> `Observed:` 2026-08-24, a stale `app-release.apk` from an earlier run was sitting at the output
+> path while the real build was still going. `appDistributionUploadRelease` would have shipped it
+> without a word.
+>
+> ```powershell
+> aapt2 dump badging app\build\outputs\apk\release\app-release.apk | Select-String versionCode
+> ```
+>
+> It must read the `versionCode` you just bumped. This is the same family as the
+> `${PIPESTATUS[0]}` trap in [OPERATIONS.md §4](OPERATIONS.md) — a build failure that scrolls past
+> inside a pipe leaves the *previous* APK in place, and everything downstream succeeds on it.
 
 ---
 

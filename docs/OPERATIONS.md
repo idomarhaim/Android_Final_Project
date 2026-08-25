@@ -22,16 +22,17 @@ against the real backend — not inferred from the UI.
 |---|---|
 | Firebase backend | **Live.** Project `goalpilot-56e30`, Blaze plan |
 | Firestore / Storage / Auth / rules | Deployed and exercised |
-| Cloud Functions — callables | `getRecommendations`, `classifyTask`, `scoreTask`, `proposeMeasure` — v2 callable, `us-central1`, `nodejs22` |
-| Cloud Functions — triggers | `projectPoints`, `projectPointsOnTaskWrite`, `projectChallengeScore` — the **only** writers of derived state (§5.2) |
+| Cloud Functions — callables | **six:** `getRecommendations`, `classifyTask`, `scoreTask`, `proposeMeasure`, `fileGoal`, `planGoal` — v2 callable, `us-central1`, `nodejs22` |
+| Cloud Functions — triggers | **six:** `projectPoints`, `projectPointsOnTaskWrite`, `projectChallengeScore`, `projectChallengeScoreOnProgress` (`projection.ts`) · `applyMeasureChangeOnApproval`, `applyMeasureChangeOnProposal` (`challenges.ts`) — the **only** writers of derived state (§5.2) |
 | LLM | GROQ `openai/gpt-oss-20b` by default; a user may bring an OpenAI / Anthropic / Gemini key (`#54`) |
 | §6 Core | ✅ verified end-to-end |
 | §6 Bonus — LLM classification | ✅ "Smart add a task" on the dashboard |
 | §6 Bonus — life areas + time-allocation analytics | ✅ shipped, verified against the real Google Tasks account |
 | §6 Nice-to-have — Google Tasks | ✅ shipped, verified on real Hebrew data |
 | §6 Nice-to-have — Health Connect | ✅ shipped |
-| §6 Nice-to-have — Challenges | ✅ shipped — `ChallengeRepositoryImpl`, live standings via the `projectChallengeScore` trigger |
-| Beyond §6 | Calendar tab + recurrence, home-screen widget, notifications, guided tour, Settings surface, Hebrew/RTL |
+| §6 Nice-to-have — Challenges | ✅ **finished 2026-08-25** — `#23` closed. A typed `Measure` (`ChallengeType` and free-text `metricUnit` deleted), invite a friend, join links or creates a goal, server-owned scores, a measure change every participant must approve, **Health Connect as a first-class source**, and **retroactive** challenges that score a week already past |
+| Beyond §6 | Calendar tab + recurrence, home-screen widget (translucent panel), notifications, guided tour, Settings surface, AI goal filing + work plan (`fileGoal` / `planGoal`), Hebrew/RTL |
+| Shipped version | **v0.5.4, `versionCode` 15** — with both testers via App Distribution |
 | Tests | JVM unit, instrumented, Firestore-rules (`firestore-tests/`) and functions (`functions/test/`) — all four layers green |
 
 > **No test counts here on purpose.** This row read *"92 JVM unit + 12 instrumented"*
@@ -244,6 +245,31 @@ because of it.
   `run-goalpilot.ps1 -Avd Pixel_10_Pro_XL_B`, or the *Run GoalPilot on Second
   Device* launcher. Details in [`scripts/README.md`](../scripts/README.md).
 
+### ⚠️ Ido's real phone is routinely attached — pass `-s` on every `adb` call
+
+`R5CY21NM30D` is **Ido's own Galaxy S25 Ultra**, and it is often plugged in alongside an AVD.
+Two consequences, and the second is the dangerous one:
+
+- A bare `adb` command fails with *more than one device/emulator*, which is merely annoying;
+- a command that happens to resolve to one device can **reach his phone** — installing over the
+  build he is actually using, or wiping a sign-in.
+
+So **every** `adb` call names its target: `adb -s emulator-5554 …`, or `-s R5CY21NM30D` when the
+phone is genuinely the target. `adb devices` first, always.
+
+**It is also the only way to verify at his geometry.** His card width is **384 dp at font scale
+1.15**; a render pass taken at AVD width shows nothing, which is how a button that renders one
+letter per line on his screen passed every check here (see *Layout that does not assume a screen
+width* in [ARCHITECTURE.md](ARCHITECTURE.md)). `scripts/mirror-phone.ps1` (and the *Mirror Phone*
+launcher) puts the phone on screen; `scripts/README.md` §*Mirroring the phone* has the adb-version
+trap it exists to avoid.
+
+- **`connectedDebugAndroidTest` UNINSTALLS the app, and takes any Google sign-in with it.** Where
+  a session needs both a signed-in device and the instrumented suite, use the data-preserving
+  path instead — `adb -s <serial> install -r` for both the debug and the `androidTest` APK, then
+  `adb shell am instrument -w <appId>.test/<runner>`. `Observed:` 2026-08-19, the full suite ran
+  green and the app's Firebase auth store still held its user afterwards.
+
 ### Test accounts
 
 ```
@@ -444,8 +470,31 @@ it holds on CI and for a human running `adb shell am instrument` by hand.
 
 - Pipe Gradle through `tail` only with `${PIPESTATUS[0]}` — the pipe's exit code
   is `tail`'s, so failures read as success.
+- ⚠️ **The same gate belongs on any build whose output you then *install*, and there the
+  failure is worse than a misread exit code.** `gradlew assemble… | grep …` exits with
+  **`grep`'s** status, so `&&` does not protect you — and **the previous APK is still sitting at
+  the output path**, so `adb install -r` succeeds and the test run reports the *last* build's
+  results. `Observed:` 2026-08-20 — a Kotlin compile error scrolled past inside a `grep` and the
+  suite came back with the same 8 failures as the run before, which read as *"the fix did not
+  work"*. It was never in the APK.
+- **The artifact path is not evidence the artifact is current** — the general form of the same
+  trap. Before uploading a release, check the APK rather than the clock:
+  `aapt2 dump badging app/build/outputs/apk/release/app-release.apk` and read `versionCode` /
+  `versionName` back. `Observed:` 2026-08-24, a stale `app-release.apk` from an earlier build sat
+  at the output path while the real build was still running.
 - KSP occasionally fails with "Could not delete/move …" file locks. Re-run, or
   `rm -rf app/build/generated/ksp`. Not a code error.
+
+### ⚠️ The emulator's window-capture surface can wedge, and it looks exactly like a code regression
+
+`Observed:` 2026-08-25. Six `EntranceAnimationUiTest` cases read *transparent* where they expect
+red, and a render frame came back one flat colour — on code that had passed **331/331** an hour
+before. Not the display (awake throughout), not the host window size (restoring it changed
+nothing), not test ordering (it failed alone). **An emulator restart fixed it completely.**
+
+If several pixel or screenshot tests go red **together**, restart the emulator before you read
+your diff. The instinctive move — bisecting the change that "caused" it — costs an hour and finds
+nothing, because nothing in the tree changed.
 
 ---
 
@@ -499,9 +548,15 @@ curl -s -H "Authorization: Bearer $T" -H "x-goog-user-project: goalpilot-56e30" 
 
 ---
 
-## 7. Open item not yet resolved
+## 7. Open items
 
-`.github/copilot-instructions.md` has an uncommitted modification and
-`.github/instructions/mermaid.instructions.md` is untracked — both from a JARVIS
-tooling sync, unrelated to the app. They were deliberately left out of every
-commit this session. Decide with the user whether they belong in their own commit.
+**None as of 2026-08-25.** This section previously held one — `.github/copilot-instructions.md`
+modified and `.github/instructions/mermaid.instructions.md` untracked, both from a JARVIS tooling
+sync. Verified resolved: `git status .github/` is clean and no `mermaid.instructions.md` exists in
+the tree.
+
+> **Open *work* is deliberately not listed here**, for the reason §3 gives at length: a second
+> backlog beside the issue tracker drifts by construction. The live list is
+> [GitHub issues](https://github.com/idomarhaim/Android_Final_Project/issues). What belongs in
+> this section is only a **loose end in the repo itself** — a dirty file, a half-applied sync, a
+> credential that needs rotating — which no ticket would ever hold.

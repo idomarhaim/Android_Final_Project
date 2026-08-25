@@ -1693,7 +1693,7 @@ also why `FieldValue.increment` stays rejected: **`increment` *is* the accumulat
 > transaction has nothing left to be atomic about, which is what §5.3 needs. Scope, verified against
 > `HEAD` rather than against this paragraph:
 > [#52](https://github.com/idomarhaim/Android_Final_Project/issues/52) and
-> [`sessions/c20-build-half.md`](../sessions/c20-build-half.md).
+> [`sessions/c20-build-half.md`](../sessions/done/c20-build-half.md).
 
 **The honest residual, not buried:** the arithmetic now exists in **Kotlin and TypeScript** — a second
 *implementation* that can disagree. Accepted, because avoiding it costs the offline win entirely, and
@@ -1822,6 +1822,31 @@ which a defect ticket cannot carry.
 ---
 
 ## 6 · Challenges *(`C14` #23)*
+
+> ### ⚠️ Ido overrode two of this section's decisions on 2026-08-25, and named the conflict himself
+>
+> *"I understand there is a conflict with what I said before — update per what I said now."*
+> `#23` is **closed** and shipped; what follows below is the decision record as it was taken, kept
+> because this file's job is to be that record. **Where it and the two bullets here disagree,
+> these win** — they are later, and they are his.
+>
+> 1. **Health Connect is a first-class choice in a challenge.** Pick it and you author no goal.
+>    The mechanism is unchanged and had to be — the scoring Function runs in the cloud and
+>    **cannot read Health Connect**, an on-device API — so `LinkChallengeToHealthUseCase`
+>    find-or-creates the canonical health goal and links it. The change is in **the choice**, not
+>    in the pipe. This also softens *"no Health Connect connection → you cannot join a
+>    health-sourced challenge"*: an unavailable provider now leaves the row visible and greyed
+>    with the reason, because a choice that vanishes teaches nothing.
+> 2. **A challenge can be retroactive.** A race for a week that has already finished scores both
+>    participants over that week and names a winner. `joinedAt` now bounds an **open-ended**
+>    challenge only; where the owner set a `startAt`, the dates on the tin win. The old rule made
+>    a retroactive race score **zero for everybody**. What `joinedAt` protected — *joining with a
+>    year-old goal imports history nobody raced for* — can only happen when there is no start date
+>    to bound the window, so nothing was given up.
+>
+> Both are described as they run in
+> [ARCHITECTURE.md § *Challenges*](ARCHITECTURE.md); the full derivation is in
+> `CHANGELOG/2026-08-25/challenge-health-source.md`.
 
 > **A challenge scores from nothing of its own: it scores from each participant's goal.**
 

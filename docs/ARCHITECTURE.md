@@ -28,8 +28,16 @@ the backend, and an **LLM behind a Cloud Function** so no API key ever ships in 
         di/ (Hilt) binds interfaces -> impls, provides Firebase singletons
 ```
 
-**Eleven feature packages at `HEAD`:** `analytics`, `auth`, `calendar`, `challenges`,
-`dashboard`, `goals`, `health`, `lifeareas`, `profile`, `settings`, `social`.
+**Twelve feature packages at `HEAD`:** `analytics`, `auth`, `calendar`, `challenges`,
+`dashboard`, `goals`, `health`, `lifeareas`, `profile`, `settings`, `social`, `sync`.
+
+⚠️ **This line said *eleven* and omitted `sync` until 2026-08-25.** `feature/sync/` is not a
+screen — it is the Google Tasks / Health Connect import surface (`SyncCards`, `SyncSection`,
+`SyncViewModel`) that both the Settings screen and the dashboard host, which is exactly why it
+kept being missed by a reader counting screens. `DocsCurrencyTest` cannot catch this: the
+*"every feature package is named"* assertion was drafted, **run**, and dropped because the
+oracle is "does this word occur in the file" and it fired on `social` while going silent on
+`health`. The count is maintained by hand and by nothing else.
 
 ### Layer rules
 - **domain** depends on nothing Android/Firebase — trivially unit-testable (`BuildSummaryUseCase`, `Leveling`).
@@ -41,6 +49,12 @@ the backend, and an **LLM behind a Cloud Function** so no API key ever ships in 
   `tutorial/` (the in-app guided tour), `widget/` (the home-screen widget) and `locale/`.
 - **notifications** is its own top-level package: channels, the permission policy, deep links,
   and two `WorkManager` workers (`OccurrenceReminderWorker`, `PlanTomorrowWorker`).
+- **`feature/sync/` is a shared surface, not a screen.** The Google Tasks import and the Health
+  Connect connection are the same shape — availability, consent, a reviewable proposal list — so
+  they live once and are hosted twice, by Settings and by the dashboard. It reaches into
+  `feature/dashboard` for the one sentence that names a proposed duration rather than copying it;
+  the comment there records why the tidier fix (a helper in `ui/components`) is blocked by
+  `AnalyticsLiteralSweepTest`'s swept-package list.
 
 ## Life areas and the time-allocation chart
 
@@ -183,12 +197,16 @@ users/{uid}                       UserDto  (points, email, displayName, friendCo
   lifeAreas/{areaId}              LifeAreaDto  (name, colorHex, iconKey, sortOrder, googleListId)
   summaries/{summaryId}           ProgressSummary
   challengeReports/{challengeId}  what the participant measured — private, owner-written (§5.2)
+  challenges/{challengeId}        { }  — the private MIRROR EDGE: "which challenges am I in?"
+                                  in one query. `challenges/` above is the world-readable
+                                  document; this is the same id under the owner's own tree
   friends/{friendUid}             { addedAt }                                [private]
 
 publicProfiles/{uid}              { displayName, photoUrl, points, friendCode } [world-readable]
 shares/{shareId}                  SharedItemDto  (authorUid, period, message, imageUrl)
-challenges/{challengeId}          Challenge  (owner, standings)
-  participants/{uid}              { score } — projected, NOT client-written (§5.2)
+challenges/{challengeId}          Challenge  (owner, measure, startAt/endAt, pendingMeasureChange)
+  participants/{uid}              { score, joinedAt, linkedGoalId, approvedChangeId } —
+                                  score is PROJECTED, never client-written (§5.2)
 challengeInvites/{inviteId}       ChallengeInvite  (challengeId, fromUid, toUid) — the offer, readable by both sides only (#23)
 ```
 
@@ -252,15 +270,13 @@ AddEditGoalViewModel →      "                 →            "        .callabl
   `fileGoal` → the silent life-area and category filing a new goal gets on Create,
   and `planGoal` → the work plan offered straight after it.
 
-  ⚠️ **`fileGoal`, `planGoal` and `challengeInvites` were added to this file on
-  2026-08-24 by `visual-parity`, which owns none of them.** They shipped without a
-  doc edit, so `DocsCurrencyTest` was **red on `main`** — two failures that block the
-  release guard, and Ido had asked for a build to be distributed before going to
-  sleep. The row that owns this file, `docs-repair`, last committed at 01:49 that day
-  (`3e4f381`), holds nothing dirty and has no live transcript on this machine, so it
-  was read as gone rather than interrupted. The three names are copied from
-  `FirestorePaths` and `functions/src/index.ts`; nothing else here was touched, and
-  the prose those sessions owe about *what these do* is still theirs to write.
+  📌 **`fileGoal`, `planGoal` and `challengeInvites` were name-only entries until 2026-08-25.**
+  They shipped on 2026-08-24 without a doc edit, `DocsCurrencyTest` went **red on `main`** and
+  blocked the release guard, and `visual-parity` — which owns none of them — pasted the three
+  names in from `FirestorePaths` and `functions/src/index.ts` to unblock a distribution Ido had
+  asked for. That was the right call and it is why the guard is a presence check: it bought the
+  *names*, and could not buy the prose. The prose is now written — the two callables above, and
+  `challengeInvites` under **Challenges → Invites**.
 - `classifyTask` and `scoreTask` also return **`estimatedMinutes`** — the duration
   the time-allocation chart weighs a completed task by — and `classifyTask` takes
   the user's life areas so a goal it creates is filed straight away. Both facts
@@ -286,6 +302,100 @@ becoming 26 documents a year.
   `WorkManager` job per due reminder. `PlanTomorrowWorker` is the evening nudge.
 - `domain/usecase/SyncCalendarUseCase` + `data/calendar/GoogleCalendarClient` — two-way sync with
   Google Calendar, on the same token route as the Google Tasks import.
+
+## Challenges — the subsystem that stores no score of its own
+
+`feature/challenges/` + `functions/src/challenges.ts`, `measureChange.ts`, `derived.ts` and the
+two projection triggers. **Written 2026-08-25**; this document described challenges only as four
+lines of the collection tree until then, which is why every reader had to go to `PRODUCT_v0.3.md`
+§6 for the shape.
+
+**The one sentence that explains the rest: a challenge scores from nothing of its own — it scores
+from each participant's own goal.** Put a goal and a challenge side by side and they are the same
+object (a title, a measure, a start, a current value), so the app keeps **one** representation and
+the challenge reads it. Everything that already feeds a goal — Health Connect, a completed task, a
+manual log — feeds the challenge for free, and `ProgressEntry.sourceKey` already stops a re-sync
+counting twice.
+
+- **A challenge carries a `Measure` (`kind` + `word`), never free text.** `metricUnit` and
+  `ChallengeType` are both **deleted**: the free-text unit defaulted to `"points"`, which ranks by
+  *time logged* rather than by the thing being raced, and the type was purely presentational —
+  nothing ever branched on it to source a score. `MeasureKind` covers the part that meant
+  something (`STEPS` is `COUNT`, `SLEEP` is `DURATION`, `RUNNING` is `DISTANCE`).
+- **The score is movement in the linked goal over the scoring window**, summed server-side from
+  timestamped `progress` entries rather than stored as a delta — which is what makes relink,
+  unlink, backfill and dedup fall out for free instead of each needing code.
+- **`score` is server-owned.** The client writes the *fact* to `users/{uid}/challengeReports/{id}`,
+  which the people reading the standings cannot read; `projectChallengeScore` and
+  `projectChallengeScoreOnProgress` project it onto `challenges/{id}/participants/{uid}.score`, and
+  `firestore.rules` enforces the split. The honest residual, stated in the spec and true here: this
+  stops a win being **typed**, not a reading being **forged** — a typed score is labelled
+  `REPORTED` on the standings row with who, what and when.
+- **Changing the measure needs every participant's approval.** The owner writes
+  `pendingMeasureChange` on the challenge document, each participant writes `approvedChangeId` in
+  the one document they are permitted to write, and `applyMeasureChangeOnApproval` /
+  `applyMeasureChangeOnProposal` apply it when every row agrees. No new rules partition was needed.
+
+### Two things Ido changed on 2026-08-25, both overriding §6
+
+Both are recorded here rather than only in `PRODUCT_v0.3.md`, because §6 is a decision record and
+this is the description of what runs.
+
+1. **Health Connect is a first-class choice in a challenge — pick it and you author no goal.**
+   §6 said a challenge scores only from a goal you wrote. It still *does*, mechanically, and it has
+   to: **the scoring Function runs in the cloud and cannot read Health Connect**, which is an
+   on-device API — the only path a reading has ever taken to Firestore is `SyncHealthDataUseCase`
+   writing a `ProgressEntry` against a goal. A literally separate pipe would write the same steps
+   twice under two summers that can disagree, which is the exact defect `#23` was filed for. So
+   `LinkChallengeToHealthUseCase` **find-or-creates** the canonical `healthSourceKey` goal and links
+   it; the user picks *"Steps"* and authors nothing. The offer is matched on measure `kind` alone
+   and **says so on the row** — a `COUNT` challenge might be counting steps or books, and matching
+   the measure *word* would be a string match over user content that shuts a Hebrew user's
+   `"צעדים"` out of an English steps race.
+2. **A challenge can be retroactive.** `derived.ts#scoringWindow` — **the copy that decides the
+   winner, because scoring runs there and not on the device** — now lets the dates on the tin win:
+   `joinedAt` bounds an **open-ended** challenge only. It was `max(joined, startAt)`
+   unconditionally, which scored a race for last week as **zero for everybody**, the lower bound
+   landing past the challenge's own `endAt`. What §6's `joinedAt` protected (*joining with a
+   year-old goal imports a year of history nobody raced for*) can only happen when there is no
+   start date to bound the window. `Challenge.scoringWindowFor` is the Kotlin mirror and the two
+   must agree, or the standings and the card disagree about the same race.
+
+### Invites
+
+`challengeInvites/{inviteId}` is **top-level, like `shares/`, and for the same reason**: it is one
+document two different users must each reach on their own account, and everywhere tidier is
+unreachable — `users/{friendUid}/{document=**}` is `isOwner(friendUid)`, and so is their
+participant row.
+
+⚠️ **Its read rule inspects `resource.data`, which constrains every QUERY and not only every get.**
+A listener here must always carry `whereEqualTo("toUid", myUid)` or `whereEqualTo("fromUid", myUid)`;
+an unconstrained collection listener fails with `PERMISSION_DENIED` and the message does not say
+why. `firestore-tests/rules.test.mjs` asserts both directions, so the next person finds out from a
+test rather than from a device.
+
+## Layout that does not assume a screen width
+
+**Written 2026-08-25**, from Ido's photograph of his S25 Ultra rendering the challenge card's
+`Standings` button as a column of single letters.
+
+A `Row` gives its last child whatever width is left over. When that is less than one word the text
+has nowhere to go but downwards, so the label renders one character per line. A mechanical sweep
+found **seven** such rows in five files, written by different sessions months apart.
+
+- **Action rows are `FlowRow`s, not `Row`s** — a row that will not fit *wraps* instead of crushing
+  its last child. `ui/components/FillButtonRow.kt` had documented this in as many words (*"a `Row`
+  would clip the last one rather than wrap it"*); the other six simply never got it.
+- **Every action label additionally carries `maxLines = 1`**, so a single over-wide button cannot
+  stack even when it is alone on its line.
+
+⚠️ **`NarrowScreenGuardTest` does not catch the regression it was written for, and says so in its
+own KDoc.** `maxLines = 1` means a crushed button **truncates** instead of stacking, and truncation
+is invisible to height, to width and to Compose semantics — reverting the `FlowRow` leaves the
+guard green. It guards the *other* half: a label added later without `maxLines`, a raised font
+scale, a long translation. **`NarrowScreenRenderPass` at a real card width is what verifies the
+fix**, and a render pass taken at AVD width shows nothing at all — which is why the session that
+predicted this defect hours earlier measured the margin wrong and shipped anyway.
 
 ## Settings, and why it is reachable signed out
 
@@ -315,6 +425,17 @@ which would have been free but would have let an **untested wire format** run.
 `BuildWidgetTileUseCase` are pure; `data/widget/WidgetSnapshotStore` persists the last snapshot so
 the widget renders instantly and offline rather than waiting on Firestore. `WidgetPalette` mirrors
 the theme axes above, because a widget cannot read `MaterialTheme`.
+
+**The panel is translucent, at `WIDGET_PANEL_ALPHA = 0.78`** (2026-08-24). An opaque widget panel
+is a rectangle pasted onto the launcher wallpaper; the app's own glass surfaces can afford alpha
+0.13 because they sit on a page the app controls, and a widget controls nothing behind it. **0.72
+is the measured minimum** at which `onSurface` still clears the contrast floor over an arbitrary
+wallpaper, and 0.78 is the shipped value — the gap is deliberate margin.
+`WidgetPanelContrastTest` (JVM, free) asserts the floor against the shipped constant rather than a
+copy of it: a floor proved against a duplicate of the number is a floor proved against nothing.
+
+⚠️ `Untested:` the widgets have not been seen on a real launcher. The translucency is held by
+measurement, not by eye.
 
 ## The in-app guided tour
 

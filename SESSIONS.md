@@ -15,6 +15,7 @@ before your first write. Normative rule:
 
 | Session | Task | Owns (paths) | Singletons | Claimed |
 |---|---|---|---|---|
+| `docs-currency-refresh` | **ACTIVE.** Ido, 2026-08-25 (Hebrew): *תעדכן את הקבצים האלה בהתאם לגרסה העדכנית של המערכת* — bring all six `docs/` files up to **v0.5.4 / versionCode 15**. Inherits `docs-repair`'s scope (released below, session gone). Documentation only — no app code | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/SETUP.md`, `docs/RELEASING.md`, `docs/PRODUCT_v0.3.md` (§6 override note + status box only), `CHANGELOG/2026-08-25/docs-currency-refresh.md`, `kb-candidates/2026-08-25-docs-currency-refresh.md` | **Gradle daemon NEEDED** for one `:app:testDebugUnitTest` (`DocsCurrencyTest` guards three of these files). **No device, no emulator, no `adb`** | 2026-08-25 |
 > 🏁 **`narrow-screen-agnostic` RELEASED — v0.5.4 (versionCode 15) is with the testers.**
 > Ido's S25 photo: `Standings` rendering one letter per line. **Seven** `Row`s app-wide could
 > do it; all seven are now `FlowRow`s with single-line labels.
@@ -454,7 +455,18 @@ before your first write. Normative rule:
 > entries, none destined for `rules/`, none superseding a standing claim. The ingest is cross-repo
 > into `C:\Dev\JARVIS\kb\` and is owed.
 
-| `docs-repair` | Bring all six files under `docs/` **and** `README.md` up to the system as it is, per Ido 2026-08-24. Test counts deleted rather than updated (his call); OPERATIONS §3 decided **by delegation** and recorded as mine | `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, `docs/CLOUD-DEVICE.md`, `docs/PRODUCT_v0.3.md` (status box only), `docs/SETUP.md`, `docs/RELEASING.md`, `README.md`, `CHANGELOG/2026-08-24/docs-repair.md`, `kb-candidates/2026-08-24-docs-repair.md` | **Gradle daemon NEEDED but held by `s25-layout-and-tour`** — verifying with a no-Gradle probe meanwhile | 2026-08-24 |
+> 🏁 **`docs-repair` RELEASED BY `docs-currency-refresh`, 2026-08-25 — the session is gone, its work is
+> committed and pushed, and I am taking its paths.**
+>
+> **How that was established, rather than assumed:** last commit `3e4f381`/`59283d0` at **2026-08-24 01:50**;
+> last transcript turn **2026-08-23T22:51Z** (~39 h quiet), read from the one transcript that actually *wrote*
+> `CHANGELOG/2026-08-24/docs-repair.md` — a `file-history` grep on that path matches **14** sessions and is
+> useless, which is what defeated `ai-goal-onboarding`'s check on 2026-08-24. Its `docs/` paths are **clean in
+> the tree**. `visual-parity` had already read it as gone on 2026-08-25 and edited `docs/ARCHITECTURE.md`.
+>
+> **Nothing of theirs was adopted or edited as my own** — there was nothing uncommitted to advance. `README.md`
+> is in their scope and **not** in mine: Ido named the six `docs/` files.
+
 
 > 📣 **`docs-repair` — `DocsCurrencyTest` is RED on `main`, and the fix is one line in a file you hold.**
 > *(From `challenges-finish-the-job`, 2026-08-25. Not touching `docs/ARCHITECTURE.md`: your row is live on it.)*

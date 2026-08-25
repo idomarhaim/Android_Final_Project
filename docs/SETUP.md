@@ -85,6 +85,18 @@ GOOGLE_WEB_CLIENT_ID=1234567890-xxxxxxxxxxxxxxxx.apps.googleusercontent.com
 FUNCTIONS_REGION=us-central1
 ```
 
+> ⚠️ **Use forward slashes for `sdk.dir`, and every other path in this file.**
+> `local.properties` is a Java `.properties` file, so **a backslash is an escape
+> character**: `sdk.dir=C\:\Users\namei\AppData\Local\Android\Sdk` is parsed as
+> `C:UsersnameiAppDataLocalAndroidSdk`, with every `\U` `\A` `\L` `\S` swallowed.
+> `Observed:` 2026-08-19 — `assembleDebug` then dies at `:app:compileDebugJavaWithJavac`
+> with `java.io.IOException: The filename, directory name, or volume label syntax is
+> incorrect`, an error naming neither the file nor the property that caused it.
+>
+> The same trap fires in your own tooling, one layer up: a Python heredoc holding that
+> path needs a raw string, or it dies with `truncated \UXXXXXXXX escape`. This very
+> paragraph did it while being written.
+
 ## 4. Deploy security rules + Cloud Functions **(you)**
 
 ```powershell
@@ -124,10 +136,22 @@ Confirm the pinned id is still listed at <https://console.groq.com/docs/models>
 and not on <https://console.groq.com/docs/deprecations> before the demo. Free
 tier is 30 requests/min and 14,400/day — far above what a demo needs.
 
-## 5. OAuth consent screen (test mode) **(you)**
+## 5. OAuth consent screen **(you)**
 
-Per spec §8, keep OAuth in **Testing** mode and add your Google account under
-**OAuth consent screen → Test users**. No app verification needed for the demo.
+**For a fresh project of your own:** start in **Testing** mode and add your Google account under
+**OAuth consent screen → Test users**. No app verification is needed for a demo.
+
+⚠️ **`goalpilot-56e30` itself is NOT in Testing — it has been *In production (unverified)* since
+2026-08-09, and this section said otherwise until 2026-08-25.** The reason is the one thing about
+Testing mode that nobody discovers by reading: **every authorization dies after seven days**, and
+the clock is on the *grant*, not the token. A weekly re-consent is indistinguishable from ordinary
+first use, so it had been happening silently for as long as the Tasks import had shipped. Fine for
+an import you press; fatal for a calendar meant to stay true while nobody is looking.
+
+The cost of production is one extra tap, once per account (*"Google hasn't verified this app"* →
+**Advanced** → **Go to GoalPilot (unsafe)**), and it is reversible.
+[OPERATIONS.md §2](OPERATIONS.md) has the full account, the evidence, and what the round trip
+costs.
 
 ## 6. Run
 
@@ -147,6 +171,25 @@ Or double-click `scripts\Run GoalPilot.cmd`. The manual equivalent:
 
 Sign in with a **test user** Google account. You should land on the dashboard.
 
+### Mirroring a plugged-in phone onto this screen
+
+```powershell
+.\scripts\mirror-phone.ps1
+```
+
+Or double-click `scripts\Mirror Phone.cmd`. It wraps
+[scrcpy](https://github.com/Genymobile/scrcpy) — mouse and keyboard control of the real device,
+what Android Studio's *Running Devices* pane does without Android Studio. It builds nothing,
+installs nothing and takes no Gradle daemon, so it can run beside a build.
+
+**Why it matters beyond convenience:** the phone renders at a real width and font scale
+(**384 dp / 1.15** on the S25 Ultra here), and an emulator does not. A defect that crushes a
+button into one letter per line is invisible at AVD width and obvious here. Details, and the adb
+version trap the script pins around: [`scripts/README.md`](../scripts/README.md).
+
+⚠️ **With a phone attached, pass `-s` on every `adb` call** — `adb -s emulator-5554 …` — or a
+command meant for the emulator can install over the build on the phone, or wipe its sign-in.
+
 ### Installing on a physical phone
 
 The debug keystore SHA-1 registered in Firebase is this machine's
@@ -157,7 +200,7 @@ machine** signs in correctly on a real phone with no extra setup:
 1. Phone: `Settings → About phone` → tap **Build number** ×7.
 2. `Settings → System → Developer options` → **USB debugging** on.
 3. Plug in with a data cable, accept *"Allow USB debugging?"*.
-4. `.\scripts\run-goalpilot.ps1 -Target device`
+4. `.\scripts\run-goalpilot.ps1 -Target device`, or double-click `scripts\Run On Phone.cmd`.
 
 Building on a *different* machine produces a different debug keystore, and
 Google Sign-In then fails with **code 10 (DEVELOPER_ERROR)** — see the
