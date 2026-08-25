@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 superseded_by: sessions/challenges-finish-the-job.md
 issue: 23
 owns:
@@ -20,6 +20,14 @@ singletons:
   - a device, for the join flow and the Health Connect route
 created: 2026-08-24 by challenge-scoring
 ---
+
+> 🏁 **DECIDED 2026-08-25 by `challenges-finish-the-job` §4 — and the decision is DO NOT
+> BUILD IT.** Nothing was coded, deliberately. The gate would exclude people from a race to
+> prevent something the provenance badge already **labels**, using a flag its own owner
+> asserts, on a model that since §6 no longer distinguishes a health challenge from any
+> other. Full paper, both options stated fairly, and the one thing that would change the
+> recommendation (challenges between strangers): `CHANGELOG/2026-08-25/challenges-finish-the-job.md` §4.
+> **This reverses a call Ido made himself, so it is his to reverse back.**
 
 # Joining a challenge: the Health Connect gate, and the goal it is supposed to create
 

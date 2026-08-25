@@ -2,7 +2,7 @@
 repo: c:\Dev\Android_Final_Project
 branch: main
 mode: auto
-status: ready
+status: done
 superseded_by: sessions/challenges-finish-the-job.md
 issue: 23
 owns:
@@ -26,6 +26,15 @@ singletons:
   - the Firestore + Functions emulators (`firestore-tests/`, `functions/ test:emulator`)
 created: 2026-08-24 by challenge-scoring
 ---
+
+> 🏁 **DONE 2026-08-25 — shipped whole by `challenges-finish-the-job` §3**, not by a session
+> of its own. `firestore.rules` now pins `measureKind`/`measureWord` against every client
+> write, `functions/src/{measureChange,challenges}.ts` apply a change on unanimous consent,
+> and both triggers are deployed. The three questions this brief left open are answered in
+> `CHANGELOG/2026-08-25/challenges-finish-the-job.md` §3 — the short version being that
+> *reset* and *adapt* were never a choice: a kind change **is** a reset, a word-only change
+> needs no adapting, and both still need everyone's approval because the gate is on the
+> **claim**, not on the arithmetic.
 
 # Changing a challenge's measure needs every participant's approval — §6's last unbuilt bullet
 
