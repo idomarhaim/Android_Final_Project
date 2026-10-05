@@ -6796,3 +6796,5 @@ always-ask; they are one tap each.
 > sessions happened to edit different regions of `DashboardScreen.kt`, and the
 > `add -A` landed in a window where the tree held no sibling work — but only by
 > luck. The rule text and enforcement were tightened in JARVIS §5 as a result.
+
+- 2026-10-05 · `auto-mode-default` (from JARVIS) — mechanical sweep: `.github/instructions/general.instructions.md` v18 -> v19 (AUTO MODE is the default). One commit, no claim held.
