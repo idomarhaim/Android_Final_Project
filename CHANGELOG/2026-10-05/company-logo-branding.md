@@ -35,3 +35,8 @@
 
 ### 🧪 Tests (round 3)
 - `:app:testDebugUnitTest` → **1200 tests, 0 failures**; `:app:assembleDebug` → success. Not re-rendered on the emulator at 150 dp (a pure width change of the same composable that was looked at, at 180 dp).
+
+## Release — 2026-10-05
+
+- **Git:** `f4fe7ce` pushed to `origin/main`. No tester release (Ido's choice); the credit ships with the next release.
+- **CI on `f4fe7ce`:** *Instrumented tests (cloud emulator)* run 37324586544 → **failure**, 2 tests: `OverviewCardRenderTest.theTextColumnStartsAtTheSamePlaceInAllThreeStates` and `.theCardKeepsItsHeightInAllThreeStates`. `Observed:` the identical two tests fail on run 32840953384 (`009c769`, 2026-08-25), and that workflow has failed on every run since at least 2026-08-24, so this is pre-existing and not caused by this change (it touches neither the overview card nor its test). *Photograph the running app* → skipped.
