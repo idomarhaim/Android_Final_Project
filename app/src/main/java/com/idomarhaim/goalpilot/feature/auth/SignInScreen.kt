@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.idomarhaim.goalpilot.ui.components.MakerCredit
 import com.idomarhaim.goalpilot.ui.theme.BrandSystemBars
 import com.idomarhaim.goalpilot.ui.theme.gpAccents
 
@@ -172,6 +173,17 @@ fun SignInScreen(
                 )
             }
         }
+
+        // The maker's credit (IMC), not GoalPilot's brand -- so it sits at the
+        // foot of the screen, under everything the user came here to do.
+        MakerCredit(
+            surface = accents.heroGradient.last(),
+            labelColor = accents.onHeroVariant,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .safeDrawingPadding()
+                .padding(bottom = 20.dp),
+        )
 
         // A word beside the icon, not a bare gear: §0.8's surviving sub-rule is
         // form and words before iconography, and this is the only control on

@@ -328,4 +328,10 @@
         <item quantity="other">%1$s goals, which stay and become unfiled.</item>
     </plurals>
 
+    <!-- Company credit (Ido Mar-Chaim / IMC), C:\Dev\JARVIS\rules\company-branding.md.
+         Not translated on purpose: the form "Made By:" is fixed by Ido (2026-10-05) and is
+         part of the credit, not UI copy. -->
+    <string name="components_maker_credit_label" translatable="false">Made By:</string>
+    <string name="components_maker_credit_description" translatable="false">Ido Mar-Chaim (IMC)</string>
+
 </resources>

@@ -71,6 +71,7 @@ import com.idomarhaim.goalpilot.domain.model.displayName
 import com.idomarhaim.goalpilot.feature.sync.SyncSection
 import com.idomarhaim.goalpilot.ui.components.GpCard
 import com.idomarhaim.goalpilot.ui.components.LanguagePicker
+import com.idomarhaim.goalpilot.ui.components.MakerCredit
 import com.idomarhaim.goalpilot.ui.components.MaterialPicker
 import com.idomarhaim.goalpilot.ui.components.SectionHeader
 import com.idomarhaim.goalpilot.ui.components.SkinPicker
@@ -359,6 +360,15 @@ fun SettingsContent(
 
             SectionHeader("Account")
             AccountCard(onOpenProfile = onOpenProfile)
+
+            // The maker's credit (IMC) closes the screen; it is not GoalPilot's brand.
+            MakerCredit(
+                surface = MaterialTheme.colorScheme.background,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            )
 
             Spacer(Modifier.height(24.dp))
         }

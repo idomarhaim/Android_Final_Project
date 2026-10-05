@@ -143,3 +143,10 @@ UI tests (`connectedDebugAndroidTest`) require an emulator/device.
 ## 📄 License / attribution
 
 Course project by Ido. Built with Kotlin, Jetpack Compose, and Firebase.
+
+---
+
+<p align="center">Made By:</p>
+<p align="center">
+  <img src=".github/brand/imc-logo.png" alt="Ido Mar-Chaim (IMC)" width="200">
+</p>
