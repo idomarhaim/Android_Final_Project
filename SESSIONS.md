@@ -6798,3 +6798,5 @@ always-ask; they are one tap each.
 > luck. The rule text and enforcement were tightened in JARVIS §5 as a result.
 
 - 2026-10-05 · `auto-mode-default` (from JARVIS) — mechanical sweep: `.github/instructions/general.instructions.md` v18 -> v19 (AUTO MODE is the default). One commit, no claim held.
+
+> **application-delivery-modes — positively released with this completion commit, 2026-10-07.** Native owner `01a0fbb6-060e-7452-a290-b44bfdc532a4`: exact approved JARVIS deployment template v3 and own `CHANGELOG/2026-10-07/application-delivery-modes.md` completed. No application/device/provider change; other claims/history and unrelated files preserved. Short board/index leases release immediately after commit. No other paths are adopted.
